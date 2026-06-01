@@ -407,7 +407,8 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(GIFAbstractDataset *poDSIn,
         int iLine = 0;
 
         if (bAdvertiseInterlacedMDI)
-            poDS->SetMetadataItem("INTERLACED", "YES", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("INTERLACED", "YES",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
 
         panInterlaceMap = (int *)CPLCalloc(poDSIn->nRasterYSize, sizeof(int));
 
@@ -420,7 +421,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(GIFAbstractDataset *poDSIn,
     }
     else if (bAdvertiseInterlacedMDI)
     {
-        poDS->SetMetadataItem("INTERLACED", "NO", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLACED", "NO", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

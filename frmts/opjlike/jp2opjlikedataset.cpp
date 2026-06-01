@@ -49,9 +49,9 @@ JP2OPJLikeRasterBand<CODEC, BASE>::JP2OPJLikeRasterBand(
 
     if ((nBits % 8) != 0)
         GDALRasterBand::SetMetadataItem(
-            "NBITS", CPLString().Printf("%d", nBits), "IMAGE_STRUCTURE");
+            "NBITS", CPLString().Printf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
     GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
     this->poDS = poDSIn;
     this->nBand = nBandIn;
 }
@@ -1951,7 +1951,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     if (poDS->nBands > 1)
     {
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     poOpenInfo->fpL = poDS->fp_;
@@ -2550,10 +2550,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
     }
     else if (poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                 "NBITS", "IMAGE_STRUCTURE") != nullptr)
+                 "NBITS", GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
     {
         nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE"));
+            "NBITS", GDAL_MDD_IMAGE_STRUCTURE));
         if (bInspireTG &&
             !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32))
         {
@@ -2696,7 +2696,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     if (EQUAL(poSrcDS->GetDriverName(), "GEORASTER"))
     {
         const char *pszGEOR_compress =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+            poSrcDS->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
 
         if (pszGEOR_compress == nullptr)
         {
@@ -2859,7 +2859,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
         const char *pszNBits =
             poSrcDS->GetRasterBand(iBand + 1)->GetMetadataItem(
-                "NBITS", "IMAGE_STRUCTURE");
+                "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         /* Recommendation 38 In the case of an opacity channel, the bit depth
          * should be 1-bit. */
         if (iBand == nAlphaBandIndex &&

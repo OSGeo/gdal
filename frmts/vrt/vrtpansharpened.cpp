@@ -783,11 +783,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                     static_cast<VRTSourcedRasterBand *>(
                         poVDS->GetRasterBand(i + 1));
 
-                const char *pszNBITS =
-                    poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                const char *pszNBITS = poSrcBand->GetMetadataItem(
+                    "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszNBITS)
                     poVRTBand->SetMetadataItem("NBITS", pszNBITS,
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
 
                 VRTSimpleSource *poSimpleSource = new VRTSimpleSource();
                 poVRTBand->ConfigureSource(
@@ -1034,8 +1034,9 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         const char *pszBitDepth =
             CPLGetXMLValue(psOptions, "BitDepth", nullptr);
         if (pszBitDepth == nullptr)
-            pszBitDepth = GDALRasterBand::FromHandle(ahSpectralBands[0])
-                              ->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+            pszBitDepth =
+                GDALRasterBand::FromHandle(ahSpectralBands[0])
+                    ->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszBitDepth)
             nBitDepth = atoi(pszBitDepth);
         if (nBitDepth)
@@ -1046,19 +1047,19 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                          ->IsPansharpenRasterBand())
                     continue;
                 if (GetRasterBand(i + 1)->GetMetadataItem(
-                        "NBITS", "IMAGE_STRUCTURE") == nullptr)
+                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
                 {
                     if (nBitDepth != 8 && nBitDepth != 16 && nBitDepth != 32)
                     {
                         GetRasterBand(i + 1)->SetMetadataItem(
                             "NBITS", CPLSPrintf("%d", nBitDepth),
-                            "IMAGE_STRUCTURE");
+                            GDAL_MDD_IMAGE_STRUCTURE);
                     }
                 }
                 else if (nBitDepth == 8 || nBitDepth == 16 || nBitDepth == 32)
                 {
-                    GetRasterBand(i + 1)->SetMetadataItem("NBITS", nullptr,
-                                                          "IMAGE_STRUCTURE");
+                    GetRasterBand(i + 1)->SetMetadataItem(
+                        "NBITS", nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }
@@ -1146,7 +1147,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     psPanOptions->nThreads = nThreads;
 
     if (nBands == psPanOptions->nOutPansharpenedBands)
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     m_poPansharpener = std::make_unique<GDALPansharpenOperation>();
     eErr = m_poPansharpener->Initialize(psPanOptions.get());
@@ -1826,11 +1827,11 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     GDALRasterBand *poSrcBand = poGDS->GetRasterBand(i + 1);
                     auto poBand = std::make_unique<VRTPansharpenedRasterBand>(
                         poOvrDS.get(), i + 1, poSrcBand->GetRasterDataType());
-                    const char *pszNBITS =
-                        poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                    const char *pszNBITS = poSrcBand->GetMetadataItem(
+                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
                     if (pszNBITS)
                         poBand->SetMetadataItem("NBITS", pszNBITS,
-                                                "IMAGE_STRUCTURE");
+                                                GDAL_MDD_IMAGE_STRUCTURE);
                     int bHasNoData = FALSE;
                     const double dfNoData =
                         poSrcBand->GetNoDataValue(&bHasNoData);
@@ -1879,7 +1880,7 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
 
                 poOvrDS->m_poMainDataset = poGDS;
                 poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
 
                 poGDS->m_apoOverviewDatasets.push_back(std::move(poOvrDS));
             }

@@ -1853,8 +1853,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         if (poSrcDS->GetRasterCount() > 1)
         {
-            const char *pszInterleaving =
-                poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            const char *pszInterleaving = poSrcDS->GetMetadataItem(
+                "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszInterleaving)
             {
                 if (EQUAL(pszInterleaving, "BAND"))
@@ -2262,8 +2262,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             // Write "assets.image.type"
             if (pszDriverName && EQUAL(pszDriverName, "GTiff"))
             {
-                const char *pszLayout =
-                    poSrcDS->GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE");
+                const char *pszLayout = poSrcDS->GetMetadataItem(
+                    "LAYOUT", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszLayout && EQUAL(pszLayout, "COG"))
                 {
                     constexpr const char TYPE[] =

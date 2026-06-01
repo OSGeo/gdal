@@ -537,16 +537,16 @@ bool BAGRasterBand::Initialize(hid_t hDatasetIDIn, const char *pszName)
                 listid, i, &flags, &cd_nelmts, cd_values, sizeof(name), name);
             if (filter == H5Z_FILTER_DEFLATE)
                 poDS->GDALDataset::SetMetadataItem("COMPRESSION", "DEFLATE",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_NBIT)
                 poDS->GDALDataset::SetMetadataItem("COMPRESSION", "NBIT",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SCALEOFFSET)
                 poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SCALEOFFSET",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SZIP)
                 poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SZIP",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         H5Pclose(listid);
@@ -2501,7 +2501,8 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
 
     if (poParentDS->GetRasterCount() > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -3300,7 +3301,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         if (GetRasterCount() > 1)
         {
             GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         const bool bCanUseLowResAsOvr = nRasterXSize > m_nLowResWidth &&
@@ -3466,7 +3467,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
             }
 
             GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         SetPhysicalFilename(osFilename);

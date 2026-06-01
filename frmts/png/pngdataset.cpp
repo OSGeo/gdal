@@ -1575,7 +1575,7 @@ void PNGDataset::CollectMetadata()
         {
             GetRasterBand(iBand + 1)->SetMetadataItem(
                 "NBITS", CPLString().Printf("%d", nBitDepth),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -2044,7 +2044,7 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
     // More metadata.
     if (poDS->nBands > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
@@ -2363,7 +2363,7 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         if (nBands == 1)
         {
             const char *pszNbits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                "NBITS", "IMAGE_STRUCTURE");
+                "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszNbits != nullptr)
             {
                 nBitDepth = atoi(pszNbits);

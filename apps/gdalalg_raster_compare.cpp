@@ -694,9 +694,9 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
     if (nBands > 10)
     {
         const char *pszRefInterleave =
-            poRefDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            poRefDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
         const char *pszInputInterleave =
-            poInputDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            poInputDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
         if ((pszRefInterleave && EQUAL(pszRefInterleave, "PIXEL")) ||
             (pszInputInterleave && EQUAL(pszInputInterleave, "PIXEL")))
         {

@@ -113,8 +113,8 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset *poSrcDS,
     if (pszCompress != NULL && !EQUAL(pszCompress, "JPEG"))
         return FALSE;
 
-    const char *pszSrcColorSpace =
-        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    const char *pszSrcColorSpace = poSrcDS->GetMetadataItem(
+        "SOURCE_COLOR_SPACE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcColorSpace != NULL &&
         (EQUAL(pszSrcColorSpace, "CMYK") || EQUAL(pszSrcColorSpace, "YCbCrK")))
         return FALSE;
@@ -269,8 +269,8 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     const int nBlockYSize =
         atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKYSIZE", "0"));
     int nMCUSize = 8;
-    const char *pszSrcColorSpace =
-        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    const char *pszSrcColorSpace = poSrcDS->GetMetadataItem(
+        "SOURCE_COLOR_SPACE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcColorSpace != nullptr && EQUAL(pszSrcColorSpace, "YCbCr"))
         nMCUSize = 16;
 
@@ -319,7 +319,7 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
 
     // We don't want to apply lossy JPEG on a source using lossless JPEG !
     const char *pszReversibility = poSrcDS->GetMetadataItem(
-        "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+        "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszReversibility && EQUAL(pszReversibility, "LOSSLESS"))
         return FALSE;
 

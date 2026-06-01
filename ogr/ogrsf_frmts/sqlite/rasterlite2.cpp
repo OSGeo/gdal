@@ -475,7 +475,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
     if (pszCompression != nullptr)
     {
         GDALDataset::SetMetadataItem("COMPRESSION", pszCompression,
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (nQuality != 0 && (nCompression == RL2_COMPRESSION_JPEG ||
@@ -483,7 +483,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
                           nCompression == RL2_COMPRESSION_LOSSY_JP2))
     {
         GDALDataset::SetMetadataItem("QUALITY", CPLSPrintf("%d", nQuality),
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Get tile dimensions
@@ -899,7 +899,7 @@ RL2RasterBand::RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT,
     {
         GDALRasterBand::SetMetadataItem(
             (nBits == 1 && bPromote1BitAs8Bit) ? "SOURCE_NBITS" : "NBITS",
-            CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE");
+            CPLSPrintf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (nPixelType == RL2_PIXEL_MONOCHROME || nPixelType == RL2_PIXEL_GRAYSCALE)
@@ -929,8 +929,8 @@ RL2RasterBand::RL2RasterBand(const RL2RasterBand *poOther)
     GDALRasterBand::SetMetadataItem(
         "NBITS",
         const_cast<RL2RasterBand *>(poOther)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE"),
-        "IMAGE_STRUCTURE");
+            "NBITS", GDAL_MDD_IMAGE_STRUCTURE),
+        GDAL_MDD_IMAGE_STRUCTURE);
     m_eColorInterp = poOther->m_eColorInterp;
     m_bHasNoData = poOther->m_bHasNoData;
     m_dfNoDataValue = poOther->m_dfNoDataValue;
@@ -1554,7 +1554,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     else
     {
         pszNBITS = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE");
+            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS != nullptr)
         {
             nBITS = atoi(pszNBITS);

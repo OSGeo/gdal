@@ -2065,7 +2065,7 @@ class MosaicDataset : public GDALDataset
                            nTileMinY, oTM, convention, directory, extension,
                            pdfDstNoData, poCT));
         }
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         const CPLStringList aosMD(metadata);
         for (const auto [key, value] : cpl::IterateNameValue(aosMD))
         {
@@ -3475,7 +3475,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
         {
             if (const char *pszNBITS =
                     m_poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                        "NBITS", "IMAGE_STRUCTURE"))
+                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE))
             {
                 if (atoi(pszNBITS) > 12)
                 {

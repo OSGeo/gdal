@@ -548,13 +548,13 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = 256;
         nBlockYSize = 256;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (poPDFDS->m_nBlockXSize)
     {
         nBlockXSize = poPDFDS->m_nBlockXSize;
         nBlockYSize = poPDFDS->m_nBlockYSize;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (nRasterXSize < 64 * 1024 * 1024 / nRasterYSize)
     {
@@ -565,7 +565,7 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = std::min(1024, nRasterXSize);
         nBlockYSize = std::min(1024, nRasterYSize);
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -5333,7 +5333,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->CheckTiledRaster();
         if (!poDS->m_aiTiles.empty())
-            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     GDALPDFObject *poLGIDict = nullptr;

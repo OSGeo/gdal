@@ -214,7 +214,7 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     if (nComp > 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

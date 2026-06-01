@@ -440,11 +440,11 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                     return CE_Failure;
                 aMSBands[i] = poVRTBand;
                 poVRTBand->SetNoDataValue(psOptions->dfNoData);
-                const char *pszNBITS =
-                    poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                const char *pszNBITS = poSrcBand->GetMetadataItem(
+                    "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszNBITS)
                     poVRTBand->SetMetadataItem("NBITS", pszNBITS,
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
 
                 VRTSimpleSource *poSimpleSource = new VRTSimpleSource();
                 poVRTBand->ConfigureSource(
@@ -1306,10 +1306,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
             poMEMDS->AddMEMBand(hMEMBand);
 
             const char *pszNBITS =
-                aMSBands[i]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                aMSBands[i]->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszNBITS)
                 poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
-                    "NBITS", pszNBITS, "IMAGE_STRUCTURE");
+                    "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
 
             if (psOptions->bHasNoData)
                 poMEMDS->GetRasterBand(i + 1)->SetNoDataValue(
@@ -1484,7 +1484,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
             GDALRasterBand *poBand = aMSBands[i];
             int nBandBitDepth = 0;
             const char *pszNBITS =
-                poBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                poBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszNBITS)
                 nBandBitDepth = atoi(pszNBITS);
             if (nBandBitDepth < nBitDepth)

@@ -275,7 +275,8 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         eBufType, nPixelSpace, nLineSpace, psExtraArg);
     if (eErr == CE_None)
     {
-        const char *pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        const char *pszNBITS =
+            GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         const int nBits = (pszNBITS) ? atoi(pszNBITS) : 16;
         const GUInt16 nMaxVal = (nBits > 8 && nBits <= 16)
                                     ? static_cast<GUInt16>((1 << nBits) - 1)
@@ -2278,7 +2279,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
         if ((nBits % 8) != 0)
         {
             poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -2674,7 +2675,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
     if ((nBits % 8) != 0)
     {
         poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                "IMAGE_STRUCTURE");
+                                GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Get metadata from top MTD XML filename
@@ -3491,7 +3492,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                 {
                     const char *pszNBits =
                         poDS->GetRasterBand(1)->GetMetadataItem(
-                            "NBITS", "IMAGE_STRUCTURE");
+                            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
                     if (pszNBits == nullptr)
                     {
                         GDALDataType eDT =
@@ -4093,10 +4094,10 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
     poDS->SetGeoTransform(GDALGeoTransform(dfMinX, nSubDSPrecision, 0, dfMaxY,
                                            0, -nSubDSPrecision));
     poDS->GDALDataset::SetMetadataItem("COMPRESSION", "JPEG2000",
-                                       "IMAGE_STRUCTURE");
+                                       GDAL_MDD_IMAGE_STRUCTURE);
     if (bIsPreview || bIsTCI)
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
 
     int nBits = (bIsPreview || bIsTCI) ? 8 : 0 /* 0 = unknown yet*/;
     int nValMax = (bIsPreview || bIsTCI) ? 255 : 0 /* 0 = unknown yet*/;
@@ -4232,7 +4233,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
         if ((nBits % 8) != 0)
         {
             poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 

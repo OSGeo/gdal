@@ -333,7 +333,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             char **papszDomainList = poSrcDS->GetMetadataDomainList();
             constexpr const char *apszReservedDomains[] = {
-                "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+                GDAL_MDD_IMAGE_STRUCTURE, "DERIVED_SUBDATASETS"};
             for (char **papszIter = papszDomainList; papszIter && *papszIter;
                  ++papszIter)
             {
@@ -376,20 +376,20 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     {
         const char *pszInterleave =
-            poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleave)
         {
             poVRTDS->SetMetadataItem("INTERLEAVE", pszInterleave,
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
     {
         const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+            poSrcDS->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
             poVRTDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -445,11 +445,11 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         poVRTBand->CopyCommonInfoFrom(poSrcBand);
 
         const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
             poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
-                                       "IMAGE_STRUCTURE");
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         /* --------------------------------------------------------------------

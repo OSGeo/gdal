@@ -179,7 +179,7 @@ JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
         (eDataType == GDT_UInt16 && nBitsPerSample < 16))
     {
         SetMetadataItem("NBITS", CPLSPrintf("%d", nBitsPerSample),
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -803,12 +803,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
                                      ? "LOSSLESS (possibly)"
                                      : "LOSSY",
-                                 "IMAGE_STRUCTURE");
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 #ifdef HAVE_JXL_BOX_API
     if (m_bHasJPEGReconstructionData)
     {
         GDALDataset::SetMetadataItem("ORIGINAL_COMPRESSION", "JPEG",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 
@@ -914,7 +914,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (l_nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
@@ -2204,7 +2204,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const char *pszNBits = CSLFetchNameValue(papszOptions, "NBITS");
     if (pszNBits == nullptr)
         pszNBits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE");
+            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
     const int nBits =
         ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)

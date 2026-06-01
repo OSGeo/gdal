@@ -410,7 +410,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                             if (psIter->eType == CXT_Element &&
                                 strcmp(psIter->pszValue, "Metadata") == 0 &&
                                 strcmp(CPLGetXMLValue(psIter, "domain", ""),
-                                       "IMAGE_STRUCTURE") == 0)
+                                       GDAL_MDD_IMAGE_STRUCTURE) == 0)
                             {
                                 for (const CPLXMLNode *psIter2 =
                                          psIter->psChild;

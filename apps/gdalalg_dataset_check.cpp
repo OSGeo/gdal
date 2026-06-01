@@ -425,7 +425,7 @@ bool GDALDatasetCheckAlgorithm::CheckDataset(GDALDataset *poDS,
         const auto nDTSize = GDALGetDataTypeSizeBytes(eDT);
         constexpr size_t BUFFER_SIZE = 10 * 1024 * 1024;
         const char *pszInterleaving =
-            poDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            poDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleaving && EQUAL(pszInterleaving, "PIXEL"))
         {
             for (const auto &oWindow :

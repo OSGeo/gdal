@@ -92,7 +92,7 @@ GenBinBitRasterBand::GenBinBitRasterBand(GenBinDataset *poDSIn, int nBitsIn)
     : nBits(nBitsIn)
 {
     SetMetadataItem("NBITS", CPLString().Printf("%d", nBitsIn),
-                    "IMAGE_STRUCTURE");
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS = poDSIn;
     nBand = 1;

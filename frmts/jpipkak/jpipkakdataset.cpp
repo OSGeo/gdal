@@ -642,7 +642,7 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
             SetMetadataItem(
                 "NBITS",
                 CPLString().Printf("%d", poCodestream->get_bit_depth(0)),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
 
         // TODO add color interpretation
 

@@ -1622,7 +1622,7 @@ GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
              poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands);
 
     if (poDS->nBands > 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     if (bIsJP2)
     {

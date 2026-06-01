@@ -1111,11 +1111,11 @@ CPLErr GDALRasterBand::RasterIOResampled(
         poMEMDS, 1, pabyData, eDTMem, nPSMem, nLSMem, false);
     poMEMDS->SetBand(1, GDALRasterBand::FromHandle(hMEMBand));
 
-    const char *pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    const char *pszNBITS = GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
     const int nNBITS = pszNBITS ? atoi(pszNBITS) : 0;
     if (pszNBITS)
         GDALRasterBand::FromHandle(hMEMBand)->SetMetadataItem(
-            "NBITS", pszNBITS, "IMAGE_STRUCTURE");
+            "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
 
     CPLErr eErr = CE_None;
 
@@ -1610,12 +1610,12 @@ CPLErr GDALDataset::RasterIOResampled(
         apoDstBands[i] = poMEMBand;
 #endif
         const char *pszNBITS =
-            poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nNBITS = atoi(pszNBITS);
-            poMEMDS->GetRasterBand(i + 1)->SetMetadataItem("NBITS", pszNBITS,
-                                                           "IMAGE_STRUCTURE");
+            poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
+                "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -5347,14 +5347,14 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nSwathCols = nXSize;
     int nSwathLines = nMaxBlockYSize;
 
-    const char *pszSrcCompression =
-        poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+    const char *pszSrcCompression = poSrcPrototypeBand->GetMetadataItem(
+        "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcCompression == nullptr)
     {
         auto poSrcDS = poSrcPrototypeBand->GetDataset();
         if (poSrcDS)
-            pszSrcCompression =
-                poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+            pszSrcCompression = poSrcDS->GetMetadataItem(
+                "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -5658,12 +5658,13 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
     /* -------------------------------------------------------------------- */
     bool bInterleave = false;
     const char *pszInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave != nullptr &&
         (EQUAL(pszInterleave, "PIXEL") || EQUAL(pszInterleave, "LINE")))
         bInterleave = true;
 
-    pszInterleave = poDstDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+    pszInterleave =
+        poDstDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave != nullptr &&
         (EQUAL(pszInterleave, "PIXEL") || EQUAL(pszInterleave, "LINE")))
         bInterleave = true;

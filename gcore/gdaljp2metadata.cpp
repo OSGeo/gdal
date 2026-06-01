@@ -3290,7 +3290,7 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(GDALDataset *poSrcDS,
              papszMDListIter && *papszMDListIter; ++papszMDListIter)
         {
             if (!EQUAL(*papszMDListIter, "") &&
-                !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszMDListIter, GDAL_MDD_IMAGE_STRUCTURE) &&
                 !EQUAL(*papszMDListIter, "DERIVED_SUBDATASETS") &&
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
                 !STARTS_WITH_CI(*papszMDListIter, "xml:BOX_") &&

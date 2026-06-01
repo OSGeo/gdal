@@ -550,8 +550,8 @@ int WCSDataset::EstablishRasterDetails()
     {
         nMaxCols = atoi(pszCols);
         nMaxRows = atoi(pszRows);
-        SetMetadataItem("MAXNCOLS", pszCols, "IMAGE_STRUCTURE");
-        SetMetadataItem("MAXNROWS", pszRows, "IMAGE_STRUCTURE");
+        SetMetadataItem("MAXNCOLS", pszCols, GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem("MAXNROWS", pszRows, GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

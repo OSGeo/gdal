@@ -127,7 +127,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         nBlockYSize = 1;
 
         SetMetadataItem("NBITS", CPLString().Printf("%d", nBits),
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -1772,12 +1772,13 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
 
     // Ensure we pass on NBITS and PIXELTYPE structure information.
     auto poSrcBand = poSrcDS->GetRasterBand(1);
-    if (poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr &&
+    if (poSrcBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE) !=
+            nullptr &&
         CSLFetchNameValue(papszOptions, "NBITS") == nullptr)
     {
         papszAdjustedOptions = CSLSetNameValue(
             papszAdjustedOptions, "NBITS",
-            poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            poSrcBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
     }
 
     if (poSrcBand->GetRasterDataType() == GDT_UInt8 &&
@@ -1785,7 +1786,7 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
     {
         poSrcBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poSrcBand->EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType != nullptr)
         {

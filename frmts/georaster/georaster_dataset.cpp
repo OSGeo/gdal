@@ -318,21 +318,24 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     if (poGRW->nBandBlockSize == 1)
     {
-        poGRD->SetMetadataItem("INTERLEAVE", "BSQ", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem("INTERLEAVE", "BSQ", GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
         if (EQUAL(poGRW->sInterleaving.c_str(), "BSQ"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BSQ", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem("INTERLEAVE", "BSQ",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIP"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "PIB", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem("INTERLEAVE", "PIB",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIL"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BIL", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem("INTERLEAVE", "BIL",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -340,7 +343,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
                            CPLGetXMLValue(poGRW->phMetadata,
                                           "rasterInfo.compression.type",
                                           "NONE"),
-                           "IMAGE_STRUCTURE");
+                           GDAL_MDD_IMAGE_STRUCTURE);
 
     if (STARTS_WITH_CI(poGRW->sCompressionType.c_str(), "JPEG"))
     {
@@ -348,22 +351,22 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
                                CPLGetXMLValue(poGRW->phMetadata,
                                               "rasterInfo.compression.quality",
                                               "undefined"),
-                               "IMAGE_STRUCTURE");
+                               GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "1BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem("NBITS", "1", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "2BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem("NBITS", "2", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "4BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "4", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem("NBITS", "4", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     //  -------------------------------------------------------------------

@@ -1878,7 +1878,7 @@ void PostGISRasterDataset::BuildBands(BandMetadata *poBandMetaData,
             b->SetMetadataItem(
                 "NBITS",
                 CPLString().Printf("%d", poBandMetaData[iBand].nBitsDepth),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
 
 #ifdef DEBUG_VERBOSE

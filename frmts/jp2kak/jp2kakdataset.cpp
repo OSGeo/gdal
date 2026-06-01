@@ -98,9 +98,9 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
         SetMetadataItem(
             "NBITS",
             CPLString().Printf("%d", oCodeStream.get_bit_depth(nBand - 1)),
-            "IMAGE_STRUCTURE");
+            GDAL_MDD_IMAGE_STRUCTURE);
     }
-    SetMetadataItem("COMPRESSION", "JP2000", "IMAGE_STRUCTURE");
+    SetMetadataItem("COMPRESSION", "JP2000", GDAL_MDD_IMAGE_STRUCTURE);
 
     // Use tile dimension as block size, unless it is too big
     kdu_dims valid_tiles;
@@ -1023,7 +1023,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (pszOrder)
         {
-            poDS->SetMetadataItem("Corder", pszOrder, "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("Corder", pszOrder, GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         poDS->bUseYCC = false;
@@ -2324,7 +2324,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 
     const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
     if (pszNBITS == nullptr)
-        pszNBITS = poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        pszNBITS =
+            poPrototypeBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszNBITS != nullptr)
     {
         nBits = atoi(pszNBITS);

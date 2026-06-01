@@ -1122,7 +1122,7 @@ int DIMAPDataset::ReadImageInformation2()
         CPLGetXMLValue(psDoc, "Raster_Data.Data_Access.DATA_FILE_FORMAT", "");
     if (osDataFormat == "image/jp2")
     {
-        SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+        SetMetadataItem("COMPRESSION", "JPEG2000", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // For VHR2020: SPECTRAL_PROCESSING = PAN, MS, MS-FS, PMS, PMS-N, PMS-X,
@@ -1319,7 +1319,7 @@ int DIMAPDataset::ReadImageInformation2()
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
             poVRTBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                       "IMAGE_STRUCTURE");
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         for (const auto &oTileIdxNameTuple : oMapTileIdxToName)
@@ -1405,7 +1405,7 @@ int DIMAPDataset::ReadImageInformation2()
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
             poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (bTwoDataFilesPerTile)
         {

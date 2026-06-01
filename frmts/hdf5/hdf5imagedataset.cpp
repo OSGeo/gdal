@@ -1285,11 +1285,11 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
                 if (poDS->m_nBandChunkSize > 1)
                     poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
-                                          "IMAGE_STRUCTURE");
+                                          GDAL_MDD_IMAGE_STRUCTURE);
 
                 poDS->SetMetadataItem("BAND_CHUNK_SIZE",
                                       CPLSPrintf("%d", poDS->m_nBandChunkSize),
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 
@@ -1304,11 +1304,12 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
             if (eFilter == H5Z_FILTER_DEFLATE)
             {
                 poDS->SetMetadataItem("COMPRESSION", "DEFLATE",
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (eFilter == H5Z_FILTER_SZIP)
             {
-                poDS->SetMetadataItem("COMPRESSION", "SZIP", "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem("COMPRESSION", "SZIP",
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 

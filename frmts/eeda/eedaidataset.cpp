@@ -1351,7 +1351,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
     if (nBands > 1)
     {
         SetMetadataItem("INTERLEAVE", m_bQueryMultipleBands ? "PIXEL" : "BAND",
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Build subdataset list

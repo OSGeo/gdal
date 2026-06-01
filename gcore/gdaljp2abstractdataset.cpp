@@ -212,7 +212,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
                      static_cast<CSLConstList>(oLocalMDMD.GetDomainList())))
             {
                 if (!EQUAL(pszDomain, "") &&
-                    !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+                    !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
                 {
                     if (GDALDataset::GetMetadata(pszDomain) != nullptr)
                     {
@@ -631,7 +631,7 @@ OGRLayer *GDALJP2AbstractDataset::GetLayer(int i) const
 
 CSLConstList GDALJP2AbstractDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
     {
         if (m_aosImageStructureMetadata.empty())
         {
@@ -658,7 +658,7 @@ CSLConstList GDALJP2AbstractDataset::GetMetadata(const char *pszDomain)
 const char *GDALJP2AbstractDataset::GetMetadataItem(const char *pszName,
                                                     const char *pszDomain)
 {
-    if (pszDomain && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+    if (pszDomain && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         EQUAL(pszName, "COMPRESSION_REVERSIBILITY"))
     {
         CSLConstList papszMD = GetMetadata(pszDomain);

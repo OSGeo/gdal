@@ -667,9 +667,10 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poDS->SetBand(i, new GDALEXRRGBARasterBand(poDS.get(), i));
                 }
-                poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                                      GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (BGR || ABGR)
             {
@@ -792,7 +793,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 poDS->SetMetadataItem("COMPRESSION",
                                       apszCompressions[compression],
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
@@ -2021,7 +2022,7 @@ GDALDataset *GDALEXRDataset::Create(const char *pszFilename, int nXSize,
     if (nBandsIn > 1)
     {
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
     for (int i = 0; i < nBandsIn; i++)
     {

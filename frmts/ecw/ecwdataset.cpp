@@ -220,7 +220,7 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
             "NBITS",
             CPLString().Printf("%d",
                                poDSIn->psFileInfo->pBands[nBand - 1].nBits),
-            "IMAGE_STRUCTURE");
+            GDAL_MDD_IMAGE_STRUCTURE);
 
     GDALRasterBand::SetDescription(
         poDSIn->psFileInfo->pBands[nBand - 1].szDesc);
@@ -2125,10 +2125,10 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 poMEMDS->AddMEMBand(hBand);
 
                 const char *pszNBITS = GetRasterBand(i + 1)->GetMetadataItem(
-                    "NBITS", "IMAGE_STRUCTURE");
+                    "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszNBITS)
                     poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
-                        "NBITS", pszNBITS, "IMAGE_STRUCTURE");
+                        "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
             }
 
             GDALRasterIOExtraArg sExtraArgTmp;

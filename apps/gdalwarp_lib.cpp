@@ -4598,7 +4598,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 const char *pszAlpha =
                     GDALGetMetadataItem(GDALGetRasterBand(pahSrcDS[0], 4),
-                                        "ALPHA", "IMAGE_STRUCTURE");
+                                        "ALPHA", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszAlpha)
                 {
                     aosCreateOptions.SetNameValue("ALPHA", pszAlpha);

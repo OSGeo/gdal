@@ -4120,7 +4120,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         CSLConstList papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
         bool bIsXMLOrJSON = false;
 
-        if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
+        if (EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
             EQUAL(papszDomainList[iDomain], "DERIVED_SUBDATASETS"))
             continue;  // Ignored.
         if (EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
@@ -4482,7 +4482,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                      cpl::Iterate(CSLConstList(papszDomainList)))
                 {
                     if (pszDomain[0] != 0 &&
-                        !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                        !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
                         (!papszSrcMDD ||
                          CSLFindString(papszSrcMDD, pszDomain) >= 0))
                     {
@@ -4597,7 +4597,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     {
         AppendMetadataItem(&psRoot, &psTail, "OVERVIEW_RESAMPLING",
                            pszOverviewResampling, 0, nullptr,
-                           "IMAGE_STRUCTURE");
+                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -4611,7 +4611,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         if (pszTileInterleave && CPLTestBool(pszTileInterleave))
         {
             AppendMetadataItem(&psRoot, &psTail, "INTERLEAVE", "TILE", 0,
-                               nullptr, "IMAGE_STRUCTURE");
+                               nullptr, GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         const char *pszCompress =
@@ -4622,14 +4622,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
                 AppendMetadataItem(
                     &psRoot, &psTail, "WEBP_LEVEL",
                     CPLSPrintf("%d", GTiffGetWebPLevel(papszCreationOptions)),
-                    0, nullptr, "IMAGE_STRUCTURE");
+                    0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         else if (pszCompress && STARTS_WITH_CI(pszCompress, "LERC"))
@@ -4642,21 +4642,21 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
                 AppendMetadataItem(&psRoot, &psTail, "MAX_Z_ERROR",
                                    CSLFetchNameValueDef(papszCreationOptions,
                                                         "MAX_Z_ERROR", ""),
-                                   0, nullptr, "IMAGE_STRUCTURE");
+                                   0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 if (dfMaxZError != dfMaxZErrorOverview)
                 {
                     AppendMetadataItem(
                         &psRoot, &psTail, "MAX_Z_ERROR_OVERVIEW",
                         CSLFetchNameValueDef(papszCreationOptions,
                                              "MAX_Z_ERROR_OVERVIEW", ""),
-                        0, nullptr, "IMAGE_STRUCTURE");
+                        0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }
@@ -4668,7 +4668,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
@@ -4676,7 +4676,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 AppendMetadataItem(
                     &psRoot, &psTail, "JXL_DISTANCE",
                     CPLSPrintf("%f", static_cast<double>(fDistance)), 0,
-                    nullptr, "IMAGE_STRUCTURE");
+                    nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             const float fAlphaDistance =
                 GTiffGetJXLAlphaDistance(papszCreationOptions);
@@ -4685,12 +4685,12 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 AppendMetadataItem(
                     &psRoot, &psTail, "JXL_ALPHA_DISTANCE",
                     CPLSPrintf("%f", static_cast<double>(fAlphaDistance)), 0,
-                    nullptr, "IMAGE_STRUCTURE");
+                    nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
                 CPLSPrintf("%d", GTiffGetJXLEffort(papszCreationOptions)), 0,
-                nullptr, "IMAGE_STRUCTURE");
+                nullptr, GDAL_MDD_IMAGE_STRUCTURE);
         }
 #endif
     }
@@ -4816,7 +4816,7 @@ void GTiffDataset::PushMetadataToPam()
             if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) ||
                 EQUAL(papszDomainList[iDomain], MD_DOMAIN_IMD) ||
                 EQUAL(papszDomainList[iDomain], "_temporary_") ||
-                EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
+                EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
                 EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
                 continue;
 
@@ -6873,7 +6873,8 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     {
         int nColorMode = 0;
 
-        poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (!TIFFGetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode) ||
             nColorMode != JPEGCOLORMODE_RGB)
             TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
@@ -6989,16 +6990,16 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
                                          poDS.get(), iBand + 1));
             poDS->GetRasterBand(iBand + 1)->SetMetadataItem(
                 "NBITS", CPLString().Printf("%d", poDS->m_nBitsPerSample),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
     poDS->GetDiscardLsbOption(papszParamList);
 
     if (poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG && l_nBands != 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "BAND", GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS->oOvManager.Initialize(poDS.get(), pszFilename);
 
@@ -7377,13 +7378,14 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
 
-    if (poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr &&
-        atoi(poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")) > 0 &&
+    if (poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE) !=
+            nullptr &&
+        atoi(poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE)) > 0 &&
         CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr)
     {
         papszCreateOptions = CSLSetNameValue(
             papszCreateOptions, "NBITS",
-            poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
     }
 
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
@@ -7391,7 +7393,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     {
         poPBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            poPBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poPBand->GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poPBand->EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType)
         {
@@ -7691,7 +7693,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                     pasNewExtraSamples[iExtraBand - nBaseSamples - 1] =
                         GTiffGetAlphaValue(
                             poSrcDS->GetRasterBand(iExtraBand)
-                                ->GetMetadataItem("ALPHA", "IMAGE_STRUCTURE"),
+                                ->GetMetadataItem("ALPHA",
+                                                  GDAL_MDD_IMAGE_STRUCTURE),
                             nAlpha);
                 }
             }
@@ -8225,7 +8228,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     if (bTileInterleaving)
     {
         poDS->m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
@@ -8256,7 +8259,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             poBand->eDataType = GDT_UInt8;
             poBand->EnablePixelTypeSignedByteWarning(false);
             poBand->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
             poBand->EnablePixelTypeSignedByteWarning(true);
         }
     }

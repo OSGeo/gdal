@@ -166,7 +166,7 @@ PLMosaicRasterBand::PLMosaicRasterBand(PLMosaicDataset *poDSIn, int nBandIn,
     if (eDataType == GDT_UInt16)
     {
         if (nBand <= 3)
-            SetMetadataItem("NBITS", "12", "IMAGE_STRUCTURE");
+            SetMetadataItem("NBITS", "12", GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -320,7 +320,7 @@ PLMosaicDataset::PLMosaicDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     osCachePathRoot = CPLGetPathSafe(CPLGenerateTempFilenameSafe("").c_str());
 }
 

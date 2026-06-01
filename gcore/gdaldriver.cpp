@@ -663,8 +663,9 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      didn't provide values.                                          */
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
-    const char *const apszOptItems[] = {"NBITS", "IMAGE_STRUCTURE", "PIXELTYPE",
-                                        "IMAGE_STRUCTURE", nullptr};
+    const char *const apszOptItems[] = {"NBITS", GDAL_MDD_IMAGE_STRUCTURE,
+                                        "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE,
+                                        nullptr};
 
     for (int iOptItem = 0; nBands > 0 && apszOptItems[iOptItem] != nullptr;
          iOptItem += 2)
@@ -974,7 +975,8 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
                         if (!papszSrcMDD)
                         {
                             constexpr const char *const apszReservedDomains[] =
-                                {"IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+                                {GDAL_MDD_IMAGE_STRUCTURE,
+                                 "DERIVED_SUBDATASETS"};
                             for (const char *pszOtherDomain :
                                  apszReservedDomains)
                             {
@@ -1203,7 +1205,7 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszOptionsToDelete = nullptr;
     const char *srcInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
     if (nBandCount > 1 && srcInterleave != nullptr &&
         CSLFetchNameValue(papszOptions, "INTERLEAVE") == nullptr &&
         EQUAL(CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE"), "NONE"))

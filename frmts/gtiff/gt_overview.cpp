@@ -421,10 +421,10 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
                 return CE_Failure;
         }
 
-        if (hBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"))
+        if (hBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE))
         {
             nBandBits =
-                atoi(hBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+                atoi(hBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
 
             if (nBandBits == 1 && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
                 nBandBits = 8;
@@ -519,16 +519,16 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         GDALDataset *poSrcDS = papoBandList[0]->GetDataset();
         if (poSrcDS)
         {
-            const char *pszSrcInterleave =
-                poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            const char *pszSrcInterleave = poSrcDS->GetMetadataItem(
+                "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszSrcInterleave && EQUAL(pszSrcInterleave, "PIXEL"))
             {
                 bSourceIsPixelInterleaved = true;
             }
         }
 
-        const char *pszSrcCompression =
-            papoBandList[0]->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszSrcCompression = papoBandList[0]->GetMetadataItem(
+            "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszSrcCompression)
         {
             bSourceIsJPEG2000 = EQUAL(pszSrcCompression, "JPEG2000");

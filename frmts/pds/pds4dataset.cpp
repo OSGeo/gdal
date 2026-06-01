@@ -2333,13 +2333,13 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 dimSemantics[1] == 'L' && dimSemantics[2] == 'S')
             {
                 poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
             if (l_nBands > 1 && dimSemantics[0] == 'L' &&
                 dimSemantics[1] == 'S' && dimSemantics[2] == 'B')
             {
                 poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                                   "IMAGE_STRUCTURE");
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
 
             CPLXMLNode *psOS = CPLGetXMLNode(psSubIter, "Object_Statistics");
@@ -5079,12 +5079,12 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
     if (EQUAL(pszInterleave, "BIP"))
     {
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (EQUAL(pszInterleave, "BSQ"))
     {
         poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     for (int i = 0; i < nBandsIn; i++)

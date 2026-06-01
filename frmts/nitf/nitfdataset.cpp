@@ -1164,7 +1164,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             char *pszAEQD = nullptr;
             oSRS_AEQD.exportToWkt(&(pszAEQD));
-            poDS->SetMetadataItem("GCPPROJECTIONX", pszAEQD, "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("GCPPROJECTIONX", pszAEQD,
+                                  GDAL_MDD_IMAGE_STRUCTURE);
             CPLFree(pszAEQD);
         }
     }
@@ -1400,19 +1401,22 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     if (psImage == nullptr)
         /* do nothing */;
     else if (psImage->szIC[1] == '1')
-        poDS->SetMetadataItem("COMPRESSION", "BILEVEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "BILEVEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '2')
-        poDS->SetMetadataItem("COMPRESSION", "ARIDPCM", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ARIDPCM",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '3')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '4')
         poDS->SetMetadataItem("COMPRESSION", "VECTOR QUANTIZATION",
-                              "IMAGE_STRUCTURE");
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '5')
         poDS->SetMetadataItem("COMPRESSION", "LOSSLESS JPEG",
-                              "IMAGE_STRUCTURE");
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '8')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "JPEG2000",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Do we have RPC info.                                            */
@@ -3263,19 +3267,21 @@ char **NITFDataset::GetMetadataDomainList()
 
 void NITFDataset::InitializeImageStructureMetadata()
 {
-    if (oSpecialMD.GetMetadata("IMAGE_STRUCTURE") != nullptr)
+    if (oSpecialMD.GetMetadata(GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
         return;
 
-    oSpecialMD.SetMetadata(GDALPamDataset::GetMetadata("IMAGE_STRUCTURE"),
-                           "IMAGE_STRUCTURE");
+    oSpecialMD.SetMetadata(
+        GDALPamDataset::GetMetadata(GDAL_MDD_IMAGE_STRUCTURE),
+        GDAL_MDD_IMAGE_STRUCTURE);
     if (poJ2KDataset)
     {
         const char *pszReversibility = poJ2KDataset->GetMetadataItem(
-            "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszReversibility)
         {
             oSpecialMD.SetMetadataItem("COMPRESSION_REVERSIBILITY",
-                                       pszReversibility, "IMAGE_STRUCTURE");
+                                       pszReversibility,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 }
@@ -3361,7 +3367,7 @@ CSLConstList NITFDataset::GetMetadata(const char *pszDomain)
         return oSpecialMD.GetMetadata(pszDomain);
     }
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         poJ2KDataset)
     {
         InitializeImageStructureMetadata();
@@ -3442,7 +3448,7 @@ const char *NITFDataset::GetMetadataItem(const char *pszName,
         !osRSetVRT.empty())
         return osRSetVRT;
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         poJ2KDataset && EQUAL(pszName, "COMPRESSION_REVERSIBILITY"))
     {
         InitializeImageStructureMetadata();
@@ -5319,7 +5325,8 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         nABPP = atoi(pszABPP);
     }
     else if (const char *pszNBITS = aosOptions.FetchNameValueDef(
-                 "NBITS", poBand1->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))
+                 "NBITS",
+                 poBand1->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE)))
     {
         aosOptions.SetNameValue("ABPP", pszNBITS);
         nABPP = atoi(pszNBITS);

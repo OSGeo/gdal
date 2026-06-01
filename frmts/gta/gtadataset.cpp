@@ -1227,32 +1227,32 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->nBands > 0)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
     if (poDS->oHeader.compression() == gta::bzip2)
-        poDS->SetMetadataItem("COMPRESSION", "BZIP2", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "BZIP2", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::xz)
-        poDS->SetMetadataItem("COMPRESSION", "XZ", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "XZ", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib1)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB1", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB1", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib2)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB2", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB2", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib3)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB3", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB3", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib4)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB4", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB4", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib5)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB5", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB5", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib6)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB6", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB6", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib7)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB7", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB7", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib8)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB8", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB8", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib9)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB9", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB9", GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
@@ -1351,8 +1351,8 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             case GDT_UInt8:
             {
-                const char *pszPixelType =
-                    poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                const char *pszPixelType = poSrcBand->GetMetadataItem(
+                    "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
                     peGTATypes[i] = gta::int8;
                 else

@@ -131,7 +131,7 @@ class CALSWrapperSrcBand final : public GDALPamRasterBand
     explicit CALSWrapperSrcBand(GDALDataset *poSrcDSIn)
     {
         poSrcDS = poSrcDSIn;
-        SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        SetMetadataItem("NBITS", "1", GDAL_MDD_IMAGE_STRUCTURE);
         poSrcDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
         eDataType = GDT_UInt8;
         bInvertValues = true;
@@ -439,9 +439,9 @@ GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
     if (poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE") == nullptr ||
-        !EQUAL(poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS",
-                                                          "IMAGE_STRUCTURE"),
+            "NBITS", GDAL_MDD_IMAGE_STRUCTURE) == nullptr ||
+        !EQUAL(poSrcDS->GetRasterBand(1)->GetMetadataItem(
+                   "NBITS", GDAL_MDD_IMAGE_STRUCTURE),
                "1"))
     {
         CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,

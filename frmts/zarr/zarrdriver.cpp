@@ -122,7 +122,7 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.FetchNameValue(pszName);
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadataItem(pszName, pszDomain);
     return nullptr;
 }
@@ -135,7 +135,7 @@ CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.List();
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadata(pszDomain);
     return nullptr;
 }
@@ -1445,7 +1445,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             return nullptr;
         }
         poDS->SetMetadataItem("INTERLEAVE", bBandInterleave ? "BAND" : "PIXEL",
-                              "IMAGE_STRUCTURE");
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (bBandInterleave)
         {
             const char *pszBlockSize =
@@ -1458,7 +1458,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 {
                     // Actually expose as pixel interleaved
                     poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
-                                          "IMAGE_STRUCTURE");
+                                          GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }

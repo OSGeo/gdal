@@ -289,7 +289,8 @@ void GDALDAASDataset::InstantiateBands()
     if (nBands > 1)
     {
         // Hint for users of the driver
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -1387,7 +1388,7 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
         poDSIn->m_nActualBitDepth != 64)
     {
         SetMetadataItem("NBITS", CPLSPrintf("%d", poDSIn->m_nActualBitDepth),
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 

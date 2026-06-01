@@ -2719,12 +2719,13 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszInterleave)
     {
         GDALDataset::SetMetadataItem("INTERLEAVE", pszInterleave,
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         m_bBandInterleave = EQUAL(pszInterleave, "BAND");
     }
-    else if (nBandCount > 1 && !GetMetadata("IMAGE_STRUCTURE"))
+    else if (nBandCount > 1 && !GetMetadata(GDAL_MDD_IMAGE_STRUCTURE))
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

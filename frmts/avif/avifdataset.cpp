@@ -260,7 +260,7 @@ GDALAVIFRasterBand::GDALAVIFRasterBand(GDALAVIFDataset *poDSIn, int nBandIn,
     if (nBits != 8 && nBits != 16)
     {
         GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -551,13 +551,13 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
     if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV444)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "444",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV422)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "422",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV420)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "420",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     for (int i = 0; i < l_nBands; ++i)
     {
@@ -775,7 +775,8 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     }
     else if (eDT == GDT_UInt16)
     {
-        pszNBITS = poFirstBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        pszNBITS =
+            poFirstBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nBits = atoi(pszNBITS);

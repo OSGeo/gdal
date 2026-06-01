@@ -81,7 +81,7 @@ PCIDSK2Band::PCIDSK2Band(PCIDSKChannel *poChannelIn)
 
     if (poChannel->GetType() == CHN_BIT)
     {
-        PCIDSK2Band::SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        PCIDSK2Band::SetMetadataItem("NBITS", "1", GDAL_MDD_IMAGE_STRUCTURE);
 
         if (!STARTS_WITH_CI(poChannel->GetDescription().c_str(),
                             "Contents Not Specified"))
@@ -1863,10 +1863,11 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         if (EQUAL(poFile->GetInterleaving().c_str(), "PIXEL"))
-            poDS->SetMetadataItem("IMAGE_STRUCTURE", "PIXEL",
-                                  "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDAL_MDD_IMAGE_STRUCTURE, "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         else if (EQUAL(poFile->GetInterleaving().c_str(), "BAND"))
-            poDS->SetMetadataItem("IMAGE_STRUCTURE", "BAND", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDAL_MDD_IMAGE_STRUCTURE, "BAND",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
 
         /* --------------------------------------------------------------------
          */

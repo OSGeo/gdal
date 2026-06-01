@@ -1175,8 +1175,9 @@ void GTiffDataset::ScanDirectories()
                     // poODS->m_nZSTDLevel = m_nZSTDLevel;
 
                     if (const char *pszOverviewResampling =
-                            m_oGTiffMDMD.GetMetadataItem("OVERVIEW_RESAMPLING",
-                                                         "IMAGE_STRUCTURE"))
+                            m_oGTiffMDMD.GetMetadataItem(
+                                "OVERVIEW_RESAMPLING",
+                                GDAL_MDD_IMAGE_STRUCTURE))
                     {
                         for (int iBand = 1; iBand <= poODS->GetRasterCount();
                              ++iBand)

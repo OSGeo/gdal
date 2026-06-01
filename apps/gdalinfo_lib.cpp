@@ -2469,7 +2469,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
             for (const char *pszDomain : aosMDDList)
             {
                 if (!EQUAL(pszDomain, "") &&
-                    !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                    !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
                     !EQUAL(pszDomain, "TILING_SCHEME") &&
                     !EQUAL(pszDomain, "SUBDATASETS") &&
                     !EQUAL(pszDomain, "GEOLOCATION") &&
@@ -2506,7 +2506,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
     /* -------------------------------------------------------------------- */
     /*      Report various named metadata domains.                          */
     /* -------------------------------------------------------------------- */
-    GDALInfoPrintMetadata(psOptions, hObject, "IMAGE_STRUCTURE",
+    GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_IMAGE_STRUCTURE,
                           "Image Structure Metadata", pszIndent, bJson,
                           poMetadata, osStr);
 

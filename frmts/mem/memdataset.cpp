@@ -145,7 +145,7 @@ MEMRasterBand::MEMRasterBand(GDALDataset *poDSIn, int nBandIn,
         nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
 
     if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
-        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", GDAL_MDD_IMAGE_STRUCTURE);
 
     PamInitializeNoParent();
 }
@@ -1485,14 +1485,17 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
 
     const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
     if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
-        poDS->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     if (nXSize != 0 && nYSize != 0)
     {
         if (bPixelInterleaved)
-            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         else
-            poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("INTERLEAVE", "BAND",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1512,7 +1515,8 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
 
         if (const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS"))
         {
-            poNewBand->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+            poNewBand->SetMetadataItem("NBITS", pszNBITS,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         poDS->SetBand(iBand + 1, poNewBand);

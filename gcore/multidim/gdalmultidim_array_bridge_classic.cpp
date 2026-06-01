@@ -1755,7 +1755,8 @@ lbl_next_depth:
         poDS->GetRasterCount() > 1)
     {
         poDS->m_bPixelInterleaved = true;
-        poDS->m_oMDD.SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->m_oMDD.SetMetadataItem("INTERLEAVE", "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (!array->GetFilename().empty() &&

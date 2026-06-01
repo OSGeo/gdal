@@ -1459,7 +1459,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
     tiledb::ArraySchema schema = poDS->m_array->schema();
 
-    CSLConstList papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
+    CSLConstList papszStructMeta = poDS->GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
     const char *pszXSize = CSLFetchNameValue(papszStructMeta, "X_SIZE");
     if (pszXSize)
     {
@@ -1577,7 +1577,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         else
         {
             const char *pszBands =
-                poDS->GetMetadataItem("NUM_BANDS", "IMAGE_STRUCTURE");
+                poDS->GetMetadataItem("NUM_BANDS", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszBands)
             {
                 poDS->nBands = atoi(pszBands);
@@ -1995,7 +1995,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
                     CPLCreateXMLNode(psSubNode, CXT_Element, "PAMDataset"),
                     CXT_Element, "Metadata");
                 CPLAddXMLAttributeAndValue(psMetaNode, "domain",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
 
                 CPLAddXMLAttributeAndValue(
                     CPLCreateXMLElementAndValue(
@@ -2186,7 +2186,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
                                          pszCompression, nLevel) == CE_None)
             {
                 poDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->m_schema->set_coords_filter_list(*poDS->m_filterList);
             }
         }
@@ -2640,7 +2640,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
                     CPLGetBasenameSafe(poAttrDS->GetDescription()).c_str());
             }
         }
-        poDS->SetMetadata(aosImageStruct.List(), "IMAGE_STRUCTURE");
+        poDS->SetMetadata(aosImageStruct.List(), GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     return poDS.release();

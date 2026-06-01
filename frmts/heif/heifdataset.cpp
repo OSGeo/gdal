@@ -838,7 +838,7 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
     if (nBits != 8 && nBits != 16)
     {
         GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 

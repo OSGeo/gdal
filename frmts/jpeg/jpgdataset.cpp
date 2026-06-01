@@ -329,8 +329,9 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
             (!bIsYCbCr &&
              memcmp(md5JPEGQuantTable_generic_8bit[i], digest, 16) == 0))
         {
-            GDALDataset::SetMetadataItem(
-                "JPEG_QUALITY", CPLSPrintf("%d", i + 1), "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem("JPEG_QUALITY",
+                                         CPLSPrintf("%d", i + 1),
+                                         GDAL_MDD_IMAGE_STRUCTURE);
             break;
         }
     }
@@ -1293,7 +1294,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
     if (eAccess == GA_ReadOnly && !bHasReadImageStructureMetadata &&
-        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+        pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         ReadImageStructureMetadata();
     if (eAccess == GA_ReadOnly && pszDomain != nullptr &&
         EQUAL(pszDomain, "xml:XMP"))
@@ -1337,7 +1338,7 @@ CSLConstList JPGDatasetCommon::GetMetadata(const char *pszDomain)
 const char *JPGDatasetCommon::GetMetadataItem(const char *pszName,
                                               const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
     {
         if (EQUAL(pszName, "JPEG_QUALITY"))
             LoadForMetadataDomain(pszDomain);
@@ -1749,9 +1750,11 @@ JPGRasterBand::JPGRasterBand(JPGDatasetCommon *poDSIn, int nBandIn)
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    GDALMajorObject::SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+    GDALMajorObject::SetMetadataItem("COMPRESSION", "JPEG",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     if (eDataType == GDT_UInt16)
-        GDALMajorObject::SetMetadataItem("NBITS", "12", "IMAGE_STRUCTURE");
+        GDALMajorObject::SetMetadataItem("NBITS", "12",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
 }
 
 /************************************************************************/
@@ -3573,7 +3576,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->sDInfo.out_color_space = JCS_RGB;
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
     else if (poDS->sDInfo.jpeg_color_space == JCS_CMYK)
@@ -3584,7 +3587,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "CMYK",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
@@ -3599,7 +3602,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCrK",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
 
             // libjpeg does the translation from YCrCbK -> CMYK internally
             // and we'll do the translation to RGB in IReadBlock().
@@ -3626,14 +3629,14 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     // More metadata.
     if (poDS->nBands > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (psArgs->bIsLossless)
     {
         poDS->SetMetadataItem("COMPRESSION_REVERSIBILITY", "LOSSLESS",
-                              "IMAGE_STRUCTURE");
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
