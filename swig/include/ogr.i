@@ -1232,6 +1232,14 @@ static bool CreateFieldsFromArrowSchema(OGRLayerH hDstLayer,
                                         const struct ArrowSchema* schemaSrc,
                                         char** options)
 {
+    const char* pszFIDName = CSLFetchNameValueDef(
+        options, "FID", OGR_L_GetFIDColumn(hDstLayer));
+    if (!pszFIDName || !pszFIDName[0])
+        pszFIDName = "OGC_FID";
+    const char* pszGeomColName = CSLFetchNameValueDef(
+        options, "GEOMETRY_NAME", OGR_L_GetGeometryColumn(hDstLayer));
+    if (!pszGeomColName || !pszGeomColName[0])
+        pszGeomColName = "wkb_geometry";
     for (int i = 0; i < schemaSrc->n_children; ++i)
     {
         const char *metadata =
@@ -1251,8 +1259,8 @@ static bool CreateFieldsFromArrowSchema(OGRLayerH hDstLayer,
 
         const char *pszFieldName =
             schemaSrc->children[i]->name;
-        if (!EQUAL(pszFieldName, "OGC_FID") &&
-            !EQUAL(pszFieldName, "wkb_geometry") &&
+        if (!EQUAL(pszFieldName, pszFIDName) &&
+            !EQUAL(pszFieldName, pszGeomColName) &&
             !OGR_L_CreateFieldFromArrowSchema(
                 hDstLayer, schemaSrc->children[i], options))
         {
