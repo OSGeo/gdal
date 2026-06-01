@@ -4609,7 +4609,8 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         if (const char *pszCenterWavelength = poBand->GetMetadataItem(
                 GDALMD_CENTRAL_WAVELENGTH_UM, "IMAGERY"))
             bm.osCenterWaveLength = pszCenterWavelength;
-        if (const char *pszFWHM = poBand->GetMetadataItem("FWHM_UM", "IMAGERY"))
+        if (const char *pszFWHM =
+                poBand->GetMetadataItem(GDALMD_FWHM_UM, "IMAGERY"))
             bm.osFWHM = pszFWHM;
         aoBandMetadata.emplace_back(std::move(bm));
     }

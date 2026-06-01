@@ -287,7 +287,7 @@ void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,
                 if (const char *pszVal = ConvertWaveLength(CPLAtof(aosFWHM[i])))
                 {
                     poDS->GetRasterBand(i + 1)->SetMetadataItem(
-                        "FWHM_UM", pszVal, "IMAGERY");
+                        GDALMD_FWHM_UM, pszVal, "IMAGERY");
                 }
             }
         }

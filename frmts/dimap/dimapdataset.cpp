@@ -1746,7 +1746,7 @@ int DIMAPDataset::ReadImageInformation2()
                                     CPLSPrintf("%.3f", (dfMin + dfMax) / 2),
                                     "IMAGERY");
             poBand->SetMetadataItem(
-                "FWHM_UM", CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
+                GDALMD_FWHM_UM, CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
         }
     }
 

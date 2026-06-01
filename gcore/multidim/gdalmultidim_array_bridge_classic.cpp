@@ -585,7 +585,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::Create(GDT_Float64));
                     dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
-                        "FWHM_UM",
+                        GDALMD_FWHM_UM,
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
                                                      .dfFWHMToMicrometer),
                         "IMAGERY");
@@ -1409,7 +1409,7 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
         for (const auto &oJsonItem : oRoot.GetChildren())
         {
             if (oJsonItem.GetName() == GDALMD_CENTRAL_WAVELENGTH_UM ||
-                oJsonItem.GetName() == "FWHM_UM")
+                oJsonItem.GetName() == GDALMD_FWHM_UM)
             {
                 const auto osBandArrayFullname = oJsonItem.GetString("array");
                 const auto osBandAttributeName =
@@ -1873,7 +1873,7 @@ lbl_next_depth:
  *                         The object currently accepts 2 members:
  *                         - GDALMD_CENTRAL_WAVELENGTH_UM: Central Wavelength in
  *                           micrometers.
- *                         - "FWHM_UM": Full-width half-maximum
+ *                         - GDALMD_FWHM_UM: Full-width half-maximum
  *                           in micrometers.
  *                         The value of each member should be an object with the
  *                         following members:
@@ -1907,7 +1907,7 @@ lbl_next_depth:
  *                                "array": "/sensor_band_parameters/wavelengths",
  *                                "unit": "${units}"
  *                            },
- *                            "FWHM_UM": {
+ *                            GDALMD_FWHM_UM: {
  *                                "array": "/sensor_band_parameters/fwhm",
  *                                "unit": "${units}"
  *                            }
@@ -1919,7 +1919,7 @@ lbl_next_depth:
  *                              "attribute": "center_wavelengths",
  *                              "unit": "${center_wavelengths_units}"
  *                            },
- *                            "FWHM_UM": {
+ *                            GDALMD_FWHM_UM: {
  *                              "attribute": "fwhm",
  *                              "unit": "${fwhm_units}"
  *                            }

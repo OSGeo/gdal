@@ -2547,7 +2547,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             adfFullWidthHalfMax[i] != 0)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "FWHM_UM", CPLSPrintf("%g", adfFullWidthHalfMax[i]), "IMAGERY");
+                GDALMD_FWHM_UM, CPLSPrintf("%g", adfFullWidthHalfMax[i]),
+                "IMAGERY");
         }
     }
 

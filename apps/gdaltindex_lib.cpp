@@ -2481,7 +2481,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     bandsCenterWavelengthArray->length++;
 
                     if (const char *pszFWHM =
-                            poBand->GetMetadataItem("FWHM_UM", "IMAGERY"))
+                            poBand->GetMetadataItem(GDALMD_FWHM_UM, "IMAGERY"))
                     {
                         float *values = static_cast<float *>(const_cast<void *>(
                             bandsFWHMArray->buffers[ARROW_BUF_DATA]));
