@@ -124,7 +124,7 @@ void GDALMDReaderOrbView::LoadMetadata()
         CSLFetchNameValue(m_papszIMDMD, "sensorInfo.satelliteName");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
 

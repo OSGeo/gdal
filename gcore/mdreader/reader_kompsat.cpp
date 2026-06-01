@@ -106,18 +106,18 @@ void GDALMDReaderKompsat::LoadMetadata()
     if (nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(
-            m_papszIMAGERYMD, MD_NAME_SATELLITE,
+            m_papszIMAGERYMD, GDALMD_SATELLITEID,
             CPLSPrintf("%s %s", CPLStripQuotes(pszSatId1).c_str(),
                        CPLStripQuotes(pszSatId2).c_str()));
     }
     else if (nullptr != pszSatId1 && nullptr == pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId1));
     }
     else if (nullptr == pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId2));
     }
 

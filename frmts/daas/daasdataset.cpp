@@ -965,7 +965,7 @@ bool GDALDAASDataset::GetImageMetadata()
         GetString(oProperties, "satellite", false, bIgnoredError));
     if (!osSatellite.empty())
     {
-        SetMetadataItem(MD_NAME_SATELLITE, osSatellite.c_str(),
+        SetMetadataItem(GDALMD_SATELLITEID, osSatellite.c_str(),
                         GDAL_MDD_IMAGERY);
     }
 

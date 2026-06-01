@@ -124,7 +124,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
     const char *pszSatId = CSLFetchNameValue(m_papszIMDMD, "IMAGE.SATID");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
     else
@@ -133,7 +133,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         if (nullptr != pszSatId)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_SATELLITE, CPLStripQuotes(pszSatId));
+                m_papszIMAGERYMD, GDALMD_SATELLITEID, CPLStripQuotes(pszSatId));
         }
     }
 

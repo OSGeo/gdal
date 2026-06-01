@@ -129,7 +129,7 @@ void GDALMDReaderLandsat::LoadMetadata()
         m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
 
