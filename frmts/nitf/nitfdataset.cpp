@@ -1452,7 +1452,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         if (papszMD != nullptr)
         {
             bHasLoadedRPCTXT = true;
-            poDS->SetMetadata(papszMD, "RPC");
+            poDS->SetMetadata(papszMD, GDAL_MDD_RPC);
             CSLDestroy(papszMD);
         }
         else
@@ -1466,84 +1466,84 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         char szValue[1280];
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_BIAS);
-        poDS->SetMetadataItem("ERR_BIAS", szValue, "RPC");
+        poDS->SetMetadataItem("ERR_BIAS", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_RAND);
-        poDS->SetMetadataItem("ERR_RAND", szValue, "RPC");
+        poDS->SetMetadataItem("ERR_RAND", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF);
-        poDS->SetMetadataItem("LINE_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_SCALE);
-        poDS->SetMetadataItem("LINE_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_OFF);
-        poDS->SetMetadataItem("SAMP_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_SCALE);
-        poDS->SetMetadataItem("SAMP_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_OFF);
-        poDS->SetMetadataItem("LONG_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LONG_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("LONG_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LONG_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_OFF);
-        poDS->SetMetadataItem("LAT_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LAT_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("LAT_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LAT_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_OFF);
-        poDS->SetMetadataItem("HEIGHT_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("HEIGHT_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_SCALE);
-        poDS->SetMetadataItem("HEIGHT_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("HEIGHT_SCALE", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.LINE_NUM_COEFF[i]);
-        poDS->SetMetadataItem("LINE_NUM_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_NUM_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.LINE_DEN_COEFF[i]);
-        poDS->SetMetadataItem("LINE_DEN_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_DEN_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.SAMP_NUM_COEFF[i]);
-        poDS->SetMetadataItem("SAMP_NUM_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_NUM_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.SAMP_DEN_COEFF[i]);
-        poDS->SetMetadataItem("SAMP_DEN_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_DEN_COEFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LONG_OFF - sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("MIN_LONG", szValue, "RPC");
+        poDS->SetMetadataItem("MIN_LONG", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LONG_OFF + sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("MAX_LONG", szValue, "RPC");
+        poDS->SetMetadataItem("MAX_LONG", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LAT_OFF - sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("MIN_LAT", szValue, "RPC");
+        poDS->SetMetadataItem("MIN_LAT", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LAT_OFF + sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("MAX_LAT", szValue, "RPC");
+        poDS->SetMetadataItem("MAX_LAT", szValue, GDAL_MDD_RPC);
     }
 
     /* -------------------------------------------------------------------- */
@@ -5254,7 +5254,7 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (!bUseSrcNITFMetadata)
         nGCIFFlags &= ~GCIF_METADATA;
 
-    CSLConstList papszRPC = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPC = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     if (papszRPC != nullptr && bUseSrcNITFMetadata &&
         CPLFetchBool(aosOptions.List(), "RPC00B", true))
     {

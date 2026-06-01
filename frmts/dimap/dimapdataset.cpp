@@ -1577,7 +1577,7 @@ int DIMAPDataset::ReadImageInformation2()
         char **papszRPC = poReader->LoadRPCXmlFile(psDoc);
         delete poReader;
         if (papszRPC)
-            SetMetadata(papszRPC, "RPC");
+            SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 

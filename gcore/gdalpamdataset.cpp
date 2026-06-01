@@ -1204,7 +1204,8 @@ CPLErr GDALPamDataset::CloneInfo(GDALDataset *poSrcDS, int nCloneFlags)
     /* -------------------------------------------------------------------- */
     if (nCloneFlags & GCIF_METADATA)
     {
-        for (const char *pszMDD : {"", "RPC", "json:ISIS3", "json:VICAR"})
+        for (const char *pszMDD :
+             {"", GDAL_MDD_RPC, "json:ISIS3", "json:VICAR"})
         {
             auto papszSrcMD = poSrcDS->GetMetadata(pszMDD);
             if (papszSrcMD != nullptr)

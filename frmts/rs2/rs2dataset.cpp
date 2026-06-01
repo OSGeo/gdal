@@ -1487,7 +1487,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
                 papszRPC = CSLSetNameValue(
                     papszRPC, apszXMLToGDALMapping[i + 1], pszValue);
         }
-        poDS->GDALDataset::SetMetadata(papszRPC, "RPC");
+        poDS->GDALDataset::SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 

@@ -2473,7 +2473,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                     !EQUAL(pszDomain, "TILING_SCHEME") &&
                     !EQUAL(pszDomain, "SUBDATASETS") &&
                     !EQUAL(pszDomain, "GEOLOCATION") &&
-                    !EQUAL(pszDomain, "RPC"))
+                    !EQUAL(pszDomain, GDAL_MDD_RPC))
                 {
                     aosExtraMDDomainsExpanded.AddString(pszDomain);
                 }
@@ -2519,7 +2519,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                               pszIndent, bJson, poMetadata, osStr);
         GDALInfoPrintMetadata(psOptions, hObject, "GEOLOCATION", "Geolocation",
                               pszIndent, bJson, poMetadata, osStr);
-        GDALInfoPrintMetadata(psOptions, hObject, "RPC", "RPC Metadata",
+        GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_RPC, "RPC Metadata",
                               pszIndent, bJson, poMetadata, osStr);
     }
 

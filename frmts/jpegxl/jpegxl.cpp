@@ -1782,7 +1782,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
     const int nGCPCount = poSrcDS->GetGCPCount();
-    CSLConstList papszRPCMD = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     std::unique_ptr<GDALJP2Box> poJUMBFBox;
     if (bWriteGeoJP2 &&
         (poSRS != nullptr || bHasGeoTransform || nGCPCount || papszRPCMD))

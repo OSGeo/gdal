@@ -2554,7 +2554,7 @@ CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     MRFDataset *nonConstThis = const_cast<MRFDataset *>(this);
-    if (nonConstThis->GetMetadata("RPC") || nonConstThis->GetGCPCount())
+    if (nonConstThis->GetMetadata(GDAL_MDD_RPC) || nonConstThis->GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid)
         return CE_Failure;

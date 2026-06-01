@@ -672,8 +672,9 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
 
     if (!m_skipRPC)
     {
-        MetadataComparison(aosReport, "RPC", poRefDS->GetMetadata("RPC"),
-                           poInputDS->GetMetadata("RPC"));
+        MetadataComparison(aosReport, GDAL_MDD_RPC,
+                           poRefDS->GetMetadata(GDAL_MDD_RPC),
+                           poInputDS->GetMetadata(GDAL_MDD_RPC));
     }
 
     if (!m_skipGeolocation)
@@ -1248,7 +1249,7 @@ void GDALRasterCompareAlgorithm::MetadataComparison(
 
             std::string ref = oIter->second;
             std::string input = sKeyValuePair.second;
-            if (metadataDomain == "RPC")
+            if (metadataDomain == GDAL_MDD_RPC)
             {
                 // _RPC.TXT files and in-file have a difference
                 // in white space that is not otherwise meaningful.

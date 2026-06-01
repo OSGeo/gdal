@@ -2690,7 +2690,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         ((poSrcDS->GetGeoTransform(gt) == CE_None &&
           (gt.xorig != 0.0 || gt.xscale != 1.0 || gt.xrot != 0.0 ||
            gt.yorig != 0.0 || gt.yrot != 0.0 || std::abs(gt.yscale) != 1.0)) ||
-         poSrcDS->GetGCPCount() > 0 || poSrcDS->GetMetadata("RPC") != nullptr))
+         poSrcDS->GetGCPCount() > 0 ||
+         poSrcDS->GetMetadata(GDAL_MDD_RPC) != nullptr))
     {
         GDALJP2Metadata oJP2MD;
 
@@ -2705,7 +2706,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
             oJP2MD.SetGeoTransform(gt);
         }
 
-        oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));
+        oJP2MD.SetRPCMD(poSrcDS->GetMetadata(GDAL_MDD_RPC));
 
         const char *const pszAreaOrPoint =
             poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);

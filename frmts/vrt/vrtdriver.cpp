@@ -316,7 +316,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* -------------------------------------------------------------------- */
         /*      Copy any special domains that should be transportable.          */
         /* -------------------------------------------------------------------- */
-        constexpr const char *apszDefaultDomains[] = {"RPC", "IMD",
+        constexpr const char *apszDefaultDomains[] = {GDAL_MDD_RPC, "IMD",
                                                       "GEOLOCATION"};
         for (const char *pszDomain : apszDefaultDomains)
         {

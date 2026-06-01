@@ -1448,7 +1448,8 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             oHeader.global_taglist().set("DESCRIPTION", pszDescription);
         }
-        const char *papszMetadataDomains[] = {nullptr /* default */, "RPC"};
+        const char *papszMetadataDomains[] = {nullptr /* default */,
+                                              GDAL_MDD_RPC};
         size_t nMetadataDomains =
             sizeof(papszMetadataDomains) / sizeof(papszMetadataDomains[0]);
         for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)

@@ -538,7 +538,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 
         if (hDstSRS)
             hDstSRS = OSRClone(hDstSRS);
-        else if (GDALGetMetadata(hDstDS, "RPC") != nullptr)
+        else if (GDALGetMetadata(hDstDS, GDAL_MDD_RPC) != nullptr)
         {
             hDstSRS = OSRNewSpatialReference(nullptr);
             CPL_IGNORE_RET_VAL(
@@ -774,7 +774,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
         CPLStringList aosTransformerOptions(CSLDuplicate(papszTO));
         GDALGeoTransform gt;
         if (poDS->GetGeoTransform(gt) != CE_None && poDS->GetGCPCount() == 0 &&
-            poDS->GetMetadata("RPC") == nullptr)
+            poDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
             aosTransformerOptions.SetNameValue("DST_METHOD", "NO_GEOTRANSFORM");
         }

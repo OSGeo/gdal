@@ -2507,8 +2507,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALTPSTransform;
         }
 
-        else if ((pszMethod == nullptr || EQUAL(pszMethod, "RPC")) &&
-                 (papszMD = GDALGetMetadata(hDS, "RPC")) != nullptr &&
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, GDAL_MDD_RPC)) &&
+                 (papszMD = GDALGetMetadata(hDS, GDAL_MDD_RPC)) != nullptr &&
                  GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
         {
             CPLStringList aosOptions(papszOptions);

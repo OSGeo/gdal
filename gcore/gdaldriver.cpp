@@ -935,7 +935,7 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
         /*      It would be nice to copy geolocation, but it is pretty fragile. */
         /* -------------------------------------------------------------------- */
         constexpr const char *apszDefaultDomains[] = {
-            "RPC", "xml:XMP", "json:ISIS3", "json:VICAR"};
+            GDAL_MDD_RPC, "xml:XMP", "json:ISIS3", "json:VICAR"};
         for (const char *pszDomain : apszDefaultDomains)
         {
             if ((!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0) &&

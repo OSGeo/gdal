@@ -243,7 +243,7 @@ GDALDAASDataset::GDALDAASDataset(GDALDAASDataset *poParentDS, int iOvrLevel)
     InstantiateBands();
 
     SetMetadata(m_poParentDS->GetMetadata());
-    SetMetadata(m_poParentDS->GetMetadata("RPC"), "RPC");
+    SetMetadata(m_poParentDS->GetMetadata(GDAL_MDD_RPC), GDAL_MDD_RPC);
 }
 
 /************************************************************************/
@@ -1112,7 +1112,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
         }
         if (!bRPCError)
         {
-            SetMetadata(aoRPC.List(), "RPC");
+            SetMetadata(aoRPC.List(), GDAL_MDD_RPC);
         }
     }
 }

@@ -533,7 +533,7 @@ const char *GDALOverviewDataset::GetMetadataItem(const char *pszName,
     }
 
     if (pszDomain != nullptr &&
-        (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "GEOLOCATION")))
+        (EQUAL(pszDomain, GDAL_MDD_RPC) || EQUAL(pszDomain, "GEOLOCATION")))
     {
         CSLConstList papszMD = GetMetadata(pszDomain);
         return CSLFetchNameValue(papszMD, pszName);

@@ -203,7 +203,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "-rpc"))
         {
-            aosTO.SetNameValue("METHOD", "RPC");
+            aosTO.SetNameValue("METHOD", GDAL_MDD_RPC);
         }
         else if (EQUAL(argv[i], "-geoloc"))
         {

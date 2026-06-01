@@ -93,7 +93,8 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     }
     else
     {
-        osRPCFileName = CPLFormFilenameSafe(osDirName, szMetadataName, "RPC");
+        osRPCFileName =
+            CPLFormFilenameSafe(osDirName, szMetadataName, GDAL_MDD_RPC);
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = std::move(osRPCFileName);

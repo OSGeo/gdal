@@ -4567,7 +4567,7 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         if (!bHasSrcGT && m_poSrcDS->GetGCPCount() == 0 &&
             m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
-            m_poSrcDS->GetMetadata("RPC") == nullptr)
+            m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Ungeoreferenced datasets are not supported, unless "
@@ -4576,7 +4576,7 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
 
         if (m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
-            m_poSrcDS->GetMetadata("RPC") == nullptr &&
+            m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr &&
             m_poSrcDS->GetSpatialRef() == nullptr &&
             m_poSrcDS->GetGCPSpatialRef() == nullptr)
         {

@@ -396,8 +396,8 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
     {
         pszProjection = GDALGetGCPProjection(hDS);
     }
-    else if (GDALGetMetadata(hDS, "RPC") != nullptr &&
-             (pszMethod == nullptr || EQUAL(pszMethod, "RPC")))
+    else if (GDALGetMetadata(hDS, GDAL_MDD_RPC) != nullptr &&
+             (pszMethod == nullptr || EQUAL(pszMethod, GDAL_MDD_RPC)))
     {
         pszProjection = SRS_WKT_WGS84_LAT_LONG;
     }
@@ -2234,8 +2234,9 @@ static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 {
     if (CPLTestBool(CSLFetchNameValueDef(psWO->papszWarpOptions,
                                          "SKIP_NOSOURCE", "NO")) &&
-        GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
-        EQUAL(FetchSrcMethod(psOptions->aosTransformerOptions, "RPC"), "RPC") &&
+        GDALGetMetadata(hSrcDS, GDAL_MDD_RPC) != nullptr &&
+        EQUAL(FetchSrcMethod(psOptions->aosTransformerOptions, GDAL_MDD_RPC),
+              GDAL_MDD_RPC) &&
         CPLTestBool(
             CPLGetConfigOption("RESTRICT_OUTPUT_DATASET_UPDATE", "YES")))
     {
@@ -2547,8 +2548,9 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         // For RPC warping add a few extra source pixels by default
         // (probably mostly needed in the RPC DEM case)
-        if (iSrc == 0 && (GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
-                          (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))))
+        if (iSrc == 0 &&
+            (GDALGetMetadata(hSrcDS, GDAL_MDD_RPC) != nullptr &&
+             (pszMethod == nullptr || EQUAL(pszMethod, GDAL_MDD_RPC))))
         {
             if (!psOptions->aosWarpOptions.FetchNameValue("SOURCE_EXTRA"))
             {
@@ -3395,7 +3397,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             ((GetMaxLat() > MAX_LAT && GetMinLat() < MAX_LAT) ||
              (GetMaxLat() > -MAX_LAT && GetMinLat() < -MAX_LAT)) &&
             GDALGetMetadata(hSrcDS, "GEOLOC_ARRAY") == nullptr &&
-            GDALGetMetadata(hSrcDS, "RPC") == nullptr)
+            GDALGetMetadata(hSrcDS, GDAL_MDD_RPC) == nullptr)
         {
             auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                 OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS));
@@ -4096,7 +4098,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             adfThisGeoTransformTmp[2] == 0 && adfThisGeoTransformTmp[4] == 0 &&
             adfThisGeoTransformTmp[5] < 0 &&
             GDALGetMetadata(hSrcDS, "GEOLOC_ARRAY") == nullptr &&
-            GDALGetMetadata(hSrcDS, "RPC") == nullptr)
+            GDALGetMetadata(hSrcDS, GDAL_MDD_RPC) == nullptr)
         {
             bool bIsSameHorizontal = osThisSourceSRS == osThisTargetSRS;
             if (!bIsSameHorizontal)
@@ -5146,7 +5148,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     bool bMayNeedDensify = true;
     if (poRasterSRS && poCutlineSRS && poRasterSRS->IsSame(poCutlineSRS) &&
-        poSrcDS->GetGCPCount() == 0 && !poSrcDS->GetMetadata("RPC") &&
+        poSrcDS->GetGCPCount() == 0 && !poSrcDS->GetMetadata(GDAL_MDD_RPC) &&
         !poSrcDS->GetMetadata("GEOLOCATION") &&
         !CSLFetchNameValue(papszTO_In, "GEOLOC_ARRAY") &&
         !CSLFetchNameValue(papszTO_In, "SRC_GEOLOC_ARRAY"))
@@ -5708,7 +5710,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 {
                     CheckSingleMethod();
                     psOptions->aosTransformerOptions.SetNameValue("SRC_METHOD",
-                                                                  "RPC");
+                                                                  GDAL_MDD_RPC);
                 })
             .help(_("Force use of RPCs."));
 

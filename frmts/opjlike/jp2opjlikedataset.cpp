@@ -2637,9 +2637,9 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                 }
             }
         }
-        if (poSrcDS->GetMetadata("RPC") != nullptr)
+        if (poSrcDS->GetMetadata(GDAL_MDD_RPC) != nullptr)
         {
-            oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));
+            oJP2MD.SetRPCMD(poSrcDS->GetMetadata(GDAL_MDD_RPC));
             bGeoreferencingCompatOfGeoJP2 = TRUE;
         }
 

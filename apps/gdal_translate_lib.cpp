@@ -1819,9 +1819,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        CSLConstList papszMD = poSrcDS->GetMetadata("RPC");
+        CSLConstList papszMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
         if (papszMD != nullptr)
-            poVDS->SetMetadata(papszMD, "RPC");
+            poVDS->SetMetadata(papszMD, GDAL_MDD_RPC);
 
         papszMD = poSrcDS->GetMetadata("GEOLOCATION");
         if (papszMD != nullptr)
@@ -1829,7 +1829,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     }
     else
     {
-        CPLStringList aosMD(poSrcDSOri->GetMetadata("RPC"));
+        CPLStringList aosMD(poSrcDSOri->GetMetadata(GDAL_MDD_RPC));
         if (!aosMD.empty())
         {
             double dfSAMP_OFF =
@@ -1878,7 +1878,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             osField.Printf("%.15g", dfSAMP_SCALE);
             aosMD.SetNameValue("SAMP_SCALE", osField);
 
-            poVDS->SetMetadata(aosMD.List(), "RPC");
+            poVDS->SetMetadata(aosMD.List(), GDAL_MDD_RPC);
         }
     }
 

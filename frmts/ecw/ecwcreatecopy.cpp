@@ -1208,7 +1208,8 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             pszFilename, papszOptions, nXSize, nYSize, nBands,
             aosBandDescriptions.List(), bRGBColorSpace, eType, poSRS, gt,
             poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), bIsJPEG2000,
-            bPixelIsPoint, poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
+            bPixelIsPoint, poSrcDS->GetMetadata(GDAL_MDD_RPC),
+            poSrcDS) != CE_None)
     {
         return nullptr;
     }

@@ -34,7 +34,7 @@ GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
       m_osIMDSourceFilename(
           GDALFindAssociatedFile(pszPath, "TXT", papszSiblingFiles, 0)),
       m_osRPBSourceFilename(
-          GDALFindAssociatedFile(pszPath, "RPC", papszSiblingFiles, 0))
+          GDALFindAssociatedFile(pszPath, GDAL_MDD_RPC, papszSiblingFiles, 0))
 {
     if (!m_osIMDSourceFilename.empty())
         CPLDebug("MDReaderDigitalGlobe", "IMD Filename: %s",

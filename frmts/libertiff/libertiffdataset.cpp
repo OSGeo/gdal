@@ -3363,7 +3363,7 @@ void LIBERTIFFDataset::ReadRPCTag()
             GDALDataset::SetMetadata(
                 gdal::tiff_common::TIFFRPCTagToRPCMetadata(adfRPC.data())
                     .List(),
-                "RPC");
+                GDAL_MDD_RPC);
         }
     }
 }

@@ -98,7 +98,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     if (osBaseName.size() >= 6)
     {
         CPLString osRPCFileName = CPLFormFilenameSafe(
-            osDirName, (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(),
+            osDirName,
+            (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 6)).c_str(),
             "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
@@ -108,7 +109,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         {
             osRPCFileName = CPLFormFilenameSafe(
                 osDirName,
-                (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(), "TXT");
+                (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 6)).c_str(),
+                "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);
@@ -120,7 +122,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     if (osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
     {
         CPLString osRPCFileName = CPLFormFilenameSafe(
-            osDirName, (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(),
+            osDirName,
+            (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 3)).c_str(),
             "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
@@ -130,7 +133,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         {
             osRPCFileName = CPLFormFilenameSafe(
                 osDirName,
-                (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(), "TXT");
+                (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 3)).c_str(),
+                "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);

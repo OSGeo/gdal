@@ -253,7 +253,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
             papszSanitazed = CSLAddString(papszSanitazed, papszRPC_MD[i]);
         }
 
-        poGRD->SetMetadata(papszSanitazed, "RPC");
+        poGRD->SetMetadata(papszSanitazed, GDAL_MDD_RPC);
 
         CSLDestroy(papszRPC_MD);
         CSLDestroy(papszSanitazed);
@@ -1550,7 +1550,7 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //      Copy RPC
     // --------------------------------------------------------------------
 
-    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
+    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, GDAL_MDD_RPC);
 
     if (papszRPCMetadata != nullptr)
     {
