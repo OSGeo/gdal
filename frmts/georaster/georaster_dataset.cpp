@@ -340,7 +340,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
         }
     }
 
-    poGRD->SetMetadataItem("COMPRESSION",
+    poGRD->SetMetadataItem(GDALMD_COMPRESSION,
                            CPLGetXMLValue(poGRW->phMetadata,
                                           "rasterInfo.compression.type",
                                           "NONE"),
@@ -393,7 +393,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     poGRD->SetMetadataItem("WKT", poGRW->sWKText.c_str(), "ORACLE");
 
-    poGRD->SetMetadataItem("COMPRESSION", poGRW->sCompressionType.c_str(),
+    poGRD->SetMetadataItem(GDALMD_COMPRESSION, poGRW->sCompressionType.c_str(),
                            "ORACLE");
 
     poGRD->SetMetadataItem("METADATA", pszDoc, "ORACLE");

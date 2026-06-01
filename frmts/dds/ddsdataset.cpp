@@ -334,8 +334,9 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->pUncompressedBuffer = pUncompressedBuffer;
     poDS->nRasterXSize = static_cast<int>(ddsDesc.dwWidth);
     poDS->nRasterYSize = static_cast<int>(ddsDesc.dwHeight);
-    poDS->GDALDataset::SetMetadataItem(
-        "COMPRESSION", crn_get_format_string(fmt), GDAL_MDD_IMAGE_STRUCTURE);
+    poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION,
+                                       crn_get_format_string(fmt),
+                                       GDAL_MDD_IMAGE_STRUCTURE);
     poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                        GDAL_MDD_IMAGE_STRUCTURE);
     for (int i = 0; i < l_nBands; i++)

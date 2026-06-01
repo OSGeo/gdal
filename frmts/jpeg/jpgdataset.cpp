@@ -1750,7 +1750,7 @@ JPGRasterBand::JPGRasterBand(JPGDatasetCommon *poDSIn, int nBandIn)
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    GDALMajorObject::SetMetadataItem("COMPRESSION", "JPEG",
+    GDALMajorObject::SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     if (eDataType == GDT_UInt16)
         GDALMajorObject::SetMetadataItem("NBITS", "12",
@@ -3631,7 +3631,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     {
         poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                               GDAL_MDD_IMAGE_STRUCTURE);
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (psArgs->bIsLossless)

@@ -339,15 +339,17 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             break;
         case 4:
             m_eRasterCompression = Compression::LZ77;
-            SetMetadataItem("COMPRESSION", "DEFLATE", GDAL_MDD_IMAGE_STRUCTURE);
+            SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
+                            GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case 8:
             m_eRasterCompression = Compression::JPEG;
-            SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
+            SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                            GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case 12:
             m_eRasterCompression = Compression::JPEG2000;
-            SetMetadataItem("COMPRESSION", "JPEG2000",
+            SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
                             GDAL_MDD_IMAGE_STRUCTURE);
             break;
         default:

@@ -2274,8 +2274,9 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                     poTIF_DS->GetRasterCount() != nBands ||
                     poTIF_DS->GetRasterBand(1)->GetRasterDataType() !=
                         eDataType ||
-                    poTIF_DS->GetMetadataItem(
-                        "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
+                    poTIF_DS->GetMetadataItem(GDALMD_COMPRESSION,
+                                              GDAL_MDD_IMAGE_STRUCTURE) !=
+                        nullptr)
                 {
                     bWarned = true;
                     CPLError(

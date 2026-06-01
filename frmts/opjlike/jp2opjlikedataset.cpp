@@ -50,7 +50,7 @@ JP2OPJLikeRasterBand<CODEC, BASE>::JP2OPJLikeRasterBand(
     if ((nBits % 8) != 0)
         GDALRasterBand::SetMetadataItem(
             "NBITS", CPLString().Printf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
-    GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
+    GDALRasterBand::SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
                                     GDAL_MDD_IMAGE_STRUCTURE);
     this->poDS = poDSIn;
     this->nBand = nBandIn;
@@ -2695,8 +2695,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
     if (EQUAL(poSrcDS->GetDriverName(), "GEORASTER"))
     {
-        const char *pszGEOR_compress =
-            poSrcDS->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszGEOR_compress = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
 
         if (pszGEOR_compress == nullptr)
         {

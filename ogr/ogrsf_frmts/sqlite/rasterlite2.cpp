@@ -474,7 +474,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
 
     if (pszCompression != nullptr)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", pszCompression,
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 

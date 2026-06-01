@@ -1756,11 +1756,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                                GDAL_MDD_IMAGE_STRUCTURE);
 
     {
-        const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszCompression = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVDS->SetMetadataItem("COMPRESSION", pszCompression,
+            poVDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
@@ -2185,11 +2185,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
         }
 
-        const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszCompression = poSrcBand->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
+            poVRTBand->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
                                        GDAL_MDD_IMAGE_STRUCTURE);
         }
 

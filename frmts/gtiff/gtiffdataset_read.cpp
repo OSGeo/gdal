@@ -5368,7 +5368,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             GTIFFGetCompressionMethodName(m_nCompression);
         if (pszCompressionMethodName)
         {
-            m_oGTiffMDMD.SetMetadataItem("COMPRESSION",
+            m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION,
                                          pszCompressionMethodName,
                                          GDAL_MDD_IMAGE_STRUCTURE);
         }
@@ -5376,14 +5376,14 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         {
             CPLString oComp;
             oComp.Printf("%d", m_nCompression);
-            m_oGTiffMDMD.SetMetadataItem("COMPRESSION", oComp.c_str());
+            m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, oComp.c_str());
         }
     }
 
     if (m_nCompression == COMPRESSION_JPEG &&
         m_nPhotometric == PHOTOMETRIC_YCBCR)
     {
-        m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "YCbCr JPEG",
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "YCbCr JPEG",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_nCompression == COMPRESSION_LERC)
@@ -5404,12 +5404,12 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         {
             if (nAddVersion == LERC_ADD_COMPRESSION_DEFLATE)
             {
-                m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "LERC_DEFLATE",
+                m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "LERC_DEFLATE",
                                              GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (nAddVersion == LERC_ADD_COMPRESSION_ZSTD)
             {
-                m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "LERC_ZSTD",
+                m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "LERC_ZSTD",
                                              GDAL_MDD_IMAGE_STRUCTURE);
             }
         }

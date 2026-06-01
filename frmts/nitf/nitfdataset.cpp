@@ -1401,21 +1401,22 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     if (psImage == nullptr)
         /* do nothing */;
     else if (psImage->szIC[1] == '1')
-        poDS->SetMetadataItem("COMPRESSION", "BILEVEL",
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "BILEVEL",
                               GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '2')
-        poDS->SetMetadataItem("COMPRESSION", "ARIDPCM",
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ARIDPCM",
                               GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '3')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '4')
-        poDS->SetMetadataItem("COMPRESSION", "VECTOR QUANTIZATION",
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "VECTOR QUANTIZATION",
                               GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '5')
-        poDS->SetMetadataItem("COMPRESSION", "LOSSLESS JPEG",
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "LOSSLESS JPEG",
                               GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '8')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG2000",
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
                               GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */

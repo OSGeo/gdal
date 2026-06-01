@@ -2022,14 +2022,14 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
 {
     if (m_image->compression() == LIBERTIFF_NS::Compression::PackBits)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", "PACKBITS",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "PACKBITS",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::Deflate ||
              m_image->compression() == LIBERTIFF_NS::Compression::LegacyDeflate)
     {
         m_decompressor = CPLGetDecompressor("zlib");
-        GDALDataset::SetMetadataItem("COMPRESSION", "DEFLATE",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::ZSTD)
@@ -2042,7 +2042,7 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                         "has not been built against libzstd");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "ZSTD",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "ZSTD",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LZMA)
@@ -2055,12 +2055,12 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                         "has not been built against liblzma");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "LZMA",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "LZMA",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LZW)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", "LZW",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "LZW",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::JPEG)
@@ -2078,12 +2078,12 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
         {
             GDALDataset::SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
                                          GDAL_MDD_IMAGE_STRUCTURE);
-            GDALDataset::SetMetadataItem("COMPRESSION", "YCbCr JPEG",
+            GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "YCbCr JPEG",
                                          GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
-            GDALDataset::SetMetadataItem("COMPRESSION", "JPEG",
+            GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
                                          GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (m_image->samplesPerPixel() != 1 &&
@@ -2140,7 +2140,7 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                 "Compression = WEBP not supported because WEBP driver missing");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "WEBP",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "WEBP",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::JXL ||
@@ -2153,7 +2153,7 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                 "Compression = JXL not supported because JXL driver missing");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "JXL",
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "JXL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LERC)
@@ -2194,7 +2194,7 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
         }
 
         GDALDataset::SetMetadataItem(
-            "COMPRESSION",
+            GDALMD_COMPRESSION,
             m_lercAdditionalCompression == LERC_ADD_COMPRESSION_DEFLATE
                 ? "LERC_DEFLATE"
             : m_lercAdditionalCompression == LERC_ADD_COMPRESSION_ZSTD

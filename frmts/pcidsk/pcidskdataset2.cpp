@@ -2035,7 +2035,7 @@ GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
         if (pszValue != nullptr)
             osOptions += pszValue;
 
-        pszValue = CSLFetchNameValue(papszParamList, "COMPRESSION");
+        pszValue = CSLFetchNameValue(papszParamList, GDALMD_COMPRESSION);
         if (pszValue != nullptr)
         {
             osOptions += " ";

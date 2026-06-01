@@ -536,16 +536,17 @@ bool BAGRasterBand::Initialize(hid_t hDatasetIDIn, const char *pszName)
             const H5Z_filter_t filter = H5Pget_filter(
                 listid, i, &flags, &cd_nelmts, cd_values, sizeof(name), name);
             if (filter == H5Z_FILTER_DEFLATE)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "DEFLATE",
-                                                   GDAL_MDD_IMAGE_STRUCTURE);
+                poDS->GDALDataset::SetMetadataItem(
+                    GDALMD_COMPRESSION, "DEFLATE", GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_NBIT)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "NBIT",
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "NBIT",
                                                    GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SCALEOFFSET)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SCALEOFFSET",
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION,
+                                                   "SCALEOFFSET",
                                                    GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SZIP)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SZIP",
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "SZIP",
                                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
 

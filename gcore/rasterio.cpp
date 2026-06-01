@@ -5348,13 +5348,13 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nSwathLines = nMaxBlockYSize;
 
     const char *pszSrcCompression = poSrcPrototypeBand->GetMetadataItem(
-        "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+        GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcCompression == nullptr)
     {
         auto poSrcDS = poSrcPrototypeBand->GetDataset();
         if (poSrcDS)
             pszSrcCompression = poSrcDS->GetMetadataItem(
-                "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+                GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

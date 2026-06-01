@@ -1122,7 +1122,8 @@ int DIMAPDataset::ReadImageInformation2()
         CPLGetXMLValue(psDoc, "Raster_Data.Data_Access.DATA_FILE_FORMAT", "");
     if (osDataFormat == "image/jp2")
     {
-        SetMetadataItem("COMPRESSION", "JPEG2000", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // For VHR2020: SPECTRAL_PROCESSING = PAN, MS, MS-FS, PMS, PMS-N, PMS-X,

@@ -82,9 +82,10 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset *poParentDSIn,
 
     SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     if (m_poParentDS->m_nPhotometric == PHOTOMETRIC_YCBCR)
-        SetMetadataItem("COMPRESSION", "YCbCr JPEG", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_COMPRESSION, "YCbCr JPEG",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     else
-        SetMetadataItem("COMPRESSION", "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
 }
 
 /************************************************************************/

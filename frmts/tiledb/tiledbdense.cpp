@@ -2153,7 +2153,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         }
 
         const char *pszCompression =
-            CSLFetchNameValue(papszOptions, "COMPRESSION");
+            CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
         const char *pszCompressionLevel =
             CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
 
@@ -2186,7 +2186,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
                                          *(poDS->m_filterList.get()),
                                          pszCompression, nLevel) == CE_None)
             {
-                poDS->SetMetadataItem("COMPRESSION", pszCompression,
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
                                       GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->m_schema->set_coords_filter_list(*poDS->m_filterList);
             }

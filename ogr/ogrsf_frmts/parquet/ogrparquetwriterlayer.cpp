@@ -439,7 +439,8 @@ bool OGRParquetWriterLayer::SetOptions(
 
     m_osFIDColumn = CSLFetchNameValueDef(papszOptions, "FID", "");
 
-    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszCompression =
+        CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszCompression == nullptr)
     {
         auto oResult = arrow::util::Codec::GetCompressionType("snappy");

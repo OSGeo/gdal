@@ -768,7 +768,7 @@ CPLErr MRFDataset::LevelInit(const int l)
 
     SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
                     GDAL_MDD_IMAGE_STRUCTURE);
-    SetMetadataItem("COMPRESSION", CompName(current.comp),
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
                     GDAL_MDD_IMAGE_STRUCTURE);
 
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
@@ -1496,7 +1496,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     // Dataset metadata setup
     SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
                     GDAL_MDD_IMAGE_STRUCTURE);
-    SetMetadataItem("COMPRESSION", CompName(current.comp),
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
                     GDAL_MDD_IMAGE_STRUCTURE);
 
     if (is_Endianness_Dependent(current.dt, current.comp))

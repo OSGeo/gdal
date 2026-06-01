@@ -4093,7 +4093,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
 
     poDS->SetGeoTransform(GDALGeoTransform(dfMinX, nSubDSPrecision, 0, dfMaxY,
                                            0, -nSubDSPrecision));
-    poDS->GDALDataset::SetMetadataItem("COMPRESSION", "JPEG2000",
+    poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
                                        GDAL_MDD_IMAGE_STRUCTURE);
     if (bIsPreview || bIsTCI)
         poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",

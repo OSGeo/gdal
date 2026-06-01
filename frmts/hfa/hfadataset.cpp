@@ -1912,7 +1912,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
 
     // Set some other information.
     if (nCompression != 0)
-        GDALMajorObject::SetMetadataItem("COMPRESSION", "RLE",
+        GDALMajorObject::SetMetadataItem(GDALMD_COMPRESSION, "RLE",
                                          GDAL_MDD_IMAGE_STRUCTURE);
 
     switch (eHFADataType)

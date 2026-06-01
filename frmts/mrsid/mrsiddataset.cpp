@@ -3267,7 +3267,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
 
             // check for compression option
             const char *pszValue =
-                CSLFetchNameValue(papszOptions, "COMPRESSION");
+                CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
             if (pszValue != nullptr)
                 poMG2ImageWriter->params().setCompressionRatio(
                     (float)CPLAtof(pszValue));
@@ -3512,7 +3512,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         oImageWriter.setWorldFileSupport(true);
 
     // check for compression option
-    const char *pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszValue = CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszValue != nullptr)
         oImageWriter.params().setCompressionRatio((float)CPLAtof(pszValue));
 

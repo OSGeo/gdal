@@ -1396,7 +1396,7 @@ GDALDatasetH GDALMDArrayAsClassicDatasetEx(GDALMDArrayH hArray, size_t iXDim,
  * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
  * value is "LITTLE" or "BIG".
  *
- * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * For HDF5 and netCDF 4, the potential keys are GDALMD_COMPRESSION (possible values
  * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
  * comma-separated)
  *
@@ -1449,7 +1449,7 @@ bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
  * For multi-byte data types, drivers should return a "ENDIANNESS" key whose
  * value is "LITTLE" or "BIG".
  *
- * For HDF5 and netCDF 4, the potential keys are "COMPRESSION" (possible values
+ * For HDF5 and netCDF 4, the potential keys are GDALMD_COMPRESSION (possible values
  * "DEFLATE" or "SZIP") and "FILTER" (if several filters, names are
  * comma-separated)
  *

@@ -1427,7 +1427,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
 
         tiledb::FilterList filterList(ctx);
         const char *pszCompression =
-            CSLFetchNameValue(papszOptions, "COMPRESSION");
+            CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
         const char *pszCompressionLevel =
             CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
 

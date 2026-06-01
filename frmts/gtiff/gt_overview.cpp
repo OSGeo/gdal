@@ -528,7 +528,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         }
 
         const char *pszSrcCompression = papoBandList[0]->GetMetadataItem(
-            "COMPRESSION", GDAL_MDD_IMAGE_STRUCTURE);
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszSrcCompression)
         {
             bSourceIsJPEG2000 = EQUAL(pszSrcCompression, "JPEG2000");

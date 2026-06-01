@@ -314,11 +314,11 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
     switch (file_info.m_tex_format)
     {
         case basist::basis_tex_format::cETC1S:
-            poDS->SetMetadataItem("COMPRESSION", "ETC1S",
+            poDS->SetMetadataItem(GDALMD_COMPRESSION, "ETC1S",
                                   GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case basist::basis_tex_format::cUASTC4x4:
-            poDS->SetMetadataItem("COMPRESSION", "UASTC",
+            poDS->SetMetadataItem(GDALMD_COMPRESSION, "UASTC",
                                   GDAL_MDD_IMAGE_STRUCTURE);
             break;
     }

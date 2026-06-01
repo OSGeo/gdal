@@ -100,7 +100,7 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
             CPLString().Printf("%d", oCodeStream.get_bit_depth(nBand - 1)),
             GDAL_MDD_IMAGE_STRUCTURE);
     }
-    SetMetadataItem("COMPRESSION", "JP2000", GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_COMPRESSION, "JP2000", GDAL_MDD_IMAGE_STRUCTURE);
 
     // Use tile dimension as block size, unless it is too big
     kdu_dims valid_tiles;

@@ -1303,12 +1303,12 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                                                nullptr, 64, szName);
             if (eFilter == H5Z_FILTER_DEFLATE)
             {
-                poDS->SetMetadataItem("COMPRESSION", "DEFLATE",
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
                                       GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (eFilter == H5Z_FILTER_SZIP)
             {
-                poDS->SetMetadataItem("COMPRESSION", "SZIP",
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, "SZIP",
                                       GDAL_MDD_IMAGE_STRUCTURE);
             }
         }

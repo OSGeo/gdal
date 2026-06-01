@@ -791,7 +791,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
             }
             else if (compression < CPL_ARRAYSIZE(apszCompressions))
             {
-                poDS->SetMetadataItem("COMPRESSION",
+                poDS->SetMetadataItem(GDALMD_COMPRESSION,
                                       apszCompressions[compression],
                                       GDAL_MDD_IMAGE_STRUCTURE);
             }

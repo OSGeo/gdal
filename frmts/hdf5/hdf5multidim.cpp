@@ -1916,7 +1916,7 @@ static CPLStringList GetFilterInfo(hid_t hArray, unsigned nFilterMask)
         }
         H5Pclose(nListId);
         if (pszCompression)
-            aosInfo.SetNameValue("COMPRESSION", pszCompression);
+            aosInfo.SetNameValue(GDALMD_COMPRESSION, pszCompression);
         if (!osFilters.empty())
             aosInfo.SetNameValue("FILTER", osFilters.c_str());
     }
