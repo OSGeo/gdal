@@ -99,7 +99,7 @@ fi
         -DGDAL_USE_EXPRTK:BOOL=ON \
 
     ninja
-    DESTDIR="/build" ninja install
+    DEB_PYTHON_INSTALL_LAYOUT=deb_system DESTDIR="/build" ninja install
 
     cd ..
 

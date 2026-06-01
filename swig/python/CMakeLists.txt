@@ -448,7 +448,6 @@ if __name__ == '__main__':
     OUTPUT_VARIABLE SITE_PACKAGE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  set(INSTALL_ARGS "--single-version-externally-managed --record=record.txt")
   set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL FALSE)
   set(IGNORE_CMAKE_INSTALL_PREFIX_CONFIGURE_TIME_DIFFERENT_FROM_RUNTIME FALSE)
   if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
@@ -473,8 +472,6 @@ if __name__ == '__main__':
         OUTPUT_STRIP_TRAILING_WHITESPACE)
       if ("${STD_UNIX_LAYOUT}" STREQUAL "TRUE")
         set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL TRUE)
-      elseif (DEFINED GDAL_PYTHON_INSTALL_LIB)
-        set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${GDAL_PYTHON_INSTALL_LIB}\"")
       endif ()
     else ()
       set(CAN_USE_CMAKE_INSTALL_PREFIX_FROM_CMAKE_INSTALL TRUE)
@@ -484,32 +481,8 @@ if __name__ == '__main__':
   # setuptools 60.0 defaults to SETUPTOOLS_USE_DISTUTILS=local, and thus Debian's specific --install-layout distutils
   # option cannot be used
   if (DEFINED GDAL_PYTHON_INSTALL_LAYOUT)
-    set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=${GDAL_PYTHON_INSTALL_LAYOUT}")
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
-
-    # We are running on Debian, but test if our setuptools version supports
-    # Debian --install-layout
-    # This might not be the case if using a regular (non-Debian patched) Python
-    # installation or setuptools (cf https://github.com/OSGeo/gdal/issues/11636)
-    execute_process(
-        COMMAND env GDAL_PYTHON_CHECK_SOURCE_FILES=no GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=yes ${Python_EXECUTABLE_CMAKE} setup.py install --help
-        OUTPUT_VARIABLE SETUP_INSTALL_HELP
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-    # If so, uses it.
-    if ("${SETUP_INSTALL_HELP}" MATCHES "install-layout")
-        set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
-    endif()
-
-    if (NOT DEFINED GDAL_PYTHON_INSTALL_LIB AND "${PREFIX_FOR_TRIMMEDSYSCONFIG}" STREQUAL "/usr/local")
-        # Scenario of https://github.com/OSGeo/gdal/issues/10242
-        # For some reason patched setuptools of Debian fails to install by default
-        # in /usr/local/lib/python{version}/dist-packages even when passing
-        # --prefix=/usr/local and --install-layout=deb
-        set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${SITE_PACKAGE_DIR}\"")
-    endif()
     if(Python_VERSION VERSION_LESS 3.12)
         # It no longer seems needed to mess with SETUPTOOLS_USE_DISTUTILS
         # with Debian Python 3.12 (or maybe its setuptools 68.1.2 version...),

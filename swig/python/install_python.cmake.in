@@ -23,10 +23,10 @@ else()
    set(PATH_SEP ":")
 endif()
 if(DEFINED INSTALL_PREFIX)
-   execute_process(COMMAND ${CMAKE_COMMAND} -E env "PATH=@PROJECT_BINARY_DIR@/apps${PATH_SEP}$ENV{PATH}" "@Python_EXECUTABLE_CMAKE@" "@SETUP_PY_FILENAME@" install ${ROOT_DIR_ARG} @INSTALL_ARGS@ "${INSTALL_PREFIX}"
+   execute_process(COMMAND ${CMAKE_COMMAND} -E env "PATH=@PROJECT_BINARY_DIR@/apps${PATH_SEP}$ENV{PATH}" "@Python_EXECUTABLE_CMAKE@" -m pip install --no-build-isolation --ignore-installed ${ROOT_DIR_ARG} @INSTALL_ARGS@ "${INSTALL_PREFIX}" .
                    WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@" RESULT_VARIABLE res)
 else()
-   execute_process(COMMAND ${CMAKE_COMMAND} -E env "PATH=@PROJECT_BINARY_DIR@/apps${PATH_SEP}$ENV{PATH}" "@Python_EXECUTABLE_CMAKE@" "@SETUP_PY_FILENAME@" install ${ROOT_DIR_ARG} @INSTALL_ARGS@
+   execute_process(COMMAND ${CMAKE_COMMAND} -E env "PATH=@PROJECT_BINARY_DIR@/apps${PATH_SEP}$ENV{PATH}" "@Python_EXECUTABLE_CMAKE@" -m pip install --no-build-isolation --ignore-installed ${ROOT_DIR_ARG} @INSTALL_ARGS@ .
                    WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@" RESULT_VARIABLE res)
 endif()
 if(NOT res EQUAL 0)

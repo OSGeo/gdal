@@ -64,6 +64,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} python3-setuptools${APT_ARCH_SUFFIX} \
+       python3-pip${APT_ARCH_SUFFIX} \
        libjpeg-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
@@ -198,7 +199,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DBUILD_TESTING=OFF \
     && ninja \
-    && DESTDIR="/build" ninja install \
+    && DEB_PYTHON_INSTALL_LAYOUT=deb_system DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Uploading cache..."; \
