@@ -29,7 +29,9 @@ def collect_config_options(filename):
             if pos >= 0:
                 pos_start = pos + len(func_name + "(")
                 option = None
-                if pos_start < len(l) and l[pos_start] == '"':
+                if l[pos_start:].startswith("GDALMD_INTERLEAVE,"):
+                    option = "INTERLEAVE"
+                elif pos_start < len(l) and l[pos_start] == '"':
                     pos_end = l.find('"', pos_start + 1)
                     if pos_end + 1 < len(l) and l[pos_end + 1] == ",":
                         option = l[pos_start + 1 : pos_end]
