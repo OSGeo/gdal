@@ -1871,9 +1871,9 @@ lbl_next_depth:
  *                         should be mapped as band metadata items in the
  *                         band IMAGERY domain.
  *                         The object currently accepts 2 members:
- *                         - GDALMD_CENTRAL_WAVELENGTH_UM: Central Wavelength in
+ *                         - "CENTRAL_WAVELENGTH_UM": Central Wavelength in
  *                           micrometers.
- *                         - GDALMD_FWHM_UM: Full-width half-maximum
+ *                         - "FWHM_UM": Full-width half-maximum
  *                           in micrometers.
  *                         The value of each member should be an object with the
  *                         following members:
@@ -1903,11 +1903,11 @@ lbl_next_depth:
  *
  *                         Example for EMIT datasets:
  *                         {
- *                            GDALMD_CENTRAL_WAVELENGTH_UM: {
+ *                            "CENTRAL_WAVELENGTH_UM": {
  *                                "array": "/sensor_band_parameters/wavelengths",
  *                                "unit": "${units}"
  *                            },
- *                            GDALMD_FWHM_UM: {
+ *                            "FWHM_UM": {
  *                                "array": "/sensor_band_parameters/fwhm",
  *                                "unit": "${units}"
  *                            }
@@ -1915,11 +1915,11 @@ lbl_next_depth:
  *
  *                         Example for Planet Labs Tanager radiance products:
  *                         {
- *                            GDALMD_CENTRAL_WAVELENGTH_UM: {
+ *                            "CENTRAL_WAVELENGTH_UM": {
  *                              "attribute": "center_wavelengths",
  *                              "unit": "${center_wavelengths_units}"
  *                            },
- *                            GDALMD_FWHM_UM: {
+ *                            "FWHM_UM": {
  *                              "attribute": "fwhm",
  *                              "unit": "${fwhm_units}"
  *                            }
