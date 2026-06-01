@@ -4125,7 +4125,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             continue;  // Ignored.
         if (EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
             continue;  // Handled elsewhere.
-        if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC))
+        if (EQUAL(papszDomainList[iDomain], GDAL_MDD_RPC))
             continue;  // Handled elsewhere.
         if (EQUAL(papszDomainList[iDomain], "xml:ESRI") &&
             CPLTestBool(CPLGetConfigOption("ESRI_XML_PAM", "NO")))
@@ -4293,7 +4293,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     /*      Handle RPC data written to TIFF RPCCoefficient tag, RPB file,   */
     /*      RPCTEXT file or PAM.                                            */
     /* -------------------------------------------------------------------- */
-    CSLConstList papszRPCMD = poSrcDS->GetMetadata(MD_DOMAIN_RPC);
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     if (papszRPCMD != nullptr)
     {
         bool bRPCSerializedOtherWay = false;
@@ -4330,7 +4330,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
         if (!bRPCSerializedOtherWay && bWriteOnlyInPAMIfNeeded && bSrcIsGeoTIFF)
             cpl::down_cast<GTiffDataset *>(poSrcDS)
-                ->GDALPamDataset::SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+                ->GDALPamDataset::SetMetadata(papszRPCMD, GDAL_MDD_RPC);
     }
 }
 
@@ -4813,7 +4813,7 @@ void GTiffDataset::PushMetadataToPam()
         {
             char **papszMD = poSrcMDMD->GetMetadata(papszDomainList[iDomain]);
 
-            if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) ||
+            if (EQUAL(papszDomainList[iDomain], GDAL_MDD_RPC) ||
                 EQUAL(papszDomainList[iDomain], GDAL_MDD_IMD) ||
                 EQUAL(papszDomainList[iDomain], "_temporary_") ||
                 EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
@@ -9228,7 +9228,7 @@ CPLErr GTiffDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
     CPLErr eErr = CE_None;
     if (eAccess == GA_Update)
     {
-        if (pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC))
+        if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_RPC))
         {
             // So that a subsequent GetMetadata() wouldn't override our new
             // values

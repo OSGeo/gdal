@@ -36,7 +36,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "fetchbufferdirectio.h"
-#include "gdal_mdreader.h"  // MD_DOMAIN_RPC
+#include "gdal_mdreader.h"  // GDAL_MDD_RPC
 #include "gdal_priv.h"
 #include "geovalues.h"        // RasterPixelIsPoint
 #include "gt_wkt_srs_priv.h"  // GDALGTIFKeyGetSHORT()
@@ -6307,7 +6307,7 @@ char **GTiffDataset::GetMetadataDomainList()
     CSLDestroy(papszBaseList);
 
     return BuildMetadataDomainList(papszDomainList, TRUE, "",
-                                   "ProxyOverviewRequest", MD_DOMAIN_RPC,
+                                   "ProxyOverviewRequest", GDAL_MDD_RPC,
                                    GDAL_MDD_IMD, "SUBDATASETS", "EXIF",
                                    "xml:XMP", "COLOR_PROFILE", nullptr);
 }
@@ -6337,7 +6337,7 @@ CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
         return GDALDataset::GetMetadata(pszDomain);
     }
 
-    else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
+    else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
                                       EQUAL(pszDomain, GDAL_MDD_IMD) ||
                                       EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
         LoadMetadata();
@@ -6431,7 +6431,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     {
         return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
     }
-    else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
+    else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
                                       EQUAL(pszDomain, GDAL_MDD_IMD) ||
                                       EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
     {
@@ -6711,12 +6711,12 @@ void GTiffDataset::LoadMetadata()
     {
         mdreader->FillMetadata(&m_oGTiffMDMD);
 
-        if (mdreader->GetMetadataDomain(MD_DOMAIN_RPC) == nullptr)
+        if (mdreader->GetMetadataDomain(GDAL_MDD_RPC) == nullptr)
         {
             char **papszRPCMD = GTiffDatasetReadRPCTag(m_hTIFF);
             if (papszRPCMD)
             {
-                m_oGTiffMDMD.SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+                m_oGTiffMDMD.SetMetadata(papszRPCMD, GDAL_MDD_RPC);
                 CSLDestroy(papszRPCMD);
             }
         }
@@ -6728,7 +6728,7 @@ void GTiffDataset::LoadMetadata()
         char **papszRPCMD = GTiffDatasetReadRPCTag(m_hTIFF);
         if (papszRPCMD)
         {
-            m_oGTiffMDMD.SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+            m_oGTiffMDMD.SetMetadata(papszRPCMD, GDAL_MDD_RPC);
             CSLDestroy(papszRPCMD);
         }
     }

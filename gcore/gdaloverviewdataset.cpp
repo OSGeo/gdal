@@ -465,7 +465,7 @@ CSLConstList GDALOverviewDataset::GetMetadata(const char *pszDomain)
     CSLConstList papszMD = poMainDS->GetMetadata(pszDomain);
 
     // We may need to rescale some values from the RPC metadata domain.
-    if (pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC) &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_RPC) &&
         papszMD != nullptr)
     {
         if (papszMD_RPC)
