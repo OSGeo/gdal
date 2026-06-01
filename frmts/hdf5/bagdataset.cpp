@@ -5008,7 +5008,7 @@ CSLConstList BAGDataset::GetMetadata(const char *pszDomain)
         return apszMDList;
     }
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_aosSubdatasets.List();
     }

@@ -293,7 +293,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         poDS->nRasterXSize = 0;
         poDS->nRasterYSize = 0;
-        poDS->SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
 
         poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 

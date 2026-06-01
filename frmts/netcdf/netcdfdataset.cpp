@@ -2964,8 +2964,9 @@ bool netCDFDataset::SetDefineMode(bool bNewDefineMode)
 
 char **netCDFDataset::GetMetadataDomainList()
 {
-    char **papszDomains = BuildMetadataDomainList(
-        GDALDataset::GetMetadataDomainList(), TRUE, "SUBDATASETS", nullptr);
+    char **papszDomains =
+        BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
+                                GDAL_MDD_SUBDATASETS, nullptr);
     for (const auto &kv : m_oMapDomainToJSon)
         papszDomains = CSLAddString(papszDomains, ("json:" + kv.first).c_str());
     return papszDomains;
@@ -2976,7 +2977,7 @@ char **netCDFDataset::GetMetadataDomainList()
 /************************************************************************/
 CSLConstList netCDFDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return aosSubDatasets.List();
 
     if (pszDomain != nullptr && STARTS_WITH(pszDomain, "json:"))

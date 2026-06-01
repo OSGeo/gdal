@@ -243,7 +243,7 @@ static int GetDatasetType(GDALDataset *poDS)
 
     if (poDS->GetLayerCount() == 0 &&
         (poDS->GetRasterCount() > 0 ||
-         poDS->GetMetadata("SUBDATASETS") != nullptr))
+         poDS->GetMetadata(GDAL_MDD_SUBDATASETS) != nullptr))
     {
         return GDAL_OF_RASTER;
     }

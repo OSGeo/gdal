@@ -197,7 +197,7 @@ GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo)
 char **GDALWMSMetaDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -207,7 +207,7 @@ char **GDALWMSMetaDataset::GetMetadataDomainList()
 CSLConstList GDALWMSMetaDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);

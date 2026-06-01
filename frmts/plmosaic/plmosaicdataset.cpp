@@ -647,7 +647,7 @@ GDALDataset *PLMosaicDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_DESC", nDatasetIdx),
                     CPLSPrintf("Mosaic %s", osName.c_str()));
             }
-            poDS->SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+            poDS->SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
         }
     }
 

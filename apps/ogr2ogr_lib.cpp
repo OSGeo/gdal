@@ -5124,7 +5124,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             for (const char *pszMD : aosDomains)
             {
                 if (!EQUAL(pszMD, GDAL_MDD_IMAGE_STRUCTURE) &&
-                    !EQUAL(pszMD, "SUBDATASETS"))
+                    !EQUAL(pszMD, GDAL_MDD_SUBDATASETS))
                 {
                     if (CSLConstList papszMD = poSrcLayer->GetMetadata(pszMD))
                     {

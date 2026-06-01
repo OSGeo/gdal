@@ -3567,7 +3567,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLSPrintf("L1B_SOLAR_ZENITH_ANGLES:\"%s\"", osFilename.c_str()));
         papszSubdatasets = CSLSetNameValue(
             papszSubdatasets, "SUBDATASET_1_DESC", "Solar zenith angles");
-        poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->SetMetadata(papszSubdatasets, GDAL_MDD_SUBDATASETS);
         CSLDestroy(papszSubdatasets);
     }
     else
@@ -3591,7 +3591,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
                                 "Clouds from AVHRR (CLAVR)");
         }
 
-        poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->SetMetadata(papszSubdatasets, GDAL_MDD_SUBDATASETS);
         CSLDestroy(papszSubdatasets);
     }
 

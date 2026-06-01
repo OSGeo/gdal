@@ -120,7 +120,7 @@ static bool ExploreGroup(const std::shared_ptr<GDALGroup> &poGroup,
 const char *ZarrDataset::GetMetadataItem(const char *pszName,
                                          const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.FetchNameValue(pszName);
     if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadataItem(pszName, pszDomain);
@@ -133,7 +133,7 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 
 CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.List();
     if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadata(pszDomain);
@@ -716,7 +716,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (!poDS->m_aosSubdatasets.empty())
         {
-            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
+            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(),
+                                 GDAL_MDD_SUBDATASETS);
         }
         return poNewDS.release();
     }

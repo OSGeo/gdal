@@ -3305,7 +3305,7 @@ GDALDataset *PostGISRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 char **PostGISRasterDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /*****************************************
@@ -3315,7 +3315,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  *****************************************/
 CSLConstList PostGISRasterDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);

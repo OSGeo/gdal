@@ -670,7 +670,7 @@ CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
             // ParseCoverageCapabilities
         }
     }
-    this->SetMetadata(metadata, "SUBDATASETS");
+    this->SetMetadata(metadata, GDAL_MDD_SUBDATASETS);
     CSLDestroy(metadata);
     return CE_None;
 }

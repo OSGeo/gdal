@@ -2654,7 +2654,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
             papoBands = nullptr;
             nRasterXSize = 0;
             nRasterYSize = 0;
-            GDALDataset::SetMetadata(aosList.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosList.List(), GDAL_MDD_SUBDATASETS);
             return true;
         }
         else if (!m_image)

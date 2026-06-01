@@ -2434,7 +2434,8 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
     if (nFAOIdxLookup < 0 && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     else if (poDS->nBands == 0 &&
              (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&

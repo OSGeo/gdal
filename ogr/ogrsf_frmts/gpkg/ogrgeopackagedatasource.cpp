@@ -3809,7 +3809,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
     if (!m_osRasterTable.empty())
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -4077,7 +4077,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
 
 {
     pszDomain = CheckMetadataDomain(pszDomain);
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubDatasets.List();
 
     if (m_bHasReadMetadataFromStorage)

@@ -974,7 +974,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (m_poVectorDS->GetLayerCount() == 0 &&
             (m_poVectorDS->GetRasterCount() != 0 ||
-             m_poVectorDS->GetMetadata("SUBDATASETS") != nullptr))
+             m_poVectorDS->GetMetadata(GDAL_MDD_SUBDATASETS) != nullptr))
         {
             return false;
         }

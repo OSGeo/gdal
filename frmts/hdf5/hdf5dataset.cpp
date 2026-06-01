@@ -556,7 +556,7 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetMetadata(poDS->m_aosMetadata.List());
 
     if (CSLCount(poDS->papszSubDatasets) / 2 >= 1)
-        poDS->SetMetadata(poDS->papszSubDatasets, "SUBDATASETS");
+        poDS->SetMetadata(poDS->papszSubDatasets, GDAL_MDD_SUBDATASETS);
 
     // Make sure we don't try to do any pam stuff with this dataset.
     poDS->nPamFlags |= GPF_NOSAVE;

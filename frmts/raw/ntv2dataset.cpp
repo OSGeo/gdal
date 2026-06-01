@@ -383,11 +383,11 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
             CPLString osValue;
             osKey.Printf("SUBDATASET_%d_NAME", iGrid);
             osValue.Printf("NTv2:%d:%s", iGrid, osFilename.c_str());
-            poDS->SetMetadataItem(osKey, osValue, "SUBDATASETS");
+            poDS->SetMetadataItem(osKey, osValue, GDAL_MDD_SUBDATASETS);
 
             osKey.Printf("SUBDATASET_%d_DESC", iGrid);
             osValue.Printf("%s", osSubName.c_str());
-            poDS->SetMetadataItem(osKey, osValue, "SUBDATASETS");
+            poDS->SetMetadataItem(osKey, osValue, GDAL_MDD_SUBDATASETS);
         }
 
         nGridOffset +=

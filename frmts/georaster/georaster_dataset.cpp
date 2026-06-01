@@ -2559,7 +2559,7 @@ CPLErr GeoRasterDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 char **GeoRasterDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 //  ---------------------------------------------------------------------------
@@ -2568,7 +2568,7 @@ char **GeoRasterDataset::GetMetadataDomainList()
 
 CSLConstList GeoRasterDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);

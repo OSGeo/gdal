@@ -902,12 +902,12 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount + 1),
                         CPLSPrintf("STACTA:\"%s\":%s:%s", osFilename.c_str(),
                                    pszAssetNameSubDS, pszTMSSubDS),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     GDALDataset::SetMetadataItem(
                         CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount + 1),
                         CPLSPrintf("Asset %s, tile matrix set %s",
                                    pszAssetNameSubDS, pszTMSSubDS),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     nSDSCount++;
                 }
             }
@@ -917,10 +917,11 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount + 1),
                     CPLSPrintf("STACTA:\"%s\":%s", osFilename.c_str(),
                                pszAssetNameSubDS),
-                    "SUBDATASETS");
+                    GDAL_MDD_SUBDATASETS);
                 GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount + 1),
-                    CPLSPrintf("Asset %s", pszAssetNameSubDS), "SUBDATASETS");
+                    CPLSPrintf("Asset %s", pszAssetNameSubDS),
+                    GDAL_MDD_SUBDATASETS);
                 nSDSCount++;
             }
         }

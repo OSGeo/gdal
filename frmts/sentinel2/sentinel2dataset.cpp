@@ -1519,7 +1519,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct(GDALOpenInfo *poOpenInfo)
                         CPLSPrintf("SENTINEL2_L1B_WITH_GEOLOC:\"%s\":%s",
                                    poOpenInfo->pszFilename,
                                    CPLGetBasenameSafe(osVRT.c_str()).c_str()),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     ++iSubDSNum;
                 }
             }
@@ -1566,7 +1566,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct(GDALOpenInfo *poOpenInfo)
                 CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
                 CPLSPrintf("SENTINEL2_L1B:%s:%dm", aosGranuleList[i].c_str(),
                            nResolution),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             CPLString osBandNames = SENTINEL2GetBandListForResolution(
                 oMapResolutionsToBands[nResolution]);
@@ -1577,7 +1577,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct(GDALOpenInfo *poOpenInfo)
                            CPLGetFilename(aosGranuleList[i]), nResolution));
             poDS->GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             iSubDSNum++;
         }
@@ -1980,7 +1980,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule(const char *pszFilename,
         poDS->GDALDataset::SetMetadataItem(
             CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
             CPLSPrintf("SENTINEL2_L1B:%s:%dm", pszFilename, nResolution),
-            "SUBDATASETS");
+            GDAL_MDD_SUBDATASETS);
 
         CPLString osBandNames = SENTINEL2GetBandListForResolution(
             oMapResolutionsToBands[nResolution]);
@@ -1989,7 +1989,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule(const char *pszFilename,
                                     osBandNames.c_str(), nResolution));
         poDS->GDALDataset::SetMetadataItem(
             CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-            "SUBDATASETS");
+            GDAL_MDD_SUBDATASETS);
 
         iSubDSNum++;
     }
@@ -3099,7 +3099,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
                 CPLSPrintf("%s:%s:%dm:EPSG_%d", pszPrefix, pszFilename,
                            nResolution, nEPSGCode),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             CPLString osBandNames = SENTINEL2GetBandListForResolution(
                 oMapResolutionsToBands[nResolution]);
@@ -3114,7 +3114,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 osDesc += CPLSPrintf(", EPSG:%d", nEPSGCode);
             poDS->GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             iSubDSNum++;
         }
@@ -3131,7 +3131,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
                 CPLSPrintf("%s:%s:TCI:EPSG_%d", pszPrefix, pszFilename,
                            nEPSGCode),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             CPLString osDesc("True color image");
             if (nEPSGCode >= 32601 && nEPSGCode <= 32660)
@@ -3142,7 +3142,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 osDesc += CPLSPrintf(", EPSG:%d", nEPSGCode);
             poDS->GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             iSubDSNum++;
         }
@@ -3157,7 +3157,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
                 CPLSPrintf("%s:%s:PREVIEW:EPSG_%d", pszPrefix, pszFilename,
                            nEPSGCode),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             CPLString osDesc("RGB preview");
             if (nEPSGCode >= 32601 && nEPSGCode <= 32660)
@@ -3168,7 +3168,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
                 osDesc += CPLSPrintf(", EPSG:%d", nEPSGCode);
             poDS->GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
 
             iSubDSNum++;
         }
@@ -3311,7 +3311,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTile(const char *pszFilename,
             CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
             CPLSPrintf("%s:%s:%dm", "SENTINEL2_L1C_TILE", pszFilename,
                        nResolution),
-            "SUBDATASETS");
+            GDAL_MDD_SUBDATASETS);
 
         CPLString osBandNames = SENTINEL2GetBandListForResolution(
             oMapResolutionsToBands[nResolution]);
@@ -3320,7 +3320,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTile(const char *pszFilename,
                                     osBandNames.c_str(), nResolution));
         poDS->GDALDataset::SetMetadataItem(
             CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-            "SUBDATASETS");
+            GDAL_MDD_SUBDATASETS);
 
         iSubDSNum++;
     }
@@ -3329,12 +3329,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTile(const char *pszFilename,
     poDS->GDALDataset::SetMetadataItem(
         CPLSPrintf("SUBDATASET_%d_NAME", iSubDSNum),
         CPLSPrintf("%s:%s:PREVIEW", "SENTINEL2_L1C_TILE", pszFilename),
-        "SUBDATASETS");
+        GDAL_MDD_SUBDATASETS);
 
     CPLString osDesc("RGB preview");
     poDS->GDALDataset::SetMetadataItem(
         CPLSPrintf("SUBDATASET_%d_DESC", iSubDSNum), osDesc.c_str(),
-        "SUBDATASETS");
+        GDAL_MDD_SUBDATASETS);
 
     return poDS;
 }

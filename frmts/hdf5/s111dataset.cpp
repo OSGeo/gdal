@@ -367,7 +367,8 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        poDS->GDALDataset::SetMetadata(aosSubDSList.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
+                                       GDAL_MDD_SUBDATASETS);
 
         // Setup/check for pam .aux.xml.
         poDS->SetDescription(osFilename.c_str());
@@ -501,7 +502,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
                     CPLSPrintf("S111:\"%s\":%s", osFilename.c_str(),
                                osSubGroup.c_str()),
-                    "SUBDATASETS");
+                    GDAL_MDD_SUBDATASETS);
                 std::string osSubDSDesc = "Values for group ";
                 osSubDSDesc += osSubGroup;
                 const auto poTimePoint = poSubGroup->GetAttribute("timePoint");
@@ -516,7 +517,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 poDS->GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
-                    osSubDSDesc.c_str(), "SUBDATASETS");
+                    osSubDSDesc.c_str(), GDAL_MDD_SUBDATASETS);
                 ++iSubDS;
             }
         }
@@ -792,7 +793,8 @@ bool S111Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
     if (m_poSrcDS->GetRasterCount() == 0 && aosDatasets.empty())
     {
         // Deal with S111 -> S111 translation;
-        CSLConstList papszSubdatasets = m_poSrcDS->GetMetadata("SUBDATASETS");
+        CSLConstList papszSubdatasets =
+            m_poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
         if (papszSubdatasets)
         {
             int iSubDS = 0;

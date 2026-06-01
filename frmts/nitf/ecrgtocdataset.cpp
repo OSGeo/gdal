@@ -203,7 +203,7 @@ void ECRGTOCDataset::AddSubDataset(const char *pszFilename,
 CSLConstList ECRGTOCDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);
@@ -931,7 +931,7 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
     if (nSubDatasets == 1)
     {
         const char *pszSubDatasetName = CSLFetchNameValue(
-            poDS->GetMetadata("SUBDATASETS"), "SUBDATASET_1_NAME");
+            poDS->GetMetadata(GDAL_MDD_SUBDATASETS), "SUBDATASET_1_NAME");
         GDALOpenInfo oOpenInfo(pszSubDatasetName, GA_ReadOnly);
         poDS.reset();
         GDALDataset *poRetDS = Open(&oOpenInfo);

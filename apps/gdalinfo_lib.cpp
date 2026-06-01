@@ -2471,7 +2471,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                 if (!EQUAL(pszDomain, "") &&
                     !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
                     !EQUAL(pszDomain, "TILING_SCHEME") &&
-                    !EQUAL(pszDomain, "SUBDATASETS") &&
+                    !EQUAL(pszDomain, GDAL_MDD_SUBDATASETS) &&
                     !EQUAL(pszDomain, GDAL_MDD_GEOLOCATION) &&
                     !EQUAL(pszDomain, GDAL_MDD_RPC))
                 {
@@ -2515,8 +2515,9 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
         GDALInfoPrintMetadata(psOptions, hObject, "TILING_SCHEME",
                               "Tiling Scheme", pszIndent, bJson, poMetadata,
                               osStr);
-        GDALInfoPrintMetadata(psOptions, hObject, "SUBDATASETS", "Subdatasets",
-                              pszIndent, bJson, poMetadata, osStr);
+        GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_SUBDATASETS,
+                              "Subdatasets", pszIndent, bJson, poMetadata,
+                              osStr);
         GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_GEOLOCATION,
                               "Geolocation", pszIndent, bJson, poMetadata,
                               osStr);

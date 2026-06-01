@@ -1313,10 +1313,11 @@ bool GDALRasterCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     CSLConstList papszSubDSRef =
-        m_skipSubdataset ? nullptr : poRefDS->GetMetadata("SUBDATASETS");
+        m_skipSubdataset ? nullptr : poRefDS->GetMetadata(GDAL_MDD_SUBDATASETS);
     const int nCountRef = CSLCount(papszSubDSRef) / 2;
     CSLConstList papszSubDSInput =
-        m_skipSubdataset ? nullptr : poInputDS->GetMetadata("SUBDATASETS");
+        m_skipSubdataset ? nullptr
+                         : poInputDS->GetMetadata(GDAL_MDD_SUBDATASETS);
     const int nCountInput = CSLCount(papszSubDSInput) / 2;
 
     if (!m_skipSubdataset)

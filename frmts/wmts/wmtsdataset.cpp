@@ -1572,7 +1572,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     WMTSDataset *poDS = new WMTSDataset();
 
     if (aosSubDatasets.size() > 2)
-        poDS->SetMetadata(aosSubDatasets.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubDatasets.List(), GDAL_MDD_SUBDATASETS);
 
     if (nLayerCount == 1)
     {

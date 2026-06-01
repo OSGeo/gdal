@@ -1602,7 +1602,7 @@ CPLErr RS2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 char **RS2Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -1612,7 +1612,8 @@ char **RS2Dataset::GetMetadataDomainList()
 CSLConstList RS2Dataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&
+    if (pszDomain != nullptr &&
+        STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS) &&
         papszSubDatasets != nullptr)
         return papszSubDatasets;
 

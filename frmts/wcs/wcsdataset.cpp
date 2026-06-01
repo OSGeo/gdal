@@ -1102,7 +1102,7 @@ static WCSDataset *CreateFromCache(const std::string &cache)
         metadata = CSLSetNameValue(metadata, name.c_str(), value.c_str());
         index += 1;
     }
-    ds->SetMetadata(metadata, "SUBDATASETS");
+    ds->SetMetadata(metadata, GDAL_MDD_SUBDATASETS);
     CSLDestroy(metadata);
     return ds;
 }
@@ -1285,7 +1285,7 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLXMLTreeCloser doc(CPLParseXMLFile(global_meta.c_str()));
             CPLXMLNode *metadata = doc.getDocumentElement();
             CPLXMLNode *domain =
-                SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+                SearchChildWithValue(metadata, "domain", GDAL_MDD_SUBDATASETS);
             if (domain != nullptr)
             {
                 CPLRemoveXMLChild(metadata, domain);
@@ -1586,7 +1586,8 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
                                                osValue.c_str());
         }
 
-        poDS->GDALMajorObject::SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->GDALMajorObject::SetMetadata(papszSubdatasets,
+                                           GDAL_MDD_SUBDATASETS);
 
         CSLDestroy(papszSubdatasets);
     }

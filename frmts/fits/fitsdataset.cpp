@@ -2265,7 +2265,7 @@ void FITSDataset::LoadMetadata(GDALMajorObject *poTarget)
 CSLConstList FITSDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_aosSubdatasets.List();
     }

@@ -1380,7 +1380,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                            oIter->second.size() > 1 ? "s" : "",
                            osSubDSSuffix.c_str(), m_osAsset.c_str()));
         }
-        SetMetadata(aoSubDSList.List(), "SUBDATASETS");
+        SetMetadata(aoSubDSList.List(), GDAL_MDD_SUBDATASETS);
     }
 
     // Attach metadata to dataset or bands

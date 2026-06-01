@@ -319,7 +319,7 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       CPLSPrintf("Subdataset %d", i + 1));
             }
-            GDALDataset::SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
     }
     else if (iPart > nSubdatasets)

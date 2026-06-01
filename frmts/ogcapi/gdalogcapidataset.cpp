@@ -1068,7 +1068,7 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
             CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
             CPLSPrintf("Collection %s", osTitle.c_str()));
     }
-    SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+    SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
 
     return true;
 }

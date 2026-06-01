@@ -774,7 +774,8 @@ static void GDALVectorInfoReportMetadata(CPLString &osRet, CPLJSONObject &oRoot,
             const CPLStringList aosMDDList(GDALGetMetadataDomainList(hObject));
             for (const char *pszDomain : aosMDDList)
             {
-                if (!EQUAL(pszDomain, "") && !EQUAL(pszDomain, "SUBDATASETS"))
+                if (!EQUAL(pszDomain, "") &&
+                    !EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
                 {
                     aosExtraMDDomainsExpanded.AddString(pszDomain);
                 }
@@ -795,7 +796,7 @@ static void GDALVectorInfoReportMetadata(CPLString &osRet, CPLJSONObject &oRoot,
         }
     }
     GDALVectorInfoPrintMetadata(osRet, oMetadata, psOptions, hObject,
-                                "SUBDATASETS", "Subdatasets", pszIndent);
+                                GDAL_MDD_SUBDATASETS, "Subdatasets", pszIndent);
 }
 
 /************************************************************************/

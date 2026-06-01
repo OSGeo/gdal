@@ -779,7 +779,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (osSelectedSubdataset.empty() && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     poDS->psProduct = psProduct.release();
     poDS->psProductDim = psProductDim.release();

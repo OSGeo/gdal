@@ -1668,7 +1668,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (nIMIndex == -1 && nSubDSCount > 1)
         {
-            poDS->GDALMajorObject::SetMetadata(papszSubdatasets, "SUBDATASETS");
+            poDS->GDALMajorObject::SetMetadata(papszSubdatasets,
+                                               GDAL_MDD_SUBDATASETS);
         }
 
         CSLDestroy(papszSubdatasets);

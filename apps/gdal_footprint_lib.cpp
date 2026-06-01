@@ -1349,7 +1349,7 @@ GDALDatasetH GDALFootprint(const char *pszDest, GDALDatasetH hDstDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Input dataset has no raster band.%s",
-                 poSrcDS->GetMetadata("SUBDATASETS")
+                 poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS)
                      ? " You need to specify one subdataset."
                      : "");
         GDALFootprintOptionsFree(psOptionsToFree);

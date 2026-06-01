@@ -807,7 +807,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                                       CPLSPrintf("EXR:PREVIEW:%d:%s", iPart + 1,
                                                  osFilename.c_str()));
                 aosSubDS.SetNameValue("SUBDATASET_1_DESC", "Preview image");
-                poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+                poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
             }
         }
         else
@@ -822,7 +822,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       header.name().c_str());
             }
-            poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
 
         poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);

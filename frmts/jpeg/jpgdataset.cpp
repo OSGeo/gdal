@@ -659,10 +659,10 @@ void JPGDatasetCommon::ReadDJIMetadata()
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":DJI_RAW_THERMAL_IMAGE",
                            GetDescription()),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
-                "DJI raw thermal image", "SUBDATASETS");
+                "DJI raw thermal image", GDAL_MDD_SUBDATASETS);
         }
     }
 }
@@ -912,10 +912,10 @@ void JPGDatasetCommon::ReadFLIRMetadata()
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":FLIR_RAW_THERMAL_IMAGE",
                            GetDescription()),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
-                "FLIR raw thermal image", "SUBDATASETS");
+                "FLIR raw thermal image", GDAL_MDD_SUBDATASETS);
         }
     };
 
@@ -946,10 +946,10 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":FLIR_EMBEDDED_IMAGE", GetDescription()),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
-                "FLIR embedded image", "SUBDATASETS");
+                "FLIR embedded image", GDAL_MDD_SUBDATASETS);
         }
     };
 
@@ -1319,7 +1319,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
     if (eAccess == GA_ReadOnly && !bHasReadDJIMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "DJI"))
         ReadDJIMetadata();
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         ReadThermalMetadata();
 }
 

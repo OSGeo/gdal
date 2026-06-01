@@ -831,7 +831,7 @@ GDALDataset *GDAL_E57Dataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLString().Printf("SUBDATASET_%u_DESC", i + 1),
                 osDesc.c_str());
         }
-        poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         CPLStringList aosXMLE57;
         aosXMLE57.AddString(osXML.c_str());
         poDS->SetMetadata(aosXMLE57.List(), "xml:E57");

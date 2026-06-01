@@ -289,7 +289,7 @@ void ADRGDataset::AddSubDataset(const char *pszGENFileName,
 char **ADRGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -299,7 +299,7 @@ char **ADRGDataset::GetMetadataDomainList()
 CSLConstList ADRGDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);

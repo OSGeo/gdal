@@ -292,7 +292,7 @@ void GDALGRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand *) const
                 // Don't return if asked for a raster dataset but the
                 // underlying one is not.
                 if (poUnderlyingDS->GetRasterCount() == 0 &&
-                    !poUnderlyingDS->GetMetadata("SUBDATASETS"))
+                    !poUnderlyingDS->GetMetadata(GDAL_MDD_SUBDATASETS))
                 {
                     return nullptr;
                 }

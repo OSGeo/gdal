@@ -1283,7 +1283,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
 CSLConstList TileDBRasterDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         if (m_aosSubdatasetMD.empty())
         {
@@ -1677,7 +1677,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     else  // subdatasets or only attributes
     {
         if ((poOpenInfo->eAccess == GA_Update) &&
-            (poDS->GetMetadata("SUBDATASETS") != nullptr))
+            (poDS->GetMetadata(GDAL_MDD_SUBDATASETS) != nullptr))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "The TileDB driver does not support update access "
@@ -1717,7 +1717,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            CSLConstList papszMeta = poDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszMeta = poDS->GetMetadata(GDAL_MDD_SUBDATASETS);
             if (papszMeta != nullptr)
             {
                 if ((CSLCount(papszMeta) / 2) == 1)
@@ -2383,7 +2383,8 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
     {
         std::vector<std::unique_ptr<GDALDataset>> apoDatasets;
         poDstDS->m_bHasSubDatasets = true;
-        CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+        CSLConstList papszSrcSubDatasets =
+            poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
         if (!papszSrcSubDatasets)
             return CE_Failure;
         const char *pszSubDSName =
@@ -2485,7 +2486,8 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
             }
         }
 
-        poDstDS->SetMetadata(poDstDS->m_aosSubdatasetMD.List(), "SUBDATASETS");
+        poDstDS->SetMetadata(poDstDS->m_aosSubdatasetMD.List(),
+                             GDAL_MDD_SUBDATASETS);
 
         poDstDS->CreateArray();
 
@@ -2672,7 +2674,8 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszSrcSubDatasets =
+        poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
 
     if (papszSrcSubDatasets == nullptr)
     {

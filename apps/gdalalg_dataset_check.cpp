@@ -63,7 +63,7 @@ bool GDALDatasetCheckAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const CPLStringList aosAllowedDrivers(m_inputFormats);
 
     const CPLStringList aosSubdatasets(
-        CSLDuplicate(poDS->GetMetadata("SUBDATASETS")));
+        CSLDuplicate(poDS->GetMetadata(GDAL_MDD_SUBDATASETS)));
     const int nSubdatasets = aosSubdatasets.size() / 2;
 
     bool bRet = true;

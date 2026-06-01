@@ -2248,7 +2248,7 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
 
 CSLConstList OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS) &&
         m_aosSubDatasets.size() > 2)
     {
         return m_aosSubDatasets.List();
