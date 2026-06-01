@@ -5571,11 +5571,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     /*      specified for GDT_UInt8, GDT_UInt16, GDT_UInt32.                 */
     /* -------------------------------------------------------------------- */
     int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-    if (CSLFetchNameValue(papszParamList, "NBITS") != nullptr)
+    if (CSLFetchNameValue(papszParamList, GDALMD_NBITS) != nullptr)
     {
         int nMinBits = 0;
         int nMaxBits = 0;
-        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
+        l_nBitsPerSample =
+            atoi(CSLFetchNameValue(papszParamList, GDALMD_NBITS));
         if (eType == GDT_UInt8)
         {
             nMinBits = 1;
@@ -6592,7 +6593,7 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
         CSLSetNameValue(papszLocalParameters, "BLOCKYSIZE", "16");
     if (m_nBitsPerSample == 12)
         papszLocalParameters =
-            CSLSetNameValue(papszLocalParameters, "NBITS", "12");
+            CSLSetNameValue(papszLocalParameters, GDALMD_NBITS, "12");
 
     const CPLString osTmpFilenameIn(
         VSIMemGenerateHiddenFilename("gtiffdataset_guess_jpeg_quality_tmp"));
@@ -6989,7 +6990,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
             poDS->SetBand(iBand + 1, std::make_unique<GTiffOddBitsBand>(
                                          poDS.get(), iBand + 1));
             poDS->GetRasterBand(iBand + 1)->SetMetadataItem(
-                "NBITS", CPLString().Printf("%d", poDS->m_nBitsPerSample),
+                GDALMD_NBITS, CPLString().Printf("%d", poDS->m_nBitsPerSample),
                 GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
@@ -7380,14 +7381,15 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
 
-    if (poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE) !=
+    if (poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) !=
             nullptr &&
-        atoi(poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE)) > 0 &&
-        CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr)
+        atoi(poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE)) >
+            0 &&
+        CSLFetchNameValue(papszCreateOptions, GDALMD_NBITS) == nullptr)
     {
         papszCreateOptions = CSLSetNameValue(
-            papszCreateOptions, "NBITS",
-            poPBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
+            papszCreateOptions, GDALMD_NBITS,
+            poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
     }
 
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&

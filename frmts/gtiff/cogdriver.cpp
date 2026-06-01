@@ -1278,7 +1278,8 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
                             CSLFetchNameValue(papszOptions, "GEOTIFF_VERSION"));
     aosOptions.SetNameValue("SPARSE_OK",
                             CSLFetchNameValue(papszOptions, "SPARSE_OK"));
-    aosOptions.SetNameValue("NBITS", CSLFetchNameValue(papszOptions, "NBITS"));
+    aosOptions.SetNameValue(GDALMD_NBITS,
+                            CSLFetchNameValue(papszOptions, GDALMD_NBITS));
 
     if (EQUAL(osOverviews, "NONE"))
     {

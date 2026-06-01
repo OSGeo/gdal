@@ -357,17 +357,17 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "1BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "1", GDAL_MDD_IMAGE_STRUCTURE);
+        poGRD->SetMetadataItem(GDALMD_NBITS, "1", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "2BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "2", GDAL_MDD_IMAGE_STRUCTURE);
+        poGRD->SetMetadataItem(GDALMD_NBITS, "2", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "4BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "4", GDAL_MDD_IMAGE_STRUCTURE);
+        poGRD->SetMetadataItem(GDALMD_NBITS, "4", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     //  -------------------------------------------------------------------
@@ -1025,7 +1025,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRW->nRowBlockSize = atoi(pszFetched);
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "NBITS");
+    pszFetched = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
 
     if (pszFetched != nullptr)
     {

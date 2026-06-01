@@ -442,7 +442,7 @@ NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
     if (psImage->nABPP != 8 && psImage->nABPP != 16 && psImage->nABPP != 32 &&
         psImage->nABPP != 64)
     {
-        SetMetadataItem("NBITS", CPLString().Printf("%d", psImage->nABPP),
+        SetMetadataItem(GDALMD_NBITS, CPLString().Printf("%d", psImage->nABPP),
                         GDAL_MDD_IMAGE_STRUCTURE);
     }
 

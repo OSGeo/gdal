@@ -1104,7 +1104,7 @@ GDALOpenFileGDBRasterBand::GDALOpenFileGDBRasterBand(
     nBlockYSize = nBlockHeight;
     if (nBitWidth < 8)
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", nBitWidth),
+        SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBitWidth),
                         GDAL_MDD_IMAGE_STRUCTURE);
     }
 }

@@ -663,7 +663,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      didn't provide values.                                          */
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
-    const char *const apszOptItems[] = {"NBITS", GDAL_MDD_IMAGE_STRUCTURE,
+    const char *const apszOptItems[] = {GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE,
                                         "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE,
                                         nullptr};
 

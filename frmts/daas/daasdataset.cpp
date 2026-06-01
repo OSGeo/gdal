@@ -1387,7 +1387,8 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
         poDSIn->m_nActualBitDepth != 16 && poDSIn->m_nActualBitDepth != 32 &&
         poDSIn->m_nActualBitDepth != 64)
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", poDSIn->m_nActualBitDepth),
+        SetMetadataItem(GDALMD_NBITS,
+                        CPLSPrintf("%d", poDSIn->m_nActualBitDepth),
                         GDAL_MDD_IMAGE_STRUCTURE);
     }
 }

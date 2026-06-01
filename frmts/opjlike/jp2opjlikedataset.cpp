@@ -48,8 +48,9 @@ JP2OPJLikeRasterBand<CODEC, BASE>::JP2OPJLikeRasterBand(
     poCT = nullptr;
 
     if ((nBits % 8) != 0)
-        GDALRasterBand::SetMetadataItem(
-            "NBITS", CPLString().Printf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS,
+                                        CPLString().Printf("%d", nBits),
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     GDALRasterBand::SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
                                     GDAL_MDD_IMAGE_STRUCTURE);
     this->poDS = poDSIn;
@@ -2537,9 +2538,9 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     int nBits;
     const int nDTBits = GDALGetDataTypeSizeBits(eDataType);
 
-    if (CSLFetchNameValue(papszOptions, "NBITS") != nullptr)
+    if (CSLFetchNameValue(papszOptions, GDALMD_NBITS) != nullptr)
     {
-        nBits = atoi(CSLFetchNameValue(papszOptions, "NBITS"));
+        nBits = atoi(CSLFetchNameValue(papszOptions, GDALMD_NBITS));
         if (bInspireTG &&
             !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32))
         {
@@ -2550,10 +2551,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
     }
     else if (poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                 "NBITS", GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
+                 GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
     {
         nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", GDAL_MDD_IMAGE_STRUCTURE));
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
         if (bInspireTG &&
             !(nBits == 1 || nBits == 8 || nBits == 16 || nBits == 32))
         {
@@ -2717,7 +2718,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                                             "EPH",
                                             "YCBCR420",
                                             "YCC",
-                                            "NBITS",
+                                            GDALMD_NBITS,
                                             "1BIT_ALPHA",
                                             "PRECINCTS",
                                             "TILEPARTS",
@@ -2859,7 +2860,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
         const char *pszNBits =
             poSrcDS->GetRasterBand(iBand + 1)->GetMetadataItem(
-                "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+                GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         /* Recommendation 38 In the case of an opacity channel, the bit depth
          * should be 1-bit. */
         if (iBand == nAlphaBandIndex &&
@@ -3353,7 +3354,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                                             "EPH",
                                             "YCBCR420",
                                             "YCC",
-                                            "NBITS",
+                                            GDALMD_NBITS,
                                             "1BIT_ALPHA",
                                             "PRECINCTS",
                                             "TILEPARTS",

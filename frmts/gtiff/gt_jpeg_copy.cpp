@@ -145,10 +145,10 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset *poSrcDS,
 
         if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
             papszCreateOptions =
-                CSLSetNameValue(papszCreateOptions, "NBITS", "12");
+                CSLSetNameValue(papszCreateOptions, GDALMD_NBITS, "12");
         else
             papszCreateOptions =
-                CSLSetNameValue(papszCreateOptions, "NBITS", NULL);
+                CSLSetNameValue(papszCreateOptions, GDALMD_NBITS, NULL);
 
         papszCreateOptions = CSLSetNameValue(papszCreateOptions, "TILED", NULL);
         papszCreateOptions =
@@ -326,7 +326,7 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     if ((nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
         (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
         poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
-        CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr &&
+        CSLFetchNameValue(papszCreateOptions, GDALMD_NBITS) == nullptr &&
         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == nullptr)
     {
         if (nMCUSize == 16 && pszPhotometric == nullptr)

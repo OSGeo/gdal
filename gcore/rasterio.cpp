@@ -1111,11 +1111,12 @@ CPLErr GDALRasterBand::RasterIOResampled(
         poMEMDS, 1, pabyData, eDTMem, nPSMem, nLSMem, false);
     poMEMDS->SetBand(1, GDALRasterBand::FromHandle(hMEMBand));
 
-    const char *pszNBITS = GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+    const char *pszNBITS =
+        GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const int nNBITS = pszNBITS ? atoi(pszNBITS) : 0;
     if (pszNBITS)
         GDALRasterBand::FromHandle(hMEMBand)->SetMetadataItem(
-            "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
+            GDALMD_NBITS, pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
 
     CPLErr eErr = CE_None;
 
@@ -1610,12 +1611,12 @@ CPLErr GDALDataset::RasterIOResampled(
         apoDstBands[i] = poMEMBand;
 #endif
         const char *pszNBITS =
-            poSrcBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+            poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nNBITS = atoi(pszNBITS);
             poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
-                "NBITS", pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
+                GDALMD_NBITS, pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 

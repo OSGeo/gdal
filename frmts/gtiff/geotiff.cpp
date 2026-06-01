@@ -645,7 +645,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     }
     papszLocalParameters = CSLSetNameValue(papszLocalParameters, "BLOCKYSIZE",
                                            CPLSPrintf("%u", nInMemImageHeight));
-    papszLocalParameters = CSLSetNameValue(papszLocalParameters, "NBITS",
+    papszLocalParameters = CSLSetNameValue(papszLocalParameters, GDALMD_NBITS,
                                            CPLSPrintf("%u", l_nBitsPerSample));
     papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                                            "JPEGTABLESMODE", pszJPEGTablesMode);

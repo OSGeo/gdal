@@ -2296,10 +2296,10 @@ CPLErr VRTSourcedRasterBand::AddSource(std::unique_ptr<VRTSource> poNewSource)
     {
         VRTSimpleSource *poSS =
             static_cast<VRTSimpleSource *>(poNewSource.get());
-        if (GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
+        if (GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
         {
             int nBits =
-                atoi(GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
+                atoi(GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
             if (nBits >= 1 && nBits <= 31)
             {
                 poSS->SetMaxValue(static_cast<int>((1U << nBits) - 1));

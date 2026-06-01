@@ -1319,7 +1319,7 @@ int DIMAPDataset::ReadImageInformation2()
                 poVRTDS->GetRasterBand(iBand + 1));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poVRTBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                        GDAL_MDD_IMAGE_STRUCTURE);
         }
 
@@ -1405,7 +1405,7 @@ int DIMAPDataset::ReadImageInformation2()
             static_cast<VRTSourcedRasterBand *>(poVRTDS->GetRasterBand(iBand)));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+            poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (bTwoDataFilesPerTile)

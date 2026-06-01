@@ -1905,7 +1905,7 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
         {
             GDALMajorObject::SetMetadataItem("RESAMPLING",
                                              "AVERAGE_BIT2GRAYSCALE");
-            GDALMajorObject::SetMetadataItem("NBITS", "8");
+            GDALMajorObject::SetMetadataItem(GDALMD_NBITS, "8");
         }
         eHFADataType = eHFADataTypeO;
     }
@@ -1972,7 +1972,8 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
     if (HFAGetDataTypeBits(eHFADataType) < 8)
     {
         GDALMajorObject::SetMetadataItem(
-            "NBITS", CPLString().Printf("%d", HFAGetDataTypeBits(eHFADataType)),
+            GDALMD_NBITS,
+            CPLString().Printf("%d", HFAGetDataTypeBits(eHFADataType)),
             GDAL_MDD_IMAGE_STRUCTURE);
     }
 
@@ -5021,9 +5022,10 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
                                 CSLConstList papszParamList)
 
 {
-    const int nBits = CSLFetchNameValue(papszParamList, "NBITS") != nullptr
-                          ? atoi(CSLFetchNameValue(papszParamList, "NBITS"))
-                          : 0;
+    const int nBits =
+        CSLFetchNameValue(papszParamList, GDALMD_NBITS) != nullptr
+            ? atoi(CSLFetchNameValue(papszParamList, GDALMD_NBITS))
+            : 0;
 
     const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
     if (pszPixelType == nullptr)

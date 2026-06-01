@@ -3475,7 +3475,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
         {
             if (const char *pszNBITS =
                     m_poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE))
+                        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE))
             {
                 if (atoi(pszNBITS) > 12)
                 {

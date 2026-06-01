@@ -91,7 +91,7 @@ class GenBinBitRasterBand final : public GDALPamRasterBand
 GenBinBitRasterBand::GenBinBitRasterBand(GenBinDataset *poDSIn, int nBitsIn)
     : nBits(nBitsIn)
 {
-    SetMetadataItem("NBITS", CPLString().Printf("%d", nBitsIn),
+    SetMetadataItem(GDALMD_NBITS, CPLString().Printf("%d", nBitsIn),
                     GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS = poDSIn;

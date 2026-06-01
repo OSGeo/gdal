@@ -421,10 +421,10 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
                 return CE_Failure;
         }
 
-        if (hBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE))
+        if (hBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE))
         {
-            nBandBits =
-                atoi(hBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE));
+            nBandBits = atoi(
+                hBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
 
             if (nBandBits == 1 && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
                 nBandBits = 8;

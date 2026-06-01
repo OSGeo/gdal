@@ -2465,7 +2465,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
             m_image->bitsPerSample() != 128)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "NBITS", CPLSPrintf("%u", m_image->bitsPerSample()),
+                GDALMD_NBITS, CPLSPrintf("%u", m_image->bitsPerSample()),
                 GDAL_MDD_IMAGE_STRUCTURE);
         }
 

@@ -178,7 +178,7 @@ JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
     if ((eDataType == GDT_UInt8 && nBitsPerSample < 8) ||
         (eDataType == GDT_UInt16 && nBitsPerSample < 16))
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", nBitsPerSample),
+        SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBitsPerSample),
                         GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
@@ -2201,10 +2201,10 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNBits = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBits = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBits == nullptr)
         pszNBits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const int nBits =
         ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)

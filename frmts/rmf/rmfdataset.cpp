@@ -3258,7 +3258,7 @@ void RMFDataset::SetupNBits()
         snprintf(szNBits, sizeof(szNBits), "%d", nBitDepth);
         for (int iBand = 1; iBand <= nBands; iBand++)
         {
-            GetRasterBand(iBand)->SetMetadataItem("NBITS", szNBits,
+            GetRasterBand(iBand)->SetMetadataItem(GDALMD_NBITS, szNBits,
                                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
     }

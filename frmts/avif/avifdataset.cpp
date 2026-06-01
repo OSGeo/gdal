@@ -259,7 +259,7 @@ GDALAVIFRasterBand::GDALAVIFRasterBand(GDALAVIFDataset *poDSIn, int nBandIn,
 {
     if (nBits != 8 && nBits != 16)
     {
-        GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                         GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
@@ -768,15 +768,15 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                  16
 #endif
         ;
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBITS)
     {
         nBits = atoi(pszNBITS);
     }
     else if (eDT == GDT_UInt16)
     {
-        pszNBITS =
-            poFirstBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+        pszNBITS = poFirstBand->GetMetadataItem(GDALMD_NBITS,
+                                                GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nBits = atoi(pszNBITS);
@@ -1258,7 +1258,7 @@ void GDALAVIFDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "NBITS");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_NBITS);
         CPLAddXMLAttributeAndValue(psOption, "type", "int");
 #if AVIF_VERSION >= 1040000
         CPLAddXMLAttributeAndValue(

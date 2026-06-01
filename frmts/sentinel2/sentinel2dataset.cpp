@@ -276,7 +276,7 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (eErr == CE_None)
     {
         const char *pszNBITS =
-            GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+            GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         const int nBits = (pszNBITS) ? atoi(pszNBITS) : 16;
         const GUInt16 nMaxVal = (nBits > 8 && nBits <= 16)
                                     ? static_cast<GUInt16>((1 << nBits) - 1)
@@ -2278,7 +2278,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
 
         if ((nBits % 8) != 0)
         {
-            poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+            poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
@@ -2674,7 +2674,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
 
     if ((nBits % 8) != 0)
     {
-        poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+        poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                 GDAL_MDD_IMAGE_STRUCTURE);
     }
 
@@ -3492,7 +3492,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                 {
                     const char *pszNBits =
                         poDS->GetRasterBand(1)->GetMetadataItem(
-                            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+                            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
                     if (pszNBits == nullptr)
                     {
                         GDALDataType eDT =
@@ -4232,7 +4232,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
 
         if ((nBits % 8) != 0)
         {
-            poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
+            poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }

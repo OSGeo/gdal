@@ -5447,7 +5447,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         for (int i = 0; i < nBands; ++i)
             cpl::down_cast<GTiffRasterBand *>(GetRasterBand(i + 1))
                 ->m_oGTiffMDMD.SetMetadataItem(
-                    "NBITS",
+                    GDALMD_NBITS,
                     CPLString().Printf("%d",
                                        static_cast<int>(m_nBitsPerSample)),
                     GDAL_MDD_IMAGE_STRUCTURE);

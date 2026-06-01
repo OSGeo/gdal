@@ -784,9 +784,9 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                         poVDS->GetRasterBand(i + 1));
 
                 const char *pszNBITS = poSrcBand->GetMetadataItem(
-                    "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+                    GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszNBITS)
-                    poVRTBand->SetMetadataItem("NBITS", pszNBITS,
+                    poVRTBand->SetMetadataItem(GDALMD_NBITS, pszNBITS,
                                                GDAL_MDD_IMAGE_STRUCTURE);
 
                 VRTSimpleSource *poSimpleSource = new VRTSimpleSource();
@@ -1036,7 +1036,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         if (pszBitDepth == nullptr)
             pszBitDepth =
                 GDALRasterBand::FromHandle(ahSpectralBands[0])
-                    ->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+                    ->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszBitDepth)
             nBitDepth = atoi(pszBitDepth);
         if (nBitDepth)
@@ -1047,19 +1047,19 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                          ->IsPansharpenRasterBand())
                     continue;
                 if (GetRasterBand(i + 1)->GetMetadataItem(
-                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
+                        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
                 {
                     if (nBitDepth != 8 && nBitDepth != 16 && nBitDepth != 32)
                     {
                         GetRasterBand(i + 1)->SetMetadataItem(
-                            "NBITS", CPLSPrintf("%d", nBitDepth),
+                            GDALMD_NBITS, CPLSPrintf("%d", nBitDepth),
                             GDAL_MDD_IMAGE_STRUCTURE);
                     }
                 }
                 else if (nBitDepth == 8 || nBitDepth == 16 || nBitDepth == 32)
                 {
                     GetRasterBand(i + 1)->SetMetadataItem(
-                        "NBITS", nullptr, GDAL_MDD_IMAGE_STRUCTURE);
+                        GDALMD_NBITS, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }
@@ -1828,9 +1828,9 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     auto poBand = std::make_unique<VRTPansharpenedRasterBand>(
                         poOvrDS.get(), i + 1, poSrcBand->GetRasterDataType());
                     const char *pszNBITS = poSrcBand->GetMetadataItem(
-                        "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+                        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
                     if (pszNBITS)
-                        poBand->SetMetadataItem("NBITS", pszNBITS,
+                        poBand->SetMetadataItem(GDALMD_NBITS, pszNBITS,
                                                 GDAL_MDD_IMAGE_STRUCTURE);
                     int bHasNoData = FALSE;
                     const double dfNoData =

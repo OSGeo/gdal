@@ -588,7 +588,7 @@ CPLErr GDALECWCompressor::Initialize(
         (NCSFileBandInfo *)NCSMalloc(sizeof(NCSFileBandInfo) * nBands, true);
     for (iBand = 0; iBand < nBands; iBand++)
     {
-        const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+        const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
         if (pszNBITS && atoi(pszNBITS) > 0)
             psClient->pBands[iBand].nBits = (UINT8)atoi(pszNBITS);
         else

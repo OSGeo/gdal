@@ -292,7 +292,7 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
     eDataType = GDT_UInt8;
 
     if (poDSIn->sInfoHeader.iBitCount < 8)
-        SetMetadataItem("NBITS",
+        SetMetadataItem(GDALMD_NBITS,
                         CPLSPrintf("%d", poDSIn->sInfoHeader.iBitCount),
                         GDAL_MDD_IMAGE_STRUCTURE);
 
@@ -727,11 +727,11 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
     }
 
     if (poDSIn->sInfoHeader.iClrUsed <= 2)
-        SetMetadataItem("NBITS", "1", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_NBITS, "1", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDSIn->sInfoHeader.iClrUsed <= 4)
-        SetMetadataItem("NBITS", "2", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_NBITS, "2", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDSIn->sInfoHeader.iClrUsed <= 16)
-        SetMetadataItem("NBITS", "4", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_NBITS, "4", GDAL_MDD_IMAGE_STRUCTURE);
 
     const GUInt32 iComprSize = static_cast<GUInt32>(
         poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits);

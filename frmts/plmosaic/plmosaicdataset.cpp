@@ -166,7 +166,7 @@ PLMosaicRasterBand::PLMosaicRasterBand(PLMosaicDataset *poDSIn, int nBandIn,
     if (eDataType == GDT_UInt16)
     {
         if (nBand <= 3)
-            SetMetadataItem("NBITS", "12", GDAL_MDD_IMAGE_STRUCTURE);
+            SetMetadataItem(GDALMD_NBITS, "12", GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 

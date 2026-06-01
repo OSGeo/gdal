@@ -898,7 +898,7 @@ RL2RasterBand::RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT,
     if ((nBits % 8) != 0)
     {
         GDALRasterBand::SetMetadataItem(
-            (nBits == 1 && bPromote1BitAs8Bit) ? "SOURCE_NBITS" : "NBITS",
+            (nBits == 1 && bPromote1BitAs8Bit) ? "SOURCE_NBITS" : GDALMD_NBITS,
             CPLSPrintf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
     }
 
@@ -927,9 +927,9 @@ RL2RasterBand::RL2RasterBand(const RL2RasterBand *poOther)
     nBlockXSize = poOther->nBlockXSize;
     nBlockYSize = poOther->nBlockYSize;
     GDALRasterBand::SetMetadataItem(
-        "NBITS",
+        GDALMD_NBITS,
         const_cast<RL2RasterBand *>(poOther)->GetMetadataItem(
-            "NBITS", GDAL_MDD_IMAGE_STRUCTURE),
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE),
         GDAL_MDD_IMAGE_STRUCTURE);
     m_eColorInterp = poOther->m_eColorInterp;
     m_bHasNoData = poOther->m_bHasNoData;
@@ -1540,7 +1540,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     }
 
     // Deal with NBITS
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     int nBITS = 0;
     if (pszNBITS != nullptr)
     {
@@ -1554,7 +1554,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     else
     {
         pszNBITS = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS != nullptr)
         {
             nBITS = atoi(pszNBITS);

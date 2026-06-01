@@ -1876,7 +1876,7 @@ void PostGISRasterDataset::BuildBands(BandMetadata *poBandMetaData,
         if (poBandMetaData[iBand].nBitsDepth < 8)
         {
             b->SetMetadataItem(
-                "NBITS",
+                GDALMD_NBITS,
                 CPLString().Printf("%d", poBandMetaData[iBand].nBitsDepth),
                 GDAL_MDD_IMAGE_STRUCTURE);
         }

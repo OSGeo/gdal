@@ -1414,7 +1414,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                  poBand->GetRasterDataType() == GDT_UInt16))
             {
                 poBand->GDALRasterBand::SetMetadataItem(
-                    "NBITS", CPLSPrintf("%d", nBitsPerSample),
+                    GDALMD_NBITS, CPLSPrintf("%d", nBitsPerSample),
                     GDAL_MDD_IMAGE_STRUCTURE);
             }
         }

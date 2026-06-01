@@ -1513,9 +1513,10 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
             poNewBand = new MEMRasterBand(poDS, iBand + 1, apbyBandData[iBand],
                                           eType, 0, 0, iBand == 0);
 
-        if (const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS"))
+        if (const char *pszNBITS =
+                CSLFetchNameValue(papszOptions, GDALMD_NBITS))
         {
-            poNewBand->SetMetadataItem("NBITS", pszNBITS,
+            poNewBand->SetMetadataItem(GDALMD_NBITS, pszNBITS,
                                        GDAL_MDD_IMAGE_STRUCTURE);
         }
 

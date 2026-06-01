@@ -1753,7 +1753,7 @@ JPGRasterBand::JPGRasterBand(JPGDatasetCommon *poDSIn, int nBandIn)
     GDALMajorObject::SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     if (eDataType == GDT_UInt16)
-        GDALMajorObject::SetMetadataItem("NBITS", "12",
+        GDALMajorObject::SetMetadataItem(GDALMD_NBITS, "12",
                                          GDAL_MDD_IMAGE_STRUCTURE);
 }
 

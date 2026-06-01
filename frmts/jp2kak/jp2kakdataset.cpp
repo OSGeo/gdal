@@ -96,7 +96,7 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
         !poBaseDSIn->bPromoteTo8Bit)
     {
         SetMetadataItem(
-            "NBITS",
+            GDALMD_NBITS,
             CPLString().Printf("%d", oCodeStream.get_bit_depth(nBand - 1)),
             GDAL_MDD_IMAGE_STRUCTURE);
     }
@@ -2322,10 +2322,10 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Work out the precision.
     int nBits = 0;
 
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBITS == nullptr)
-        pszNBITS =
-            poPrototypeBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+        pszNBITS = poPrototypeBand->GetMetadataItem(GDALMD_NBITS,
+                                                    GDAL_MDD_IMAGE_STRUCTURE);
     if (pszNBITS != nullptr)
     {
         nBits = atoi(pszNBITS);

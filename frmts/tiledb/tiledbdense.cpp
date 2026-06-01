@@ -1486,7 +1486,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const char *pszNBits = CSLFetchNameValue(papszStructMeta, "NBITS");
+    const char *pszNBits = CSLFetchNameValue(papszStructMeta, GDALMD_NBITS);
     if (pszNBits)
     {
         poDS->nBitsPerSample = atoi(pszNBits);
@@ -2037,7 +2037,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
                     CPLCreateXMLElementAndValue(
                         psMetaNode, "MDI",
                         CPLString().Printf("%d", nBitsPerSample)),
-                    "KEY", "NBITS");
+                    "KEY", GDALMD_NBITS);
             }
         }
         return CE_None;
@@ -2619,7 +2619,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
     {
         CPLStringList aosImageStruct;
         aosImageStruct.SetNameValue(
-            "NBITS", CPLString().Printf("%d", poDS->nBitsPerSample));
+            GDALMD_NBITS, CPLString().Printf("%d", poDS->nBitsPerSample));
         aosImageStruct.SetNameValue(
             "DATA_TYPE",
             CPLString().Printf("%s", GDALGetDataTypeName(poDS->eDataType)));
@@ -3030,7 +3030,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
             CPLStringList aosCreationOptions;
             aosCreationOptions.SetNameValue("CREATE_GROUP", "NO");
             aosCreationOptions.SetNameValue(
-                "NBITS", CPLString().Printf("%d", nBitsPerSample));
+                GDALMD_NBITS, CPLString().Printf("%d", nBitsPerSample));
             aosCreationOptions.SetNameValue(GDALMD_INTERLEAVE,
                                             index_type_name(eIndexMode));
             if (nTimestamp)

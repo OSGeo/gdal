@@ -2158,13 +2158,13 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
         // Preserve NBITS if no option change values
         const char *pszNBits =
-            poSrcBand->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE);
+            poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBits && psOptions->nRGBExpand == 0 &&
             psOptions->asScaleParams.empty() && !psOptions->bUnscale &&
             psOptions->eOutputType == GDT_Unknown &&
             psOptions->osResampling.empty())
         {
-            poVRTBand->SetMetadataItem("NBITS", pszNBits,
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, pszNBits,
                                        GDAL_MDD_IMAGE_STRUCTURE);
         }
 

@@ -4183,7 +4183,7 @@ static CPLStringList NITFJP2KAKOptions(const CPLStringList &aosOptionsIn,
         }
     }
 
-    aoJP2KAKOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2KAKOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", nABPP));
 
     return aoJP2KAKOptions;
 }
@@ -4323,7 +4323,7 @@ static CPLStringList NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
         aoJP2OJPOptions.AddString("PROFILE=UNRESTRICTED");
     }
 
-    aoJP2OJPOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2OJPOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", nABPP));
 
     return aoJP2OJPOptions;
 }
@@ -4496,7 +4496,7 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
         aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
     }
 
-    if (const char *pszNBITS = aosOptions.FetchNameValue("NBITS"))
+    if (const char *pszNBITS = aosOptions.FetchNameValue(GDALMD_NBITS))
     {
         aosOptions.SetNameValue("ABPP", pszNBITS);
     }
@@ -5326,8 +5326,8 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         nABPP = atoi(pszABPP);
     }
     else if (const char *pszNBITS = aosOptions.FetchNameValueDef(
-                 "NBITS",
-                 poBand1->GetMetadataItem("NBITS", GDAL_MDD_IMAGE_STRUCTURE)))
+                 GDALMD_NBITS, poBand1->GetMetadataItem(
+                                   GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE)))
     {
         aosOptions.SetNameValue("ABPP", pszNBITS);
         nABPP = atoi(pszNBITS);
