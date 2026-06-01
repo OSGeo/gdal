@@ -77,3 +77,9 @@ Raster and Vector How do I...
 
 ... know which :term:`CRS`\s are suitable for reprojecting my dataset?
    :example:`gdal-bash-completion-crs`
+
+... clip a raster image with vector features?
+    - :example:`gdal-raster-clip-vector`
+    - :example:`gdal-raster-clip-sql`
+    - :example:`gdal-pipeline-mixed-nested`
+    - :example:`gdal-pipeline-mixed-pipe`

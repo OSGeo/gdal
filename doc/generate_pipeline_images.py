@@ -62,3 +62,15 @@ gdal vector pipeline
 """
     output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_vector_nested_example.svg"
     generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
+
+
+def test_gdal_mixed_pipeline_nested():
+    pipeline = """
+gdal pipeline
+    ! read "NE2_50M_SR_W.tif"
+    ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ]
+    ! resize --size=70%,70% -r average
+    ! write romania.png --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_mixed_pipeline_nested.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
