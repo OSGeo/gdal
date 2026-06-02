@@ -294,13 +294,84 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      return ret;
    }
 
- public static void FileFromMemBuffer(string utf8_string, byte[] bytes) {
-     GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-     try {
-          FileFromMemBuffer(utf8_string, bytes.Length, handle.AddrOfPinnedObject());
-     } finally {
-        handle.Free();
-     }
+  /*
+   *  Keep this seemingly redundant overload to maintain
+   * compatability with old FileFromMemBuffer definition
+   */
+  public static bool FileFromMemBuffer(string utf8_string, byte[] bytes)
+    => FileFromMemBuffer(utf8_string, bytes, 0, bytes.LongLength);
+
+  private static void ValidateBufferArgs(byte[] buffer, long offset, long count) {
+    if (buffer == null)
+      throw new ArgumentNullException(nameof(buffer));
+    else if (offset < 0)
+      throw new ArgumentOutOfRangeException(nameof(offset), "Non-negative number required");
+    else if (count < 0)
+      throw new ArgumentOutOfRangeException(nameof(count), "Non-negative number required");
+    else if (count > buffer.LongLength - offset)
+      throw new ArgumentOutOfRangeException(nameof(offset), "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
+  }
+
+  private static IntPtr AddOffset(IntPtr ptr, long offset)
+    => IntPtr.Size == sizeof(long) ? new IntPtr(checked(ptr.ToInt64() + offset))
+     : new IntPtr(checked(ptr.ToInt32() + (int)offset));
+
+  public sealed class VsiMemoryFile : IDisposable {
+    private readonly GCHandle m_dataHandle;
+    private int m_disposed;
+    public string Filename { get; }
+    public bool VsiOwned { get; }
+    public bool IsDisposed => m_disposed != 0;
+    internal VsiMemoryFile(string filename, GCHandle dataHandle) {
+      Filename = filename;
+      m_dataHandle = dataHandle;
+    }
+    internal VsiMemoryFile(string filename) {
+      Filename = filename;
+      VsiOwned = true;
+    }
+    public void Dispose() {
+      if (System.Threading.Interlocked.CompareExchange(ref m_disposed, 1, 0) == 0) {
+        Unlink(Filename);
+        if (!VsiOwned)
+          m_dataHandle.Free();
+      }
+      GC.SuppressFinalize(this);
+    }
+    ~VsiMemoryFile() => Dispose();
+  }
+
+  public static VsiMemoryFile FileFromMemBuffer(string utf8_string, byte[] buffer, long offset, long count, bool vsiTakeOwnership) {
+    if (vsiTakeOwnership) {
+      return FileFromMemBuffer(utf8_string, buffer, offset, count) ? new VsiMemoryFile(utf8_string) : null;
+    } else {
+      ValidateBufferArgs(buffer, offset, count);
+      GCHandle dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+        IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
+        IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)count, bTakeOwnership: 0);
+        if (fp == IntPtr.Zero) {
+          dataHandle.Free();
+          return null;
+        }
+        VSIFCloseL(fp);
+        return new VsiMemoryFile(utf8_string, dataHandle);
+      } catch {
+        dataHandle.Free();
+        throw;
+      }
+    }
+  }
+
+  public static bool FileFromMemBuffer(string utf8_string, byte[] buffer, long offset, long count) {
+    ValidateBufferArgs(buffer, offset, count);
+    GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    try {
+      IntPtr addr = AddOffset(handle.AddrOfPinnedObject(), offset);
+      return FileFromMemBuffer(utf8_string, count, addr) == 0;
+    } finally {
+      handle.Free();
+    }
   }
 
   public static int Warp(Dataset dstDS, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
@@ -379,6 +450,42 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
+  public static bool VSIFSeekL(IntPtr fp, long offset, System.IO.SeekOrigin origin) {
+    return VSIFSeekL(fp, offset, (int)origin) == 0;
+  }
+
+  /* To maintain compatability with old VSIFWriteL definition */
+  [Obsolete("Use VSIFWriteL(byte[] buffer, int offset, int count, IntPtr fp)")]
+  public static int VSIFWriteL(string data, int objectSize, int numObjects, IntPtr fp) {
+    IntPtr handle = Marshal.StringToHGlobalAnsi(data);
+    try {
+      return VSIFWriteL(handle, (IntPtr)1, (IntPtr)data.Length, fp).ToInt32();
+    } finally {
+      Marshal.FreeHGlobal(handle);
+    }
+  }
+
+  public static int VSIFReadL(byte[] buffer, long offset, int count, IntPtr fp) {
+    ValidateBufferArgs(buffer, offset, count);
+    GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    try {
+      IntPtr addr = AddOffset(handle.AddrOfPinnedObject(), offset);
+      return VSIFReadL(addr, (IntPtr)sizeof(byte), (IntPtr)count, fp).ToInt32();
+    } finally {
+      handle.Free();
+    }
+  }
+
+  public static int VSIFWriteL(byte[] buffer, long offset, int count, IntPtr fp) {
+    ValidateBufferArgs(buffer, offset, count);
+    GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    try {
+      IntPtr addr = AddOffset(handle.AddrOfPinnedObject(), offset);
+      return VSIFWriteL(addr, (IntPtr)sizeof(byte), (IntPtr)count, fp).ToInt32();
+    } finally {
+      handle.Free();
+    }
+  }
 %}
 
 %rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
