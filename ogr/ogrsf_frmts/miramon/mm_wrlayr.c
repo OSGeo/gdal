@@ -2013,6 +2013,7 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&hMiraMonLayer->MMPoint.pF);
+    fclose_and_nullify(&hMiraMonLayer->MMPoint.pFTL);
     fclose_and_nullify(&hMiraMonLayer->MMPoint.pF3d);
     return ret_code;
 }
