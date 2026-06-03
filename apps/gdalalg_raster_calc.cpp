@@ -396,9 +396,12 @@ CreateDerivedBandXML(const char *pszVRTFilename, CPLXMLNode *root, int nXOut,
         }
         else if (noDataText != "none")
         {
-            char *end;
-            dstNoData = CPLStrtod(noDataText.c_str(), &end);
-            if (end != noDataText.c_str() + noDataText.size())
+            if (auto parsed = cpl::strict_parse<double>(noDataText);
+                parsed.has_value())
+            {
+                dstNoData = parsed.value();
+            }
+            else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid NoData value: %s", noDataText.c_str());
