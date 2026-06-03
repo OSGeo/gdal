@@ -1141,6 +1141,42 @@ def test_vsicurl_test_parse_html_filelist_nginx_cdn(server):
 
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/14707
+
+
+def test_vsicurl_test_parse_html_filelist_nginx_autoindex_exact_size_off(server):
+
+    gdal.VSICurlClearCache()
+
+    # Test format with "autoindex_exact_size off" nginx setting
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/mydir/",
+        200,
+        {},
+        """<html>
+<head><title>Index of /ma-cdn02/mydir/</title></head>
+<body>
+<h1>Index of /ortho/ign/</h1><hr><pre><a href="../">../</a>
+<a href="bdortho50_01_2000.cog.tif">bdortho50_01_2000.cog.tif</a>                          21-Dec-2022 10:51     10G
+</pre><hr></body>
+</html>
+
+""",
+    )
+    with webserver.install_http_handler(handler):
+        fl = gdal.ReadDir("/vsicurl/http://localhost:%d/mydir" % server.port)
+    assert fl == ["bdortho50_01_2000.cog.tif"]
+
+    stat = gdal.VSIStatL(
+        "/vsicurl/http://localhost:%d/mydir/bdortho50_01_2000.cog.tif" % server.port
+    )
+    assert stat is None
+
+
+###############################################################################
 
 
 def test_vsicurl_no_size_in_HEAD(server):

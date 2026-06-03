@@ -4716,6 +4716,30 @@ static char *VSICurlParserFindEOL(char *pszData)
 }
 
 /************************************************************************/
+/*                           ParseFileSize()                            */
+/************************************************************************/
+
+static GUIntBig ParseFileSize(const char *pszStr)
+{
+    GUIntBig nFileSize = 0;
+    while (*pszStr == ' ')
+        pszStr++;
+    if (*pszStr >= '1' && *pszStr <= '9')
+    {
+        const char *pszIter = pszStr + 1;
+        while (*pszIter >= '0' && *pszIter <= '9')
+            ++pszIter;
+        if (*pszIter == 0 || *pszIter == ' ' || *pszIter == '\t' ||
+            *pszIter == '\r' || *pszIter == '\n')
+        {
+            nFileSize =
+                CPLScanUIntBig(pszStr, static_cast<int>(pszIter - pszStr));
+        }
+    }
+    return nFileSize;
+}
+
+/************************************************************************/
 /*                  VSICurlParseHTMLDateTimeFileSize()                  */
 /************************************************************************/
 
@@ -4730,6 +4754,8 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
 {
     for (int iMonth = 0; iMonth < 12; iMonth++)
     {
+        nFileSize = 0;
+
         char szMonth[32] = {};
         szMonth[0] = '-';
         memcpy(szMonth + 1, apszMonths[iMonth], 3);
@@ -4763,18 +4789,11 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     if (nMonthFoundLen > 15 + 2)
                     {
                         const char *pszFilesize = pszMonthFound + 15 + 2;
-                        while (*pszFilesize == ' ')
-                            pszFilesize++;
-                        if (*pszFilesize >= '1' && *pszFilesize <= '9')
-                            nFileSize = CPLScanUIntBig(
-                                pszFilesize,
-                                static_cast<int>(strlen(pszFilesize)));
+                        nFileSize = ParseFileSize(pszFilesize);
                     }
-
-                    return true;
                 }
             }
-            return false;
+            return nFileSize > 0;
         }
 
         /* Microsoft IIS */
@@ -4809,13 +4828,6 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     nHour = -1;
                 nCurOffset += 4;
 
-                const char *pszFilesize = pszMonthFound + nCurOffset;
-                while (*pszFilesize == ' ')
-                    pszFilesize++;
-                if (*pszFilesize >= '1' && *pszFilesize <= '9')
-                    nFileSize = CPLScanUIntBig(
-                        pszFilesize, static_cast<int>(strlen(pszFilesize)));
-
                 if (nDay >= 1 && nDay <= 31 && nYear >= 1900 && nHour >= 0 &&
                     nHour <= 24 && nMin >= 0 && nMin < 60)
                 {
@@ -4826,9 +4838,9 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-                    return true;
+                    const char *pszFilesize = pszMonthFound + nCurOffset;
+                    nFileSize = ParseFileSize(pszFilesize);
                 }
-                nFileSize = 0;
             }
             else if (pszMonthFound - pszStr > 1 && pszMonthFound[-1] == ',' &&
                      static_cast<int>(strlen(pszMonthFound)) >
@@ -4854,13 +4866,6 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     nHour = -1;
                 nCurOffset += 2;
 
-                const char *pszFilesize = pszMonthFound + nCurOffset;
-                while (*pszFilesize == ' ')
-                    pszFilesize++;
-                if (*pszFilesize >= '1' && *pszFilesize <= '9')
-                    nFileSize = CPLScanUIntBig(
-                        pszFilesize, static_cast<int>(strlen(pszFilesize)));
-
                 if (nDay >= 1 && nDay <= 31 && nYear >= 1900 && nHour >= 0 &&
                     nHour <= 24 && nMin >= 0 && nMin < 60)
                 {
@@ -4871,11 +4876,12 @@ static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                     brokendowntime.tm_min = nMin;
                     mTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-                    return true;
+                    const char *pszFilesize = pszMonthFound + nCurOffset;
+                    nFileSize = ParseFileSize(pszFilesize);
                 }
-                nFileSize = 0;
             }
-            return false;
+
+            return nFileSize > 0;
         }
     }
 
@@ -5060,9 +5066,15 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
                     GetCachedFileProp(osCachedFilename.c_str(), cachedFileProp);
                     cachedFileProp.eExists = EXIST_YES;
                     cachedFileProp.bIsDirectory = bIsDirectory;
-                    cachedFileProp.mTime = static_cast<time_t>(mTime);
-                    cachedFileProp.bHasComputedFileSize = nFileSize > 0;
-                    cachedFileProp.fileSize = nFileSize;
+                    if (mTime > 0)
+                    {
+                        cachedFileProp.mTime = static_cast<time_t>(mTime);
+                    }
+                    if (!cachedFileProp.bHasComputedFileSize)
+                    {
+                        cachedFileProp.bHasComputedFileSize = nFileSize > 0;
+                        cachedFileProp.fileSize = nFileSize;
+                    }
                     SetCachedFileProp(osCachedFilename.c_str(), cachedFileProp);
 
                     oFileList.AddString(beginFilename);
