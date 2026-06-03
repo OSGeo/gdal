@@ -8590,10 +8590,23 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
             psOptions->asGCPs.resize(psOptions->asGCPs.size() + 1);
             auto &sGCP = psOptions->asGCPs.back();
 
-            sGCP.Pixel() = CPLAtof(papszArgv[++i]);
-            sGCP.Line() = CPLAtof(papszArgv[++i]);
-            sGCP.X() = CPLAtof(papszArgv[++i]);
-            sGCP.Y() = CPLAtof(papszArgv[++i]);
+            const auto oPixel = cpl::strict_parse<double>(papszArgv[++i]);
+            const auto oLine = cpl::strict_parse<double>(papszArgv[++i]);
+            const auto oX = cpl::strict_parse<double>(papszArgv[++i]);
+            const auto oY = cpl::strict_parse<double>(papszArgv[++i]);
+
+            if (!oPixel.has_value() || !oLine.has_value() || !oX.has_value() ||
+                !oY.has_value())
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -gcp value");
+                return nullptr;
+            }
+
+            sGCP.Pixel() = oPixel.value();
+            sGCP.Line() = oLine.value();
+            sGCP.X() = oX.value();
+            sGCP.Y() = oY.value();
+
             if (papszArgv[i + 1] != nullptr &&
                 (CPLStrtod(papszArgv[i + 1], &endptr) != 0.0 ||
                  papszArgv[i + 1][0] == '0'))

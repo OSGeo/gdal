@@ -2891,6 +2891,24 @@ def test_ogr2ogr_lib_two_gcps():
 
 
 ###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_invalid_gcp():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 3)"))
+    src_lyr.CreateFeature(f)
+
+    with pytest.raises(Exception, match="Invalid -gcp value"):
+        gdal.VectorTranslate(
+            "", src_ds, options="-f MEM -gcp 1 2 200 300k -gcp 3 4 300 400"
+        )
+
+
+###############################################################################
 # Test -skipInvalid
 
 
