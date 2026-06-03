@@ -988,6 +988,43 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_vsis3_permanent_redirect_and_region_change(aws_test_config, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/test_vsis3_permanent_redirect_and_region_change/?delimiter=%2F&list-type=2",
+        301,
+        {"Content-type": "application/xml"},
+        f"""<?xml version="1.0" encoding="UTF-8"?>
+            <Error><Code>PermanentRedirect</Code><Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message><Endpoint>localhost:{webserver_port}</Endpoint><Bucket>test_vsis3_permanent_redirect_and_region_change</Bucket></Error>""",
+    )
+    handler.add(
+        "GET",
+        "/test_vsis3_permanent_redirect_and_region_change/?delimiter=%2F&list-type=2",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>123456</Size>
+                </Contents>
+            </ListBucketResult>""",
+    )
+    with webserver.install_http_handler(handler):
+        with gdal.VSIFile(
+            "/vsis3/test_vsis3_permanent_redirect_and_region_change/test.bin", "rb"
+        ):
+            pass
+
+
+###############################################################################
+
+
 @pytest.mark.parametrize("with_error_message", [True, False])
 def test_vsis3_request_timeout(aws_test_config, webserver_port, with_error_message):
     gdal.VSICurlClearCache()
