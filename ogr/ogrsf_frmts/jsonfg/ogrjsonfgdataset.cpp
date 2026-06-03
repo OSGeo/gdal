@@ -20,15 +20,15 @@
 #include <cmath>
 
 constexpr const char *CONFORMANCE_CORE =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/core";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/core";
 constexpr const char *CONFORMANCE_FEATURE_TYPE =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/types-schemas";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas";
 constexpr const char *CONFORMANCE_POLYHEDRA =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/polyhedra";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/polyhedra";
 constexpr const char *CONFORMANCE_CIRCULAR_ARCS =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/circular-arcs";
 constexpr const char *CONFORMANCE_MEASURES =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/measures";
 
 /************************************************************************/
 /*                OGRJSONFGDataset::~OGRJSONFGDataset()                 */
