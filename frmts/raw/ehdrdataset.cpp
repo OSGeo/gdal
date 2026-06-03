@@ -1532,54 +1532,26 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     // Only read the .clr for byte, int16 or uint16 bands.
     if (nItemSize <= 2)
-        fp = VSIFOpenL(osCLRFilename.c_str(), "r");
-    else
-        fp = nullptr;
-
-    if (fp != nullptr)
     {
-        std::shared_ptr<GDALRasterAttributeTable> poRat(
-            new GDALDefaultRasterAttributeTable());
-        poRat->CreateColumn("Value", GFT_Integer, GFU_Generic);
-        poRat->CreateColumn("Red", GFT_Integer, GFU_Red);
-        poRat->CreateColumn("Green", GFT_Integer, GFU_Green);
-        poRat->CreateColumn("Blue", GFT_Integer, GFU_Blue);
-
-        poDS->m_poColorTable.reset(new GDALColorTable());
-
-        bool bHasFoundNonCTValues = false;
-        int nRatRow = 0;
-
-        while (true)
+        auto poRAT = GDALLoadEsriCLRAsRAT(osCLRFilename.c_str());
+        if (poRAT && poRAT->GetColumnCount() == 4)
         {
-            pszLine = CPLReadLineL(fp);
-            if (!pszLine)
-                break;
+            poDS->m_poColorTable = std::make_unique<GDALColorTable>();
 
-            if (*pszLine == '#' || *pszLine == '!')
-                continue;
+            bool bHasFoundNonCTValues = false;
 
-            char **papszValues =
-                CSLTokenizeString2(pszLine, "\t ", CSLT_HONOURSTRINGS);
-
-            if (CSLCount(papszValues) >= 4)
+            for (int iRow = 0; iRow < poRAT->GetRowCount(); ++iRow)
             {
-                const int nIndex = atoi(papszValues[0]);
-                poRat->SetValue(nRatRow, 0, nIndex);
-                poRat->SetValue(nRatRow, 1, atoi(papszValues[1]));
-                poRat->SetValue(nRatRow, 2, atoi(papszValues[2]));
-                poRat->SetValue(nRatRow, 3, atoi(papszValues[3]));
-                nRatRow++;
-
+                const int nIndex = poRAT->GetValueAsInt(iRow, 0);
                 if (nIndex >= 0 && nIndex < 65536)
                 {
                     const GDALColorEntry oEntry = {
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[1]), 0, 255)),  // Red
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[2]), 0, 255)),  // Green
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[3]), 0, 255)),  // Blue
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 1), 0, 255)),  // Red
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 2), 0, 255)),  // Green
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 3), 0, 255)),  // Blue
                         255};
 
                     poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
@@ -1591,32 +1563,28 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                     //   http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/
                     // But, there's no way of representing them with GDAL color
                     // table model.
-                    if (!bHasFoundNonCTValues)
-                        CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
+                    CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
                     bHasFoundNonCTValues = true;
+                    break;
                 }
             }
 
-            CSLDestroy(papszValues);
+            if (bHasFoundNonCTValues)
+            {
+                poDS->m_poRAT.reset(poRAT.release());
+            }
+
+            for (int i = 1; i <= poDS->nBands; i++)
+            {
+                EHdrRasterBand *poBand =
+                    cpl::down_cast<EHdrRasterBand *>(poDS->GetRasterBand(i));
+                poBand->m_poColorTable = poDS->m_poColorTable;
+                poBand->m_poRAT = poDS->m_poRAT;
+                poBand->SetColorInterpretation(GCI_PaletteIndex);
+            }
+
+            poDS->bCLRDirty = false;
         }
-
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-
-        if (bHasFoundNonCTValues)
-        {
-            poDS->m_poRAT.swap(poRat);
-        }
-
-        for (int i = 1; i <= poDS->nBands; i++)
-        {
-            EHdrRasterBand *poBand =
-                cpl::down_cast<EHdrRasterBand *>(poDS->GetRasterBand(i));
-            poBand->m_poColorTable = poDS->m_poColorTable;
-            poBand->m_poRAT = poDS->m_poRAT;
-            poBand->SetColorInterpretation(GCI_PaletteIndex);
-        }
-
-        poDS->bCLRDirty = false;
     }
 
     // Read statistics (.STX).
