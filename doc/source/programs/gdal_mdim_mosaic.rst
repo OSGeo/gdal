@@ -133,7 +133,7 @@ Examples
 --------
 
 .. example::
-   :title: Mosaic together several netCDF files starting with ``slice`` that are slices of a 3D array
+   :title: Mosaic together all netCDF files starting with ``slice`` that are slices of a 3D array
 
    .. code-block:: bash
 
