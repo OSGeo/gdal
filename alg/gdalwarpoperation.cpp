@@ -723,18 +723,33 @@ GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions,
         }
     }
 
-    if (eErr == CE_None && psOptions->hDstDS &&
-        CPLTestBool(CSLFetchNameValueDef(psOptions->papszWarpOptions,
-                                         "RESET_DEST_PIXELS", "NO")))
+    if (eErr == CE_None && psOptions->hDstDS)
     {
-        for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
+        const auto oResetDestPixels =
+            cpl::strict_parse<bool>(CSLFetchNameValueDef(
+                psOptions->papszWarpOptions, "RESET_DEST_PIXELS", "NO"));
+
+        if (!oResetDestPixels.has_value())
         {
-            eErr = GDALFillRaster(
-                GDALGetRasterBand(psOptions->hDstDS, psOptions->panDstBands[i]),
-                psOptions->padfDstNoDataReal ? psOptions->padfDstNoDataReal[i]
-                                             : 0.0,
-                psOptions->padfDstNoDataImag ? psOptions->padfDstNoDataImag[i]
-                                             : 0.0);
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid value of RESET_DEST_PIXELS");
+            return CE_Failure;
+        }
+
+        if (oResetDestPixels.value())
+        {
+            for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
+            {
+                eErr =
+                    GDALFillRaster(GDALGetRasterBand(psOptions->hDstDS,
+                                                     psOptions->panDstBands[i]),
+                                   psOptions->padfDstNoDataReal
+                                       ? psOptions->padfDstNoDataReal[i]
+                                       : 0.0,
+                                   psOptions->padfDstNoDataImag
+                                       ? psOptions->padfDstNoDataImag[i]
+                                       : 0.0);
+            }
         }
     }
 

@@ -4945,3 +4945,15 @@ def test_gdalwarp_lib_invalid_source_extra(tmp_vsimem):
             "../gcore/data/byte.tif",
             warpOptions={"SOURCE_EXTRA": "5.1"},
         )
+
+
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_invalid_reset_dest_pixels(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Invalid value of RESET_DEST_PIXELS"):
+        # code path does not allow raising an exception
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            warpOptions={"RESET_DEST_PIXELS": "POSSIBLY"},
+        )
