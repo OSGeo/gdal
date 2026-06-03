@@ -296,7 +296,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 
   /*
    *  Keep this seemingly redundant overload to maintain
-   * compatability with old FileFromMemBuffer definition
+   * compatibility with old FileFromMemBuffer definition
    */
   public static bool FileFromMemBuffer(string utf8_string, byte[] bytes)
     => FileFromMemBuffer(utf8_string, bytes, 0, bytes.LongLength);
@@ -454,7 +454,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     return VSIFSeekL(fp, offset, (int)origin) == 0;
   }
 
-  /* To maintain compatability with old VSIFWriteL definition */
+  /* To maintain compatibility with old VSIFWriteL definition */
   [Obsolete("Use VSIFWriteL(byte[] buffer, int offset, int count, IntPtr fp)")]
   public static int VSIFWriteL(string data, int objectSize, int numObjects, IntPtr fp) {
     IntPtr handle = Marshal.StringToHGlobalAnsi(data);
