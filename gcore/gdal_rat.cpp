@@ -3451,7 +3451,7 @@ GDALLoadEsriCLRAsRAT(const char *pszFilename)
 
     int nRatRow = 0;
 
-    constexpr int MAX_LINE_SIZE = 1000;  // Arbitary
+    constexpr int MAX_LINE_SIZE = 1000;  // Arbitrary
     while (const char *pszLine =
                CPLReadLine2L(fp.get(), MAX_LINE_SIZE, nullptr))
     {
