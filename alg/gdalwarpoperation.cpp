@@ -3283,7 +3283,17 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     if (const char *pszSourceExtra =
             CSLFetchNameValue(psOptions->papszWarpOptions, "SOURCE_EXTRA"))
     {
-        const int nSrcExtra = atoi(pszSourceExtra);
+        int nSrcExtra = cpl::strict_parse<int>(pszSourceExtra).value_or(-1);
+
+        if (nSrcExtra < 0)
+        {
+            // no point raising CE_Failure because it will get converted into
+            // a warning at an outer scope
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "SOURCE_EXTRA must be a positive integer or zero.");
+            nSrcExtra = 0;
+        }
+
         nXRadius += nSrcExtra;
         nYRadius += nSrcExtra;
     }
