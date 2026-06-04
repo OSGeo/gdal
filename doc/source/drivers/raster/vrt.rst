@@ -1215,6 +1215,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **abs**
+     - 1
+     -
+     - (GDAL >= 3.14) Returns the absolute value
    * - **area**
      - 0
      -

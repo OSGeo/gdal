@@ -3344,6 +3344,55 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ReclassifyPixelFunc
 
+static const char pszAbsPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr AbsPixelFunc(void **papoSources, int nSources, void *pData,
+                           int nXSize, int nYSize, GDALDataType eSrcType,
+                           GDALDataType eBufType, int nPixelSpace,
+                           int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+    if (nSources != 1)
+        return CE_Failure;
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "abs cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                        ? dfNoData
+                                        : std::abs(dfVal);
+
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}
+
 struct MeanKernel
 {
     static constexpr const char *pszName = "mean";
@@ -4438,5 +4487,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("area", AreaPixelFunc,
                                         pszAreaPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("abs", AbsPixelFunc,
+                                        pszAbsPixelFuncMetadata);
     return CE_None;
 }
