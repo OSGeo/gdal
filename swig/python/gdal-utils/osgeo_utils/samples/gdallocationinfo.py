@@ -309,7 +309,9 @@ def val_at_coord(
 
     # Read geotransform matrix and calculate corresponding pixel coordinates
     geotransform = ds.GetGeoTransform()
-    success, inv_geotransform = gdal.InvGeoTransform(geotransform)
+    inv_geotransform = gdal.InvGeoTransform(geotransform)
+    if inv_geotransform is None:
+        raise Exception("InvGeoTransform() failed")
     x = int(inv_geotransform[0] + inv_geotransform[1] * X + inv_geotransform[2] * Y)
     y = int(inv_geotransform[3] + inv_geotransform[4] * X + inv_geotransform[5] * Y)
 
