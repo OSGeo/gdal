@@ -1796,6 +1796,9 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
 @pytest.mark.parametrize(
     "pixelfn,values,nodata_value,pixelfn_args,expected",
     [
+        ("abs", [-2], 7, {}, 2),
+        ("abs", [2], 7, {}, 2),
+        ("abs", [-7], -7, {}, -7),
         ("argmax", [3, 7, 9, 2], 7, {}, 3),
         ("argmax", [3, 7, 9], 7, {"propagateNoData": True}, 7),
         ("argmax", [7, 7, 7], 7, {}, 7),

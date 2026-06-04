@@ -1215,6 +1215,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **abs**
+     - 1
+     -
+     - (GDAL >= 3.14) Returns the absolute value
    * - **area**
      - 0
      -
@@ -1480,7 +1484,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **mod**
      - 1
      - -
-     - Extract module from a single raster band (real or complex)
+     - Extract module from a single raster band (real or complex). Starting with GDAL 3.14, NoData
+       values in real input bands will be preserved.
    * - **mode**
      - >= 1
      - ``propagateNoData`` (optional, default=false)

@@ -382,10 +382,15 @@ static CPLErr PolarPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // PolarPixelFunc
 
+static constexpr char pszModulePixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize, GDALDataType eSrcType,
                               GDALDataType eBufType, int nPixelSpace,
-                              int nLineSpace)
+                              int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 1)
@@ -419,15 +424,24 @@ static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
     }
     else
     {
+        double dfNoData{0};
+        const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+        if (bHasNoData &&
+            FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+            return CE_Failure;
+
         /* ---- Set pixels ---- */
         size_t ii = 0;
         for (int iLine = 0; iLine < nYSize; ++iLine)
         {
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
+                const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
                 // Source raster pixels may be obtained with GetSrcVal macro.
-                const double dfPixVal =
-                    fabs(GetSrcVal(papoSources[0], eSrcType, ii));
+                const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                            ? dfNoData
+                                            : std::fabs(dfVal);
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -4365,7 +4379,10 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("polar", PolarPixelFunc,
                                         pszPolarPixelFuncMetadata);
-    GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("mod", ModulePixelFunc,
+                                        pszModulePixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("abs", ModulePixelFunc,
+                                        pszModulePixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc,
