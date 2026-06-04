@@ -14,8 +14,6 @@
 
 import os
 import sys
-import tempfile
-import uuid
 import zipfile
 
 import gdaltest
@@ -2656,56 +2654,30 @@ def test_sentinel2_l1c_safe_compact_3():
 # Test opening zipped versions of S2 datasets
 
 
-def test_sentinel2_zipped():
-    # S2 L1C
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L1B
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L1A
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L2A
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(
-            zipwpath,
+@pytest.mark.parametrize(
+    "src_dir",
+    (
+        pytest.param("data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/", id="S2 L1C"),
+        pytest.param("data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/", id="S2 L1B"),
+        pytest.param("data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/", id="S2 L1A"),
+        pytest.param(
             "data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/",
-        )
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
+            id="S2 L2A",
+        ),
+        pytest.param(
+            "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/",
+            id="S2 L1c SAFE compact",
+        ),
+    ),
+)
+def test_sentinel2_zipped(src_dir, tmp_path):
 
-    # S2 L1c SAFE compact
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(
-            zipwpath, "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/"
-        )
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
+    zipwpath = tmp_path / "S2.zip"
+    _zip_a_dir(zipwpath, src_dir)
+    assert os.path.exists(zipwpath)
+
+    ds = gdal.Open(zipwpath)
+    assert ds is not None
 
 
 ###############################################################################

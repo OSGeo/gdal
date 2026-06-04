@@ -15,7 +15,6 @@
 import collections
 import json
 import pathlib
-import tempfile
 
 import gdaltest
 import ogrtest
@@ -1907,6 +1906,7 @@ def test_width_precision_flags(
     expected_dest_precision,
     exp_src_decimal_flag,
     exp_src_minus_flag,
+    tmp_path,
 ):
     """Test precision/width (scale) conversions for numeric type"""
 
@@ -1923,11 +1923,11 @@ def test_width_precision_flags(
     # but it writes the full precision value in the GML without warning
     PRECISION_UNRELIABLE_DRIVERS = ("GML", "CSV")
 
-    src_file_base_name = "ogr_precision_flags_test"
-    src_file_name = tempfile.mktemp(src_ext, src_file_base_name)
+    src_file_base_name = "ogr_precision_flags_test_src"
+    src_file_name = tmp_path / f"{src_file_base_name}.{src_ext}"
 
-    dest_file_base_name = "ogr_precision_flags_test"
-    dest_file_name = tempfile.mktemp(dest_ext, dest_file_base_name)
+    dest_file_base_name = "ogr_precision_flags_test_dst"
+    dest_file_name = tmp_path / f"{dest_file_base_name}.{dest_ext}"
 
     dr = ogr.GetDriverByName(src_driver)
     src_width_includes_sign = (

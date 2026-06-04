@@ -1571,15 +1571,11 @@ def test_ogr_miramon_write_launder_layer_name(tmp_path):
 ###############################################################################
 
 
-def test_ogr_miramon_vector_sql_select_preserve_reserved_fields():
+def test_ogr_miramon_vector_sql_select_preserve_reserved_fields(tmp_path):
 
     src_filename = "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol"
 
-    import os
-    import tempfile
-
-    tmp_dir = tempfile.mkdtemp()
-    out_filename = os.path.join(tmp_dir, "selected.pol")
+    out_filename = str(tmp_path / "selected.pol")
 
     ds = ogr.Open(src_filename)
     assert ds is not None
