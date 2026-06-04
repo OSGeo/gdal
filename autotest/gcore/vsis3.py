@@ -17,7 +17,6 @@ import os
 import os.path
 import stat
 import sys
-import tempfile
 import urllib
 
 import gdaltest
@@ -5356,11 +5355,10 @@ aws_secret_access_key = bar
 # Read credentials from sts AssumeRoleWithWebIdentity
 @pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
 def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
-    aws_test_config, webserver_port
+    aws_test_config, webserver_port, tmp_path
 ):
-    fp = tempfile.NamedTemporaryFile(delete=False)
-    fp.write(b"token")
-    fp.close()
+    with open(tmp_path / "token.txt", "wb") as fp:
+        fp.write(b"token")
 
     aws_role_arn = "arn:aws:iam:role/test"
     aws_role_arn_encoded = urllib.parse.quote_plus(aws_role_arn)
@@ -7167,12 +7165,12 @@ region = us-east-1
 # Test credential_process with invalid JSON
 
 
-def test_vsis3_credential_process_invalid_json(tmp_vsimem, aws_test_config):
+def test_vsis3_credential_process_invalid_json(tmp_vsimem, aws_test_config, tmp_path):
     script_content = """#!/usr/bin/env python3
 print('invalid json response')
 """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+    with open(tmp_path / "script.py", "w") as f:
         f.write(script_content)
         script_path = f.name
 
@@ -7211,7 +7209,7 @@ region = us-east-1
 # Test credential_process with missing required fields
 
 
-def test_vsis3_credential_process_missing_fields(tmp_vsimem, aws_test_config):
+def test_vsis3_credential_process_missing_fields(tmp_vsimem, aws_test_config, tmp_path):
 
     script_content = """#!/usr/bin/env python3
 import json
@@ -7219,7 +7217,7 @@ credentials = {"AccessKeyId": "test_key"}
 print(json.dumps(credentials))
 """
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+    with open(tmp_path / "script.py", "w") as f:
         f.write(script_content)
         script_path = f.name
 
