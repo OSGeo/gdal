@@ -4596,7 +4596,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 const vsi_l_offset nChunksLarge =
                     nMaxChunkSize == 0
                         ? 1
-                        : cpl::div_round_up(entry->nSize, nMaxChunkSize);
+                        : std::max<vsi_l_offset>(
+                              1,
+                              cpl::div_round_up(entry->nSize, nMaxChunkSize));
                 if (nChunksLarge >
                     1000)  // must also be below knMAX_PART_NUMBER for upload
                 {
