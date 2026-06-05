@@ -323,3 +323,6 @@ See Also
 
 -  `OGC WMTS Standard <http://www.opengeospatial.org/standards/wmts>`__
 -  :ref:`raster.wms` driver page.
+
+.. spelling:word-list::
+    WMTSCapabilities
