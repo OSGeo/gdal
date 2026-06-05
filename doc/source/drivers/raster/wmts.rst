@@ -170,6 +170,7 @@ Local service description XML file
 It is important that there be no spaces or other content before the
 ``<GDAL_WMTS>`` element.
 
+.. tabularcolumns:: |p{0.35\linewidth}|p{0.55\linewidth}|
 .. rst-class:: gdal-wrapped-table
 
 ========================================================================== ===============================================================================================================
