@@ -2397,29 +2397,25 @@ def test_vsiaz_imds_authentication_expiration():
     ):
 
         handler = webserver.SequentialHandler()
-        handler.add(
-            "GET",
-            "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
-            200,
-            {},
-            """{
-                    "access_token": "my_bearer",
-                    "expires_on": "1000",
-                    }""",
-            expected_headers={"Metadata": "true"},
-        )
+
+        def add_get_token():
+            handler.add(
+                "GET",
+                "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
+                200,
+                {},
+                """{
+                        "access_token": "my_bearer",
+                        "expires_on": "1000",
+                        }""",
+                expected_headers={"Metadata": "true"},
+            )
+
+        add_get_token()
         # Credentials requested again since they are expired
-        handler.add(
-            "GET",
-            "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
-            200,
-            {},
-            """{
-                    "access_token": "my_bearer",
-                    "expires_on": "1000",
-                    }""",
-            expected_headers={"Metadata": "true"},
-        )
+        add_get_token()
+        add_get_token()
+        add_get_token()
         handler.add(
             "GET",
             "/azure/blob/myaccount/az_fake_bucket/resource",
@@ -2714,6 +2710,24 @@ def test_vsiaz_workload_identity_managed_authentication_expiration():
 
         # We have a security margin of 60 seconds over the expires_in delay
         # so we will need to fetch the token again
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer2", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer2", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
         handler.add(
             "POST",
             "/tenant_id/oauth2/v2.0/token",
