@@ -28,6 +28,8 @@ service description XML file -- there are examples below for each of the
 supported image services. It is important that there be no spaces or
 other content before the ``<GDAL_WMS>`` element.
 
+.. rst-class:: gdal-wrapped-table
+
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
 <GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)

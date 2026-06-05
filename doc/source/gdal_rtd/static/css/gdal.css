@@ -361,3 +361,8 @@ table.top-aligned-table td p {
 .steps-toc ul {
     columns: 2;
 }
+
+.gdal-wrapped-table td:nth-child(2) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
