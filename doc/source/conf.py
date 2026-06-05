@@ -1486,11 +1486,23 @@ man_pages = [
 
 # latex
 
+# preamble adds customisations to the top of the generated .tex file
+
+# \DeclareUnicodeCharacter: map unicode chars (prime, zero-width space) to LaTeX equivalents
+# \newcolumntype{P}: custom column type for line-wrapping long cells (e.g. XML tags)
+#   \raggedright turns off justification
+#   \hspace{0pt} inserts a zero-width breakpoint so long unspaced strings can break
+#   \sloppy relaxes LaTeX's line-breaking strictness for edge cases
+# \LTleft/\LTright: fix longtable centering (caused gaps at the sides and misaligned border)
+
 preamble = r"""
 \ifdefined\DeclareUnicodeCharacter
   \DeclareUnicodeCharacter{2032}{$'$}% prime
   \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
 \fi
+\newcolumntype{P}[1]{>{\raggedright\hspace{0pt}\sloppy}p{#1}}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
 """
 
 # Package substitutefont no longer exists since TeXLive 2023 later than August 2023

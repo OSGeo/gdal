@@ -170,242 +170,84 @@ Local service description XML file
 It is important that there be no spaces or other content before the
 ``<GDAL_WMTS>`` element.
 
-+-----------------------------------+-----------------------------------+
-| <GDAL_WMTS>                       |                                   |
-+-----------------------------------+-----------------------------------+
-| <GetCapabilitiesUrl>              | URL (or filename for local files) |
-| http://foo/WMTSCapabilities.xml   | to GetCapabilities response       |
-| </GetCapabilitiesUrl>             | document (required). For a KVP    |
-|                                   | only server, will be like         |
-|                                   | http://end_point?SERVICE=WMTS&amp |
-|                                   | ;REQUEST=GetCapabilities          |
-|                                   | .                                 |
-+-----------------------------------+-----------------------------------+
-| <ExtraQueryParameters>foo=bar&amp;| URL query parameters to add to    |
-| </ExtraQueryParameters>           | all requests (GetCapabilities,    |
-|                                   | GetTile, GetFeatureInfo)          |
-|                                   | (added in GDAL 3.5.1)             |
-+-----------------------------------+-----------------------------------+
-| <Layer>layer_id</Layer>           | Layer identifier (optional, but   |
-|                                   | may be needed to disambiguate     |
-|                                   | between several layers)           |
-+-----------------------------------+-----------------------------------+
-| <Style>style_id</Style>           | Style identifier. Must be one of  |
-|                                   | the listed styles for the layer.  |
-|                                   | (optional, but may be needed to   |
-|                                   | disambiguate between several      |
-|                                   | styles)                           |
-+-----------------------------------+-----------------------------------+
-| <TileMatrixSet>tile_matrix_set_id | Tile Matrix Set identifier. Must  |
-| </TileMatrixSet>                  | be one of the listed tile matrix  |
-|                                   | set for the layer. (optional, but |
-|                                   | may be needed to disambiguate     |
-|                                   | between several tile matrix sets) |
-+-----------------------------------+-----------------------------------+
-| <TileMatrix>tile_matrix_id        | Tile Matrix identifier. Must be   |
-| </TileMatrix>                     | one of the listed tile matrix of  |
-|                                   | the select tile matrix set for    |
-|                                   | the layer. (optional, GDAL >=     |
-|                                   | 2.2. Exclusive with ZoomLevel. If |
-|                                   | not specified the last tile       |
-|                                   | matrix, ie the one with the best  |
-|                                   | resolution, is selected)          |
-+-----------------------------------+-----------------------------------+
-| <ZoomLevel>int_value</ZoomLevel>  | Index of the maximum zoom level / |
-|                                   | tile matrix to use. The first one |
-|                                   | (ie the one of lower resolution)  |
-|                                   | is indexed 0. (optional, GDAL >=  |
-|                                   | 2.2. Exclusive with TileMatrix.   |
-|                                   | If not specified the last tile    |
-|                                   | matrix, ie the one with the best  |
-|                                   | resolution, is selected)          |
-+-----------------------------------+-----------------------------------+
-| <Format>image/png</Format>        | Tile format, used by GetTile      |
-|                                   | requests. Must be one of the      |
-|                                   | listed Format for the layer.      |
-|                                   | (optional, but may be needed to   |
-|                                   | disambiguate between several      |
-|                                   | Format)                           |
-+-----------------------------------+-----------------------------------+
-| <InfoFormat>application/xml       | Info format, used by              |
-| </InfoFormat>                     | GetFeatureInfo requests. Must be  |
-|                                   | one of the listed InfoFormat for  |
-|                                   | the layer. (optional, but may be  |
-|                                   | needed to disambiguate between    |
-|                                   | several InfoFormat)               |
-+-----------------------------------+-----------------------------------+
-| <DataWindow>                      | Define extents of the data.       |
-|                                   | (optional, when not specified the |
-|                                   | driver will query the declared    |
-|                                   | extent of the layer, and if not   |
-|                                   | present fallback to the extent of |
-|                                   | the select tile matrix set,       |
-|                                   | taking into account potential     |
-|                                   | tile matrix set limits)           |
-+-----------------------------------+-----------------------------------+
-| <UpperLeftX>-180.0</UpperLeftX>   | X (longitude/easting) coordinate  |
-|                                   | of upper-left corner, in the SRS  |
-|                                   | of the tile matrix set. (required |
-|                                   | if DataWindow is present)         |
-+-----------------------------------+-----------------------------------+
-| <UpperLeftY>90.0</UpperLeftY>     | Y (latitude/northing) coordinate  |
-|                                   | of upper-left corner, in the SRS  |
-|                                   | of the tile matrix set. (required |
-|                                   | if DataWindow is present)         |
-+-----------------------------------+-----------------------------------+
-| <LowerRightX>180.0</LowerRightX>  | X (longitude/easting) coordinate  |
-|                                   | of lower-right corner, in the SRS |
-|                                   | of the tile matrix set. (required |
-|                                   | if DataWindow is present)         |
-+-----------------------------------+-----------------------------------+
-| <LowerRightY>-90.0</LowerRightY>  | Y (latitude/northing) coordinate  |
-|                                   | of lower-right corner, in the SRS |
-|                                   | of the tile matrix set. (required |
-|                                   | if DataWindow is present)         |
-+-----------------------------------+-----------------------------------+
-| </DataWindow>                     |                                   |
-+-----------------------------------+-----------------------------------+
-| <Projection>EPSG:4326             | Declared projection, in case the  |
-| </Projection>                     | one of the TileMatrixSet is not   |
-|                                   | desirable (optional, defaults to  |
-|                                   | value of the TileMatrixSet)       |
-+-----------------------------------+-----------------------------------+
-| <BandsCount>4</BandsCount>        | Number of bands/channels, 1 for   |
-|                                   | grayscale data, 3 for RGB, 4 for  |
-|                                   | RGBA. (optional, defaults to 4)   |
-+-----------------------------------+-----------------------------------+
-| <DataType>Byte</DataType>         | Band data type, one of: Byte,     |
-|                                   | Int16, UInt16, Int32, UInt32,     |
-|                                   | Float32, Float64, etc..           |
-|                                   | (optional, defaults to Byte)      |
-+-----------------------------------+-----------------------------------+
-| <ExtendBeyondDateLine>false       | Whether to make the extent go     |
-| </ExtendBeyondDateLine>           | over dateline and warp tile       |
-|                                   | requests. Only appropriate when   |
-|                                   | the 2 following conditions are    |
-|                                   | met (optional, defaults to        |
-|                                   | false):                           |
-|                                   |                                   |
-|                                   | -  for a geodetic SRS or          |
-|                                   |    EPSG:3857, with tile matrix    |
-|                                   |    sets such as the whole         |
-|                                   |    [-180,180] range of longitude  |
-|                                   |    is entirely covered by an      |
-|                                   |    integral number of tiles (e.g. |
-|                                   |    GoogleMapsCompatible).         |
-|                                   | -  AND                            |
-|                                   |                                   |
-|                                   |    -  when the layer BoundingBox  |
-|                                   |       in the SRS of the tile      |
-|                                   |       matrix set covers the whole |
-|                                   |       [-180,180] range of         |
-|                                   |       longitude, and that there   |
-|                                   |       is another BoundingBox in   |
-|                                   |       another SRS that is         |
-|                                   |       centered around longitude   |
-|                                   |       180. If such alternate      |
-|                                   |       BoundingBox is not present  |
-|                                   |       in the GetCapabilities      |
-|                                   |       document, DataWindow must   |
-|                                   |       be explicitly specified     |
-|                                   |    -  OR when the layer           |
-|                                   |       BoundingBox in the SRS of   |
-|                                   |       the tile matrix set extends |
-|                                   |       beyond the dateline.        |
-+-----------------------------------+-----------------------------------+
-| <Cache>                           | Enable local disk cache. Allows   |
-|                                   | for offline operation. (optional, |
-|                                   | cache is disabled when absent,    |
-|                                   | but it is present in the          |
-|                                   | autogenerated XML, can be         |
-|                                   | overridden with                   |
-|                                   | GDAL_ENABLE_WMS_CACHE=NO          |
-+-----------------------------------+-----------------------------------+
-| <Path>./gdalwmscache</Path>       | Location where to store cache     |
-|                                   | files. It is safe to use same     |
-|                                   | cache path for different data     |
-|                                   | sources. (optional, defaults to   |
-|                                   | ./gdalwmscache if                 |
-|                                   | GDAL_DEFAULT_WMS_CACHE_PATH       |
-|                                   | configuration option is not       |
-|                                   | specified)                        |
-|                                   | /vsimem/ paths are supported      |
-|                                   | allowing for temporary in-memory  |
-|                                   | cache                             |
-+-----------------------------------+-----------------------------------+
-| <Type>file</Type>                 | Cache type. Now supported only    |
-|                                   | 'file' type. In 'file'            |
-|                                   | cache type files are stored in    |
-|                                   | file system folders. (optional,   |
-|                                   | defaults to 'file')               |
-+-----------------------------------+-----------------------------------+
-| <Depth>2</Depth>                  | Number of directory layers. 2     |
-|                                   | will result in files being        |
-|                                   | written as                        |
-|                                   | cache_path/A/B/ABCDEF...          |
-|                                   | (optional, defaults to 2)         |
-+-----------------------------------+-----------------------------------+
-| <Extension>.jpg</Extension>       | Append to cache files. (optional, |
-|                                   | defaults to none)                 |
-+-----------------------------------+-----------------------------------+
-| </Cache>                          |                                   |
-+-----------------------------------+-----------------------------------+
-| <MaxConnections>2                 | Maximum number of simultaneous    |
-| </MaxConnections                  | connections. (optional, defaults  |
-|                                   | to 2)                             |
-+-----------------------------------+-----------------------------------+
-| <Timeout>300</Timeout>            | Connection timeout in seconds.    |
-|                                   | (optional, defaults to 300)       |
-+-----------------------------------+-----------------------------------+
-| <OfflineMode>true</OfflineMode>   | Do not download any new images,   |
-|                                   | use only what is in cache. Useful |
-|                                   | only with cache enabled.          |
-|                                   | (optional, defaults to false)     |
-+-----------------------------------+-----------------------------------+
-| <UserAgent>GDAL WMS driver        | HTTP User-agent string. Some      |
-| (http://gdal.org/frmt_wms.html)   | servers might require a           |
-| </UserAgent>                      | well-known user-agent such as     |
-|                                   | "Mozilla/5.0" (optional, defaults |
-|                                   | to "GDAL WMS driver               |
-|                                   | (http://gdal.org/frmt_wms.html)   |
-+-----------------------------------+-----------------------------------+
-| <Accept>mimetype>/Accept>         | HTTP Accept header to specify the |
-|                                   | MIME type of the expected output  |
-|                                   | of the server. Empty by default.  |
-|                                   | (added in GDAL 3.5.1)             |
-+-----------------------------------+-----------------------------------+
-| <UserPwd>user:password</UserPwd>  | User and Password for HTTP        |
-|                                   | authentication (optional).        |
-+-----------------------------------+-----------------------------------+
-| <UnsafeSSL>true</UnsafeSSL>       | Skip SSL certificate              |
-|                                   | verification. May be needed if    |
-|                                   | server is using a self signed     |
-|                                   | certificate (optional, defaults   |
-|                                   | to false, but set to true in      |
-|                                   | autogenerated XML).               |
-+-----------------------------------+-----------------------------------+
-| <Referer>http://example.foo/      | HTTP Referer string. Some servers |
-| </Referer>                        | might require it (optional).      |
-+-----------------------------------+-----------------------------------+
-| <ZeroBlockHttpCodes>204,404       | Comma separated list of HTTP      |
-| </ZeroBlockHttpCodes>             | response codes that will be       |
-|                                   | interpreted as a 0 filled image   |
-|                                   | (i.e. black for 3 bands, and      |
-|                                   | transparent for 4 bands) instead  |
-|                                   | of aborting the request.          |
-|                                   | (optional, defaults to non set,   |
-|                                   | but set to 204,404 in             |
-|                                   | autogenerated XML)                |
-+-----------------------------------+-----------------------------------+
-| <ZeroBlockOnServerException>true  | Whether to treat a Service        |
-| </ZeroBlockOnServerException>     | Exception returned by the server  |
-|                                   | as a 0 filled image instead of    |
-|                                   | aborting the request. (optional,  |
-|                                   | defaults to false, but set to     |
-|                                   | true in autogenerated XML)        |
-+-----------------------------------+-----------------------------------+
-| </GDAL_WMTS>                      |                                   |
-+-----------------------------------+-----------------------------------+
+.. tabularcolumns:: P{0.45\linewidth}p{0.55\linewidth}
+.. rst-class:: gdal-wrapped-table
+
+========================================================================== ===============================================================================================================
+<GDAL_WMTS>
+<GetCapabilitiesUrl>http://host/wms.cgi?</GetCapabilitiesUrl>              URL (or filename for local files) to GetCapabilities response document (required). For a KVP only server, will
+                                                                           be like http://end_point?SERVICE=WMTS&REQUEST=GetCapabilities.
+<ExtraQueryParameters>foo=bar&</ExtraQueryParameters>                      URL query parameters to add to all requests (GetCapabilities, GetTile, GetFeatureInfo) (added in GDAL 3.5.1)
+<Layer>layer_id</Layer>                                                    Layer identifier (optional, but may be needed to disambiguate between several layers)
+<Style>style_id</Style>                                                    Style identifier. Must be one of the listed styles for the layer. (optional, but may be needed to disambiguate
+                                                                           between several styles)
+<TileMatrixSet>tile_matrix_set_id</TileMatrixSet>                          Tile Matrix Set identifier. Must be one of the listed tile matrix set for the layer. (optional, but may be
+                                                                           needed to disambiguate between several tile matrix sets)
+<TileMatrix>tile_matrix_id</TileMatrix>                                    Tile Matrix identifier. Must be one of the listed tile matrix of the select tile matrix set for the layer.
+                                                                           (optional, GDAL >= 2.2. Exclusive with ZoomLevel. If not specified the last tile matrix, ie the one with the
+                                                                           best resolution, is selected)
+<ZoomLevel>int_value</ZoomLevel>                                           Index of the maximum zoom level / tile matrix to use. The first one (ie the one of lower resolution) is indexed
+                                                                           0. (optional, GDAL >= 2.2. Exclusive with TileMatrix. If not specified the last tile matrix, ie the one with
+                                                                           the best resolution, is selected)
+<Format>image/png</Format>                                                 Tile format, used by GetTile requests. Must be one of the listed Format for the layer. (optional, but may be
+                                                                           needed to disambiguate between several Format)
+<InfoFormat>application/xml</InfoFormat>                                   Info format, used by GetFeatureInfo requests. Must be one of the listed InfoFormat for the layer. (optional,
+                                                                           but may be needed to disambiguate between several InfoFormat)
+<DataWindow>                                                               Define extents of the data. (optional, when not specified the driver will query the declared extent of the
+                                                                           layer, and if not present fallback to the extent of the select tile matrix set, taking into account potential
+                                                                           tile matrix set limits)
+<UpperLeftX>-180.0</UpperLeftX>                                            X (longitude/easting) coordinate of upper-left corner, in the SRS of the tile matrix set. (required if
+                                                                           DataWindow is present)
+<UpperLeftY>90.0</UpperLeftY>                                              Y (latitude/northing) coordinate of upper-left corner, in the SRS of the tile matrix set. (required if
+                                                                           DataWindow is present)
+<LowerRightX>180.0</LowerRightX>                                           X (longitude/easting) coordinate of lower-right corner, in the SRS of the tile matrix set. (required if
+                                                                           DataWindow is present)
+<LowerRightY>-90.0</LowerRightY>                                           Y (latitude/northing) coordinate of lower-right corner, in the SRS of the tile matrix set. (required if
+                                                                           DataWindow is present)
+</DataWindow>
+<Projection>EPSG:4326</Projection>                                         Declared projection, in case the one of the TileMatrixSet is not desirable (optional, defaults to value of the
+                                                                           TileMatrixSet)
+<BandsCount>4</BandsCount>                                                 Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 4)
+<DataType>Byte</DataType>                                                  Band data type, one of: Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to
+                                                                           Byte)
+<ExtendBeyondDateLine>false</ExtendBeyondDateLine>                         Whether to make the extent go over dateline and warp tile requests. Only appropriate when the 2 following
+                                                                           conditions are met (optional, defaults to false): for a geodetic SRS or EPSG:3857, with tile matrix sets such
+                                                                           as the whole [-180,180] range of longitude is entirely covered by an integral number of tiles (e.g.
+                                                                           GoogleMapsCompatible). AND when the layer BoundingBox in the SRS of the tile matrix set covers the whole
+                                                                           [-180,180] range of longitude, and that there is another BoundingBox in another SRS that is centered around
+                                                                           longitude 180. If such alternate BoundingBox is not present in the GetCapabilities document, DataWindow must be
+                                                                           explicitly specified. OR when the layer BoundingBox in the SRS of the tile matrix set extends beyond the
+                                                                           dateline.
+<Cache>                                                                    Enable local disk cache. Allows for offline operation. (optional, cache is disabled when absent, but it is
+                                                                           present in the autogenerated XML, can be overridden with GDAL_ENABLE_WMS_CACHE=NO)
+<Path>./gdalwmscache</Path>                                                Location where to store cache files. It is safe to use same cache path for different data sources. (optional,
+                                                                           defaults to ./gdalwmscache if GDAL_DEFAULT_WMS_CACHE_PATH configuration option is not specified) /vsimem/ paths
+                                                                           are supported allowing for temporary in-memory cache
+<Type>file</Type>                                                          Cache type. Now supported only 'file' type. In 'file' cache type files are stored in file system folders.
+                                                                           (optional, defaults to 'file')
+<Depth>2</Depth>                                                           Number of directory layers. 2 will result in files being written as cache_path/A/B/ABCDEF... (optional,
+                                                                           defaults to 2)
+<Extension>.jpg</Extension>                                                Append to cache files. (optional, defaults to none)
+</Cache>
+<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2)
+<Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
+<OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults
+                                                                           to false)
+<UserAgent>GDAL WMS driver (http://gdal.org/frmt_wms.html)</UserAgent>     HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional,
+                                                                           defaults to "GDAL WMS driver (http://gdal.org/frmt_wms.html)")
+<Accept>mimetype>/Accept>                                                  HTTP Accept header to specify the MIME type of the expected output of the server. Empty by default. (added in
+                                                                           GDAL 3.5.1)
+<UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
+<UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional,
+                                                                           defaults to false, but set to true in autogenerated XML).
+<Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional).
+<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3
+                                                                           bands, and transparent for 4 bands) instead of aborting the request. (optional, defaults to non set, but set to
+                                                                           204,404 in autogenerated XML)
+<ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the
+                                                                           request. (optional, defaults to false, but set to true in autogenerated XML)
+</GDAL_WMTS>
+========================================================================== ===============================================================================================================
 
 Additional HTTP headers can be sent by setting the
 :config:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text
@@ -482,3 +324,6 @@ See Also
 
 -  `OGC WMTS Standard <http://www.opengeospatial.org/standards/wmts>`__
 -  :ref:`raster.wms` driver page.
+
+.. spelling:word-list::
+    WMTSCapabilities
