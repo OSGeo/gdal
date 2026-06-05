@@ -1491,7 +1491,9 @@ preamble = r"""
   \DeclareUnicodeCharacter{2032}{$'$}% prime
   \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
 \fi
-\newcolumntype{P}[1]{>{\raggedright\hspace{0pt}}p{#1}}
+\newcolumntype{P}[1]{>{\raggedright\hspace{0pt}\sloppy}p{#1}}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
 """
 
 # Package substitutefont no longer exists since TeXLive 2023 later than August 2023
