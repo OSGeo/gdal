@@ -9,6 +9,8 @@
   </Metadata_Identification>
   <Dataset_Content>
       <SURFACE_AREA unit="square km">1</SURFACE_AREA>
+      <CLOUD_COVERAGE unit="percent">2</CLOUD_COVERAGE>
+      <SNOW_COVERAGE unit="percent">3</SNOW_COVERAGE>
       <Dataset_Components>
          <Component>
             <COMPONENT_TITLE>Strip Source</COMPONENT_TITLE>
