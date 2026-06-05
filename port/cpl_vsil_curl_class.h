@@ -183,13 +183,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
                                             // GetRegionCache();
     RegionCacheType *GetRegionCache();
 
-    // LRU cache that just keeps in memory if this file system handler is
-    // spposed to know the file properties of a file. The actual cache is a
-    // shared one among all network file systems.
-    // The aim of that design is that invalidating /vsis3/foo results in
-    // /vsis3_streaming/foo to be invalidated as well.
-    lru11::Cache<std::string, bool> oCacheFileProp;
-
     int nCachedFilesInDirList = 0;
     lru11::Cache<std::string, CachedDirList> oCacheDirList;
 
@@ -303,8 +296,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
                                   vsi_l_offset startOffset, int nBlocks,
                                   const std::string &osData);
 
-    bool GetCachedFileProp(const char *pszURL, FileProp &oFileProp);
-    void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
+    static bool GetCachedFileProp(const char *pszURL, FileProp &oFileProp);
+    static void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void InvalidateCachedData(const char *pszURL);
 
     CURLM *GetCurlMultiHandleFor(const std::string &osURL);
