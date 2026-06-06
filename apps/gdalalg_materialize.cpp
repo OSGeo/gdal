@@ -151,7 +151,10 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             poOutDS.reset();
             if (ok)
             {
-                const char *const apszAllowedDrivers[] = {m_format.c_str(),
+                std::string reopenFormat = m_format;
+                if (m_format == "COG")
+                    reopenFormat = "GTiff";
+                const char *const apszAllowedDrivers[] = {reopenFormat.c_str(),
                                                           nullptr};
                 poOutDS.reset(GDALDataset::Open(
                     filename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
