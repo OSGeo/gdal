@@ -4,7 +4,7 @@
 Pre-requisites: GDAL installation and workshop sample dataset download
 ================================================================================
 
-This workshop requires GDAL 3.13.0, released May 2026.
+This workshop requires GDAL 3.13.1, released June 2026.
 
 The suggested installation procedure is to use GDAL Conda builds. Conda is a
 system package management system that works on all major desktop operating system
@@ -59,7 +59,7 @@ Inside the container:
 
 ::
 
-    GDAL 3.13.0 "Iowa City", released 2026/05/04
+    GDAL 3.13.1 "Iowa City", released 2026/06/01
 
 The datasets are there:
 
@@ -260,7 +260,7 @@ Now let's check we got the GDAL we expected:
 
 ::
 
-    GDAL 3.13.0 "Iowa City", released 2026/05/04
+    GDAL 3.13.1 "Iowa City", released 2026/06/01
 
 MacOS X
 -------
@@ -455,7 +455,7 @@ Now let's check we got the GDAL we expected:
 
 ::
 
-    GDAL 3.13.0 "Iowa City", released 2026/05/04
+    GDAL 3.13.1 "Iowa City", released 2026/06/01
 
 Install a Bash shell
 ++++++++++++++++++++

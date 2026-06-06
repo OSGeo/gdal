@@ -99,10 +99,6 @@ and check the result:
 Exercise
 --------
 
-.. warning::
-
-    Does not work on GDAL 3.13.0 because of https://github.com/OSGeo/gdal/issues/14621
-
 Modify above pipeline to materialize the scaled dataset as a COG before tiling.
 
 .. collapse:: (hint)
