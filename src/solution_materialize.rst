@@ -18,6 +18,12 @@ Exercise solution for materializing pipeline intermediate result
                   --input-max 2400 \
                   --output-data-type uint8 \
             ! \
-            materialize --format COG --creation-option RESAMPLING=CUBIC --output=mosaic.tif \
+            materialize --output=mosaic.tif \
             ! \
-            tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP \
+            tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP
+
+
+.. note::
+
+      Original idea was to use COG output instead of regular GeoTIFF, but fails
+      currently because of https://github.com/OSGeo/gdal/issues/14730

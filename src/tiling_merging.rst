@@ -99,7 +99,7 @@ and check the result:
 Exercise
 --------
 
-Modify above pipeline to materialize the scaled dataset as a COG before tiling.
+Modify above pipeline to materialize the scaled dataset as a GeoTIFF before tiling.
 
 .. collapse:: (hint)
 
