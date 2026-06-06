@@ -526,13 +526,13 @@ The following configuration options are available:
 
 - :copy-config:`OGR_SQLITE_JOURNAL`
 
-- .. config:: OGR_SQLITE_CACHE
+- :copy-config:`OGR_SQLITE_CACHE`
 
-     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
-- .. config:: OGR_SQLITE_SYNCHRONOUS
+- :copy-config:`OGR_SQLITE_SYNCHRONOUS`
 
-     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - :copy-config:`OGR_SQLITE_LOAD_EXTENSIONS`
 
