@@ -466,11 +466,15 @@ The following configuration options are available:
 
 - .. config:: OGR_SQLITE_CACHE
 
-     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+     increases SQLite’s internal page cache (in MB).
+
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - .. config:: OGR_SQLITE_SYNCHRONOUS
 
-     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+     setting to OFF can improve write performance but reduces crash safety
+
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - .. config:: OGR_SQLITE_LOAD_EXTENSIONS
      :choices: <extension1\,...\,extensionN>, ENABLE_SQL_LOAD_EXTENSION
