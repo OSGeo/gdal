@@ -835,6 +835,18 @@ def test_gdalalg_pipeline_nested_nominal():
         ]
 
 
+def test_gdalalg_pipeline_inner_pipeline_vrt(tmp_path):
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/14732"""
+
+    shutil.copy("data/color_file.txt", tmp_path)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! blend --overlay [ read ../gcore/data/byte.tif ! color-map --color-map {tmp_path}/color_file.txt ]"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4475
+
+
 def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
 
     out_filename = tmp_vsimem / "out.gdalg.json"
