@@ -1901,7 +1901,7 @@ class FakeMaxZoomDataset : public GDALDataset
         for (int i = 1; i <= nBandsIn; ++i)
         {
             SetBand(i,
-                    new FakeMaxZoomRasterBand(
+                    std::make_unique<FakeMaxZoomRasterBand>(
                         i, nWidth, nHeight, nBlockXSize, nBlockYSize, eDT,
                         dstBuffer.data() + static_cast<size_t>(i - 1) *
                                                nBlockXSize * nBlockYSize *
@@ -2059,7 +2059,7 @@ class MosaicDataset : public GDALDataset
                 (i <= static_cast<int>(m_aeColorInterp.size()))
                     ? m_aeColorInterp[i - 1]
                     : GCI_AlphaBand;
-            SetBand(i, new MosaicRasterBand(
+            SetBand(i, std::make_unique<MosaicRasterBand>(
                            this, i, nRasterXSize, nRasterYSize, oTM.mTileWidth,
                            oTM.mTileHeight, eDT, eColorInterp, nTileMinX,
                            nTileMinY, oTM, convention, directory, extension,
