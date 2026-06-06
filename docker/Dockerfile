@@ -39,13 +39,12 @@ RUN set -x && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate" >> ~/.bashrc && \
-    /opt/conda/bin/conda install python==3.14 && \
     find /opt/conda/ -follow -type f -name '*.a' -delete && \
     find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
     /opt/conda/bin/conda clean -afy
 
 RUN set -x && \
-    /opt/conda/bin/conda install gdal libgdal yq qgis && \
+    /opt/conda/bin/conda install gdal==3.13.1 libgdal==3.13.1 yq qgis && \
     find /opt/conda/ -follow -type f -name '*.a' -delete && \
     find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
     /opt/conda/bin/conda clean -afy
