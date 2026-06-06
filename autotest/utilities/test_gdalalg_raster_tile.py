@@ -2316,6 +2316,19 @@ def test_gdalalg_raster_tile_pipeline_materialize_explicit_filename(tmp_vsimem):
     assert ds.RasterXSize == 400
 
 
+def test_gdalalg_raster_tile_pipeline_materialize_explicit_filename_cog(tmp_vsimem):
+
+    gdal.alg.pipeline(
+        pipeline=f"read ../gdrivers/data/small_world.tif ! materialize --output-format COG --output {tmp_vsimem}/tmp.tif ! tile {tmp_vsimem}"
+    )
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 255)
+
+    ds = gdal.Open(tmp_vsimem / "tmp.tif")
+    assert ds.RasterXSize == 400
+
+
 def test_gdalalg_raster_tile_pipeline_materialize_no_explicit_filename(tmp_vsimem):
 
     gdal.alg.pipeline(
