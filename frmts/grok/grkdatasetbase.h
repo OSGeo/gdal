@@ -2190,6 +2190,18 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                             for (int x = 0; x < copyWidth; ++x)
                                 dst32[x] = src[x];
                         }
+                        else if (eBufType == GDT_Float32)
+                        {
+                            auto dstF = reinterpret_cast<float *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dstF[x] = static_cast<float>(src[x]);
+                        }
+                        else if (eBufType == GDT_Float64)
+                        {
+                            auto dstD = reinterpret_cast<double *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dstD[x] = static_cast<double>(src[x]);
+                        }
                     }
                     else
                     {
@@ -2211,6 +2223,18 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                         {
                             for (int x = 0; x < copyWidth; ++x)
                                 dst[x] = static_cast<GByte>(src[x]);
+                        }
+                        else if (eBufType == GDT_Float32)
+                        {
+                            auto dstF = reinterpret_cast<float *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dstF[x] = static_cast<float>(src[x]);
+                        }
+                        else if (eBufType == GDT_Float64)
+                        {
+                            auto dstD = reinterpret_cast<double *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dstD[x] = static_cast<double>(src[x]);
                         }
                     }
                 }
@@ -2285,6 +2309,16 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                         static_cast<GUInt32 *>(pData)[dstOffset / 4] =
                             static_cast<GUInt32>(value);
                     }
+                    else if (eBufType == GDT_Float32)
+                    {
+                        static_cast<float *>(pData)[dstOffset / 4] =
+                            static_cast<float>(value);
+                    }
+                    else if (eBufType == GDT_Float64)
+                    {
+                        static_cast<double *>(pData)[dstOffset / 8] =
+                            static_cast<double>(value);
+                    }
                 }
             }
         }
@@ -2322,7 +2356,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         const int nTotalTiles = (postPreload.tile_x1 - postPreload.tile_x0) *
                                 (postPreload.tile_y1 - postPreload.tile_y0);
         bool canUseFastPath =
-            (nTotalTiles > 1 && m_codec && m_codec->psImage && iLevel == 0);
+            (nTotalTiles > 1 && m_codec && m_codec->psImage && iLevel == 0 &&
+             eBufType != GDT_Float32 && eBufType != GDT_Float64);
         if (canUseFastPath)
         {
             for (int i = 0; i < nBandCount && canUseFastPath; ++i)
@@ -2499,7 +2534,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // Validate buffer data type
         if (eBufType != GDT_Byte && eBufType != GDT_Int16 &&
             eBufType != GDT_UInt16 && eBufType != GDT_Int32 &&
-            eBufType != GDT_UInt32)
+            eBufType != GDT_UInt32 && eBufType != GDT_Float32 &&
+            eBufType != GDT_Float64)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "DirectRasterIO: unsupported buffer data type %s",
