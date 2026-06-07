@@ -1069,6 +1069,30 @@ def test_jp2grok_multitile_multirow(tmp_vsimem):
 
 
 ###############################################################################
+# Test DirectRasterIO decompression path into a Float32/Float64 buffer
+
+
+def test_jp2grok_directrasterio_float():
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    ds = gdal.Open("data/jpeg2000/byte.jp2")
+    assert ds is not None
+
+    arr_f32 = ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
+    assert arr_f32.dtype == np.float32
+
+    arr_u8 = ds.GetRasterBand(1).ReadAsArray()
+    assert np.array_equal(arr_f32, arr_u8.astype(np.float32))
+
+    arr_f64 = ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float64)
+    assert arr_f64.dtype == np.float64
+
+    arr_u8 = ds.GetRasterBand(1).ReadAsArray()
+    assert np.array_equal(arr_f64, arr_u8.astype(np.float64))
+
+
+###############################################################################
 # Test in-place rewrite of JP2 boxes via GA_Update
 
 
