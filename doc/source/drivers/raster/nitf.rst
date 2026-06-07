@@ -911,6 +911,8 @@ the JPEG2000 capable driver to use.
   When those profiles are specified, the J2KLRA TRE will also be written, unless
   the ``J2KLRA=NO`` creation option is specified.
 
+.. _raster.nitf.cadrg_writing:
+
 CADRG (Compressed ARC Digitized Raster Graphics) (write support)
 ----------------------------------------------------------------
 
