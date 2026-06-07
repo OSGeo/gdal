@@ -230,8 +230,9 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
                                  nullptr))
                 return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
 
-            poRasterDS = GDALDataset::FromHandle(
-                GDALOpen(osImgFilename, poOpenInfo->eAccess));
+            poRasterDS = GDALDataset::Open(
+                osImgFilename,
+                poOpenInfo->eAccess | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
             if (poRasterDS == nullptr)
             {
                 delete pImage;

@@ -2228,7 +2228,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         poDS->m_poExternalDS =
-            GDALDataset::FromHandle(GDALOpen(osQubeFile, poOpenInfo->eAccess));
+            GDALDataset::Open(osQubeFile, poOpenInfo->eAccess);
         if (poDS->m_poExternalDS == nullptr)
         {
             return nullptr;
@@ -2264,8 +2264,10 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         // TIFF file
         if (EQUAL(CPLGetExtensionSafe(osQubeFile).c_str(), "tif"))
         {
-            GDALDataset *poTIF_DS =
-                GDALDataset::FromHandle(GDALOpen(osQubeFile, GA_ReadOnly));
+            const char *const apszAllowedDrivers[] = {"GTiff", nullptr};
+            auto poTIF_DS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                osQubeFile, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                apszAllowedDrivers));
             if (poTIF_DS)
             {
                 bool bWarned = false;
@@ -2342,8 +2344,6 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                     }
                 }
-
-                delete poTIF_DS;
             }
         }
     }

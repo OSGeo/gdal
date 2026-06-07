@@ -4589,6 +4589,11 @@ int HFADataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *HFADataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenHFA(poOpenInfo);
+}
+
+HFADataset *HFADataset::OpenHFA(GDALOpenInfo *poOpenInfo)
 
 {
     // Verify that this is a HFA file.
@@ -5114,7 +5119,8 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
     }
 
     // Open the dataset normally.
-    HFADataset *poDS = (HFADataset *)GDALOpen(pszFilenameIn, GA_Update);
+    GDALOpenInfo oOpenInfo(pszFilenameIn, GA_Update);
+    HFADataset *poDS = OpenHFA(&oOpenInfo);
 
     // Special creation option to disable checking for UTM
     // parameters when writing the projection.  This is a special

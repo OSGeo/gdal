@@ -992,7 +992,8 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
                   static_cast<vsi_l_offset>(nXSize) * nYSize * nTargetDTSize);
     VSIFCloseL(fp);
 
-    return (IdrisiDataset *)GDALOpen(pszFilename, GA_Update);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/

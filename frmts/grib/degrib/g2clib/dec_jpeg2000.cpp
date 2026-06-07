@@ -60,8 +60,9 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
                     FALSE ) ); // TRUE to let vsi delete the buffer when done
 
     // Open memory buffer for reading
-    GDALDataset* poJ2KDataset = (GDALDataset *)
-        GDALOpen( osFileName, GA_ReadOnly );
+    const char* const apszAllowedDrivers[] = {"JP2KAK", "JP2ECW", "JP2MRSID", "JP2GROK", "JP2OPENJPEG", nullptr };
+    auto poJ2KDataset = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open(osFileName, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, apszAllowedDrivers ));
 
     if( poJ2KDataset == nullptr )
     {
@@ -74,7 +75,6 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     if( poJ2KDataset->GetRasterCount() != 1 )
     {
        fprintf(stderr, "dec_jpeg2000: Found color image.  Grayscale expected.\n");
-       GDALClose( poJ2KDataset );
        VSIUnlink( osFileName );
        return (-5);
     }
@@ -88,7 +88,6 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     {
         fprintf(stderr, "dec_jpeg2000: Image contains %ld pixels > %d.\n",
                 (long)nXSize * nYSize, outpixels);
-       GDALClose( poJ2KDataset );
        VSIUnlink( osFileName );
        return (-5);
     }
@@ -97,7 +96,6 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     {
         fprintf(stderr, "dec_jpeg2000: Image contains %ld pixels << %d.\n",
                 (long)nXSize * nYSize, outpixels);
-       GDALClose( poJ2KDataset );
        VSIUnlink( osFileName );
        return (-5);
     }
@@ -105,7 +103,6 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     if ( *outfld == nullptr ) {
         fprintf(stderr, "Could not allocate space in jpcunpack.\n"
                 "Data field NOT unpacked.\n");
-        GDALClose( poJ2KDataset );
         VSIUnlink( osFileName );
         return(-5);
     }
@@ -127,7 +124,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
                             nPixelSpace, nLineSpace, nBandSpace, nullptr );
 
     // close source file, and "unlink" it.
-    GDALClose( poJ2KDataset );
+    poJ2KDataset.reset();
     VSIUnlink( osFileName );
 
     return (eErr == CE_None) ? 0 : -3;

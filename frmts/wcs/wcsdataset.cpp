@@ -714,8 +714,8 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
     /* -------------------------------------------------------------------- */
     /*      Try opening this result as a gdaldataset.                       */
     /* -------------------------------------------------------------------- */
-    GDALDataset *poDS =
-        (GDALDataset *)GDALOpen(osResultFilename.c_str(), GA_ReadOnly);
+    GDALDataset *poDS = GDALDataset::Open(
+        osResultFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
 
     /* -------------------------------------------------------------------- */
     /*      If opening it in memory didn't work, perhaps we need to         */

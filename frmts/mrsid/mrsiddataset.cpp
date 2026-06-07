@@ -258,6 +258,7 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     explicit MrSIDDataset(int bIsJPEG2000);
     ~MrSIDDataset() override;
 
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *poOpenInfo, int bIsJP2);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, int bIsJP2);
 
     char **GetFileList() override;
@@ -1411,6 +1412,11 @@ static GDALDataset *JP2Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
+{
+    return OpenPAM(poOpenInfo, bIsJP2);
+}
+
+GDALPamDataset *MrSIDDataset::OpenPAM(GDALOpenInfo *poOpenInfo, int bIsJP2)
 {
     if (poOpenInfo->fpL)
     {
@@ -3412,7 +3418,8 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo, /* bIsJP2 = */ false);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
@@ -3544,7 +3551,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    GDALPamDataset *poDS = (GDALPamDataset *)JP2Open(&oOpenInfo);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo, /* bIsJP2 = */ true);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

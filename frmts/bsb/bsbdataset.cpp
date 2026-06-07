@@ -1187,7 +1187,8 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    return (GDALDataset *)GDALOpen(pszFilename, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    return Open(&oOpenInfo);
 }
 #endif
 

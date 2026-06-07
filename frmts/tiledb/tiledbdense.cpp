@@ -1724,8 +1724,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     const char *pszSubDSName =
                         poDS->m_aosSubdatasetMD.FetchNameValueDef(
                             "SUBDATASET_1_NAME", "");
-                    return GDALDataset::FromHandle(
-                        GDALOpen(pszSubDSName, poOpenInfo->eAccess));
+                    GDALOpenInfo oOpenInfo(pszSubDSName, poOpenInfo->eAccess);
+                    return OpenInternal(&oOpenInfo, objectType);
                 }
             }
             else if (poDS->eIndexMode == ATTRIBUTES)

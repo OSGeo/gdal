@@ -2077,10 +2077,9 @@ void GDALPDFBaseWriter::GetObjectStyle(
                         if (oMapSymbolFilenameToDesc.find(os.osSymbolId) ==
                             oMapSymbolFilenameToDesc.end())
                         {
-                            CPLPushErrorHandler(CPLQuietErrorHandler);
                             GDALDatasetH hImageDS =
-                                GDALOpen(os.osSymbolId, GA_ReadOnly);
-                            CPLPopErrorHandler();
+                                GDALDataset::ToHandle(GDALDataset::Open(
+                                    os.osSymbolId, GDAL_OF_RASTER));
                             if (hImageDS != nullptr)
                             {
                                 os.nImageWidth = GDALGetRasterXSize(hImageDS);
