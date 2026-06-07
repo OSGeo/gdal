@@ -528,7 +528,11 @@ The following configuration options are available:
 
 - :copy-config:`OGR_SQLITE_CACHE`
 
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
 - :copy-config:`OGR_SQLITE_SYNCHRONOUS`
+
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - :copy-config:`OGR_SQLITE_LOAD_EXTENSIONS`
 
