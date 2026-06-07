@@ -469,7 +469,8 @@ Options can be passed in the filename with the following syntax: ``/vsicurl?[opt
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
-- header_file=value: Filename that contains one or several "Header: Value" lines
+- header_file=filename: Filename that contains one or several "Header: Value" lines.
+  Starting with GDAL 3.13.2, for security reasons, the filename is restricted by default to be located under ``/vsimem/``, ``/tmp`` or the value of the ``TEMP`` environment variable (or ``TMP`` if ``TEMP`` not defined). See the :config:`CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED` configuration option to define the policy.
 - header.<key>=<value>: HTTP request header of name <key> and value <value>. (GDAL >= 3.11). e.g. ``header.Accept=application%2Fjson``
 - unsafessl=yes/no
 - low_speed_time=value
