@@ -14,7 +14,8 @@ exposes it as a virtual dataset whose coverage is the set of frames
 contained in the table of content.
 
 Starting with GDAL 3.13, the A.TOC file can also be generated using the
-``gdal driver rpftoc create`` program from existing CADRG frames.
+``gdal driver rpftoc create`` program from existing CADRG frames. And CADRG
+frames themselves can be created with the :ref:`NITF driver <raster.nitf.cadrg_writing>`.
 
 The driver will report a different subdataset for each subdataset found
 in the A.TOC file.
