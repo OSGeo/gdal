@@ -145,6 +145,12 @@ def test_gdal_suggestions(gdal_path):
     _, err = gdaltest.runexternal_out_and_err(f"{gdal_path} raster info --frmt=json")
     assert "Option '--frmt' is unknown. Do you mean '--format'?" in err
 
+    _, err = gdaltest.runexternal_out_and_err(f"{gdal_path} raster reproject --crs")
+    assert (
+        "Option '--crs' is unknown. Do you mean '--input-crs', '--output-crs' or '--bbox-crs'?"
+        in err
+    )
+
 
 def test_gdal_completion(gdal_path):
 

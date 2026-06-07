@@ -2516,6 +2516,11 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Return a likely matching argument using a Damerau-Levenshtein distance */
     std::string GetSuggestionForArgumentName(const std::string &osName) const;
 
+    /** Return likely matching arguments using a Damerau-Levenshtein distance
+     * and additional heuristics. */
+    std::vector<std::string>
+    GetSuggestionsForArgumentName(const std::string &osName) const;
+
     /** Return an argument from its long name, short name or an alias */
     GDALAlgorithmArg *GetArg(const std::string &osName,
                              bool suggestionAllowed = false)
