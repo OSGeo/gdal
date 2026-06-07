@@ -140,6 +140,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT", // from cpl_http.cpp, cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_CACHE_SIZE", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_CHUNK_SIZE", // from cpl_vsil_curl.cpp
+   "CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_IGNORE_STORAGE_CLASSES", // from cpl_vsil_curl.cpp

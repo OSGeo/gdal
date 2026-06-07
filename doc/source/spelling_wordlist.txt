@@ -819,6 +819,7 @@ eWorkingDataType
 eXchange
 exe
 executables
+exfiltration
 Exif
 explodeCollections
 eXploration

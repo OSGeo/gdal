@@ -422,9 +422,103 @@ static std::string VSICurlGetURLFromFilename(
                     if (pbEmptyDir)
                         *pbEmptyDir = CPLTestBool(pszValue);
                 }
+                else if (EQUAL(pszKey, "header_file"))
+                {
+#if defined(CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED)
+                    constexpr bool CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED =
+                        true;
+#else
+                    constexpr bool CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED =
+                        false;
+#endif
+                    if (CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Use of 'header_file' key-value pair in "
+                                 "/vsicurl? is disabled in this build");
+                    }
+                    else
+                    {
+                        bool bSetValue = false;
+                        const char *pszAllowHeaderFileKVP = CPLGetConfigOption(
+                            "CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED", nullptr);
+                        if (!pszAllowHeaderFileKVP ||
+                            pszAllowHeaderFileKVP[0] == 0 ||
+                            EQUAL(pszAllowHeaderFileKVP, "ONLY_IN_TEMP"))
+                        {
+                            if (STARTS_WITH(pszValue, "/vsimem/"))
+                            {
+                                bSetValue = !CPLHasUnbalancedPathTraversal(
+                                    pszValue + strlen("/vsimem/"));
+                            }
+                            else if (STARTS_WITH(pszValue, "/tmp/"))
+                            {
+                                bSetValue = !CPLHasUnbalancedPathTraversal(
+                                    pszValue + strlen("/tmp/"));
+                            }
+                            else
+                            {
+                                for (const char *pszEnvVar : {"TEMP", "TMP"})
+                                {
+                                    if (const char *pszTemp =
+                                            CPLGetConfigOption(pszEnvVar,
+                                                               nullptr))
+                                    {
+                                        std::string osTemp = pszTemp;
+                                        if (!osTemp.empty() &&
+                                            (osTemp.back() == '/' ||
+                                             osTemp.back() == '\\'))
+                                            osTemp.pop_back();
+                                        if (!osTemp.empty() &&
+                                            cpl::starts_with(
+                                                std::string_view(pszValue),
+                                                osTemp) &&
+                                            (pszValue[osTemp.size()] == '/' ||
+                                             pszValue[osTemp.size()] == '\\'))
+                                        {
+                                            bSetValue =
+                                                !CPLHasUnbalancedPathTraversal(
+                                                    pszValue + osTemp.size());
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!bSetValue)
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Use of 'header_file=%s' "
+                                         "key-value pair in /vsicurl? is "
+                                         "disabled because it refers to a "
+                                         "file stored in a non-temporary "
+                                         "location. You may set the "
+                                         "CPL_VSIL_CURL_HEADER_FILE_KVP_"
+                                         "ENABLED configuration option to "
+                                         "YES to remove that restriction.",
+                                         pszValue);
+                            }
+                        }
+                        else if (CPLTestBool(pszAllowHeaderFileKVP))
+                        {
+                            bSetValue = true;
+                        }
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Use of 'header_file' key-value pair in "
+                                     "/vsicurl? is disabled by the "
+                                     "CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED "
+                                     "configuration option");
+                        }
+
+                        if (bSetValue && paosHTTPOptions)
+                        {
+                            paosHTTPOptions->SetNameValue(pszKey, pszValue);
+                        }
+                    }
+                }
                 else if (EQUAL(pszKey, "useragent") ||
                          EQUAL(pszKey, "referer") || EQUAL(pszKey, "cookie") ||
-                         EQUAL(pszKey, "header_file") ||
                          EQUAL(pszKey, "unsafessl") ||
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
                          EQUAL(pszKey, "timeout") ||
@@ -4491,6 +4585,13 @@ const char *VSICurlFilesystemHandlerBase::GetActualURL(const char *pszFilename)
     "  <Option name='CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT' "            \
     "type='integer' description='Maximum number of bytes AdviseRead() is "     \
     "allowed to fetch at once' default='104857600'/>"                          \
+    "  <Option name='CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED' "                  \
+    "type='string-select' description='Whether the header-file key-value "     \
+    "pair can be used in /vsicurl? filenames' default='ONLY_IN_TEMP'>"         \
+    "       <Value>ONLY_IN_TEMP</Value>"                                       \
+    "       <Value>NO</Value>"                                                 \
+    "       <Value>YES</Value>"                                                \
+    "  </Option>"                                                              \
     "  <Option name='GDAL_HTTP_MAX_CACHED_CONNECTIONS' type='integer' "        \
     "description='Maximum amount of connections that libcurl may keep alive "  \
     "in its connection cache after use'/>"                                     \

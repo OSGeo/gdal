@@ -647,6 +647,24 @@ Networking options
       content. Value is assumed to represent bytes unless memory units are
       specified (since GDAL 3.11).
 
+-  .. config:: CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED
+      :choices: ONLY_IN_TEMP, YES, NO
+      :default: ONLY_IN_TEMP (since GDAL 3.13.2)
+      :since: 3.13.2
+
+      Sets the policy for accepted filenames passed in the ``header_file`` key-value
+      pair of ``/vsicurl?`` filenames.
+
+      Starting with GDAL 3.13.2, for security reasons, the filename is restricted
+      by default to be located under ``/vsimem/``, ``/tmp`` or the value of the
+      ``TEMP`` or ``TMP`` environment variable.
+      All locations can be allowed by setting the configuration option to ``YES``.
+      Or all locations can be disabled by setting the configuration option to to ``NO``.
+
+      GDAL can also be built with the ``CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED``
+      compilation definitions (passed in ``CXXFLAGS``) to entirely disable
+      ``header_file`` key-value.
+
 -  .. config:: CPL_VSIL_CURL_USE_HEAD
       :choices: YES, NO
       :default: YES
