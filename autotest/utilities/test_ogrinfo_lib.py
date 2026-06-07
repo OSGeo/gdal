@@ -49,7 +49,7 @@ def test_ogrinfo_lib_1_path():
 
 def test_ogrinfo_lib_json():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     ret = gdal.VectorInfo(ds, format="json")
     del ret["description"]
@@ -116,7 +116,7 @@ def test_ogrinfo_lib_json():
 
 def test_ogrinfo_lib_json_features():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True, limit=1)
     del ret["description"]

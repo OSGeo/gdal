@@ -5888,7 +5888,7 @@ def test_ogr_gpkg_prelude_statements_after_spatialite_loading(tmp_vsimem):
     ) as ds:
         with ds.ExecuteSQL("SELECT ST_AsText(geom) FROM poly LIMIT 1") as sql_lyr:
             f = sql_lyr.GetNextFeature()
-            assert f[0].startswith("POLYGON((479819.8 4765180.5,")
+            assert f[0].startswith("MULTIPOLYGON(((479819.8 4765180.5,")
 
 
 ###############################################################################

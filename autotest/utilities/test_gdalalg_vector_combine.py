@@ -28,7 +28,7 @@ def alg():
 
 def test_gdalalg_vector_combine(alg):
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    src_ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     alg["input"] = src_ds
     alg["output"] = ""

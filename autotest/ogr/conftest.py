@@ -1,7 +1,7 @@
 import pytest
 import webserver
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -9,6 +9,15 @@ from osgeo import ogr
 
 @pytest.fixture(scope="module")
 def poly_feat():
+
+    with gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"]) as shp_ds:
+        shp_lyr = shp_ds.GetLayer(0)
+
+        return [feat for feat in shp_lyr]
+
+
+@pytest.fixture(scope="module")
+def multipoly_feat():
 
     with ogr.Open("data/poly.shp") as shp_ds:
         shp_lyr = shp_ds.GetLayer(0)

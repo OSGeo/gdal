@@ -40,8 +40,10 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                               OGRFeatureDefn *poDefn, int iShape,
                               SHPObject *psShape, const char *pszSHPEncoding,
                               bool &bHasWarnedWrongWindingOrder);
-OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
-                              bool &bHasWarnedWrongWindingOrder);
+std::unique_ptr<OGRGeometry>
+SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
+                 bool &bHasWarnedWrongWindingOrder,
+                 OGRwkbGeometryType eLayerGeomType);
 OGRFeatureDefnRefCountedPtr
 SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP, DBFHandle hDBF,
                       VSILFILE *fpSHPXML, const char *pszSHPEncoding,
@@ -220,8 +222,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                   SHPHandle hSHP, DBFHandle hDBF,
                   const OGRSpatialReference *poSRS, bool bSRSSet,
                   const std::string &osPrjFilename, bool bUpdate,
-                  OGRwkbGeometryType eReqType,
-                  CSLConstList papszCreateOptions = nullptr);
+                  OGRwkbGeometryType eReqType, bool bCreateLayer);
     ~OGRShapeLayer() override;
 
     GDALDataset *GetDataset() override;

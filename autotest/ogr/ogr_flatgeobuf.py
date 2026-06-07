@@ -106,7 +106,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     src_name = os.path.join("data", "shp", name + ".shp")
-    shp_ds = ogr.Open(src_name)
+    shp_ds = gdal.OpenEx(src_name, open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()

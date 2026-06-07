@@ -158,7 +158,7 @@ def test_gdal_contour_2(gdal_contour_path, testdata_tif, tmp_path):
     size = 160
     precision = 1.0 / size
 
-    ds = ogr.Open(contour_shp)
+    ds = gdal.OpenEx(contour_shp, open_options=["PROMOTE_TO_MULTI=NO"])
 
     expected_envelopes = [
         [1.25, 1.75, 49.25, 49.75],
@@ -283,7 +283,7 @@ def test_gdal_contour_4(gdal_contour_path, tmp_path):
         + f" -a elev -i 10 {contour_orientation_tif} {contour_orientation1_shp}"
     )
 
-    ds = ogr.Open(contour_orientation1_shp)
+    ds = gdal.OpenEx(contour_orientation1_shp, open_options=["PROMOTE_TO_MULTI=NO"])
 
     expected_contours = [
         "LINESTRING ("
@@ -342,14 +342,14 @@ def test_gdal_contour_5(gdal_contour_path, tmp_path):
     ds = ogr.Open(contour_orientation2_shp)
 
     expected_contours = [
-        "LINESTRING (0.0 1.999999,"
+        "MULTILINESTRING ((0.0 1.999999,"
         + "0.5 1.999999,"
         + "1.5 1.999999,"
         + "1.95454293244555 2.5,"
         + "2.1249976158233 3.5,"
         + "1.5 3.9545460850748,"
         + "0.5 4.06666564941406,"
-        + "0.0 4.06666564941406)"
+        + "0.0 4.06666564941406))"
     ]
     expected_elev = [140]
 

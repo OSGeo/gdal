@@ -505,7 +505,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
         this, pszNewName, hSHP, hDBF,
         /* poSRS = */ nullptr,
         /* bSRSSet = */ false,
-        /* osPrjFilename = */ std::string(), bUpdate, wkbNone);
+        /* osPrjFilename = */ std::string(), bUpdate, wkbNone, false);
     poLayer->SetModificationDate(
         CSLFetchNameValue(papszOpenOptions, "DBF_DATE_LAST_UPDATE"));
     poLayer->SetAutoRepack(CPLFetchBool(papszOpenOptions, "AUTO_REPACK", true));
@@ -905,7 +905,7 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     auto poLayer = std::make_unique<OGRShapeLayer>(
         this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone.get(),
         /* bSRSSet = */ true, osPrjFilename,
-        /* bUpdate = */ true, eType);
+        /* bUpdate = */ true, eType, true);
 
     poLayer->SetResizeAtClose(CPLFetchBool(papszOptions, "RESIZE", false));
     poLayer->CreateSpatialIndexAtClose(

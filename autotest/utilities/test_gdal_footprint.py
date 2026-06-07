@@ -83,12 +83,12 @@ def test_gdal_footprint_appending(gdal_footprint_path, tmp_path):
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
         f,
-        "POLYGON ((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320))",
+        "MULTIPOLYGON (((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320)))",
     )
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
         f,
-        "POLYGON ((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320))",
+        "MULTIPOLYGON (((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320)))",
     )
 
     ds = None
@@ -118,7 +118,7 @@ def test_gdal_footprint_overwrite(gdal_footprint_path, tmp_path):
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
         f,
-        "POLYGON ((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320))",
+        "MULTIPOLYGON (((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320)))",
     )
 
     ds = None

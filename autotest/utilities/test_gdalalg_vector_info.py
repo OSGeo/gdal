@@ -83,7 +83,7 @@ def test_gdalalg_vector_info_text():
     output_string = info["output-string"]
     assert output_string.startswith("INFO: Open of")
     assert "Layer name: path" in output_string
-    assert "Geometry: Line String" in output_string
+    assert "Geometry: Multi Line String" in output_string
     assert "Feature Count: 1" in output_string
     assert "OGRFeature" not in output_string
 
@@ -103,7 +103,7 @@ def test_gdalalg_vector_info_features_text():
     output_string = info["output-string"]
     assert output_string.startswith("INFO: Open of")
     assert "Layer name: path" in output_string
-    assert "Geometry: Line String" in output_string
+    assert "Geometry: Multi Line String" in output_string
     assert "Feature Count: 1" in output_string
     assert "OGRFeature" in output_string
 
@@ -219,7 +219,7 @@ def test_gdalalg_vector_info_summary():
     output_string = info["output-string"]
     assert (
         output_string
-        == "INFO: Open of `data/path.shp'\n      using driver `ESRI Shapefile' successful.\n1: path (Line String)\n"
+        == "INFO: Open of `data/path.shp'\n      using driver `ESRI Shapefile' successful.\n1: path (Multi Line String)\n"
     )
 
 
@@ -248,9 +248,9 @@ def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem, require_spatiali
     output_string = info["output-string"]
     j = json.loads(output_string)
     assert j["layers"][0]["geometryType"] == [
-        "Line String",
+        "Multi Line String",
         "Point",
-        "Line String",
+        "Multi Line String",
         "Polygon",
     ]
 
@@ -258,7 +258,7 @@ def test_gdalalg_vector_info_summary_multi_geometry(tmp_vsimem, require_spatiali
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["--summary", "--format=text", sqlite_multi])
     output_string = info["output-string"]
-    assert "(Line String, Point, Line String, Polygon)" in output_string
+    assert "(Multi Line String, Point, Multi Line String, Polygon)" in output_string
 
 
 @pytest.mark.require_driver("SQLite")

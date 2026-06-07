@@ -74,10 +74,10 @@ def test_gdaltindex_lib_basic(four_tile_index):
     assert "WGS_1984" in tileindex_wkt
 
     expected_wkts = [
-        "POLYGON ((49 2,50 2,50 1,49 1,49 2))",
-        "POLYGON ((49 3,50 3,50 2,49 2,49 3))",
-        "POLYGON ((48 2,49 2,49 1,48 1,48 2))",
-        "POLYGON ((48 3,49 3,49 2,48 2,48 3))",
+        "MULTIPOLYGON (((49 2,50 2,50 1,49 1,49 2)))",
+        "MULTIPOLYGON (((49 3,50 3,50 2,49 2,49 3)))",
+        "MULTIPOLYGON (((48 2,49 2,49 1,48 1,48 2)))",
+        "MULTIPOLYGON (((48 3,49 3,49 2,48 2,48 3)))",
     ]
 
     for i, feat in enumerate(ds.GetLayer(0)):

@@ -976,7 +976,7 @@ def test_ogr_gml_26(tmp_path):
 
     lyr = ds.GetLayer(0)
 
-    assert lyr.GetGeomType() == ogr.wkbPolygon25D
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
 
     ds = None
 
@@ -1009,7 +1009,7 @@ def test_ogr_gml_27(tmp_path):
 
     lyr = ds.GetLayer(0)
 
-    assert lyr.GetGeomType() == ogr.wkbPolygon25D
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
 
     ds = None
 

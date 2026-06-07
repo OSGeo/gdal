@@ -58,10 +58,10 @@ def test_ogr_basic_2():
     lyr = ds.GetLayerByName("poly")
 
     assert lyr.GetName() == "poly"
-    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon
 
     assert lyr.GetLayerDefn().GetName() == "poly"
-    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon
 
     count = lyr.GetFeatureCount()
     assert count == 10, (

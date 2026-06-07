@@ -19,12 +19,15 @@ However, it is also possible to use one of the files (.shp, .shx or
 treated as a dataset with one layer.
 
 Note that when reading a Shapefile of type SHPT_ARC, the corresponding
-layer will be reported as of type wkbLineString, but depending on the
-number of parts of each geometry, the actual type of the geometry for
-each feature can be either OGRLineString or OGRMultiLineString. The same
-applies for SHPT_POLYGON shapefiles, reported as layers of type
-wkbPolygon, but depending on the number of parts of each geometry, the
-actual type can be either OGRPolygon or OGRMultiPolygon.
+layer will be reported as of type wkbMultiLineString starting with GDAL 3.14,
+independently from the actual number of parts in the geometries of features.
+Single part arcs are reported as MultiLineString geometries.
+The same applies for SHPT_POLYGON shapefiles, reported as layers of type
+wkbMultiPolygon.
+Prior to GDAL 3.14, they were reported as wkbLineString and wkbPolygon.
+That behavior can be obtained by opening by setting the
+:oo:`PROMOTE_TO_MULTI` open option, or the :config:`SHAPE_PROMOTE_TO_MULTI`
+configuration option, to NO.
 
 Measures (M coordinate) are supported. A
 Shapefile with measures is created if the specified geometry type is
@@ -320,6 +323,16 @@ The following open options are supported:
       features until a shape with a valid M value is found to decide the
       appropriate layer type.
 
+-  .. oo:: PROMOTE_TO_MULTI
+      :choices: YES, NO
+      :default: NO
+      :since: 3.14
+
+      Whether lines/polygons should be promoted to multilines/multipolygons.
+      Defaults to YES since GDAL 3.14. Prior versions had a behavior equivalent
+      to NO.
+      This can also be set with :config:`SHAPE_PROMOTE_TO_MULTI` configuration
+      option.
 
 -  .. oo:: AUTO_REPACK
       :choices: YES, NO
@@ -451,12 +464,22 @@ The following configuration options are available:
      interpretation of the shapefile with any encoding supported by :cpp:func:`CPLRecode`
      or to "" to avoid any recoding.
 
+-  .. config:: SHAPE_PROMOTE_TO_MULTI
+      :choices: YES, NO
+      :default: NO
+      :since: 3.14
+
+      Whether lines/polygons should be promoted to multilines/multipolygons.
+      Defaults to YES since GDAL 3.14. Prior versions had a behavior equivalent
+      to NO.
+      This can also be set with :oo:`PROMOTE_TO_MULTI` open option.
+
 Examples
 --------
 
 .. example::
-   :title: Merging two shapefiles 'file1.shp' and 'file2.shp' 
-   
+   :title: Merging two shapefiles 'file1.shp' and 'file2.shp'
+
    A new 'file_merged.shp' is created like this:
 
    .. code-block:: bash

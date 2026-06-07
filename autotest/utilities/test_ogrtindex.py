@@ -17,7 +17,7 @@ import ogrtest
 import pytest
 import test_cli_utilities
 
-from osgeo import ogr, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_ogrtindex_path() is None, reason="ogrtindex not available"
@@ -83,10 +83,10 @@ def test_ogrtindex_1(ogrtindex_path, tmp_path, srs):
         ), "did not get expected spatial ref"
 
     expected_wkts = [
-        "POLYGON ((49 2,49 2,49 2,49 2,49 2))",
-        "POLYGON ((49 3,49 3,49 3,49 3,49 3))",
-        "POLYGON ((48 2,48 2,48 2,48 2,48 2))",
-        "POLYGON ((48 3,48 3,48 3,48 3,48 3))",
+        "MULTIPOLYGON (((49 2,49 2,49 2,49 2,49 2)))",
+        "MULTIPOLYGON (((49 3,49 3,49 3,49 3,49 3)))",
+        "MULTIPOLYGON (((48 2,48 2,48 2,48 2,48 2)))",
+        "MULTIPOLYGON (((48 3,48 3,48 3,48 3,48 3)))",
     ]
 
     for i, feat in enumerate(ds.GetLayer(0)):
@@ -164,7 +164,10 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
         err is None or err == ""
     ), "got error/warning"
 
-    ds = ogr.Open(output_filename)
+    if output_filename.endswith(".shp"):
+        ds = gdal.OpenEx(output_filename, open_options=["PROMOTE_TO_MULTI=NO"])
+    else:
+        ds = ogr.Open(output_filename)
     assert ds.GetLayer(0).GetFeatureCount() == 2, "did not get expected feature count"
 
     assert (

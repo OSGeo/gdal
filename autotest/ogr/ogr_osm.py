@@ -284,7 +284,8 @@ def test_ogr_osm_3(options=None, all_layers=False):
             "tmp/ogr_osm_3", "data/osm/test.pbf", options=layers + options
         )
 
-    test_ogr_osm_1(filepath)
+    with gdal.config_option("SHAPE_PROMOTE_TO_MULTI", "NO"):
+        test_ogr_osm_1(filepath)
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filepath)
 
