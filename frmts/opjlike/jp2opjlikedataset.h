@@ -23,6 +23,15 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 
+/** Environment variable / open option that must be set to YES to let opjlike
+ *  codec handle /vsicurl/ reads natively.
+ *
+ *  Set OPJLIKE_VSICURL_NATIVE=YES as a GDAL config option, or pass it as an
+ *  open option on the dataset, to opt in.
+ */
+static constexpr const char *OPJLIKE_VSICURL_NATIVE_OPT =
+    "OPJLIKE_VSICURL_NATIVE";
+
 typedef int JP2_COLOR_SPACE;
 typedef int JP2_PROG_ORDER;
 
