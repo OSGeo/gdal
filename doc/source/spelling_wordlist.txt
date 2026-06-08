@@ -525,6 +525,7 @@ danlittle
 dat
 DataArray
 dataAxisToSRSAxisMapping
+datacube
 DATADIR
 DataElement
 datafile
