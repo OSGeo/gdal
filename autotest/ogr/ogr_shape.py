@@ -999,7 +999,7 @@ def test_ogr_shape_26(tmp_path):
         tmp_path,
         layer_name,
         geom,
-        ogr.CreateGeometryFromWkt(geom.ExportToWkt()),
+        ogr.ForceToMultiPolygon(ogr.CreateGeometryFromWkt(geom.ExportToWkt())),
         ogr.wkbUnknown,
     )
 
@@ -2649,7 +2649,7 @@ def test_ogr_shape_59(tmp_vsimem):
     geom = feat.GetGeometryRef()
     assert (
         geom.ExportToIsoWkt()
-        == "POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80))"
+        == "MULTIPOLYGON M (((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80)))"
     )
     geom = None
     feat = None
@@ -3228,7 +3228,10 @@ def test_ogr_shape_73(tmp_vsimem):
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     got_geom = feat.GetGeometryRef()
-    assert got_geom.ExportToWkt() == geom.ExportToWkt()
+    assert (
+        got_geom.ExportToWkt()
+        == "MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0),(5 1,4 3,4 2,5 1,6 2,6 3,5 1)))"
+    )
     ds = None
 
 
@@ -3279,8 +3282,8 @@ def test_ogr_shape_issue_14385(tmp_vsimem):
     lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
-    assert g.GetGeometryType() == ogr.wkbPolygon
-    assert g.GetGeometryCount() == 3
+    assert g.GetGeometryType() == ogr.wkbMultiPolygon
+    assert g.GetGeometryRef(0).GetGeometryCount() == 3
 
 
 ###############################################################################
@@ -5768,7 +5771,7 @@ def test_ogr_shape_write_non_planar_polygon(tmp_vsimem):
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
         f,
-        "POLYGON Z ((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418))",
+        "MULTIPOLYGON Z (((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418)))",
     )
 
 
