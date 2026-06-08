@@ -551,11 +551,29 @@ bool DDFFieldDefn::BuildSubfields()
                                 }
                                 else if (*pszFormatCur == ',')
                                 {
+                                    if (nGroupSubFieldCount == INT_MAX)
+                                    {
+                                        CPLError(CE_Failure, CPLE_AppDefined,
+                                                 "Tag %s: invalid "
+                                                 "formatControls: %s",
+                                                 osTag.c_str(),
+                                                 _formatControls.c_str());
+                                        return false;
+                                    }
                                     nGroupSubFieldCount++;
                                     ++pszFormatCur;
                                 }
                                 else if (*pszFormatCur == ')')
                                 {
+                                    if (nGroupSubFieldCount == INT_MAX)
+                                    {
+                                        CPLError(CE_Failure, CPLE_AppDefined,
+                                                 "Tag %s: invalid "
+                                                 "formatControls: %s",
+                                                 osTag.c_str(),
+                                                 _formatControls.c_str());
+                                        return false;
+                                    }
                                     nGroupSubFieldCount++;
                                     break;
                                 }
