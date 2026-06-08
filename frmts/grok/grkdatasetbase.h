@@ -114,14 +114,26 @@ template <size_t N> void safe_strcpy(char (&dest)[N], const std::string &src)
 /**
  * @brief True if @p filename is a network path handled natively by Grok.
  *
- * Both /vsis3/ and /vsicurl/ are fetched via libcurl inside Grok; /vsis3/
- * needs AWS credentials resolved by GDAL, /vsicurl/ only needs the shared
- * HTTP auth options (.netrc, cookies, allow-insecure).
+ * /vsis3/ is always handed to Grok (AWS credentials are resolved by GDAL
+ * before the path reaches Grok).
+ *
+ * /vsicurl/ is only handed to Grok when the user explicitly opts in by
+ * setting the OPJLIKE_VSICURL_NATIVE_OPT config option (or open option) to YES.
+ * Without the flag GDAL reads via curl and streams the bytes to Grok,
+ * which is the safe default.
  */
 static bool isGrokNetworkPath(const char *filename)
 {
-    return STARTS_WITH(filename, "/vsis3/") ||
-           STARTS_WITH(filename, "/vsicurl/");
+    if (STARTS_WITH(filename, "/vsis3/"))
+        return true;
+
+    if (STARTS_WITH(filename, "/vsicurl/"))
+    {
+        return CPLTestBool(
+            CPLGetConfigOption(OPJLIKE_VSICURL_NATIVE_OPT, "NO"));
+    }
+
+    return false;
 }
 
 /**

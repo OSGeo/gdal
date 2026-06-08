@@ -1407,6 +1407,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
+    const char *pszNative = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, OPJLIKE_VSICURL_NATIVE_OPT, nullptr);
+    if (pszNative)
+        CPLSetThreadLocalConfigOption(OPJLIKE_VSICURL_NATIVE_OPT, pszNative);
+
     /* Detect which codec to use : J2K or JP2 ? */
     vsi_l_offset nCodeStreamLength = 0;
     vsi_l_offset nCodeStreamStart =
