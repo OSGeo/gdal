@@ -98,6 +98,10 @@ Supporter
 
     .. container:: horizontal-logo
 
+        `GeoStandards.ch <https://geostandards.ch/>`__
+
+    .. container:: horizontal-logo
+
         `Kaplan Open Source Consulting <https://kaplanopensource.co.il/>`__
 
     .. container:: horizontal-logo
