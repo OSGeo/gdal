@@ -70,7 +70,10 @@ const GTIFFTag *GTiffDataset::GetTIFFTags()
 /************************************************************************/
 
 GTiffDataset::GTiffDataset()
-    : m_bStreamingIn(false), m_bStreamingOut(false), m_bScanDeferred(true),
+    : m_apoJPEGOverviewDS(std::vector<std::unique_ptr<GTiffJPEGOverviewDS>>{}),
+      m_apoJPEGOverviewDSOld(
+          std::vector<std::unique_ptr<GTiffJPEGOverviewDS>>{}),
+      m_bStreamingIn(false), m_bStreamingOut(false), m_bScanDeferred(true),
       m_bSingleIFDOpened(false), m_bLoadedBlockDirty(false),
       m_bWriteError(false), m_bLookedForProjection(false),
       m_bLookedForMDAreaOrPoint(false), m_bGeoTransformValid(false),
