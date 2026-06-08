@@ -443,6 +443,14 @@ std::unique_ptr<OGRGeometry> SHPReadOGRObject(SHPHandle hSHP, int iShape,
             poOGR = OGRGeometryFactory::organizePolygons(
                 apoPolygons, &isValidGeometry, apszOptions);
 
+            if (poOGR && wkbFlatten(poOGR->getGeometryType()) == wkbPolygon &&
+                wkbFlatten(eLayerGeomType) == wkbMultiPolygon)
+            {
+                auto poOGRMulti = std::make_unique<OGRMultiPolygon>();
+                poOGRMulti->addGeometryDirectly(poOGR.release()->toPolygon());
+                poOGR = std::move(poOGRMulti);
+            }
+
             if (!isValidGeometry)
             {
                 CPLError(
