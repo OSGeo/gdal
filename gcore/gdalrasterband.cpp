@@ -10008,7 +10008,7 @@ bool GDALRasterBand::HasConflictingMaskSources(
                 *posDetailMessage += poDS->GetDescription();
             }
             *posDetailMessage += " has several conflicting mask sources:\n";
-            if (bHasExternalMask)
+            if (bHasBinaryMaskBand)
                 *posDetailMessage += "- internal binary mask band\n";
             if (bHasExternalMask)
                 *posDetailMessage += "- external mask band (.msk)\n";
