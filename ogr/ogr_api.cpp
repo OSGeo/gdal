@@ -943,8 +943,9 @@ OGRErr OGR_G_SetPoint(OGRGeometryH hGeom, int i, double dfX, double dfY,
                 CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
                 return OGRERR_FAILURE;
             }
-            return ToPointer(hGeom)->toSimpleCurve()->setPoint(i, dfX, dfY,
-                                                               dfZ);
+            return ToPointer(hGeom)->toSimpleCurve()->setPoint(i, dfX, dfY, dfZ)
+                       ? OGRERR_NONE
+                       : OGRERR_FAILURE;
         }
 
         default:
@@ -1008,7 +1009,9 @@ OGRErr OGR_G_SetPoint_2D(OGRGeometryH hGeom, int i, double dfX, double dfY)
                 CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
                 return OGRERR_FAILURE;
             }
-            return ToPointer(hGeom)->toSimpleCurve()->setPoint(i, dfX, dfY);
+            return ToPointer(hGeom)->toSimpleCurve()->setPoint(i, dfX, dfY)
+                       ? OGRERR_NONE
+                       : OGRERR_FAILURE;
         }
 
         default:
@@ -1079,7 +1082,9 @@ OGRErr OGR_G_SetPointM(OGRGeometryH hGeom, int i, double dfX, double dfY,
                 return OGRERR_FAILURE;
             }
             return ToPointer(hGeom)->toSimpleCurve()->setPointM(i, dfX, dfY,
-                                                                dfM);
+                                                                dfM)
+                       ? OGRERR_NONE
+                       : OGRERR_FAILURE;
         }
 
         default:
