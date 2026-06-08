@@ -133,8 +133,8 @@ class GTiffDataset final : public GDALPamDataset
     GTiffDataset *m_poBaseDS = nullptr;
     // Used with MASK_OVERVIEW_DATASET open option
     std::unique_ptr<GDALDataset> m_poMaskExtOvrDS{};
-    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDS{};
-    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDSOld{};
+    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDS;
+    std::vector<std::unique_ptr<GTiffJPEGOverviewDS>> m_apoJPEGOverviewDSOld;
     std::vector<gdal::GCP> m_aoGCPs{};
     std::unique_ptr<GDALColorTable> m_poColorTable{};
     char **m_papszMetadataFiles = nullptr;
