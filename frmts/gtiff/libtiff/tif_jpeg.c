@@ -1683,6 +1683,13 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
         !isTiled(tif))
         nrows = td->td_imagelength - tif->tif_dir.td_row;
 
+    /* The downsampled-data decode loop below only writes up to the JPEG
+     * codestream dimensions (and, due to the clump stride, may not cover the
+     * full caller buffer even for compliant files). Zero the whole buffer so
+     * no uninitialised heap is ever returned, mirroring the guard JPEGDecode
+     * received in 65759931ab6e (#826). */
+    memset(buf, 0, (size_t)cc);
+
 #if defined(JPEG_LIB_MK1_OR_12BIT)
     unsigned short *tmpbuf = NULL;
 #endif

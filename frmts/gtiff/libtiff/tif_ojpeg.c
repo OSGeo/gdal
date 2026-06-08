@@ -1370,13 +1370,29 @@ static int OJPEGWriteHeaderInfo(TIFF *tif)
             sp->subsampling_convert_clinelen =
                 sp->subsampling_convert_ylinelen / sp->subsampling_hor;
             sp->subsampling_convert_clines = 8;
-            sp->subsampling_convert_ybuflen = sp->subsampling_convert_ylinelen *
-                                              sp->subsampling_convert_ylines;
-            sp->subsampling_convert_cbuflen = sp->subsampling_convert_clinelen *
-                                              sp->subsampling_convert_clines;
-            sp->subsampling_convert_ycbcrbuflen =
-                sp->subsampling_convert_ybuflen +
-                2 * sp->subsampling_convert_cbuflen;
+            /* Check for potential overflow in buffer length computations.
+             * Use 64-bit intermediates to detect uint32_t overflow in
+             * ylinelen * ylines, clinelen * clines, and their sum.
+             */
+            {
+                uint64_t ybuflen64 =
+                    (uint64_t)sp->subsampling_convert_ylinelen *
+                    sp->subsampling_convert_ylines;
+                uint64_t cbuflen64 =
+                    (uint64_t)sp->subsampling_convert_clinelen *
+                    sp->subsampling_convert_clines;
+                uint64_t ycbcrbuflen64 = ybuflen64 + 2 * cbuflen64;
+                if (ybuflen64 > UINT32_MAX || cbuflen64 > UINT32_MAX ||
+                    ycbcrbuflen64 > UINT32_MAX)
+                {
+                    TIFFErrorExtR(tif, module,
+                                  "Integer overflow in OJPEG buffer size");
+                    return (0);
+                }
+                sp->subsampling_convert_ybuflen = (uint32_t)ybuflen64;
+                sp->subsampling_convert_cbuflen = (uint32_t)cbuflen64;
+                sp->subsampling_convert_ycbcrbuflen = (uint32_t)ycbcrbuflen64;
+            }
             /* The calloc is not normally necessary, except in some edge/broken
              * cases */
             /* for example for a tiled image of height 1 with a tile height of 1

@@ -8021,7 +8021,7 @@ static void ChopUpSingleUncompressedStrip(TIFF *tif)
     /* later ( StripOffsets and StripByteCounts improperly filled) . */
     if (bytecount == 0 && tif->tif_mode != O_RDONLY)
         return;
-    offset = TIFFGetStrileByteCount(tif, 0);
+    offset = TIFFGetStrileOffset(tif, 0);
     assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
     if ((td->td_photometric == PHOTOMETRIC_YCBCR) && (!isUpSampled(tif)))
         rowblock = td->td_ycbcrsubsampling[1];

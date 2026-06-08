@@ -54,12 +54,19 @@ uint32_t TIFFComputeTile(TIFF *tif, uint32_t x, uint32_t y, uint32_t z,
         uint32_t xpt = TIFFhowmany_32(td->td_imagewidth, dx);
         uint32_t ypt = TIFFhowmany_32(td->td_imagelength, dy);
         uint32_t zpt = TIFFhowmany_32(td->td_imagedepth, dz);
+        uint32_t xpt_ypt = _TIFFMultiply32(tif, xpt, ypt, "TIFFComputeTile");
+        uint32_t xpt_ypt_zpt =
+            _TIFFMultiply32(tif, xpt_ypt, zpt, "TIFFComputeTile");
+
+        if ((xpt_ypt == 0 && xpt != 0 && ypt != 0) ||
+            (xpt_ypt_zpt == 0 && xpt_ypt != 0 && zpt != 0))
+            return (0);
 
         if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
-            tile = (xpt * ypt * zpt) * s + (xpt * ypt) * (z / dz) +
-                   xpt * (y / dy) + x / dx;
+            tile =
+                xpt_ypt_zpt * s + xpt_ypt * (z / dz) + xpt * (y / dy) + x / dx;
         else
-            tile = (xpt * ypt) * (z / dz) + xpt * (y / dy) + x / dx;
+            tile = xpt_ypt * (z / dz) + xpt * (y / dy) + x / dx;
     }
     return (tile);
 }
