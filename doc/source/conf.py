@@ -107,6 +107,7 @@ exclude_patterns = [
     "api/python/modules.rst",
     "gdal_rtd/README.md",
     "user/geometry_validity_examples.rst",
+    "programs/nodata_handling_gdaladdo_gdal_translate.rst",
 ]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
