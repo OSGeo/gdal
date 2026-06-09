@@ -1645,3 +1645,79 @@ def test_ogr_flatgeobuf_write_empty_file_no_spatial_index(tmp_vsimem):
         assert lyr.GetFeatureCount() == 0
         assert lyr.GetExtent(can_return_null=True) is None
         assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_in_vsimem(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_vsimem / "out.fgb") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_vsimem)) == {"out.fgb", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_regular(tmp_path):
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_path / "out.fgb") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_path)) - {".", ".."} == {"out.fgb", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_vsizip(tmp_path):
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(
+        "/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")
+    ) as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open("/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_path)) - {".", ".."} == {"out.fgb.zip", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_TEMPORARY_DIR(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_vsimem / "out.fgb") as ds:
+        with pytest.raises(Exception, match="Failed to create"):
+            ds.CreateLayer("test", options=["TEMPORARY_DIR=/i_do/not/exist"])
+        lyr = ds.CreateLayer("test", options=["TEMPORARY_DIR=" + str(tmp_vsimem)])
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_vsimem)) == {"out.fgb", "out_temp.fgb"}
