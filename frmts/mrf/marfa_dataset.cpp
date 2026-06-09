@@ -2168,8 +2168,7 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     if (val)
     {
         if (IL_NONE == img.comp)
-            throw CPLString(
-                "GDAL MRF: Compression is required when caching");
+            throw CPLString("GDAL MRF: Compression is required when caching");
         source = val;
         nocopy = opt.FetchBoolean("NOCOPY", FALSE);
     }
