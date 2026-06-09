@@ -21,6 +21,7 @@
 #include "cpl_time.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_nasa_earthdata.h"
 #include "cpl_spawn.h"
 #include "cpl_http.h"
 #include <algorithm>
@@ -1942,6 +1943,32 @@ bool VSIS3HandleHelper::GetConfiguration(
 {
     eCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
 
+    bool bErrorEDL = false;
+    auto poEarthdataCredentialProvider =
+        CPLNasaEarthdataCredentialProvider::Get(osPathForOption, &bErrorEDL);
+    if (poEarthdataCredentialProvider)
+    {
+        osAccessKeyId = poEarthdataCredentialProvider->GetAccessKeyId();
+        if (!osAccessKeyId.empty())
+        {
+            osSecretAccessKey =
+                poEarthdataCredentialProvider->GetSecretAccessKey();
+            osSessionToken = poEarthdataCredentialProvider->GetSessionToken();
+            eCredentialsSource = AWSCredentialsSource::NASA_EARTHDATA;
+
+            // Earthdata uses us-west-2 region and requires in-bound requests
+            // to come from that region.
+            osRegion = VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                                "AWS_REGION", "us-west-2");
+
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (bErrorEDL)
+        return false;
+
     // AWS_REGION is GDAL specific. Later overloaded by standard
     // AWS_DEFAULT_REGION
     osRegion = CSLFetchNameValueDef(
@@ -2255,6 +2282,8 @@ void VSIS3HandleHelper::CleanMutex()
 
 void VSIS3HandleHelper::ClearCache()
 {
+    CPLNasaEarthdataCredentialProvider::ClearCache();
+
     CPLMutexHolder oHolder(&ghMutex);
 
     geCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
@@ -2305,17 +2334,20 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
         return nullptr;
     }
 
-    // According to
-    // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
-    // This variable overrides the default region of the in-use profile, if
-    // set."
-    std::string osDefaultRegion = CSLFetchNameValueDef(
-        papszOptions, "AWS_DEFAULT_REGION",
-        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_REGION",
-                                 ""));
-    if (!osDefaultRegion.empty())
+    if (eCredentialsSource != AWSCredentialsSource::NASA_EARTHDATA)
     {
-        osRegion = std::move(osDefaultRegion);
+        // According to
+        // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
+        // This variable overrides the default region of the in-use profile, if
+        // set."
+        std::string osDefaultRegion = CSLFetchNameValueDef(
+            papszOptions, "AWS_DEFAULT_REGION",
+            VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                     "AWS_DEFAULT_REGION", ""));
+        if (!osDefaultRegion.empty())
+        {
+            osRegion = std::move(osDefaultRegion);
+        }
     }
 
     std::string osEndpoint = VSIGetPathSpecificOption(

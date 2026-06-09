@@ -115,6 +115,7 @@ enum class AWSCredentialsSource
     // credentials from credential_process command
     // See https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html
     CREDENTIAL_PROCESS,
+    NASA_EARTHDATA,  // credentials from Nasa Earthdata login mechanism
 };
 
 class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
