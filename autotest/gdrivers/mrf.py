@@ -15,6 +15,7 @@ import glob
 
 import gdaltest
 import pytest
+from os import environ
 
 from osgeo import gdal, osr
 
@@ -519,6 +520,7 @@ def test_raw_lerc():
 def test_mrf_cached_source():
 
     # Test empty cache creation
+    environ["MRF_ENABLE_CACHING"]="ON"
     gdal.Translate(
         "/vsimem/out.mrf",
         "data/byte.tif",
