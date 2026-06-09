@@ -1358,3 +1358,27 @@ def test_ogr_basic_numpy():
 
     with pytest.raises(Exception, match="Unsupported type"):
         f["int"] = np.array([[1, 2, 3], [4, 5, 6]])
+
+
+###############################################################################
+# Test SetPoint with out-of-bounds index
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_setpoint_grows_geometry():
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING (3 3, 2 2)")
+
+    g.SetPoint(5, 1, 1, 1)
+
+    assert g.GetPointCount() == 6
+
+    g.SetPoint_2D(10, 1, 1)
+
+    assert g.GetPointCount() == 11
+
+    g.SetPointM(15, 1, 1, 1)
+
+    assert g.GetPointCount() == 16
+
+    g.SetPointZM(20, 1, 1, 1, 1)
