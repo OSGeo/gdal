@@ -623,7 +623,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
             insidefn = string("/vsitar/") + pszFileName + "/" + pszHeader;
             config = CPLParseXMLFile(insidefn.c_str());
         }
-#if defined(LERC)
+#if defined(GDAL_USE_LERC_INTERNAL)
         else
             config = LERC_Band::GetMRFConfig(poOpenInfo);
 #endif

@@ -44,8 +44,6 @@ Authors:  Lucian Plesea
 #define L2NS LercNS
 #endif
 
-#define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
-
 USING_NAMESPACE_LERC1
 NAMESPACE_MRF_START
 
@@ -368,38 +366,6 @@ static CPLErr DecompressLERC1(buf_mgr &dst, const buf_mgr &src,
 
 // Lerc2
 
-static GDALDataType L2toGDT(L2NS::DataType L2type)
-{
-    GDALDataType dt;
-    switch (L2type)
-    {
-        case L2NS::DataType::dt_short:
-            dt = GDT_Int16;
-            break;
-        case L2NS::DataType::dt_ushort:
-            dt = GDT_UInt16;
-            break;
-        case L2NS::DataType::dt_int:
-            dt = GDT_Int32;
-            break;
-        case L2NS::DataType::dt_uint:
-            dt = GDT_UInt32;
-            break;
-        case L2NS::DataType::dt_float:
-            dt = GDT_Float32;
-            break;
-        case L2NS::DataType::dt_double:
-            dt = GDT_Float64;
-            break;
-        case L2NS::DataType::dt_char:
-            dt = GDT_Int8;
-            break;
-        default:  // Unsigned byte
-            dt = GDT_UInt8;
-    }
-    return dt;
-}
-
 static L2NS::DataType GDTtoL2(GDALDataType dt)
 {
     L2NS::DataType L2dt;
@@ -578,25 +544,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     auto stride = static_cast<int>(img.pagesize.c);
 
     std::vector<Lerc1NS::Byte> bm;
-    int nMasks = 0;
-#if LERC_AT_LEAST_VERSION(3, 0, 0)
-    {
-        // Determine the number of masks
-        std::vector<unsigned int> info(INFOIDX(nMasks) + 1);
-        auto status =
-            lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte *>(src.buffer),
-                             static_cast<unsigned int>(src.size), info.data(),
-                             nullptr, static_cast<int>(info.size()), 0);
-        if (L2NS::ErrCode::Ok == static_cast<L2NS::ErrCode>(status) &&
-            1 == info[INFOIDX(nBands)])
-        {
-            nMasks = info[INFOIDX(nMasks)];
-        }
-    }
-#else
-    if (img.hasNoData)
-        nMasks = 1;
-#endif
+    const int nMasks = img.hasNoData ? 1 : 0;
     if (nMasks > 0)
         bm.resize(static_cast<size_t>(w) * static_cast<size_t>(h) * nMasks);
     auto pbm = bm.data();
@@ -664,10 +612,10 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
         return CompressLERC1(dst, src, img, precision);
 }
 
+#if defined(GDAL_USE_LERC_INTERNAL)
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 {
-    // Header of Lerc2 takes 58 bytes, an empty area 62 or more, depending on
-    // the subversion. Size of Lerc1 empty file is 67 Anything under 50 bytes
+    // Size of Lerc1 empty file is 67 Anything under 50 bytes
     // can't be lerc
     if (poOpenInfo->eAccess != GA_ReadOnly ||
         poOpenInfo->pszFilename == nullptr ||
@@ -679,7 +627,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     char *psz = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     CPLString sHeader;
     sHeader.assign(psz, psz + poOpenInfo->nHeaderBytes);
-    if (!(IsLerc1(sHeader) || IsLerc2(sHeader)))
+    if (!IsLerc1(sHeader))
         return nullptr;
 
     GDALDataType dt = GDT_Unknown;  // Use this as a validity flag
@@ -694,39 +642,6 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
                               poOpenInfo->nHeaderBytes, size.x, size.y))
             dt = GDALGetDataTypeByName(CSLFetchNameValueDef(
                 poOpenInfo->papszOpenOptions, "DATATYPE", "Byte"));
-    }
-    else if (IsLerc2(sHeader))
-    {
-        // getBlobInfo will fail without the whole LERC blob
-        // Wasteful, but that's the only choice given by the LERC C API
-        // This will only work if the Lerc2 file is under the constant defined
-        // here
-        static const GIntBig MAX_L2SIZE(10 * 1024 * 1024);  // 10MB
-        GByte *buffer = nullptr;
-        vsi_l_offset l2size;
-
-        if (VSIIngestFile(nullptr, poOpenInfo->pszFilename, &buffer, &l2size,
-                          MAX_L2SIZE))
-        {
-            //! Info returned in infoArray is { version, dataType, nDim, nCols,
-            //! nRows, nBands, nValidPixels... }, see Lerc_types.h .
-            std::vector<unsigned int> info(INFOIDX(nValidPixels) + 1);
-            auto status =
-                lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte *>(buffer),
-                                 static_cast<unsigned int>(l2size), info.data(),
-                                 nullptr, static_cast<int>(info.size()), 0);
-            VSIFree(buffer);
-            if (L2NS::ErrCode::Ok == static_cast<L2NS::ErrCode>(status) &&
-                1 == info[INFOIDX(nBands)])
-            {
-                size.x = info[INFOIDX(nCols)];
-                size.y = info[INFOIDX(nRows)];
-                if (info[INFOIDX(version)] > 3)  // Single band before version 4
-                    size.c = info[INFOIDX(nDim)];
-                dt = L2toGDT(
-                    static_cast<L2NS::DataType>(info[INFOIDX(dataType)]));
-            }
-        }
     }
 
     if (size.x <= 0 || size.y <= 0 || dt == GDT_Unknown)
@@ -754,6 +669,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     }
     return config;
 }
+#endif
 
 LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     : MRFRasterBand(pDS, image, b, level)

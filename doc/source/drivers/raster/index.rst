@@ -111,6 +111,7 @@ Raster drivers
    lan
    l1b
    lcp
+   lerc
    leveller
    libertiff
    loslas

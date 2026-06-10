@@ -487,33 +487,26 @@ def test_mrf_lerc_with_huffman():
 
 
 @pytest.mark.require_creation_option("MRF", "LERC")
-def test_raw_lerc():
+@pytest.mark.require_driver("LERC")
+# None: LercV2
+@pytest.mark.parametrize("opt", ["OPTIONS=V1:1", None])
+def test_raw_lerc(tmp_path, opt):
 
-    # Defaults to LERC2
-    for opt in "OPTIONS=V1:1", None:
-        co = ["COMPRESS=LERC"]
-        if opt:
-            co.append(opt)
-        gdal.Translate(
-            "/vsimem/out.mrf", "data/byte.tif", format="MRF", creationOptions=co
-        )
-        ds = gdal.Open("/vsimem/out.lrc")
-        with gdal.quiet_errors():
-            cs = ds.GetRasterBand(1).Checksum()
-        expected_cs = 4819
-        assert cs == expected_cs
-        ds = None
-        # Test open options for raw LERC1, it accepts NDV and datatype overrides
-        if opt:
-            ds = gdal.OpenEx(
-                "/vsimem/out.lrc", open_options=["@NDV=100, @datatype=UInt32"]
-            )
-            with gdal.quiet_errors():
-                cs = ds.GetRasterBand(1).Checksum()
-            print(cs, opt)
-            assert cs == 60065
-            ds = None
-        cleanup()
+    co = ["COMPRESS=LERC"]
+    if opt:
+        co.append(opt)
+    gdal.Translate(
+        tmp_path / "out.mrf", "data/byte.tif", format="MRF", creationOptions=co
+    )
+    ds = gdal.Open(tmp_path / "out.lrc")
+    cs = ds.GetRasterBand(1).Checksum()
+    if opt == "OPTIONS=V1:1":
+        print(ds.GetDriver().ShortName)
+        # 4819 with MRF driver (internal liblerc)
+        # 26813 with LERC driver using NaN
+        assert cs in (4819, 26813)
+    else:
+        assert cs == 4819
 
 
 def test_mrf_cached_source():
@@ -662,22 +655,6 @@ def test_mrf_setspatialref():
     assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
     ds = None
     gdal.GetDriverByName("MRF").Delete(filename)
-
-
-@pytest.mark.network
-def test_mrf_read_naked_lerc2_with_mask():
-    """Test case https://github.com/OSGeo/gdal/issues/14676"""
-
-    gdaltest.download_or_skip(
-        "https://github.com/user-attachments/files/28327092/exportImage.zip",
-        "exportImage.zip",
-        force_download=True,
-    )
-
-    ds = gdal.Open("/vsizip/tmp/cache/exportImage.zip/exportImage")
-    # 13269: internal liblerc
-    # 43345: liblerc v4
-    assert ds.GetRasterBand(1).Checksum() in (13269, 43345)
 
 
 def test_mrf_cleanup():
