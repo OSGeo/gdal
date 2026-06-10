@@ -2133,7 +2133,7 @@ const char *VSIS3FSHandler::GetOptions()
                 "  <Option name='VSIS3_EARTHDATA_CREDENTIALS_URL' "
                 "type='string' "
                 "description='URL from which to retrieve temporary S3 "
-                "credentials for a ressource protected by NASA Earthdata "
+                "credentials for a resource protected by NASA Earthdata "
                 "login (EDL)'/>"
                 "  <Option name='EARTHDATA_TOKEN' type='string' description='"
                 "Authorization token to transmit to "

@@ -154,7 +154,7 @@ CPLNasaEarthdataCredentialProvider::Build(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Earthdata credentials provider: line with credentials "
-                     "for host %s fonud in %s, but missing 'login'",
+                     "for host %s found in %s, but missing 'login'",
                      l_osEarthdataHost.c_str(), l_osNetrcFilename.c_str());
             return nullptr;
         }
@@ -162,7 +162,7 @@ CPLNasaEarthdataCredentialProvider::Build(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Earthdata credentials provider: line with credentials "
-                     "for host %s fonud in %s, but missing 'password'",
+                     "for host %s found in %s, but missing 'password'",
                      l_osEarthdataHost.c_str(), l_osNetrcFilename.c_str());
             return nullptr;
         }
@@ -351,10 +351,10 @@ static EarthdataCacheType &GetCache()
 /* static */
 std::shared_ptr<CPLNasaEarthdataCredentialProvider>
 CPLNasaEarthdataCredentialProvider::Get(const std::string &osFilename,
-                                        bool *pbErrorOccured)
+                                        bool *pbErrorOccurred)
 {
-    if (pbErrorOccured)
-        *pbErrorOccured = false;
+    if (pbErrorOccurred)
+        *pbErrorOccurred = false;
 
     const char *pszCredentialsURL = VSIGetPathSpecificOption(
         osFilename.c_str(), "VSIS3_EARTHDATA_CREDENTIALS_URL", nullptr);
@@ -391,9 +391,9 @@ CPLNasaEarthdataCredentialProvider::Get(const std::string &osFilename,
         {
             oCache.insert(osCacheKey, ret);
         }
-        else if (pbErrorOccured)
+        else if (pbErrorOccurred)
         {
-            *pbErrorOccured = true;
+            *pbErrorOccurred = true;
         }
     }
     return ret;

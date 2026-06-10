@@ -70,7 +70,7 @@ class CPLNasaEarthdataCredentialProvider
      *         is not set, or nullptr in case of error
      */
     static std::shared_ptr<CPLNasaEarthdataCredentialProvider>
-    Get(const std::string &osFilename, bool *pbErrorOccured = nullptr);
+    Get(const std::string &osFilename, bool *pbErrorOccurred = nullptr);
 
     /** Returns S3 access key id, or empty string if invalid.
      *
