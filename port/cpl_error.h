@@ -328,6 +328,15 @@ void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
  * @since GDAL 3.1
  */
 #define CPLDebugOnly(...) CPLDebug(__VA_ARGS__)
+#elif __cplusplus >= 201703L
+#define CPLDebugOnly(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (false)                                                   \
+        {                                                                      \
+            CPLDebug(__VA_ARGS__);                                             \
+        }                                                                      \
+    } while (0)
 #else
 /** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
  * @since GDAL 3.1
