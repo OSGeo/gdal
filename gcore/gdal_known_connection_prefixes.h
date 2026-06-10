@@ -21,6 +21,7 @@ asKnownConnectionPrefixes[] =
    {"GPSBABEL:", "GPSBABEL"},
    {"GTI:", "GTI"},
    {"HANA:", "HANA"},
+   {"ICECHUNK:", "ICECHUNK"},
    {"IDB:", "IDB"},
    {"MongoDBv3:", "MongoDBv3"},
    {"MSSQL:", "MSSQLSpatial"},

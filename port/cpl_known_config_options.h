@@ -25,7 +25,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_NO_SIGN_REQUEST", // from cpl_aws.cpp
    "AWS_PROFILE", // from cpl_aws.cpp
    "AWS_REGION", // from cpl_aws.cpp
-   "AWS_REQUEST_PAYER", // from cpl_aws.cpp
+   "AWS_REQUEST_PAYER", // from cpl_aws.cpp, icechunkrepo.cpp
    "AWS_ROLE_ARN", // from cpl_aws.cpp
    "AWS_ROLE_SESSION_NAME", // from cpl_aws.cpp
    "AWS_S3_ENDPOINT", // from cpl_aws.cpp
@@ -569,6 +569,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "HFA_USE_RRD", // from hfaband.cpp
    "HFA_WRITE_PE_STRING", // from hfaopen.cpp
    "HOME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
+   "ICECHUNK_ALLOW_LOCAL_CHUNK_LOCATION", // from vsiicechunk.cpp
    "IDB_OGR_FID", // from ogridblayer.cpp
    "IDRISIDIR", // from IdrisiDataset.cpp
    "INTERLEAVE_OVERVIEW", // from gt_overview.cpp

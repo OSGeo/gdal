@@ -160,6 +160,7 @@ gdal_dependent_format(http "HTTP driver" "GDAL_USE_CURL")
 
 gdal_dependent_format(netcdf "NetCDF network Common Data Form" "GDAL_USE_NETCDF")
 gdal_optional_format(zarr "ZARR")
+gdal_dependent_format(icechunk "Icechunk" "GDAL_ENABLE_DRIVER_ZARR;GDAL_USE_ZSTD")
 gdal_dependent_format(daas "Airbus DS Intelligence Data As A Service(DAAS)" "GDAL_USE_CURL")
 gdal_dependent_format(eeda "Earth Engine Data API" "GDAL_USE_CURL")
 gdal_dependent_format(fits "FITS Driver" "GDAL_USE_CFITSIO")
