@@ -519,7 +519,7 @@ def test_raw_lerc():
 def test_mrf_cached_source():
 
     # Test empty cache creation
-    with gdal.config_option("MRF_ENABLE_CACHING","ON"):
+    with gdal.config_option("MRF_ENABLE_CACHING", "ON"):
         gdal.Translate(
             "/vsimem/out.mrf",
             "data/byte.tif",
