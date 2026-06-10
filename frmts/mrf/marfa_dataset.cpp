@@ -67,9 +67,6 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
-#if defined(ZSTD_SUPPORT)
-#include <zstd.h>
-#endif
 using std::string;
 using std::vector;
 
@@ -79,7 +76,7 @@ NAMESPACE_MRF_START
 MRFDataset::MRFDataset()
     : zslice(0), idxSize(0), clonedSource(FALSE), nocopy(FALSE),
       bypass_cache(
-          CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
+          !CPLTestBool(CPLGetConfigOption("MRF_ENABLE_CACHING", "FALSE"))),
       mp_safe(FALSE), hasVersions(FALSE), verCount(0),
       bCrystalized(TRUE),  // Assume not in create mode
       spacing(0), no_errors(0), missing(0), poSrcDS(nullptr), level(-1),
@@ -688,6 +685,15 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (ret != CE_None)
     {
         delete ds;
+        return nullptr;
+    }
+
+    // Caching requires a tile compression
+    if (!ds->source.empty() && IL_NONE == ds->current.comp)
+    {
+        delete ds;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDAL MRF: Cached MRF must use some compression");
         return nullptr;
     }
 
@@ -2161,6 +2167,8 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     val = opt.FetchNameValue("CACHEDSOURCE");
     if (val)
     {
+        if (IL_NONE == img.comp)
+            throw CPLString("GDAL MRF: Compression is required when caching");
         source = val;
         nocopy = opt.FetchBoolean("NOCOPY", FALSE);
     }
@@ -2192,8 +2200,6 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     // General Fixups
     if (img.order == IL_Interleaved)
         img.pagesize.c = img.size.c;
-
-    // Compression dependent fixups
 }
 
 /**

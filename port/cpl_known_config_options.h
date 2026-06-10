@@ -659,7 +659,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "MITAB_MAX_LINE_LENGTH", // from mitab_middatafile.cpp
    "MITAB_SET_TOWGS84_ON_KNOWN_DATUM", // from ogrmitabspatialref.cpp
    "MRF_ALL_OVERVIEW_LEVELS", // from marfa_dataset.cpp
-   "MRF_BYPASSCACHING", // from marfa_dataset.cpp
+   "MRF_ENABLE_CACHING", // from marfa_dataset.cpp
    "MSSQLSPATIAL_ALWAYS_OUTPUT_FID", // from ogrmssqlspatialdatasource.cpp
    "MSSQLSPATIAL_BCP_SIZE", // from ogrmssqlspatialdatasource.cpp
    "MSSQLSPATIAL_LIST_ALL_TABLES", // from ogrmssqlspatialdatasource.cpp
