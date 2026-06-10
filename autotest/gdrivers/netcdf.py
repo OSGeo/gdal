@@ -6085,7 +6085,7 @@ def test_netcdf_short_as_unsigned(tmp_path):
 def test_netcdf_read_unrelated_dim():
     """Test https://github.com/OSGeo/gdal/issues/6367"""
 
-    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc")
+    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc", gdal.OF_RASTER)
     # Test that "unrelated_dim" metadata is not reported
     assert ds.GetMetadata() == {"Band1#foo": "bar"}
 

@@ -118,7 +118,7 @@ def test_gti_no_metadata(tmp_vsimem):
     del index_ds
 
     with pytest.raises(Exception):
-        gdal.Open(index_filename)
+        gdal.Open(index_filename, gdal.OF_RASTER)
 
     vrt_ds = gdal.OpenEx(index_filename, allowed_drivers=["GTI"])
     assert vrt_ds.GetDriver().GetDescription() == "GTI"

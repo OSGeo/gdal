@@ -145,7 +145,7 @@ def test_fits_read_empty_primary_hdu():
     filename = "data/fits/empty_primary_hdu.fits"
     assert os.path.exists(filename)
     with gdal.quiet_errors():
-        assert gdal.Open(filename) is None
+        assert gdal.Open(filename, gdal.OF_RASTER) is None
 
 
 def test_fits_read_image_in_second_hdu():
@@ -257,7 +257,7 @@ def test_fits_open_vector_only_in_raster_mode():
     filename = "data/fits/binary_table.fits"
     assert os.path.exists(filename)
     with gdal.quiet_errors():
-        assert gdal.Open(filename) is None
+        assert gdal.Open(filename, gdal.OF_RASTER) is None
     assert "but contains binary table" in gdal.GetLastErrorMsg()
 
 
