@@ -140,15 +140,18 @@ def check_feature_geometry(
     # equality, but structural one
     # Within does not take into account Z or M values, so we skip to the
     # pointwise check if they are present.
-    if (
-        (not pointwise)
-        and have_geos()
-        and actual.Within(expected)
-        and expected.Within(actual)
-        and (not actual.Is3D())
-        and (not actual.IsMeasured())
-    ):
-        return
+    # Set quiet_errors() to avoid generating noise if Within generates a
+    # GEOS TopologyException
+    with gdal.quiet_errors():
+        if (
+            (not pointwise)
+            and have_geos()
+            and actual.Within(expected)
+            and expected.Within(actual)
+            and (not actual.Is3D())
+            and (not actual.IsMeasured())
+        ):
+            return
 
     if _root_actual is None:
         _root_actual = actual
