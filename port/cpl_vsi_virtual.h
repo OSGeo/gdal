@@ -646,6 +646,7 @@ class CPL_DLL VSIFileManager
     std::shared_ptr<VSIFilesystemHandler> m_poDefaultHandler{};
     std::map<std::string, std::shared_ptr<VSIFilesystemHandler>>
         m_apoHandlers{};
+    std::map<std::string, void (*)(void)> m_oMapHandlerLoader{};
 
     VSIFileManager();
 
@@ -663,6 +664,9 @@ class CPL_DLL VSIFileManager
                                VSIFilesystemHandler *)
         CPL_WARN_DEPRECATED("Use version with std::shared_ptr<> instead");
     static void RemoveHandler(const std::string &osPrefix);
+
+    static void RegisterHandlerLoader(const char *pszPrefix,
+                                      void (*pfnLoadHandler)(void));
 
     static char **GetPrefixes();
 };
