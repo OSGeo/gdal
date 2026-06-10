@@ -2011,11 +2011,8 @@ after_loop:
         auto poFilterGeomBackup = m_poFilterGeom;
         m_poFilterGeom = nullptr;
         CPLStringList aosOptions;
-        if (!m_poFilterGeom)
-        {
-            aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
-                                    CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
-        }
+        aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
+                                CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
         PostFilterArrowArray(&schema, out_array, aosOptions.List());
         schema.release(&schema);
         m_poFilterGeom = poFilterGeomBackup;
