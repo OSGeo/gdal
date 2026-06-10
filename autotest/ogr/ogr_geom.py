@@ -37,6 +37,14 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+
+@pytest.fixture(autouse=True)
+def fail_on_warnings():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        yield
+
+
 ###############################################################################
 # Test Area calculation for a MultiPolygon (which exercises lower level
 # get_Area() methods as well).
@@ -522,22 +530,16 @@ def test_ogr_geom_build_from_edges_2():
 def test_ogr_geom_build_from_edges_3():
 
     src_geom = ogr.CreateGeometryFromWkt("POINT (0 1)")
-    try:
-        with gdal.quiet_errors():
-            poly = ogr.BuildPolygonFromEdges(src_geom)
-        assert poly is None
-    except Exception:
-        pass
+    with pytest.raises(
+        Exception, match="passed geometry is not an OGRGeometryCollection"
+    ):
+        ogr.BuildPolygonFromEdges(src_geom)
 
     src_geom = ogr.CreateGeometryFromWkt(
         "GEOMETRYCOLLECTION (LINESTRING(0 1,2 3),POINT(0 1),LINESTRING(0 1,-2 3),LINESTRING(-2 3,2 3))"
     )
-    try:
-        with gdal.quiet_errors():
-            poly = ogr.BuildPolygonFromEdges(src_geom)
-        assert poly is None
-    except Exception:
-        pass
+    with pytest.raises(Exception, match="contains non-line string geometries"):
+        ogr.BuildPolygonFromEdges(src_geom)
 
 
 ###############################################################################
@@ -1138,7 +1140,7 @@ def test_ogr_geom_area_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "non-surface geometry type"):
         area = geom.Area()
     assert area == 0, "Area() result wrong, got %g." % area
 
@@ -1153,7 +1155,7 @@ def test_ogr_geom_length_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "non-curve geometry type"):
         length = geom.Length()
     assert length == 0, "Length() result wrong, got %g." % length
 
@@ -2124,16 +2126,14 @@ def test_ogr_geom_compoundcurve():
     g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdal.quiet_errors():
-        g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
+    g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdal.quiet_errors():
-        g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
+    g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
     # Cannot add compoundcurve in compoundcurve
@@ -2971,7 +2971,7 @@ def test_ogr_geom_getcurvegeometry():
     ogrtest.check_feature_geometry(g3, g1_expected)
 
     # Test with unrecognized options
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "Unsupported option"):
         g2_new = g1.GetLinearGeometry(
             options=["bla", "ADD_INTERMEDIATE_POINT=FALSE", "foo=bar"]
         )
