@@ -2118,9 +2118,12 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace, int nPromoteAlphaBandIdx)
     {
-        // Get tile position and size from component 0 (full resolution)
-        const int tileXOff = img->x0;
-        const int tileYOff = img->y0;
+        // Use origin AND size from component 0.  For partial (dw_reduced)
+        // decompression, img->x0/y0 describe the full tile canvas bounds while
+        // comps[0].x0/y0/w/h describe the cropped decode window; mixing
+        // the two can produce a corrupt output
+        const int tileXOff = static_cast<int>(img->comps[0].x0);
+        const int tileYOff = static_cast<int>(img->comps[0].y0);
         const int tileWidth = static_cast<int>(img->comps[0].w);
         const int tileHeight = static_cast<int>(img->comps[0].h);
 
