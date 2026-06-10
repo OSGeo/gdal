@@ -3302,19 +3302,9 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             aosOptions.SetNameValue("SPARSE_OK", "YES");
         }
 
-        CPLErr eErr = GDALDataset::IBuildOverviews(
+        return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList, nBandsIn, panBandList,
             pfnProgress, pProgressData, aosOptions);
-        if (eErr == CE_None && m_poMaskDS)
-        {
-            ReportError(
-                CE_Warning, CPLE_NotSupported,
-                "Building external overviews whereas there is an internal "
-                "mask is not fully supported. "
-                "The overviews of the non-mask bands will be created, "
-                "but not the overviews of the mask band.");
-        }
-        return eErr;
     }
 
     /* -------------------------------------------------------------------- */

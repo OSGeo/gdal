@@ -1438,6 +1438,24 @@ int GTiffRasterBand::GetOverviewCount()
     if (m_poGDS->m_nJPEGOverviewVisibilityCounter)
         return m_poGDS->GetJPEGOverviewCount();
 
+    // Deal with a GeoTIFF file with internal mask, but with external .ovr
+    if (!m_poGDS->m_bIsOverview && m_poGDS->m_poBaseDS &&
+        m_poGDS->m_poBaseDS->m_poMaskDS.get() == m_poGDS &&
+        m_poGDS->m_poBaseDS->m_apoOverviewDS.empty())
+    {
+        auto poMainBand = m_poGDS->m_poBaseDS->GetRasterBand(1);
+        int nCount = 0;
+        const int nMainBandOvrCount = poMainBand->GetOverviewCount();
+        for (int i = 0; i < nMainBandOvrCount; ++i)
+        {
+            const auto poMainBandOvr = poMainBand->GetOverview(i);
+            if (poMainBandOvr &&
+                poMainBandOvr->GetMaskFlags() == GMF_PER_DATASET)
+                ++nCount;
+        }
+        return nCount;
+    }
+
     return 0;
 }
 
@@ -1469,6 +1487,29 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
     if (i >= 0 && i < m_poGDS->GetJPEGOverviewCount())
         return m_poGDS->m_apoJPEGOverviewDS[i]->GetRasterBand(nBand);
 
+    // Deal with a GeoTIFF file with internal mask, but with external .ovr
+    if (!m_poGDS->m_bIsOverview && m_poGDS->m_poBaseDS &&
+        m_poGDS->m_poBaseDS->m_poMaskDS.get() == m_poGDS &&
+        m_poGDS->m_poBaseDS->m_apoOverviewDS.empty())
+    {
+        auto poMainBand = m_poGDS->m_poBaseDS->GetRasterBand(1);
+        int nCount = 0;
+        const int nMainBandOvrCount = poMainBand->GetOverviewCount();
+        for (int iIter = 0; iIter < nMainBandOvrCount; ++iIter)
+        {
+            const auto poMainBandOvr = poMainBand->GetOverview(iIter);
+            if (poMainBandOvr &&
+                poMainBandOvr->GetMaskFlags() == GMF_PER_DATASET)
+            {
+                if (nCount == i)
+                {
+                    return poMainBandOvr->GetMaskBand();
+                }
+                ++nCount;
+            }
+        }
+    }
+
     return nullptr;
 }
 
@@ -1497,7 +1538,24 @@ int GTiffRasterBand::GetMaskFlags()
 
     if (m_poGDS->m_bIsOverview)
     {
-        return m_poGDS->m_poBaseDS->GetRasterBand(nBand)->GetMaskFlags();
+        auto poMainBand = m_poGDS->m_poBaseDS->GetRasterBand(nBand);
+        if (poMainBand->GetMaskFlags() == GMF_PER_DATASET)
+        {
+            GDALRasterBand *poBaseMask = poMainBand->GetMaskBand();
+            if (poBaseMask)
+            {
+                const int nOverviews = poBaseMask->GetOverviewCount();
+                for (int i = 0; i < nOverviews; i++)
+                {
+                    GDALRasterBand *poOvr = poBaseMask->GetOverview(i);
+                    if (poOvr && poOvr->GetXSize() == GetXSize() &&
+                        poOvr->GetYSize() == GetYSize())
+                    {
+                        return GMF_PER_DATASET;
+                    }
+                }
+            }
+        }
     }
 
     return GDALPamRasterBand::GetMaskFlags();
