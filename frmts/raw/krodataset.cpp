@@ -303,7 +303,8 @@ GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (nRet != 6)
         return nullptr;
 
-    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/

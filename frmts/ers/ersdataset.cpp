@@ -1007,8 +1007,9 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(poHeader->Find("DataSetType", ""), "Translated"))
     {
         nRecLevel++;
-        poDS->poDepFile = GDALDataset::FromHandle(
-            GDALOpen(osDataFilePath, poOpenInfo->eAccess));
+        poDS->poDepFile = GDALDataset::FromHandle(GDALDataset::Open(
+            osDataFilePath,
+            poOpenInfo->eAccess | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
         nRecLevel--;
 
         if (poDS->poDepFile != nullptr &&

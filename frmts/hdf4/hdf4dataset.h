@@ -19,6 +19,10 @@
 #include "cpl_list.h"
 #include "gdal_pam.h"
 
+constexpr int HDF4_SDS_MAXNAMELEN = 65;
+
+constexpr int N_BUF_SIZE = 8192;
+
 typedef enum  // Types of dataset:
 {
     HDF4_SDS,  // Scientific Dataset
@@ -94,6 +98,92 @@ class HDF4Dataset CPL_NON_FINAL : public GDALPamDataset
     char **GetMetadataDomainList() override;
     CSLConstList GetMetadata(const char *pszDomain = "") override;
     static GDALDataset *Open(GDALOpenInfo *);
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                              HDF4ImageDataset                        */
+/* ==================================================================== */
+/************************************************************************/
+
+constexpr int N_COLOR_ENTRIES = 256;
+
+class HDF4ImageDataset final : public HDF4Dataset
+{
+    friend class HDF4ImageRasterBand;
+
+    char *pszFilename;
+    int32 hHDF4;
+    int32 iGR;
+    int32 iPal;
+    int32 iDataset;
+    int32 iRank;
+    int32 iNumType;
+    int32 nAttrs;
+    int32 iInterlaceMode;
+    int32 iPalInterlaceMode;
+    int32 iPalDataType;
+    int32 nComps;
+    int32 nPalEntries;
+    int32 aiDimSizes[H4_MAX_VAR_DIMS];
+    int iXDim;
+    int iYDim;
+    int iBandDim;
+    int i4Dim;
+    int nBandCount;
+    char **papszLocalMetadata{};
+    uint8 aiPaletteData[N_COLOR_ENTRIES][3];  // XXX: Static array for now
+    char szName[HDF4_SDS_MAXNAMELEN];
+    char *pszSubdatasetName;
+    char *pszFieldName;
+
+    GDALColorTable *poColorTable;
+
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
+    bool bHasGeoTransform;
+    GDALGeoTransform m_gt{};
+    std::vector<gdal::GCP> m_aoGCPs{};
+
+    HDF4DatasetType iDatasetType;
+
+    int32 iSDS;
+
+    int nBlockPreferredXSize;
+    int nBlockPreferredYSize;
+    bool bReadTile;
+
+    void ToGeoref(double *, double *);
+    void GetImageDimensions(char *);
+    void GetSwatAttrs(int32);
+    void GetGridAttrs(int32 hGD);
+    void CaptureNRLGeoTransform(void);
+    void CaptureL1GMTLInfo(void);
+    void CaptureCoastwatchGCTPInfo(void);
+    void ProcessModisSDSGeolocation(void);
+    int ProcessSwathGeolocation(int32, char **);
+
+    static long USGSMnemonicToCode(const char *);
+    static void ReadCoordinates(const char *, double *, double *);
+
+    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageDataset)
+
+  public:
+    HDF4ImageDataset();
+    ~HDF4ImageDataset() override;
+
+    static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
+                               int nBandsIn, GDALDataType eType,
+                               CSLConstList papszParamList);
+    CPLErr FlushCache(bool bAtClosing) override;
+    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
+    int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+    const GDAL_GCP *GetGCPs() override;
 };
 
 char *SPrintArray(GDALDataType eDataType, const void *paDataArray, int nValues,

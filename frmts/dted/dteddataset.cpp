@@ -54,6 +54,7 @@ class DTEDDataset final : public GDALPamDataset
 
     void SetFileName(const char *pszFilename);
 
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 };
@@ -312,6 +313,11 @@ int DTEDDataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *DTEDDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *DTEDDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -966,7 +972,8 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Reopen and copy missing information into a PAM file.            */
     /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS = DTEDDataset::OpenPAM(&oOpenInfo);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

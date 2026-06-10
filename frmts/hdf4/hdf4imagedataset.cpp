@@ -41,8 +41,6 @@
 
 #include <algorithm>
 
-constexpr int HDF4_SDS_MAXNAMELEN = 65;
-
 extern const char *const pszGDALSignature;
 
 // Signature to recognize files written by GDAL.
@@ -50,8 +48,6 @@ const char *const pszGDALSignature =
     "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
 extern CPLMutex *hHDF4Mutex;
-
-constexpr int N_BUF_SIZE = 8192;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -69,92 +65,6 @@ enum HDF4EOSProduct
     PROD_AST14DEM,
     PROD_MODIS_L1B,
     PROD_MODIS_L2
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              HDF4ImageDataset                        */
-/* ==================================================================== */
-/************************************************************************/
-
-constexpr int N_COLOR_ENTRIES = 256;
-
-class HDF4ImageDataset final : public HDF4Dataset
-{
-    friend class HDF4ImageRasterBand;
-
-    char *pszFilename;
-    int32 hHDF4;
-    int32 iGR;
-    int32 iPal;
-    int32 iDataset;
-    int32 iRank;
-    int32 iNumType;
-    int32 nAttrs;
-    int32 iInterlaceMode;
-    int32 iPalInterlaceMode;
-    int32 iPalDataType;
-    int32 nComps;
-    int32 nPalEntries;
-    int32 aiDimSizes[H4_MAX_VAR_DIMS];
-    int iXDim;
-    int iYDim;
-    int iBandDim;
-    int i4Dim;
-    int nBandCount;
-    char **papszLocalMetadata{};
-    uint8 aiPaletteData[N_COLOR_ENTRIES][3];  // XXX: Static array for now
-    char szName[HDF4_SDS_MAXNAMELEN];
-    char *pszSubdatasetName;
-    char *pszFieldName;
-
-    GDALColorTable *poColorTable;
-
-    OGRSpatialReference m_oSRS{};
-    OGRSpatialReference m_oGCPSRS{};
-    bool bHasGeoTransform;
-    GDALGeoTransform m_gt{};
-    std::vector<gdal::GCP> m_aoGCPs{};
-
-    HDF4DatasetType iDatasetType;
-
-    int32 iSDS;
-
-    int nBlockPreferredXSize;
-    int nBlockPreferredYSize;
-    bool bReadTile;
-
-    void ToGeoref(double *, double *);
-    void GetImageDimensions(char *);
-    void GetSwatAttrs(int32);
-    void GetGridAttrs(int32 hGD);
-    void CaptureNRLGeoTransform(void);
-    void CaptureL1GMTLInfo(void);
-    void CaptureCoastwatchGCTPInfo(void);
-    void ProcessModisSDSGeolocation(void);
-    int ProcessSwathGeolocation(int32, char **);
-
-    static long USGSMnemonicToCode(const char *);
-    static void ReadCoordinates(const char *, double *, double *);
-
-    CPL_DISALLOW_COPY_ASSIGN(HDF4ImageDataset)
-
-  public:
-    HDF4ImageDataset();
-    ~HDF4ImageDataset() override;
-
-    static GDALDataset *Open(GDALOpenInfo *);
-    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBandsIn, GDALDataType eType,
-                               CSLConstList papszParamList);
-    CPLErr FlushCache(bool bAtClosing) override;
-    CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
-    CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
-    const OGRSpatialReference *GetSpatialRef() const override;
-    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
-    int GetGCPCount() override;
-    const OGRSpatialReference *GetGCPSpatialRef() const override;
-    const GDAL_GCP *GetGCPs() override;
 };
 
 /************************************************************************/
@@ -3767,6 +3677,8 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
     CPLAcquireMutex(hHDF4Mutex, 1000.0);
+
+    poDS->poDriver = GetGDALDriverManager()->GetDriverByName("HDF4Image");
 
     return poDS;
 }

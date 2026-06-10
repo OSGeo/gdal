@@ -58,6 +58,7 @@ class GSAGDataset final : public GDALPamDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    CSLConstList papszOptions,
@@ -812,6 +813,11 @@ int GSAGDataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *GSAGDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *GSAGDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -1658,7 +1664,8 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
 
     VSIFCloseL(fp);
 
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_Update);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo);
     if (poDS)
     {
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

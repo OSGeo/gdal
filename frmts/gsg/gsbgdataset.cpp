@@ -54,6 +54,7 @@ class GSBGDataset final : public GDALPamDataset
 
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType, CSLConstList);
     static GDALDataset *CreateCopy(const char *pszFilename,
@@ -483,6 +484,11 @@ int GSBGDataset::Identify(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *GSBGDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *GSBGDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -863,7 +869,8 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
 
     VSIFCloseL(fp);
 
-    return (GDALDataset *)GDALOpen(pszFilename, GA_Update);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/
@@ -1019,7 +1026,8 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
 
     VSIFCloseL(fp);
 
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_Update);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo);
     if (poDS)
     {
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

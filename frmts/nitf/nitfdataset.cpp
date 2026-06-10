@@ -3953,7 +3953,7 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
                       panJPEGBlockOffset[iBlock], 0, osNITFFilename.c_str());
 
     GDALDataset *poDS =
-        GDALDataset::FromHandle(GDALOpen(osFilename, GA_ReadOnly));
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
     if (poDS == nullptr)
         return CE_Failure;
 

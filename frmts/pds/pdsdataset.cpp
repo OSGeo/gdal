@@ -1386,8 +1386,8 @@ int PDSDataset::ParseCompressedImage()
     const CPLString osFullFileName =
         CPLFormFilenameSafe(osPath, osFileName, nullptr);
 
-    poCompressedDS =
-        GDALDataset::FromHandle(GDALOpen(osFullFileName, GA_ReadOnly));
+    poCompressedDS = GDALDataset::Open(osFullFileName,
+                                       GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
 
     if (poCompressedDS == nullptr)
         return FALSE;

@@ -2577,21 +2577,6 @@ CSLConstList GeoRasterDataset::GetMetadata(const char *pszDomain)
 CPLErr GeoRasterDataset::Delete(const char *pszFilename)
 {
     (void)pszFilename;
-    /***
-        GeoRasterDataset* poGRD = nullptr;
-
-        poGRD = (GeoRasterDataset*) GDALOpen( pszFilename, GA_Update );
-
-        if( ! poGRD )
-        {
-            return CE_Failure;
-        }
-
-        if( ! poGRD->poGeoRaster->Delete() )
-        {
-            return CE_Failure;
-        }
-    ***/
     return CE_None;
 }
 

@@ -246,6 +246,7 @@ class GTADataset final : public GDALPamDataset
     ~GTADataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -1012,6 +1013,11 @@ CPLErr GTADataset::SetGCPs(int, const GDAL_GCP *, const OGRSpatialReference *)
 /************************************************************************/
 
 GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *GTADataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (GTADriverIdentify(poOpenInfo) == GDAL_IDENTIFY_FALSE)
@@ -1725,8 +1731,9 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
 
-    GTADataset *poDS = (GTADataset *)GDALOpen(
+    GDALOpenInfo oOpenInfo(
         pszFilename, eGTACompression == gta::none ? GA_Update : GA_ReadOnly);
+    auto poDS = GTADataset::OpenPAM(&oOpenInfo);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

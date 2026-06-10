@@ -966,10 +966,7 @@ GDALDataset *TerragenDataset::Create(const char *pszFilename, int nXSize,
     // --------------------------------------------------------------------
     poDS->SetBand(1, new TerragenRasterBand(poDS));
 
-    // VSIFClose( poDS->m_fp );
-
-    // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-    return GDALDataset::FromHandle(poDS);
+    return poDS;
 }
 
 /************************************************************************/

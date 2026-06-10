@@ -1627,7 +1627,9 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
         }
         CPLFree(pszESRIProjection);
     }
-    return static_cast<GDALDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/

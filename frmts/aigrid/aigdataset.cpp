@@ -892,8 +892,8 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     /* -------------------------------------------------------------------- */
     /*      Get file list.                                                  */
     /* -------------------------------------------------------------------- */
-
-    GDALDatasetH hDS = GDALOpen(osOldPath, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(osOldPath, GA_ReadOnly);
+    GDALDatasetH hDS = GDALDataset::ToHandle(AIGDataset::Open(&oOpenInfo));
     if (hDS == nullptr)
         return CE_Failure;
 
@@ -985,7 +985,8 @@ static CPLErr AIGDelete(const char *pszDatasetname)
     /* -------------------------------------------------------------------- */
     /*      Get file list.                                                  */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = GDALOpen(pszDatasetname, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(pszDatasetname, GA_ReadOnly);
+    GDALDatasetH hDS = GDALDataset::ToHandle(AIGDataset::Open(&oOpenInfo));
     if (hDS == nullptr)
         return CE_Failure;
 
