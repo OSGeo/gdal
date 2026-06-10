@@ -2129,6 +2129,26 @@ const char *VSIS3FSHandler::GetOptions()
             .append("' max='")
             .append(CPLSPrintf("%d", GetMaximumPartSizeInMiB()))
             .append("'/>")
+            .append(
+                "  <Option name='VSIS3_EARTHDATA_CREDENTIALS_URL' "
+                "type='string' "
+                "description='URL from which to retrieve temporary S3 "
+                "credentials for a ressource protected by NASA Earthdata "
+                "login (EDL)'/>"
+                "  <Option name='EARTHDATA_TOKEN' type='string' description='"
+                "Authorization token to transmit to "
+                "VSIS3_EARTHDATA_CREDENTIALS_URL'/>"
+                "  <Option name='EARTHDATA_USERNAME' type='string' "
+                "description='"
+                "Username of the EDL account to transmit to "
+                "urs.earthdata.nasa.gov to get a token to transmit to "
+                "VSIS3_EARTHDATA_CREDENTIALS_URL. Must be used together with "
+                "EARTHDATA_PASSWORD. Mutually exclusive with EARTHDATA_TOKEN'/>"
+                "  <Option name='EARTHDATA_PASSWORD' type='string' "
+                "description='"
+                "Password of the EDL account to transmit to "
+                "urs.earthdata.nasa.gov to get a token to transmit to "
+                "VSIS3_EARTHDATA_CREDENTIALS_URL'/>")
             .append(VSICurlFilesystemHandlerBase::GetOptionsStatic())
             .append("</Options>"));
     return osOptions.c_str();
