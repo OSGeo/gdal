@@ -21,16 +21,6 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("ZARR")
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def load_zarr():
-    # Make sure the ZARR driver is fully loaded so that /vsikerchunk_parquet_ref
-    # is available
-    with pytest.raises(Exception):
-        gdal.Open("ZARR:")
-
-
 ###############################################################################
 
 

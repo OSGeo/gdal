@@ -15,6 +15,7 @@
 #include "gdalplugindriverproxy.h"
 
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "vsikerchunk.h"
 #include "vsikerchunk_inline.hpp"
 
@@ -197,5 +198,19 @@ void DeclareDeferredZarrPlugin()
 #endif
     ZARRDriverSetCommonMetadata(poDriver);
     GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+
+    const auto loadLambda = []()
+    {
+        auto poDrv = GetGDALDriverManager()->GetDriverByName(DRIVER_NAME);
+        // Querying any non-standard driver metadata forces the plugin
+        // to be loaded.
+        if (poDrv)
+            poDrv->GetMetadata("FORCE_LOAD");
+    };
+
+    // trigger the loading of the plugin if Kerchunk related file systems are
+    // queried.
+    VSIFileManager::RegisterHandlerLoader(JSON_REF_FS_PREFIX, loadLambda);
+    VSIFileManager::RegisterHandlerLoader(PARQUET_REF_FS_PREFIX, loadLambda);
 }
 #endif
