@@ -1545,26 +1545,52 @@ int DIMAPDataset::ReadImageInformation2()
         "GEOMETRIC_",
         "Processing_Information.Product_Settings.Radiometric_Settings",
         "RADIOMETRIC_",
-        "Quality_Assessment.Imaging_Quality_Measurement",
-        "CLOUDCOVER_",
         nullptr,
         nullptr};
 
     SetMetadataFromXML(psProductDim, apszMetadataTranslationDim);
+
+    if (const CPLXMLNode *psCloudCoverage = CPLGetXMLNode(
+            psProductDim, "=Dimap_Document.Dataset_Content.CLOUD_COVERAGE"))
+    {
+        if (const char *pszValue = CPLGetXMLValue(psCloudCoverage, "", nullptr))
+        {
+            SetMetadataItem("CLOUD_COVERAGE", pszValue);
+            if (const char *pszUnit =
+                    CPLGetXMLValue(psCloudCoverage, "unit", nullptr))
+            {
+                SetMetadataItem("CLOUD_COVERAGE_UNIT", pszUnit);
+                if (EQUAL(pszUnit, "percent"))
+                {
+                    // GDAL standardized metadata domain
+                    SetMetadataItem("CLOUDCOVER", pszValue, "IMAGERY");
+                }
+            }
+        }
+    }
+
+    if (const CPLXMLNode *psSnowCoverage = CPLGetXMLNode(
+            psProductDim, "=Dimap_Document.Dataset_Content.SNOW_COVERAGE"))
+    {
+        if (const char *pszValue = CPLGetXMLValue(psSnowCoverage, "", nullptr))
+        {
+            SetMetadataItem("SNOW_COVERAGE", pszValue);
+            if (const char *pszUnit =
+                    CPLGetXMLValue(psSnowCoverage, "unit", nullptr))
+            {
+                SetMetadataItem("SNOW_COVERAGE_UNIT", pszUnit);
+            }
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Translate other metadata of interest: STRIP_<product_name>.XML    */
     /* -------------------------------------------------------------------- */
 
     static const char *const apszMetadataTranslationStrip[] = {
-        "Catalog.Full_Strip.Notations.Cloud_And_Quality_Notation."
-        "Data_Strip_Notation",
-        "CLOUDCOVER_",
         "Acquisition_Configuration.Platform_Configuration."
         "Ephemeris_Configuration",
-        "EPHEMERIS_",
-        nullptr,
-        nullptr};
+        "EPHEMERIS_", nullptr, nullptr};
 
     if (psProductStrip != nullptr)
         SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
