@@ -361,7 +361,7 @@ def have_sfcgal():
     global sfcgal_flag
 
     if sfcgal_flag is None:
-        with gdaltest.disable_exceptions():
+        with gdaltest.disable_exceptions(), gdal.quiet_errors():
             pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20 30)")
             pnt2 = ogr.CreateGeometryFromWkt("POINT(40 50 60)")
             sfcgal_flag = pnt1.Distance3D(pnt2) >= 0
