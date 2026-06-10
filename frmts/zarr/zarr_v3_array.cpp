@@ -2266,7 +2266,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                                   oDoc.GetRoot());
                     }
                 }
-                else
+                else if (!osDirName.empty() && osDirName.back() != '}')
                 {
                     // Recurse to upper level for datasets such as
                     // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
