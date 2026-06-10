@@ -233,8 +233,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
                               int nMaxFiles, bool &bIsTruncated,
                               std::string &osNextMarker);
 
-    static const char *GetOptionsStatic();
-
     VSICurlFilesystemHandlerBase();
 
   public:
@@ -322,6 +320,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     GetStreamingFilename(const std::string &osFilename) const override = 0;
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
+
+    static const char *GetOptionsStatic();
 };
 
 class VSICurlFilesystemHandler final : public VSICurlFilesystemHandlerBase
