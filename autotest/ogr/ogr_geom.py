@@ -2436,15 +2436,16 @@ def test_ogr_geom_curvepolygon():
     )
     assert p1.Within(g1)
 
-    # This is not a circle
-    p2 = ogr.CreateGeometryFromWkt(
-        "POINT (%.16g %.16g)"
-        % (1 + math.cos(math.pi / 6) - 1e-2, math.sin(math.pi / 6))
-    )
-    g1 = ogr.CreateGeometryFromWkt(
-        "CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))"
-    )
-    assert not p2.Within(g1)
+    if ogrtest.have_geos():
+        # This is not a circle
+        p2 = ogr.CreateGeometryFromWkt(
+            "POINT (%.16g %.16g)"
+            % (1 + math.cos(math.pi / 6) - 1e-2, math.sin(math.pi / 6))
+        )
+        g1 = ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))"
+        )
+        assert not p2.Within(g1)
 
     # Test area on circle in 2 pieces
     g1 = ogr.CreateGeometryFromWkt(
