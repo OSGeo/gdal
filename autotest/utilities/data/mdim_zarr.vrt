@@ -1,0 +1,32 @@
+<VRTDataset>
+  <Group name="/">
+    <Dimension name="lat" type="HORIZONTAL_Y" direction="NORTH" size="20" indexingVariable="lat" />
+    <Dimension name="lon" type="HORIZONTAL_X" direction="EAST" size="40" indexingVariable="lon" />
+    <Array name="lat">
+      <DataType>Float64</DataType>
+      <DimensionRef ref="lat" />
+      <BlockSize>20</BlockSize>
+      <Unit>degrees_north</Unit>
+      <RegularlySpacedValues start="0" increment="0" />
+    </Array>
+    <Array name="lon">
+      <DataType>Float64</DataType>
+      <DimensionRef ref="lon" />
+      <BlockSize>40</BlockSize>
+      <Unit>degrees_east</Unit>
+      <RegularlySpacedValues start="0" increment="0" />
+    </Array>
+    <Array name="var">
+      <DataType>Float64</DataType>
+      <DimensionRef ref="lat" />
+      <DimensionRef ref="lon" />
+      <BlockSize>20,40</BlockSize>
+      <Source>
+        <SourceFilename>../gdrivers/data/zarr/array_dimensions.zarr</SourceFilename>
+        <SourceArray>/var</SourceArray>
+        <SourceSlab offset="0,0" count="20,40" step="1,1" />
+        <DestSlab offset="0,0" />
+      </Source>
+    </Array>
+  </Group>
+</VRTDataset>
