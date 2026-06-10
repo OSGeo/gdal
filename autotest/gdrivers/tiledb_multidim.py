@@ -734,7 +734,7 @@ def test_tiledb_multidim_translate_from_netcdf():
 def test_tiledb_multidim_open_converted_by_tiledb_cf_netcdf_convert():
 
     filename = "data/tiledb/byte_epsg_3949_cf1.tiledb"
-    ds = gdal.Open(filename)
+    ds = gdal.Open(filename, gdal.OF_RASTER)
     assert (
         ds.GetSpatialRef().ExportToProj4()
         == "+proj=lcc +lat_0=49 +lon_0=3 +lat_1=48.25 +lat_2=49.75 +x_0=1700000 +y_0=8200000 +ellps=GRS80 +units=m +no_defs"

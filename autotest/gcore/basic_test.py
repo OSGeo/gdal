@@ -53,12 +53,10 @@ def test_basic_test_1():
 
 
 def test_basic_test_invalid_open_flag():
-    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+    with pytest.raises(Exception, match="not a uint64 value"):
         gdal.Open("data/byte.tif", "invalid")
 
     assert gdal.OF_RASTER not in (gdal.GA_ReadOnly, gdal.GA_Update)
-    with pytest.raises(Exception, match="invalid value for GDALAccess"):
-        gdal.Open("data/byte.tif", gdal.OF_RASTER)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
@@ -66,7 +64,8 @@ def test_basic_test_strace_non_existing_file():
 
     python_exe = sys.executable
     cmd = 'strace -f %s -c "from osgeo import gdal; ' % python_exe + (
-        "gdal.DontUseExceptions(); gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
+        "gdal.DontUseExceptions(); gdal.OpenEx('non_existing_ds', gdal.OF_RASTER | gdal.OF_SILENT_ERROR)"
+        ' " '
     )
     try:
         _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
@@ -416,7 +415,7 @@ def test_basic_test_11():
     ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds is not None
 
-    ds = gdal.OpenEx("non existing")
+    ds = gdal.OpenEx("non existing", gdal.OF_SILENT_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() == ""
 
     with gdal.quiet_errors():

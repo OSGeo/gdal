@@ -27,6 +27,31 @@ From GDAL 3.13 to GDAL 3.14
     * :cpp:func:`GDALRasterBand::ComputeStatistics` takes an additional
       ``CSLConstList papszOptions`` parameter.
 
+- Changes impacting Python users:
+
+  * Past :py:func:`osgeo.gdal.Open` is now mapped onto :py:func:`osgeo.gdal.OpenEx`, and
+    :py:func:`osgeo.gdal.OpenEx` functionality is available as :py:func:`osgeo.gdal.Open`,
+    making both functions strict aliases.
+
+    This change is *mostly* backwards compatible, except the 2 following
+    situations:
+
+    + :py:func:`osgeo.gdal.Open` used to open only datasets in raster mode, or fail.
+      If no ``flags`` parameter is passed (or none of ``gdal.OF_RASTER``,
+      ``gdal.OF_VECTOR``,  ``gdal.OF_MULTIDIM_RASTER`` is set), all of them are
+      set to allow any GDAL-recognized dataset to be opened. This is a change of
+      behavior for GDAL < 3.14 users of :py:func:`Open` where this method
+      behaved as setting only ``gdal.OF_RASTER``. If opening vector or
+      multidimensional raster datasets with :py:func:`Open` is not desired,
+      ``gdal.OF_RASTER`` must be explicitly passed.
+
+    + For GDAL < 3.14 users of :py:func:`osgeo.gdal.OpenEx` in the ``gdal.DontUseExceptions()`` (default)
+      mode, that method did not set ``gdal.OF_VERBOSE_ERROR`` automatically.
+      But :py:func:`osgeo.gdal.Open` did. As that later behavior is desired, and both
+      functions are now aliases, :py:func:`osgeo.gdal.OpenEx` in the
+      ``gdal.DontUseExceptions()`` mode now also sets ``gdal.OF_VERBOSE_ERROR``
+      automatically, unless the new ``gdal.OF_SILENT_ERROR`` flag is set.
+
 From GDAL 3.12 to GDAL 3.13
 ---------------------------
 

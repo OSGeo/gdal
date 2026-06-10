@@ -295,44 +295,37 @@ Examples
 
 "
 
-// gdal.Open
-%feature("docstring") Open "
-
-Opens a raster file as a :py:class:`Dataset` using default options.
-See :cpp:func:`GDALOpen`.
-For more control over how the file is opened, use :py:func:`OpenEx`.
-
-Parameters
-----------
-path : str
-    name of the file to open
-eAccess : int, default = :py:const:`gdal.GA_ReadOnly`
-
-Returns
--------
-Dataset or None
-    A dataset if successful, or ``None`` on failure.
-
-See Also
---------
-:py:func:`OpenEx`
-:py:func:`OpenShared`
-
-";
-
-// gdal.OpenEx
+// gdal.Open / gdal.OpenEx
 %feature("docstring") OpenEx "
 
 Open a raster or vector file as a :py:class:`Dataset`.
 See :cpp:func:`GDALOpenEx`.
 
+Prior to GDAL 3.14, that method was named :py:func:`OpenEx`. Since GDAL 3.14,
+:py:func:`Open` and :py:func:`OpenEx` are aliases.
+
 Parameters
 ----------
 path : str
-    name of the file to open
+        name of the file / dataset to open
 flags : int
         Flags controlling how the Dataset is opened. Multiple ``gdal.OF_XXX`` flags
         may be combined using the ``|`` operator. See :cpp:func:`GDALOpenEx`.
+
+        If no flag is passed (or none of ``gdal.OF_RASTER``, ``gdal.OF_VECTOR``,
+        ``gdal.OF_MULTIDIM_RASTER`` is set), all of them will be set to allow any
+        GDAL-recognized dataset to be opened. This is a change of behavior for
+        GDAL < 3.14 users of :py:func:`Open` where this method behaved as
+        setting only ``gdal.OF_RASTER``. If opening vector or multidimensional
+        raster datasets with :py:func:`Open` is not desired, ``gdal.OF_RASTER``
+        must be explicitly passed
+
+        Since GDAL 3.14, it is possible to set the ``gdal.OF_SILENT_ERROR`` flag
+        to avoid ``gdal.OF_VERBOSE_ERROR`` to be automatically set. This is
+        mostly of interest for users wanting to restore GDAL < 3.14 behavior
+        when calling :py:func:`OpenEx` in the (default) mode where GDAL errors are
+        not turned into Python exceptions.
+
 allowed_drivers : list, optional
         A list of the names of drivers that may attempt to open the dataset.
 open_options : dict or list, optional
@@ -347,7 +340,6 @@ Dataset or None
 
 See Also
 --------
-:py:func:`Open`
 :py:func:`OpenShared`
 
 ";
