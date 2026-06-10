@@ -28,18 +28,16 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 
     CPLString osMDFilename =
         CPLFormFilenameSafe(pszFilename, ".zarray", nullptr);
-
-    VSIStatBufL sStat;
-    if (VSIStatL(osMDFilename, &sStat) == 0)
+    if (VSIFilesystemHandler::OpenStatic(osMDFilename, "rb"))
         return true;
 
     osMDFilename = CPLFormFilenameSafe(pszFilename, ".zgroup", nullptr);
-    if (VSIStatL(osMDFilename, &sStat) == 0)
+    if (VSIFilesystemHandler::OpenStatic(osMDFilename, "rb"))
         return true;
 
     // Zarr V3
     osMDFilename = CPLFormFilenameSafe(pszFilename, "zarr.json", nullptr);
-    if (VSIStatL(osMDFilename, &sStat) == 0)
+    if (VSIFilesystemHandler::OpenStatic(osMDFilename, "rb"))
         return true;
 
     return false;
