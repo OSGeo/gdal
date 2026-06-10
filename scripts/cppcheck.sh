@@ -155,7 +155,7 @@ grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecom
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # I don't want to care about flatbuffers
-grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
+grep -v -e "third_party/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # Ignore pmtiles header

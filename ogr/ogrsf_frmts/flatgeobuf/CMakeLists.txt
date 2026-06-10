@@ -13,6 +13,7 @@ add_gdal_driver(
 )
 gdal_standard_includes(ogr_FlatGeobuf)
 target_include_directories(ogr_FlatGeobuf PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                                                  $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
+                                                  $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
+                                                  ${PROJECT_SOURCE_DIR}/third_party)
 # Quick and dirty way of modifying the default flatbuffers namespace to gdal_flatbuffers
 target_compile_definitions(ogr_FlatGeobuf PRIVATE -Dflatbuffers=gdal_flatbuffers)

@@ -98,13 +98,13 @@ class SliceAllocator : public Allocator {
 
   virtual ~SliceAllocator() {}
 
-  uint8_t *allocate(size_t size) override {
+  virtual uint8_t *allocate(size_t size) override {
     FLATBUFFERS_ASSERT(slice_.size() == 0);
     slice_ = ::grpc::Slice(size);
     return const_cast<uint8_t *>(slice_.begin());
   }
 
-  void deallocate(uint8_t *p, size_t size) override {
+  virtual void deallocate(uint8_t *p, size_t size) override {
     FLATBUFFERS_ASSERT(p == slice_.begin());
     FLATBUFFERS_ASSERT(size == slice_.size());
     slice_ = ::grpc::Slice();
