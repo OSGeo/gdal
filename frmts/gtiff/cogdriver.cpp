@@ -1435,11 +1435,9 @@ class COGProxyDataset final : public GDALProxyDataset
         eAccess = GA_Update;
         nRasterXSize = m_poGTiffTmpDS->GetRasterXSize();
         nRasterYSize = m_poGTiffTmpDS->GetRasterYSize();
-        nBands = m_poGTiffTmpDS->GetRasterCount();
-        papoBands = static_cast<GDALRasterBand **>(
-            CPLMalloc(sizeof(GDALRasterBand *) * nBands));
-        for (int i = 0; i < nBands; ++i)
-            papoBands[i] = m_poGTiffTmpDS->GetRasterBand(i + 1);
+        const int l_nBands = m_poGTiffTmpDS->GetRasterCount();
+        for (int i = 0; i < l_nBands; ++i)
+            SetBand(i + 1, m_poGTiffTmpDS->GetRasterBand(i + 1));
     }
 
     ~COGProxyDataset() override;
