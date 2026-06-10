@@ -22,6 +22,8 @@
 #include "gdalalg_vector_read.h"
 #include "gdalalg_tee.h"
 
+#include "vrtdataset.h"
+
 #include <algorithm>
 #include <cassert>
 
@@ -1567,6 +1569,9 @@ std::string GDALAbstractPipelineAlgorithm::BuildNestedPipeline(
         curAlg->m_oMapDatasetNameToDataset[datasetNameOut] = poDS;
 
         poDS->SetDescription(argsStr.c_str());
+        auto poVRTDataset = dynamic_cast<VRTDataset *>(poDS);
+        if (poVRTDataset)
+            poVRTDataset->SetWritable(false);
     }
 
     m_apoNestedPipelines.emplace_back(std::move(nestedPipeline));
