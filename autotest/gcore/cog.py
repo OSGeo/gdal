@@ -797,7 +797,7 @@ def test_cog_invalidation_by_data_change(tmp_vsimem):
     ):
         gdal.Open(filename, gdal.GA_Update)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
     )
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
@@ -835,7 +835,7 @@ def test_cog_invalidation_by_metadata_change(tmp_vsimem):
     ds = None
 
     with gdaltest.error_raised(gdal.CE_Warning, "IFD has been rewritten"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
         )
         ds.GetRasterBand(1).ComputeStatistics(False)

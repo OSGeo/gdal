@@ -32,7 +32,7 @@ def test_gdalalg_vector_sql_base(tmp_vsimem):
         ["../ogr/data/poly.shp", out_filename, "--sql=select * from poly limit 1"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerCount() == 1
         assert ds.GetLayer(0).GetFeatureCount() == 1
         assert ds.GetLayer(-1) is None
@@ -54,7 +54,7 @@ def test_gdalalg_vector_sql_layer_name(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
         assert ds.GetLayer(0).GetName() == "foo"
 
@@ -113,7 +113,7 @@ def test_gdalalg_vector_sql_several(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerCount() == 2
         assert ds.GetLayer(-1) is None
         assert ds.GetLayer(2) is None
@@ -141,7 +141,7 @@ def test_gdalalg_vector_sql_dialect(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
@@ -162,7 +162,7 @@ def test_gdalalg_vector_sql_layer_names(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerCount() == 2
         assert ds.GetLayer(0).GetFeatureCount() == 1
         assert ds.GetLayer(0).GetDescription() == "lyr1"
@@ -217,7 +217,7 @@ def test_gdalalg_vector_sql_update_without_output(tmp_vsimem):
         sql="DELETE FROM poly WHERE EAS_ID=170",
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 9
 
 
@@ -249,7 +249,7 @@ def test_gdalalg_vector_sql_overwrite_layer(tmp_vsimem):
         overwrite_layer=True,
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
@@ -286,7 +286,7 @@ def test_gdalalg_vector_sql_in_pipeline(tmp_vsimem):
         pipeline=f'read ../ogr/data/poly.shp | sql "SELECT * FROM poly WHERE eas_id=170" ! write {out_filename}',
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 

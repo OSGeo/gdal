@@ -63,7 +63,7 @@ def test_gnm_filenetwork_create():
 
 def test_gnm_filenetwork_open():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     assert dn is not None
@@ -82,10 +82,10 @@ def test_gnm_filenetwork_open():
 
 def test_gnm_import():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
 
     # pipes
-    dspipes = gdal.OpenEx("data/pipes.shp", gdal.OF_VECTOR)
+    dspipes = gdal.Open("data/pipes.shp", gdal.OF_VECTOR)
     lyrpipes = dspipes.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrpipes, "pipes")
     assert new_lyr is not None, "failed to import pipes"
@@ -93,7 +93,7 @@ def test_gnm_import():
     new_lyr = None
 
     # wells
-    dswells = gdal.OpenEx("data/wells.shp", gdal.OF_VECTOR)
+    dswells = gdal.Open("data/wells.shp", gdal.OF_VECTOR)
     lyrwells = dswells.GetLayerByIndex(0)
     new_lyr = ds.CopyLayer(lyrwells, "wells")
     assert new_lyr is not None, "failed to import wells"
@@ -111,7 +111,7 @@ def test_gnm_import():
 
 def test_gnm_autoconnect():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
     dgn = gnm.CastToGenericNetwork(ds)
     assert dgn is not None, "cast to GNMGenericNetwork failed"
 
@@ -129,7 +129,7 @@ def test_gnm_autoconnect():
 
 def test_gnm_graph_dijkstra():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
     dn = gnm.CastToNetwork(ds)
     assert dn is not None, "cast to GNMNetwork failed"
 
@@ -150,7 +150,7 @@ def test_gnm_graph_dijkstra():
 
 def test_gnm_graph_kshortest():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
     dn = gnm.CastToNetwork(ds)
     assert dn is not None, "cast to GNMNetwork failed"
 
@@ -171,7 +171,7 @@ def test_gnm_graph_kshortest():
 
 def test_gnm_graph_connectedcomponents():
 
-    ds = gdal.OpenEx("tmp/test_gnm")
+    ds = gdal.Open("tmp/test_gnm")
     dn = gnm.CastToNetwork(ds)
     assert dn is not None, "cast to GNMNetwork failed"
 

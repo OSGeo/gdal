@@ -2341,7 +2341,7 @@ def test_multidim_array_arithmetic_scale_same_but_non_zero_offset():
 @pytest.mark.require_driver("HDF5")
 def test_multidim_array_arithmetic_block_size():
 
-    ds = gdal.OpenEx("../gdrivers/data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("../gdrivers/data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
     ar = ds.GetRootGroup().OpenMDArray("Band1")
     assert (ar + ar).GetBlockSize() == [1, 2]
 

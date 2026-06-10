@@ -313,7 +313,7 @@ def test_gdalmdiminfo_lib_null_string():
 @pytest.mark.require_driver("Zarr")
 def test_gdalmdiminfo_lib_overviews():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "../gdrivers/data/zarr/v3/simple_multiscales/zarr.json", gdal.OF_MULTIDIM_RASTER
     )
 

@@ -128,7 +128,7 @@ def test_ogr_mongodbv3_1():
 
     # Connect to non existent host.
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("mongodbv3:", open_options=["HOST=non_existing"])
+        ds = gdal.Open("mongodbv3:", open_options=["HOST=non_existing"])
     assert ds is None
 
     if ogrtest.mongodbv3_test_host is None:
@@ -142,7 +142,7 @@ def test_ogr_mongodbv3_1():
     if ogrtest.mongodbv3_test_user is not None:
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         open_options += ["PASSWORD=" + ogrtest.mongodbv3_test_password]
-    ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
+    ds = gdal.Open("mongodbv3:", open_options=open_options)
     assert ds is not None
 
     # Without DBNAME
@@ -155,7 +155,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["PASSWORD=" + ogrtest.mongodbv3_test_password]
     # Will succeed only against server in single mode
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
+        ds = gdal.Open("mongodbv3:", open_options=open_options)
 
     # A few error cases with authentication
     if ogrtest.mongodbv3_test_user is not None:
@@ -165,7 +165,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["DBNAME=" + ogrtest.mongodbv3_test_dbname]
         # Missing user and password
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
+            ds = gdal.Open("mongodbv3:", open_options=open_options)
         assert ds is None
 
         open_options = []
@@ -175,7 +175,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         # Missing password
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
+            ds = gdal.Open("mongodbv3:", open_options=open_options)
         assert ds is None
 
         open_options = []
@@ -185,7 +185,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["PASSWORD=" + ogrtest.mongodbv3_test_password]
         # Missing DBNAME
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
+            ds = gdal.Open("mongodbv3:", open_options=open_options)
         assert ds is None
 
         open_options = []
@@ -196,7 +196,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["PASSWORDv3=" + ogrtest.mongodbv3_test_password + "_wrong"]
         # Wrong password
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("mongodb:", open_options=open_options)
+            ds = gdal.Open("mongodb:", open_options=open_options)
         assert ds is None
 
 
@@ -427,7 +427,7 @@ def test_ogr_mongodbv3_2():
         lyr = ogrtest.mongodbv3_ds.CreateLayer(ogrtest.mongodbv3_layer_name)
     assert lyr is None
 
-    ogrtest.mongodbv3_ds = gdal.OpenEx(
+    ogrtest.mongodbv3_ds = gdal.Open(
         ogrtest.mongodbv3_test_uri,
         gdal.OF_UPDATE,
         open_options=[
@@ -629,7 +629,7 @@ def test_ogr_mongodbv3_2():
     ogrtest.mongodbv3_ds = None
 
     # Reopen in read-only
-    ogrtest.mongodbv3_ds = gdal.OpenEx(
+    ogrtest.mongodbv3_ds = gdal.Open(
         ogrtest.mongodbv3_test_uri,
         0,
         open_options=["FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=2", "JSON_FIELD=TRUE"],

@@ -468,7 +468,7 @@ def test_gdalalg_vector_check_geometry_multiple_geometry_fields(alg):
 def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, create_empty_layers):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
-    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+    with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
         ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
     ds.CopyLayer(polys.GetLayer(0), "poly2")
 
@@ -578,7 +578,7 @@ def test_gdalalg_vector_check_geometry_test_ogrsf(tmp_path, polys):
         pytest.skip()
 
     with gdal.GetDriverByName("GPKG").CreateVector(tmp_path / "src.gpkg") as ds:
-        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
             ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
         ds.CopyLayer(polys.GetLayer(0), "poly2")
 

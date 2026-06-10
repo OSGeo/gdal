@@ -3175,7 +3175,7 @@ def test_ogr_gpkg_27(tmp_vsimem):
 
 def test_ogr_gpkg_28(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
         tmp_vsimem / "ogr_gpkg_28.gpkg", srcDS, format="GPKG", dstSRS="EPSG:4326"
     )
@@ -4384,13 +4384,13 @@ def test_ogr_gpkg_43(tmp_vsimem):
     ds.CommitTransaction()
     ds = None
 
-    ds = gdal.OpenEx(dbname)
+    ds = gdal.Open(dbname)
     assert len(ds.GetMetadata_List("SUBDATASETS")) == 2 * 1001
     assert ds.GetLayerCount() == 1001
 
     with gdaltest.config_option("OGR_TABLE_LIMIT", "1000"):
         with gdal.quiet_errors():
-            ds = gdal.OpenEx(dbname)
+            ds = gdal.Open(dbname)
             assert len(ds.GetMetadata_List("SUBDATASETS")) == 2 * 1000
             assert ds.GetLayerCount() == 1000
     ds = None
@@ -5475,11 +5475,11 @@ def test_ogr_gpkg_nolock(tmp_path):
 
     # Special case on Windows for files that start with drive letters
     full_filename = (tmp_path / "test_ogr_gpkg_#_nolock.gpkg").absolute()
-    ds = gdal.OpenEx(full_filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
+    ds = gdal.Open(full_filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
     assert ds
     ds = None
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
+    ds = gdal.Open(filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
     assert ds
     assert get_nolock(ds)
 
@@ -5495,7 +5495,7 @@ def test_ogr_gpkg_nolock(tmp_path):
     ds = None
 
     # Lockless mode should NOT be honored by GDAL in update mode
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["NOLOCK=YES"]
     )
     assert ds
@@ -5509,19 +5509,19 @@ def test_ogr_gpkg_nolock(tmp_path):
     ds = None
 
     # Lockless mode should NOT be honored by GDAL on a WAL enabled file
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
+    ds = gdal.Open(filename, gdal.OF_VECTOR, open_options=["NOLOCK=YES"])
     assert ds
     assert not get_nolock(ds)
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsizip/data/gpkg/poly.gpkg.zip/poly.gpkg",
         gdal.OF_VECTOR,
         open_options=["NOLOCK=YES"],
     )
     assert ds
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsizip/" + os.getcwd() + "/data/gpkg/poly.gpkg.zip/poly.gpkg",
         gdal.OF_VECTOR,
         open_options=["NOLOCK=YES"],
@@ -5860,7 +5860,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger(tmp_vsimem):
 def test_ogr_gpkg_prelude_statements(tmp_vsimem):
 
     gdal.VectorTranslate(tmp_vsimem / "test.gpkg", "data/poly.shp", format="GPKG")
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_vsimem / "test.gpkg",
         open_options=[
             f"PRELUDE_STATEMENTS=ATTACH DATABASE '{tmp_vsimem}/test.gpkg' AS other"
@@ -5882,7 +5882,7 @@ def test_ogr_gpkg_prelude_statements_after_spatialite_loading(tmp_vsimem):
         if not _has_spatialite_4_3_or_later(ds):
             pytest.skip("spatialite missing")
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "test.gpkg",
         open_options=["PRELUDE_STATEMENTS=SELECT setdecimalprecision(1)"],
     ) as ds:
@@ -6002,7 +6002,7 @@ def test_abort_sql():
     assert int(end - start) < 2
 
     # Same test with a GDAL dataset
-    ds2 = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds2 = gdal.Open(filename, gdal.OF_VECTOR)
 
     def abortAfterDelay2():
         # print("Aborting SQL...")
@@ -6489,7 +6489,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
     assert validate(filename, tmpdir=tmp_path), "validation failed"
 
     # Test read support
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
 
     with ds.ExecuteSQL("SELECT * FROM gpkg_data_column_constraints") as sql_lyr:
         assert sql_lyr
@@ -6615,7 +6615,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
     ds = None
 
     # Test AlterFieldDefn() support
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -6650,7 +6650,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
     assert validate(filename, tmpdir=tmp_path), "validation failed"
 
     # Test read support
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -6696,7 +6696,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
 
     # Test UpdateFieldDomain()
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR) as ds:
         with gdaltest.error_raised(
             gdal.CE_Failure, match="not supported on read-only dataset"
         ):
@@ -6712,7 +6712,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
                     True,
                 )
             )
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
 
         assert (
@@ -6741,7 +6741,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
             )
         )
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR) as ds:
         domain = ds.GetFieldDomain("range_domain_int")
         assert domain is not None
         assert domain.GetName() == "range_domain_int"
@@ -6755,13 +6755,13 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
 
     # Test DeleteFieldDomain()
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR) as ds:
         with gdaltest.error_raised(
             gdal.CE_Failure, match="not supported on read-only dataset"
         ):
             assert ds.DeleteFieldDomain("range_domain_int") is False
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
 
         assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
 
@@ -6771,7 +6771,7 @@ def test_ogr_gpkg_field_domains(tmp_vsimem, tmp_path):
             assert ds.DeleteFieldDomain(name)
             assert ds.GetFieldDomain(name) is None
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR) as ds:
         assert ds.GetFieldDomainNames() is None
 
 
@@ -6828,7 +6828,7 @@ def test_ogr_gpkg_field_domains_errors(tmp_vsimem, tmp_path):
     )
     ds = None
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
 
     assert ds.GetFieldDomain("null_constraint_type") is None
 
@@ -6889,7 +6889,7 @@ def test_ogr_gpkg_field_domain_gpkg_1_0(tmp_vsimem, tmp_path):
 
     assert validate(filename, tmpdir=tmp_path)
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
 
     gdal.ErrorReset()
     domain = ds.GetFieldDomain("range_domain_int")
@@ -7272,7 +7272,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     lyr.CreateField(ogr.FieldDefn("other_id", ogr.OFTInteger))
     ds = None
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
     ds.ExecuteSQL("""CREATE TABLE 'gpkgext_relations' (
@@ -7286,7 +7286,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
          );""")
 
     # not yet valid...
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
     ds.ExecuteSQL(
@@ -7300,7 +7300,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     )
     ds = None
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
     ds.ExecuteSQL(
         """CREATE TABLE my_mapping_table(base_id INTEGER NOT NULL, related_id INTEGER NOT NULL);"""
@@ -7308,7 +7308,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
 
     assert validate(filename, tmpdir=tmp_path), "validation failed"
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == ["a_b_attributes"]
     assert ds.GetRelationship("xxx") is None
     rel = ds.GetRelationship("a_b_attributes")
@@ -7366,7 +7366,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     ds = None
     assert validate(filename, tmpdir=tmp_path), "validation failed"
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     ds.ExecuteSQL("DELLAYER:a_renamed")
     with ds.ExecuteSQL(
         "SELECT * FROM gpkg_extensions WHERE extension_name IN ('related_tables', 'gpkg_related_tables')"
@@ -7392,7 +7392,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
         "INSERT INTO gpkg_extensions VALUES('my_mapping_table',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');"
     )
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() == ["custom_type"]
     assert ds.GetRelationship("xxx") is None
     rel = ds.GetRelationship("custom_type")
@@ -7410,7 +7410,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     assert rel.GetRelatedTableType() == "features"
 
     # a one-to-many relationship defined using foreign key constraints
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     ds.ExecuteSQL(
         "CREATE TABLE test_relation_a(artistid INTEGER PRIMARY KEY, artistname  TEXT)"
     )
@@ -7419,7 +7419,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     )
     ds = None
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "custom_type",
         "test_relation_a_test_relation_b",
@@ -7454,7 +7454,7 @@ def test_ogr_gpkg_relations_sqlite_foreign_keys(tmp_vsimem):
     lyr.CreateField(ogr.FieldDefn("other_id", ogr.OFTInteger))
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
     ds.ExecuteSQL(
@@ -7465,7 +7465,7 @@ def test_ogr_gpkg_relations_sqlite_foreign_keys(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
     assert ds.GetRelationship("xxx") is None
     rel = ds.GetRelationship("test_relation_a_test_relation_b")
@@ -7519,7 +7519,7 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
     relationship.SetRightTableFields(["dest_pkey"])
     relationship.SetRelatedTableType("media")
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     # no tables yet
     assert not ds.AddRelationship(relationship)
@@ -7628,7 +7628,7 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
         "DELETE FROM gpkg_contents WHERE table_name='origin_table_dest_table'"
     )
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     # ensure that the mapping table, which is present in gpkgext_relations but
     # NOT gpkg_contents can be opened as a layer
     lyr = ds.GetLayer("origin_table_dest_table")
@@ -7829,7 +7829,7 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
 
     ds = None
     assert validate(filename, tmpdir=tmp_path), "validation failed"
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     # delete relationship
     assert not ds.DeleteRelationship("nope")
@@ -7876,7 +7876,7 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
 
     ds = None
     assert validate(filename, tmpdir=tmp_path), "validation failed"
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     # update relationship
     retrieved_rel = ds.GetRelationship("origin_table_dest_table_media")
@@ -7908,7 +7908,7 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
 
     ds = None
     assert validate(filename, tmpdir=tmp_path), "validation failed"
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     assert set(ds.GetRelationshipNames()) == {
         "origin_table_dest_table_attributes",
@@ -8040,7 +8040,7 @@ def test_ogr_gpkg_add_relationship_complex_names(tmp_vsimem, tmp_path):
     relationship.SetRightTableFields(["Dest pkéy"])
     relationship.SetRelatedTableType("media")
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     lyr = ds.CreateLayer("Origin' [tàble!", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("o pkéy", ogr.OFTInteger)
@@ -8813,14 +8813,14 @@ def test_ogr_gpkg_immutable(tmp_path):
 
     with gdal.quiet_errors():
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 tmp_path / "read_only_test_ogr_gpkg_immutable/test.gpkg",
                 gdal.OF_VECTOR | gdal.OF_UPDATE,
             )
             is None
         )
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 tmp_path / "read_only_test_ogr_gpkg_immutable/test.gpkg",
                 gdal.OF_VECTOR,
                 open_options=["IMMUTABLE=NO"],
@@ -8830,7 +8830,7 @@ def test_ogr_gpkg_immutable(tmp_path):
 
     gdal.ErrorReset()
     assert (
-        gdal.OpenEx(
+        gdal.Open(
             tmp_path / "read_only_test_ogr_gpkg_immutable/test.gpkg",
             gdal.OF_VECTOR,
             open_options=["IMMUTABLE=YES"],
@@ -9800,7 +9800,7 @@ def test_ogr_gpkg_field_alternative_names_comment(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer("test")
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
@@ -9873,7 +9873,7 @@ def test_ogr_gpkg_field_alter_field_defn_alternative_names_comment(tmp_vsimem):
     del lyr
     ds = None
 
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(dbname, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer("test")
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
@@ -9892,7 +9892,7 @@ def test_ogr_gpkg_field_alter_field_defn_alternative_names_comment(tmp_vsimem):
     del lyr
     ds = None
 
-    ds = gdal.OpenEx(dbname, gdal.OF_VECTOR)
+    ds = gdal.Open(dbname, gdal.OF_VECTOR)
     lyr = ds.GetLayer("test")
 
     assert lyr.GetLayerDefn().GetFieldCount() == 3
@@ -10447,7 +10447,7 @@ def test_ogr_gpkg_extent3d_envelope_variants(file_name):
     """Test all variants of envelope in gpkg"""
 
     file_name = os.path.join("data", "gpkg", file_name + ".gpkg")
-    ds = gdal.OpenEx(file_name, gdal.OF_VECTOR | gdal.OF_READONLY)
+    ds = gdal.Open(file_name, gdal.OF_VECTOR | gdal.OF_READONLY)
     lyr = ds.GetLayerByName("foo")
     ext3d = lyr.GetExtent3D()
     assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
@@ -10851,24 +10851,24 @@ def test_gpkg_rename_hidden_table(tmp_vsimem):
 
     test_layer_path = str(tmp_vsimem / "test_gpkg_rename_hidden_table.gpkg")
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    src_ds = gdal.Open("../ogr/data/poly.shp")
     gdal.VectorTranslate(test_layer_path, src_ds)
     src_ds = None
 
-    dst_ds = gdal.OpenEx(
+    dst_ds = gdal.Open(
         test_layer_path, gdal.OF_UPDATE, open_options=["LIST_ALL_TABLES=NO"]
     )
     dst_ds.ExecuteSQL("CREATE TABLE hidden_foo_table(id integer primary key);")
     dst_ds = None
 
-    dst_ds = gdal.OpenEx(
+    dst_ds = gdal.Open(
         test_layer_path, gdal.OF_UPDATE, open_options=["LIST_ALL_TABLES=NO"]
     )
     dst_ds.ExecuteSQL("ALTER TABLE hidden_foo_table RENAME TO hidden_bar_table")
     dst_ds.ExecuteSQL("VACUUM")
     dst_ds = None
 
-    dst_ds = gdal.OpenEx(test_layer_path)
+    dst_ds = gdal.Open(test_layer_path)
     # Verify that layer exists
     lyr = dst_ds.GetLayerByName("hidden_bar_table")
     assert lyr is not None
@@ -11247,19 +11247,19 @@ def test_ogr_gpkg_append_to_layer_feature_count_int64_max(tmp_vsimem):
     with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "tmp.gpkg") as ds:
         ds.CreateLayer("test")
 
-    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         ds.ExecuteSQL("UPDATE gpkg_ogr_contents SET feature_count = -2")
 
-    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
 
-    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         ds.ExecuteSQL(
             "UPDATE gpkg_ogr_contents SET feature_count = 9223372036854775807"
         )
 
-    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 9223372036854775807
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -11267,7 +11267,7 @@ def test_ogr_gpkg_append_to_layer_feature_count_int64_max(tmp_vsimem):
         f = ogr.Feature(lyr.GetLayerDefn())
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "tmp.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         with ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents") as sql_lyr:
             f = sql_lyr.GetNextFeature()
             assert not f.IsFieldSetAndNotNull("feature_count")

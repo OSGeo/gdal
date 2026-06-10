@@ -5956,7 +5956,7 @@ def test_nitf_metadata_validation_tre(tmp_vsimem):
         )
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+        ds = gdal.Open(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:TRE")[0]
     assert md == """<tres>
@@ -5980,7 +5980,7 @@ def test_nitf_metadata_validation_tre(tmp_vsimem):
 """
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
         )
     assert ds is None
@@ -6001,7 +6001,7 @@ def test_nitf_metadata_validation_des(tmp_vsimem):
         )
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+        ds = gdal.Open(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:DES")[0]
     assert md == """<des_list>
@@ -6035,7 +6035,7 @@ def test_nitf_metadata_validation_des(tmp_vsimem):
 """
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
         )
     assert ds is None

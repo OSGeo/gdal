@@ -28,7 +28,7 @@ def test_gdalalg_raster_edit_read_only(tmp_vsimem):
     gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
 
     alg = get_edit_alg()
-    alg["dataset"] = gdal.OpenEx(tmp_filename)
+    alg["dataset"] = gdal.Open(tmp_filename)
     with pytest.raises(
         Exception, match="edit: Dataset should be opened in update mode"
     ):
@@ -48,7 +48,7 @@ def test_gdalalg_raster_edit_crs(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
 
 
@@ -65,7 +65,7 @@ def test_gdalalg_raster_edit_crs_none(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetSpatialRef() is None
 
 
@@ -82,7 +82,7 @@ def test_gdalalg_raster_edit_bbox(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetGeoTransform() == pytest.approx((1.0, 0.45, 0.0, 200.0, 0.0, -9.9))
 
 
@@ -117,7 +117,7 @@ def test_gdalalg_raster_edit_nodata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetRasterBand(1).GetNoDataValue() == 100
 
     alg = get_edit_alg()
@@ -128,7 +128,7 @@ def test_gdalalg_raster_edit_nodata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
@@ -166,7 +166,7 @@ def test_gdalalg_raster_edit_metadata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "foo": "bar", "bar": "baz"}
 
     alg = get_edit_alg()
@@ -178,7 +178,7 @@ def test_gdalalg_raster_edit_metadata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(tmp_filename) as ds:
+    with gdal.Open(tmp_filename) as ds:
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
 
 
@@ -276,7 +276,7 @@ def test_gdalalg_raster_pipeline_edit_crs(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
         assert ds.GetRasterBand(1).Checksum() == 4672
 
@@ -300,7 +300,7 @@ def test_gdalalg_raster_pipeline_edit_crs_none(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetSpatialRef() is None
 
 
@@ -323,7 +323,7 @@ def test_gdalalg_raster_pipeline_edit_bbox(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetGeoTransform() == pytest.approx((1.0, 0.45, 0.0, 200.0, 0.0, -9.9))
 
 
@@ -347,7 +347,7 @@ def test_gdalalg_raster_pipeline_edit_nodata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).GetNoDataValue() == 100
 
     pipeline = get_pipeline_alg()
@@ -365,7 +365,7 @@ def test_gdalalg_raster_pipeline_edit_nodata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
@@ -391,7 +391,7 @@ def test_gdalalg_raster_pipeline_edit_metadata(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
 
 

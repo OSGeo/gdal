@@ -475,9 +475,9 @@ def test_ogr_geojsonseq_force_opening(tmp_vsimem):
         )
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["GeoJSONSeq"])
+    ds = gdal.Open(filename, allowed_drivers=["GeoJSONSeq"])
     assert ds.GetDriver().GetDescription() == "GeoJSONSeq"
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSONSeq"])

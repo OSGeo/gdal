@@ -356,7 +356,7 @@ def test_gdalalg_vector_index_append(tmp_vsimem):
             accept_different_schemas=True,
             append=True,
         )
-    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
     assert gdal.Run(
         "vector",
@@ -366,7 +366,7 @@ def test_gdalalg_vector_index_append(tmp_vsimem):
         accept_different_schemas=True,
         append=True,
     )
-    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 2
 
 

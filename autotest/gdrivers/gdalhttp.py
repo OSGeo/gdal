@@ -156,7 +156,7 @@ def test_http_ssl_verifystatus():
     with gdaltest.config_option("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"):
         with gdal.quiet_errors():
             # For now this URL doesn't support OCSP stapling...
-            gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+            gdal.Open("https://google.com", allowed_drivers=["HTTP"])
     last_err = gdal.GetLastErrorMsg()
     if "timed out" in last_err:
         pytest.skip(last_err)
@@ -200,7 +200,7 @@ def test_http_use_capi_store_sub():
     with gdaltest.disable_exceptions(), gdaltest.config_option(
         "GDAL_HTTP_USE_CAPI_STORE", "YES"
     ):
-        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+        gdal.Open("https://google.com", allowed_drivers=["HTTP"])
 
 
 ###############################################################################
@@ -212,7 +212,7 @@ def test_http_keep_alive():
     # Rather dummy test. Just trigger the code path
 
     with gdaltest.config_option("GDAL_HTTP_TCP_KEEPALIVE", "YES"):
-        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+        gdal.Open("https://google.com", allowed_drivers=["HTTP"])
 
     with gdaltest.config_options(
         {
@@ -221,7 +221,7 @@ def test_http_keep_alive():
             "GDAL_HTTP_TCP_KEEPIDLE": "1",
         }
     ):
-        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+        gdal.Open("https://google.com", allowed_drivers=["HTTP"])
 
 
 ###############################################################################

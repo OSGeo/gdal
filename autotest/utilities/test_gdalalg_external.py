@@ -101,7 +101,7 @@ def test_gdalalg_external_pipeline_simple_vector(tmp_vsimem):
             pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} vector reproject --dst-crs=EPSG:4326 <INPUT> <OUTPUT>" ! write {tmp_vsimem}/out.gpkg'
         )
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg") as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg") as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
@@ -126,7 +126,7 @@ def test_gdalalg_external_vector_pipeline_simple(tmp_vsimem):
             pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} vector reproject --dst-crs=EPSG:4326 <INPUT> <OUTPUT>" ! write {tmp_vsimem}/out.gpkg'
         )
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg") as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg") as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
@@ -215,7 +215,7 @@ def test_gdalalg_external_pipeline_vector_and_clip_raster_with_tee(
     assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
     assert gdal.ReadDir(tmp_path) == before_tmp_path
 
-    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
     with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
@@ -272,7 +272,7 @@ def test_gdalalg_external_pipeline_raster_and_clip_vector(tmp_vsimem, tmp_path):
     assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
     assert gdal.ReadDir(tmp_path) == before_tmp_path
 
-    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(byte_shp) as src_ds, gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
 
 
@@ -299,7 +299,7 @@ def test_gdalalg_external_pipeline_raster_and_clip_vector_from_inner_pipeline(
     assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
     assert gdal.ReadDir(tmp_path) == before_tmp_path
 
-    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(byte_shp) as src_ds, gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
 
 

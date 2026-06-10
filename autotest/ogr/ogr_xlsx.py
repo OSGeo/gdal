@@ -120,7 +120,7 @@ def test_ogr_xlsx_2():
 
 def test_ogr_xlsx_headers_open_option():
 
-    ds = gdal.OpenEx("data/xlsx/test.xlsx", open_options=["HEADERS=DISABLE"])
+    ds = gdal.Open("data/xlsx/test.xlsx", open_options=["HEADERS=DISABLE"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -147,7 +147,7 @@ def test_ogr_xlsx_3():
 
 def test_ogr_xlsx_field_types_open_option():
 
-    ds = gdal.OpenEx("data/xlsx/test.xlsx", open_options=["FIELD_TYPES=STRING"])
+    ds = gdal.Open("data/xlsx/test.xlsx", open_options=["FIELD_TYPES=STRING"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -250,7 +250,7 @@ def test_ogr_xlsx_7():
         gdal.Unlink("tmp/ogr_xlsx_7.xlsx")
     shutil.copy("data/xlsx/test.xlsx", "tmp/ogr_xlsx_7.xlsx")
 
-    ds = gdal.OpenEx("tmp/ogr_xlsx_7.xlsx", gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open("tmp/ogr_xlsx_7.xlsx", gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:

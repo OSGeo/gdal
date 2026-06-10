@@ -27,7 +27,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
     tmpfilename = "tmp/tmpdirreadonly/test.nc"
 
     def get_transposed_and_cache():
-        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(tmpfilename, gdal.OF_MULTIDIM_RASTER)
         ar = ds.GetRootGroup().OpenMDArray("Band1")
         assert ar
         transpose = ar.Transpose([1, 0])
@@ -46,7 +46,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
         transposed_data = get_transposed_and_cache()
 
     def check_cache_exists():
-        cache_ds = gdal.OpenEx(
+        cache_ds = gdal.Open(
             "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -61,7 +61,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
     check_cache_exists()
 
     def check_cache_working():
-        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(tmpfilename, gdal.OF_MULTIDIM_RASTER)
         ar = ds.GetRootGroup().OpenMDArray("Band1")
         transpose = ar.Transpose([1, 0])
         assert transpose.Read() == transposed_data
@@ -72,7 +72,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
     # Now alter the cache directly
     def alter_cache():
-        cache_ds = gdal.OpenEx(
+        cache_ds = gdal.Open(
             "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE,
         )
@@ -85,7 +85,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
     # And check we get the altered values
     def check_cache_really_working():
-        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(tmpfilename, gdal.OF_MULTIDIM_RASTER)
         ar = ds.GetRootGroup().OpenMDArray("Band1")
         transpose = ar.Transpose([1, 0])
         assert transpose.Read() == b"\x00" * len(transposed_data)

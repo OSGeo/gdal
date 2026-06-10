@@ -720,7 +720,7 @@ def _check_domains(ds):
 
 def test_ogr_fgdb_read_domains():
 
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     _check_domains(ds)
 
 
@@ -753,7 +753,7 @@ def test_ogr_fgdb_read_layer_hierarchy():
             "fd2_lyr", srs=srs3, geom_type=ogr.wkbPoint, options=["FEATURE_DATASET=fd2"]
         )
 
-    ds = gdal.OpenEx("data/filegdb/featuredataset.gdb")
+    ds = gdal.Open("data/filegdb/featuredataset.gdb")
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["fd1", "fd2"]
@@ -951,11 +951,11 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
 
     # no relationships
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
     assert ds.GetDriver().GetDescription() == "FileGDB"
     assert set(ds.GetRelationshipNames()) == {
         "composite_many_to_many",

@@ -543,7 +543,7 @@ Error""",
         """/vsimem/carto&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo"""
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
     gdal.SetConfigOption("CARTO_MAX_CHUNK_SIZE", "0")
@@ -690,7 +690,7 @@ Error""",
     ds = None
 
     gdal.SetConfigOption("CARTO_MAX_CHUNK_SIZE", None)
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -724,7 +724,7 @@ Error""",
         pytest.fail()
     f = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -771,7 +771,7 @@ Error""",
                   "srtext":{"type":"string"}}}""",
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -804,7 +804,7 @@ Error""",
         ds = None
     assert gdal.GetLastErrorMsg() == ""
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
 
@@ -833,7 +833,7 @@ Error""",
         ds = None
     assert gdal.GetLastErrorMsg() == ""
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=NO"]
     )
 
@@ -864,7 +864,7 @@ Error""",
         ds.DeleteLayer(0)
 
     gdal.ErrorReset()
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "CARTO:foo", gdal.OF_VECTOR | gdal.OF_UPDATE, open_options=["COPY_MODE=YES"]
     )
     assert ds is not None

@@ -51,7 +51,7 @@ def server():
 @pytest.mark.require_driver("JPEG")
 def test_mbtiles_2():
 
-    ds = gdal.OpenEx("data/mbtiles/world_l1.mbtiles", open_options=["USE_BOUNDS=NO"])
+    ds = gdal.Open("data/mbtiles/world_l1.mbtiles", open_options=["USE_BOUNDS=NO"])
     assert ds is not None
 
     assert ds.RasterCount == 4, "expected 3 bands"
@@ -257,7 +257,7 @@ def test_mbtiles_5():
     gdaltest.mbtiles_drv.CreateCopy("/vsimem/mbtiles_5.mbtiles", src_ds)
     src_ds = None
 
-    ds = gdal.OpenEx("/vsimem/mbtiles_5.mbtiles", open_options=["BAND_COUNT=2"])
+    ds = gdal.Open("/vsimem/mbtiles_5.mbtiles", open_options=["BAND_COUNT=2"])
     assert ds.RasterXSize == 19 and ds.RasterYSize == 19
     assert ds.RasterCount == 2
     got_gt = ds.GetGeoTransform()

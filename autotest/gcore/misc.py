@@ -539,7 +539,7 @@ def test_update_metadata(tmp_path, tmp_vsimem, driver_name):
         assert dst_ds
         dst_ds.Close()
 
-    update_ds = gdal.OpenEx(filename, gdal.GA_Update, allowed_drivers=[driver_name])
+    update_ds = gdal.Open(filename, gdal.GA_Update, allowed_drivers=[driver_name])
     assert update_ds
 
     flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
@@ -795,7 +795,7 @@ def test_misc_13():
     assert out_ds is None
 
     # Raster-only -> vector-only
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
     with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None

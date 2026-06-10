@@ -594,7 +594,7 @@ def test_miramon_lineage_preservation(tmp_path):
     # --- Open existing MiraMonRaster dataset with lineage information ---
     mm_ori_path = "data/miramon/lineage/int_2x3_6_RLEI.rel"
     expected_lineage_path = "data/miramon/lineage/int_2x3_6_RLE_expected_lineage.txt"
-    src_ds = gdal.OpenEx(mm_ori_path, allowed_drivers=["MiraMonRaster"])
+    src_ds = gdal.Open(mm_ori_path, allowed_drivers=["MiraMonRaster"])
     assert src_ds is not None, "Could not open the file"
 
     # --- Write to VRT preserving the MIRAMON metadata domain ---

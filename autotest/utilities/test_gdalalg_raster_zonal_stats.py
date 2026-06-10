@@ -671,7 +671,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_include_geom(
     out_ds = zonal.Output()
     out_lyr = out_ds.GetLayer(0)
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    src_ds = gdal.Open("../ogr/data/poly.shp")
     src_lyr = src_ds.GetLayer(0)
 
     assert out_lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
@@ -1159,7 +1159,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
         ]
     )
 
-    with gdal.OpenEx(out_fname) as dst:
+    with gdal.Open(out_fname) as dst:
         assert dst.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -1192,7 +1192,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_piped_is_zones(
         ]
     )
 
-    with gdal.OpenEx(out_fname) as dst:
+    with gdal.Open(out_fname) as dst:
         assert dst.GetLayer(0).GetFeatureCount() == 10
 
 

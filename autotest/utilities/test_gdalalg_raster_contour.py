@@ -151,7 +151,7 @@ cellsize     1
     else:
         assert alg.ParseRunAndFinalize(alg_options)
 
-        with gdal.OpenEx(tmp_out_filename) as ds:
+        with gdal.Open(tmp_out_filename) as ds:
             lyr = ds.GetLayer()
             for i, feat in enumerate(lyr):
                 geom = feat.GetGeometryRef()

@@ -628,7 +628,7 @@ def test_ogr_mitab_bounds_metadata_pipeline(tmp_vsimem):
     src_fname = "/vsizip/data/mitab/all_geoms_block_32256.zip"
     dst_fname = tmp_vsimem / "out.tab"
 
-    with gdal.OpenEx(src_fname) as src_ds:
+    with gdal.Open(src_fname) as src_ds:
         src_bounds = src_ds.GetLayer(0).GetMetadataItem("BOUNDS")
         assert src_bounds
 
@@ -636,7 +636,7 @@ def test_ogr_mitab_bounds_metadata_pipeline(tmp_vsimem):
         ["read", src_fname, "!", "buffer", 20, "!", "write", dst_fname]
     )
 
-    with gdal.OpenEx(dst_fname) as dst_ds:
+    with gdal.Open(dst_fname) as dst_ds:
         dst_bounds = dst_ds.GetLayer(0).GetMetadataItem("BOUNDS")
         assert dst_bounds
         assert dst_bounds != src_bounds
@@ -1870,7 +1870,7 @@ def test_ogr_mitab_42():
 
 def test_ogr_mitab_43(tmp_vsimem):
 
-    src_ds = gdal.OpenEx("/vsizip/data/mitab/all_geoms_block_32256.zip")
+    src_ds = gdal.Open("/vsizip/data/mitab/all_geoms_block_32256.zip")
     gdal.VectorTranslate(
         tmp_vsimem / "all_geoms_block_512.tab", src_ds, format="MapInfo File"
     )

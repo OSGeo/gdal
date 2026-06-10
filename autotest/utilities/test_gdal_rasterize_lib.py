@@ -800,7 +800,7 @@ def test_gdal_rasterize_no_options(tmp_vsimem):
     )
 
     # Open the dataset
-    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+    ds = gdal.Open(tmp_vsimem / "test.json", gdal.OF_VECTOR)
     assert ds
 
     # Create a raster to rasterize into.

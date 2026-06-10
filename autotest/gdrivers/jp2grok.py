@@ -316,7 +316,7 @@ def test_jp2grok_11():
     assert jp2_bands_data == gtiff_bands_data
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )
@@ -587,7 +587,7 @@ def test_jp2grok_22():
     del out_ds
     src_ds = None
     assert gdal.VSIStatL("/vsimem/jp2grok_22.jp2.aux.xml") is None
-    ds = gdal.OpenEx("/vsimem/jp2grok_22.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
+    ds = gdal.Open("/vsimem/jp2grok_22.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
     ds = None
@@ -714,7 +714,7 @@ def test_jp2grok_24():
     del out_ds
     src_ds = None
     assert gdal.VSIStatL("/vsimem/jp2grok_24.jp2.aux.xml") is None
-    ds = gdal.OpenEx("/vsimem/jp2grok_24.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
+    ds = gdal.Open("/vsimem/jp2grok_24.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
     assert ds.GetRasterBand(2).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
@@ -853,7 +853,7 @@ def test_jp2grok_26():
         "/vsimem/jp2grok_26.jp2", src_ds, options=["INSPIRE_TG=YES", "ALPHA=YES"]
     )
     out_ds = None
-    ds = gdal.OpenEx("/vsimem/jp2grok_26.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
+    ds = gdal.Open("/vsimem/jp2grok_26.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"])
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
     assert ds.GetRasterBand(4).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
     ds = None
@@ -1680,7 +1680,7 @@ def _jp2grok_checksums_in_subprocess(src, num_threads):
 
     code = (
         "import sys; from osgeo import gdal; gdal.UseExceptions();"
-        "ds = gdal.OpenEx(sys.argv[1], allowed_drivers=['JP2Grok']);"
+        "ds = gdal.Open(sys.argv[1], allowed_drivers=['JP2Grok']);"
         "print(' '.join(str(ds.GetRasterBand(b + 1).Checksum())"
         " for b in range(ds.RasterCount)))"
     )

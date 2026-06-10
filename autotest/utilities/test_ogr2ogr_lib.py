@@ -29,7 +29,7 @@ from osgeo import gdal, ogr, osr
 
 def test_ogr2ogr_lib_1():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -48,7 +48,7 @@ def test_ogr2ogr_lib_1():
 
 def test_ogr2ogr_lib_2():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
         "",
         srcDS,
@@ -61,7 +61,7 @@ def test_ogr2ogr_lib_2():
 
 def test_ogr2ogr_lib_2a(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
 
     # Test @filename syntax
     gdal.FileFromMemBuffer(
@@ -76,7 +76,7 @@ def test_ogr2ogr_lib_2a(tmp_vsimem):
 
 def test_ogr2ogr_lib_2b(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
 
     # Test @filename syntax with a UTF-8 BOM
     gdal.FileFromMemBuffer(
@@ -94,7 +94,7 @@ def test_ogr2ogr_lib_2b(tmp_vsimem):
 
 def test_ogr2ogr_lib_3(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM", where="EAS_ID=171")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
 
@@ -112,7 +112,7 @@ def test_ogr2ogr_lib_3(tmp_vsimem):
 
 def test_ogr2ogr_lib_4(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(tmp_vsimem / "poly.shp", srcDS)
     assert ds.GetLayer(0).GetFeatureCount() == 10, "wrong feature count"
     ds = None
@@ -142,7 +142,7 @@ def test_ogr2ogr_lib_4(tmp_vsimem):
 
 def test_ogr2ogr_lib_5():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM", dstSRS="EPSG:4326")
     assert str(ds.GetLayer(0).GetSpatialRef()).find("1984") != -1
 
@@ -153,7 +153,7 @@ def test_ogr2ogr_lib_5():
 
 def test_ogr2ogr_lib_6():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     # Voluntary don't use the exact case of the source field names (#4502)
     ds = gdal.VectorTranslate(
         "", srcDS, format="MEM", selectFields=["eas_id", "prfedea"]
@@ -190,7 +190,7 @@ def test_ogr2ogr_lib_selectFields_gpkg(tmp_vsimem):
 
 def test_ogr2ogr_lib_sel_fields_empty():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM", selectFields=[])
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
@@ -251,7 +251,7 @@ def test_ogr2ogr_lib_sel_fields_with_space():
 
 def test_ogr2ogr_lib_7(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
         tmp_vsimem / "poly.shp", srcDS, layerCreationOptions=["SHPT=POLYGONZ"]
     )
@@ -266,7 +266,7 @@ def test_ogr2ogr_lib_7(tmp_vsimem):
 
 def test_ogr2ogr_lib_8():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM", layers=["poly"])
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -281,7 +281,7 @@ def test_ogr2ogr_lib_8():
 
 def test_ogr2ogr_lib_9():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="MEM", segmentizeMaxDist=100)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
@@ -296,7 +296,7 @@ def test_ogr2ogr_lib_9():
 
 def test_ogr2ogr_lib_10(tmp_vsimem):
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(tmp_vsimem / "tmp/poly.shp", srcDS)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds = None
@@ -313,7 +313,7 @@ def test_ogr2ogr_lib_10(tmp_vsimem):
 
 def test_ogr2ogr_lib_11():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
         "", srcDS, format="MEM", spatFilter=[479609, 4764629, 479764, 4764817]
     )
@@ -379,7 +379,7 @@ def test_ogr2ogr_lib_14():
     # Null dest name and no option
     with pytest.raises(Exception):
         gdal.wrapper_GDALVectorTranslateDestName(
-            None, gdal.OpenEx("../ogr/data/poly.shp"), None
+            None, gdal.Open("../ogr/data/poly.shp"), None
         )
 
 
@@ -389,7 +389,7 @@ def test_ogr2ogr_lib_14():
 
 def test_ogr2ogr_lib_15():
 
-    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    srcDS = gdal.Open("../ogr/data/poly.shp")
     with gdal.quiet_errors():
         ds = gdal.VectorTranslate("", srcDS, format="MEM", zField="foo")
     lyr = ds.GetLayer(0)
@@ -439,7 +439,7 @@ def test_ogr2ogr_lib_16():
 def test_ogr2ogr_lib_17():
 
     ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
-    gdal.VectorTranslate(ds, gdal.OpenEx("../ogr/data/poly.shp"))
+    gdal.VectorTranslate(ds, gdal.Open("../ogr/data/poly.shp"))
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
     ds = None
@@ -452,7 +452,7 @@ def test_ogr2ogr_lib_17():
 def test_ogr2ogr_lib_18():
 
     ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
-    gdal.VectorTranslate(ds, gdal.OpenEx("../ogr/data/poly.shp"), limit=1)
+    gdal.VectorTranslate(ds, gdal.Open("../ogr/data/poly.shp"), limit=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
@@ -592,7 +592,7 @@ def test_ogr2ogr_axis_mapping_swap(tmp_vsimem):
     )
 
     with gdaltest.disable_exceptions():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.gml",
             open_options=["INVERT_AXIS_ORDER_IF_LAT_LONG=NO"],
         )
@@ -1675,7 +1675,7 @@ def test_ogr2ogr_lib_mapfieldtype():
     )
     assert dst_ds is not None
 
-    src_ds = gdal.OpenEx(src_path)
+    src_ds = gdal.Open(src_path)
     src_lyr = src_ds.GetLayer(0)
     src_lyr_defn = src_lyr.GetLayerDefn()
     dst_lyr = dst_ds.GetLayer(0)
@@ -2529,7 +2529,7 @@ def test_json_types(tmp_vsimem):
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
-        with gdal.OpenEx(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+        with gdal.Open(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
             lyr = ds.GetLayer(0)
             test_extended_types(lyr)
 
@@ -2552,7 +2552,7 @@ def test_json_types(tmp_vsimem):
             srcDS=dst, destNameOrDestDS=round_trip_dst, options=options
         )
 
-        with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+        with gdal.Open(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
             lyr = ds.GetLayer(0)
             test_extended_types(lyr)
 
@@ -2944,7 +2944,7 @@ def test_ogr2ogr_lib_reproject_arrow(tmp_vsimem, source_driver, force_reproj_thr
     if force_reproj_threading:
         config_options["OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ"] = "0"
 
-    with gdal.OpenEx(src_filename) as src_ds:
+    with gdal.Open(src_filename) as src_ds:
         for i in range(2):
 
             got_msg = []
@@ -3148,7 +3148,7 @@ def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
     out_filename = str(tmp_vsimem / "relationships.gpkg")
     gdal.VectorTranslate(out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg")
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRelationshipNames() == ["a_b_attributes"]
         relationship = ds.GetRelationship("a_b_attributes")
         assert relationship.GetLeftTableName() == "a"
@@ -3160,7 +3160,7 @@ def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
         "../ogr/data/gpkg/relation_mapping_table.gpkg",
         layers=["a", "my_mapping_table"],
     )
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRelationshipNames() is None
 
     gdal.VectorTranslate(
@@ -3168,13 +3168,13 @@ def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
         "../ogr/data/gpkg/relation_mapping_table.gpkg",
         layers=["b", "my_mapping_table"],
     )
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRelationshipNames() is None
 
     gdal.VectorTranslate(
         out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg", layers=["a", "b"]
     )
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRelationshipNames() is None
 
 
@@ -3190,7 +3190,7 @@ def test_ogr2ogr_lib_transfer_filegdb_relationships(tmp_vsimem):
         out_filename, "../ogr/data/filegdb/relationships.gdb", format="OpenFileGDB"
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert set(ds.GetRelationshipNames()) == set(
             [
                 "composite_many_to_many",

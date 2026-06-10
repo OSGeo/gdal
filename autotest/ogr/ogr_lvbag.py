@@ -380,7 +380,7 @@ def test_ogr_lvbag_read_zip_4():
 @pytest.mark.require_geos(3, 8)
 def test_ogr_lvbag_fix_invalid_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/lvbag/inval_polygon.xml",
         gdal.OF_VECTOR,
         open_options=["AUTOCORRECT_INVALID_DATA=YES"],
@@ -409,7 +409,7 @@ def test_ogr_lvbag_fix_invalid_polygon():
 @pytest.mark.require_geos(3, 8)
 def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/lvbag/inval_polygon2.xml",
         gdal.OF_VECTOR,
         open_options=["AUTOCORRECT_INVALID_DATA=YES"],
@@ -595,5 +595,5 @@ def test_ogr_lvbag_test_ogrsf_num():
 def test_ogr_lvbag_force_opening():
 
     # Would be opened by GML driver if not forced
-    ds = gdal.OpenEx("data/gml/empty.gml", allowed_drivers=["LVBAG"])
+    ds = gdal.Open("data/gml/empty.gml", allowed_drivers=["LVBAG"])
     assert ds.GetDriver().GetDescription() == "LVBAG"

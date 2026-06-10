@@ -147,7 +147,7 @@ def test_vicar_read_datatypes(filename, dt, checksum):
 
 def test_vicar_read_binary_prefix():
 
-    ds = gdal.OpenEx("data/vicar/vicar_binary_prefix.vic")
+    ds = gdal.Open("data/vicar/vicar_binary_prefix.vic")
     assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
     assert lyr
@@ -545,7 +545,7 @@ x
     assert ds.GetDriver().ShortName == "VICAR"
     assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster())[0] == ord("x")
 
-    ds = gdal.OpenEx("/vsimem/test", allowed_drivers=["VICAR"])
+    ds = gdal.Open("/vsimem/test", allowed_drivers=["VICAR"])
     assert ds
     assert ds.GetDriver().ShortName == "VICAR"
     assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster())[0] == ord("x")

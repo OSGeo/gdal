@@ -322,7 +322,7 @@ def test_jp2openjpeg_11():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )
@@ -685,7 +685,7 @@ def test_jp2openjpeg_22():
     del out_ds
     src_ds = None
     assert gdal.VSIStatL("/vsimem/jp2openjpeg_22.jp2.aux.xml") is None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/jp2openjpeg_22.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"]
     )
     fourth_band = ds.GetRasterBand(4)
@@ -832,7 +832,7 @@ def test_jp2openjpeg_24():
     del out_ds
     src_ds = None
     assert gdal.VSIStatL("/vsimem/jp2openjpeg_24.jp2.aux.xml") is None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/jp2openjpeg_24.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"]
     )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
@@ -975,7 +975,7 @@ def test_jp2openjpeg_26():
         "/vsimem/jp2openjpeg_26.jp2", src_ds, options=["INSPIRE_TG=YES", "ALPHA=YES"]
     )
     out_ds = None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/jp2openjpeg_26.jp2", open_options=["1BIT_ALPHA_PROMOTION=NO"]
     )
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
@@ -2799,7 +2799,7 @@ def test_jp2openjpeg_45():
 
     # We have to explicitly allow it.
     if gdaltest.built_against_curl():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "/vsimem/jp2openjpeg_45.jp2", open_options=["OPEN_REMOTE_GML=YES"]
         )
 
@@ -3469,7 +3469,7 @@ def test_jp2openjpeg_49():
         open_options = []
         if config_option_value is not None:
             open_options += ["GEOREF_SOURCES=" + config_option_value]
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "/vsimem/inconsitant_geojp2_gmljp2.jp2", open_options=open_options
         )
         gt = ds.GetGeoTransform()
@@ -3503,7 +3503,7 @@ def test_jp2openjpeg_49():
                 % (config_option_value, str(copy_pam), str(copy_worldfile))
             )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/inconsitant_geojp2_gmljp2.jp2",
         open_options=["GEOREF_SOURCES=PAM,WORLDFILE"],
     )
@@ -3517,7 +3517,7 @@ def test_jp2openjpeg_49():
 
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        gdal.OpenEx(
+        gdal.Open(
             "data/jpeg2000/inconsitant_geojp2_gmljp2.jp2",
             open_options=["GEOREF_SOURCES=unhandled"],
         )
@@ -3752,7 +3752,7 @@ def test_jp2openjpeg_STRICT_NO():
         assert ds.GetRasterBand(1).Checksum() == -1
     ds = None
 
-    ds = gdal.OpenEx(filename, open_options=["STRICT=NO"])
+    ds = gdal.Open(filename, open_options=["STRICT=NO"])
     with gdal.quiet_errors():
         assert ds.GetRasterBand(1).Checksum() == 5058
     ds = None

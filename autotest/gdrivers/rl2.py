@@ -468,7 +468,7 @@ def test_rl2_22():
     )
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
-    ds = gdal.OpenEx("/vsimem/rl2_22.rl2")
+    ds = gdal.Open("/vsimem/rl2_22.rl2")
     assert ds.RasterXSize == 20
     assert ds.GetLayerCount() == 1
 

@@ -42,7 +42,7 @@ def test_ogr_s101_update_cancellation():
 
 def test_ogr_s101_update_updates_ignore():
 
-    ds = gdal.OpenEx("data/s101/cancelled.000", open_options=["UPDATES=IGNORE"])
+    ds = gdal.Open("data/s101/cancelled.000", open_options=["UPDATES=IGNORE"])
     assert ds.GetLayerCount() == 1
     assert ds.GetMetadata() == {
         "APPLICATION_PROFILE": "1",

@@ -1758,7 +1758,7 @@ def test_ogr_shape_vsicurl_url():
 
 def test_ogr_shape_45():
 
-    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
     shp_layer.SetIgnoredFields(["AREA"])
 
@@ -2506,7 +2506,7 @@ def test_ogr_shape_58(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(tmp_vsimem / "ogr_shape_58", open_options=["PROMOTE_TO_MULTI=NO"])
+    ds = gdal.Open(tmp_vsimem / "ogr_shape_58", open_options=["PROMOTE_TO_MULTI=NO"])
 
     for wkt in wkt_list:
         geom = ogr.CreateGeometryFromWkt(wkt)
@@ -3192,7 +3192,7 @@ def test_ogr_shape_issue_14385(tmp_vsimem):
 
 def test_ogr_shape_75(tmp_vsimem):
 
-    ds = gdal.OpenEx("data/poly.shp")
+    ds = gdal.Open("data/poly.shp")
     filelist_PRJ = [
         "data/poly.shp",
         "data/poly.shx",
@@ -3219,11 +3219,11 @@ def test_ogr_shape_75(tmp_vsimem):
         assert ds.GetFileList() == filelist_PRJ or ds.GetFileList() == filelist_prj
     ds = None
 
-    ds = gdal.OpenEx("data/idlink.dbf")
+    ds = gdal.Open("data/idlink.dbf")
     assert ds.GetFileList() == ["data/idlink.dbf"]
     ds = None
 
-    ds = gdal.OpenEx("data/shp/testpoly.shp")
+    ds = gdal.Open("data/shp/testpoly.shp")
     assert ds.GetFileList() == [
         "data/shp/testpoly.shp",
         "data/shp/testpoly.shx",
@@ -3232,7 +3232,7 @@ def test_ogr_shape_75(tmp_vsimem):
     ]
     ds = None
 
-    ds = gdal.OpenEx("data/shp/emptyshapefilewithsbn.shx")
+    ds = gdal.Open("data/shp/emptyshapefilewithsbn.shx")
     assert ds.GetFileList() == [
         "data/shp/emptyshapefilewithsbn.shp",
         "data/shp/emptyshapefilewithsbn.shx",
@@ -3241,7 +3241,7 @@ def test_ogr_shape_75(tmp_vsimem):
     ]
     ds = None
 
-    ds = gdal.OpenEx("data/shp/testpoly.shp")
+    ds = gdal.Open("data/shp/testpoly.shp")
     assert ds.GetFileList() == [
         "data/shp/testpoly.shp",
         "data/shp/testpoly.shx",
@@ -3252,7 +3252,7 @@ def test_ogr_shape_75(tmp_vsimem):
 
     # Test that CreateLayer() + GetFileList() list the .prj file when it
     # exists
-    src_ds = gdal.OpenEx("data/shp/Stacks.shp")
+    src_ds = gdal.Open("data/shp/Stacks.shp")
     driver = gdal.GetDriverByName("ESRI Shapefile")
     copy_ds = driver.CreateCopy(tmp_vsimem / "test_copy.shp", src_ds)
     src_ds = None
@@ -3269,7 +3269,7 @@ def test_ogr_shape_75(tmp_vsimem):
 
     # Test that CreateLayer() + GetFileList() don't list the .prj file when it
     # doesn't exist.
-    src_ds = gdal.OpenEx("data/shp/testpoly.shp")
+    src_ds = gdal.Open("data/shp/testpoly.shp")
     driver = gdal.GetDriverByName("ESRI Shapefile")
     copy_ds = driver.CreateCopy(tmp_vsimem / "test_copy.shp", src_ds)
     src_ds = None
@@ -3644,7 +3644,7 @@ def test_ogr_shape_85(tmp_vsimem):
     ds = None
 
     # Test open option ADJUST_TYPE
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_vsimem / "ogr_shape_85.shp",
         gdal.OF_VECTOR,
         open_options={"ADJUST_TYPE": "YES"},
@@ -3963,7 +3963,7 @@ def test_ogr_shape_94(tmp_vsimem, shpt, geom_type, wkt):
         lyr.CreateFeature(f)
         f = None
         ds = None
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_vsimem / "ogr_shape_94.shp", open_options=["PROMOTE_TO_MULTI=NO"]
         )
         lyr = ds.GetLayer(0)
@@ -3987,13 +3987,13 @@ def test_ogr_shape_94(tmp_vsimem, shpt, geom_type, wkt):
 
 def test_ogr_shape_95():
 
-    ds = gdal.OpenEx("data/shp/pointzm_with_all_nodata_m.shp")
+    ds = gdal.Open("data/shp/pointzm_with_all_nodata_m.shp")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)", lyr.GetGeomType()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/shp/pointzm_with_all_nodata_m.shp", open_options=["ADJUST_GEOM_TYPE=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -4004,14 +4004,14 @@ def test_ogr_shape_95():
     )
 
     # The shape with a non nodata M is the second one
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/shp/pointzm_with_one_valid_m.shp",
         open_options=["ADJUST_GEOM_TYPE=FIRST_SHAPE"],
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/shp/pointzm_with_one_valid_m.shp",
         open_options=["ADJUST_GEOM_TYPE=ALL_SHAPES"],
     )
@@ -4274,9 +4274,7 @@ def test_ogr_shape_100(tmp_path, variant):
     f = None
     ds = None
 
-    ds = gdal.OpenEx(
-        tmp_path / "ogr_shape_100.shp", open_options=["PROMOTE_TO_MULTI=NO"]
-    )
+    ds = gdal.Open(tmp_path / "ogr_shape_100.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, variant
     f = lyr.GetNextFeature()
@@ -4371,7 +4369,7 @@ def test_ogr_shape_101(tmp_vsimem):
             ds = None
 
             # Test disabling auto-repack on update
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 tmp_vsimem / "ogr_shape_101.shp",
                 gdal.OF_UPDATE,
                 open_options=["AUTO_REPACK=NO"],
@@ -4466,7 +4464,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected), options
 
     # Add field
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ds = None
@@ -4474,7 +4472,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Add record
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds = None
@@ -4482,7 +4480,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Add another field
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.CreateField(ogr.FieldDefn("foo2", ogr.OFTString))
     ds = None
@@ -4490,7 +4488,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Grow a field
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     fd = lyr.GetLayerDefn().GetFieldDefn(0)
     new_fd = ogr.FieldDefn(fd.GetName(), fd.GetType())
@@ -4501,7 +4499,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Reorder fields
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.ReorderFields([1, 0])
     ds = None
@@ -4509,7 +4507,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Shrink a field
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     fd = lyr.GetLayerDefn().GetFieldDefn(0)
     new_fd = ogr.FieldDefn(fd.GetName(), fd.GetType())
@@ -4520,7 +4518,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Remove a field
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.DeleteField(0)
     ds = None
@@ -4549,7 +4547,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Test editing a record that is not the last one
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.SetFeature(lyr.GetNextFeature())
     ds = None
@@ -4557,7 +4555,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     assert check_EOF(filename, expected=expected)
 
     # Test editing the last record
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options=options)
+    ds = gdal.Open(filename, gdal.OF_UPDATE, open_options=options)
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
     lyr.SetFeature(lyr.GetNextFeature())
@@ -4577,7 +4575,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds = None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.OF_UPDATE, open_options=["DBF_DATE_LAST_UPDATE=1970-01-01"]
     )
     lyr = ds.GetLayer(0)
@@ -4600,7 +4598,7 @@ def test_ogr_shape_103(tmp_vsimem, options, expected):
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
     ds = None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.OF_UPDATE, open_options=["DBF_DATE_LAST_UPDATE=1970-01-01"]
     )
     lyr = ds.GetLayer(0)
@@ -5140,12 +5138,12 @@ def test_ogr_shape_115_shp_zip(tmp_path):
     with gdaltest.config_option("OGR_SHAPE_PACK_IN_PLACE", "NO"):
         assert gdal.VectorTranslate(ds, "data/poly.shp", options="-nln polyY")
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     with gdaltest.config_option("OGR_SHAPE_USE_VSIMEM_FOR_TEMP", "NO"):
         assert gdal.VectorTranslate(ds, "data/poly.shp", options="-nln polyX")
         assert tmp_uncompressed in gdal.ReadDir(dirname)
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert gdal.VectorTranslate(ds, "data/poly.shp", options="-nln polyZ")
     assert tmp_uncompressed not in gdal.ReadDir(dirname)
     ds = None
@@ -5173,7 +5171,7 @@ def test_ogr_shape_115_shp_zip(tmp_path):
         assert tmp_uncompressed not in gdal.ReadDir(dirname)
         ds = None
 
-        ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         lyr = ds.GetLayer(0)
         assert tmp_uncompressed not in gdal.ReadDir(dirname)
         with gdaltest.config_option("OGR_SHAPE_LOCK_DELAY", "0.01"):
@@ -5264,7 +5262,7 @@ def test_ogr_shape_ldid_and_cpg(tmp_vsimem):
         tmp_vsimem / "tmp.dbf", open("data/shp/facility_surface_dd.dbf", "rb").read()
     )
     gdal.FileFromMemBuffer(tmp_vsimem / "tmp.cpg", "UTF-8")
-    ds = gdal.OpenEx(tmp_vsimem / "tmp.dbf")
+    ds = gdal.Open(tmp_vsimem / "tmp.dbf")
     lyr = ds.GetLayer(0)
     assert lyr.GetMetadata_Dict("SHAPEFILE") == {
         "CPG_VALUE": "UTF-8",
@@ -5276,7 +5274,7 @@ def test_ogr_shape_ldid_and_cpg(tmp_vsimem):
     ds = None
 
     # Disable recoding
-    ds = gdal.OpenEx(tmp_vsimem / "tmp.dbf", open_options=["ENCODING="])
+    ds = gdal.Open(tmp_vsimem / "tmp.dbf", open_options=["ENCODING="])
     lyr = ds.GetLayer(0)
     assert lyr.GetMetadata_Dict("SHAPEFILE") == {
         "CPG_VALUE": "UTF-8",

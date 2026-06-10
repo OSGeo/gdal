@@ -42,7 +42,7 @@ def setup_and_cleanup():
 def test_pythondrivers_test_dummy(geomformat):
     assert not ogr.Open("UNRELATED:")
 
-    ds = gdal.OpenEx("DUMMY:", open_options=["GEOMFORMAT=" + geomformat])
+    ds = gdal.Open("DUMMY:", open_options=["GEOMFORMAT=" + geomformat])
     assert ds
     assert ds.GetLayerCount() == 1
     assert not ds.GetLayer(-1)

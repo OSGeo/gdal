@@ -1611,7 +1611,7 @@ def test_jpeg_write_4band_not_cmyk():
 @pytest.mark.parametrize("orientation", [i + 1 for i in range(8)])
 def test_jpeg_apply_orientation(orientation):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg/exif_orientation/F%d.jpg" % orientation,
         open_options=["APPLY_ORIENTATION=YES"],
     )

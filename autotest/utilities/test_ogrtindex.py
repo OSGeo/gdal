@@ -165,7 +165,7 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
     ), "got error/warning"
 
     if output_filename.endswith(".shp"):
-        ds = gdal.OpenEx(output_filename, open_options=["PROMOTE_TO_MULTI=NO"])
+        ds = gdal.Open(output_filename, open_options=["PROMOTE_TO_MULTI=NO"])
     else:
         ds = ogr.Open(output_filename)
     assert ds.GetLayer(0).GetFeatureCount() == 2, "did not get expected feature count"

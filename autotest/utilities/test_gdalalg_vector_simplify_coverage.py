@@ -41,7 +41,7 @@ def count_points(g):
 
 def test_gdalalg_vector_simplify_coverage(alg):
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    src_ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
     src_lyr = src_ds.GetLayer(0)
 
     alg["input"] = src_ds
@@ -73,7 +73,7 @@ def test_gdalalg_vector_simplify_coverage_active_layer(alg, active_layer):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
 
-    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly:
+    with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly:
         src_ds.CopyLayer(poly.GetLayer(0), "poly1", options=["ADVERTIZE_UTF8=YES"])
         src_ds.CopyLayer(poly.GetLayer(0), "poly2", options=["ADVERTIZE_UTF8=YES"])
 

@@ -1807,7 +1807,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_internal(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_internal.tif"
     gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename,
         gdal.OF_UPDATE | gdal.OF_RASTER,
         open_options=["SPARSE_OK=YES"] if apply_sparse else [],
@@ -1837,7 +1837,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_external(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_external.tif"
     gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
-    ds = gdal.OpenEx(filename, open_options=["SPARSE_OK=YES"] if apply_sparse else [])
+    ds = gdal.Open(filename, open_options=["SPARSE_OK=YES"] if apply_sparse else [])
     ds.BuildOverviews("NEAREST", overviewlist=[2])
     ds = None
     ds = gdal.Open(filename)
@@ -2423,7 +2423,7 @@ def test_tiff_ovr_multiband_code_path_degenerate():
     ds = gdal.GetDriverByName("GTiff").Create(temp_path, 5, 6)
     ds.GetRasterBand(1).Fill(255)
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     with gdaltest.config_option("COMPRESS_OVERVIEW", "LZW"):
         ds.BuildOverviews("nearest", overviewlist=[2, 4, 8])
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
@@ -2444,7 +2444,7 @@ def test_tiff_ovr_color_table_bug_3336():
     ct.SetColorEntry(255, (255, 2552, 55))
     ds.GetRasterBand(1).SetRasterColorTable(ct)
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert ds.BuildOverviews("nearest", overviewlist=[32]) == 0
     del ds
     gdal.GetDriverByName("GTiff").Delete(temp_path)
@@ -2461,7 +2461,7 @@ def test_tiff_ovr_color_table_bug_3336_bis():
     ct.SetColorEntry(255, (255, 2552, 55))
     ds.GetRasterBand(1).SetRasterColorTable(ct)
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert ds.BuildOverviews("nearest", overviewlist=[128]) == 0
     del ds
     gdal.GetDriverByName("GTiff").Delete(temp_path)
@@ -2736,11 +2736,11 @@ def test_tiff_ovr_int64():
         0, 0, 2, 1, struct.pack("q" * 2, -10000000000, -10000000000)
     )
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
     assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert struct.unpack("q", ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (
         -10000000000,
     )
@@ -2759,11 +2759,11 @@ def test_tiff_ovr_uint64():
         0, 0, 2, 1, struct.pack("Q" * 2, 10000000000, 10000000000)
     )
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
     assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
-    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    ds = gdal.Open(temp_path, gdal.GA_ReadOnly)
     assert struct.unpack("Q", ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (
         10000000000,
     )
@@ -2780,7 +2780,7 @@ def test_tiff_ovr_internal_overview_different_method():
     gdal.GetDriverByName("GTiff").Create(
         temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW"]
     )
-    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    ds = gdal.Open(temp_path, gdal.GA_Update)
     with gdaltest.config_options(
         {"COMPRESS_OVERVIEW": "DEFLATE", "PREDICTOR_OVERVIEW": "2"}
     ):
@@ -2804,7 +2804,7 @@ def test_tiff_ovr_internal_overview_different_method_propagate_predictor():
     gdal.GetDriverByName("GTiff").Create(
         temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW", "PREDICTOR=2"]
     )
-    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    ds = gdal.Open(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "DEFLATE"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
@@ -2826,7 +2826,7 @@ def test_tiff_ovr_internal_overview_different_method_do_not_propagate_predictor(
     gdal.GetDriverByName("GTiff").Create(
         temp_path, 2, 1, 1, gdal.GDT_UInt8, options=["COMPRESS=LZW", "PREDICTOR=2"]
     )
-    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    ds = gdal.Open(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "PACKBITS"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
@@ -2848,7 +2848,7 @@ def test_tiff_ovr_internal_overview_different_planar_config_to_pixel():
     gdal.GetDriverByName("GTiff").Create(
         temp_path, 2, 1, 3, gdal.GDT_UInt8, options=["INTERLEAVE=BAND"]
     )
-    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    ds = gdal.Open(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "PIXEL"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
@@ -2869,7 +2869,7 @@ def test_tiff_ovr_internal_overview_different_planar_config_to_band():
     gdal.GetDriverByName("GTiff").Create(
         temp_path, 2, 1, 3, gdal.GDT_UInt8, options=["INTERLEAVE=PIXEL"]
     )
-    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    ds = gdal.Open(temp_path, gdal.GA_Update)
     with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "BAND"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
@@ -2890,7 +2890,7 @@ def test_tiff_ovr_external_1_px_wide_3_px_tall():
     ds = gdal.GetDriverByName("GTiff").Create(temp_path, 1, 3)
     ds.GetRasterBand(1).Fill(1)
     ds = None
-    ds = gdal.OpenEx(temp_path)
+    ds = gdal.Open(temp_path)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds
@@ -2914,7 +2914,7 @@ def test_tiff_ovr_external_3_px_wide_1_px_tall():
     ds = gdal.GetDriverByName("GTiff").Create(temp_path, 3, 1)
     ds.GetRasterBand(1).Fill(1)
     ds = None
-    ds = gdal.OpenEx(temp_path)
+    ds = gdal.Open(temp_path)
     with gdaltest.config_options({"COMPRESS_OVERVIEW": "LZW"}):
         assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
     del ds

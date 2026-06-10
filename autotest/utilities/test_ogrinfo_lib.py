@@ -25,7 +25,7 @@ from osgeo import gdal, ogr, osr
 
 def test_ogrinfo_lib_1():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.Open("../ogr/data/poly.shp")
 
     ret = gdal.VectorInfo(ds)
     assert "ESRI Shapefile" in ret
@@ -49,7 +49,7 @@ def test_ogrinfo_lib_1_path():
 
 def test_ogrinfo_lib_json():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    ds = gdal.Open("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     ret = gdal.VectorInfo(ds, format="json")
     del ret["description"]
@@ -116,7 +116,7 @@ def test_ogrinfo_lib_json():
 
 def test_ogrinfo_lib_json_features():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    ds = gdal.Open("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True, limit=1)
     del ret["description"]
@@ -222,7 +222,7 @@ def test_ogrinfo_lib_json_features():
 
 def test_ogrinfo_lib_json_validate():
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.Open("../ogr/data/poly.shp")
 
     ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True)
 
@@ -235,7 +235,7 @@ def test_ogrinfo_lib_json_validate():
 
 def test_ogrinfo_lib_json_zm():
 
-    ds = gdal.OpenEx("../ogr/data/shp/testpointzm.shp")
+    ds = gdal.Open("../ogr/data/shp/testpointzm.shp")
 
     ret = gdal.VectorInfo(ds, format="json")
     assert ret["layers"][0]["geometryFields"][0]["type"] == "PointZM"
@@ -248,7 +248,7 @@ def test_ogrinfo_lib_json_zm():
 @pytest.mark.require_driver("OpenFileGDB")
 def test_ogrinfo_lib_relationships():
 
-    ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
+    ds = gdal.Open("../ogr/data/filegdb/relationships.gdb")
 
     ret = gdal.VectorInfo(ds)
     expected = """Relationship: composite_many_to_many
@@ -275,7 +275,7 @@ def test_ogrinfo_lib_relationships():
 @pytest.mark.require_driver("OpenFileGDB")
 def test_ogrinfo_lib_json_relationships():
 
-    ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
+    ds = gdal.Open("../ogr/data/filegdb/relationships.gdb")
 
     ret = gdal.VectorInfo(ds, format="json")
     gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
@@ -304,7 +304,7 @@ def test_ogrinfo_lib_json_relationships():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
-    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
+    ds = gdal.Open("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": true }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": null }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
@@ -361,7 +361,7 @@ def test_ogrinfo_lib_json_OFSTJSON():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
-    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
+    ds = gdal.Open("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
         ]}""")
 
@@ -383,7 +383,7 @@ def test_ogrinfo_lib_json_fields_NO():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
-    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
+    ds = gdal.Open("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
         ]}""")
 

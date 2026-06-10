@@ -914,7 +914,7 @@ def test_ogr2ogr_33(ogr2ogr_path, tmp_path):
         ogr2ogr_path + f" -explodecollections {dst_shp} {src_csv} -select foo"
     )
 
-    ds = gdal.OpenEx(dst_shp, open_options=["PROMOTE_TO_MULTI=NO"])
+    ds = gdal.Open(dst_shp, open_options=["PROMOTE_TO_MULTI=NO"])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 3, "-explodecollections failed"
 
@@ -2186,7 +2186,7 @@ def test_ogr2ogr_65(ogr2ogr_path, tmp_path):
     dst_csv = str(tmp_path / "out.csv")
 
     gdaltest.runexternal(f"{ogr2ogr_path} {dst_csv} ../ogr/data/poly.shp")
-    ds = gdal.OpenEx(dst_csv)
+    ds = gdal.Open(dst_csv)
     assert ds.GetDriver().ShortName == "CSV"
     ds = None
 

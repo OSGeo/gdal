@@ -139,7 +139,7 @@ def mysql_ds(mysql_autotest_ds, request):
 @pytest.fixture()
 def tpoly(mysql_ds):
 
-    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
 
     ######################################################

@@ -120,7 +120,7 @@ def test_s104_basic():
 
 def test_s104_north_up_no():
     filename = "data/s104/test_s104_v1.1.h5"
-    ds = gdal.OpenEx(f'S104:"{filename}":Group_001', open_options=["NORTH_UP=NO"])
+    ds = gdal.Open(f'S104:"{filename}":Group_001', open_options=["NORTH_UP=NO"])
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
@@ -162,7 +162,7 @@ def test_s104_north_up_no():
 def test_s104_multidim():
 
     filename = "data/s104/test_s104_v1.1.h5"
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArrayFromFullname("/WaterLevel/WaterLevel.01/Group_001/values")
     assert ar.GetSpatialRef().GetAuthorityCode() == "4326"

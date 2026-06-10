@@ -141,7 +141,7 @@ def test_lerc_float32_with_mask_v2():
 
 def test_lerc_float32_with_mask_v2_as_mask():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsisubfile/304_1741,../gcore/data/gtiff/lerc_float32_with_mask.tif",
         open_options=["NDV=NONE"],
     )

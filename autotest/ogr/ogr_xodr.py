@@ -55,7 +55,7 @@ def test_ogr_xodr_basics():
     - Data source
     - Layer count
     """
-    ds = gdal.OpenEx(xodr_file, gdal.OF_VECTOR)
+    ds = gdal.Open(xodr_file, gdal.OF_VECTOR)
     assert ds is not None, f"Cannot open dataset for file: {xodr_file}"
     assert ds.GetLayerCount() == 6, f"Bad layer count for file: {xodr_file}"
 
@@ -65,7 +65,7 @@ def test_ogr_xodr_undissolvable_layers():
     - Correct feature type definitions
     - Spatial reference system
     """
-    ds = gdal.OpenEx(xodr_file, gdal.OF_VECTOR)
+    ds = gdal.Open(xodr_file, gdal.OF_VECTOR)
 
     layer_reference_line = ds.GetLayer("ReferenceLine")
     check_feat_def_reference_line(layer_reference_line)
@@ -90,7 +90,7 @@ def test_ogr_xodr_dissolvable_layers(dissolve_tin: bool):
         dissolve_tin (bool): True if to dissolve triangulated surfaces.
     """
     options = ["DISSOLVE_TIN=" + str(dissolve_tin)]
-    ds = gdal.OpenEx(xodr_file, gdal.OF_VECTOR, open_options=options)
+    ds = gdal.Open(xodr_file, gdal.OF_VECTOR, open_options=options)
 
     layer_road_mark = ds.GetLayer("RoadMark")
     check_feat_def_road_mark(layer_road_mark, dissolve_tin)
@@ -216,7 +216,7 @@ def test_ogr_xodr_geometry_eps(eps: float):
         eps (float): Value for linear approximation of parametric geometries.
     """
     options = ["EPSILON=" + str(eps)]
-    ds = gdal.OpenEx(xodr_file, gdal.OF_VECTOR, open_options=options)
+    ds = gdal.Open(xodr_file, gdal.OF_VECTOR, open_options=options)
 
     lyr = ds.GetLayer("ReferenceLine")
     ogr_xodr_check_reference_line_geometry_eps(lyr, eps)
@@ -246,7 +246,7 @@ def test_ogr_xodr_geometry_dissolve(dissolve_tin: bool):
         dissolve_tin (bool): True if to dissolve triangulated surfaces.
     """
     options = ["DISSOLVE_TIN=" + str(dissolve_tin)]
-    ds = gdal.OpenEx(xodr_file, gdal.OF_VECTOR, open_options=options)
+    ds = gdal.Open(xodr_file, gdal.OF_VECTOR, open_options=options)
 
     lyr = ds.GetLayer("Lane")
     ogr_xodr_check_lane_geometry_dissolve(lyr, dissolve_tin)

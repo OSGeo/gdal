@@ -497,9 +497,7 @@ def test_ogr_gpx_creator(tmp_vsimem, options, expected):
 
 def test_ogr_gpx_ELE_AS_25D():
 
-    ds = gdal.OpenEx(
-        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["ELE_AS_25D=YES"]
-    )
+    ds = gdal.Open("data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["ELE_AS_25D=YES"])
     lyr = ds.GetLayerByName("waypoints")
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 0 2)"
@@ -515,7 +513,7 @@ def test_ogr_gpx_ELE_AS_25D():
 
 def test_ogr_gpx_SHORT_NAMES():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["SHORT_NAMES=YES"]
     )
     lyr = ds.GetLayerByName("track_points")
@@ -529,9 +527,7 @@ def test_ogr_gpx_SHORT_NAMES():
 
 def test_ogr_gpx_N_MAX_LINKS():
 
-    ds = gdal.OpenEx(
-        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["N_MAX_LINKS=3"]
-    )
+    ds = gdal.Open("data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["N_MAX_LINKS=3"])
     lyr = ds.GetLayerByName("track_points")
     f = lyr.GetNextFeature()
     assert f["link3_href"] is None

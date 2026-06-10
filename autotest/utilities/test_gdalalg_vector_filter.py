@@ -36,7 +36,7 @@ def test_gdalalg_vector_filter_no_filter(tmp_vsimem):
     assert filter_alg.Finalize()
     ds = None
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -49,7 +49,7 @@ def test_gdalalg_vector_filter_bbox(tmp_vsimem):
         ["--bbox=479867,4762909,479868,4762910", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
@@ -62,7 +62,7 @@ def test_gdalalg_vector_filter_where_discard_all(tmp_vsimem):
         ["--where=0=1", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 0
 
 
@@ -75,7 +75,7 @@ def test_gdalalg_vector_filter_where_accept_all(tmp_vsimem):
         ["--where=1=1", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 

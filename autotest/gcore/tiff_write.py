@@ -4225,7 +4225,7 @@ def test_tiff_write_ifd_offsets():
     ds = None
 
     # Test rewriting but without changing strile size
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
     )
     ds.GetRasterBand(1).Fill(0)
@@ -4237,7 +4237,7 @@ def test_tiff_write_ifd_offsets():
     assert "KNOWN_INCOMPATIBLE_EDITION=NO\n " in data
 
     # Test rewriting with changing strile size
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
     )
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "x")
@@ -6746,7 +6746,7 @@ def test_tiff_write_137():
         options=["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2", "SPARSE_OK=YES"],
     )
     ds = None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/tiff_write_137.tif", gdal.OF_UPDATE, open_options=["NUM_THREADS=4"]
     )
     ds.GetRasterBand(1).Fill(1)
@@ -7552,7 +7552,7 @@ def test_tiff_write_154():
     ds = None
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 162
     # SPARSE_OK in Open()/update: blocks are not written
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/tiff_write_154.tif", gdal.OF_UPDATE, open_options=["SPARSE_OK=YES"]
     )
     ds.GetRasterBand(1).Fill(0)
@@ -7560,7 +7560,7 @@ def test_tiff_write_154():
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 162
     ds = None
     # Default behaviour in Open()/update: blocks are written
-    ds = gdal.OpenEx("/vsimem/tiff_write_154.tif", gdal.OF_UPDATE)
+    ds = gdal.Open("/vsimem/tiff_write_154.tif", gdal.OF_UPDATE)
     ds.GetRasterBand(1).Fill(0)
     ds = None
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 250162
@@ -11835,7 +11835,7 @@ def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
     ), "Wrong color table entry."
 
     # Check we get wrong values when not specifying the appropriate multiplier
-    ds = gdal.OpenEx(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
+    ds = gdal.Open(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     assert (
         ct.GetColorEntry(0) == (0, 0, 0, 255)

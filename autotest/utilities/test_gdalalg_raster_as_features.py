@@ -44,7 +44,7 @@ def test_gdalalg_raster_as_features_multiple_bands(alg, tmp_vsimem):
     assert alg.Finalize()
     assert tab_pct[0] == 1
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2500
@@ -69,7 +69,7 @@ def test_gdalalg_raster_as_features_specified_bands(alg, tmp_vsimem):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         lyr = ds.GetLayer(0)
 
         f = lyr.GetFeature(2317)
@@ -89,7 +89,7 @@ def test_gdalalg_raster_as_features_skip_nodata(alg, tmp_vsimem):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 380
@@ -106,7 +106,7 @@ def test_gdalalg_raster_as_features_geom_type(alg, tmp_path, geom_type):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_path / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_path / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 400

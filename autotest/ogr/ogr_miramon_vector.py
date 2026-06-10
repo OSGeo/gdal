@@ -88,7 +88,7 @@ def check_simple_point(ds):
 
 def test_ogr_miramon_read_simple_point():
 
-    ds = gdal.OpenEx("data/miramon/Points/SimplePoints/SimplePointsFile.pnt")
+    ds = gdal.Open("data/miramon/Points/SimplePoints/SimplePointsFile.pnt")
     assert ds is not None, "Failed to get dataset"
 
     check_simple_point(ds)
@@ -102,7 +102,7 @@ def test_ogr_miramon_write_simple_point_EmptyVersion(tmp_vsimem):
         "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_point(ds)
 
 
@@ -124,7 +124,7 @@ def test_ogr_miramon_write_simple_point_V11(tmp_vsimem, version):
         format="MiraMonVector",
         options="-lco Version=" + version,
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_point(ds)
 
 
@@ -203,7 +203,7 @@ def check_simple_arc(ds):
 
 def test_ogr_miramon_read_simple_arc():
 
-    ds = gdal.OpenEx("data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc")
+    ds = gdal.Open("data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc")
     assert ds is not None, "Failed to get dataset"
     check_simple_arc(ds)
 
@@ -216,7 +216,7 @@ def test_ogr_miramon_write_simple_arc_EmptyVersion(tmp_vsimem):
         "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_arc(ds)
     del ds
 
@@ -230,7 +230,7 @@ def test_ogr_miramon_write_simple_arc_V11(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=V1.1",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_arc(ds)
     del ds
 
@@ -244,7 +244,7 @@ def test_ogr_miramon_write_simple_arc_V20(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=V2.0",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_arc(ds)
     del ds
 
@@ -258,7 +258,7 @@ def test_ogr_miramon_write_simple_arc_last_version(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=last_version",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_arc(ds)
     del ds
 
@@ -328,7 +328,7 @@ def check_simple_polygon(ds):
 
 def test_ogr_miramon_read_simple_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol", gdal.OF_VECTOR
     )
     assert ds is not None, "Failed to get dataset"
@@ -339,7 +339,7 @@ def test_ogr_miramon_read_simple_polygon():
 # the result has to be the same than if it has extension
 def test_ogr_miramon_read_simple_polygon_no_ext():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Polygons/SimplePolygonsCycleNoExt/SimplePolFile.pol",
         gdal.OF_VECTOR,
     )
@@ -355,7 +355,7 @@ def test_ogr_miramon_write_simple_polygon_EmptyVersion(tmp_vsimem):
         "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_polygon(ds)
 
 
@@ -368,7 +368,7 @@ def test_ogr_miramon_write_simple_polygon__V11(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=V1.1",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_polygon(ds)
 
 
@@ -381,7 +381,7 @@ def test_ogr_miramon_write_simple_polygon_V20(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=V2.0",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_polygon(ds)
 
 
@@ -394,7 +394,7 @@ def test_ogr_miramon_write_simple_polygon_last_version(tmp_vsimem):
         format="MiraMonVector",
         options="-lco Version=last_version",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_simple_polygon(ds)
 
 
@@ -430,7 +430,7 @@ def check_multi_polygon(ds):
 
 def test_ogr_miramon_read_multi_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Polygons/Multipolygons/Multipolygons.pol", gdal.OF_VECTOR
     )
     assert ds is not None, "Failed to get dataset"
@@ -445,7 +445,7 @@ def test_ogr_miramon_write_multi_polygon_EmptyVersion(tmp_vsimem):
         "data/miramon/Polygons/Multipolygons/Multipolygons.pol",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_multi_polygon(ds)
 
 
@@ -455,7 +455,7 @@ def test_ogr_miramon_write_multi_polygon_EmptyVersion(tmp_vsimem):
 
 def test_ogr_miramon_empty_point_layers():
 
-    ds = gdal.OpenEx("data/miramon/Points/EmptyPoints/Empty_PNT.pnt", gdal.OF_VECTOR)
+    ds = gdal.Open("data/miramon/Points/EmptyPoints/Empty_PNT.pnt", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
 
     lyr = ds.GetLayer(0)
@@ -472,7 +472,7 @@ def test_ogr_miramon_empty_point_layers():
 
 def test_ogr_miramon_empty_arc_layers():
 
-    ds = gdal.OpenEx("data/miramon/Arcs/EmptyArcs/Empty_ARC.arc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/miramon/Arcs/EmptyArcs/Empty_ARC.arc", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
 
     lyr = ds.GetLayer(0)
@@ -489,9 +489,7 @@ def test_ogr_miramon_empty_arc_layers():
 
 def test_ogr_miramon_empty_pol_layers():
 
-    ds = gdal.OpenEx(
-        "data/miramon/Polygons/EmptyPolygons/Empty_POL.pol", gdal.OF_VECTOR
-    )
+    ds = gdal.Open("data/miramon/Polygons/EmptyPolygons/Empty_POL.pol", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
 
     lyr = ds.GetLayer(0)
@@ -542,7 +540,7 @@ def check_3d_point(ds):
 
 def test_ogr_miramon_read_3d_point(tmp_vsimem):
 
-    ds = gdal.OpenEx("data/miramon/Points/3dpoints/Some3dPoints.pnt", gdal.OF_VECTOR)
+    ds = gdal.Open("data/miramon/Points/3dpoints/Some3dPoints.pnt", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
     check_3d_point(ds)
 
@@ -557,7 +555,7 @@ def test_ogr_miramon_read_3d_point(tmp_vsimem):
 )
 def test_ogr_miramon_read_multi_3d_point(Height, expected_height):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Points/3dpoints/Some3dPoints.pnt",
         gdal.OF_VECTOR,
         open_options=["Height=" + Height],
@@ -585,7 +583,7 @@ def test_ogr_miramon_write_3d_point(tmp_vsimem):
         "data/miramon/Points/3dpoints/Some3dPoints.pnt",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_3d_point(ds)
 
 
@@ -629,7 +627,7 @@ def check_3d_arc(ds):
 
 def test_ogr_miramon_read_3d_arc(tmp_vsimem):
 
-    ds = gdal.OpenEx("data/miramon/Arcs/3dArcs/linies_3d_WGS84.arc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/miramon/Arcs/3dArcs/linies_3d_WGS84.arc", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
     check_3d_arc(ds)
 
@@ -642,7 +640,7 @@ def test_ogr_miramon_write_3d_arc(tmp_vsimem):
         "data/miramon/Arcs/3dArcs/linies_3d_WGS84.arc",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_3d_arc(ds)
     del ds
 
@@ -693,7 +691,7 @@ def check_3d_pol(ds):
 
 def test_ogr_miramon_read_3d_pol():
 
-    ds = gdal.OpenEx("data/miramon/Polygons/3dPolygons/tin_3d.pol", gdal.OF_VECTOR)
+    ds = gdal.Open("data/miramon/Polygons/3dPolygons/tin_3d.pol", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
     check_3d_pol(ds)
 
@@ -706,7 +704,7 @@ def test_ogr_miramon_write_3d_pol(tmp_vsimem):
         "data/miramon/Polygons/3dPolygons/tin_3d.pol",
         format="MiraMonVector",
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     check_3d_pol(ds)
     del ds
 
@@ -767,7 +765,7 @@ def test_ogr_miramon_CreationLanguage(tmp_vsimem, Language, expected_description
         options="-lco CreationLanguage=" + Language,
     )
 
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     assert lyr is not None, "Failed to get layer"
 
@@ -794,7 +792,7 @@ def test_ogr_miramon_CreationLanguage(tmp_vsimem, Language, expected_description
 )
 def test_ogr_miramon_OpenLanguagePoint(Language, expected_description):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
         gdal.OF_VECTOR,
         open_options=["OpenLanguage=" + Language],
@@ -821,7 +819,7 @@ def test_ogr_miramon_OpenLanguagePoint(Language, expected_description):
 )
 def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
         gdal.OF_VECTOR,
         open_options=["OpenLanguage=" + Language],
@@ -878,7 +876,7 @@ def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
 )
 def test_ogr_miramon_corrupted_files(name, message):
     with pytest.raises(Exception, match=message):
-        gdal.OpenEx(
+        gdal.Open(
             name,
             gdal.OF_VECTOR,
         )
@@ -911,7 +909,7 @@ def test_ogr_miramon_corrupted_files(name, message):
 )
 def test_ogr_miramon_corrupted_features(name, message):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         name,
         gdal.OF_VECTOR,
     )
@@ -946,7 +944,7 @@ def test_ogr_miramon_corrupted_features(name, message):
     ],
 )
 def test_multiregister(expected_MultiRecordIndex, textField, expectedResult):
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/Polygons/Multipolygons/Multipolygons.pol",
         gdal.OF_VECTOR,
         open_options=["MultiRecordIndex=" + expected_MultiRecordIndex],
@@ -1437,7 +1435,7 @@ def test_ogr_miramon_create_field_after_feature(tmp_path):
 def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out/json_layer_to_mm.pol")
-    src_ds = gdal.OpenEx(
+    src_ds = gdal.Open(
         "data/miramon_inputs/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
         gdal.OF_VECTOR,
         open_options=["FOREIGN_MEMBERS=NONE"],
@@ -1448,7 +1446,7 @@ def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
         format="MiraMonVector",
     )
 
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
 
     lyr = ds.GetLayer(0)
     assert lyr is not None, "Failed to get layer"
@@ -1486,7 +1484,7 @@ def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
 def test_ogr_miramon_SHP_decimal_figures(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out/MonumentalTrees.pnt")
-    src_ds = gdal.OpenEx(
+    src_ds = gdal.Open(
         "data/miramon_inputs/MonumentalTrees.shp",
         gdal.OF_VECTOR,
     )
@@ -1496,7 +1494,7 @@ def test_ogr_miramon_SHP_decimal_figures(tmp_vsimem):
         format="MiraMonVector",
     )
 
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename, gdal.OF_VECTOR)
 
     lyr = ds.GetLayer(0)
     assert lyr is not None, "Failed to get layer"
@@ -1539,7 +1537,7 @@ def test_ogr_miramon_check_layer_name_with_accents(tmp_vsimem):
         format="MiraMonVector",
     )
 
-    ds = gdal.OpenEx(out_filename + "/" + layer_name + ".arc", gdal.OF_VECTOR)
+    ds = gdal.Open(out_filename + "/" + layer_name + ".arc", gdal.OF_VECTOR)
 
     lyr = ds.GetLayer(0)
     assert lyr is not None, "Failed to get layer"

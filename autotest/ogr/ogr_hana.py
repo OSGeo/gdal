@@ -120,7 +120,7 @@ def test_ogr_hana_2():
     ds = open_datasource()
     layer = ds.GetLayerByName("TPOLY")
 
-    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     assert (
@@ -1254,7 +1254,7 @@ def create_tpoly_table(ds, layer_name="TPOLY"):
     with gdal.quiet_errors():
         ds.ExecuteSQL("DELLAYER:%s" % layer_name)
 
-    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     ######################################################
@@ -1404,7 +1404,7 @@ def open_datasource(update=0, open_opts=None):
     if open_opts is None:
         return ogr.Open(conn_str, update=update)
     else:
-        return gdal.OpenEx(conn_str, update, open_options=[open_opts])
+        return gdal.Open(conn_str, update, open_options=[open_opts])
 
 
 def check_extent(layer, expected, force=True, max_error=0.001):

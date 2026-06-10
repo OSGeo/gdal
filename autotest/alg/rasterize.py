@@ -874,7 +874,7 @@ def test_rasterize_bugfix_gh6981():
 
     import json
 
-    vect_ds = gdal.OpenEx(json.dumps(bad_geometry), gdal.OF_VECTOR)
+    vect_ds = gdal.Open(json.dumps(bad_geometry), gdal.OF_VECTOR)
 
     # Just check we don't crash
     assert (

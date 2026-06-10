@@ -99,7 +99,7 @@ def test_s111_basic():
 
 def test_s111_north_up_no():
     filename = "data/s111/test_s111_v1.2.h5"
-    ds = gdal.OpenEx(f'S111:"{filename}":Group_001', open_options=["NORTH_UP=NO"])
+    ds = gdal.Open(f'S111:"{filename}":Group_001', open_options=["NORTH_UP=NO"])
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
@@ -142,7 +142,7 @@ def test_s111_north_up_no():
 def test_s111_multidim():
 
     filename = "data/s111/test_s111_v1.2.h5"
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArrayFromFullname(
         "/SurfaceCurrent/SurfaceCurrent.01/Group_001/values"

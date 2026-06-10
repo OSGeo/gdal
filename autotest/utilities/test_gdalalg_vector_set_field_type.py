@@ -356,7 +356,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     assert alg.Run()
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 2
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert out_ds.GetLayer(1).GetFeatureCount() == 1
@@ -401,7 +401,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     src_ds = None
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 1
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert (

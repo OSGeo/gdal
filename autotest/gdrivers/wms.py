@@ -935,7 +935,7 @@ def test_twms_GIBS():
 
     # Connects to the server
     options = ["Change=time:2021-02-10"]
-    ds = gdal.OpenEx(subdatasets["SUBDATASET_1_NAME"], open_options=options)
+    ds = gdal.Open(subdatasets["SUBDATASET_1_NAME"], open_options=options)
     if ds is None and gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
         pytest.xfail(
             "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
@@ -965,7 +965,7 @@ def test_twms_inline_configuration():
         "TiledGroupName={}".format(tiled_group_name),
         "Change=time:{}".format(date),
     ]
-    ds = gdal.OpenEx("/vsimem/ttms.xml", open_options=options)
+    ds = gdal.Open("/vsimem/ttms.xml", open_options=options)
     assert ds is not None, "Open twms with open options failed"
     metadata = ds.GetMetadata("")
     assert metadata["Change"] == "${time}=2021-02-10", "Change parameter not captured"
@@ -1199,7 +1199,7 @@ def test_wms_force_opening_url(tmp_vsimem, webserver_port):
         open("data/wms/demo_mapserver_org.xml", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
+        gdal.Open(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
 
 
 @pytest.mark.network

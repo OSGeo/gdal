@@ -165,7 +165,7 @@ def validate_xml(filename):
         force_download=True,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "GMLAS:" + filename,
         open_options=[
             "VALIDATE=YES",

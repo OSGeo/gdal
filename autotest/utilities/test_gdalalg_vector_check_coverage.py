@@ -85,7 +85,7 @@ def test_gdalalg_vector_check_coverage_invalid_layer(alg, three_rectangles):
 @pytest.mark.parametrize("input_layers", (1, 2))
 def test_gdalalg_vector_check_coverage_two_layers(alg, three_rectangles, input_layers):
 
-    poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    poly_ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
@@ -137,7 +137,7 @@ def test_gdalalg_vector_check_coverage_invalid_geometry_name(alg, three_rectangl
 
 def test_gdalalg_vector_check_coverage_multiple_geometry_fields(alg):
 
-    poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    poly_ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("source", geom_type=ogr.wkbPolygon)
@@ -170,7 +170,7 @@ def test_gdalalg_vector_check_coverage_multiple_layers(
 ):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
-    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+    with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
         ds.CopyLayer(poly_ds.GetLayer(0), "source1")
     ds.CopyLayer(three_rectangles.GetLayer(0), "source2")
 
@@ -226,7 +226,7 @@ def test_gdalalg_vector_check_coverage_test_ogrsf(tmp_path, three_rectangles):
         pytest.skip()
 
     with gdal.GetDriverByName("GPKG").CreateVector(tmp_path / "src.gpkg") as ds:
-        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
             ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
         ds.CopyLayer(three_rectangles.GetLayer(0), "poly2")
 

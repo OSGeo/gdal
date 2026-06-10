@@ -210,7 +210,7 @@ def test_bag_vr_normal():
             pytest.fail(key)
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/bag/test_vr.bag", open_options=["MODE=LOW_RES_GRID", "MINX=0"]
         )
     assert gdal.GetLastErrorMsg() != "", "warning expected"
@@ -225,7 +225,7 @@ def test_bag_vr_normal():
 
 def test_bag_vr_list_supergrids():
 
-    ds = gdal.OpenEx("data/bag/test_vr.bag", open_options=["MODE=LIST_SUPERGRIDS"])
+    ds = gdal.Open("data/bag/test_vr.bag", open_options=["MODE=LIST_SUPERGRIDS"])
     assert ds is not None
     sub_ds = ds.GetSubDatasets()
     assert len(sub_ds) == 24
@@ -235,13 +235,13 @@ def test_bag_vr_list_supergrids():
     with gdal.quiet_errors():
         # Bounding box filter ignored since only part of MINX, MINY, MAXX and
         # MAXY has been specified
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/bag/test_vr.bag", open_options=["MODE=LIST_SUPERGRIDS", "MINX=200"]
         )
     sub_ds = ds.GetSubDatasets()
     assert len(sub_ds) == 24
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=[
             "MODE=LIST_SUPERGRIDS",
@@ -255,7 +255,7 @@ def test_bag_vr_list_supergrids():
     assert len(sub_ds) == 6
     assert sub_ds[0][0] == 'BAG:"data/bag/test_vr.bag":supergrid:1:1'
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=LIST_SUPERGRIDS", "RES_FILTER_MIN=5", "RES_FILTER_MAX=10"],
     )
@@ -263,7 +263,7 @@ def test_bag_vr_list_supergrids():
     assert len(sub_ds) == 12
     assert sub_ds[0][0] == 'BAG:"data/bag/test_vr.bag":supergrid:0:3'
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["SUPERGRIDS_INDICES=(2,1),(3,4)"]
     )
     sub_ds = ds.GetSubDatasets()
@@ -274,14 +274,14 @@ def test_bag_vr_list_supergrids():
     )
 
     # One single tuple: open the subdataset directly
-    ds = gdal.OpenEx("data/bag/test_vr.bag", open_options=["SUPERGRIDS_INDICES=(2,1)"])
+    ds = gdal.Open("data/bag/test_vr.bag", open_options=["SUPERGRIDS_INDICES=(2,1)"])
     ds2 = gdal.Open('BAG:"data/bag/test_vr.bag":supergrid:2:1')
     assert gdal.Info(ds) == gdal.Info(ds2), sub_ds
 
     # Test invalid values for SUPERGRIDS_INDICES
     for invalid_val in ["", "x", "(", "(1", "(1,", "(1,)", "(1,2),", "(x,2)", "(2,x)"]:
         with gdal.quiet_errors():
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "data/bag/test_vr.bag",
                 open_options=["SUPERGRIDS_INDICES=" + invalid_val],
             )
@@ -294,7 +294,7 @@ def test_bag_vr_list_supergrids():
 
 def test_bag_vr_open_supergrids():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         'BAG:"data/bag/test_vr.bag":supergrid:0:0', open_options=["REPORT_VERTCRS=NO"]
     )
     assert ds is not None
@@ -367,7 +367,7 @@ def test_bag_vr_open_supergrids():
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             'BAG:"data/bag/test_vr.bag":supergrid:0:0', open_options=["MINX=0"]
         )
     assert gdal.GetLastErrorMsg() != "", "warning expected"
@@ -379,7 +379,7 @@ def test_bag_vr_open_supergrids():
 
 def test_bag_vr_resampled():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "REPORT_VERTCRS=NO"],
     )
@@ -459,9 +459,7 @@ def test_bag_vr_resampled():
     # Test that block size has no influence on the result
     for block_size in (2, 5, 9, 16):
         with gdaltest.config_option("GDAL_BAG_BLOCK_SIZE", str(block_size)):
-            ds = gdal.OpenEx(
-                "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID"]
-            )
+            ds = gdal.Open("data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID"])
             assert ds.GetRasterBand(1).GetBlockSize() == [block_size, block_size]
             data = ds.ReadRaster()
 
@@ -469,7 +467,7 @@ def test_bag_vr_resampled():
 
     # Test overviews
     with gdaltest.config_option("GDAL_BAG_MIN_OVR_SIZE", "4"):
-        ds = gdal.OpenEx("data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID"])
+        ds = gdal.Open("data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID"])
     assert ds.GetRasterBand(1).GetOverviewCount() == 3
     assert ds.GetRasterBand(1).GetOverview(-1) is None
     assert ds.GetRasterBand(1).GetOverview(3) is None
@@ -488,7 +486,7 @@ def test_bag_vr_resampled():
     cs = ovr.Checksum()
     assert cs == 681
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "MINX=90", "MAXX=120", "MAXY=500112"],
     )
@@ -496,35 +494,35 @@ def test_bag_vr_resampled():
     got = (gt[0], gt[3], ds.RasterXSize)
     assert got == (90.0, 500112.0, 6)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID", "MINY=500000"]
     )
     gt = ds.GetGeoTransform()
     got = (gt[3] + gt[5] * ds.RasterYSize, ds.RasterYSize)
     assert got == (500000.0, 21)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID", "RESX=5", "RESY=6"]
     )
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     assert got == (5.0, -6.0)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID", "RES_STRATEGY=MIN"]
     )
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     assert got == (4.983333110809326, -5.316666603088379)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID", "RES_STRATEGY=MAX"]
     )
     gt = ds.GetGeoTransform()
     got = (gt[1], gt[5])
     assert got == (29.899999618530273, -31.899999618530273)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "RES_STRATEGY=MEAN"],
     )
@@ -532,7 +530,7 @@ def test_bag_vr_resampled():
     got = (gt[1], gt[5])
     assert got == (12.209166447321573, -13.025833209355673)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=0", "RES_FILTER_MAX=8"],
     )
@@ -542,7 +540,7 @@ def test_bag_vr_resampled():
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     assert got == (2021, 2722)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MAX=8"]
     )
     gt = ds.GetGeoTransform()
@@ -551,7 +549,7 @@ def test_bag_vr_resampled():
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     assert got == (2021, 2722)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=8", "RES_FILTER_MAX=16"],
     )
@@ -561,7 +559,7 @@ def test_bag_vr_resampled():
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     assert got == (728, 848)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=16", "RES_FILTER_MAX=32"],
     )
@@ -571,7 +569,7 @@ def test_bag_vr_resampled():
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
     assert got == (207, 207)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=16"],
     )
@@ -583,7 +581,7 @@ def test_bag_vr_resampled():
 
     # Too big RES_FILTER_MIN
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/bag/test_vr.bag",
             open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=32"],
         )
@@ -591,7 +589,7 @@ def test_bag_vr_resampled():
 
     # Too small RES_FILTER_MAX
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/bag/test_vr.bag",
             open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MAX=4"],
         )
@@ -599,7 +597,7 @@ def test_bag_vr_resampled():
 
     # RES_FILTER_MIN >= RES_FILTER_MAX
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/bag/test_vr.bag",
             open_options=[
                 "MODE=RESAMPLED_GRID",
@@ -610,7 +608,7 @@ def test_bag_vr_resampled():
     assert ds is None
 
     # Test VALUE_POPULATION
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=[
             "MODE=RESAMPLED_GRID",
@@ -621,7 +619,7 @@ def test_bag_vr_resampled():
     m1_max, M1_max, mean1_max, _ = ds.GetRasterBand(1).ComputeStatistics(False)
     m2_max, M2_max, mean2_max, _ = ds.GetRasterBand(2).ComputeStatistics(False)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=[
             "MODE=RESAMPLED_GRID",
@@ -632,7 +630,7 @@ def test_bag_vr_resampled():
     m1_mean, M1_mean, mean1_mean, _ = ds.GetRasterBand(1).ComputeStatistics(False)
     m2_mean, M2_mean, mean2_mean, _ = ds.GetRasterBand(2).ComputeStatistics(False)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=[
             "MODE=RESAMPLED_GRID",
@@ -661,7 +659,7 @@ def test_bag_vr_resampled():
         print(m1_min, M1_min, mean1_min)
         pytest.fail(m2_min, M2_min, mean2_min)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=[
             "MODE=RESAMPLED_GRID",
@@ -681,7 +679,7 @@ def test_bag_vr_resampled():
 
 def test_bag_vr_resampled_mask():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_vr.bag",
         open_options=["MODE=RESAMPLED_GRID", "SUPERGRIDS_MASK=YES"],
     )
@@ -699,7 +697,7 @@ def test_bag_vr_resampled_mask():
 
 def test_bag_vr_interpolated():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_interpolated.bag",
         open_options=["MODE=INTERPOLATED", "REPORT_VERTCRS=NO"],
     )
@@ -905,7 +903,7 @@ def test_bag_read_georef_metadata():
     assert ds.RasterYSize == 4
     assert ds.RasterCount == 2
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/bag/test_georef_metadata.bag", open_options=["MODE=LIST_SUPERGRIDS"]
     )
     assert ds is not None

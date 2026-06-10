@@ -38,7 +38,7 @@ def test_cphd_local():
 
     # test CPHD file generated with sarkit and then edited, it does not contain valid data
     filename = Path(__file__).parent / "data" / "cphd" / "test.cphd"
-    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(filename, gdal.OF_MULTIDIM_RASTER) as ds:
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -186,7 +186,7 @@ def test_cphd_multidim_basic(file):
             if gdal.VSIStatL(filename) is None:
                 pytest.skip(f"{filename} no longer existing or reachable")
 
-        with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        with gdal.Open(filename, gdal.OF_MULTIDIM_RASTER) as ds:
             rg = ds.GetRootGroup()
             if bucket == "umbra-open-data-catalog":
                 assert rg

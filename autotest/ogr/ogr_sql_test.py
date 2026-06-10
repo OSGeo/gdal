@@ -48,7 +48,7 @@ def test_ogr_sql_execute_sql(tmp_path, use_gdal):
 
     def get_dataset():
         return (
-            gdal.OpenEx(tmp_path / "test_ogr_sql_execute_sql.shp")
+            gdal.Open(tmp_path / "test_ogr_sql_execute_sql.shp")
             if use_gdal
             else ogr.Open(tmp_path / "test_ogr_sql_execute_sql.shp")
         )
@@ -127,7 +127,7 @@ def test_ogr_sql_execute_sql_empty_database(tmp_vsimem):
 @pytest.mark.parametrize("use_gdal", [True, False])
 def test_ogr_sql_invalid_release_result_set(use_gdal):
 
-    ds = gdal.OpenEx("data/poly.shp") if use_gdal else ogr.Open("data/poly.shp")
+    ds = gdal.Open("data/poly.shp") if use_gdal else ogr.Open("data/poly.shp")
     lyr = ds.GetLayer(0)
     with pytest.raises(Exception):
         ds.ReleaseResultSet(lyr)
@@ -2228,7 +2228,7 @@ def test_ogr_sql_max_expr_depth_other():
 @pytest.mark.require_driver("GPKG")
 def test_ogr_sql_union_layer_feature_count_add_overflow():
 
-    with gdal.OpenEx("data/gpkg/huge_feature_count.gpkg") as ds:
+    with gdal.Open("data/gpkg/huge_feature_count.gpkg") as ds:
         with ds.ExecuteSQL(
             "select * from test union all select * from test2", dialect="OGRSQL"
         ) as sql_lyr:

@@ -57,7 +57,7 @@ def test_icechunk_empty_repo():
     assert gdal.ReadDirRecursive("/vsiicechunk/{data/icechunk/empty_repo}") is None
     assert gdal.VSIStatL("/vsiicechunk/{data/icechunk/empty_repo}").size == 0
 
-    ds = gdal.OpenEx("data/icechunk/empty_repo", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/icechunk/empty_repo", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == []
     assert rg.GetMDArrayNames() == []
@@ -76,13 +76,11 @@ def test_icechunk_empty_repo():
     with gdal.alg.driver.icechunk.list_tags(input="data/icechunk/scalar_array") as alg:
         assert alg.Output() == []
 
-    assert gdal.OpenEx("data/icechunk/empty_repo/repo", gdal.OF_MULTIDIM_RASTER)
+    assert gdal.Open("data/icechunk/empty_repo/repo", gdal.OF_MULTIDIM_RASTER)
 
-    assert gdal.OpenEx("ICECHUNK:data/icechunk/empty_repo", gdal.OF_MULTIDIM_RASTER)
+    assert gdal.Open("ICECHUNK:data/icechunk/empty_repo", gdal.OF_MULTIDIM_RASTER)
 
-    assert gdal.OpenEx(
-        "ICECHUNK:data/icechunk/empty_repo/repo", gdal.OF_MULTIDIM_RASTER
-    )
+    assert gdal.Open("ICECHUNK:data/icechunk/empty_repo/repo", gdal.OF_MULTIDIM_RASTER)
 
 
 def test_icechunk_scalar_array_v1():
@@ -107,7 +105,7 @@ def test_icechunk_scalar_array_v1():
         my_array[...] = 1
         session.commit("first commit")
 
-    ds = gdal.OpenEx("data/icechunk/scalar_array_v1", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/icechunk/scalar_array_v1", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("i", [1])
@@ -134,9 +132,7 @@ def test_icechunk_scalar_array_v1():
             }
         ]
 
-    assert gdal.OpenEx(
-        "ICECHUNK:data/icechunk/scalar_array_v1", gdal.OF_MULTIDIM_RASTER
-    )
+    assert gdal.Open("ICECHUNK:data/icechunk/scalar_array_v1", gdal.OF_MULTIDIM_RASTER)
 
 
 def test_icechunk_regular_array_v1():
@@ -163,7 +159,7 @@ def test_icechunk_regular_array_v1():
         my_array[...] = 1
         session.commit("first commit")
 
-    ds = gdal.OpenEx("data/icechunk/regular_array_v1", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/icechunk/regular_array_v1", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("i", [1] * 6)
@@ -233,7 +229,7 @@ def test_icechunk_scalar_array():
         is None
     )
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("i", [1])
@@ -244,7 +240,7 @@ def test_icechunk_ClearMemoryCaches(tmp_vsimem):
     dirname = "data/icechunk/scalar_array"
     gdal.alg.vsi.copy(source=dirname, destination=tmp_vsimem, recursive=True)
 
-    ds = gdal.OpenEx(f"{tmp_vsimem}/scalar_array", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(f"{tmp_vsimem}/scalar_array", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("i", [1])
@@ -274,13 +270,13 @@ def test_icechunk_ClearMemoryCaches(tmp_vsimem):
 
 def test_icechunk_open_branch():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ICECHUNK:data/icechunk/scalar_array?branch=main", gdal.OF_MULTIDIM_RASTER
     ) as ds:
         assert ds.GetRootGroup().GetMDArrayNames() == ["my_array"]
 
     with pytest.raises(Exception, match="Invalid branch name"):
-        gdal.OpenEx(
+        gdal.Open(
             "ICECHUNK:data/icechunk/scalar_array?branch=non_existing",
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -288,13 +284,13 @@ def test_icechunk_open_branch():
 
 def test_icechunk_open_tag():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ICECHUNK:data/icechunk/scalar_array_v1?tag=my_tag", gdal.OF_MULTIDIM_RASTER
     ) as ds:
         assert ds.GetRootGroup().GetMDArrayNames() == ["my_array"]
 
     with pytest.raises(Exception, match="Invalid tag name"):
-        gdal.OpenEx(
+        gdal.Open(
             "ICECHUNK:data/icechunk/scalar_array_v1?tag=non_existing",
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -303,7 +299,7 @@ def test_icechunk_open_tag():
 def test_icechunk_open_unknown_parameter():
 
     with pytest.raises(Exception, match="Invalid Icechunk connection string"):
-        gdal.OpenEx(
+        gdal.Open(
             "ICECHUNK:data/icechunk/scalar_array_v1?foo=bar", gdal.OF_MULTIDIM_RASTER
         )
 
@@ -428,7 +424,7 @@ def test_icechunk_multi_chunks():
         is None
     )
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     expected = array.array("B", [1] * (11 * 7))
@@ -470,7 +466,7 @@ def test_icechunk_path_sorting():
             )
             a_slash_b[...] = 1
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     a_slash_b = rg.OpenGroup("a").OpenMDArray("b")
     assert a_slash_b.Read() == array.array("B", [1])
@@ -519,7 +515,7 @@ def test_icechunk_virtual_ref_uncompressed():
                     length=1,
                 )
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array(
@@ -573,7 +569,7 @@ def test_icechunk_virtual_ref_compressed():
                     length=1,
                 )
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array(
@@ -608,7 +604,7 @@ def test_icechunk_physical_chunks():
             )
             my_array[...] = [1, 2, 3, 4]
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("B", [1, 2, 3, 4])
@@ -641,7 +637,7 @@ def test_icechunk_sparse():
             my_array[0:2] = [10, 20]
             my_array[4:6] = [50, 60]
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar.Read() == array.array("B", [10, 20, 123, 123, 50, 60])
@@ -1698,7 +1694,7 @@ def test_icechunk_manifests_not_referenced_in_snapshot(tmp_path):
             tmp_path, rootdirname, chunk_ref_manifest_id=[1] * 12
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1763,7 +1759,7 @@ def test_icechunk_manifest_missing(tmp_path):
 
         _create_simple_repo_and_snapshot_files(tmp_path, rootdirname)
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1794,7 +1790,7 @@ def test_icechunk_manifest_too_short(tmp_path):
             tmp_path, rootdirname, manifest_file_size=manifest_file_size
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1822,7 +1818,7 @@ def test_icechunk_manifest_invalid(tmp_path):
             tmp_path, rootdirname, manifest_file_size=manifest_file_size
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1845,7 +1841,7 @@ def test_icechunk_manifest_mismatch_id_filename(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1871,7 +1867,7 @@ def test_icechunk_manifest_invalid_compression_alg(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1911,7 +1907,7 @@ def test_icechunk_manifest_invalid_location_dictionary(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1938,7 +1934,7 @@ def test_icechunk_manifest_array_id_non_increasing(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -1974,7 +1970,7 @@ def test_icechunk_manifest_chunk_ref_index_non_increasing(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2011,7 +2007,7 @@ def test_icechunk_manifest_chunk_ref_index_not_same_dim(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2052,7 +2048,7 @@ def test_icechunk_manifest_chunk_ref_invalid_offset_length(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2085,7 +2081,7 @@ def test_icechunk_manifest_chunk_ref_inline_content_with_offset_length(tmp_path)
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2118,7 +2114,7 @@ def test_icechunk_manifest_chunk_ref_missing_info(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2154,7 +2150,7 @@ def test_icechunk_manifest_chunk_ref_mutually_exclusive_info(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2190,7 +2186,7 @@ def test_icechunk_manifest_chunk_ref_compressed_location_fails(tmp_path):
             tmp_path, rootdirname, "081040G2081040G20810", manifest
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2238,7 +2234,7 @@ def test_icechunk_manifest_chunk_ref_compressed_location_uncompressed(tmp_path):
             manifest_num_chunk_refs=1,
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2281,7 +2277,7 @@ def test_icechunk_manifest_chunk_ref_location_uncompressed_beyond_file_size(tmp_
             manifest_num_chunk_refs=1,
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2325,7 +2321,7 @@ def test_icechunk_manifest_chunk_ref_invalid_location(tmp_path):
             manifest_num_chunk_refs=1,
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2336,7 +2332,7 @@ def test_icechunk_manifest_chunk_ref_invalid_location(tmp_path):
     ):
         ar.Read()
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2376,7 +2372,7 @@ def test_icechunk_manifest_inconsistent_chunk_ref_count(tmp_path):
             manifest_num_chunk_refs=2,
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2425,7 +2421,7 @@ def test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified(tmp_pat
         os.mkdir(rootdirname / "chunks", 0o755)
         open(rootdirname / "chunks" / "00000000000000000000", "wb").write(b"\x01")
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2436,7 +2432,7 @@ def test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified(tmp_pat
     ):
         ar.Read()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ICECHUNK:{rootdirname}?ignore-timestamp-etag=yes", gdal.OF_MULTIDIM_RASTER
     )
     rg = ds.GetRootGroup()
@@ -2476,7 +2472,7 @@ def test_icechunk_manifest_inconsistent_chunk_ref_dim(tmp_path):
             manifest_num_chunk_refs=1,
         )
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2752,7 +2748,7 @@ def test_icechunk_clunky_scalar_array(tmp_path):
             os.mkdir(rootdirname / "transactions", 0o755)
         open(rootdirname / "transactions" / "_dummy_file_", "wb").close()
 
-    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(rootdirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert ar
@@ -2772,7 +2768,7 @@ def test_icechunk_remote_test_dataset_native_icechunk_v2_GLAD_LCLU():
         if gdal.VSIStatL(f"{url}/repo") is None:
             pytest.skip(f"{url}/repo not accessible")
 
-        ds = gdal.OpenEx(url, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(url, gdal.OF_MULTIDIM_RASTER)
         assert "lclu" in ds.GetRootGroup().GetMDArrayNames()
         ar = ds.GetRootGroup().OpenMDArray("lclu")
         assert struct.unpack(
@@ -2799,7 +2795,7 @@ def test_icechunk_remote_test_dataset_native_icechunk_v1_NOAA_GFS():
         if gdal.VSIStatL(f"{url}/repo") is None:
             pytest.skip(f"{url}/repo not accessible")
 
-        ds = gdal.OpenEx(url, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(url, gdal.OF_MULTIDIM_RASTER)
         assert (
             "categorical_freezing_rain_surface" in ds.GetRootGroup().GetMDArrayNames()
         )
@@ -2829,7 +2825,7 @@ def test_icechunk_tag_selection():
         zarr.open_group(s.store)["my_array"][:] = [30, 31, 32, 33]
         s.commit("c2")
 
-    ds = gdal.OpenEx(f"ICECHUNK:{dirname}?tag=v1", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(f"ICECHUNK:{dirname}?tag=v1", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert struct.unpack("i" * 4, ar.Read()) == (10, 11, 12, 13)
@@ -2867,7 +2863,7 @@ def test_icechunk_remote_missing_virtual_ref():
         )
         s.commit("c")
 
-    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dirname, gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     with pytest.raises(

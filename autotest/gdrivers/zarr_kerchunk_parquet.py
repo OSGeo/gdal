@@ -282,7 +282,7 @@ def test_zarr_kerchunk_parquet_fail_exception(tmp_vsimem, content, exception_msg
     ],
 )
 def test_zarr_kerchunk_parquet_gdal_open(filename):
-    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(filename, gdal.OF_MULTIDIM_RASTER) as ds:
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("x")
         if gdal.GetDriverByName("PARQUET") is not None:
@@ -296,7 +296,7 @@ def test_zarr_kerchunk_parquet_gdal_open(filename):
 
 
 def test_zarr_kerchunk_parquet_gdal_open_dim2():
-    with gdal.OpenEx(
+    with gdal.Open(
         "ZARR:/vsikerchunk_parquet_ref/{data/zarr/kerchunk_parquet/parquet_ref_2_dim}",
         gdal.OF_MULTIDIM_RASTER,
     ) as ds:
@@ -320,7 +320,7 @@ def test_zarr_kerchunk_parquet_gdal_open_missing_bin_file(tmp_path):
     )
     os.unlink(tmp_path / "parquet_ref_2_dim/ar/4.bin")
 
-    with gdal.OpenEx(
+    with gdal.Open(
         f"ZARR:/vsikerchunk_parquet_ref/{{{tmp_path}/parquet_ref_2_dim}}",
         gdal.OF_MULTIDIM_RASTER,
     ) as ds:
@@ -335,7 +335,7 @@ def test_zarr_kerchunk_parquet_gdal_open_missing_bin_file(tmp_path):
 
 @pytest.mark.require_driver("PARQUET")
 def test_zarr_kerchunk_parquet_invalid_parquet_struct():
-    with gdal.OpenEx(
+    with gdal.Open(
         "ZARR:data/zarr/kerchunk_parquet/parquet_ref_invalid_parquet_struct",
         gdal.OF_MULTIDIM_RASTER,
     ) as ds:

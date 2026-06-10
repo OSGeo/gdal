@@ -396,9 +396,9 @@ def test_ogr_openfilegdb_1(gdb_source):
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    assert gdal.OpenEx(filename, gdal.OF_RASTER) is None
+    assert gdal.Open(filename, gdal.OF_RASTER) is None
 
-    assert gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
+    assert gdal.Open(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
 
     ds = ogr.Open(filename)
 
@@ -1982,7 +1982,7 @@ def _check_domains(ds):
 
 def test_ogr_openfilegdb_read_domains():
 
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     _check_domains(ds)
 
 
@@ -2021,7 +2021,7 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb(tmp_path):
 
     ds = None
 
-    ds = gdal.OpenEx(out_dir, allowed_drivers=["OpenFileGDB"])
+    ds = gdal.Open(out_dir, allowed_drivers=["OpenFileGDB"])
     assert ds.GetFieldDomain("unused_domain") is None
     domain = ds.GetFieldDomain("SpeedLimit")
     assert domain.GetDescription() == "desc"
@@ -2062,7 +2062,7 @@ def test_ogr_openfilegdb_read_layer_hierarchy():
             "fd2_lyr", srs=srs3, geom_type=ogr.wkbPoint, options=["FEATURE_DATASET=fd2"]
         )
 
-    ds = gdal.OpenEx("data/filegdb/featuredataset.gdb")
+    ds = gdal.Open("data/filegdb/featuredataset.gdb")
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["fd1", "fd2"]
@@ -2116,7 +2116,7 @@ def test_ogr_openfilegdb_list_all_tables_v10():
         assert name not in layer_names
 
     # Test LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/testopenfilegdb.gdb.zip",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2181,7 +2181,7 @@ def test_ogr_openfilegdb_list_all_tables_v9():
         assert name not in layer_names
 
     # Test LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/testopenfilegdb93.gdb.zip",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2244,7 +2244,7 @@ def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
     assert layer_names == {"aquaduct", "flat_table1", "flat_table2"}
 
     # Test with the LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/table_outside_gdbitems.gdb",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2354,11 +2354,11 @@ def test_ogr_openfilegdb_shape_length_shape_area_as_default_in_field_defn():
 
 def test_ogr_openfilegdb_read_relationships():
     # no relationships
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
     assert set(ds.GetRelationshipNames()) == {
         "composite_many_to_many",
         "composite_one_to_many",
@@ -2886,7 +2886,7 @@ def test_ogr_openfilegdb_read_from_http():
             response,
         )
         with webserver.install_http_handler(handler):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "http://localhost:%d/foo" % webserver_port,
                 allowed_drivers=["OpenFileGDB", "HTTP"],
             )
@@ -2917,7 +2917,7 @@ def test_ogr_openfilegdb_read_from_http():
                 response,
             )
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "http://localhost:%d/foo" % webserver_port,
                     allowed_drivers=["GeoJSON", "OpenFileGDB", "HTTP"],
                 )

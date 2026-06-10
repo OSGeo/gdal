@@ -90,7 +90,7 @@ def reconnect(ds, update=True, open_options=None):
     if open_options is None:
         open_options = {}
 
-    return gdal.OpenEx(dsn, flags, open_options=open_options)
+    return gdal.Open(dsn, flags, open_options=open_options)
 
 
 def clean_identifier(x):
@@ -1635,7 +1635,7 @@ def test_ogr_pg_tables_open_option(pg_ds):
     )
     pg_ds.FlushCache()
 
-    with gdal.OpenEx(
+    with gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR,
         open_options=["TABLES=test \\(with parenthesis and \\\\)"],
@@ -1643,7 +1643,7 @@ def test_ogr_pg_tables_open_option(pg_ds):
         assert ds.GetLayerCount() == 1
         assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
 
-    with gdal.OpenEx(
+    with gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR,
         open_options=["TABLES=test \\(with parenthesis and \\\\)(geometry)"],
@@ -1651,7 +1651,7 @@ def test_ogr_pg_tables_open_option(pg_ds):
         assert ds.GetLayerCount() == 1
         assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
 
-    with gdal.OpenEx(
+    with gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR,
         open_options=['TABLES="test with, comma"'],
@@ -2549,7 +2549,7 @@ def test_ogr_pg_48(pg_ds, use_postgis):
         assert found is not False, "layer no_pk_table not listed"
 
         # Test LIST_ALL_TABLES=YES open option
-        pg_ds = gdal.OpenEx(
+        pg_ds = gdal.Open(
             pg_ds.GetDescription(),
             gdal.OF_VECTOR | gdal.OF_UPDATE,
             open_options=["LIST_ALL_TABLES=YES"],
@@ -4582,7 +4582,7 @@ def test_ogr_pg_78(pg_ds):
 def test_ogr_pg_79(pg_ds):
 
     # PRELUDE_STATEMENTS starting with BEGIN (use case: pg_bouncer in transaction pooling)
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR | gdal.OF_UPDATE,
         open_options=[
@@ -4608,7 +4608,7 @@ def test_ogr_pg_79(pg_ds):
 def test_ogr_pg_79a(pg_ds):
 
     # random PRELUDE_STATEMENTS
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR | gdal.OF_UPDATE,
         open_options=['PRELUDE_STATEMENTS=SET statement_timeout TO "1h"'],
@@ -4632,7 +4632,7 @@ def test_ogr_pg_79b(pg_ds):
 
     # Test wrong PRELUDE_STATEMENTS
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             pg_ds.GetDescription(),
             gdal.OF_VECTOR | gdal.OF_UPDATE,
             open_options=[
@@ -4646,7 +4646,7 @@ def test_ogr_pg_79b(pg_ds):
 def test_ogr_pg_79c(pg_ds):
 
     # Test wrong CLOSING_STATEMENTS
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         pg_ds.GetDescription(),
         gdal.OF_VECTOR | gdal.OF_UPDATE,
         open_options=[
@@ -5417,7 +5417,7 @@ def test_ogr_pg_url(pg_autotest_ds, pg_version):
     url = "postgresql://"
     if params_without_dbname:
         url += "?" + "&".join(params_without_dbname)
-    ds = gdal.OpenEx(url, gdal.OF_VECTOR, open_options=open_options)
+    ds = gdal.Open(url, gdal.OF_VECTOR, open_options=open_options)
     assert ds is not None
 
 

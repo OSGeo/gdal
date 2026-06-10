@@ -1619,7 +1619,7 @@ def test_ogr_oapif_storage_crs_latitude_longitude_non_compliant_server():
                  }] }""",
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             open_options=["SERVER_FEATURE_AXIS_ORDER=GIS_FRIENDLY"],
         )
@@ -1704,13 +1704,13 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
 
     with webserver.install_http_handler(get_collections_handler()):
         with pytest.raises(Exception):
-            gdal.OpenEx(
+            gdal.Open(
                 "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
                 open_options=["CRS=EPSG:32632"],
             )
 
     with webserver.install_http_handler(get_collections_handler()):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             open_options=["CRS=EPSG:32631"],
         )
@@ -1789,7 +1789,7 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
     )
 
     with webserver.install_http_handler(get_collections_handler()):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             open_options=["PREFERRED_CRS=EPSG:32631"],
         )
@@ -1801,7 +1801,7 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
         assert srs.GetAuthorityCode() == "32631"
 
     with webserver.install_http_handler(get_collections_handler()):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             open_options=["PREFERRED_CRS=EPSG:32632"],
         )
@@ -1977,7 +1977,7 @@ def test_ogr_oapif_collection_items_page_size():
 
     # Test default page size 1000
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -1996,7 +1996,7 @@ def test_ogr_oapif_collection_items_page_size():
     handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -2015,7 +2015,7 @@ def test_ogr_oapif_collection_items_page_size():
     handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -2034,7 +2034,7 @@ def test_ogr_oapif_collection_items_page_size():
     handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -2054,7 +2054,7 @@ def test_ogr_oapif_collection_items_page_size():
     handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -2075,7 +2075,7 @@ def test_ogr_oapif_collection_items_page_size():
     handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
         )
         lyr = ds.GetLayer(0)
@@ -2097,7 +2097,7 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "http://localhost:%d/oapif" % gdaltest.webserver_port,
             gdal.OF_VECTOR,
             allowed_drivers=["OAPIF"],
@@ -2134,7 +2134,7 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             gdal.OF_VECTOR,
             open_options=["INITIAL_REQUEST_PAGE_SIZE=0"],
@@ -2170,7 +2170,7 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             gdal.OF_VECTOR,
             open_options=["INITIAL_REQUEST_PAGE_SIZE=2000"],
@@ -2206,7 +2206,7 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
             open_options=["INITIAL_REQUEST_PAGE_SIZE=30"],
         )
@@ -2244,7 +2244,7 @@ def test_ogr_oapif_datetime_open_option():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "http://localhost:%d/oapif" % gdaltest.webserver_port,
             gdal.OF_VECTOR,
             open_options=["DATETIME=2011-01-03T12:31:00Z"],

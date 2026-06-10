@@ -60,7 +60,7 @@ def test_ogr_mvt_datatypes():
         pytest.fail()
 
     # Without metadata.json
-    ds = gdal.OpenEx("data/mvt/datatypes/0/0/0.pbf", open_options=["METADATA_FILE="])
+    ds = gdal.Open("data/mvt/datatypes/0/0/0.pbf", open_options=["METADATA_FILE="])
     lyr = ds.GetLayer(0)
 
     count = lyr.GetLayerDefn().GetFieldCount()
@@ -212,7 +212,7 @@ def test_ogr_mvt_linestring():
         "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119))",
     )
 
-    ds = gdal.OpenEx("data/mvt/linestring/0/0/0.pbf", open_options=["METADATA_FILE="])
+    ds = gdal.Open("data/mvt/linestring/0/0/0.pbf", open_options=["METADATA_FILE="])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
@@ -234,7 +234,7 @@ def test_ogr_mvt_multilinestring():
         "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))",
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/multilinestring/0/0/0.pbf", open_options=["METADATA_FILE="]
     )
     lyr = ds.GetLayer(0)
@@ -258,7 +258,7 @@ def test_ogr_mvt_polygon():
         "MULTIPOLYGON (((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119)))",
     )
 
-    ds = gdal.OpenEx("data/mvt/polygon/0/0/0.pbf", open_options=["METADATA_FILE="])
+    ds = gdal.Open("data/mvt/polygon/0/0/0.pbf", open_options=["METADATA_FILE="])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(
@@ -317,7 +317,7 @@ def test_ogr_mvt_point_polygon_clip():
 def test_ogr_mvt_tileset_without_readdir():
 
     with gdaltest.config_option("MVT_USE_READDIR", "NO"):
-        ds = gdal.OpenEx("data/mvt/linestring/0")
+        ds = gdal.Open("data/mvt/linestring/0")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -340,7 +340,7 @@ def test_ogr_mvt_tileset_tilegl():
 
 def test_ogr_mvt_tileset_without_metadata_file():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/point_polygon/1", open_options=["METADATA_FILE=", "CLIP=NO"]
     )
     lyr = ds.GetLayerByName("point")
@@ -356,7 +356,7 @@ def test_ogr_mvt_tileset_without_metadata_file():
 
 def test_ogr_mvt_tileset_json_field():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/datatypes/0",
         open_options=["METADATA_FILE=", "JSON_FIELD=YES", "CLIP=NO"],
     )
@@ -389,7 +389,7 @@ def test_ogr_mvt_tileset_json_field():
 
 def test_ogr_mvt_add_tile_fields():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/point_polygon/1",
         open_options=["METADATA_FILE=", "ADD_TILE_FIELDS=YES"],
     )
@@ -447,7 +447,7 @@ def test_ogr_mvt_open_variants():
 
 def test_ogr_mvt_xyz_options():
 
-    ds = gdal.OpenEx("data/mvt/datatypes/0/0/0.pbf", open_options=["X=1", "Y=2", "Z=3"])
+    ds = gdal.Open("data/mvt/datatypes/0/0/0.pbf", open_options=["X=1", "Y=2", "Z=3"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(f, "POINT (-12496536.8802869 8299226.7830913)")
@@ -514,7 +514,7 @@ def test_ogr_mvt_mbtiles():
 @pytest.mark.require_driver("MBTILES")
 def test_ogr_mvt_mbtiles_json_field():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/datatypes.mbtiles", open_options=["JSON_FIELD=YES", "CLIP=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -539,7 +539,7 @@ def test_ogr_mvt_mbtiles_json_field():
 @pytest.mark.require_driver("MBTILES")
 def test_ogr_mvt_mbtiles_json_field_auto():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/mvt/datatypes_json_field_auto.mbtiles", open_options=["CLIP=NO"]
     )
     lyr = ds.GetLayer(0)
@@ -584,7 +584,7 @@ def test_ogr_mvt_mbtiles_test_ogrsf():
 def test_ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
     with pytest.raises(Exception):
-        gdal.OpenEx("data/mvt/datatypes.mbtiles", gdal.OF_RASTER)
+        gdal.Open("data/mvt/datatypes.mbtiles", gdal.OF_RASTER)
 
 
 ###############################################################################
@@ -613,7 +613,7 @@ def test_ogr_mvt_x_y_z_filename_scheme():
 def test_ogr_mvt_polygon_larger_than_header():
 
     with gdaltest.config_option("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "NO"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/mvt/polygon_larger_than_header.pbf", open_options=["CLIP=NO"]
         )
     lyr = ds.GetLayer(0)
@@ -644,7 +644,7 @@ def test_ogr_mvt_errors():
     # Inexisting metadata
     with gdal.quiet_errors():
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 "data/mvt/linestring/0/0/0.pbf",
                 open_options=["METADATA_FILE=/i_do_not/exist"],
             )
@@ -654,7 +654,7 @@ def test_ogr_mvt_errors():
     # Invalid metadata
     with gdal.quiet_errors():
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 "data/mvt/linestring/0/0/0.pbf",
                 open_options=["METADATA_FILE=ogr_mvt.py"],
             )
@@ -665,7 +665,7 @@ def test_ogr_mvt_errors():
     gdal.FileFromMemBuffer("/vsimem/my.json", "{}")
     with gdal.quiet_errors():
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 "data/mvt/linestring/0/0/0.pbf",
                 open_options=["METADATA_FILE=/vsimem/my.json"],
             )
@@ -677,7 +677,7 @@ def test_ogr_mvt_errors():
     gdal.FileFromMemBuffer("/vsimem/my.json", '{ "json": "x y" }')
     with gdal.quiet_errors():
         assert (
-            gdal.OpenEx(
+            gdal.Open(
                 "data/mvt/linestring/0/0/0.pbf",
                 open_options=["METADATA_FILE=/vsimem/my.json"],
             )

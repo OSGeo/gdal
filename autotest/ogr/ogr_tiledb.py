@@ -234,7 +234,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
 
     field_count, srs, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetGeomType() == ogr.wkbUnknown
@@ -890,17 +890,17 @@ def test_ogr_tiledb_dimension_names_open_option():
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
+    ds = gdal.Open("tmp/test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
     ds = None
 
     with pytest.raises(Exception):
-        gdal.OpenEx("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
+        gdal.Open("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
 
     with pytest.raises(Exception):
-        gdal.OpenEx(
+        gdal.Open(
             "tmp/test.tiledb",
             gdal.OF_UPDATE,
             open_options=["DIM_X=invalid", "DIM_Y=_Y"],
@@ -1104,7 +1104,7 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
 
     _, _, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
@@ -1211,14 +1211,14 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
 
     _, _, options = create_tiledb_dataset(nullable, batch_size, extra_feature=True)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
     for f in lyr:
         mapFeatures[f.GetFID()] = f
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
@@ -1453,7 +1453,7 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb")
+    ds = gdal.Open("tmp/test.tiledb")
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()
@@ -1497,7 +1497,7 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb")
+    ds = gdal.Open("tmp/test.tiledb")
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()

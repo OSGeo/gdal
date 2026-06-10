@@ -78,7 +78,7 @@ def test_gdalalg_raster_footprint_existing_output(tmp_vsimem):
 
     alg = get_alg()
     alg["input"] = "../gcore/data/byte.tif"
-    out_ds = gdal.OpenEx(out_filename, gdal.OF_UPDATE)
+    out_ds = gdal.Open(out_filename, gdal.OF_UPDATE)
     alg["output"] = out_ds
     alg["append"] = True
     assert alg.Run()
@@ -121,7 +121,7 @@ def test_gdalalg_raster_footprint_creation_options(tmp_vsimem):
     alg["layer-creation-option"] = {"DESCRIPTION": "my_description"}
     assert alg.Run()
     assert alg.Finalize()
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as ds:
         assert ds.GetLayer(0).GetMetadata() == {"DESCRIPTION": "my_description"}
         with ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE name LIKE '%metadata%'"

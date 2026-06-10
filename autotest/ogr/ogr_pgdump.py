@@ -58,7 +58,7 @@ def test_ogr_pgdump_1(tmp_path):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
 
@@ -145,7 +145,7 @@ def test_ogr_pgdump_2(tmp_path):
 
         dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-        shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+        shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
 

@@ -368,7 +368,7 @@ def test_miramon_test_basic_raster(
     filename, band_idx, expected, checksum, exp_min, exp_max, exp_gt
 ):
     # ds = gdal.Open(filename)
-    ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
+    ds = gdal.Open(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, "Could not open the file"
     check_raster(ds, band_idx, expected, checksum, exp_min, exp_max, exp_gt)
 
@@ -441,7 +441,7 @@ def test_miramon_test_basic_raster(
 )
 def test_miramon_test_fails(name, message_substring):
     with pytest.raises(Exception) as excinfo:
-        gdal.OpenEx(
+        gdal.Open(
             name,
             gdal.OF_RASTER,
         )
@@ -535,7 +535,7 @@ def test_miramon_subdatasets_detection(
     exp_min,
     exp_max,
 ):
-    ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
+    ds = gdal.Open(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, f"Could not open file: {filename}"
 
     subdatasets = ds.GetSubDatasets()
@@ -546,7 +546,7 @@ def test_miramon_subdatasets_detection(
 
     # Let's open every one of them
     subdataset_name, desc = subdatasets[idx_sds]
-    subds = gdal.OpenEx(subdataset_name, allowed_drivers=["MiraMonRaster"])
+    subds = gdal.Open(subdataset_name, allowed_drivers=["MiraMonRaster"])
     assert subds is not None, f"Could not open subdataset: {subdataset_name}"
     band = subds.GetRasterBand(idx_bnd)
     assert band is not None, "Could not get band from subdataset"
@@ -575,7 +575,7 @@ def test_miramon_subdatasets_detection(
 
 
 def test_miramon_subdatasets_number():
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/miramon/subdatasets/byteI.rel", allowed_drivers=["MiraMonRaster"]
     )
     assert ds is not None, "Could not open file: data/miramon/subdatasets/byteI.rel"
@@ -835,7 +835,7 @@ init_list_color_tables = [
     ],
 )
 def test_miramon_epsg_and_color_table(filename, idx_bnd, expected_ct, exp_epsg):
-    ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
+    ds = gdal.Open(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, f"Could not open file: {filename}"
 
     # Comparing reference system
@@ -1121,7 +1121,7 @@ init_list_attribute_tables = [
     ],
 )
 def test_miramon_default_rat(filename, idx_bnd, expected_rat):
-    ds = gdal.OpenEx(filename, allowed_drivers=["MiraMonRaster"])
+    ds = gdal.Open(filename, allowed_drivers=["MiraMonRaster"])
     assert ds is not None, f"Could not open file: {filename}"
 
     band = ds.GetRasterBand(idx_bnd)
@@ -1193,7 +1193,7 @@ def test_miramon_rat_or_ct(option, expect_rat, expect_ct):
 
     options = f"RAT_OR_CT={option}"
 
-    ds_normal = gdal.OpenEx(
+    ds_normal = gdal.Open(
         filename, allowed_drivers=["MiraMonRaster"], open_options=[options]
     )
     assert ds_normal is not None, f"Could not open file: {filename}"

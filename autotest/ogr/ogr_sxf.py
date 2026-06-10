@@ -79,7 +79,7 @@ def test_ogr_sxf_3(tmp_path):
     fake_rsc = open(rsc_name, "w")
     fake_rsc.close()
     shutil.copy("data/sxf/100_test.sxf", sxf_name)
-    sxf_ds = gdal.OpenEx(
+    sxf_ds = gdal.Open(
         sxf_name, gdal.OF_VECTOR, open_options=["SXF_RSC_FILENAME=" + rsc_name]
     )
 
@@ -108,7 +108,7 @@ def test_ogr_sxf_4():
         "Not_Classified",
     ]
     sxf_name = "data/sxf/100_test.sxf"
-    sxf_ds = gdal.OpenEx(
+    sxf_ds = gdal.Open(
         sxf_name, gdal.OF_VECTOR, open_options=["SXF_LAYER_FULLNAME=YES"]
     )
 

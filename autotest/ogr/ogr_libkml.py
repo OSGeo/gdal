@@ -2290,19 +2290,19 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
         assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
         with pytest.raises(Exception, match="Non existing feature"):
             lyr.DeleteFeature(0)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception, match="Non existing feature"):
             lyr.DeleteFeature(3)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         lyr.DeleteFeature(1)
         assert lyr.GetFeatureCount() == 1
@@ -2315,7 +2315,7 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
         f["name"] = "name2_updated"
         lyr.SetFeature(f)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         if custom_id:
@@ -2334,7 +2334,7 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
 
 def ogr_libkml_non_editable():
 
-    with gdal.OpenEx("data/kml/placemark.kml", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open("data/kml/placemark.kml", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
         assert lyr.TestCapability(ogr.OLCDeleteFeature) == 0
@@ -2356,7 +2356,7 @@ def test_ogr_libkml_create_field_id_integer(tmp_vsimem):
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f["id"] == "test.1"
@@ -2383,7 +2383,7 @@ def test_ogr_libkml_create_field_bool(tmp_vsimem):
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(filename, gdal.OF_VECTOR) as ds:
+    with gdal.Open(filename, gdal.OF_VECTOR) as ds:
         lyr = ds.GetLayer(0)
         idx = lyr.GetLayerDefn().GetFieldIndex("b")
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)

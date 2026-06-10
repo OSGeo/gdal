@@ -114,7 +114,7 @@ def test_eedai_2():
 
     gdal.SetConfigOption("EEDA_BEARER", "mybearer")
     gdal.SetConfigOption("EEDA_URL", "/vsimem/ee/")
-    ds = gdal.OpenEx("EEDAI:image", open_options=["PIXEL_ENCODING=NPY"])
+    ds = gdal.Open("EEDAI:image", open_options=["PIXEL_ENCODING=NPY"])
     gdal.SetConfigOption("EEDA_URL", None)
 
     expected_info = {
@@ -316,7 +316,7 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS(use_vsi_path):
     if use_vsi_path:
         open_options.append("VSI_PATH_FOR_AUTH=/vsigs/to_test_eeda")
     try:
-        ds = gdal.OpenEx("EEDAI:image", open_options=open_options)
+        ds = gdal.Open("EEDAI:image", open_options=open_options)
         assert ds is not None
     except RuntimeError:
         pass

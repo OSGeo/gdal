@@ -176,7 +176,7 @@ def test_gdalalg_vector_select_fields_non_existing_ignore_missing_fields(tmp_vsi
             ]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
@@ -196,7 +196,7 @@ def test_gdalalg_vector_select_fields_exclude(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -214,7 +214,7 @@ def test_gdalalg_vector_select_fields_exclude_ogr_geometry(tmp_vsimem):
         ["--exclude", "--fields=_ogr_geometry_", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -236,7 +236,7 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
         ["--exclude", "--fields=geom", tmp_filename, out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -258,7 +258,7 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
         ["--exclude", "--fields=i_do_not_exist", tmp_filename, out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [

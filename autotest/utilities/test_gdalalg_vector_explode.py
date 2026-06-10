@@ -260,7 +260,7 @@ def test_gdalalg_vector_explode_geometry_limit_type_with_pipeline(alg, tmp_vsime
         pipeline=f'read {src_fname} ! explode --geometry-field 0"" ! set-geom-type --geometry-type LINESTRING --skip ! write -f GeoJSON {dst_fname}'
     )
 
-    with gdal.OpenEx(dst_fname) as dst_ds:
+    with gdal.Open(dst_fname) as dst_ds:
         assert dst_ds.GetLayerCount() == 1
 
         dst_lyr = dst_ds.GetLayer(0)
@@ -463,7 +463,7 @@ def test_gdalalg_vector_explode_geometry_multiple_cartesian_product_using_pipeli
         pipeline=f"read {src_fname} ! explode --geometry ! explode --geometry-field 1 ! write {dst_fname} --of GML"
     )
 
-    with gdal.OpenEx(dst_fname) as dst_ds:
+    with gdal.Open(dst_fname) as dst_ds:
         assert dst_ds.GetLayerCount() == 1
 
         dst_lyr = dst_ds.GetLayer(0)

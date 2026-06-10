@@ -392,7 +392,7 @@ class GDALTest:
             wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -474,7 +474,7 @@ class GDALTest:
         # hopefully it's closed now!
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(
+            new_ds = gdal.Open(
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
@@ -576,7 +576,7 @@ class GDALTest:
             wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -632,7 +632,7 @@ class GDALTest:
         new_ds = None
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(
+            new_ds = gdal.Open(
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
@@ -665,7 +665,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -723,7 +723,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -789,7 +789,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -840,7 +840,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -912,7 +912,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -957,7 +957,7 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
@@ -2123,7 +2123,7 @@ def reopen(ds, update=False, open_options=None):
     if open_options is None:
         open_options = {}
 
-    return gdal.OpenEx(
+    return gdal.Open(
         ds_loc,
         flags,
         allowed_drivers=[ds_drv.GetDescription()],

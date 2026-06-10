@@ -41,7 +41,7 @@ def test_gdalalg_vector_pipeline_read_and_write(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
     with pytest.raises(Exception, match="can only be called once per instance"):
@@ -71,7 +71,7 @@ def test_gdalalg_vector_pipeline_read_osm():
     assert out_ds.TestCapability("unknown") == 0
 
     expected = []
-    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    src_ds = gdal.Open("../ogr/data/osm/test.pbf")
     while True:
         f, _ = src_ds.GetNextFeature()
         if not f:
@@ -110,7 +110,7 @@ def test_gdalalg_vector_pipeline_read_osm_subset_of_layers():
     assert out_ds.TestCapability(ogr.ODsCRandomLayerRead)
 
     expected = []
-    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    src_ds = gdal.Open("../ogr/data/osm/test.pbf")
     while True:
         f, lyr = src_ds.GetNextFeature()
         if not f:
@@ -140,7 +140,7 @@ def test_gdalalg_vector_pipeline_pipeline_arg(tmp_vsimem):
         ["--pipeline", f"! read ../ogr/data/poly.shp | | write {out_filename} !"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -156,7 +156,7 @@ def test_gdalalg_vector_pipeline_as_api(tmp_vsimem):
     assert pipeline.Finalize()
     ds = None
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -165,12 +165,12 @@ def test_gdalalg_vector_pipeline_input_through_api(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline["input"] = gdal.OpenEx("../ogr/data/poly.shp")
+    pipeline["input"] = gdal.Open("../ogr/data/poly.shp")
     pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     assert pipeline.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -179,7 +179,7 @@ def test_gdalalg_vector_pipeline_input_through_api_run_twice(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out.shp")
 
     pipeline = get_pipeline_alg()
-    pipeline["input"] = gdal.OpenEx("../ogr/data/poly.shp")
+    pipeline["input"] = gdal.Open("../ogr/data/poly.shp")
     pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     with pytest.raises(
@@ -198,7 +198,7 @@ def test_gdalalg_vector_pipeline_output_through_api(tmp_vsimem):
     assert pipeline.Run()
     assert pipeline.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -257,7 +257,7 @@ def test_gdalalg_vector_pipeline_quoted(tmp_vsimem):
         [f"read ../ogr/data/poly.shp ! write {out_filename}"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -277,7 +277,7 @@ def test_gdalalg_vector_pipeline_progress(tmp_path):
         "0...10...20...30...40...50...60...70...80...90...100 - done."
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -294,7 +294,7 @@ def test_gdalalg_vector_easter_egg(tmp_path):
         f"{gdal_path} vector +gdal=pipeline +step +gdal=read +input=../ogr/data/poly.shp +step +write +output={out_filename}"
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -477,7 +477,7 @@ def test_gdalalg_vector_pipeline_read_layername(tmp_vsimem):
         ["read", "--layer", "poly", "../ogr/data/poly.shp", "!", "write", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -524,7 +524,7 @@ def test_gdalalg_vector_pipeline_write_options(tmp_vsimem):
         ["read", "../ogr/data/poly.shp", "!", "write", "--append", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 20
 
     pipeline = get_pipeline_alg()
@@ -540,7 +540,7 @@ def test_gdalalg_vector_pipeline_write_options(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer("poly").GetFeatureCount() == 20
         assert ds.GetLayer("layer2").GetFeatureCount() == 10
 
@@ -556,7 +556,7 @@ def test_gdalalg_vector_pipeline_write_options(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer("poly").GetFeatureCount() == 10
         assert ds.GetLayer("layer2").GetFeatureCount() == 10
 
@@ -565,7 +565,7 @@ def test_gdalalg_vector_pipeline_write_options(tmp_vsimem):
         ["read", "../ogr/data/poly.shp", "!", "write", "--overwrite", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerCount() == 1
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -588,7 +588,7 @@ def test_gdalalg_vector_pipeline_write_dsco(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         with ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE name = 'gpkg_ogr_contents'"
         ) as lyr:
@@ -613,7 +613,7 @@ def test_gdalalg_vector_pipeline_write_lco(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFIDColumn() == "my_fid"
 
 
@@ -626,7 +626,7 @@ def test_gdalalg_vector_pipeline_filter_no_arg(tmp_vsimem):
         ["read", "../ogr/data/poly.shp", "!", "filter", "!", "write", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -684,7 +684,7 @@ def test_gdalalg_vector_pipeline_filter_bbox(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 0
 
     pipeline = get_pipeline_alg()
@@ -702,7 +702,7 @@ def test_gdalalg_vector_pipeline_filter_bbox(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
@@ -811,7 +811,7 @@ def test_gdalalg_vector_pipeline_reproject_nominal(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -836,7 +836,7 @@ def test_gdalalg_vector_pipeline_reproject_with_src_crs(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         f = lyr.GetNextFeature()
@@ -866,7 +866,7 @@ def test_gdalalg_vector_pipeline_reproject_proj_string(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert "Lambert Azimuthal Equal Area" in lyr.GetSpatialRef().ExportToWkt(
             ["FORMAT=WKT2"]
@@ -1040,7 +1040,7 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
         ["read", src_filename, "!", "limit", "3", "!", "write", dst_filename]
     )
 
-    with gdal.OpenEx(dst_filename) as ds:
+    with gdal.Open(dst_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 3
         assert ds.GetLayer(1).GetFeatureCount() == 3
 
@@ -1076,7 +1076,7 @@ def test_gdalalg_vector_pipeline_no_create_empty_layers(tmp_vsimem):
     dst_filename = tmp_vsimem / "dst.gpkg"
 
     with gdal.GetDriverByName("GPKG").CreateVector(src_filename) as src_ds:
-        with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+        with gdal.Open("../ogr/data/poly.shp") as poly_ds:
             src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
             src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
 
@@ -1098,7 +1098,7 @@ def test_gdalalg_vector_pipeline_no_create_empty_layers(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(dst_filename) as ds:
+    with gdal.Open(dst_filename) as ds:
         assert ds.GetLayerCount() == 1
         assert ds.GetLayer(0).GetName() == "poly_2"
         assert ds.GetLayer(0).GetFeatureCount() == 10

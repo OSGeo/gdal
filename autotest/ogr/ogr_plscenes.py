@@ -45,7 +45,7 @@ def test_ogr_plscenes_data_v1_catalog_no_paging(pl_url, handle_get):
     )
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is not None
@@ -74,7 +74,7 @@ def test_ogr_plscenes_data_v1_catalog_paging(pl_url, handle_get):
         '{ "item_types": [ { "id": "PSScene4Band" } ] }',
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is not None
@@ -107,13 +107,13 @@ def test_ogr_plscenes_data_v1_nominal_vector(pl_url, handle_get, handle_post):
 ]}""",
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is not None
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:version=data_v1,api_key=foo,FOLLOW_LINKS=YES", gdal.OF_VECTOR
         )
     assert ds is not None
@@ -202,7 +202,7 @@ def test_ogr_plscenes_data_v1_nominal_vector(pl_url, handle_get, handle_post):
     with gdal.config_options(
         {"PL_URL": f"{pl_url}/data_v1/", "PLSCENES_PAGE_SIZE": "1"}
     ):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:",
             gdal.OF_VECTOR,
             open_options=["VERSION=data_v1", "API_KEY=foo", "FOLLOW_LINKS=YES"],
@@ -390,7 +390,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_1(pl_url, handle_get, handle_post):
     # Missing catalog
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
         with gdal.quiet_errors():
-            ds_raster = gdal.OpenEx(
+            ds_raster = gdal.Open(
                 "PLScenes:",
                 gdal.OF_RASTER,
                 open_options=["VERSION=data_v1", "API_KEY=foo", "SCENE=id"],
@@ -403,7 +403,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_2(pl_url, handle_get, handle_post):
 
     # Invalid catalog
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdal.quiet_errors():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -425,7 +425,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_3(pl_url, handle_get, handle_post):
         """{ "visual": false }""",
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdal.quiet_errors():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -455,7 +455,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_4(pl_url, handle_get, handle_post):
 }""".replace("PL_URL", pl_url),
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdal.quiet_errors():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -488,7 +488,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_5(pl_url, handle_get, handle_post):
 }""",
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdal.quiet_errors():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -524,7 +524,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_6(pl_url, handle_get, handle_post):
 
     # Missing /vsimem/data_v1/item-types/PSOrthoTile/items/id/assets/analytic/my.tiff
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -565,7 +565,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_7(pl_url, handle_get, handle_post):
     )
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -606,7 +606,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_8(pl_url, handle_get, handle_post):
     )
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -651,7 +651,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
     )
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -677,7 +677,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
 }""",
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -695,7 +695,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
 
     # Test invalid ASSET
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -711,7 +711,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
 
     # Test subdatasets
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:",
             gdal.OF_RASTER,
             open_options=[
@@ -727,7 +727,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
 
     # Unsupported option
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds_raster = gdal.OpenEx(
+        ds_raster = gdal.Open(
             "PLScenes:unsupported=yes",
             gdal.OF_RASTER,
             open_options=[
@@ -758,7 +758,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_10(pl_url, handle_get, handle_post)
 
     # Test catalog with vector access
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"):
-        ds2 = gdal.OpenEx(
+        ds2 = gdal.Open(
             "PLScenes:",
             gdal.OF_VECTOR,
             open_options=["VERSION=data_v1", "API_KEY=foo", "ITEMTYPES=PSOrthoTile"],
@@ -766,7 +766,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_10(pl_url, handle_get, handle_post)
     assert ds2 is not None and ds2.GetLayerCount() == 1
 
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdaltest.error_handler():
-        ds2 = gdal.OpenEx(
+        ds2 = gdal.Open(
             "PLScenes:",
             gdal.OF_VECTOR,
             open_options=["VERSION=data_v1", "API_KEY=foo", "ITEMTYPES=invalid"],
@@ -784,7 +784,7 @@ def test_ogr_plscenes_data_v1_errors_1():
     with gdal.config_options(
         {"PL_API_KEY": "", "PL_URL": "/vsimem/data_v1/"}
     ), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1"])
+        ds = gdal.Open("PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1"])
     assert ds is None
 
     assert "Missing PL_API_KEY" in gdal.GetLastErrorMsg()
@@ -795,7 +795,7 @@ def test_ogr_plscenes_data_v1_errors_2(tmp_vsimem):
     # Invalid option
     gdal.FileFromMemBuffer(tmp_vsimem / "data_v1/item-types", '{ "item-types": [] }')
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"), gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:version=data_v1,api_key=foo,invalid=invalid", gdal.OF_VECTOR
         )
     assert ds is None
@@ -808,7 +808,7 @@ def test_ogr_plscenes_data_v1_errors_3(tmp_vsimem):
     # Invalid JSON
     gdal.FileFromMemBuffer(tmp_vsimem / "data_v1/item-types", "{invalid_json")
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"), gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is None
@@ -821,7 +821,7 @@ def test_ogr_plscenes_data_v1_errors_4(tmp_vsimem):
     # Not an object
     gdal.FileFromMemBuffer(tmp_vsimem / "data_v1/item-types", "false")
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"), gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is None
@@ -834,7 +834,7 @@ def test_ogr_plscenes_data_v1_errors_5(tmp_vsimem):
     # Lack of "item_types"
     gdal.FileFromMemBuffer(tmp_vsimem / "data_v1/item-types", "{}")
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"), gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is None
@@ -851,7 +851,7 @@ def test_ogr_plscenes_data_v1_errors_6(tmp_vsimem):
     {"id":"foo"}]}""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds.GetLayerCount() == 1
@@ -865,7 +865,7 @@ def test_ogr_plscenes_data_v1_errors_7(tmp_vsimem):
         '{"_links": { "_next": "/vsimem/inexisting" }, "item_types": [{"id": "my_catalog"}]}',
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     with gdal.quiet_errors():
@@ -880,7 +880,7 @@ def test_ogr_plscenes_data_v1_errors_8(tmp_vsimem):
         '{"item_types": [{"id": "PSScene3Band"}]}',
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/data_v1/"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     lyr = ds.GetLayer(0)

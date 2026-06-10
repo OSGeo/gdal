@@ -1637,10 +1637,10 @@ def test_hdf5_read_netcdf_nodata_scale_offset():
 
 def test_hdf5_force_opening_netcdf_file():
 
-    ds = gdal.OpenEx("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
+    ds = gdal.Open("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
     assert ds.GetDriver().GetDescription() == "HDF5Image"
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/byte_hdf5_starting_at_offset_1024.nc", allowed_drivers=["HDF5"]
     )
     assert ds.GetDriver().GetDescription() == "HDF5Image"
@@ -1660,7 +1660,7 @@ def test_hdf5_force_opening_no_match():
 @gdaltest.enable_exceptions()
 def test_hdf5_open_larger_than_INT_MAX_pixels():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/bag/larger_than_INT_MAX_pixels.bag", allowed_drivers=["HDF5"]
     ) as ds:
         assert len(ds.GetSubDatasets()) == 0

@@ -86,7 +86,7 @@ def test_gdalalg_info_mixed_raster_vector(tmp_vsimem):
 
     filename = str(tmp_vsimem / "test.gpkg")
     gdal.Translate(filename, "data/utmsmall.tif")
-    with gdal.OpenEx(filename, gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_UPDATE) as ds:
         ds.CreateLayer("vector_layer")
     info = get_info_alg()
     with pytest.raises(Exception, match="has both raster and vector content"):
@@ -98,7 +98,7 @@ def test_gdalalg_info_mixed_raster_vector_with_invalid_arg(tmp_vsimem):
 
     filename = str(tmp_vsimem / "test.gpkg")
     gdal.Translate(filename, "data/utmsmall.tif")
-    with gdal.OpenEx(filename, gdal.OF_UPDATE) as ds:
+    with gdal.Open(filename, gdal.OF_UPDATE) as ds:
         ds.CreateLayer("vector_layer")
     info = get_info_alg()
     with pytest.raises(Exception, match="has both raster and vector content"):

@@ -741,9 +741,9 @@ def test_ogr_esrijson_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["ESRIJSON"])
+    ds = gdal.Open(filename, allowed_drivers=["ESRIJSON"])
     assert ds.GetDriver().GetDescription() == "ESRIJSON"
 
 

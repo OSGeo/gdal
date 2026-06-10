@@ -163,7 +163,7 @@ def test_gdalalg_vector_create_overwrite_update_overwrite_layer(tmp_vsimem):
     assert alg.Run()
 
     # Check that we actually have both layers in the file
-    ds = gdal.OpenEx(out_file, gdal.OF_VECTOR)
+    ds = gdal.Open(out_file, gdal.OF_VECTOR)
     assert ds is not None, "Failed to open dataset"
     assert _get_layer_names(alg["output"].GetDataset()) == [
         "test_layer",
