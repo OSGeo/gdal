@@ -989,6 +989,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 
 @gdaltest.enable_exceptions()
 def test_vsis3_permanent_redirect_and_region_change(aws_test_config, webserver_port):
+    gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1019,6 +1020,48 @@ def test_vsis3_permanent_redirect_and_region_change(aws_test_config, webserver_p
             "/vsis3/test_vsis3_permanent_redirect_and_region_change/test.bin", "rb"
         ):
             pass
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_permanent_redirect_and_region_change_open_a_dir(
+    aws_test_config, webserver_port
+):
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/test_vsis3_permanent_redirect_and_region_change_open_a_dir/?delimiter=%2F&list-type=2",
+        301,
+        {"Content-type": "application/xml"},
+        f"""<?xml version="1.0" encoding="UTF-8"?>
+            <Error><Code>PermanentRedirect</Code><Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message><Endpoint>localhost:{webserver_port}</Endpoint><Bucket>test_vsis3_permanent_redirect_and_region_change_open_a_dir</Bucket></Error>""",
+    )
+    handler.add(
+        "GET",
+        "/test_vsis3_permanent_redirect_and_region_change_open_a_dir/?delimiter=%2F&list-type=2",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents/>
+                <CommonPrefixes>
+                    <Prefix>a_dir.ext</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>""",
+    )
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.VSIFOpenL(
+                "/vsis3/test_vsis3_permanent_redirect_and_region_change_open_a_dir/a_dir.ext",
+                "rb",
+            )
+            is None
+        )
 
 
 ###############################################################################
@@ -3799,22 +3842,6 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
         },
         "x" * 16384,
     )
-    handler.add(
-        "GET",
-        "/out/?delimiter=%2F&list-type=2",
-        200,
-        {"Content-type": "application/xml"},
-        """<?xml version="1.0" encoding="UTF-8"?>
-        <ListBucketResult>
-            <Prefix></Prefix>
-            <Contents>
-                <Key>testsync.txt</Key>
-                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                <Size>30000</Size>
-            </Contents>
-        </ListBucketResult>
-        """,
-    )
     handler.add("GET", "/out/testsync.txt", 400)
     # Do not use /vsicurl_streaming/ as source, otherwise errors may be
     # emitted in worker thread, which isn't properly handled (should ideally
@@ -5753,54 +5780,42 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add(
-        "PUT",
-        "/latest/api/token",
-        200,
-        {},
-        "mytoken",
-        expected_headers={"X-aws-ec2-metadata-token-ttl-seconds": "10"},
-    )
-    handler.add(
-        "GET",
-        "/latest/meta-data/iam/security-credentials/",
-        200,
-        {},
-        "myprofile",
-        expected_headers={"X-aws-ec2-metadata-token": "mytoken"},
-    )
-    handler.add(
-        "GET",
-        "/latest/meta-data/iam/security-credentials/myprofile",
-        200,
-        {},
-        """{
-        "AccessKeyId": "AWS_ACCESS_KEY_ID",
-        "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
-        "Expiration": "1970-01-01T00:00:00Z"
-        }""",
-        expected_headers={"X-aws-ec2-metadata-token": "mytoken"},
-    )
-    handler.add(
-        "PUT",
-        "/latest/api/token",
-        200,
-        {},
-        "mytoken2",
-        expected_headers={"X-aws-ec2-metadata-token-ttl-seconds": "10"},
-    )
-    handler.add(
-        "GET",
-        "/latest/meta-data/iam/security-credentials/myprofile",
-        200,
-        {},
-        """{
-        "AccessKeyId": "AWS_ACCESS_KEY_ID",
-        "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
-        "Expiration": "1970-01-01T00:00:00Z"
-        }""",
-        expected_headers={"X-aws-ec2-metadata-token": "mytoken2"},
-    )
+
+    def refresh_credentials(with_get_profile=False):
+        handler.add(
+            "PUT",
+            "/latest/api/token",
+            200,
+            {},
+            "mytoken",
+            expected_headers={"X-aws-ec2-metadata-token-ttl-seconds": "10"},
+        )
+        if with_get_profile:
+            handler.add(
+                "GET",
+                "/latest/meta-data/iam/security-credentials/",
+                200,
+                {},
+                "myprofile",
+                expected_headers={"X-aws-ec2-metadata-token": "mytoken"},
+            )
+        handler.add(
+            "GET",
+            "/latest/meta-data/iam/security-credentials/myprofile",
+            200,
+            {},
+            """{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "1970-01-01T00:00:00Z"
+            }""",
+            expected_headers={"X-aws-ec2-metadata-token": "mytoken"},
+        )
+
+    refresh_credentials(with_get_profile=True)
+    refresh_credentials()
+    refresh_credentials()
+    refresh_credentials()
     handler.add(
         "GET",
         "/s3_fake_bucket/resource",
@@ -5821,6 +5836,14 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
     assert data == "foo"
 
     handler = webserver.SequentialHandler()
+    handler.add("PUT", "/invalid/latest/api/token", 404)
+    handler.add(
+        "GET", "/invalid/latest/meta-data/iam/security-credentials/myprofile", 404
+    )
+    handler.add("PUT", "/invalid/latest/api/token", 404)
+    handler.add(
+        "GET", "/invalid/latest/meta-data/iam/security-credentials/myprofile", 404
+    )
     handler.add("PUT", "/invalid/latest/api/token", 404)
     handler.add(
         "GET", "/invalid/latest/meta-data/iam/security-credentials/myprofile", 404
@@ -6115,28 +6138,24 @@ role_session_name = my_role_session_name
         </Credentials></AssumeRoleResult></AssumeRoleResponse>"""
 
     handler = webserver.SequentialHandler()
-    handler.add(
-        "GET",
-        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
-        200,
-        {},
-        expired_xml_response,
-        expected_headers={
-            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
-            "X-Amz-Date": "20150101T000000Z",
-        },
-    )
-    handler.add(
-        "GET",
-        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
-        200,
-        {},
-        expired_xml_response,
-        expected_headers={
-            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
-            "X-Amz-Date": "20150101T000000Z",
-        },
-    )
+
+    def add_request_AssumeRole():
+        handler.add(
+            "GET",
+            "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
+            200,
+            {},
+            expired_xml_response,
+            expected_headers={
+                "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
+                "X-Amz-Date": "20150101T000000Z",
+            },
+        )
+
+    add_request_AssumeRole()
+    add_request_AssumeRole()
+    add_request_AssumeRole()
+    add_request_AssumeRole()
     handler.add(
         "GET",
         "/s3_fake_bucket/resource",
@@ -6306,28 +6325,33 @@ source_profile = foo
         </AssumeRoleWithWebIdentityResponse>"""
 
     handler = webserver.SequentialHandler()
-    handler.add(
-        "GET",
-        "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn=foo_role_arn&WebIdentityToken=token",
-        200,
-        {},
-        assumeRoleWithWebIdentityResponseXML,
-    )
 
     # Note that the Expiration is in the past, so for a next request we will
     # have to renew
-    handler.add(
-        "GET",
-        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15",
-        200,
-        {},
-        """<AssumeRoleResponse><AssumeRoleResult><Credentials>
-            <AccessKeyId>TEMP_ACCESS_KEY_ID</AccessKeyId>
-            <SecretAccessKey>TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
-            <SessionToken>TEMP_SESSION_TOKEN</SessionToken>
-            <Expiration>1970-01-01T01:00:00Z</Expiration>
-        </Credentials></AssumeRoleResult></AssumeRoleResponse>""",
-    )
+    def add_request_AssumeRole():
+        handler.add(
+            "GET",
+            "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn=foo_role_arn&WebIdentityToken=token",
+            200,
+            {},
+            assumeRoleWithWebIdentityResponseXML,
+        )
+        handler.add(
+            "GET",
+            "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15",
+            200,
+            {},
+            """<AssumeRoleResponse><AssumeRoleResult><Credentials>
+                <AccessKeyId>TEMP_ACCESS_KEY_ID</AccessKeyId>
+                <SecretAccessKey>TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
+                <SessionToken>TEMP_SESSION_TOKEN</SessionToken>
+                <Expiration>1970-01-01T01:00:00Z</Expiration>
+            </Credentials></AssumeRoleResult></AssumeRoleResponse>""",
+        )
+
+    add_request_AssumeRole()
+    add_request_AssumeRole()
+    add_request_AssumeRole()
 
     handler.add(
         "GET",
@@ -6340,6 +6364,14 @@ source_profile = foo
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+    assert data == "foo"
 
     handler2 = webserver.SequentialHandler()
     handler2.add(
@@ -6386,14 +6418,6 @@ source_profile = foo
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
-
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(options, thread_local=False):
-            f = open_for_read("/vsis3/s3_fake_bucket/resource")
-        assert f is not None
-        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-        gdal.VSIFCloseL(f)
-    assert data == "foo"
 
     with webserver.install_http_handler(handler2):
         with gdaltest.config_options(options, thread_local=False):

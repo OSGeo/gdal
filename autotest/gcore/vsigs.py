@@ -1786,30 +1786,27 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
             request.wfile.write("""foo""".encode("ascii"))
 
         handler = webserver.SequentialHandler()
+
+        def add_get_token():
+            handler.add(
+                "GET",
+                "/computeMetadata/v1/instance/service-accounts/default/token",
+                200,
+                {},
+                """{
+                        "access_token" : "ACCESS_TOKEN",
+                        "token_type" : "Bearer",
+                        "expires_in" : 0,
+                        }""",
+            )
+
         # First time is used when trying to establish if GCE authentication is available
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 0,
-                    }""",
-        )
-        # Second time is needed because f the access to th file
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 0,
-                    }""",
-        )
+        add_get_token()
+        # Second time is needed because of the access to the file
+        add_get_token()
+        # A couple more because VSICurlFilesystemHandlerBase::Open() use GetURLFromFilename()
+        add_get_token()
+        add_get_token()
         handler.add("GET", "/gs_fake_bucket/resource", custom_method=method)
         with webserver.install_http_handler(handler):
             f = open_for_read("/vsigs/gs_fake_bucket/resource")

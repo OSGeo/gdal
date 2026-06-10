@@ -315,16 +315,12 @@ static int VSICurlIsFileInList(CSLConstList papszList, const char *pszTarget)
 /*                      StartsWithVSICurlPrefix()                       */
 /************************************************************************/
 
-static bool
-StartsWithVSICurlPrefix(const char *pszFilename,
-                        std::string *posFilenameAfterPrefix = nullptr)
+static bool StartsWithVSICurlPrefix(const char *pszFilename)
 {
     for (const char *pszPrefix : VSICURL_PREFIXES)
     {
         if (STARTS_WITH(pszFilename, pszPrefix))
         {
-            if (posFilenameAfterPrefix)
-                *posFilenameAfterPrefix = pszFilename + strlen(pszPrefix);
             return true;
         }
     }
@@ -4589,12 +4585,9 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
                                    const char *pszAccess, bool bSetError,
                                    CSLConstList papszOptions)
 {
-    std::string osFilenameAfterPrefix;
-    if (cpl::starts_with(std::string_view(pszFilename), GetFSPrefix()))
-    {
-        osFilenameAfterPrefix = pszFilename + GetFSPrefix().size();
-    }
-    else if (!StartsWithVSICurlPrefix(pszFilename, &osFilenameAfterPrefix))
+    const bool bStartsWithVSICurlPrefix = StartsWithVSICurlPrefix(pszFilename);
+    if (!bStartsWithVSICurlPrefix &&
+        !cpl::starts_with(std::string_view(pszFilename), GetFSPrefix()))
     {
         return nullptr;
     }
@@ -4618,9 +4611,12 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    CPL_IGNORE_RET_VAL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr,
-                                                 nullptr, &bListDir, &bEmptyDir,
-                                                 nullptr, nullptr, nullptr));
+    std::string osURL =
+        bStartsWithVSICurlPrefix
+            ? VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
+                                        &bListDir, &bEmptyDir, nullptr, nullptr,
+                                        nullptr)
+            : GetURLFromFilename(pszFilename);
 
     const char *pszOptionVal = CSLFetchNameValueDef(
         papszOptions, "DISABLE_READDIR_ON_OPEN",
@@ -4637,7 +4633,7 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
     bool bForceExistsCheck = false;
     FileProp cachedFileProp;
     if (!bSkipReadDir &&
-        !(GetCachedFileProp(osFilenameAfterPrefix.c_str(), cachedFileProp) &&
+        !(GetCachedFileProp(osURL.c_str(), cachedFileProp) &&
           cachedFileProp.eExists == EXIST_YES) &&
         strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
         !STARTS_WITH(CPLGetExtensionSafe(osFilename.c_str()).c_str(), "zip") &&
@@ -4671,6 +4667,13 @@ VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
                 return nullptr;
             }
         }
+    }
+    if (!bStartsWithVSICurlPrefix)
+        osURL = GetURLFromFilename(pszFilename);
+    if (GetCachedFileProp(osURL.c_str(), cachedFileProp) &&
+        cachedFileProp.eExists == EXIST_YES && cachedFileProp.bIsDirectory)
+    {
+        return nullptr;
     }
 
     auto poHandle =
