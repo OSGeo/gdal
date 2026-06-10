@@ -7325,3 +7325,415 @@ def test_vsis3_invalid_filenames():
 
     with pytest.raises(Exception, match="Invalid filename"):
         gdal.OpenDir("/vsis3/../traversal")
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_from_username_password(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "EARTHDATA_USERNAME": "username",
+        "EARTHDATA_PASSWORD": "password",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/earthdata_login/api/users/find_or_create_token",
+            200,
+            {"Content-Type": "application/json"},
+            """{"access_token":"access_token_1","token_type":"Bearer","expiration_date":"12/31/9999"}""",
+            expected_headers={
+                "Accept": "application/json",
+                "Authorization": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+            },
+        )
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "application/json"},
+            """{"accessKeyId":"accessKeyId","secretAccessKey":"secretAccessKey","sessionToken":"sessionToken","expiration":"9999-12-31 23:59:59+00:00"}""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        handler.add(
+            "GET",
+            "/test_vsis3_earthdata_credentials/test.bin",
+            206,
+            {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
+            "foo",
+            expected_headers={"X-Amz-Security-Token": "sessionToken"},
+        )
+        handler.add(
+            "GET",
+            "/test_vsis3_earthdata_credentials/test2.bin",
+            206,
+            {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
+            "bar",
+            expected_headers={"X-Amz-Security-Token": "sessionToken"},
+        )
+        with webserver.install_http_handler(handler):
+            with gdal.VSIFile(
+                "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+            ) as f:
+                assert f.read() == b"foo"
+            with gdal.VSIFile(
+                "/vsis3/test_vsis3_earthdata_credentials/test2.bin", "rb"
+            ) as f:
+                assert f.read() == b"bar"
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_from_token(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_TOKEN": "access_token_1",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "application/json"},
+            """{"accessKeyId":"accessKeyId","secretAccessKey":"secretAccessKey","sessionToken":"sessionToken","expiration":"9999-12-31 23:59:59+00:00"}""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        handler.add(
+            "GET",
+            "/test_vsis3_earthdata_credentials/test.bin",
+            206,
+            {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
+            "foo",
+            expected_headers={"X-Amz-Security-Token": "sessionToken"},
+        )
+        with webserver.install_http_handler(handler):
+            with gdal.VSIFile(
+                "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+            ) as f:
+                assert f.read() == b"foo"
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_login_failed_with_error(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "EARTHDATA_USERNAME": "username",
+        "EARTHDATA_PASSWORD": "password",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/earthdata_login/api/users/find_or_create_token",
+            401,
+            {"Content-Type": "application/json"},
+            """{"error":"invalid_credentials","error_description":"Invalid user credentials"}""",
+            expected_headers={
+                "Accept": "application/json",
+                "Authorization": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+            },
+        )
+        with webserver.install_http_handler(handler):
+            with pytest.raises(
+                Exception,
+                match="Earthdata credentials provider: invalid_credentials in response of ",
+            ):
+                with gdal.VSIFile(
+                    "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+                ):
+                    pass
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_login_failed_missing_access_token(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "EARTHDATA_USERNAME": "username",
+        "EARTHDATA_PASSWORD": "password",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/earthdata_login/api/users/find_or_create_token",
+            200,
+            {"Content-Type": "application/json"},
+            """{}""",
+            expected_headers={
+                "Accept": "application/json",
+                "Authorization": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+            },
+        )
+        with webserver.install_http_handler(handler):
+            with pytest.raises(
+                Exception,
+                match="Earthdata credentials provider: missing 'access_token' in response of",
+            ):
+                with gdal.VSIFile(
+                    "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+                ):
+                    pass
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_get_credentials_failed(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_TOKEN": "access_token_1",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "text/html"},
+            """Some error""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        with webserver.install_http_handler(handler):
+            with pytest.raises(
+                Exception,
+                match=r"Earthdata credentials provider: request to .* failed to return one of 'accessKeyId', 'secretAccessKey', 'sessionToken' and/or 'expiration'",
+            ):
+                with gdal.VSIFile(
+                    "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+                ):
+                    pass
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_expired(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_TOKEN": "access_token_1",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "application/json"},
+            """{"accessKeyId":"accessKeyId","secretAccessKey":"secretAccessKey","sessionToken":"sessionToken","expiration":"1970-01-01 00:00:00+00:00"}""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "application/json"},
+            """{"accessKeyId":"accessKeyId","secretAccessKey":"secretAccessKey","sessionToken":"sessionToken","expiration":"9999-01-01 00:00:00+00:00"}""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        handler.add(
+            "GET",
+            "/test_vsis3_earthdata_credentials/test.bin",
+            206,
+            {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
+            "foo",
+            expected_headers={"X-Amz-Security-Token": "sessionToken"},
+        )
+        with webserver.install_http_handler(handler):
+            with gdal.VSIFile(
+                "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+            ) as f:
+                assert f.read() == b"foo"
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_from_netrc(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    netrc_filename = tmp_vsimem / "mynetrc"
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "NETRC": str(netrc_filename),
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+
+    with gdal.VSIFile(netrc_filename, "wb") as f:
+        f.write(
+            f"machine {config_options['EARTHDATA_HOST']} login username password password".encode(
+                "utf-8"
+            )
+        )
+
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/earthdata_login/api/users/find_or_create_token",
+            200,
+            {"Content-Type": "application/json"},
+            """{"access_token":"access_token_1","token_type":"Bearer","expiration_date":"12/31/9999"}""",
+            expected_headers={
+                "Accept": "application/json",
+                "Authorization": "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+            },
+        )
+        handler.add(
+            "GET",
+            "/get_credentials",
+            200,
+            {"Content-Type": "application/json"},
+            """{"accessKeyId":"accessKeyId","secretAccessKey":"secretAccessKey","sessionToken":"sessionToken","expiration":"9999-12-31 23:59:59+00:00"}""",
+            expected_headers={"Authorization": "Bearer access_token_1"},
+        )
+        handler.add(
+            "GET",
+            "/test_vsis3_earthdata_credentials/test.bin",
+            206,
+            {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
+            "foo",
+            expected_headers={"X-Amz-Security-Token": "sessionToken"},
+        )
+        with webserver.install_http_handler(handler):
+            with gdal.VSIFile(
+                "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+            ) as f:
+                assert f.read() == b"foo"
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_from_netrc_not_existing(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "NETRC": "/i_do/not/exist",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        with webserver.install_http_handler(handler):
+            with pytest.raises(
+                Exception,
+                match=r"Earthdata credentials provider: cannot open /i_do/not/exist, and no other Earthdata login mechanism defined \(EARTHDATA_TOKEN or EARTHDATA_USERNAME\+EARTHDATA_PASSWORD\)",
+            ):
+                with gdal.VSIFile(
+                    "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+                ):
+                    pass
+
+
+###############################################################################
+# Test NASA Earthdata credentials provider
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_earthdata_credentials_from_netrc_no_entry(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    netrc_filename = tmp_vsimem / "mynetrc"
+
+    config_options = {
+        "VSIS3_EARTHDATA_CREDENTIALS_URL": f"http://127.0.0.1:{webserver_port}/get_credentials",
+        "EARTHDATA_HOST": f"http://127.0.0.1:{webserver_port}/earthdata_login",
+        "NETRC": str(netrc_filename),
+        "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+    }
+
+    with gdal.VSIFile(netrc_filename, "wb"):
+        pass
+
+    with gdaltest.config_options(config_options):
+
+        handler = webserver.SequentialHandler()
+        with webserver.install_http_handler(handler):
+            with pytest.raises(
+                Exception,
+                match="Earthdata credentials provider: no credentials for host",
+            ):
+                with gdal.VSIFile(
+                    "/vsis3/test_vsis3_earthdata_credentials/test.bin", "rb"
+                ):
+                    pass
