@@ -1084,43 +1084,42 @@ def test_ogr_geom_flattenTo2D_triangle():
 ###############################################################################
 
 
-@gdaltest.enable_exceptions()
 def test_ogr_geom_linestring_limits():
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING EMPTY")
     assert geom.Length() == 0
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint(-1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint(0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint_2D(-1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint_2D(0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.SetPoint(-1, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.SetPoint_2D(-1, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too many points"):
         geom.SetPoint((1 << 31) - 2, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too many points"):
         geom.SetPoint_2D((1 << 31) - 2, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPoint_2D((1 << 31) - 1, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPointM((1 << 31) - 1, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPointZM((1 << 31) - 1, 5, 6, 7, 8)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0)")
@@ -3518,100 +3517,100 @@ def test_ogr_geom_api_limit_tests():
     lyr = ogr.Geometry(ogr.wkbLineString)
     poly = ogr.Geometry(ogr.wkbPolygon)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetX(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetY(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetZ(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetX(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetY(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetZ(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetX()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetY()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetZ()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetPoints()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPoint(1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPoint(-1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPoint(0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPoint_2D(1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPoint_2D(-1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPoint_2D(0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPointM(1, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPointM(-1, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPointM(0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPointZM(1, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPointZM(-1, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPointZM(0, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPoint(0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPointM(0, 0, 0)
 
-    with pytest.raises(Exception):
-        poly.AddPointZM(0, 0, 0, 0, 0)
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
+        poly.AddPointZM(0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPoint_2D(0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         p.GetGeometryRef(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Unsupported geometry type"):
         p.AddGeometry(p)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Unsupported geometry type"):
         p.AddGeometryDirectly(p)
 
 
