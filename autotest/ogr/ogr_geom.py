@@ -252,9 +252,7 @@ def test_ogr_geom_polyhedral_surface():
         "POLYHEDRALSURFACE EMPTY",
     ]:
         g2 = ogr.CreateGeometryFromWkt(wkt)
-        if g.Equals(g2):
-            print(wkt)
-            pytest.fail("Unexpected true Equals() return")
+        assert not g.Equals(g2)
 
     # Error
     with pytest.raises(Exception, match="Unsupported geometry type"):
@@ -486,11 +484,8 @@ def test_ogr_geom_build_from_edges_1():
         # print "geom is",geom
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
 
 
 ###############################################################################
@@ -515,11 +510,8 @@ def test_ogr_geom_build_from_edges_2():
         geom = ogr.CreateGeometryFromWkt(wkt)
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
 
 
 ###############################################################################
@@ -578,13 +570,10 @@ def test_ogr_geom_build_from_edges_4():
         # print "geom is",geom
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-        wkt = poly.ExportToWkt()
-        assert wkt == "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))"
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
+    wkt = poly.ExportToWkt()
+    assert wkt == "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))"
 
 
 ###############################################################################
@@ -959,15 +948,7 @@ def test_ogr_geom_segmentize():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
-            print(
-                "%.17g"
-                % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
-            )
-            pytest.fail(
-                "%.17g"
-                % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
-            )
+        assert g1.GetPoint(i) == g2.GetPoint(g1.GetPointCount() - 1 - i)
 
     # Test extremely small threshold
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,0 1)")
@@ -1743,15 +1724,7 @@ def test_ogr_geom_circularstring():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
-            print(
-                "%.17g"
-                % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
-            )
-            pytest.fail(
-                "%.17g"
-                % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
-            )
+        assert g1.GetPoint(i) == g2.GetPoint(g1.GetPointCount() - 1 - i)
 
     # Test stroking of full circle with Z
     in_wkt = "CIRCULARSTRING (0 0 1,1 0 2,0 0 1)"
@@ -2184,11 +2157,8 @@ def test_ogr_geom_compoundcurve():
     for i in range(p_count):
         # yes we do strict (binary) comparison. This is really intended.
         # The curves must be exactly the same, despite our stealth mode
-        if g2.GetX(i) != g3.GetX(p_count - 1 - i) or g2.GetY(i) != g3.GetY(
-            p_count - 1 - i
-        ):
-            print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
-            pytest.fail(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
+        assert g2.GetX(i) == g3.GetX(p_count - 1 - i)
+        assert g2.GetY(i) == g3.GetY(p_count - 1 - i)
 
     # Test Transform
     sr = osr.SpatialReference()
@@ -3763,9 +3733,7 @@ def test_ogr_geom_measured_geometries_to_2D_or_3D():
         geom = ogr.CreateGeometryFromWkt(before)
         wkb = geom.ExportToIsoWkb()
         geom2 = ogr.CreateGeometryFromWkb(wkb)
-        if not geom.Equals(geom2):
-            print(before)
-            pytest.fail(geom2.ExportToIsoWkt())
+        assert geom.Equals(geom2)
 
         geom = ogr.CreateGeometryFromWkt(before)
         geom.FlattenTo2D()
