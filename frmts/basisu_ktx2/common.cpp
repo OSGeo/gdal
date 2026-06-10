@@ -138,8 +138,9 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         params.m_out_filename = pszFilename;
     }
 
-    params.m_uastc = EQUAL(
-        CSLFetchNameValueDef(papszOptions, "COMPRESSION", "ETC1S"), "UASTC");
+    params.m_uastc =
+        EQUAL(CSLFetchNameValueDef(papszOptions, GDALMD_COMPRESSION, "ETC1S"),
+              "UASTC");
     if (params.m_uastc)
     {
         if (bIsKTX2)

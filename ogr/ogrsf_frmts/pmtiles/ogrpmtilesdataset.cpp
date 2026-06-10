@@ -523,7 +523,7 @@ bool OGRPMTilesDataset::OpenRaster(int nZoomLevel)
     m_osTmpGPKGFilename = VSIMemGenerateHiddenFilename("pmtiles.gti.gpkg");
 
     if (nTargetBands > 1)
-        SetMetadataItem("INTERLEAVING", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem("INTERLEAVING", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     // Create overview datasets
     for (int iOvr = 0; iOvr < m_nZoomLevel - m_nMinZoomLevel; ++iOvr)
@@ -556,7 +556,7 @@ bool OGRPMTilesDataset::OpenRaster(int nZoomLevel)
 
         if (nTargetBands > 1)
             poOvrDS->SetMetadataItem("INTERLEAVING", "PIXEL",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
         m_apoOverviews.push_back(std::move(poOvrDS));
     }

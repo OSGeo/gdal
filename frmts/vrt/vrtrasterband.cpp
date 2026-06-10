@@ -89,16 +89,16 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom(const GDALRasterBand *poSrcBand)
 {
     auto poSrcBandNonConst = const_cast<GDALRasterBand *>(poSrcBand);
     SetMetadata(poSrcBandNonConst->GetMetadata());
-    const char *pszNBits =
-        poSrcBandNonConst->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
-    SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+    const char *pszNBits = poSrcBandNonConst->GetMetadataItem(
+        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_NBITS, pszNBits, GDAL_MDD_IMAGE_STRUCTURE);
     if (poSrcBand->GetRasterDataType() == GDT_UInt8)
     {
         poSrcBandNonConst->EnablePixelTypeSignedByteWarning(false);
-        const char *pszPixelType =
-            poSrcBandNonConst->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        const char *pszPixelType = poSrcBandNonConst->GetMetadataItem(
+            "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poSrcBandNonConst->EnablePixelTypeSignedByteWarning(true);
-        SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+        SetMetadataItem("PIXELTYPE", pszPixelType, GDAL_MDD_IMAGE_STRUCTURE);
     }
     SetColorTable(poSrcBandNonConst->GetColorTable());
     SetColorInterpretation(poSrcBandNonConst->GetColorInterpretation());

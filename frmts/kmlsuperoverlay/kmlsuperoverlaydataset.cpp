@@ -2115,7 +2115,8 @@ void KmlSingleDocRasterDataset::BuildOverviews()
             poOvrDS->SetBand(iBand,
                              std::make_unique<KmlSingleDocRasterRasterBand>(
                                  poOvrDS.get(), iBand));
-        poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poOvrDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 
         m_apoOverviews.push_back(std::move(poOvrDS));
     }
@@ -2470,7 +2471,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
         poDS->SetBand(iBand, std::make_unique<KmlSingleDocRasterRasterBand>(
                                  poDS.get(), iBand));
     poDS->SetDescription(pszFilename);
-    poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     poDS->aosDescs = std::move(aosDescs);
 
     return poDS.release();
@@ -2810,7 +2811,7 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         poDS->SetBand(i + 1, std::make_unique<KmlSuperOverlayRasterBand>(
                                  poDS.get(), i + 1));
     poDS->SetDescription(pszFilename);
-    poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     while (poDS->poParent == nullptr && nFactor > 1)
     {
@@ -2837,7 +2838,8 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
             poOvrDS->SetBand(i + 1, std::make_unique<KmlSuperOverlayRasterBand>(
                                         poOvrDS.get(), i + 1));
         poOvrDS->SetDescription(pszFilename);
-        poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poOvrDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 
         poDS->m_apoOverviewDS.push_back(std::move(poOvrDS));
     }

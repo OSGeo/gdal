@@ -5553,8 +5553,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             poJob->args.eOvrDataType = poDstBand->GetRasterDataType();
             poJob->args.nOvrXSize = poDstBand->GetXSize();
             poJob->args.nOvrYSize = poDstBand->GetYSize();
-            const char *pszNBITS =
-                poDstBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+            const char *pszNBITS = poDstBand->GetMetadataItem(
+                GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
             poJob->args.nOvrNBITS = pszNBITS ? atoi(pszNBITS) : 0;
             poJob->args.dfXRatioDstToSrc = dfXRatioDstToSrc;
             poJob->args.dfYRatioDstToSrc = dfYRatioDstToSrc;
@@ -6646,7 +6646,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     poJob->args.nOvrXSize = poJob->poDstBand->GetXSize();
                     poJob->args.nOvrYSize = poJob->poDstBand->GetYSize();
                     const char *pszNBITS = poJob->poDstBand->GetMetadataItem(
-                        "NBITS", "IMAGE_STRUCTURE");
+                        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
                     poJob->args.nOvrNBITS = pszNBITS ? atoi(pszNBITS) : 0;
                     poJob->args.dfXRatioDstToSrc = dfXRatioDstToSrc;
                     poJob->args.dfYRatioDstToSrc = dfYRatioDstToSrc;

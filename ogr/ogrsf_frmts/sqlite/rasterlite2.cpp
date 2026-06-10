@@ -474,8 +474,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
 
     if (pszCompression != nullptr)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", pszCompression,
-                                     "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (nQuality != 0 && (nCompression == RL2_COMPRESSION_JPEG ||
@@ -483,7 +483,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
                           nCompression == RL2_COMPRESSION_LOSSY_JP2))
     {
         GDALDataset::SetMetadataItem("QUALITY", CPLSPrintf("%d", nQuality),
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Get tile dimensions
@@ -898,8 +898,8 @@ RL2RasterBand::RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT,
     if ((nBits % 8) != 0)
     {
         GDALRasterBand::SetMetadataItem(
-            (nBits == 1 && bPromote1BitAs8Bit) ? "SOURCE_NBITS" : "NBITS",
-            CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE");
+            (nBits == 1 && bPromote1BitAs8Bit) ? "SOURCE_NBITS" : GDALMD_NBITS,
+            CPLSPrintf("%d", nBits), GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (nPixelType == RL2_PIXEL_MONOCHROME || nPixelType == RL2_PIXEL_GRAYSCALE)
@@ -927,10 +927,10 @@ RL2RasterBand::RL2RasterBand(const RL2RasterBand *poOther)
     nBlockXSize = poOther->nBlockXSize;
     nBlockYSize = poOther->nBlockYSize;
     GDALRasterBand::SetMetadataItem(
-        "NBITS",
+        GDALMD_NBITS,
         const_cast<RL2RasterBand *>(poOther)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE"),
-        "IMAGE_STRUCTURE");
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE),
+        GDAL_MDD_IMAGE_STRUCTURE);
     m_eColorInterp = poOther->m_eColorInterp;
     m_bHasNoData = poOther->m_bHasNoData;
     m_dfNoDataValue = poOther->m_dfNoDataValue;
@@ -1540,7 +1540,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     }
 
     // Deal with NBITS
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     int nBITS = 0;
     if (pszNBITS != nullptr)
     {
@@ -1554,7 +1554,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
     else
     {
         pszNBITS = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE");
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS != nullptr)
         {
             nBITS = atoi(pszNBITS);
@@ -2248,7 +2248,7 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
 
 CSLConstList OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS) &&
         m_aosSubDatasets.size() > 2)
     {
         return m_aosSubDatasets.List();

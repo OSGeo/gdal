@@ -588,7 +588,7 @@ CPLErr GDALECWCompressor::Initialize(
         (NCSFileBandInfo *)NCSMalloc(sizeof(NCSFileBandInfo) * nBands, true);
     for (iBand = 0; iBand < nBands; iBand++)
     {
-        const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+        const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
         if (pszNBITS && atoi(pszNBITS) > 0)
             psClient->pBands[iBand].nBits = (UINT8)atoi(pszNBITS);
         else
@@ -1208,7 +1208,8 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             pszFilename, papszOptions, nXSize, nYSize, nBands,
             aosBandDescriptions.List(), bRGBColorSpace, eType, poSRS, gt,
             poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), bIsJPEG2000,
-            bPixelIsPoint, poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
+            bPixelIsPoint, poSrcDS->GetMetadata(GDAL_MDD_RPC),
+            poSrcDS) != CE_None)
     {
         return nullptr;
     }

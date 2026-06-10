@@ -2507,8 +2507,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALTPSTransform;
         }
 
-        else if ((pszMethod == nullptr || EQUAL(pszMethod, "RPC")) &&
-                 (papszMD = GDALGetMetadata(hDS, "RPC")) != nullptr &&
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, GDAL_MDD_RPC)) &&
+                 (papszMD = GDALGetMetadata(hDS, GDAL_MDD_RPC)) != nullptr &&
                  GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
         {
             CPLStringList aosOptions(papszOptions);
@@ -2539,7 +2539,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
 
         else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")) &&
-                 ((papszMD = GDALGetMetadata(hDS, "GEOLOCATION")) != nullptr ||
+                 ((papszMD = GDALGetMetadata(hDS, GDAL_MDD_GEOLOCATION)) !=
+                      nullptr ||
                   pszGeolocArray != nullptr))
         {
             CPLStringList aosGeolocMD;  // keep in this scope

@@ -2741,7 +2741,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                      "Update of compressed VICAR file not supported");
             return nullptr;
         }
-        poDS->SetMetadataItem("COMPRESS", osCompress, "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESS", osCompress, GDAL_MDD_IMAGE_STRUCTURE);
         poDS->m_eCompress =
             EQUAL(osCompress, "BASIC") ? COMPRESS_BASIC : COMPRESS_BASIC2;
         if (poDS->nRasterYSize > 100 * 1000 * 1000 / nBands)

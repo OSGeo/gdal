@@ -259,8 +259,8 @@ GDALAVIFRasterBand::GDALAVIFRasterBand(GDALAVIFDataset *poDSIn, int nBandIn,
 {
     if (nBits != 8 && nBits != 16)
     {
-        GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -551,13 +551,13 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
     if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV444)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "444",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV422)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "422",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV420)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "420",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     for (int i = 0; i < l_nBands; ++i)
     {
@@ -583,7 +583,7 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       CPLSPrintf("Subdataset %d", i + 1));
             }
-            GDALDataset::SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
     }
     else if (m_iPart > m_decoder->imageCount)
@@ -768,14 +768,15 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                  16
 #endif
         ;
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBITS)
     {
         nBits = atoi(pszNBITS);
     }
     else if (eDT == GDT_UInt16)
     {
-        pszNBITS = poFirstBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        pszNBITS = poFirstBand->GetMetadataItem(GDALMD_NBITS,
+                                                GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nBits = atoi(pszNBITS);
@@ -1257,7 +1258,7 @@ void GDALAVIFDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "NBITS");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_NBITS);
         CPLAddXMLAttributeAndValue(psOption, "type", "int");
 #if AVIF_VERSION >= 1040000
         CPLAddXMLAttributeAndValue(

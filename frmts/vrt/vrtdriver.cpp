@@ -316,8 +316,8 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* -------------------------------------------------------------------- */
         /*      Copy any special domains that should be transportable.          */
         /* -------------------------------------------------------------------- */
-        constexpr const char *apszDefaultDomains[] = {"RPC", "IMD",
-                                                      "GEOLOCATION"};
+        constexpr const char *apszDefaultDomains[] = {
+            GDAL_MDD_RPC, GDAL_MDD_IMD, GDAL_MDD_GEOLOCATION};
         for (const char *pszDomain : apszDefaultDomains)
         {
             if (!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0)
@@ -333,7 +333,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             char **papszDomainList = poSrcDS->GetMetadataDomainList();
             constexpr const char *apszReservedDomains[] = {
-                "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+                GDAL_MDD_IMAGE_STRUCTURE, "DERIVED_SUBDATASETS"};
             for (char **papszIter = papszDomainList; papszIter && *papszIter;
                  ++papszIter)
             {
@@ -375,21 +375,21 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     CSLDestroy(papszSrcMDD);
 
     {
-        const char *pszInterleave =
-            poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        const char *pszInterleave = poSrcDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleave)
         {
-            poVRTDS->SetMetadataItem("INTERLEAVE", pszInterleave,
-                                     "IMAGE_STRUCTURE");
+            poVRTDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
     {
-        const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                     "IMAGE_STRUCTURE");
+            poVRTDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -444,12 +444,12 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
          */
         poVRTBand->CopyCommonInfoFrom(poSrcBand);
 
-        const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcBand->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         /* --------------------------------------------------------------------

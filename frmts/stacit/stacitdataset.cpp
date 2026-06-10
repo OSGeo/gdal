@@ -728,7 +728,7 @@ void STACITDataset::SetSubdatasets(
             }
         }
     }
-    GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+    GDALDataset::SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
 }
 
 /************************************************************************/

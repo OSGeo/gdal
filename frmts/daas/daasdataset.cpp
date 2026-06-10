@@ -243,7 +243,7 @@ GDALDAASDataset::GDALDAASDataset(GDALDAASDataset *poParentDS, int iOvrLevel)
     InstantiateBands();
 
     SetMetadata(m_poParentDS->GetMetadata());
-    SetMetadata(m_poParentDS->GetMetadata("RPC"), "RPC");
+    SetMetadata(m_poParentDS->GetMetadata(GDAL_MDD_RPC), GDAL_MDD_RPC);
 }
 
 /************************************************************************/
@@ -289,7 +289,8 @@ void GDALDAASDataset::InstantiateBands()
     if (nBands > 1)
     {
         // Hint for users of the driver
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -944,10 +945,10 @@ bool GDALDAASDataset::GetImageMetadata()
                    &iMonth, &iDay, &iHours, &iMin, &iSec);
         if (r == 6)
         {
-            SetMetadataItem(MD_NAME_ACQDATETIME,
+            SetMetadataItem(GDALMD_ACQUISITIONDATETIME,
                             CPLSPrintf("%04d-%02d-%02d %02d:%02d:%02d", iYear,
                                        iMonth, iDay, iHours, iMin, iSec),
-                            MD_DOMAIN_IMAGERY);
+                            GDAL_MDD_IMAGERY);
         }
     }
 
@@ -956,16 +957,16 @@ bool GDALDAASDataset::GetImageMetadata()
         GetDouble(oProperties, "cloudCover", false, bIgnoredError);
     if (!bIgnoredError)
     {
-        SetMetadataItem(MD_NAME_CLOUDCOVER, CPLSPrintf("%.2f", dfCloudCover),
-                        MD_DOMAIN_IMAGERY);
+        SetMetadataItem(GDALMD_CLOUDCOVER, CPLSPrintf("%.2f", dfCloudCover),
+                        GDAL_MDD_IMAGERY);
     }
 
     CPLString osSatellite(
         GetString(oProperties, "satellite", false, bIgnoredError));
     if (!osSatellite.empty())
     {
-        SetMetadataItem(MD_NAME_SATELLITE, osSatellite.c_str(),
-                        MD_DOMAIN_IMAGERY);
+        SetMetadataItem(GDALMD_SATELLITEID, osSatellite.c_str(),
+                        GDAL_MDD_IMAGERY);
     }
 
     return !bError;
@@ -1111,7 +1112,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
         }
         if (!bRPCError)
         {
-            SetMetadata(aoRPC.List(), "RPC");
+            SetMetadata(aoRPC.List(), GDAL_MDD_RPC);
         }
     }
 }
@@ -1386,8 +1387,9 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
         poDSIn->m_nActualBitDepth != 16 && poDSIn->m_nActualBitDepth != 32 &&
         poDSIn->m_nActualBitDepth != 64)
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", poDSIn->m_nActualBitDepth),
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS,
+                        CPLSPrintf("%d", poDSIn->m_nActualBitDepth),
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 

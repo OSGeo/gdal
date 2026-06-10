@@ -1572,7 +1572,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     WMTSDataset *poDS = new WMTSDataset();
 
     if (aosSubDatasets.size() > 2)
-        poDS->SetMetadata(aosSubDatasets.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubDatasets.List(), GDAL_MDD_SUBDATASETS);
 
     if (nLayerCount == 1)
     {
@@ -2421,7 +2421,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         for (int i = 0; i < nBands; i++)
             poDS->SetBand(i + 1, new WMTSBand(poDS, i + 1, eDataType));
 

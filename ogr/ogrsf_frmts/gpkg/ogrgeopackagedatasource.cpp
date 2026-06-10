@@ -2368,11 +2368,11 @@ bool GDALGeoPackageDataset::InitRaster(
         {
             nBandCount = atoi(pszBAND_COUNT);
             if (nBandCount == 1)
-                GetMetadata("IMAGE_STRUCTURE");
+                GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
-            GetMetadata("IMAGE_STRUCTURE");
+            GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
             nBandCount = m_nBandCountFromMetadata;
             if (nBandCount == 1)
                 m_eTF = GPKG_TF_PNG;
@@ -2551,7 +2551,8 @@ bool GDALGeoPackageDataset::InitRaster(
         return false;
     }
 
-    GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                    GDAL_MDD_IMAGE_STRUCTURE);
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL",
                                     CPLSPrintf("%d", m_nZoomLevel));
 
@@ -3427,7 +3428,7 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)
             CPLFree(pszKey);
         }
         oMDMD.SetMetadata(aosMD.List());
-        oMDMD.SetMetadata(nullptr, "IMAGE_STRUCTURE");
+        oMDMD.SetMetadata(nullptr, GDAL_MDD_IMAGE_STRUCTURE);
 
         GDALPamDataset::FlushCache(bAtClosing);
     }
@@ -3808,7 +3809,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
     if (!m_osRasterTable.empty())
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -4076,7 +4077,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
 
 {
     pszDomain = CheckMetadataDomain(pszDomain);
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubDatasets.List();
 
     if (m_bHasReadMetadataFromStorage)
@@ -4153,7 +4154,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                     CSLConstList papszIter = papszDomainList;
                     while (papszIter && *papszIter)
                     {
-                        if (EQUAL(*papszIter, "IMAGE_STRUCTURE"))
+                        if (EQUAL(*papszIter, GDAL_MDD_IMAGE_STRUCTURE))
                         {
                             CSLConstList papszMD =
                                 oLocalMDMD.GetMetadata(*papszIter);
@@ -4199,7 +4200,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                                 m_osTFFromMetadata = pszTILE_FORMAT;
                                 oMDMD.SetMetadataItem("TILE_FORMAT",
                                                       pszTILE_FORMAT,
-                                                      "IMAGE_STRUCTURE");
+                                                      GDAL_MDD_IMAGE_STRUCTURE);
                             }
 
                             const char *pszNodataValue =
@@ -4707,7 +4708,7 @@ void GDALGeoPackageDataset::FlushMetadata()
         while (papszIter && *papszIter)
         {
             if (!EQUAL(*papszIter, "") &&
-                !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszIter, GDAL_MDD_IMAGE_STRUCTURE) &&
                 !EQUAL(*papszIter, "GEOPACKAGE"))
             {
                 oLocalMDMD.SetMetadata(oMDMD.GetMetadata(*papszIter),
@@ -4719,7 +4720,7 @@ void GDALGeoPackageDataset::FlushMetadata()
         {
             oLocalMDMD.SetMetadataItem(
                 "BAND_COUNT", CPLSPrintf("%d", m_nBandCountFromMetadata),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
             if (nBands == 1)
             {
                 const auto poCT = GetRasterBand(1)->GetColorTable();
@@ -4738,7 +4739,7 @@ void GDALGeoPackageDataset::FlushMetadata()
                     }
                     osVal += '}';
                     oLocalMDMD.SetMetadataItem("COLOR_TABLE", osVal.c_str(),
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
             if (nBands == 1)
@@ -4767,7 +4768,7 @@ void GDALGeoPackageDataset::FlushMetadata()
                 }
                 if (pszTILE_FORMAT)
                     oLocalMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT,
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         if (GetRasterCount() > 0 &&
@@ -4780,7 +4781,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             {
                 oLocalMDMD.SetMetadataItem("NODATA_VALUE",
                                            CPLSPrintf("%.17g", dfNoDataValue),
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         for (int i = 1; i <= GetRasterCount(); ++i)
@@ -5553,8 +5554,8 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                            this, nTileWidth, nTileHeight));
         }
 
-        GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                        "IMAGE_STRUCTURE");
+        GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                        GDAL_MDD_IMAGE_STRUCTURE);
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
         if (!m_osDescription.empty())
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);

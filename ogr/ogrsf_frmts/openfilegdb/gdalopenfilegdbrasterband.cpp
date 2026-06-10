@@ -339,15 +339,18 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             break;
         case 4:
             m_eRasterCompression = Compression::LZ77;
-            SetMetadataItem("COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE");
+            SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
+                            GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case 8:
             m_eRasterCompression = Compression::JPEG;
-            SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+            SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                            GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case 12:
             m_eRasterCompression = Compression::JPEG2000;
-            SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+            SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
+                            GDAL_MDD_IMAGE_STRUCTURE);
             break;
         default:
         {
@@ -593,7 +596,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
     if (m_oMapGDALBandToGDBBandId.size() > 1)
     {
-        SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "BAND", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Figure out number of overviews by looking at the biggest block_key
@@ -900,11 +903,11 @@ void OGROpenFileGDBDataSource::GuessJPEGQuality(int nOverviewCount)
                     if (poJPEGDS)
                     {
                         const char *pszQuality = poJPEGDS->GetMetadataItem(
-                            "JPEG_QUALITY", "IMAGE_STRUCTURE");
+                            "JPEG_QUALITY", GDAL_MDD_IMAGE_STRUCTURE);
                         if (pszQuality)
                         {
                             SetMetadataItem("JPEG_QUALITY", pszQuality,
-                                            "IMAGE_STRUCTURE");
+                                            GDAL_MDD_IMAGE_STRUCTURE);
                         }
                     }
                     VSIUnlink(osTmpFilename);
@@ -1101,8 +1104,8 @@ GDALOpenFileGDBRasterBand::GDALOpenFileGDBRasterBand(
     nBlockYSize = nBlockHeight;
     if (nBitWidth < 8)
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", nBitWidth),
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBitWidth),
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 

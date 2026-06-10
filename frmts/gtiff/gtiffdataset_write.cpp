@@ -2731,7 +2731,7 @@ bool GTiffDataset::GetOverviewParameters(
         nPlanarConfig = PLANARCONFIG_CONTIG;
     }
     const char *pszInterleave =
-        GetOptionValue("INTERLEAVE", "INTERLEAVE_OVERVIEW", &pszOptionKey);
+        GetOptionValue(GDALMD_INTERLEAVE, "INTERLEAVE_OVERVIEW", &pszOptionKey);
     if (pszInterleave != nullptr && pszInterleave[0] != '\0')
     {
         if (EQUAL(pszInterleave, "PIXEL"))
@@ -4110,12 +4110,12 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         CSLConstList papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
         bool bIsXMLOrJSON = false;
 
-        if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
+        if (EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
             EQUAL(papszDomainList[iDomain], "DERIVED_SUBDATASETS"))
             continue;  // Ignored.
         if (EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
             continue;  // Handled elsewhere.
-        if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC))
+        if (EQUAL(papszDomainList[iDomain], GDAL_MDD_RPC))
             continue;  // Handled elsewhere.
         if (EQUAL(papszDomainList[iDomain], "xml:ESRI") &&
             CPLTestBool(CPLGetConfigOption("ESRI_XML_PAM", "NO")))
@@ -4283,7 +4283,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     /*      Handle RPC data written to TIFF RPCCoefficient tag, RPB file,   */
     /*      RPCTEXT file or PAM.                                            */
     /* -------------------------------------------------------------------- */
-    CSLConstList papszRPCMD = poSrcDS->GetMetadata(MD_DOMAIN_RPC);
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     if (papszRPCMD != nullptr)
     {
         bool bRPCSerializedOtherWay = false;
@@ -4320,7 +4320,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
         if (!bRPCSerializedOtherWay && bWriteOnlyInPAMIfNeeded && bSrcIsGeoTIFF)
             cpl::down_cast<GTiffDataset *>(poSrcDS)
-                ->GDALPamDataset::SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+                ->GDALPamDataset::SetMetadata(papszRPCMD, GDAL_MDD_RPC);
     }
 }
 
@@ -4416,7 +4416,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         /* ------------------------------------------------------------------ */
         /*      Handle metadata data written to an IMD file. */
         /* ------------------------------------------------------------------ */
-        CSLConstList papszIMDMD = poSrcDS->GetMetadata(MD_DOMAIN_IMD);
+        CSLConstList papszIMDMD = poSrcDS->GetMetadata(GDAL_MDD_IMD);
         if (papszIMDMD != nullptr)
         {
             GDALWriteIMDFile(pszTIFFFilename, papszIMDMD);
@@ -4453,7 +4453,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
             if (EQUAL(pszCopySrcMDD, "AUTO") && !papszSrcMDD)
             {
-                for (const char *pszDomain : {"", "IMAGERY"})
+                for (const char *pszDomain : {"", GDAL_MDD_IMAGERY})
                 {
                     if (CSLConstList papszMD = poBand->GetMetadata(pszDomain))
                     {
@@ -4472,7 +4472,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                      cpl::Iterate(CSLConstList(papszDomainList)))
                 {
                     if (pszDomain[0] != 0 &&
-                        !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                        !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
                         (!papszSrcMDD ||
                          CSLFindString(papszSrcMDD, pszDomain) >= 0))
                     {
@@ -4587,7 +4587,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     {
         AppendMetadataItem(&psRoot, &psTail, "OVERVIEW_RESAMPLING",
                            pszOverviewResampling, 0, nullptr,
-                           "IMAGE_STRUCTURE");
+                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -4600,8 +4600,8 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             CSLFetchNameValue(papszCreationOptions, "@TILE_INTERLEAVE");
         if (pszTileInterleave && CPLTestBool(pszTileInterleave))
         {
-            AppendMetadataItem(&psRoot, &psTail, "INTERLEAVE", "TILE", 0,
-                               nullptr, "IMAGE_STRUCTURE");
+            AppendMetadataItem(&psRoot, &psTail, GDALMD_INTERLEAVE, "TILE", 0,
+                               nullptr, GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         const char *pszCompress =
@@ -4612,14 +4612,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
                 AppendMetadataItem(
                     &psRoot, &psTail, "WEBP_LEVEL",
                     CPLSPrintf("%d", GTiffGetWebPLevel(papszCreationOptions)),
-                    0, nullptr, "IMAGE_STRUCTURE");
+                    0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         else if (pszCompress && STARTS_WITH_CI(pszCompress, "LERC"))
@@ -4632,21 +4632,21 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
                 AppendMetadataItem(&psRoot, &psTail, "MAX_Z_ERROR",
                                    CSLFetchNameValueDef(papszCreationOptions,
                                                         "MAX_Z_ERROR", ""),
-                                   0, nullptr, "IMAGE_STRUCTURE");
+                                   0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 if (dfMaxZError != dfMaxZErrorOverview)
                 {
                     AppendMetadataItem(
                         &psRoot, &psTail, "MAX_Z_ERROR_OVERVIEW",
                         CSLFetchNameValueDef(papszCreationOptions,
                                              "MAX_Z_ERROR_OVERVIEW", ""),
-                        0, nullptr, "IMAGE_STRUCTURE");
+                        0, nullptr, GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }
@@ -4658,7 +4658,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
-                                   nullptr, "IMAGE_STRUCTURE");
+                                   nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
@@ -4666,7 +4666,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 AppendMetadataItem(
                     &psRoot, &psTail, "JXL_DISTANCE",
                     CPLSPrintf("%f", static_cast<double>(fDistance)), 0,
-                    nullptr, "IMAGE_STRUCTURE");
+                    nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             const float fAlphaDistance =
                 GTiffGetJXLAlphaDistance(papszCreationOptions);
@@ -4675,12 +4675,12 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 AppendMetadataItem(
                     &psRoot, &psTail, "JXL_ALPHA_DISTANCE",
                     CPLSPrintf("%f", static_cast<double>(fAlphaDistance)), 0,
-                    nullptr, "IMAGE_STRUCTURE");
+                    nullptr, GDAL_MDD_IMAGE_STRUCTURE);
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
                 CPLSPrintf("%d", GTiffGetJXLEffort(papszCreationOptions)), 0,
-                nullptr, "IMAGE_STRUCTURE");
+                nullptr, GDAL_MDD_IMAGE_STRUCTURE);
         }
 #endif
     }
@@ -4803,10 +4803,10 @@ void GTiffDataset::PushMetadataToPam()
         {
             char **papszMD = poSrcMDMD->GetMetadata(papszDomainList[iDomain]);
 
-            if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) ||
-                EQUAL(papszDomainList[iDomain], MD_DOMAIN_IMD) ||
+            if (EQUAL(papszDomainList[iDomain], GDAL_MDD_RPC) ||
+                EQUAL(papszDomainList[iDomain], GDAL_MDD_IMD) ||
                 EQUAL(papszDomainList[iDomain], "_temporary_") ||
-                EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
+                EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
                 EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
                 continue;
 
@@ -5473,7 +5473,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     else
     {
         if (const char *pszValue =
-                CSLFetchNameValue(papszParamList, "INTERLEAVE"))
+                CSLFetchNameValue(papszParamList, GDALMD_INTERLEAVE))
         {
             if (EQUAL(pszValue, "PIXEL"))
             {
@@ -5561,11 +5561,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     /*      specified for GDT_UInt8, GDT_UInt16, GDT_UInt32.                 */
     /* -------------------------------------------------------------------- */
     int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-    if (CSLFetchNameValue(papszParamList, "NBITS") != nullptr)
+    if (CSLFetchNameValue(papszParamList, GDALMD_NBITS) != nullptr)
     {
         int nMinBits = 0;
         int nMaxBits = 0;
-        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
+        l_nBitsPerSample =
+            atoi(CSLFetchNameValue(papszParamList, GDALMD_NBITS));
         if (eType == GDT_UInt8)
         {
             nMinBits = 1;
@@ -6582,7 +6583,7 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
         CSLSetNameValue(papszLocalParameters, "BLOCKYSIZE", "16");
     if (m_nBitsPerSample == 12)
         papszLocalParameters =
-            CSLSetNameValue(papszLocalParameters, "NBITS", "12");
+            CSLSetNameValue(papszLocalParameters, GDALMD_NBITS, "12");
 
     const CPLString osTmpFilenameIn(
         VSIMemGenerateHiddenFilename("gtiffdataset_guess_jpeg_quality_tmp"));
@@ -6863,7 +6864,8 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     {
         int nColorMode = 0;
 
-        poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (!TIFFGetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode) ||
             nColorMode != JPEGCOLORMODE_RGB)
             TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
@@ -6978,17 +6980,19 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
             poDS->SetBand(iBand + 1, std::make_unique<GTiffOddBitsBand>(
                                          poDS.get(), iBand + 1));
             poDS->GetRasterBand(iBand + 1)->SetMetadataItem(
-                "NBITS", CPLString().Printf("%d", poDS->m_nBitsPerSample),
-                "IMAGE_STRUCTURE");
+                GDALMD_NBITS, CPLString().Printf("%d", poDS->m_nBitsPerSample),
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
     poDS->GetDiscardLsbOption(papszParamList);
 
     if (poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG && l_nBands != 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS->oOvManager.Initialize(poDS.get(), pszFilename);
 
@@ -7367,13 +7371,15 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
 
-    if (poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr &&
-        atoi(poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")) > 0 &&
-        CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr)
+    if (poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) !=
+            nullptr &&
+        atoi(poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE)) >
+            0 &&
+        CSLFetchNameValue(papszCreateOptions, GDALMD_NBITS) == nullptr)
     {
         papszCreateOptions = CSLSetNameValue(
-            papszCreateOptions, "NBITS",
-            poPBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            papszCreateOptions, GDALMD_NBITS,
+            poPBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
     }
 
     if (CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
@@ -7381,7 +7387,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     {
         poPBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            poPBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poPBand->GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poPBand->EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType)
         {
@@ -7681,7 +7687,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                     pasNewExtraSamples[iExtraBand - nBaseSamples - 1] =
                         GTiffGetAlphaValue(
                             poSrcDS->GetRasterBand(iExtraBand)
-                                ->GetMetadataItem("ALPHA", "IMAGE_STRUCTURE"),
+                                ->GetMetadataItem("ALPHA",
+                                                  GDAL_MDD_IMAGE_STRUCTURE),
                             nAlpha);
                 }
             }
@@ -7838,7 +7845,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     bool bCreateMask = false;
     CPLString osHiddenStructuralMD;
     const char *pszInterleave =
-        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "PIXEL");
     if (bCopySrcOverviews &&
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "NO")))
     {
@@ -8214,8 +8221,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     if (bTileInterleaving)
     {
-        poDS->m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
-                                           "IMAGE_STRUCTURE");
+        poDS->m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "TILE",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
@@ -8246,7 +8253,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             poBand->eDataType = GDT_UInt8;
             poBand->EnablePixelTypeSignedByteWarning(false);
             poBand->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
             poBand->EnablePixelTypeSignedByteWarning(true);
         }
     }
@@ -9211,7 +9218,7 @@ CPLErr GTiffDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
     CPLErr eErr = CE_None;
     if (eAccess == GA_Update)
     {
-        if (pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC))
+        if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_RPC))
         {
             // So that a subsequent GetMetadata() wouldn't override our new
             // values

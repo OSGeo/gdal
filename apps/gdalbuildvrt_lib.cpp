@@ -478,7 +478,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
 {
     GDALDataset *poDS = GDALDataset::FromHandle(hDS);
     const char *dsFileName = poDS->GetDescription();
-    CSLConstList papszMetadata = poDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszMetadata = poDS->GetMetadata(GDAL_MDD_SUBDATASETS);
     if (CSLCount(papszMetadata) > 0 && poDS->GetRasterCount() == 0)
     {
         ppszInputFilenames = static_cast<char **>(CPLRealloc(

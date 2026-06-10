@@ -370,7 +370,7 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
             const CPLStringList aosDomains(poSrcDS->GetMetadataDomainList());
             for (const char *domain : aosDomains)
             {
-                if (!EQUAL(domain, "IMAGE_STRUCTURE"))
+                if (!EQUAL(domain, GDAL_MDD_IMAGE_STRUCTURE))
                 {
                     if (poRetDS->SetMetadata(poSrcDS->GetMetadata(domain),
                                              domain) != CE_None)
@@ -388,7 +388,7 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 poSrcDS->GetRasterBand(i + 1)->GetMetadataDomainList());
             for (const char *domain : aosDomains)
             {
-                if (!EQUAL(domain, "IMAGE_STRUCTURE"))
+                if (!EQUAL(domain, GDAL_MDD_IMAGE_STRUCTURE))
                 {
                     if (poRetDS->GetRasterBand(i + 1)->SetMetadata(
                             poSrcDS->GetRasterBand(i + 1)->GetMetadata(domain),

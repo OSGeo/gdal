@@ -96,11 +96,11 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
         !poBaseDSIn->bPromoteTo8Bit)
     {
         SetMetadataItem(
-            "NBITS",
+            GDALMD_NBITS,
             CPLString().Printf("%d", oCodeStream.get_bit_depth(nBand - 1)),
-            "IMAGE_STRUCTURE");
+            GDAL_MDD_IMAGE_STRUCTURE);
     }
-    SetMetadataItem("COMPRESSION", "JP2000", "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_COMPRESSION, "JP2000", GDAL_MDD_IMAGE_STRUCTURE);
 
     // Use tile dimension as block size, unless it is too big
     kdu_dims valid_tiles;
@@ -1023,7 +1023,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (pszOrder)
         {
-            poDS->SetMetadataItem("Corder", pszOrder, "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("Corder", pszOrder, GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         poDS->bUseYCC = false;
@@ -2322,9 +2322,10 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Work out the precision.
     int nBits = 0;
 
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBITS == nullptr)
-        pszNBITS = poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        pszNBITS = poPrototypeBand->GetMetadataItem(GDALMD_NBITS,
+                                                    GDAL_MDD_IMAGE_STRUCTURE);
     if (pszNBITS != nullptr)
     {
         nBits = atoi(pszNBITS);
@@ -2689,7 +2690,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         ((poSrcDS->GetGeoTransform(gt) == CE_None &&
           (gt.xorig != 0.0 || gt.xscale != 1.0 || gt.xrot != 0.0 ||
            gt.yorig != 0.0 || gt.yrot != 0.0 || std::abs(gt.yscale) != 1.0)) ||
-         poSrcDS->GetGCPCount() > 0 || poSrcDS->GetMetadata("RPC") != nullptr))
+         poSrcDS->GetGCPCount() > 0 ||
+         poSrcDS->GetMetadata(GDAL_MDD_RPC) != nullptr))
     {
         GDALJP2Metadata oJP2MD;
 
@@ -2704,7 +2706,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
             oJP2MD.SetGeoTransform(gt);
         }
 
-        oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));
+        oJP2MD.SetRPCMD(poSrcDS->GetMetadata(GDAL_MDD_RPC));
 
         const char *const pszAreaOrPoint =
             poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);

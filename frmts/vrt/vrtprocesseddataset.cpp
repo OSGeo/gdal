@@ -761,7 +761,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     }
 
     if (nBands > 1)
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     m_oXMLTree.reset(CPLCloneXMLTree(psTree));
 
@@ -1224,7 +1224,7 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
     auto &abyOutput = m_abyOutput;
 
     const char *pszInterleave =
-        m_poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        m_poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (nFirstBandCount > 1 && (!pszInterleave || EQUAL(pszInterleave, "BAND")))
     {
         // If there are several bands and the source dataset organization

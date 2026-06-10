@@ -55,7 +55,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
 
 CSLConstList GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "RPC"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_RPC))
     {
         const int nPAMIndex = GetPAMGeorefSrcIndex();
         if (nPAMIndex >= 0 &&
@@ -106,7 +106,8 @@ CSLConstList GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
 const char *GDALGeorefPamDataset::GetMetadataItem(const char *pszName,
                                                   const char *pszDomain)
 {
-    if (pszDomain == nullptr || EQUAL(pszDomain, "") || EQUAL(pszDomain, "RPC"))
+    if (pszDomain == nullptr || EQUAL(pszDomain, "") ||
+        EQUAL(pszDomain, GDAL_MDD_RPC))
     {
         return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
     }

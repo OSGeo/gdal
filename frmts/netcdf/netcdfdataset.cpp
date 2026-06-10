@@ -2964,8 +2964,9 @@ bool netCDFDataset::SetDefineMode(bool bNewDefineMode)
 
 char **netCDFDataset::GetMetadataDomainList()
 {
-    char **papszDomains = BuildMetadataDomainList(
-        GDALDataset::GetMetadataDomainList(), TRUE, "SUBDATASETS", nullptr);
+    char **papszDomains =
+        BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
+                                GDAL_MDD_SUBDATASETS, nullptr);
     for (const auto &kv : m_oMapDomainToJSon)
         papszDomains = CSLAddString(papszDomains, ("json:" + kv.first).c_str());
     return papszDomains;
@@ -2976,7 +2977,7 @@ char **netCDFDataset::GetMetadataDomainList()
 /************************************************************************/
 CSLConstList netCDFDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return aosSubDatasets.List();
 
     if (pszDomain != nullptr && STARTS_WITH(pszDomain, "json:"))
@@ -4342,35 +4343,41 @@ void netCDFDataset::SetProjectionFromVar(
         if (bSwitchedXY)
         {
             std::swap(pszGeolocXFullName, pszGeolocYFullName);
-            GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
+            GDALPamDataset::SetMetadataItem("SWAP_XY", "YES",
+                                            GDAL_MDD_GEOLOCATION);
         }
 
         CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
                  pszGeolocXFullName, pszGeolocYFullName);
 
         GDALPamDataset::SetMetadataItem("SRS", osGeolocWKT.c_str(),
-                                        "GEOLOCATION");
+                                        GDAL_MDD_GEOLOCATION);
 
         CPLString osTMP;
         osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
                      pszGeolocXFullName);
 
-        GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-        GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("X_DATASET", osTMP,
+                                        GDAL_MDD_GEOLOCATION);
+        GDALPamDataset::SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
         osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
                      pszGeolocYFullName);
 
-        GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-        GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP,
+                                        GDAL_MDD_GEOLOCATION);
+        GDALPamDataset::SetMetadataItem("Y_BAND", "1", GDAL_MDD_GEOLOCATION);
 
-        GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-        GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0",
+                                        GDAL_MDD_GEOLOCATION);
+        GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1",
+                                        GDAL_MDD_GEOLOCATION);
 
-        GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-        GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0",
+                                        GDAL_MDD_GEOLOCATION);
+        GDALPamDataset::SetMetadataItem("LINE_STEP", "1", GDAL_MDD_GEOLOCATION);
 
         GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION",
-                                        "PIXEL_CENTER", "GEOLOCATION");
+                                        "PIXEL_CENTER", GDAL_MDD_GEOLOCATION);
     }
 
     // Set GeoTransform if we got a complete one - after projection has been set
@@ -4598,33 +4605,33 @@ bool netCDFDataset::ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId)
     if (bSwitchedXY)
     {
         std::swap(pszGeolocXFullName, pszGeolocYFullName);
-        GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
+        GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", GDAL_MDD_GEOLOCATION);
     }
 
     CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
              pszGeolocXFullName, pszGeolocYFullName);
 
     GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
-                                    "GEOLOCATION");
+                                    GDAL_MDD_GEOLOCATION);
 
     CPLString osTMP;
     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocXFullName);
 
-    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocYFullName);
 
-    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("Y_BAND", "1", GDAL_MDD_GEOLOCATION);
 
-    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", GDAL_MDD_GEOLOCATION);
 
-    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", GDAL_MDD_GEOLOCATION);
 
     GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER",
-                                    "GEOLOCATION");
+                                    GDAL_MDD_GEOLOCATION);
     return true;
 }
 
@@ -4736,26 +4743,26 @@ bool netCDFDataset::ProcessNASAEMITGeoLocation(int nGroupId, int nVarId)
              pszGeolocXFullName, pszGeolocYFullName);
 
     GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
-                                    "GEOLOCATION");
+                                    GDAL_MDD_GEOLOCATION);
 
     CPLString osTMP;
     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocXFullName);
 
-    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocYFullName);
 
-    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("Y_BAND", "1", GDAL_MDD_GEOLOCATION);
 
-    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", GDAL_MDD_GEOLOCATION);
 
-    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", GDAL_MDD_GEOLOCATION);
 
     GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER",
-                                    "GEOLOCATION");
+                                    GDAL_MDD_GEOLOCATION);
     return true;
 }
 
@@ -4874,7 +4881,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                     {
                         std::swap(osGeolocXFullName, osGeolocYFullName);
                         GDALPamDataset::SetMetadataItem("SWAP_XY", "YES",
-                                                        "GEOLOCATION");
+                                                        GDAL_MDD_GEOLOCATION);
                     }
 
                     bAddGeoloc = true;
@@ -4884,37 +4891,37 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                              osGeolocYFullName.c_str());
 
                     GDALPamDataset::SetMetadataItem("SRS", osGeolocWKT.c_str(),
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
 
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
                                  osGeolocXFullName.c_str());
 
                     GDALPamDataset::SetMetadataItem("X_DATASET", osTMP,
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                     GDALPamDataset::SetMetadataItem("X_BAND", "1",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),
                                  osGeolocYFullName.c_str());
 
                     GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP,
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                     GDALPamDataset::SetMetadataItem("Y_BAND", "1",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
 
                     GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                     GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
 
                     GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                     GDALPamDataset::SetMetadataItem("LINE_STEP", "1",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
 
                     GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION",
                                                     "PIXEL_CENTER",
-                                                    "GEOLOCATION");
+                                                    GDAL_MDD_GEOLOCATION);
                 }
                 else
                 {
@@ -5389,7 +5396,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
     // Check GEOLOCATION information.
     CSLConstList papszGeolocationInfo =
-        netCDFDataset::GetMetadata("GEOLOCATION");
+        netCDFDataset::GetMetadata(GDAL_MDD_GEOLOCATION);
     if (papszGeolocationInfo != nullptr)
     {
         // Look for geolocation datasets.
@@ -6168,8 +6175,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                                                        VSIFree);
             double *padLatVal = nullptr;
             // Override lat values with the ones in GEOLOCATION/Y_VALUES.
-            if (netCDFDataset::GetMetadataItem("Y_VALUES", "GEOLOCATION") !=
-                nullptr)
+            if (netCDFDataset::GetMetadataItem("Y_VALUES",
+                                               GDAL_MDD_GEOLOCATION) != nullptr)
             {
                 int nTemp = 0;
                 adLatValKeeper.reset(Get1DGeolocation("Y_VALUES", nTemp));
@@ -9719,9 +9726,11 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     // Copy GeoTransform and Projection.
 
     // Copy geolocation info.
-    CSLConstList papszGeolocationInfo = poSrcDS->GetMetadata("GEOLOCATION");
+    CSLConstList papszGeolocationInfo =
+        poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION);
     if (papszGeolocationInfo != nullptr)
-        poDS->GDALPamDataset::SetMetadata(papszGeolocationInfo, "GEOLOCATION");
+        poDS->GDALPamDataset::SetMetadata(papszGeolocationInfo,
+                                          GDAL_MDD_GEOLOCATION);
 
     // Copy geotransform.
     bool bGotGeoTransform = false;

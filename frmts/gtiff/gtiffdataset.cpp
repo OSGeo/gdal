@@ -1194,8 +1194,9 @@ void GTiffDataset::ScanDirectories()
                     // poODS->m_nZSTDLevel = m_nZSTDLevel;
 
                     if (const char *pszOverviewResampling =
-                            m_oGTiffMDMD.GetMetadataItem("OVERVIEW_RESAMPLING",
-                                                         "IMAGE_STRUCTURE"))
+                            m_oGTiffMDMD.GetMetadataItem(
+                                "OVERVIEW_RESAMPLING",
+                                GDAL_MDD_IMAGE_STRUCTURE))
                     {
                         for (int iBand = 1; iBand <= poODS->GetRasterCount();
                              ++iBand)
@@ -1422,7 +1423,7 @@ void GTiffDataset::ScanDirectories()
     /* -------------------------------------------------------------------- */
     if (aosSubdatasets.size() > 2)
     {
-        m_oGTiffMDMD.SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        m_oGTiffMDMD.SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
     }
 }
 

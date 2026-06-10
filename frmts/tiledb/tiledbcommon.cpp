@@ -383,7 +383,7 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
     try
     {
         if (poSrcDS->GetRasterCount() > 0 ||
-            poSrcDS->GetMetadata("SUBDATASETS"))
+            poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS))
         {
             return TileDBRasterDataset::CreateCopy(pszFilename, poSrcDS,
                                                    bStrict, papszOptions,

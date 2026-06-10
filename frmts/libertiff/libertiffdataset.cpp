@@ -2022,15 +2022,15 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
 {
     if (m_image->compression() == LIBERTIFF_NS::Compression::PackBits)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", "PACKBITS",
-                                     "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "PACKBITS",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::Deflate ||
              m_image->compression() == LIBERTIFF_NS::Compression::LegacyDeflate)
     {
         m_decompressor = CPLGetDecompressor("zlib");
-        GDALDataset::SetMetadataItem("COMPRESSION", "DEFLATE",
-                                     "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::ZSTD)
     {
@@ -2042,7 +2042,8 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                         "has not been built against libzstd");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "ZSTD", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "ZSTD",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LZMA)
     {
@@ -2054,11 +2055,13 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                         "has not been built against liblzma");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "LZMA", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "LZMA",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LZW)
     {
-        GDALDataset::SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "LZW",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::JPEG)
     {
@@ -2074,14 +2077,14 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
             m_image->samplesPerPixel() == 3)
         {
             GDALDataset::SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                         "IMAGE_STRUCTURE");
-            GDALDataset::SetMetadataItem("COMPRESSION", "YCbCr JPEG",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
+            GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "YCbCr JPEG",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
-            GDALDataset::SetMetadataItem("COMPRESSION", "JPEG",
-                                         "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (m_image->samplesPerPixel() != 1 &&
             m_image->samplesPerPixel() != 3 &&
@@ -2137,7 +2140,8 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                 "Compression = WEBP not supported because WEBP driver missing");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "WEBP", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "WEBP",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::JXL ||
              m_image->compression() == LIBERTIFF_NS::Compression::JXL_DNG_1_7)
@@ -2149,7 +2153,8 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
                 "Compression = JXL not supported because JXL driver missing");
             return false;
         }
-        GDALDataset::SetMetadataItem("COMPRESSION", "JXL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "JXL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->compression() == LIBERTIFF_NS::Compression::LERC)
     {
@@ -2189,18 +2194,18 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
         }
 
         GDALDataset::SetMetadataItem(
-            "COMPRESSION",
+            GDALMD_COMPRESSION,
             m_lercAdditionalCompression == LERC_ADD_COMPRESSION_DEFLATE
                 ? "LERC_DEFLATE"
             : m_lercAdditionalCompression == LERC_ADD_COMPRESSION_ZSTD
                 ? "LERC_ZSTD"
                 : "LERC",
-            "IMAGE_STRUCTURE");
+            GDAL_MDD_IMAGE_STRUCTURE);
 
         if (m_lercVersion == LERC_VERSION_2_4)
         {
             GDALDataset::SetMetadataItem("LERC_VERSION", "2.4",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 #endif
     }
@@ -2291,7 +2296,8 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
     // Deal with Predictor tag
     if (m_image->predictor() == 2)
     {
-        GDALDataset::SetMetadataItem("PREDICTOR", "2", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("PREDICTOR", "2",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->predictor() == 3)
     {
@@ -2300,7 +2306,8 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
             CPLDebug("LIBERTIFF", "Unhandled predictor=3 with non-float data");
             return false;
         }
-        GDALDataset::SetMetadataItem("PREDICTOR", "3", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("PREDICTOR", "3",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_image->predictor() > 3)
     {
@@ -2312,9 +2319,11 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
     if (m_image->planarConfiguration() ==
             LIBERTIFF_NS::PlanarConfiguration::Separate ||
         m_image->samplesPerPixel() == 1)
-        GDALDataset::SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     const int nNativeDTSize = GDALGetDataTypeSizeBytes(eDT);
     const bool bSeparate = m_image->planarConfiguration() ==
@@ -2445,7 +2454,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
             {
                 poBand->m_eColorInterp = GCI_AlphaBand;
                 poBand->GDALRasterBand::SetMetadataItem(
-                    "ALPHA", "PREMULTIPLIED", "IMAGE_STRUCTURE");
+                    "ALPHA", "PREMULTIPLIED", GDAL_MDD_IMAGE_STRUCTURE);
                 if (!m_poAlphaBand)
                     m_poAlphaBand = poBand.get();
             }
@@ -2456,8 +2465,8 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
             m_image->bitsPerSample() != 128)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "NBITS", CPLSPrintf("%u", m_image->bitsPerSample()),
-                "IMAGE_STRUCTURE");
+                GDALMD_NBITS, CPLSPrintf("%u", m_image->bitsPerSample()),
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         if (l_nBands == 1 && eDT == GDT_UInt8)
@@ -2469,7 +2478,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
             LIBERTIFF_NS::PhotometricInterpretation::MinIsWhite)
         {
             GDALDataset::SetMetadataItem("MINISWHITE", "YES",
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         if (m_image->bitsPerSample() == 1 && !poBand->m_poColorTable)
@@ -2590,7 +2599,8 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (bLayoutIFDSBeforeData && bBlockOrderRowMajor &&
                  bLeaderSizeAsUInt4 && bTrailerRepeatedLast4BytesRepeated)
         {
-            GDALDataset::SetMetadataItem("LAYOUT", "COG", "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem("LAYOUT", "COG",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -2644,7 +2654,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
             papoBands = nullptr;
             nRasterXSize = 0;
             nRasterYSize = 0;
-            GDALDataset::SetMetadata(aosList.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosList.List(), GDAL_MDD_SUBDATASETS);
             return true;
         }
         else if (!m_image)
@@ -2806,7 +2816,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (pszKey == nullptr || pszValue == nullptr)
                         continue;
-                    if (EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+                    if (EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
                     {
                         if (m_image->compression() ==
                                 LIBERTIFF_NS::Compression::WEBP &&
@@ -2823,7 +2833,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 GDALDataset::SetMetadataItem(
                                     "COMPRESSION_REVERSIBILITY", "LOSSY",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
                             }
                         }
                         else if (m_image->compression() ==
@@ -2853,7 +2863,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 GDALDataset::SetMetadataItem(
                                     "COMPRESSION_REVERSIBILITY", "LOSSY",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
                             }
                         }
                         else if (m_image->compression() ==
@@ -2865,7 +2875,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 GDALDataset::SetMetadataItem(
                                     "COMPRESSION_REVERSIBILITY", "LOSSY",
-                                    "IMAGE_STRUCTURE");
+                                    GDAL_MDD_IMAGE_STRUCTURE);
                             }
                         }
                         else if (m_image->compression() ==
@@ -2972,8 +2982,8 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
     if ((m_image->compression() == LIBERTIFF_NS::Compression::WEBP ||
          m_image->compression() == LIBERTIFF_NS::Compression::JXL ||
          m_image->compression() == LIBERTIFF_NS::Compression::JXL_DNG_1_7) &&
-        GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") ==
-            nullptr)
+        GetMetadataItem("COMPRESSION_REVERSIBILITY",
+                        GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
     {
         const char *pszDriverName =
             m_image->compression() == LIBERTIFF_NS::Compression::WEBP
@@ -3001,11 +3011,12 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     const char *pszReversibility =
                         poTileDataset->GetMetadataItem(
-                            "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+                            "COMPRESSION_REVERSIBILITY",
+                            GDAL_MDD_IMAGE_STRUCTURE);
                     if (pszReversibility)
                         GDALDataset::SetMetadataItem(
                             "COMPRESSION_REVERSIBILITY", pszReversibility,
-                            "IMAGE_STRUCTURE");
+                            GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }
@@ -3352,7 +3363,7 @@ void LIBERTIFFDataset::ReadRPCTag()
             GDALDataset::SetMetadata(
                 gdal::tiff_common::TIFFRPCTagToRPCMetadata(adfRPC.data())
                     .List(),
-                "RPC");
+                GDAL_MDD_RPC);
         }
     }
 }

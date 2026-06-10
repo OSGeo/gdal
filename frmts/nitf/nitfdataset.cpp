@@ -1164,7 +1164,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
             char *pszAEQD = nullptr;
             oSRS_AEQD.exportToWkt(&(pszAEQD));
-            poDS->SetMetadataItem("GCPPROJECTIONX", pszAEQD, "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem("GCPPROJECTIONX", pszAEQD,
+                                  GDAL_MDD_IMAGE_STRUCTURE);
             CPLFree(pszAEQD);
         }
     }
@@ -1400,19 +1401,23 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     if (psImage == nullptr)
         /* do nothing */;
     else if (psImage->szIC[1] == '1')
-        poDS->SetMetadataItem("COMPRESSION", "BILEVEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "BILEVEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '2')
-        poDS->SetMetadataItem("COMPRESSION", "ARIDPCM", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ARIDPCM",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '3')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '4')
-        poDS->SetMetadataItem("COMPRESSION", "VECTOR QUANTIZATION",
-                              "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "VECTOR QUANTIZATION",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '5')
-        poDS->SetMetadataItem("COMPRESSION", "LOSSLESS JPEG",
-                              "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "LOSSLESS JPEG",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (psImage->szIC[1] == '8')
-        poDS->SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Do we have RPC info.                                            */
@@ -1447,7 +1452,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         if (papszMD != nullptr)
         {
             bHasLoadedRPCTXT = true;
-            poDS->SetMetadata(papszMD, "RPC");
+            poDS->SetMetadata(papszMD, GDAL_MDD_RPC);
             CSLDestroy(papszMD);
         }
         else
@@ -1461,84 +1466,84 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         char szValue[1280];
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_BIAS);
-        poDS->SetMetadataItem("ERR_BIAS", szValue, "RPC");
+        poDS->SetMetadataItem("ERR_BIAS", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_RAND);
-        poDS->SetMetadataItem("ERR_RAND", szValue, "RPC");
+        poDS->SetMetadataItem("ERR_RAND", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF);
-        poDS->SetMetadataItem("LINE_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_SCALE);
-        poDS->SetMetadataItem("LINE_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_OFF);
-        poDS->SetMetadataItem("SAMP_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.SAMP_SCALE);
-        poDS->SetMetadataItem("SAMP_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_OFF);
-        poDS->SetMetadataItem("LONG_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LONG_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("LONG_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LONG_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_OFF);
-        poDS->SetMetadataItem("LAT_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("LAT_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("LAT_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("LAT_SCALE", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_OFF);
-        poDS->SetMetadataItem("HEIGHT_OFF", szValue, "RPC");
+        poDS->SetMetadataItem("HEIGHT_OFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g", sRPCInfo.HEIGHT_SCALE);
-        poDS->SetMetadataItem("HEIGHT_SCALE", szValue, "RPC");
+        poDS->SetMetadataItem("HEIGHT_SCALE", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.LINE_NUM_COEFF[i]);
-        poDS->SetMetadataItem("LINE_NUM_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_NUM_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.LINE_DEN_COEFF[i]);
-        poDS->SetMetadataItem("LINE_DEN_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("LINE_DEN_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.SAMP_NUM_COEFF[i]);
-        poDS->SetMetadataItem("SAMP_NUM_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_NUM_COEFF", szValue, GDAL_MDD_RPC);
 
         szValue[0] = '\0';
         for (int i = 0; i < 20; i++)
             CPLsnprintf(szValue + strlen(szValue),
                         sizeof(szValue) - strlen(szValue), "%.16g ",
                         sRPCInfo.SAMP_DEN_COEFF[i]);
-        poDS->SetMetadataItem("SAMP_DEN_COEFF", szValue, "RPC");
+        poDS->SetMetadataItem("SAMP_DEN_COEFF", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LONG_OFF - sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("MIN_LONG", szValue, "RPC");
+        poDS->SetMetadataItem("MIN_LONG", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LONG_OFF + sRPCInfo.LONG_SCALE);
-        poDS->SetMetadataItem("MAX_LONG", szValue, "RPC");
+        poDS->SetMetadataItem("MAX_LONG", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LAT_OFF - sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("MIN_LAT", szValue, "RPC");
+        poDS->SetMetadataItem("MIN_LAT", szValue, GDAL_MDD_RPC);
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
                     sRPCInfo.LAT_OFF + sRPCInfo.LAT_SCALE);
-        poDS->SetMetadataItem("MAX_LAT", szValue, "RPC");
+        poDS->SetMetadataItem("MAX_LAT", szValue, GDAL_MDD_RPC);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1663,7 +1668,8 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
         if (nIMIndex == -1 && nSubDSCount > 1)
         {
-            poDS->GDALMajorObject::SetMetadata(papszSubdatasets, "SUBDATASETS");
+            poDS->GDALMajorObject::SetMetadata(papszSubdatasets,
+                                               GDAL_MDD_SUBDATASETS);
         }
 
         CSLDestroy(papszSubdatasets);
@@ -3263,19 +3269,21 @@ char **NITFDataset::GetMetadataDomainList()
 
 void NITFDataset::InitializeImageStructureMetadata()
 {
-    if (oSpecialMD.GetMetadata("IMAGE_STRUCTURE") != nullptr)
+    if (oSpecialMD.GetMetadata(GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
         return;
 
-    oSpecialMD.SetMetadata(GDALPamDataset::GetMetadata("IMAGE_STRUCTURE"),
-                           "IMAGE_STRUCTURE");
+    oSpecialMD.SetMetadata(
+        GDALPamDataset::GetMetadata(GDAL_MDD_IMAGE_STRUCTURE),
+        GDAL_MDD_IMAGE_STRUCTURE);
     if (poJ2KDataset)
     {
         const char *pszReversibility = poJ2KDataset->GetMetadataItem(
-            "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
         if (pszReversibility)
         {
             oSpecialMD.SetMetadataItem("COMPRESSION_REVERSIBILITY",
-                                       pszReversibility, "IMAGE_STRUCTURE");
+                                       pszReversibility,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 }
@@ -3361,7 +3369,7 @@ CSLConstList NITFDataset::GetMetadata(const char *pszDomain)
         return oSpecialMD.GetMetadata(pszDomain);
     }
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         poJ2KDataset)
     {
         InitializeImageStructureMetadata();
@@ -3442,7 +3450,7 @@ const char *NITFDataset::GetMetadataItem(const char *pszName,
         !osRSetVRT.empty())
         return osRSetVRT;
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         poJ2KDataset && EQUAL(pszName, "COMPRESSION_REVERSIBILITY"))
     {
         InitializeImageStructureMetadata();
@@ -4176,7 +4184,7 @@ static CPLStringList NITFJP2KAKOptions(const CPLStringList &aosOptionsIn,
         }
     }
 
-    aoJP2KAKOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2KAKOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", nABPP));
 
     return aoJP2KAKOptions;
 }
@@ -4316,7 +4324,7 @@ static CPLStringList NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
         aoJP2OJPOptions.AddString("PROFILE=UNRESTRICTED");
     }
 
-    aoJP2OJPOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2OJPOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", nABPP));
 
     return aoJP2OJPOptions;
 }
@@ -4489,7 +4497,7 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
         aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
     }
 
-    if (const char *pszNBITS = aosOptions.FetchNameValue("NBITS"))
+    if (const char *pszNBITS = aosOptions.FetchNameValue(GDALMD_NBITS))
     {
         aosOptions.SetNameValue("ABPP", pszNBITS);
     }
@@ -5247,7 +5255,7 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (!bUseSrcNITFMetadata)
         nGCIFFlags &= ~GCIF_METADATA;
 
-    CSLConstList papszRPC = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPC = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     if (papszRPC != nullptr && bUseSrcNITFMetadata &&
         CPLFetchBool(aosOptions.List(), "RPC00B", true))
     {
@@ -5319,7 +5327,8 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         nABPP = atoi(pszABPP);
     }
     else if (const char *pszNBITS = aosOptions.FetchNameValueDef(
-                 "NBITS", poBand1->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))
+                 GDALMD_NBITS, poBand1->GetMetadataItem(
+                                   GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE)))
     {
         aosOptions.SetNameValue("ABPP", pszNBITS);
         nABPP = atoi(pszNBITS);

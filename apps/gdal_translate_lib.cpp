@@ -1750,17 +1750,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          psOptions->aosDomainMetadataOptions);
 
     const char *pszInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave)
-        poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
+        poVDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
+                               GDAL_MDD_IMAGE_STRUCTURE);
 
     {
-        const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                   "IMAGE_STRUCTURE");
+            poVDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -1818,17 +1819,17 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        CSLConstList papszMD = poSrcDS->GetMetadata("RPC");
+        CSLConstList papszMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
         if (papszMD != nullptr)
-            poVDS->SetMetadata(papszMD, "RPC");
+            poVDS->SetMetadata(papszMD, GDAL_MDD_RPC);
 
-        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION);
         if (papszMD != nullptr)
-            poVDS->SetMetadata(papszMD, "GEOLOCATION");
+            poVDS->SetMetadata(papszMD, GDAL_MDD_GEOLOCATION);
     }
     else
     {
-        CPLStringList aosMD(poSrcDSOri->GetMetadata("RPC"));
+        CPLStringList aosMD(poSrcDSOri->GetMetadata(GDAL_MDD_RPC));
         if (!aosMD.empty())
         {
             double dfSAMP_OFF =
@@ -1877,7 +1878,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             osField.Printf("%.15g", dfSAMP_SCALE);
             aosMD.SetNameValue("SAMP_SCALE", osField);
 
-            poVDS->SetMetadata(aosMD.List(), "RPC");
+            poVDS->SetMetadata(aosMD.List(), GDAL_MDD_RPC);
         }
     }
 
@@ -2157,13 +2158,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
         // Preserve NBITS if no option change values
         const char *pszNBits =
-            poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBits && psOptions->nRGBExpand == 0 &&
             psOptions->asScaleParams.empty() && !psOptions->bUnscale &&
             psOptions->eOutputType == GDT_Unknown &&
             psOptions->osResampling.empty())
         {
-            poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, pszNBits,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         // Preserve PIXELTYPE if no option change values
@@ -2173,22 +2175,22 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->osResampling.empty())
         {
             poSrcBand->EnablePixelTypeSignedByteWarning(false);
-            const char *pszPixelType =
-                poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            const char *pszPixelType = poSrcBand->GetMetadataItem(
+                "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             poSrcBand->EnablePixelTypeSignedByteWarning(true);
             if (pszPixelType)
             {
                 poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType,
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 
-        const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcBand->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         /* --------------------------------------------------------------------
@@ -2466,8 +2468,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 poVRTBand->GetRasterDataType() == GDT_UInt8)
             {
                 poVRTBand->EnablePixelTypeSignedByteWarning(false);
-                pszPixelType =
-                    poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                pszPixelType = poVRTBand->GetMetadataItem(
+                    "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
                 poVRTBand->EnablePixelTypeSignedByteWarning(true);
             }
 

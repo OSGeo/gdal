@@ -178,8 +178,8 @@ JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
     if ((eDataType == GDT_UInt8 && nBitsPerSample < 8) ||
         (eDataType == GDT_UInt16 && nBitsPerSample < 16))
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", nBitsPerSample),
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBitsPerSample),
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -803,12 +803,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
                                      ? "LOSSLESS (possibly)"
                                      : "LOSSY",
-                                 "IMAGE_STRUCTURE");
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 #ifdef HAVE_JXL_BOX_API
     if (m_bHasJPEGReconstructionData)
     {
         GDALDataset::SetMetadataItem("ORIGINAL_COMPRESSION", "JPEG",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 
@@ -914,7 +914,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (l_nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
@@ -1782,7 +1782,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
     const int nGCPCount = poSrcDS->GetGCPCount();
-    CSLConstList papszRPCMD = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     std::unique_ptr<GDALJP2Box> poJUMBFBox;
     if (bWriteGeoJP2 &&
         (poSRS != nullptr || bHasGeoTransform || nGCPCount || papszRPCMD))
@@ -2201,10 +2201,10 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNBits = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBits = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBits == nullptr)
         pszNBits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE");
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const int nBits =
         ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)

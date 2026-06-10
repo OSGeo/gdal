@@ -88,7 +88,7 @@ constexpr const char *MD_BLOCK_X_SIZE = "BLOCKXSIZE";
 constexpr const char *MD_BLOCK_Y_SIZE = "BLOCKYSIZE";
 constexpr const char *MD_MASK_BAND = "MASK_BAND";
 constexpr const char *MD_RESAMPLING = "RESAMPLING";
-constexpr const char *MD_INTERLEAVE = "INTERLEAVE";
+constexpr const char *MD_INTERLEAVE = GDALMD_INTERLEAVE;
 
 constexpr const char *const apszTIOptions[] = {MD_RESX,
                                                MD_RESY,
@@ -974,7 +974,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (m_poVectorDS->GetLayerCount() == 0 &&
             (m_poVectorDS->GetRasterCount() != 0 ||
-             m_poVectorDS->GetMetadata("SUBDATASETS") != nullptr))
+             m_poVectorDS->GetMetadata(GDAL_MDD_SUBDATASETS) != nullptr))
         {
             return false;
         }
@@ -2539,15 +2539,16 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             adfCenterWavelength[i] != 0)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "CENTRAL_WAVELENGTH_UM",
-                CPLSPrintf("%g", adfCenterWavelength[i]), "IMAGERY");
+                GDALMD_CENTRAL_WAVELENGTH_UM,
+                CPLSPrintf("%g", adfCenterWavelength[i]), GDAL_MDD_IMAGERY);
         }
 
         if (static_cast<int>(adfFullWidthHalfMax.size()) == nBandCount &&
             adfFullWidthHalfMax[i] != 0)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "FWHM_UM", CPLSPrintf("%g", adfFullWidthHalfMax[i]), "IMAGERY");
+                GDALMD_FWHM_UM, CPLSPrintf("%g", adfFullWidthHalfMax[i]),
+                GDAL_MDD_IMAGERY);
         }
     }
 
@@ -2718,13 +2719,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     const char *pszInterleave = GetOption(MD_INTERLEAVE);
     if (pszInterleave)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", pszInterleave,
-                                     "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         m_bBandInterleave = EQUAL(pszInterleave, "BAND");
     }
-    else if (nBandCount > 1 && !GetMetadata("IMAGE_STRUCTURE"))
+    else if (nBandCount > 1 && !GetMetadata(GDAL_MDD_IMAGE_STRUCTURE))
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

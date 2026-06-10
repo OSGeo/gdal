@@ -902,12 +902,12 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount + 1),
                         CPLSPrintf("STACTA:\"%s\":%s:%s", osFilename.c_str(),
                                    pszAssetNameSubDS, pszTMSSubDS),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     GDALDataset::SetMetadataItem(
                         CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount + 1),
                         CPLSPrintf("Asset %s, tile matrix set %s",
                                    pszAssetNameSubDS, pszTMSSubDS),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     nSDSCount++;
                 }
             }
@@ -917,10 +917,11 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount + 1),
                     CPLSPrintf("STACTA:\"%s\":%s", osFilename.c_str(),
                                pszAssetNameSubDS),
-                    "SUBDATASETS");
+                    GDAL_MDD_SUBDATASETS);
                 GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount + 1),
-                    CPLSPrintf("Asset %s", pszAssetNameSubDS), "SUBDATASETS");
+                    CPLSPrintf("Asset %s", pszAssetNameSubDS),
+                    GDAL_MDD_SUBDATASETS);
                 nSDSCount++;
             }
         }
@@ -1414,8 +1415,8 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                  poBand->GetRasterDataType() == GDT_UInt16))
             {
                 poBand->GDALRasterBand::SetMetadataItem(
-                    "NBITS", CPLSPrintf("%d", nBitsPerSample),
-                    "IMAGE_STRUCTURE");
+                    GDALMD_NBITS, CPLSPrintf("%d", nBitsPerSample),
+                    GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         SetBand(i + 1, poBand);
@@ -1436,17 +1437,18 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poProtoDS)
     {
-        const char *pszInterleave =
-            poProtoDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-        GDALDataset::SetMetadataItem("INTERLEAVE",
+        const char *pszInterleave = poProtoDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE,
                                      pszInterleave ? pszInterleave : "PIXEL",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
         // A bit bold to assume that, but that should be a reasonable
         // setting
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     m_bDownloadWholeMetaTile = CPLTestBool(CSLFetchNameValueDef(
@@ -1537,7 +1539,7 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
     m_gt.yorig =
         oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
     m_gt.yscale = -oTM.mResY;
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     return true;
 }

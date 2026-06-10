@@ -2065,7 +2065,7 @@ class MosaicDataset : public GDALDataset
                            nTileMinY, oTM, convention, directory, extension,
                            pdfDstNoData, poCT));
         }
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         const CPLStringList aosMD(metadata);
         for (const auto [key, value] : cpl::IterateNameValue(aosMD))
         {
@@ -3475,7 +3475,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
         {
             if (const char *pszNBITS =
                     m_poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                        "NBITS", "IMAGE_STRUCTURE"))
+                        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE))
             {
                 if (atoi(pszNBITS) > 12)
                 {
@@ -4566,8 +4566,8 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     else
     {
         if (!bHasSrcGT && m_poSrcDS->GetGCPCount() == 0 &&
-            m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
-            m_poSrcDS->GetMetadata("RPC") == nullptr)
+            m_poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION) == nullptr &&
+            m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
                         "Ungeoreferenced datasets are not supported, unless "
@@ -4575,8 +4575,8 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
-        if (m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
-            m_poSrcDS->GetMetadata("RPC") == nullptr &&
+        if (m_poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION) == nullptr &&
+            m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr &&
             m_poSrcDS->GetSpatialRef() == nullptr &&
             m_poSrcDS->GetGCPSpatialRef() == nullptr)
         {
@@ -4606,10 +4606,11 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         bm.osDescription = poBand->GetDescription();
         bm.eDT = poBand->GetRasterDataType();
         bm.eColorInterp = poBand->GetColorInterpretation();
-        if (const char *pszCenterWavelength =
-                poBand->GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY"))
+        if (const char *pszCenterWavelength = poBand->GetMetadataItem(
+                GDALMD_CENTRAL_WAVELENGTH_UM, GDAL_MDD_IMAGERY))
             bm.osCenterWaveLength = pszCenterWavelength;
-        if (const char *pszFWHM = poBand->GetMetadataItem("FWHM_UM", "IMAGERY"))
+        if (const char *pszFWHM =
+                poBand->GetMetadataItem(GDALMD_FWHM_UM, GDAL_MDD_IMAGERY))
             bm.osFWHM = pszFWHM;
         aoBandMetadata.emplace_back(std::move(bm));
     }

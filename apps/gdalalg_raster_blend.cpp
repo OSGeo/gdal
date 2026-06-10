@@ -756,7 +756,7 @@ BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
                               m_oOverlayDS.GetDescription()));
     if (nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (bCanCreateOvr)

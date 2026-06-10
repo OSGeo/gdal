@@ -129,7 +129,7 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     // todo: in 2.0.1 the band list in this dataset may be user-defined
 
     int band_count = 1;
-    if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL"))
+    if (EQUAL(CPLGetXMLValue(poODS->psService, GDALMD_INTERLEAVE, ""), "PIXEL"))
     {
         band_count = 0;
     }

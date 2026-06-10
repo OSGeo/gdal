@@ -1628,7 +1628,8 @@ GDALPamDataset *MrSIDDataset::OpenPAM(GDALOpenInfo *poOpenInfo, int bIsJP2)
              poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands);
 
     if (poDS->nBands > 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     if (bIsJP2)
     {
@@ -3272,7 +3273,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
 
             // check for compression option
             const char *pszValue =
-                CSLFetchNameValue(papszOptions, "COMPRESSION");
+                CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
             if (pszValue != nullptr)
                 poMG2ImageWriter->params().setCompressionRatio(
                     (float)CPLAtof(pszValue));
@@ -3518,7 +3519,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         oImageWriter.setWorldFileSupport(true);
 
     // check for compression option
-    const char *pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszValue = CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszValue != nullptr)
         oImageWriter.params().setCompressionRatio((float)CPLAtof(pszValue));
 

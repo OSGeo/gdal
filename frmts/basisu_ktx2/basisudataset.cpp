@@ -293,7 +293,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         poDS->nRasterXSize = 0;
         poDS->nRasterYSize = 0;
-        poDS->SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
 
         poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 
@@ -314,10 +314,12 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
     switch (file_info.m_tex_format)
     {
         case basist::basis_tex_format::cETC1S:
-            poDS->SetMetadataItem("COMPRESSION", "ETC1S", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDALMD_COMPRESSION, "ETC1S",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
             break;
         case basist::basis_tex_format::cUASTC4x4:
-            poDS->SetMetadataItem("COMPRESSION", "UASTC", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDALMD_COMPRESSION, "UASTC",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
             break;
     }
 

@@ -2411,7 +2411,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 papszRPC = CSLSetNameValue(
                     papszRPC, apszXMLToGDALMapping[i + 1], pszValue);
         }
-        poDS->GDALDataset::SetMetadata(papszRPC, "RPC");
+        poDS->GDALDataset::SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 
@@ -2545,7 +2545,7 @@ CPLErr RCMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 char **RCMDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -2555,7 +2555,8 @@ char **RCMDataset::GetMetadataDomainList()
 CSLConstList RCMDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&
+    if (pszDomain != nullptr &&
+        STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS) &&
         papszSubDatasets != nullptr)
         return papszSubDatasets;
 

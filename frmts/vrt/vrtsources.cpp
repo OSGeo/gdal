@@ -1369,7 +1369,8 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
     auto l_band = GetRasterBand();
     if (!l_band)
         return FALSE;
-    const char *pszNBITS = l_band->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    const char *pszNBITS =
+        l_band->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const int nBits = (pszNBITS) ? atoi(pszNBITS) : 0;
     if (nBits >= 1 && nBits <= 31)
     {

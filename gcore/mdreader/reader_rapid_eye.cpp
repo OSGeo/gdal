@@ -121,7 +121,7 @@ void GDALMDReaderRapidEye::LoadMetadata()
                       "eop:Platform.eop:serialIdentifier");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
 
@@ -136,8 +136,8 @@ void GDALMDReaderRapidEye::LoadMetadata()
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
+                                           GDALMD_ACQUISITIONDATETIME, buffer);
     }
 
     const char *pszCC = CSLFetchNameValue(
@@ -146,6 +146,6 @@ void GDALMDReaderRapidEye::LoadMetadata()
     if (nullptr != pszSatId)
     {
         m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, pszCC);
+            CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER, pszCC);
     }
 }

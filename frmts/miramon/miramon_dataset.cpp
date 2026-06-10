@@ -595,7 +595,7 @@ void MMRDataset::CreateSubdatasetsFromBands()
     if (oSubdatasetList.Count() > 0)
     {
         // Add metadata to the main dataset
-        SetMetadata(oSubdatasetList.List(), "SUBDATASETS");
+        SetMetadata(oSubdatasetList.List(), GDAL_MDD_SUBDATASETS);
         oSubdatasetList.Clear();
     }
 }

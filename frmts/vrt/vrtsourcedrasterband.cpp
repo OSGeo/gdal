@@ -1530,7 +1530,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
-                GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             EnablePixelTypeSignedByteWarning(true);
             bSignedByte =
                 pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -2296,9 +2296,10 @@ CPLErr VRTSourcedRasterBand::AddSource(std::unique_ptr<VRTSource> poNewSource)
     {
         VRTSimpleSource *poSS =
             static_cast<VRTSimpleSource *>(poNewSource.get());
-        if (GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr)
+        if (GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
         {
-            int nBits = atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            int nBits =
+                atoi(GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
             if (nBits >= 1 && nBits <= 31)
             {
                 poSS->SetMaxValue(static_cast<int>((1U << nBits) - 1));

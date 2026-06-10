@@ -157,7 +157,7 @@ void GDALMDReaderGeoEye::LoadMetadata()
         CSLFetchNameValue(m_papszIMDMD, "Source Image Metadata.Sensor");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
 
@@ -165,8 +165,8 @@ void GDALMDReaderGeoEye::LoadMetadata()
         m_papszIMDMD, "Source Image Metadata.Percent Cloud Cover");
     if (nullptr != pszCloudCover)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
-                                           pszCloudCover);
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER, pszCloudCover);
     }
 
     const char *pszDateTime = CSLFetchNameValue(
@@ -180,8 +180,8 @@ void GDALMDReaderGeoEye::LoadMetadata()
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
+                                           GDALMD_ACQUISITIONDATETIME, buffer);
     }
 }
 

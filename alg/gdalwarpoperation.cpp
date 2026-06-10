@@ -473,7 +473,7 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
                         const char *pszKey)
 {
     const char *pszNBits =
-        GDALGetMetadataItem(hBand, "NBITS", "IMAGE_STRUCTURE");
+        GDALGetMetadataItem(hBand, GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const char *pszAlphaMax = nullptr;
     if (pszNBits)
     {

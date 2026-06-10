@@ -1350,8 +1350,9 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", m_bQueryMultipleBands ? "PIXEL" : "BAND",
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE,
+                        m_bQueryMultipleBands ? "PIXEL" : "BAND",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Build subdataset list
@@ -1379,7 +1380,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                            oIter->second.size() > 1 ? "s" : "",
                            osSubDSSuffix.c_str(), m_osAsset.c_str()));
         }
-        SetMetadata(aoSubDSList.List(), "SUBDATASETS");
+        SetMetadata(aoSubDSList.List(), GDAL_MDD_SUBDATASETS);
     }
 
     // Attach metadata to dataset or bands

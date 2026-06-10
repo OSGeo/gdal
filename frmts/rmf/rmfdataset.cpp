@@ -1823,7 +1823,8 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
     if (poDS->nBands > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     /* -------------------------------------------------------------------- */
     /*  Set up projection.                                                  */
@@ -2381,7 +2382,8 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
     if (nBandsIn > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     poDS->WriteHeader();
@@ -2798,7 +2800,7 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
     {
         Decompress = &LZWDecompress;
         Compress = &LZWCompress;
-        SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "LZW", GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (sHeader.iCompression == RMF_COMPRESSION_JPEG)
     {
@@ -2814,8 +2816,8 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
         oBuf.Printf("%d", sHeader.iJpegQuality);
         Decompress = &JPEGDecompress;
         Compress = &JPEGCompress;
-        SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), "IMAGE_STRUCTURE");
-        SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
 #else   // HAVE_LIBJPEG
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JPEG codec is needed to open <%s>.\n"
@@ -2829,7 +2831,8 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
     {
         Decompress = &DEMDecompress;
         Compress = &DEMCompress;
-        SetMetadataItem("COMPRESSION", "RMF_DEM", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "RMF_DEM",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
@@ -3255,8 +3258,8 @@ void RMFDataset::SetupNBits()
         snprintf(szNBits, sizeof(szNBits), "%d", nBitDepth);
         for (int iBand = 1; iBand <= nBands; iBand++)
         {
-            GetRasterBand(iBand)->SetMetadataItem("NBITS", szNBits,
-                                                  "IMAGE_STRUCTURE");
+            GetRasterBand(iBand)->SetMetadataItem(GDALMD_NBITS, szNBits,
+                                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 }

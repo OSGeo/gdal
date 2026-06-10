@@ -472,7 +472,8 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         CSLFetchNameValueDef(papszOptions, "TILEDB_TIMESTAMP", "0");
     poLayer->m_nTimestamp = std::strtoull(pszTimestamp, nullptr, 10);
 
-    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszCompression =
+        CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     const char *pszCompressionLevel =
         CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
 

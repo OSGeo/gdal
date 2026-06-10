@@ -2332,14 +2332,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             if (l_nBands > 1 && dimSemantics[0] == 'B' &&
                 dimSemantics[1] == 'L' && dimSemantics[2] == 'S')
             {
-                poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
             if (l_nBands > 1 && dimSemantics[0] == 'L' &&
                 dimSemantics[1] == 'S' && dimSemantics[2] == 'B')
             {
-                poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
 
             CPLXMLNode *psOS = CPLGetXMLNode(psSubIter, "Object_Statistics");
@@ -2434,7 +2434,8 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
     if (nFAOIdxLookup < 0 && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     else if (poDS->nBands == 0 &&
              (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -4800,7 +4801,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
     vsi_l_offset nBandOffset;
 
     const char *pszInterleave =
-        aosOptions.FetchNameValueDef("INTERLEAVE", "BSQ");
+        aosOptions.FetchNameValueDef(GDALMD_INTERLEAVE, "BSQ");
     if (bIsArray2D)
         pszInterleave = "BIP";
 
@@ -5009,7 +5010,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
 #endif
 
         papszGTiffOptions =
-            CSLSetNameValue(papszGTiffOptions, "INTERLEAVE",
+            CSLSetNameValue(papszGTiffOptions, GDALMD_INTERLEAVE,
                             EQUAL(pszInterleave, "BSQ") ? "BAND" : "PIXEL");
         // Will make sure that our blocks at nodata are not optimized
         // away but indeed well written
@@ -5078,13 +5079,13 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
 
     if (EQUAL(pszInterleave, "BIP"))
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (EQUAL(pszInterleave, "BSQ"))
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                           "IMAGE_STRUCTURE");
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     for (int i = 0; i < nBandsIn; i++)

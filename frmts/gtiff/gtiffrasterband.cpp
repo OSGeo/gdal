@@ -174,7 +174,7 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
             {
                 if (v[nBand - nBaseSamples - 1] == EXTRASAMPLE_ASSOCALPHA)
                     m_oGTiffMDMD.SetMetadataItem("ALPHA", "PREMULTIPLIED",
-                                                 "IMAGE_STRUCTURE");
+                                                 GDAL_MDD_IMAGE_STRUCTURE);
                 m_eBandInterp = GCI_AlphaBand;
             }
             else

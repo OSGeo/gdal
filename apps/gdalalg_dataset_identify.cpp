@@ -145,8 +145,8 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
         {
             if (EQUAL(pszDriverName, "GTiff"))
             {
-                if (const char *pszLayout =
-                        poDS->GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE"))
+                if (const char *pszLayout = poDS->GetMetadataItem(
+                        "LAYOUT", GDAL_MDD_IMAGE_STRUCTURE))
                 {
                     osLayout = pszLayout;
                 }

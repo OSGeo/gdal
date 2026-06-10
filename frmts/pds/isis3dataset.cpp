@@ -2276,8 +2276,9 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                     poTIF_DS->GetRasterCount() != nBands ||
                     poTIF_DS->GetRasterBand(1)->GetRasterDataType() !=
                         eDataType ||
-                    poTIF_DS->GetMetadataItem("COMPRESSION",
-                                              "IMAGE_STRUCTURE") != nullptr)
+                    poTIF_DS->GetMetadataItem(GDALMD_COMPRESSION,
+                                              GDAL_MDD_IMAGE_STRUCTURE) !=
+                        nullptr)
                 {
                     bWarned = true;
                     CPLError(
@@ -4275,7 +4276,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         {
             bGeoTIFFAsRegularExternal = true;
             papszGTiffOptions =
-                CSLSetNameValue(papszGTiffOptions, "INTERLEAVE", "BAND");
+                CSLSetNameValue(papszGTiffOptions, GDALMD_INTERLEAVE, "BAND");
             // Will make sure that our blocks at nodata are not optimized
             // away but indeed well written
             papszGTiffOptions = CSLSetNameValue(

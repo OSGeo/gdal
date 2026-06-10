@@ -1429,7 +1429,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
     int nLineOffset = 0;
     vsi_l_offset nBandOffset = 0;
     CPLString osBandOrder(
-        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "BIL"));
     if (!ComputeSpacings(osBandOrder, nXSize, nYSize, nBandsIn, eType,
                          nPixelOffset, nLineOffset, nBandOffset))
     {

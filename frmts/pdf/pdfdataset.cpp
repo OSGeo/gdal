@@ -548,13 +548,15 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = 256;
         nBlockYSize = 256;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (poPDFDS->m_nBlockXSize)
     {
         nBlockXSize = poPDFDS->m_nBlockXSize;
         nBlockYSize = poPDFDS->m_nBlockYSize;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (nRasterXSize < 64 * 1024 * 1024 / nRasterYSize)
     {
@@ -565,7 +567,8 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = std::min(1024, nRasterXSize);
         nBlockYSize = std::min(1024, nRasterYSize);
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -5081,7 +5084,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             aosList.AddNameValue(szKey, CPLSPrintf("Page %d of %s", i + 1,
                                                    poOpenInfo->pszFilename));
         }
-        poDS->SetMetadata(aosList.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosList.List(), GDAL_MDD_SUBDATASETS);
     }
 
 #ifdef HAVE_POPPLER
@@ -5333,7 +5336,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->CheckTiledRaster();
         if (!poDS->m_aiTiles.empty())
-            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     GDALPDFObject *poLGIDict = nullptr;
@@ -5495,14 +5499,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                                     CPLSPrintf("PDF_IMAGE:%d:%d:%s", iPage,
                                                poObj->GetRefNum().toInt(),
                                                pszFilename),
-                                    "SUBDATASETS");
+                                    GDAL_MDD_SUBDATASETS);
                                 poDS->SetMetadataItem(
                                     CPLSPrintf("SUBDATASET_%d_DESC",
                                                nSubDataset),
                                     CPLSPrintf("Georeferenced image of size "
                                                "%dx%d of page %d of %s",
                                                nW, nH, iPage, pszFilename),
-                                    "SUBDATASETS");
+                                    GDAL_MDD_SUBDATASETS);
                             }
                             else if (poObj->GetRefNum().toInt() == nImageNum)
                             {
@@ -7475,7 +7479,7 @@ CSLConstList PDFDataset::GetMetadata(const char *pszDomain)
         return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
     if (EQUAL(pszDomain, "LAYERS") || EQUAL(pszDomain, "xml:XMP") ||
-        EQUAL(pszDomain, "SUBDATASETS"))
+        EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
@@ -7513,7 +7517,7 @@ CPLErr PDFDataset::SetMetadata(CSLConstList papszMetadata,
         m_bXMPDirty = true;
         return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
-    else if (EQUAL(pszDomain, "SUBDATASETS"))
+    else if (EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
@@ -7603,7 +7607,7 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         m_bXMPDirty = true;
         return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
-    else if (EQUAL(pszDomain, "SUBDATASETS"))
+    else if (EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }

@@ -640,9 +640,9 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
         if ((poCodestream->get_bit_depth(0) % 8) != 0 &&
             poCodestream->get_bit_depth(0) < 16)
             SetMetadataItem(
-                "NBITS",
+                GDALMD_NBITS,
                 CPLString().Printf("%d", poCodestream->get_bit_depth(0)),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
 
         // TODO add color interpretation
 

@@ -1107,7 +1107,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
         CPLStringList aosTransformerOptions;
         GDALGeoTransform gt;
         if (poDS->GetGeoTransform(gt) != CE_None && poDS->GetGCPCount() == 0 &&
-            poDS->GetMetadata("RPC") == nullptr)
+            poDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
             aosTransformerOptions.SetNameValue("DST_METHOD", "NO_GEOTRANSFORM");
         }
@@ -1696,7 +1696,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
             {
                 if (poDS->GetSpatialRef() != nullptr ||
                     poDS->GetGCPSpatialRef() != nullptr ||
-                    poDS->GetMetadata("RPC") != nullptr)
+                    poDS->GetMetadata(GDAL_MDD_RPC) != nullptr)
                 {
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
@@ -1716,7 +1716,8 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
                 aosTransformerOptions.SetNameValue("SRC_SRS", pszProjection);
             GDALGeoTransform gt;
             if (poDS->GetGeoTransform(gt) != CE_None &&
-                poDS->GetGCPCount() == 0 && poDS->GetMetadata("RPC") == nullptr)
+                poDS->GetGCPCount() == 0 &&
+                poDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
             {
                 aosTransformerOptions.SetNameValue("DST_METHOD",
                                                    "NO_GEOTRANSFORM");

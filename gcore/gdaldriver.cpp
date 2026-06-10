@@ -663,8 +663,9 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      didn't provide values.                                          */
     /* -------------------------------------------------------------------- */
     char **papszCreateOptions = CSLDuplicate(papszOptions);
-    const char *const apszOptItems[] = {"NBITS", "IMAGE_STRUCTURE", "PIXELTYPE",
-                                        "IMAGE_STRUCTURE", nullptr};
+    const char *const apszOptItems[] = {GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE,
+                                        "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE,
+                                        nullptr};
 
     for (int iOptItem = 0; nBands > 0 && apszOptItems[iOptItem] != nullptr;
          iOptItem += 2)
@@ -934,7 +935,7 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
         /*      It would be nice to copy geolocation, but it is pretty fragile. */
         /* -------------------------------------------------------------------- */
         constexpr const char *apszDefaultDomains[] = {
-            "RPC", "xml:XMP", "json:ISIS3", "json:VICAR"};
+            GDAL_MDD_RPC, "xml:XMP", "json:ISIS3", "json:VICAR"};
         for (const char *pszDomain : apszDefaultDomains)
         {
             if ((!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0) &&
@@ -974,7 +975,8 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
                         if (!papszSrcMDD)
                         {
                             constexpr const char *const apszReservedDomains[] =
-                                {"IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+                                {GDAL_MDD_IMAGE_STRUCTURE,
+                                 "DERIVED_SUBDATASETS"};
                             for (const char *pszOtherDomain :
                                  apszReservedDomains)
                             {
@@ -1203,9 +1205,9 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszOptionsToDelete = nullptr;
     const char *srcInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (nBandCount > 1 && srcInterleave != nullptr &&
-        CSLFetchNameValue(papszOptions, "INTERLEAVE") == nullptr &&
+        CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE) == nullptr &&
         EQUAL(CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE"), "NONE"))
     {
 
@@ -1224,7 +1226,7 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
                 const char *nameAttribute =
                     CPLGetXMLValue(child, "name", nullptr);
                 const bool isInterleaveAttribute =
-                    nameAttribute && EQUAL(nameAttribute, "INTERLEAVE");
+                    nameAttribute && EQUAL(nameAttribute, GDALMD_INTERLEAVE);
                 if (isInterleaveAttribute)
                 {
                     for (CPLXMLNode *optionChild = child->psChild;
@@ -1270,8 +1272,8 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
         if (dstInterleave != nullptr)
         {
             papszOptionsToDelete = CSLDuplicate(papszOptions);
-            papszOptionsToDelete = CSLSetNameValue(papszOptionsToDelete,
-                                                   "INTERLEAVE", dstInterleave);
+            papszOptionsToDelete = CSLSetNameValue(
+                papszOptionsToDelete, GDALMD_INTERLEAVE, dstInterleave);
             papszOptionsToDelete = CSLSetNameValue(
                 papszOptionsToDelete, "@INTERLEAVE_ADDED_AUTOMATICALLY", "YES");
             papszOptions = papszOptionsToDelete;

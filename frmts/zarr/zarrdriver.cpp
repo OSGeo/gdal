@@ -120,9 +120,9 @@ static bool ExploreGroup(const std::shared_ptr<GDALGroup> &poGroup,
 const char *ZarrDataset::GetMetadataItem(const char *pszName,
                                          const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.FetchNameValue(pszName);
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadataItem(pszName, pszDomain);
     return nullptr;
 }
@@ -133,9 +133,9 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 
 CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.List();
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         return GDALDataset::GetMetadata(pszDomain);
     return nullptr;
 }
@@ -716,7 +716,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (!poDS->m_aosSubdatasets.empty())
         {
-            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
+            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(),
+                                 GDAL_MDD_SUBDATASETS);
         }
         return poNewDS.release();
     }
@@ -1139,7 +1140,8 @@ void ZarrDriver::InitMetadata()
 
             auto psInterleaveNode =
                 CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-            CPLAddXMLAttributeAndValue(psInterleaveNode, "name", "INTERLEAVE");
+            CPLAddXMLAttributeAndValue(psInterleaveNode, "name",
+                                       GDALMD_INTERLEAVE);
             CPLAddXMLAttributeAndValue(psInterleaveNode, "type",
                                        "string-select");
             CPLAddXMLAttributeAndValue(psInterleaveNode, "default", "BAND");
@@ -1411,8 +1413,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
 
     const bool bSingleArray =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
-    const bool bBandInterleave =
-        EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
+    const bool bBandInterleave = EQUAL(
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "BAND"), "BAND");
     std::shared_ptr<GDALDimension> poBandDim(
         (bSingleArray && nBandsIn > 1)
             ? poRG->CreateDimension("Band", std::string(), std::string(),
@@ -1444,8 +1446,9 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             CleanupCreatedFiles();
             return nullptr;
         }
-        poDS->SetMetadataItem("INTERLEAVE", bBandInterleave ? "BAND" : "PIXEL",
-                              "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE,
+                              bBandInterleave ? "BAND" : "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (bBandInterleave)
         {
             const char *pszBlockSize =
@@ -1457,8 +1460,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 if (aosTokens.size() == 3 && atoi(aosTokens[0]) == nBandsIn)
                 {
                     // Actually expose as pixel interleaved
-                    poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
-                                          "IMAGE_STRUCTURE");
+                    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                          GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
         }

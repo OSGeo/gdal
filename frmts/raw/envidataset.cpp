@@ -919,7 +919,7 @@ bool ENVIDataset::ParseRpcCoeffsMetaDataString(const char *psName,
                                                CPLStringList &aosVal)
 {
     // Separate one string with 20 coefficients into an array of 20 strings.
-    const char *psz20Vals = GetMetadataItem(psName, "RPC");
+    const char *psz20Vals = GetMetadataItem(psName, GDAL_MDD_RPC);
     if (!psz20Vals)
         return false;
 
@@ -948,7 +948,7 @@ bool ENVIDataset::WriteRpcInfo()
                                 "HEIGHT_OFF", "LINE_SCALE", "SAMP_SCALE",
                                 "LAT_SCALE", "LONG_SCALE", "HEIGHT_SCALE"})
     {
-        const char *pszValue = GetMetadataItem(pszItem, "RPC");
+        const char *pszValue = GetMetadataItem(pszItem, GDAL_MDD_RPC);
         if (!pszValue)
             return false;
         aosVal.push_back(pszValue);
@@ -965,7 +965,7 @@ bool ENVIDataset::WriteRpcInfo()
     for (const char *pszItem :
          {"TILE_ROW_OFFSET", "TILE_COL_OFFSET", "ENVI_RPC_EMULATION"})
     {
-        const char *pszValue = GetMetadataItem(pszItem, "RPC");
+        const char *pszValue = GetMetadataItem(pszItem, GDAL_MDD_RPC);
         if (!pszValue)
             return false;
         aosVal.push_back(pszValue);
@@ -1111,7 +1111,8 @@ void ENVIDataset::SetDescription(const char *pszDescription)
 CPLErr ENVIDataset::SetMetadata(CSLConstList papszMetadata,
                                 const char *pszDomain)
 {
-    if (pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")))
+    if (pszDomain &&
+        (EQUAL(pszDomain, GDAL_MDD_RPC) || EQUAL(pszDomain, "ENVI")))
     {
         bHeaderDirty = true;
     }
@@ -1125,7 +1126,8 @@ CPLErr ENVIDataset::SetMetadata(CSLConstList papszMetadata,
 CPLErr ENVIDataset::SetMetadataItem(const char *pszName, const char *pszValue,
                                     const char *pszDomain)
 {
-    if (pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")))
+    if (pszDomain &&
+        (EQUAL(pszDomain, GDAL_MDD_RPC) || EQUAL(pszDomain, "ENVI")))
     {
         bHeaderDirty = true;
     }
@@ -1522,71 +1524,71 @@ void ENVIDataset::ProcessRPCinfo(const char *pszRPCinfo, int numCols,
 
     char sVal[1280] = {'\0'};
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[0]));
-    SetMetadataItem("LINE_OFF", sVal, "RPC");
+    SetMetadataItem("LINE_OFF", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[5]));
-    SetMetadataItem("LINE_SCALE", sVal, "RPC");
+    SetMetadataItem("LINE_SCALE", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[1]));
-    SetMetadataItem("SAMP_OFF", sVal, "RPC");
+    SetMetadataItem("SAMP_OFF", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[6]));
-    SetMetadataItem("SAMP_SCALE", sVal, "RPC");
+    SetMetadataItem("SAMP_SCALE", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[2]));
-    SetMetadataItem("LAT_OFF", sVal, "RPC");
+    SetMetadataItem("LAT_OFF", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[7]));
-    SetMetadataItem("LAT_SCALE", sVal, "RPC");
+    SetMetadataItem("LAT_SCALE", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[3]));
-    SetMetadataItem("LONG_OFF", sVal, "RPC");
+    SetMetadataItem("LONG_OFF", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[8]));
-    SetMetadataItem("LONG_SCALE", sVal, "RPC");
+    SetMetadataItem("LONG_SCALE", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[4]));
-    SetMetadataItem("HEIGHT_OFF", sVal, "RPC");
+    SetMetadataItem("HEIGHT_OFF", sVal, GDAL_MDD_RPC);
     CPLsnprintf(sVal, sizeof(sVal), "%.16g", CPLAtof(aosFields[9]));
-    SetMetadataItem("HEIGHT_SCALE", sVal, "RPC");
+    SetMetadataItem("HEIGHT_SCALE", sVal, GDAL_MDD_RPC);
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
                     CPLAtof(aosFields[10 + i]));
-    SetMetadataItem("LINE_NUM_COEFF", sVal, "RPC");
+    SetMetadataItem("LINE_NUM_COEFF", sVal, GDAL_MDD_RPC);
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
                     CPLAtof(aosFields[30 + i]));
-    SetMetadataItem("LINE_DEN_COEFF", sVal, "RPC");
+    SetMetadataItem("LINE_DEN_COEFF", sVal, GDAL_MDD_RPC);
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
                     CPLAtof(aosFields[50 + i]));
-    SetMetadataItem("SAMP_NUM_COEFF", sVal, "RPC");
+    SetMetadataItem("SAMP_NUM_COEFF", sVal, GDAL_MDD_RPC);
 
     sVal[0] = '\0';
     for (int i = 0; i < 20; i++)
         CPLsnprintf(sVal + strlen(sVal), sizeof(sVal) - strlen(sVal), "%.16g ",
                     CPLAtof(aosFields[70 + i]));
-    SetMetadataItem("SAMP_DEN_COEFF", sVal, "RPC");
+    SetMetadataItem("SAMP_DEN_COEFF", sVal, GDAL_MDD_RPC);
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
                 CPLAtof(aosFields[3]) - CPLAtof(aosFields[8]));
-    SetMetadataItem("MIN_LONG", sVal, "RPC");
+    SetMetadataItem("MIN_LONG", sVal, GDAL_MDD_RPC);
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
                 CPLAtof(aosFields[3]) + CPLAtof(aosFields[8]));
-    SetMetadataItem("MAX_LONG", sVal, "RPC");
+    SetMetadataItem("MAX_LONG", sVal, GDAL_MDD_RPC);
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
                 CPLAtof(aosFields[2]) - CPLAtof(aosFields[7]));
-    SetMetadataItem("MIN_LAT", sVal, "RPC");
+    SetMetadataItem("MIN_LAT", sVal, GDAL_MDD_RPC);
 
     CPLsnprintf(sVal, sizeof(sVal), "%.16g",
                 CPLAtof(aosFields[2]) + CPLAtof(aosFields[7]));
-    SetMetadataItem("MAX_LAT", sVal, "RPC");
+    SetMetadataItem("MAX_LAT", sVal, GDAL_MDD_RPC);
 
     if (nCount == 93)
     {
-        SetMetadataItem("TILE_ROW_OFFSET", aosFields[90], "RPC");
-        SetMetadataItem("TILE_COL_OFFSET", aosFields[91], "RPC");
-        SetMetadataItem("ENVI_RPC_EMULATION", aosFields[92], "RPC");
+        SetMetadataItem("TILE_ROW_OFFSET", aosFields[90], GDAL_MDD_RPC);
+        SetMetadataItem("TILE_COL_OFFSET", aosFields[91], GDAL_MDD_RPC);
+        SetMetadataItem("ENVI_RPC_EMULATION", aosFields[92], GDAL_MDD_RPC);
     }
 
     // Handle the chipping case where the image is a subset.
@@ -2153,7 +2155,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     if (STARTS_WITH_CI(osInterleave, "bil"))
     {
         poDS->eInterleave = Interleave::BIL;
-        poDS->SetMetadataItem("INTERLEAVE", "LINE", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "LINE",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2166,7 +2169,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     else if (STARTS_WITH_CI(osInterleave, "bip"))
     {
         poDS->eInterleave = Interleave::BIP;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2179,7 +2183,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     else
     {
         poDS->eInterleave = Interleave::BSQ;
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / nDataSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2421,7 +2426,8 @@ GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
     bRet &=
         VSIFPrintfL(fp, "header offset = 0\nfile type = ENVI Standard\n") > 0;
     bRet &= VSIFPrintfL(fp, "data type = %d\n", iENVIType) > 0;
-    const char *pszInterleaving = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    const char *pszInterleaving =
+        CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
     if (pszInterleaving)
     {
         if (STARTS_WITH_CI(pszInterleaving, "bip"))

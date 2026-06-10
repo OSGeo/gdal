@@ -1905,15 +1905,15 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
         {
             GDALMajorObject::SetMetadataItem("RESAMPLING",
                                              "AVERAGE_BIT2GRAYSCALE");
-            GDALMajorObject::SetMetadataItem("NBITS", "8");
+            GDALMajorObject::SetMetadataItem(GDALMD_NBITS, "8");
         }
         eHFADataType = eHFADataTypeO;
     }
 
     // Set some other information.
     if (nCompression != 0)
-        GDALMajorObject::SetMetadataItem("COMPRESSION", "RLE",
-                                         "IMAGE_STRUCTURE");
+        GDALMajorObject::SetMetadataItem(GDALMD_COMPRESSION, "RLE",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
 
     switch (eHFADataType)
     {
@@ -1972,8 +1972,9 @@ HFARasterBand::HFARasterBand(HFADataset *poDSIn, int nBandIn, int iOverview)
     if (HFAGetDataTypeBits(eHFADataType) < 8)
     {
         GDALMajorObject::SetMetadataItem(
-            "NBITS", CPLString().Printf("%d", HFAGetDataTypeBits(eHFADataType)),
-            "IMAGE_STRUCTURE");
+            GDALMD_NBITS,
+            CPLString().Printf("%d", HFAGetDataTypeBits(eHFADataType)),
+            GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Collect color table if present.
@@ -5026,9 +5027,10 @@ GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
                                 CSLConstList papszParamList)
 
 {
-    const int nBits = CSLFetchNameValue(papszParamList, "NBITS") != nullptr
-                          ? atoi(CSLFetchNameValue(papszParamList, "NBITS"))
-                          : 0;
+    const int nBits =
+        CSLFetchNameValue(papszParamList, GDALMD_NBITS) != nullptr
+            ? atoi(CSLFetchNameValue(papszParamList, GDALMD_NBITS))
+            : 0;
 
     const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
     if (pszPixelType == nullptr)
@@ -5266,7 +5268,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
         auto poSrcBand = poSrcDS->GetRasterBand(1);
         poSrcBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poSrcBand->EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType)
         {

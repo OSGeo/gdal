@@ -167,7 +167,7 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     if (!sOptionsForBinary.bCopySubDatasets &&
         GDALGetRasterCount(hDataset) == 0 &&
-        CSLCount(GDALGetMetadata(hDataset, "SUBDATASETS")) > 0 &&
+        CSLCount(GDALGetMetadata(hDataset, GDAL_MDD_SUBDATASETS)) > 0 &&
         // S104 and S111 drivers know how to handle a source dataset with subdatasets
         // and no input bands.
         !EQUAL(sOptionsForBinary.osFormat.c_str(), "S104") &&
@@ -207,7 +207,7 @@ MAIN_START(argc, argv)
          nullptr);
 
     if (sOptionsForBinary.bCopySubDatasets &&
-        CSLCount(GDALGetMetadata(hDataset, "SUBDATASETS")) > 0)
+        CSLCount(GDALGetMetadata(hDataset, GDAL_MDD_SUBDATASETS)) > 0)
     {
         if (bCopyCreateSubDatasets)
         {
@@ -220,7 +220,7 @@ MAIN_START(argc, argv)
         else
         {
             CSLConstList papszSubdatasets =
-                GDALGetMetadata(hDataset, "SUBDATASETS");
+                GDALGetMetadata(hDataset, GDAL_MDD_SUBDATASETS);
             const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
             char *pszSubDest = static_cast<char *>(
                 CPLMalloc(strlen(sOptionsForBinary.osDest.c_str()) + 32));

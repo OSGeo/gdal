@@ -1853,8 +1853,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         if (poSrcDS->GetRasterCount() > 1)
         {
-            const char *pszInterleaving =
-                poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            const char *pszInterleaving = poSrcDS->GetMetadataItem(
+                GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
             if (pszInterleaving)
             {
                 if (EQUAL(pszInterleaving, "BAND"))
@@ -2262,8 +2262,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             // Write "assets.image.type"
             if (pszDriverName && EQUAL(pszDriverName, "GTiff"))
             {
-                const char *pszLayout =
-                    poSrcDS->GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE");
+                const char *pszLayout = poSrcDS->GetMetadataItem(
+                    "LAYOUT", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszLayout && EQUAL(pszLayout, "COG"))
                 {
                     constexpr const char TYPE[] =
@@ -2463,8 +2463,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     bandsCommonNameArray->length++;
 
                     if (const char *pszCenterWavelength =
-                            poBand->GetMetadataItem("CENTRAL_WAVELENGTH_UM",
-                                                    "IMAGERY"))
+                            poBand->GetMetadataItem(
+                                GDALMD_CENTRAL_WAVELENGTH_UM, GDAL_MDD_IMAGERY))
                     {
                         float *values = static_cast<float *>(
                             const_cast<void *>(bandsCenterWavelengthArray
@@ -2480,8 +2480,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     }
                     bandsCenterWavelengthArray->length++;
 
-                    if (const char *pszFWHM =
-                            poBand->GetMetadataItem("FWHM_UM", "IMAGERY"))
+                    if (const char *pszFWHM = poBand->GetMetadataItem(
+                            GDALMD_FWHM_UM, GDAL_MDD_IMAGERY))
                     {
                         float *values = static_cast<float *>(const_cast<void *>(
                             bandsFWHMArray->buffers[ARROW_BUF_DATA]));
@@ -2863,14 +2863,14 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         if (psRoot)
             CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Band");
         else
-            poLayer->SetMetadataItem("INTERLEAVE", "BAND");
+            poLayer->SetMetadataItem(GDALMD_INTERLEAVE, "BAND");
     }
     else if (nPixelInterleavedCount > 0)
     {
         if (psRoot)
             CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Pixel");
         else
-            poLayer->SetMetadataItem("INTERLEAVE", "PIXEL");
+            poLayer->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL");
     }
 
     if (!psOptions->osGTIFilename.empty())

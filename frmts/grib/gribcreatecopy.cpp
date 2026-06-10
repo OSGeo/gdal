@@ -1653,7 +1653,7 @@ bool GRIB2Section567Writer::WritePNG()
     CPLFree(pafData);
 
     CPLStringList aosPNGOptions;
-    aosPNGOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
+    aosPNGOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", m_nBits));
 
     const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
@@ -1839,7 +1839,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(CSLConstList papszOptions)
                 "TARGET", CPLSPrintf("%f", 100.0 - 100.0 / nCompressionRatio));
         }
     }
-    aosJ2KOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
+    aosJ2KOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", m_nBits));
 
     const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
@@ -2025,7 +2025,7 @@ bool GRIB2Section567Writer::Write(float fValOffset, CSLConstList papszOptions,
     }
 
     const char *pszBits =
-        GetBandOption(papszOptions, nullptr, m_nBand, "NBITS", nullptr);
+        GetBandOption(papszOptions, nullptr, m_nBand, GDALMD_NBITS, nullptr);
     if (pszBits == nullptr && eDataEncoding != IEEE_FLOATING_POINT)
     {
         pszBits = m_poSrcDS->GetRasterBand(m_nBand)->GetMetadataItem(

@@ -562,11 +562,11 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::Create(GDT_Float64));
                     dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
-                        "CENTRAL_WAVELENGTH_UM",
+                        GDALMD_CENTRAL_WAVELENGTH_UM,
                         CPLSPrintf(
                             "%g", dfVal * aoBandImageryMetadata[j]
                                               .dfCentralWavelengthToMicrometer),
-                        "IMAGERY");
+                        GDAL_MDD_IMAGERY);
                 }
             }
 
@@ -585,10 +585,10 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::Create(GDT_Float64));
                     dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
-                        "FWHM_UM",
+                        GDALMD_FWHM_UM,
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
                                                      .dfFWHMToMicrometer),
-                        "IMAGERY");
+                        GDAL_MDD_IMAGERY);
                 }
             }
 
@@ -1408,8 +1408,8 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
         }
         for (const auto &oJsonItem : oRoot.GetChildren())
         {
-            if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM" ||
-                oJsonItem.GetName() == "FWHM_UM")
+            if (oJsonItem.GetName() == GDALMD_CENTRAL_WAVELENGTH_UM ||
+                oJsonItem.GetName() == GDALMD_FWHM_UM)
             {
                 const auto osBandArrayFullname = oJsonItem.GetString("array");
                 const auto osBandAttributeName =
@@ -1611,7 +1611,7 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
                     abstractArray = std::move(poArray);
                 else
                     abstractArray = std::move(poAttribute);
-                if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM")
+                if (oJsonItem.GetName() == GDALMD_CENTRAL_WAVELENGTH_UM)
                 {
                     item.poCentralWavelengthArray = std::move(abstractArray);
                     item.dfCentralWavelengthToMicrometer = dfConvToUM;
@@ -1755,7 +1755,8 @@ lbl_next_depth:
         poDS->GetRasterCount() > 1)
     {
         poDS->m_bPixelInterleaved = true;
-        poDS->m_oMDD.SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->m_oMDD.SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (!array->GetFilename().empty() &&

@@ -1092,7 +1092,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
         // Include eo:cloud_cover in stac output
         const char *pszCloudCover =
-            GDALGetMetadataItem(hDataset, "CLOUDCOVER", "IMAGERY");
+            GDALGetMetadataItem(hDataset, "CLOUDCOVER", GDAL_MDD_IMAGERY);
         json_object *poValue = nullptr;
         if (pszCloudCover)
         {
@@ -2469,11 +2469,11 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
             for (const char *pszDomain : aosMDDList)
             {
                 if (!EQUAL(pszDomain, "") &&
-                    !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                    !EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
                     !EQUAL(pszDomain, "TILING_SCHEME") &&
-                    !EQUAL(pszDomain, "SUBDATASETS") &&
-                    !EQUAL(pszDomain, "GEOLOCATION") &&
-                    !EQUAL(pszDomain, "RPC"))
+                    !EQUAL(pszDomain, GDAL_MDD_SUBDATASETS) &&
+                    !EQUAL(pszDomain, GDAL_MDD_GEOLOCATION) &&
+                    !EQUAL(pszDomain, GDAL_MDD_RPC))
                 {
                     aosExtraMDDomainsExpanded.AddString(pszDomain);
                 }
@@ -2506,7 +2506,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
     /* -------------------------------------------------------------------- */
     /*      Report various named metadata domains.                          */
     /* -------------------------------------------------------------------- */
-    GDALInfoPrintMetadata(psOptions, hObject, "IMAGE_STRUCTURE",
+    GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_IMAGE_STRUCTURE,
                           "Image Structure Metadata", pszIndent, bJson,
                           poMetadata, osStr);
 
@@ -2515,16 +2515,18 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
         GDALInfoPrintMetadata(psOptions, hObject, "TILING_SCHEME",
                               "Tiling Scheme", pszIndent, bJson, poMetadata,
                               osStr);
-        GDALInfoPrintMetadata(psOptions, hObject, "SUBDATASETS", "Subdatasets",
-                              pszIndent, bJson, poMetadata, osStr);
-        GDALInfoPrintMetadata(psOptions, hObject, "GEOLOCATION", "Geolocation",
-                              pszIndent, bJson, poMetadata, osStr);
-        GDALInfoPrintMetadata(psOptions, hObject, "RPC", "RPC Metadata",
+        GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_SUBDATASETS,
+                              "Subdatasets", pszIndent, bJson, poMetadata,
+                              osStr);
+        GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_GEOLOCATION,
+                              "Geolocation", pszIndent, bJson, poMetadata,
+                              osStr);
+        GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_RPC, "RPC Metadata",
                               pszIndent, bJson, poMetadata, osStr);
     }
 
-    GDALInfoPrintMetadata(psOptions, hObject, "IMAGERY", "Imagery", pszIndent,
-                          bJson, poMetadata, osStr);
+    GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_IMAGERY, "Imagery",
+                          pszIndent, bJson, poMetadata, osStr);
 }
 
 /************************************************************************/

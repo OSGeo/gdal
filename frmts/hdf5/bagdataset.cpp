@@ -536,17 +536,18 @@ bool BAGRasterBand::Initialize(hid_t hDatasetIDIn, const char *pszName)
             const H5Z_filter_t filter = H5Pget_filter(
                 listid, i, &flags, &cd_nelmts, cd_values, sizeof(name), name);
             if (filter == H5Z_FILTER_DEFLATE)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "DEFLATE",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(
+                    GDALMD_COMPRESSION, "DEFLATE", GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_NBIT)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "NBIT",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "NBIT",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SCALEOFFSET)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SCALEOFFSET",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION,
+                                                   "SCALEOFFSET",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             else if (filter == H5Z_FILTER_SZIP)
-                poDS->GDALDataset::SetMetadataItem("COMPRESSION", "SZIP",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_COMPRESSION, "SZIP",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         H5Pclose(listid);
@@ -2501,7 +2502,8 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
 
     if (poParentDS->GetRasterCount() > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -3299,8 +3301,8 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
         if (GetRasterCount() > 1)
         {
-            GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                         "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         const bool bCanUseLowResAsOvr = nRasterXSize > m_nLowResWidth &&
@@ -3465,8 +3467,8 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                                                     fNoDataValue));
             }
 
-            GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                         "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         SetPhysicalFilename(osFilename);
@@ -5006,7 +5008,7 @@ CSLConstList BAGDataset::GetMetadata(const char *pszDomain)
         return apszMDList;
     }
 
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_aosSubdatasets.List();
     }

@@ -1020,7 +1020,8 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            ds->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            ds->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                GDAL_MDD_IMAGE_STRUCTURE);
             ds->SetDescription(poOpenInfo->pszFilename);
             ds->TryLoadXML();
         }

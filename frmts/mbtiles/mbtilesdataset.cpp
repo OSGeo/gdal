@@ -1268,7 +1268,8 @@ bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
 
     ComputeTileAndPixelShifts();
 
-    GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                 GDAL_MDD_IMAGE_STRUCTURE);
     GDALDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
     if (poParentDS)

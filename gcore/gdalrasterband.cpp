@@ -2926,7 +2926,7 @@ double GDALRasterBand::GetMaximum(int *pbSuccess)
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
-                GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             EnablePixelTypeSignedByteWarning(true);
             if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
                 return 127;
@@ -3035,7 +3035,7 @@ double GDALRasterBand::GetMinimum(int *pbSuccess)
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
-                GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             EnablePixelTypeSignedByteWarning(true);
             if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
                 return -128;
@@ -4298,7 +4298,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         EnablePixelTypeSignedByteWarning(true);
         bSignedByte =
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -4955,7 +4955,7 @@ CPLErr GDALRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         EnablePixelTypeSignedByteWarning(true);
         bSignedByte =
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -7208,7 +7208,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         EnablePixelTypeSignedByteWarning(true);
         bSignedByte =
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -8611,7 +8611,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         EnablePixelTypeSignedByteWarning(true);
         bSignedByte =
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -8977,7 +8977,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
     {
         EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         EnablePixelTypeSignedByteWarning(true);
         bSignedByte =
             pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -10782,7 +10782,7 @@ const char *GDALRasterBand::GetMetadataItem(const char *pszName,
 {
     // TODO (GDAL 4.0?): remove this when GDAL 3.7 has been widely adopted.
     if (m_bEnablePixelTypeSignedByteWarning && eDataType == GDT_UInt8 &&
-        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+        pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE) &&
         EQUAL(pszName, "PIXELTYPE"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,

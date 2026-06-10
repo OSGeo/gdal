@@ -319,7 +319,7 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       CPLSPrintf("Subdataset %d", i + 1));
             }
-            GDALDataset::SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
     }
     else if (iPart > nSubdatasets)
@@ -837,8 +837,8 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
     }
     if (nBits != 8 && nBits != 16)
     {
-        GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 

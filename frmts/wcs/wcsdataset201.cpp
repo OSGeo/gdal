@@ -514,7 +514,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid, const std::string &subtype,
 
 std::string WCSDataset201::GetSubdataset(const std::string &coverage)
 {
-    CSLConstList metadata = GDALPamDataset::GetMetadata("SUBDATASETS");
+    CSLConstList metadata = GDALPamDataset::GetMetadata(GDAL_MDD_SUBDATASETS);
     std::string subdataset;
     if (metadata != nullptr)
     {

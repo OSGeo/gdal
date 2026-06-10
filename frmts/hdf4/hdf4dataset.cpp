@@ -76,7 +76,7 @@ HDF4Dataset::~HDF4Dataset()
 char **HDF4Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -86,7 +86,7 @@ char **HDF4Dataset::GetMetadataDomainList()
 CSLConstList HDF4Dataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALDataset::GetMetadata(pszDomain);

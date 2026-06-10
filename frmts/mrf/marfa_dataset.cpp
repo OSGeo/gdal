@@ -772,8 +772,10 @@ CPLErr MRFDataset::LevelInit(const int l)
     if (poSRS)
         m_oSRS = *poSRS;
 
-    SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
-    SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
+                    GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
     for (int i = 0; i < l + 1; i++)
@@ -1475,8 +1477,9 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     if (current.size.z != 1)
     {
         SetMetadataItem("ZSIZE", CPLOPrintf("%d", current.size.z),
-                        "IMAGE_STRUCTURE");
-        SetMetadataItem("ZSLICE", CPLOPrintf("%d", zslice), "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem("ZSLICE", CPLOPrintf("%d", zslice),
+                        GDAL_MDD_IMAGE_STRUCTURE);
         // Capture the zslice in pagesize.l
         current.pagesize.l = zslice;
         // Adjust offset for base image
@@ -1497,12 +1500,14 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     }
 
     // Dataset metadata setup
-    SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
-    SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
+                    GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     if (is_Endianness_Dependent(current.dt, current.comp))
         SetMetadataItem("NETBYTEORDER", current.nbo ? "TRUE" : "FALSE",
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
 
     // Open the files for the current image, either RW or RO
     nRasterXSize = current.size.x;
@@ -1533,7 +1538,8 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
         if (std::string::npos != nSepPos)
         {
             s.resize(nSepPos);
-            SetMetadataItem(s, optlist.FetchNameValue(s), "IMAGE_STRUCTURE");
+            SetMetadataItem(s, optlist.FetchNameValue(s),
+                            GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -1768,9 +1774,9 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
     char **options = CSLDuplicate(papszOptions);
 
     const char *pszValue =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-    options =
-        CSLAddIfMissing(options, "INTERLEAVE", pszValue ? pszValue : "PIXEL");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+    options = CSLAddIfMissing(options, GDALMD_INTERLEAVE,
+                              pszValue ? pszValue : "PIXEL");
     int xb, yb;
     poSrcBand1->GetBlockSize(&xb, &yb);
 
@@ -1816,9 +1822,9 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
                 poDS->vMax.push_back(dfData);
 
             // Copy the band metadata, PAM will handle it
-            CSLConstList meta = srcBand->GetMetadata("IMAGE_STRUCTURE");
+            CSLConstList meta = srcBand->GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
             if (CSLCount(meta))
-                mBand->SetMetadata(meta, "IMAGE_STRUCTURE");
+                mBand->SetMetadata(meta, GDAL_MDD_IMAGE_STRUCTURE);
 
             meta = srcBand->GetMetadata();
             if (CSLCount(meta))
@@ -2138,7 +2144,7 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     if (val && IL_ERR_COMP == (img.comp = CompToken(val)))
         throw CPLString("GDAL MRF: Error setting compression");
 
-    val = opt.FetchNameValue("INTERLEAVE");
+    val = opt.FetchNameValue(GDALMD_INTERLEAVE);
     if (val && IL_ERR_ORD == (img.order = OrderToken(val)))
         throw CPLString("GDAL MRF: Error setting interleave");
 
@@ -2554,7 +2560,7 @@ CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     MRFDataset *nonConstThis = const_cast<MRFDataset *>(this);
-    if (nonConstThis->GetMetadata("RPC") || nonConstThis->GetGCPCount())
+    if (nonConstThis->GetMetadata(GDAL_MDD_RPC) || nonConstThis->GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid)
         return CE_Failure;

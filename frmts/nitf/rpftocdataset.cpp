@@ -718,7 +718,7 @@ void RPFTOCDataset::AddSubDataset(const char *pszFilename,
 CSLConstList RPFTOCDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);

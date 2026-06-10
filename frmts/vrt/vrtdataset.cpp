@@ -1173,7 +1173,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                          "'sd'");
                 return nullptr;
             }
-            CSLConstList papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszSubdatasets =
+                poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
             int nSubdatasets = CSLCount(papszSubdatasets);
 
             if (nSubdatasets > 0)
@@ -1242,7 +1243,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                          "'sd_name'");
                 return nullptr;
             }
-            CSLConstList papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszSubdatasets =
+                poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
             int nSubdatasets = CSLCount(papszSubdatasets);
 
             if (nSubdatasets > 0)

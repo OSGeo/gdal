@@ -126,7 +126,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
         aosGeoLoc.SetNameValue("Y_BAND", "1");
         aosGeoLoc.SetNameValue("Y_DATASET", m_osFilenameLat.c_str());
         aosGeoLoc.SetNameValue("GEOREFERENCING_CONVENTION", "PIXEL_CENTER");
-        SetMetadata(aosGeoLoc.List(), "GEOLOCATION");
+        SetMetadata(aosGeoLoc.List(), GDAL_MDD_GEOLOCATION);
     }
 };
 

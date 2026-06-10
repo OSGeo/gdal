@@ -779,7 +779,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (osSelectedSubdataset.empty() && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     poDS->psProduct = psProduct.release();
     poDS->psProductDim = psProductDim.release();
@@ -1122,7 +1123,8 @@ int DIMAPDataset::ReadImageInformation2()
         CPLGetXMLValue(psDoc, "Raster_Data.Data_Access.DATA_FILE_FORMAT", "");
     if (osDataFormat == "image/jp2")
     {
-        SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // For VHR2020: SPECTRAL_PROCESSING = PAN, MS, MS-FS, PMS, PMS-N, PMS-X,
@@ -1318,8 +1320,8 @@ int DIMAPDataset::ReadImageInformation2()
                 poVRTDS->GetRasterBand(iBand + 1));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poVRTBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         for (const auto &oTileIdxNameTuple : oMapTileIdxToName)
@@ -1404,8 +1406,8 @@ int DIMAPDataset::ReadImageInformation2()
             static_cast<VRTSourcedRasterBand *>(poVRTDS->GetRasterBand(iBand)));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                    "IMAGE_STRUCTURE");
+            poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (bTwoDataFilesPerTile)
         {
@@ -1602,7 +1604,7 @@ int DIMAPDataset::ReadImageInformation2()
         char **papszRPC = poReader->LoadRPCXmlFile(psDoc);
         delete poReader;
         if (papszRPC)
-            SetMetadata(papszRPC, "RPC");
+            SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 
@@ -1767,11 +1769,12 @@ int DIMAPDataset::ReadImageInformation2()
                 CPLAtof(SPECTRAL_RANGE_FWHM_MIN) * dfFactorToMicrometer;
             const double dfMax =
                 CPLAtof(SPECTRAL_RANGE_FWHM_MAX) * dfFactorToMicrometer;
-            poBand->SetMetadataItem("CENTRAL_WAVELENGTH_UM",
+            poBand->SetMetadataItem(GDALMD_CENTRAL_WAVELENGTH_UM,
                                     CPLSPrintf("%.3f", (dfMin + dfMax) / 2),
-                                    "IMAGERY");
-            poBand->SetMetadataItem(
-                "FWHM_UM", CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
+                                    GDAL_MDD_IMAGERY);
+            poBand->SetMetadataItem(GDALMD_FWHM_UM,
+                                    CPLSPrintf("%.3f", dfMax - dfMin),
+                                    GDAL_MDD_IMAGERY);
         }
     }
 

@@ -316,7 +316,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                 }
 
                 poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
-                                               "SUBDATASETS");
+                                               GDAL_MDD_SUBDATASETS);
 
                 // Setup/check for pam .aux.xml.
                 poDS->SetDescription(osFilename.c_str());
@@ -561,19 +561,20 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                 "SUBDATASET_1_NAME",
                 CPLSPrintf("S102:\"%s\":BathymetryCoverage",
                            osFilename.c_str()),
-                "SUBDATASETS");
-            poDS->GDALDataset::SetMetadataItem(
-                "SUBDATASET_1_DESC", "Bathymetric gridded data", "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
+            poDS->GDALDataset::SetMetadataItem("SUBDATASET_1_DESC",
+                                               "Bathymetric gridded data",
+                                               GDAL_MDD_SUBDATASETS);
 
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_2_NAME",
                 CPLSPrintf("S102:\"%s\":%s", osFilename.c_str(),
                            pszNameOfQualityGroup),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_2_DESC",
                 CPLSPrintf("Georeferenced metadata %s", pszNameOfQualityGroup),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
         }
     }
 
@@ -856,8 +857,8 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
     const GDALRasterAttributeTable *poRAT = nullptr;
     if (!pszQualityDataset && !bAppendSubdataset)
     {
-        const char *pszSubDSName =
-            m_poSrcDS->GetMetadataItem("SUBDATASET_2_NAME", "SUBDATASETS");
+        const char *pszSubDSName = m_poSrcDS->GetMetadataItem(
+            "SUBDATASET_2_NAME", GDAL_MDD_SUBDATASETS);
         if (pszSubDSName &&
             cpl::starts_with(std::string_view(pszSubDSName), "S102:") &&
             cpl::ends_with(std::string_view(pszSubDSName),

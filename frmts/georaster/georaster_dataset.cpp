@@ -253,7 +253,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
             papszSanitazed = CSLAddString(papszSanitazed, papszRPC_MD[i]);
         }
 
-        poGRD->SetMetadata(papszSanitazed, "RPC");
+        poGRD->SetMetadata(papszSanitazed, GDAL_MDD_RPC);
 
         CSLDestroy(papszRPC_MD);
         CSLDestroy(papszSanitazed);
@@ -318,29 +318,33 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     if (poGRW->nBandBlockSize == 1)
     {
-        poGRD->SetMetadataItem("INTERLEAVE", "BSQ", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BSQ",
+                               GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
         if (EQUAL(poGRW->sInterleaving.c_str(), "BSQ"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BSQ", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BSQ",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIP"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "PIB", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "PIB",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIL"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BIL", "IMAGE_STRUCTURE");
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BIL",
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
-    poGRD->SetMetadataItem("COMPRESSION",
+    poGRD->SetMetadataItem(GDALMD_COMPRESSION,
                            CPLGetXMLValue(poGRW->phMetadata,
                                           "rasterInfo.compression.type",
                                           "NONE"),
-                           "IMAGE_STRUCTURE");
+                           GDAL_MDD_IMAGE_STRUCTURE);
 
     if (STARTS_WITH_CI(poGRW->sCompressionType.c_str(), "JPEG"))
     {
@@ -348,22 +352,22 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
                                CPLGetXMLValue(poGRW->phMetadata,
                                               "rasterInfo.compression.quality",
                                               "undefined"),
-                               "IMAGE_STRUCTURE");
+                               GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "1BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem(GDALMD_NBITS, "1", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "2BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem(GDALMD_NBITS, "2", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (EQUAL(poGRW->sCellDepth.c_str(), "4BIT"))
     {
-        poGRD->SetMetadataItem("NBITS", "4", "IMAGE_STRUCTURE");
+        poGRD->SetMetadataItem(GDALMD_NBITS, "4", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     //  -------------------------------------------------------------------
@@ -389,7 +393,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     poGRD->SetMetadataItem("WKT", poGRW->sWKText.c_str(), "ORACLE");
 
-    poGRD->SetMetadataItem("COMPRESSION", poGRW->sCompressionType.c_str(),
+    poGRD->SetMetadataItem(GDALMD_COMPRESSION, poGRW->sCompressionType.c_str(),
                            "ORACLE");
 
     poGRD->SetMetadataItem("METADATA", pszDoc, "ORACLE");
@@ -1021,7 +1025,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRW->nRowBlockSize = atoi(pszFetched);
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "NBITS");
+    pszFetched = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
 
     if (pszFetched != nullptr)
     {
@@ -1049,7 +1053,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         nQuality = poGRW->nCompressQuality;
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    pszFetched = CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
 
     bool bInterleve_ind = false;
 
@@ -1546,7 +1550,7 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     //      Copy RPC
     // --------------------------------------------------------------------
 
-    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, "RPC");
+    CSLConstList papszRPCMetadata = GDALGetMetadata(poSrcDS, GDAL_MDD_RPC);
 
     if (papszRPCMetadata != nullptr)
     {
@@ -2555,7 +2559,7 @@ CPLErr GeoRasterDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 char **GeoRasterDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 //  ---------------------------------------------------------------------------
@@ -2564,7 +2568,7 @@ char **GeoRasterDataset::GetMetadataDomainList()
 
 CSLConstList GeoRasterDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);
