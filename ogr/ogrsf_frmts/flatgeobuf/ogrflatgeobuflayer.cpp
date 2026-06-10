@@ -2455,24 +2455,30 @@ void OGRFlatGeobufLayer::ResetReading()
     return;
 }
 
-std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
-                                                CSLConstList papszOptions)
+// Only for use by CreateOutputFile()
+static std::string GetTempFilePath(const CPLString &fileName,
+                                   CSLConstList papszOptions)
 {
-    const CPLString osDirname(CPLGetPathSafe(fileName.c_str()));
-    const CPLString osBasename(CPLGetBasenameSafe(fileName.c_str()));
+    const std::string osBasename(CPLGetBasenameSafe(fileName.c_str()));
+    const std::string osTmpFilename =
+        CPLGenerateTempFilenameSafe((osBasename + "_temp").c_str()) + ".fgb";
+
     const char *pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
-    std::string osTempFile =
-        pszTempDir ? CPLFormFilenameSafe(pszTempDir, osBasename, nullptr)
-        : (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
-            ? CPLGenerateTempFilenameSafe(osBasename)
-            : CPLFormFilenameSafe(osDirname, osBasename, nullptr);
-    osTempFile += "_temp.fgb";
-    return osTempFile;
+    if (pszTempDir)
+        return CPLFormFilenameSafe(
+            pszTempDir, CPLGetFilename(osTmpFilename.c_str()), nullptr);
+
+    if (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
+        return osTmpFilename;
+
+    const std::string osDirname(CPLGetDirnameSafe(fileName.c_str()));
+    return CPLFormFilenameSafe(osDirname.c_str(),
+                               CPLGetFilename(osTmpFilename.c_str()), nullptr);
 }
 
-VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
-                                               CSLConstList papszOptions,
-                                               bool isTemp)
+std::pair<VSILFILE *, std::string>
+OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
+                                     CSLConstList papszOptions, bool isTemp)
 {
     std::string osTempFile;
     VSILFILE *poFpWrite;
@@ -2502,9 +2508,9 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
                  osFilename.c_str(), VSIStrerror(savedErrno));
-        return nullptr;
+        return {nullptr, std::string()};
     }
-    return poFpWrite;
+    return {poFpWrite, osTempFile};
 }
 
 OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
@@ -2512,8 +2518,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
     const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
     bool bCreateSpatialIndexAtClose, CSLConstList papszOptions)
 {
-    std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
-    VSILFILE *poFpWrite =
+    auto [poFpWrite, osTempFile] =
         CreateOutputFile(pszFilename, papszOptions, bCreateSpatialIndexAtClose);
     if (poFpWrite == nullptr)
         return nullptr;
