@@ -99,6 +99,11 @@ class GDALGDataset final : public GDALProxyDataset
     {
         return m_poUnderlyingDS->TestCapability(pszCap);
     }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poUnderlyingDS->GetRootGroup();
+    }
 };
 
 /************************************************************************/
@@ -287,7 +292,8 @@ void GDALGRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand *) const
         if (poUnderlyingDS)
         {
             if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) &&
-                !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR))
+                !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) &&
+                !(poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER))
             {
                 // Don't return if asked for a raster dataset but the
                 // underlying one is not.
@@ -297,12 +303,24 @@ void GDALGRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand *) const
                     return nullptr;
                 }
             }
-            else if (!(poOpenInfo->nOpenFlags & GDAL_OF_RASTER) &&
-                     (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR))
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) &&
+                     !(poOpenInfo->nOpenFlags & GDAL_OF_RASTER) &&
+                     !(poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER))
             {
                 // Don't return if asked for a vector dataset but the
                 // underlying one is not.
                 if (poUnderlyingDS->GetLayerCount() == 0)
+                {
+                    return nullptr;
+                }
+            }
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) &&
+                     !(poOpenInfo->nOpenFlags & GDAL_OF_RASTER) &&
+                     !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR))
+            {
+                // Don't return if asked for a multidim dataset but the
+                // underlying one is not.
+                if (!poUnderlyingDS->GetRootGroup())
                 {
                     return nullptr;
                 }
@@ -330,6 +348,7 @@ void GDALRegister_GDALG()
     poDriver->SetDescription("GDALG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "GDAL Streamed Algorithm driver");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gdalg.json");

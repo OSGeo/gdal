@@ -13,7 +13,7 @@
 #ifndef GDALALG_MDIM_INFO_INCLUDED
 #define GDALALG_MDIM_INFO_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_mdim_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,8 @@
 /*                        GDALMdimInfoAlgorithm                         */
 /************************************************************************/
 
-class GDALMdimInfoAlgorithm final : public GDALAlgorithm
+class GDALMdimInfoAlgorithm /* non final */
+    : public GDALMdimPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "info";
@@ -29,23 +30,38 @@ class GDALMdimInfoAlgorithm final : public GDALAlgorithm
         "Return information on a multidimensional dataset.";
     static constexpr const char *HELP_URL = "/programs/gdal_mdim_info.html";
 
-    GDALMdimInfoAlgorithm();
+    explicit GDALMdimInfoAlgorithm(bool standaloneStep = false,
+                                   bool openForMixedRasterVector = false);
+
+    bool CanBeLastStep() const override
+    {
+        return true;
+    }
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    std::string m_format{};
-    GDALArgDatasetValue m_dataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    std::string m_output{};
     bool m_summary = false;
     bool m_detailed = false;
     std::string m_array{};
     int m_limit = 0;
     std::vector<std::string> m_arrayOptions{};
     bool m_stats = false;
-    bool m_stdout = false;
+};
+
+/************************************************************************/
+/*                   GDALMdimInfoAlgorithmStandalone                    */
+/************************************************************************/
+
+class GDALMdimInfoAlgorithmStandalone final : public GDALMdimInfoAlgorithm
+{
+  public:
+    GDALMdimInfoAlgorithmStandalone()
+        : GDALMdimInfoAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALMdimInfoAlgorithmStandalone() override;
 };
 
 //! @endcond
