@@ -61,8 +61,8 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecShardingIndexed::Clone() const
 {
     auto psClone = std::make_unique<ZarrV3CodecShardingIndexed>();
     ZarrArrayMetadata oOutputArrayMetadata;
-    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
-                                   oOutputArrayMetadata,
+    psClone->InitFromConfiguration(std::string(), m_oConfiguration,
+                                   m_oInputArrayMetadata, oOutputArrayMetadata,
                                    /* bEmitWarnings = */ false);
     return psClone;
 }
@@ -72,7 +72,7 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecShardingIndexed::Clone() const
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
-    const CPLJSONObject &configuration,
+    const std::string &osArrayName, const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata, bool bEmitWarnings)
 {
@@ -173,7 +173,8 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
     inputArrayMetadataCodecs.anBlockSizes = m_anInnerBlockSize;
     m_poCodecSequence =
         std::make_unique<ZarrV3CodecSequence>(inputArrayMetadataCodecs);
-    if (!m_poCodecSequence->InitFromJson(oCodecs, oOutputArrayMetadata))
+    if (!m_poCodecSequence->InitFromJson(osArrayName, oCodecs,
+                                         oOutputArrayMetadata))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Codec sharding_indexed: initialization of codecs failed");
@@ -218,7 +219,7 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
     m_poIndexCodecSequence =
         std::make_unique<ZarrV3CodecSequence>(inputArrayMetadataIndex);
     ZarrArrayMetadata oOutputArrayMetadataIndex;
-    if (!m_poIndexCodecSequence->InitFromJson(oIndexCodecs,
+    if (!m_poIndexCodecSequence->InitFromJson(osArrayName, oIndexCodecs,
                                               oOutputArrayMetadataIndex))
     {
         CPLError(

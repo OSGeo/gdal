@@ -32,8 +32,8 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecCRC32C::Clone() const
 {
     auto psClone = std::make_unique<ZarrV3CodecCRC32C>();
     ZarrArrayMetadata oOutputArrayMetadata;
-    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
-                                   oOutputArrayMetadata,
+    psClone->InitFromConfiguration(std::string(), m_oConfiguration,
+                                   m_oInputArrayMetadata, oOutputArrayMetadata,
                                    /* bEmitWarnings = */ false);
     return psClone;
 }
@@ -43,7 +43,7 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecCRC32C::Clone() const
 /************************************************************************/
 
 bool ZarrV3CodecCRC32C::InitFromConfiguration(
-    const CPLJSONObject &configuration,
+    const std::string & /* osArrayName */, const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata, bool /* bEmitWarnings */)
 {

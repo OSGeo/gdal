@@ -30,12 +30,14 @@ std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
 /*                 ZarrV3CodecSequence::InitFromJson()                  */
 /************************************************************************/
 
-bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
+bool ZarrV3CodecSequence::InitFromJson(const std::string &osArrayName,
+                                       const CPLJSONObject &oCodecs,
                                        ZarrArrayMetadata &oOutputArrayMetadata)
 {
     if (oCodecs.GetType() != CPLJSONObject::Type::Array)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "codecs is not an array");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: codecs is not an array",
+                 osArrayName.c_str());
         return false;
     }
     auto oCodecsArray = oCodecs.ToArray();
@@ -61,8 +63,9 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
             auto poEndianCodec = std::make_unique<ZarrV3CodecBytes>();
             ZarrArrayMetadata oTmpOutputArrayMetadata;
             poEndianCodec->InitFromConfiguration(
-                ZarrV3CodecBytes::GetConfiguration(true), oInputArrayMetadata,
-                oTmpOutputArrayMetadata, /* bEmitWarnings = */ true);
+                std::string(), ZarrV3CodecBytes::GetConfiguration(true),
+                oInputArrayMetadata, oTmpOutputArrayMetadata,
+                /* bEmitWarnings = */ true);
             oInputArrayMetadata = std::move(oTmpOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
@@ -107,8 +110,8 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
         }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported codec: %s",
-                     osName.c_str());
+            CPLError(CE_Failure, CPLE_NotSupported, "%s: Unsupported codec: %s",
+                     osArrayName.c_str(), osName.c_str());
             return false;
         }
 
@@ -132,10 +135,10 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
         {
             anBlockSizesBeforeSharding = oInputArrayMetadata.anBlockSizes;
         }
-        if (!poCodec->InitFromConfiguration(oCodec["configuration"],
-                                            oInputArrayMetadata,
-                                            oStepOutputArrayMetadata,
-                                            /* bEmitWarnings = */ true))
+        if (!poCodec->InitFromConfiguration(
+                osArrayName, oCodec["configuration"], oInputArrayMetadata,
+                oStepOutputArrayMetadata,
+                /* bEmitWarnings = */ true))
         {
             return false;
         }

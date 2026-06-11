@@ -1288,9 +1288,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     if (oCodecs.Size() > 0)
     {
         std::vector<GByte> abyNoData;
-        poCodecs = ZarrV3Array::SetupCodecs(oCodecs, anOuterBlockSize,
-                                            anInnerBlockSize,
-                                            aoDtypeElts.back(), abyNoData);
+        poCodecs = ZarrV3Array::SetupCodecs(
+            GetFullName() + "/" + osName, oCodecs, anOuterBlockSize,
+            anInnerBlockSize, aoDtypeElts.back(), abyNoData);
         if (!poCodecs)
         {
             return nullptr;

@@ -2606,9 +2606,9 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     std::vector<GUInt64> anInnerBlockSize = anOuterBlockSize;
     if (oCodecs.Size() > 0)
     {
-        poCodecs = ZarrV3Array::SetupCodecs(oCodecs, anOuterBlockSize,
-                                            anInnerBlockSize,
-                                            aoDtypeElts.back(), abyNoData);
+        poCodecs = ZarrV3Array::SetupCodecs(
+            GetFullName() + "/" + osArrayName, oCodecs, anOuterBlockSize,
+            anInnerBlockSize, aoDtypeElts.back(), abyNoData);
         if (!poCodecs)
         {
             return nullptr;
@@ -2765,7 +2765,8 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
 /************************************************************************/
 
 /* static */ std::unique_ptr<ZarrV3CodecSequence> ZarrV3Array::SetupCodecs(
-    const CPLJSONArray &oCodecs, const std::vector<GUInt64> &anOuterBlockSize,
+    const std::string &osArrayName, const CPLJSONArray &oCodecs,
+    const std::vector<GUInt64> &anOuterBlockSize,
     std::vector<GUInt64> &anInnerBlockSize, DtypeElt &zarrDataType,
     const std::vector<GByte> &abyNoData)
 
@@ -2818,7 +2819,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
     oInputArrayMetadata.oElt = zarrDataType;
     auto poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
     ZarrArrayMetadata oOutputArrayMetadata;
-    if (!poCodecs->InitFromJson(oCodecs, oOutputArrayMetadata))
+    if (!poCodecs->InitFromJson(osArrayName, oCodecs, oOutputArrayMetadata))
     {
         return nullptr;
     }

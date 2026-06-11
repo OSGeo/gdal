@@ -60,11 +60,10 @@ class ZarrV3Codec CPL_NON_FINAL
     virtual IOType GetInputType() const = 0;
     virtual IOType GetOutputType() const = 0;
 
-    virtual bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata,
-                          bool bEmitWarnings) = 0;
+    virtual bool InitFromConfiguration(
+        const std::string &osArrayName, const CPLJSONObject &configuration,
+        const ZarrArrayMetadata &oInputArrayMetadata,
+        ZarrArrayMetadata &oOutputArrayMetadata, bool bEmitWarnings) = 0;
 
     virtual std::unique_ptr<ZarrV3Codec> Clone() const = 0;
 
@@ -162,7 +161,8 @@ class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
 
     static CPLJSONObject GetConfiguration(int nLevel);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -186,7 +186,8 @@ class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
                                           const char *shuffle, int typesize,
                                           int blocksize);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -208,7 +209,8 @@ class ZarrV3CodecZstd final : public ZarrV3CodecAbstractCompressor
 
     static CPLJSONObject GetConfiguration(int level, bool checksum);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -242,7 +244,8 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 
     static CPLJSONObject GetConfiguration(bool bLittle);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -302,7 +305,8 @@ class ZarrV3CodecVLenUTF8 final : public ZarrV3Codec
         return IOType::BYTES;
     }
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -352,7 +356,8 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
 
     static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -430,7 +435,8 @@ class ZarrV3CodecCRC32C final : public ZarrV3Codec
         return IOType::BYTES;
     }
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -479,7 +485,8 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
         return IOType::BYTES;
     }
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -535,7 +542,8 @@ class ZarrV3CodecSequence
     // This method is not thread safe due to cloning a JSON object
     std::unique_ptr<ZarrV3CodecSequence> Clone() const;
 
-    bool InitFromJson(const CPLJSONObject &oCodecs,
+    bool InitFromJson(const std::string &osArrayName,
+                      const CPLJSONObject &oCodecs,
                       ZarrArrayMetadata &oOutputArrayMetadata);
 
     const CPLJSONObject &GetJSon() const

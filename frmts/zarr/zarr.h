@@ -1469,7 +1469,7 @@ class ZarrV3Array final : public ZarrArray
     bool Flush() override;
 
     static std::unique_ptr<ZarrV3CodecSequence>
-    SetupCodecs(const CPLJSONArray &oCodecs,
+    SetupCodecs(const std::string &osArrayName, const CPLJSONArray &oCodecs,
                 const std::vector<GUInt64> &anOuterBlockSize,
                 std::vector<GUInt64> &anInnerBlockSize, DtypeElt &zarrDataType,
                 const std::vector<GByte> &abyNoData);

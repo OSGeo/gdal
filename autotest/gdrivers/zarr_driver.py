@@ -7208,7 +7208,7 @@ def mutate_wrong_index_location(j):
         ),
         (
             mutate_codecs_invalid_subcodec,
-            r"Codec sharding_indexed: initialization of codecs failed\nMay be caused by: Unsupported codec: invalid",
+            r"Codec sharding_indexed: initialization of codecs failed\nMay be caused by: .*Unsupported codec: invalid",
         ),
         (
             mutate_missing_index_codecs,
@@ -7224,7 +7224,7 @@ def mutate_wrong_index_location(j):
         ),
         (
             mutate_index_codecs_invalid_subcodec,
-            r"Codec sharding_indexed: initialization of index_codecs failed\nMay be caused by: Unsupported codec: invalid",
+            r"Codec sharding_indexed: initialization of index_codecs failed\nMay be caused by: .*Unsupported codec: invalid",
         ),
         (
             mutate_index_codecs_unsupported_type,

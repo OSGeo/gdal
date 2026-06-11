@@ -38,7 +38,7 @@ ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 /************************************************************************/
 
 bool ZarrV3CodecBytes::InitFromConfiguration(
-    const CPLJSONObject &configuration,
+    const std::string & /* osArrayName */, const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata, bool /* bEmitWarnings */)
 {
@@ -101,8 +101,8 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecBytes::Clone() const
 {
     auto psClone = std::make_unique<ZarrV3CodecBytes>();
     ZarrArrayMetadata oOutputArrayMetadata;
-    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
-                                   oOutputArrayMetadata,
+    psClone->InitFromConfiguration(std::string(), m_oConfiguration,
+                                   m_oInputArrayMetadata, oOutputArrayMetadata,
                                    /* bEmitWarnings = */ false);
     return psClone;
 }

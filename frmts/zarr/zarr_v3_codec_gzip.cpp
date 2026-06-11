@@ -40,7 +40,7 @@ ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3CodecAbstractCompressor(NAME)
 /************************************************************************/
 
 bool ZarrV3CodecGZip::InitFromConfiguration(
-    const CPLJSONObject &configuration,
+    const std::string & /* osArrayName */, const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata, bool /* bEmitWarnings */)
 {
@@ -112,8 +112,8 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecGZip::Clone() const
 {
     auto psClone = std::make_unique<ZarrV3CodecGZip>();
     ZarrArrayMetadata oOutputArrayMetadata;
-    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
-                                   oOutputArrayMetadata,
+    psClone->InitFromConfiguration(std::string(), m_oConfiguration,
+                                   m_oInputArrayMetadata, oOutputArrayMetadata,
                                    /* bEmitWarnings = */ false);
     return psClone;
 }
