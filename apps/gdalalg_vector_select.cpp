@@ -44,8 +44,8 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
            &m_fields)
         .SetDuplicateValuesAllowed(false)
-        .SetPositional()
-        .SetRequired();
+        .SetPositional();
+    AddArg("geometry", 0, _("Select default geometry field"), &m_defaultGeom);
     AddArg("exclude", 0, _("Exclude specified fields"), &m_exclude)
         .SetDuplicateValuesAllowed(false)
         .SetMutualExclusionGroup("exclude-ignore");
@@ -321,6 +321,19 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
+
+    if (m_defaultGeom &&
+        std::find(m_fields.begin(), m_fields.end(),
+                  OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) == m_fields.end())
+    {
+        m_fields.emplace_back(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
+    }
+    if (m_fields.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Must specify --fields and/or --geometry");
+        return false;
+    }
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {

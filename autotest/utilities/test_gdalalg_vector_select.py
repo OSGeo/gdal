@@ -73,6 +73,59 @@ def test_gdalalg_vector_select_fields():
     lyr.SetSpatialFilter(None)
 
 
+def test_gdalalg_vector_select_geom():
+
+    alg = get_select_alg()
+
+    alg["geometry"] = True
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+
+def test_gdalalg_vector_select_named_geom():
+
+    alg = get_select_alg()
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("lyr", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("custom_geom", ogr.wkbLineString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 1 1)"))
+    src_lyr.CreateFeature(f)
+
+    alg["geometry"] = True
+    alg["input"] = src_ds
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+    assert dst_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "custom_geom"
+
+
+def test_gdalalg_vector_select_no_fields_or_geom():
+
+    alg = get_select_alg()
+
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Must specify --fields and/or --geometry"):
+        alg.Run()
+
+
 def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)

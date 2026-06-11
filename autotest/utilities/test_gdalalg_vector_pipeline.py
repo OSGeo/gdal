@@ -967,7 +967,7 @@ def test_gdalalg_vector_pipeline_help():
     out = gdaltest.runexternal(
         f"{gdal_path} vector pipeline read foo.shp ! select --help"
     )
-    assert out.startswith("Usage: select [OPTIONS] <FIELDS>")
+    assert out.startswith("Usage: select [OPTIONS] [<FIELDS>]")
 
 
 def test_gdalalg_vector_pipeline_skip_errors(tmp_vsimem):

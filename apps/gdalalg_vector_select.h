@@ -37,6 +37,7 @@ class GDALVectorSelectAlgorithm /* non final */
 
     std::string m_activeLayer{};
     std::vector<std::string> m_fields{};
+    bool m_defaultGeom = false;
     bool m_ignoreMissingFields = false;
     bool m_exclude = false;
 };
