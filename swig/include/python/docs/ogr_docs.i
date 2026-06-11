@@ -61,7 +61,7 @@ may optionally be specified.
 
 Since GDAL 3.14, PostGIS-style \"extended\" WKT inputs of the format
 ``SRID=<EPSG_CODE>;<WKT>`` are supported. (The axis order of coordinates is
-assumed to follow the ``OAMS_TRADITIONAL_GIS_ORDER`` convention. 
+assumed to follow the ``OAMS_TRADITIONAL_GIS_ORDER`` convention.
 If a spatial reference argument is also provided, that value will override the SRS specified in the EWKT.
 
 Parameters
@@ -230,7 +230,7 @@ int
 %feature("docstring") Open "
 
 Open a vector file as a :py:class:`gdal.Dataset`.
-Equivalent to calling :py:func:`gdal.OpenEx` with the
+Equivalent to calling :py:func:`gdal.Open` with the
 :py:const:`gdal.OF_VECTOR` flag.
 
 Parameters
@@ -257,7 +257,7 @@ Examples
 
 Open a vector file as a :py:class:`gdal.Dataset`. If the file has already been
 opened in the current thread, return a reference to the already-opened
-:py:class:`gdal.Dataset`. Equivalent to calling :py:func:`gdal.OpenEx` with the
+:py:class:`gdal.Dataset`. Equivalent to calling :py:func:`gdal.Open` with the
 :py:const:`gdal.OF_VECTOR` and :py:const:`gdal.OF_SHARED` flags.
 
 Parameters

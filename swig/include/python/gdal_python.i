@@ -2306,7 +2306,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 
     .. testsetup::
 
-       >>> src_ds = gdal.OpenEx("poly.shp", gdal.OF_VECTOR)
+       >>> src_ds = gdal.Open("poly.shp", gdal.OF_VECTOR)
        >>> ds = gdal.GetDriverByName("MEM").CreateVector("")
        >>> _ = ds.CopyLayer(src_ds.GetLayer(0), "layer")
 
@@ -2319,7 +2319,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     2. Use keep_ref_on_ds=True to return an object that keeps a reference to its dataset:
 
     >>> def get_sql_lyr():
-    ...     return gdal.OpenEx("poly.shp", gdal.OF_VECTOR).ExecuteSQL("SELECT * FROM poly", keep_ref_on_ds=True)
+    ...     return gdal.Open("poly.shp", gdal.OF_VECTOR).ExecuteSQL("SELECT * FROM poly", keep_ref_on_ds=True)
     ...
     >>> with get_sql_lyr() as lyr:
     ...     print(lyr.GetFeatureCount())
