@@ -1105,11 +1105,11 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         input=src_ds,
         output=tmp_vsimem / "out",
         output_format="GPKG",
-        field="OGR_GEOMETRY",
+        field="_ogr_geometry_",
     )
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POLYGON/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POLYGON/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -1120,7 +1120,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         )
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINT/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINT/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPoint
@@ -1129,7 +1129,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(2).GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZ/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTZ/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPoint25D
@@ -1137,7 +1137,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(3).GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTM/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTM/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPointM
@@ -1145,7 +1145,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(4).GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 4)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZM/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTZM/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPointZM
@@ -1156,7 +1156,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
 
     with ogr.Open(
         tmp_vsimem
-        / "out/test/OGR_GEOMETRY=__HIVE_DEFAULT_PARTITION__/part_0000000001.gpkg"
+        / "out/test/_ogr_geometry_=__HIVE_DEFAULT_PARTITION__/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbNone
@@ -1260,4 +1260,4 @@ def test_gdalalg_vector_partition_completion(tmp_path):
         f"{gdal_path} completion gdal vector partition ../ogr/data/poly.shp --field"
     )
     assert "EAS_ID" in out
-    assert "OGR_GEOMETRY" in out
+    assert "_ogr_geometry_" in out

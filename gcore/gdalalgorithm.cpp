@@ -26,6 +26,7 @@
 #include "gdal_thread_pool.h"
 #include "memdataset.h"
 #include "ogrsf_frmts.h"
+#include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
@@ -5291,7 +5292,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
                         {
                             const char *fieldName = poFieldDefn->GetNameRef();
                             if (fieldName[0] == 0)
-                                fieldName = "OGR_GEOMETRY";
+                                fieldName = OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
                             if (currentValue == fieldName)
                             {
                                 ret.clear();
