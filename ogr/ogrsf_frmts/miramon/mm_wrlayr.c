@@ -849,14 +849,19 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                  sizeof(hMiraMonLayer->MMPoint.pszLayerName), "%s.pnt",
                  hMiraMonLayer->pszSrcLayerName);
     }
-    if (nullptr == (hMiraMonLayer->MMPoint.pF =
-                        VSIFOpenL(hMiraMonLayer->MMPoint.pszLayerName,
-                                  hMiraMonLayer->pszFlags)))
+
+    // After verifying that it has not been opened, we open it.
+    if (!hMiraMonLayer->MMPoint.pF)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Error MMPoint.pF: Cannot open file %s.",
-                 hMiraMonLayer->MMPoint.pszLayerName);
-        return 1;
+        if (nullptr == (hMiraMonLayer->MMPoint.pF =
+                            VSIFOpenL(hMiraMonLayer->MMPoint.pszLayerName,
+                                      hMiraMonLayer->pszFlags)))
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error MMPoint.pF: Cannot open file %s.",
+                     hMiraMonLayer->MMPoint.pszLayerName);
+            return 1;
+        }
     }
     VSIFSeekL(hMiraMonLayer->MMPoint.pF, 0, SEEK_SET);
 
@@ -867,14 +872,18 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                  sizeof(hMiraMonLayer->MMPoint.pszTLName), "%sT.~xy",
                  hMiraMonLayer->pszSrcLayerName);
 
-        if (nullptr == (hMiraMonLayer->MMPoint.pFTL =
-                            VSIFOpenL(hMiraMonLayer->MMPoint.pszTLName,
-                                      hMiraMonLayer->pszFlags)))
+        // After verifying that it has not been opened, we open it.
+        if (!hMiraMonLayer->MMPoint.pFTL)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Error MMPoint.pFTL: Cannot open file %s.",
-                     hMiraMonLayer->MMPoint.pszTLName);
-            return 1;
+            if (nullptr == (hMiraMonLayer->MMPoint.pFTL =
+                                VSIFOpenL(hMiraMonLayer->MMPoint.pszTLName,
+                                          hMiraMonLayer->pszFlags)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Error MMPoint.pFTL: Cannot open file %s.",
+                         hMiraMonLayer->MMPoint.pszTLName);
+                return 1;
+            }
         }
         VSIFSeekL(hMiraMonLayer->MMPoint.pFTL, 0, SEEK_SET);
 
@@ -890,14 +899,18 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                      sizeof(hMiraMonLayer->MMPoint.psz3DLayerName), "%sT.~z",
                      hMiraMonLayer->pszSrcLayerName);
 
-            if (nullptr == (hMiraMonLayer->MMPoint.pF3d =
-                                VSIFOpenL(hMiraMonLayer->MMPoint.psz3DLayerName,
-                                          hMiraMonLayer->pszFlags)))
+            // After verifying that it has not been opened, we open it.
+            if (!hMiraMonLayer->MMPoint.pF3d)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Error MMPoint.pF3d: Cannot open file %s.",
-                         hMiraMonLayer->MMPoint.psz3DLayerName);
-                return 1;
+                if (nullptr == (hMiraMonLayer->MMPoint.pF3d = VSIFOpenL(
+                                    hMiraMonLayer->MMPoint.psz3DLayerName,
+                                    hMiraMonLayer->pszFlags)))
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "Error MMPoint.pF3d: Cannot open file %s.",
+                             hMiraMonLayer->MMPoint.psz3DLayerName);
+                    return 1;
+                }
             }
             VSIFSeekL(hMiraMonLayer->MMPoint.pF3d, 0, SEEK_SET);
         }
@@ -1009,15 +1022,19 @@ static int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                CPLResetExtension(pMMArcLayer->MMNode.pszLayerName, "nod"),
                sizeof(pMMArcLayer->MMNode.pszLayerName));
 
-    if (nullptr ==
-        (pMMArcLayer->MMNode.pF = VSIFOpenL(pMMArcLayer->MMNode.pszLayerName,
-                                            hMiraMonLayer->pszFlags)))
+    // After verifying that it has not been opened, we open it.
+    if (!pMMArcLayer->MMNode.pF)
     {
+        if (nullptr == (pMMArcLayer->MMNode.pF =
+                            VSIFOpenL(pMMArcLayer->MMNode.pszLayerName,
+                                      hMiraMonLayer->pszFlags)))
+        {
 
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Error MMNode.pF: Cannot open file %s.",
-                 pMMArcLayer->MMNode.pszLayerName);
-        return 1;
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error MMNode.pF: Cannot open file %s.",
+                     pMMArcLayer->MMNode.pszLayerName);
+            return 1;
+        }
     }
     VSIFSeekL(pMMArcLayer->MMNode.pF, 0, SEEK_SET);
 
@@ -1059,15 +1076,19 @@ static int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                                        MM_CPL_PATH_BUF_SIZE, ".nod", "N.~idx"))
             return 1;
 
-        if (nullptr ==
-            (pMMArcLayer->MMNode.pFNL = VSIFOpenL(pMMArcLayer->MMNode.pszNLName,
-                                                  hMiraMonLayer->pszFlags)))
+        // After verifying that it has not been opened, we open it.
+        if (!pMMArcLayer->MMNode.pFNL)
         {
+            if (nullptr == (pMMArcLayer->MMNode.pFNL =
+                                VSIFOpenL(pMMArcLayer->MMNode.pszNLName,
+                                          hMiraMonLayer->pszFlags)))
+            {
 
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Error MMNode.pFNL: Cannot open file %s.",
-                     pMMArcLayer->MMNode.pszNLName);
-            return 1;
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Error MMNode.pFNL: Cannot open file %s.",
+                         pMMArcLayer->MMNode.pszNLName);
+                return 1;
+            }
         }
         VSIFSeekL(pMMArcLayer->MMNode.pFNL, 0, SEEK_SET);
 
@@ -1138,13 +1159,17 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         }
     }
 
-    if (nullptr == (pMMArcLayer->pF = VSIFOpenL(pMMArcLayer->pszLayerName,
-                                                hMiraMonLayer->pszFlags)))
+    // After verifying that it has not been opened, we open it.
+    if (!pMMArcLayer->pF)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Error pMMArcLayer->pF: Cannot open file %s.",
-                 pMMArcLayer->pszLayerName);
-        return 1;
+        if (nullptr == (pMMArcLayer->pF = VSIFOpenL(pMMArcLayer->pszLayerName,
+                                                    hMiraMonLayer->pszFlags)))
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error pMMArcLayer->pF: Cannot open file %s.",
+                     pMMArcLayer->pszLayerName);
+            return 1;
+        }
     }
 
     if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE &&
@@ -1219,13 +1244,18 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                      "%sA.~xy", hMiraMonLayer->pszSrcLayerName);
         }
 
-        if (nullptr == (pMMArcLayer->pFAL = VSIFOpenL(pMMArcLayer->pszALName,
-                                                      hMiraMonLayer->pszFlags)))
+        // After verifying that it has not been opened, we open it.
+        if (!pMMArcLayer->pFAL)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Error pMMArcLayer->pFAL: Cannot open file %s.",
-                     pMMArcLayer->pszALName);
-            return 1;
+            if (nullptr ==
+                (pMMArcLayer->pFAL = VSIFOpenL(pMMArcLayer->pszALName,
+                                               hMiraMonLayer->pszFlags)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Error pMMArcLayer->pFAL: Cannot open file %s.",
+                         pMMArcLayer->pszALName);
+                return 1;
+            }
         }
         VSIFSeekL(pMMArcLayer->pFAL, 0, SEEK_SET);
 
@@ -1252,14 +1282,18 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                          hMiraMonLayer->pszSrcLayerName);
             }
 
-            if (nullptr ==
-                (pMMArcLayer->pF3d = VSIFOpenL(pMMArcLayer->psz3DLayerName,
-                                               hMiraMonLayer->pszFlags)))
+            // After verifying that it has not been opened, we open it.
+            if (!pMMArcLayer->pF3d)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Error pMMArcLayer->pF3d: Cannot open file %s.",
-                         pMMArcLayer->psz3DLayerName);
-                return 1;
+                if (nullptr ==
+                    (pMMArcLayer->pF3d = VSIFOpenL(pMMArcLayer->psz3DLayerName,
+                                                   hMiraMonLayer->pszFlags)))
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "Error pMMArcLayer->pF3d: Cannot open file %s.",
+                             pMMArcLayer->psz3DLayerName);
+                    return 1;
+                }
             }
             VSIFSeekL(pMMArcLayer->pF3d, 0, SEEK_SET);
         }
@@ -1426,14 +1460,18 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                  hMiraMonLayer->pszSrcLayerName);
     }
 
-    if (nullptr ==
-        (pMMPolygonLayer->pF =
-             VSIFOpenL(pMMPolygonLayer->pszLayerName, hMiraMonLayer->pszFlags)))
+    // After verifying that it has not been opened, we open it.
+    if (!pMMPolygonLayer->pF)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Error pMMPolygonLayer->pF: Cannot open file %s.",
-                 pMMPolygonLayer->pszLayerName);
-        return 1;
+        if (nullptr ==
+            (pMMPolygonLayer->pF = VSIFOpenL(pMMPolygonLayer->pszLayerName,
+                                             hMiraMonLayer->pszFlags)))
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Error pMMPolygonLayer->pF: Cannot open file %s.",
+                     pMMPolygonLayer->pszLayerName);
+            return 1;
+        }
     }
 
     // PS
@@ -1447,14 +1485,18 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         snprintf(pMMPolygonLayer->pszPSName, sizeof(pMMPolygonLayer->pszPSName),
                  "%sP.~PS", hMiraMonLayer->pszSrcLayerName);
 
-        if (nullptr ==
-            (pMMPolygonLayer->pFPS = VSIFOpenL(pMMPolygonLayer->pszPSName,
-                                               hMiraMonLayer->pszFlags)))
+        // After verifying that it has not been opened, we open it.
+        if (!pMMPolygonLayer->pFPS)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Error pMMPolygonLayer->pFPS: Cannot open file %s.",
-                     pMMPolygonLayer->pszPSName);
-            return 1;
+            if (nullptr ==
+                (pMMPolygonLayer->pFPS = VSIFOpenL(pMMPolygonLayer->pszPSName,
+                                                   hMiraMonLayer->pszFlags)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Error pMMPolygonLayer->pFPS: Cannot open file %s.",
+                         pMMPolygonLayer->pszPSName);
+                return 1;
+            }
         }
         VSIFSeekL(pMMPolygonLayer->pFPS, 0, SEEK_SET);
 
@@ -1511,14 +1553,18 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                  sizeof(pMMPolygonLayer->pszPALName), "%sP.~idx",
                  hMiraMonLayer->pszSrcLayerName);
 
-        if (nullptr ==
-            (pMMPolygonLayer->pFPAL = VSIFOpenL(pMMPolygonLayer->pszPALName,
-                                                hMiraMonLayer->pszFlags)))
+        // After verifying that it has not been opened, we open it.
+        if (!pMMPolygonLayer->pFPAL)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Error pMMPolygonLayer->pFPAL: Cannot open file %s.",
-                     pMMPolygonLayer->pszPALName);
-            return 1;
+            if (nullptr ==
+                (pMMPolygonLayer->pFPAL = VSIFOpenL(pMMPolygonLayer->pszPALName,
+                                                    hMiraMonLayer->pszFlags)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Error pMMPolygonLayer->pFPAL: Cannot open file %s.",
+                         pMMPolygonLayer->pszPALName);
+                return 1;
+            }
         }
         VSIFSeekL(pMMPolygonLayer->pFPAL, 0, SEEK_SET);
 
@@ -1761,15 +1807,20 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
                 return 1;
             }
 
-            if (nullptr == (hMiraMonLayer->MMPolygon.MMArc.pF =
-                                VSIFOpenL(pMMPolygonLayer->MMArc.pszLayerName,
-                                          hMiraMonLayer->pszFlags)))
+            // After verifying that it has not been opened, we open it.
+            if (!hMiraMonLayer->MMPolygon.MMArc.pF)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Error pMMPolygonLayer.MMArc.pF: Cannot open file %s.",
-                         pMMPolygonLayer->MMArc.pszLayerName);
-                CPLFree(pszSrcLayerNameCP1252);
-                return 1;
+                if (nullptr == (hMiraMonLayer->MMPolygon.MMArc.pF = VSIFOpenL(
+                                    pMMPolygonLayer->MMArc.pszLayerName,
+                                    hMiraMonLayer->pszFlags)))
+                {
+                    CPLError(
+                        CE_Failure, CPLE_OpenFailed,
+                        "Error pMMPolygonLayer.MMArc.pF: Cannot open file %s.",
+                        pMMPolygonLayer->MMArc.pszLayerName);
+                    CPLFree(pszSrcLayerNameCP1252);
+                    return 1;
+                }
             }
 
             if (MMReadHeader(hMiraMonLayer->MMPolygon.MMArc.pF,
@@ -4459,6 +4510,7 @@ static int MMCreateRecordDBF(struct MiraMonVectLayerInfo *hMiraMonLayer,
     {
         if (MMCreateMMDB(hMiraMonLayer, nullptr))
         {
+            MMCloseMMBD_XP(hMiraMonLayer);
             MMDestroyMMDB(hMiraMonLayer);
             return MM_FATAL_ERROR_WRITING_FEATURES;
         }
