@@ -406,6 +406,14 @@ IcechunkManifest::GetChunkRef(const ObjectId8 &nodeId,
     }
     const auto &arrayManifest = *iterArrayManifests;
 
+    if (idx.empty() && arrayManifest.chunkRefs.size() == 1 &&
+        arrayManifest.chunkRefs[0].idx.size() == 1 &&
+        arrayManifest.chunkRefs[0].idx[0] == 0)
+    {
+        // Special case for scalar arrays such as "crs" written by Icechunk v0
+        return &(arrayManifest.chunkRefs[0]);
+    }
+
 #if __cplusplus >= 202002L
     const auto iterChunkRefs = std::ranges::lower_bound(
         arrayManifest.chunkRefs, idx, {}, &ChunkRef::idx);

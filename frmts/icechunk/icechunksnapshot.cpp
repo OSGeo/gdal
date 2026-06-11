@@ -309,38 +309,25 @@ IcechunkSnapshot::Open(const char *pszFilename)
                 CPLAssertAlways(
                     extents);  // guaranteed by VerifySnapshotBuffer()
 
-                if (node.numChunks.size() != extents->size())
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "%s: array %s: manifest extents has not expected "
-                             "dimension count",
-                             pszFilename, path.c_str());
-                    return nullptr;
-                }
-
                 CPLDebugOnly("Icechunk", "snapshot %s, manifest ref %s:",
                              snapshotIdBase32.c_str(),
                              CrockfordBase32Encode(*manifestIdBytes).c_str());
+
                 uint64_t chunkCountFromManifest = 1;
-                for (unsigned iDim = 0; iDim < extents->size(); ++iDim)
+                if (node.numChunks.empty() && extents->size() == 1 &&
+                    node.numChunks.empty())
                 {
-                    const auto *extent = (*extents)[iDim];
-                    if (extent->from() >= extent->to() ||
-                        extent->from() >= node.numChunks[iDim] ||
-                        extent->to() > node.numChunks[iDim])
+                    // Special case for scalar arrays such as "crs" written by Icechunk v0
+                    const auto *extent = (*extents)[0];
+                    if (extent->from() != 0 || extent->to() != 1)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "%s: array %s: invalid manifest extent "
                                  "[%u, %u[ for dim %u",
                                  pszFilename, path.c_str(), extent->from(),
-                                 extent->to(), iDim);
+                                 extent->to(), 0);
                         return nullptr;
                     }
-
-                    // Overflow cannot happen given the validation of extent
-                    // w.r.t node.numChunks and the fact that
-                    // times(node.numChunks) has been checked to fit on uint64_t
-                    chunkCountFromManifest *= extent->to() - extent->from();
 
                     manifestRef.extents.emplace_back(extent->from(),
                                                      extent->to());
@@ -349,6 +336,50 @@ IcechunkSnapshot::Open(const char *pszFilename)
                                  snapshotIdBase32.c_str(),
                                  manifestRef.extents.back().from,
                                  manifestRef.extents.back().to);
+                }
+                else
+                {
+                    if (node.numChunks.size() != extents->size())
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "%s: array %s: manifest extents has not expected "
+                            "dimension count. Got %d from manifest extents, "
+                            "expected %d from node shape",
+                            pszFilename, path.c_str(),
+                            static_cast<int>(extents->size()),
+                            static_cast<int>(node.numChunks.size()));
+                        return nullptr;
+                    }
+                    for (unsigned iDim = 0; iDim < extents->size(); ++iDim)
+                    {
+                        const auto *extent = (*extents)[iDim];
+                        if (extent->from() >= extent->to() ||
+                            extent->from() >= node.numChunks[iDim] ||
+                            extent->to() > node.numChunks[iDim])
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "%s: array %s: invalid manifest extent "
+                                     "[%u, %u[ for dim %u",
+                                     pszFilename, path.c_str(), extent->from(),
+                                     extent->to(), iDim);
+                            return nullptr;
+                        }
+
+                        // Overflow cannot happen given the validation of extent
+                        // w.r.t node.numChunks and the fact that
+                        // times(node.numChunks) has been checked to fit on uint64_t
+                        chunkCountFromManifest *= extent->to() - extent->from();
+
+                        manifestRef.extents.emplace_back(extent->from(),
+                                                         extent->to());
+                        CPLDebugOnly("Icechunk",
+                                     "snapshot %s,   from %" PRIu32
+                                     " to %" PRIu32,
+                                     snapshotIdBase32.c_str(),
+                                     manifestRef.extents.back().from,
+                                     manifestRef.extents.back().to);
+                    }
                 }
 
                 node.manifestRefs.push_back(std::move(manifestRef));
@@ -596,6 +627,15 @@ const ObjectId12 *
 IcechunkSnapshot::Node::findManifestIdForChunk(const ChunkIdx &anChunkIdx) const
 {
     CPLAssert(anChunkIdx.size() == numChunks.size());
+
+    // Special case for scalar arrays such as "crs" written by Icechunk v0
+    if (anChunkIdx.empty() && manifestRefs.size() == 1 &&
+        manifestRefs[0].extents.size() == 1 &&
+        manifestRefs[0].extents[0].from == 0 &&
+        manifestRefs[0].extents[0].to == 1)
+    {
+        return &(manifestRefs[0].manifestId);
+    }
 
     // Heuristics to find more quickly the chunk, assuming the passed chunk
     // index is contained in the last ChunkRef.

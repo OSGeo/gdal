@@ -2540,6 +2540,132 @@ def test_icechunk_multi_threaded_access_to_vsiicechunk():
         assert not error[0]
 
 
+def test_icechunk_clunky_scalar_array(tmp_path):
+
+    # Test for weird configuration of scalar arrays such as the
+    # "/combined/ILTS_PIK_SICOPOLIS1/ctrl_proj_std/crs" array of
+    # /vsis3/us-west-2.opendata.source.coop/englacial/ismip6/icechunk-ais
+
+    rootdirname = Path("data/icechunk/test_icechunk_clunky_scalar_array")
+
+    if FORCE_REGENERATE or not os.path.exists(rootdirname):
+
+        chunk_ref_manifest_id = [2] * 12
+        manifest = {
+            "id": {"bytes": chunk_ref_manifest_id},
+            "arrays": [
+                {
+                    "node_id": {"bytes": [0] * 8},
+                    "refs": [
+                        {
+                            "index": [0],
+                            "inline": [0],
+                        },
+                    ],
+                },
+            ],
+        }
+
+        manifest_filename = "081040G2081040G20810"
+        manifest_file_size = _create_manifest_file(
+            tmp_path, rootdirname, manifest_filename, manifest
+        )
+
+        manifest_num_chunk_refs = 1
+
+        import json
+
+        _create_repo_with_single_snapshot(tmp_path, rootdirname)
+
+        snapshot = {
+            "id": {"bytes": [0] * 12},
+            "nodes": [
+                {
+                    "id": {"bytes": [0] * 8},
+                    "path": "/my_array",
+                    "user_data": list(
+                        json.dumps(
+                            {
+                                "zarr_format": 3,
+                                "node_type": "array",
+                                "shape": [],
+                                "data_type": "uint8",
+                                "chunk_key_encoding": {
+                                    "name": "default",
+                                    "configuration": {"separator": "/"},
+                                },
+                                "chunk_grid": {
+                                    "name": "regular",
+                                    "configuration": {"chunk_shape": []},
+                                },
+                                "fill_value": 0,
+                                "codecs": [
+                                    {
+                                        "name": "bytes",
+                                        "configuration": {"endian": "little"},
+                                    }
+                                ],
+                                "attributes": {},
+                                "dimension_names": [],
+                            }
+                        ).encode("utf-8")
+                    ),
+                    "node_data_type": "Array",
+                    "node_data": {
+                        "shape": [],
+                        "manifests": [
+                            {
+                                "object_id": {"bytes": chunk_ref_manifest_id},
+                                "extents": [{"from": 0, "to": 1}],
+                            },
+                        ],
+                        "shape_v2": [{"array_length": 1, "num_chunks": 1}],
+                    },
+                },
+                {
+                    "id": {"bytes": [0] * 8},
+                    "path": "/",
+                    "user_data": list(
+                        json.dumps({"zarr_format": 3, "node_type": "group"}).encode(
+                            "utf-8"
+                        )
+                    ),
+                    "node_data_type": "Group",
+                    "node_data": {},
+                },
+            ],
+            "message": "my commit",
+            "metadata": [],
+            "manifest_files": [],
+            "manifest_files_v2": [
+                {
+                    "id": {"bytes": [2] * 12},
+                    "size_bytes": manifest_file_size,
+                    "num_chunk_refs": manifest_num_chunk_refs,
+                },
+            ],
+        }
+
+        _create_simple_repo_and_snapshot_files(
+            tmp_path,
+            rootdirname,
+            manifest_file_size=manifest_file_size,
+            manifest_num_chunk_refs=manifest_num_chunk_refs,
+        )
+
+        _create_snapshot_file(tmp_path, rootdirname, "00000000000000000000", snapshot)
+
+        if not os.path.exists(rootdirname / "transactions"):
+            os.mkdir(rootdirname / "transactions", 0o755)
+        open(rootdirname / "transactions" / "_dummy_file_", "wb").close()
+
+    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar
+    ar.Read()
+
+
 @pytest.mark.require_curl()
 @pytest.mark.network
 def test_icechunk_remote_test_dataset_native_icechunk_v2_GLAD_LCLU():
