@@ -140,15 +140,18 @@ def check_feature_geometry(
     # equality, but structural one
     # Within does not take into account Z or M values, so we skip to the
     # pointwise check if they are present.
-    if (
-        (not pointwise)
-        and have_geos()
-        and actual.Within(expected)
-        and expected.Within(actual)
-        and (not actual.Is3D())
-        and (not actual.IsMeasured())
-    ):
-        return
+    # Set quiet_errors() to avoid generating noise if Within generates a
+    # GEOS TopologyException
+    with gdal.quiet_errors():
+        if (
+            (not pointwise)
+            and have_geos()
+            and actual.Within(expected)
+            and expected.Within(actual)
+            and (not actual.Is3D())
+            and (not actual.IsMeasured())
+        ):
+            return
 
     if _root_actual is None:
         _root_actual = actual
@@ -361,7 +364,7 @@ def have_sfcgal():
     global sfcgal_flag
 
     if sfcgal_flag is None:
-        with gdaltest.disable_exceptions():
+        with gdaltest.disable_exceptions(), gdal.quiet_errors():
             pnt1 = ogr.CreateGeometryFromWkt("POINT(10 20 30)")
             pnt2 = ogr.CreateGeometryFromWkt("POINT(40 50 60)")
             sfcgal_flag = pnt1.Distance3D(pnt2) >= 0

@@ -38,10 +38,10 @@ import pytest
 from osgeo import gdal, ogr, osr
 
 
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
+@pytest.fixture(autouse=True)
+def fail_on_warnings():
+
+    with gdaltest.error_raised(gdal.CE_None):
         yield
 
 
@@ -182,6 +182,7 @@ def test_ogr_geom_is_empty_triangle():
     assert not geom.IsEmpty(), "IsEmpty returning true for a non-empty geometry"
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geom_pickle():
     geom_wkt = "MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
@@ -259,15 +260,15 @@ def test_ogr_geom_polyhedral_surface():
         "POLYHEDRALSURFACE EMPTY",
     ]:
         g2 = ogr.CreateGeometryFromWkt(wkt)
-        if g.Equals(g2):
-            print(wkt)
-            pytest.fail("Unexpected true Equals() return")
+        assert not g.Equals(g2)
 
     # Error
-    assert g.AddGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)")) != 0
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        g.AddGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
 
     # Error
-    assert g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)")) != 0
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
 
     # Test dimension promotion
     g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE EMPTY")
@@ -339,11 +340,9 @@ def test_ogr_geom_tin():
 
     wrong_polygon = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 1 0,1 1 0,0 0 1))")
     geom_count = tin.GetGeometryCount()
-    with gdal.quiet_errors():
-        x = tin.AddGeometry(wrong_polygon)
-    assert (
-        tin.GetGeometryCount() == geom_count
-    ), "Added wrong geometry in TIN, error has code " + str(x)
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        tin.AddGeometry(wrong_polygon)
+    assert tin.GetGeometryCount() == geom_count, "Added wrong geometry in TIN"
 
     if ogrtest.have_geos():
         point = tin.PointOnSurface()
@@ -363,27 +362,23 @@ def test_ogr_geom_tin():
     #    return 'fail'
 
     tin.FlattenTo2D()
-    assert not tin.IsValid(), "Problem with IsValid() in TIN"
-
     if ogrtest.have_sfcgal():
+        assert not tin.IsValid(), "Problem with IsValid() in TIN"
         assert "orientation" in tin.GetInvalidityReason()
 
     # 4 points
     invalid_wkt = "TIN (((0 0,0 1,1 1,1 0,0 0)))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(invalid_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(invalid_wkt)
 
     # hole
     invalid_wkt = "TIN(((0 0,0 1,1 1,0 0),(0.1 0.1,0.1 0.2,0.2 0.2,0.1 0.1)))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(invalid_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(invalid_wkt)
 
     invalid_wkt = "TIN (POLYGON((0 0,0 1,1 1,0 0)))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(invalid_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(invalid_wkt)
 
     # Add a POLYGON that can be cast as a TRIANGLE
     g = ogr.Geometry(ogr.wkbTIN)
@@ -497,11 +492,8 @@ def test_ogr_geom_build_from_edges_1():
         # print "geom is",geom
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
 
 
 ###############################################################################
@@ -526,11 +518,8 @@ def test_ogr_geom_build_from_edges_2():
         geom = ogr.CreateGeometryFromWkt(wkt)
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
 
 
 ###############################################################################
@@ -541,22 +530,16 @@ def test_ogr_geom_build_from_edges_2():
 def test_ogr_geom_build_from_edges_3():
 
     src_geom = ogr.CreateGeometryFromWkt("POINT (0 1)")
-    try:
-        with gdal.quiet_errors():
-            poly = ogr.BuildPolygonFromEdges(src_geom)
-        assert poly is None
-    except Exception:
-        pass
+    with pytest.raises(
+        Exception, match="passed geometry is not an OGRGeometryCollection"
+    ):
+        ogr.BuildPolygonFromEdges(src_geom)
 
     src_geom = ogr.CreateGeometryFromWkt(
         "GEOMETRYCOLLECTION (LINESTRING(0 1,2 3),POINT(0 1),LINESTRING(0 1,-2 3),LINESTRING(-2 3,2 3))"
     )
-    try:
-        with gdal.quiet_errors():
-            poly = ogr.BuildPolygonFromEdges(src_geom)
-        assert poly is None
-    except Exception:
-        pass
+    with pytest.raises(Exception, match="contains non-line string geometries"):
+        ogr.BuildPolygonFromEdges(src_geom)
 
 
 ###############################################################################
@@ -589,13 +572,10 @@ def test_ogr_geom_build_from_edges_4():
         # print "geom is",geom
         link_coll.AddGeometry(geom)
 
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        assert poly is not None
-        wkt = poly.ExportToWkt()
-        assert wkt == "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))"
-    except Exception:
-        pytest.fail()
+    poly = ogr.BuildPolygonFromEdges(link_coll)
+    assert poly is not None
+    wkt = poly.ExportToWkt()
+    assert wkt == "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))"
 
 
 ###############################################################################
@@ -639,9 +619,8 @@ def test_ogr_geom_transform_to():
     # Geometry without SRS
     geom = ogr.CreateGeometryFromWkt("POINT(2 49)")
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = geom.TransformTo(sr2)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(Exception, match="Geometry has no SRS"):
+        geom.TransformTo(sr2)
 
 
 ###############################################################################
@@ -971,21 +950,12 @@ def test_ogr_geom_segmentize():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
-            print(
-                "%.17g"
-                % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
-            )
-            pytest.fail(
-                "%.17g"
-                % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
-            )
+        assert g1.GetPoint(i) == g2.GetPoint(g1.GetPointCount() - 1 - i)
 
     # Test extremely small threshold
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,0 1)")
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="Too many points in a segment"):
         geom.Segmentize(1e-30)
-    assert gdal.GetLastErrorMsg() != ""
 
     # on a CircularStringZM
     geom = ogr.CreateGeometryFromWkt(
@@ -1000,9 +970,8 @@ def test_ogr_geom_segmentize():
     # Test that it does not crash
     geom.Segmentize(0.1)
 
-    with gdaltest.enable_exceptions():
-        with pytest.raises(Exception):
-            geom.Segmentize(1e-10)
+    with pytest.raises(Exception, match="segmentize .* invalid"):
+        geom.Segmentize(1e-10)
 
 
 def test_ogr_geom_segmentize_issue_1341():
@@ -1098,43 +1067,42 @@ def test_ogr_geom_flattenTo2D_triangle():
 ###############################################################################
 
 
-@gdaltest.enable_exceptions()
 def test_ogr_geom_linestring_limits():
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING EMPTY")
     assert geom.Length() == 0
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint(-1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint(0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint_2D(-1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.GetPoint_2D(0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.SetPoint(-1, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         geom.SetPoint_2D(-1, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too many points"):
         geom.SetPoint((1 << 31) - 2, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too many points"):
         geom.SetPoint_2D((1 << 31) - 2, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPoint_2D((1 << 31) - 1, 5, 6)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPointM((1 << 31) - 1, 5, 6, 7)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Too big point count"):
         geom.SetPointZM((1 << 31) - 1, 5, 6, 7, 8)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0)")
@@ -1172,7 +1140,7 @@ def test_ogr_geom_area_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "non-surface geometry type"):
         area = geom.Area()
     assert area == 0, "Area() result wrong, got %g." % area
 
@@ -1187,7 +1155,7 @@ def test_ogr_geom_length_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "non-curve geometry type"):
         length = geom.Length()
     assert length == 0, "Length() result wrong, got %g." % length
 
@@ -1277,10 +1245,8 @@ def test_ogr_geom_getpoints_failure(wkt):
 
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    with gdaltest.error_raised(gdal.CE_Failure, "Incompatible geometry"):
-        points = geom.GetPoints()
-
-        assert points is None
+    with pytest.raises(Exception, match="Incompatible geometry"):
+        geom.GetPoints()
 
 
 ###############################################################################
@@ -1521,29 +1487,24 @@ def test_ogr_geom_triangle():
 def test_ogr_geom_triangle_invalid_wkt():
 
     geom_wkt = "TRIANGLE (0 0)"
-    with gdal.quiet_errors():
-        geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    assert geom is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(geom_wkt)
 
     geom_wkt = "TRIANGLE ((0 0))"
-    with gdal.quiet_errors():
-        geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    assert geom is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(geom_wkt)
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,1 0))"
-    with gdal.quiet_errors():
-        geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    assert geom is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(geom_wkt)
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,1 0,0 0))"
-    with gdal.quiet_errors():
-        geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    assert geom is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(geom_wkt)
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,0 0),(0 0,0 1,1 1,0 0))"
-    with gdal.quiet_errors():
-        geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    assert geom is None
+    with pytest.raises(Exception, match="Corrupt data"):
+        ogr.CreateGeometryFromWkt(geom_wkt)
 
 
 ###############################################################################
@@ -1765,15 +1726,7 @@ def test_ogr_geom_circularstring():
     g2 = ogr.CreateGeometryFromWkt(in_wkt)
     g2.Segmentize(0.25)
     for i in range(g1.GetPointCount()):
-        if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
-            print(
-                "%.17g"
-                % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
-            )
-            pytest.fail(
-                "%.17g"
-                % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
-            )
+        assert g1.GetPoint(i) == g2.GetPoint(g1.GetPointCount() - 1 - i)
 
     # Test stroking of full circle with Z
     in_wkt = "CIRCULARSTRING (0 0 1,1 0 2,0 0 1)"
@@ -1965,9 +1918,8 @@ def test_ogr_geom_circularstring():
 
     # Error case : not enough points
     in_wkt = "CIRCULARSTRING (0 0)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Invalid number of points"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # EMPTY
     for in_wkt in ["CIRCULARSTRING EMPTY", "CIRCULARSTRING Z EMPTY"]:
@@ -2147,53 +2099,48 @@ def test_ogr_geom_compoundcurve():
 
     # Error case : not enough points
     in_wkt = "COMPOUNDCURVE ((0 0))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="not enough points"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case : invalid curve
     in_wkt = "COMPOUNDCURVE (COMPOUNDCURVE EMPTY)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : COMPOUNDCURVE"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE ((0 0,1 1),(2 2,3 3))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Non contiguous curves"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE (EMPTY,(2 2,3 3))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : EMPTY"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE ((2 2,3 3), EMPTY)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : EMPTY"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdal.quiet_errors():
-        g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
+    g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
     g = ogr.Geometry(ogr.wkbCompoundCurve)
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdal.quiet_errors():
-        g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
+    g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
     # Cannot add compoundcurve in compoundcurve
     g = ogr.Geometry(ogr.wkbCompoundCurve)
-    with gdal.quiet_errors():
+    with pytest.raises(
+        Exception, match="Cannot add a compound curve inside a compound curve"
+    ):
         g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("COMPOUNDCURVE((1 1,2 2))"))
     assert g.ExportToWkt() == "COMPOUNDCURVE EMPTY"
 
@@ -2210,32 +2157,14 @@ def test_ogr_geom_compoundcurve():
     for i in range(p_count):
         # yes we do strict (binary) comparison. This is really intended.
         # The curves must be exactly the same, despite our stealth mode
-        if g2.GetX(i) != g3.GetX(p_count - 1 - i) or g2.GetY(i) != g3.GetY(
-            p_count - 1 - i
-        ):
-            print(abs(g2.GetX(i) - g3.GetX(p_count - 1 - i)))
-            pytest.fail(abs(g2.GetY(i) - g3.GetY(p_count - 1 - i)))
+        assert g2.GetX(i) == g3.GetX(p_count - 1 - i)
+        assert g2.GetY(i) == g3.GetY(p_count - 1 - i)
 
     # Test Transform
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     g.AssignSpatialReference(sr)
     g.TransformTo(sr)
-
-    # Invalid wkb
-    wkb_list = [
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00",  # subgeometry declared but not present
-        "\x01\x09\x00\x00\x00\xff\xff\xff\x7f",  # 2 billion subgeometries declared !
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\xff\x00\x00\x00\x00\x00\x00\x00",  # subgeometry invalid: unknown type
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00",  # subgeometry invalid: linestring truncated
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",  # subgeometry invalid: linestring with one point
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",  # subgeometry invalid: point
-        "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x09\x00\x00\x00\x00\x00\x00\x00",  # subgeometry invalid: compoundcurve
-    ]
-    for wkb in wkb_list:
-        with gdal.quiet_errors():
-            g = ogr.CreateGeometryFromWkb(wkb)
-        assert g is None, wkb
 
     # EMPTY
     for in_wkt in ["COMPOUNDCURVE EMPTY", "COMPOUNDCURVE Z EMPTY"]:
@@ -2247,6 +2176,53 @@ def test_ogr_geom_compoundcurve():
         g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
         out_wkt = g2.ExportToWkt()
         assert in_wkt == out_wkt
+
+
+@pytest.mark.parametrize(
+    "wkb,error",
+    [
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00",
+            "Length of input WKB is too small",
+            id="subgeometry declared but not present",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\xff\xff\xff\x7f",
+            "Corrupt data",
+            id="2 billion subgeometries declared",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\xff\x00\x00\x00\x00\x00\x00\x00",
+            "Unsupported WKB type",
+            id="subgeometry invalid: unknown type",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00",
+            "Length of input WKB is too small",
+            id="subgeometry invalid: linestring truncated",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x02\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+            "Invalid curve",
+            id="subgeometry invalid: linestring with one point",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+            "Unsupported geometry type",
+            id="subgeometry invalid: point",
+        ),
+        pytest.param(
+            "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x09\x00\x00\x00\x00\x00\x00\x00",
+            "Unsupported geometry type",
+            id="subgeometry invalid: compoundcurve",
+        ),
+    ],
+)
+def test_ogr_geom_curvepolygon_invalid_wkb(wkb, error):
+
+    # Invalid wkb
+    with pytest.raises(Exception, match=error):
+        ogr.CreateGeometryFromWkb(wkb)
 
 
 ###############################################################################
@@ -2382,22 +2358,20 @@ def test_ogr_geom_curvepolygon():
 
     # Error case : not enough points
     in_wkt = "CURVEPOLYGON ((0 0,0 1,0 0))"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    # FIXME: this doesn't seem like the right error message?
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case : wrong sub-geometry type
     in_wkt = "CURVEPOLYGON (POINT EMPTY)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : POINT"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
     # Error case: non closed ring
     in_wkt = "CURVEPOLYGON ((0 0,0 1,1 1,1 0))"
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="Non closed ring"):
         with gdaltest.config_option("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", "NO"):
-            g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+            ogr.CreateGeometryFromWkt(in_wkt)
 
     # Area
     g = ogr.CreateGeometryFromWkt("CURVEPOLYGON ((0 0,1 1,1 0,0 0))")
@@ -2462,15 +2436,16 @@ def test_ogr_geom_curvepolygon():
     )
     assert p1.Within(g1)
 
-    # This is not a circle
-    p2 = ogr.CreateGeometryFromWkt(
-        "POINT (%.16g %.16g)"
-        % (1 + math.cos(math.pi / 6) - 1e-2, math.sin(math.pi / 6))
-    )
-    g1 = ogr.CreateGeometryFromWkt(
-        "CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))"
-    )
-    assert not p2.Within(g1)
+    if ogrtest.have_geos():
+        # This is not a circle
+        p2 = ogr.CreateGeometryFromWkt(
+            "POINT (%.16g %.16g)"
+            % (1 + math.cos(math.pi / 6) - 1e-2, math.sin(math.pi / 6))
+        )
+        g1 = ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 1,0 0))"
+        )
+        assert not p2.Within(g1)
 
     # Test area on circle in 2 pieces
     g1 = ogr.CreateGeometryFromWkt(
@@ -2597,9 +2572,8 @@ def test_ogr_geom_multicurve():
 
     # Error case : wrong sub-geometry type
     in_wkt = "MULTILINESTRING (POINT EMPTY)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : POINT"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
 
 ###############################################################################
@@ -2682,9 +2656,8 @@ def test_ogr_geom_multisurface():
 
     # Error case : wrong sub-geometry type
     in_wkt = "MULTIPOLYGON (POINT EMPTY)"
-    with gdal.quiet_errors():
-        g = ogr.CreateGeometryFromWkt(in_wkt)
-    assert g is None
+    with pytest.raises(Exception, match="Unexpected token : POINT"):
+        ogr.CreateGeometryFromWkt(in_wkt)
 
 
 ###############################################################################
@@ -2999,7 +2972,7 @@ def test_ogr_geom_getcurvegeometry():
     ogrtest.check_feature_geometry(g3, g1_expected)
 
     # Test with unrecognized options
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "Unsupported option"):
         g2_new = g1.GetLinearGeometry(
             options=["bla", "ADD_INTERMEDIATE_POINT=FALSE", "foo=bar"]
         )
@@ -3515,100 +3488,100 @@ def test_ogr_geom_api_limit_tests():
     lyr = ogr.Geometry(ogr.wkbLineString)
     poly = ogr.Geometry(ogr.wkbPolygon)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetX(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetY(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetZ(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetX(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetY(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetZ(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetX()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetY()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetZ()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetPoints()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.GetPoint(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPoint(1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPoint(-1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPoint(0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPoint_2D(1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPoint_2D(-1, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPoint_2D(0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPointM(1, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPointM(-1, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPointM(0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Only i == 0 is supported"):
         p.SetPointZM(1, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Index out of bounds"):
         lyr.SetPointZM(-1, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.SetPointZM(0, 0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPoint(0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPointM(0, 0, 0)
 
-    with pytest.raises(Exception):
-        poly.AddPointZM(0, 0, 0, 0, 0)
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
+        poly.AddPointZM(0, 0, 0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         poly.AddPoint_2D(0, 0)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
         p.GetGeometryRef(1)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Unsupported geometry type"):
         p.AddGeometry(p)
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Unsupported geometry type"):
         p.AddGeometryDirectly(p)
 
 
@@ -3761,9 +3734,7 @@ def test_ogr_geom_measured_geometries_to_2D_or_3D():
         geom = ogr.CreateGeometryFromWkt(before)
         wkb = geom.ExportToIsoWkb()
         geom2 = ogr.CreateGeometryFromWkb(wkb)
-        if not geom.Equals(geom2):
-            print(before)
-            pytest.fail(geom2.ExportToIsoWkt())
+        assert geom.Equals(geom2)
 
         geom = ogr.CreateGeometryFromWkt(before)
         geom.FlattenTo2D()
@@ -3839,6 +3810,7 @@ def test_ogr_geom_curve_surface():
 # Test importing corrupted WKB
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_geom_import_corrupted_wkb():
 
     list_wkt = [
@@ -3920,8 +3892,11 @@ def test_ogr_geom_import_ewkt_invalid(wkt):
 
     srs = osr.SpatialReference(epsg=4269)
 
-    assert ogr.CreateGeometryFromWkt(wkt) is None
-    assert ogr.CreateGeometryFromWkt(wkt, srs) is None
+    with pytest.raises(Exception, match="OGR Error"):
+        ogr.CreateGeometryFromWkt(wkt)
+
+    with pytest.raises(Exception, match="OGR Error"):
+        ogr.CreateGeometryFromWkt(wkt, srs)
 
 
 ###############################################################################
@@ -4130,7 +4105,11 @@ def test_ogr_geom_remove_geometry():
     g = ogr.CreateGeometryFromWkt(
         "GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,2 3),POINT (3 4))"
     )
-    assert not (g.RemoveGeometry(3) == 0 or g.RemoveGeometry(-2) == 0)
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(3)
+
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(-2)
 
     assert g.RemoveGeometry(1) == 0
     assert g.ExportToWkt() == "GEOMETRYCOLLECTION (POINT (1 2),POINT (3 4))"
@@ -4149,7 +4128,11 @@ def test_ogr_geom_remove_geometry():
 
     # With POLYHEDRALSURFACE/TIN
     g = ogr.CreateGeometryFromWkt("TIN (((0 0,0 1,1 1,0 0)),((0 0,1 0,1 1,0 0)))")
-    assert not (g.RemoveGeometry(2) == 0 or g.RemoveGeometry(-2) == 0)
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(2)
+
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(-2)
 
     assert g.RemoveGeometry(1) == 0
     assert g.ExportToWkt() == "TIN (((0 0,0 1,1 1,0 0)))"
@@ -4165,7 +4148,11 @@ def test_ogr_geom_remove_geometry():
     g = ogr.CreateGeometryFromWkt(
         "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,1 1))"
     )
-    assert not (g.RemoveGeometry(2) == 0 or g.RemoveGeometry(-2) == 0)
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(2)
+
+    with pytest.raises(Exception, match="OGR Error"):
+        g.RemoveGeometry(-2)
 
     assert g.RemoveGeometry(1) == 0
     assert g.ExportToWkt() == "POLYGON ((0 0,0 10,10 10,10 0,0 0))"
@@ -4181,7 +4168,8 @@ def test_ogr_geom_remove_geometry():
 
     # Unsupported type
     g = ogr.CreateGeometryFromWkt("POINT (0 0)")
-    assert g.RemoveGeometry(0) != 0
+    with pytest.raises(Exception, match="Unsupported operation"):
+        g.RemoveGeometry(0)
 
 
 ###############################################################################
@@ -4243,7 +4231,8 @@ def test_ogr_geom_sfcgal_intersection3D():
 def test_ogr_geom_cannot_add_triangle_to_multisurface():
 
     g = ogr.Geometry(ogr.wkbMultiSurface)
-    assert g.AddGeometry(ogr.Geometry(ogr.wkbTriangle)) != 0
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        g.AddGeometry(ogr.Geometry(ogr.wkbTriangle)) != 0
 
 
 ###############################################################################
