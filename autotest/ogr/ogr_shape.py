@@ -38,14 +38,6 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -572,20 +564,18 @@ def test_ogr_shape_21(f):
     ds = ogr.Open(f)
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
-    with gdal.quiet_errors():
-        feat = lyr.GetNextFeature()
 
-    assert feat.GetGeometryRef() is None
+    with pytest.raises(Exception, match="Corrupted .shp"):
+        lyr.GetNextFeature()
 
     # Test fix for #3665
     lyr.ResetReading()
     minx, maxx, miny, maxy = lyr.GetExtent()
-    with ogrtest.spatial_filter(
-        lyr, minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9
-    ), gdaltest.error_handler():
-        feat = lyr.GetNextFeature()
-
-    assert feat is None or feat.GetGeometryRef() is None
+    with pytest.raises(Exception, match="Corrupted .shp"):
+        with ogrtest.spatial_filter(
+            lyr, minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9
+        ):
+            lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -665,7 +655,7 @@ def ogr_shape_23_write_valid_and_invalid(
     # Write an invalid geometry for this layer type
     dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(invalid_wkt))
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="Attempt to write non-.* to .* shapefile"):
         shape_lyr.CreateFeature(dst_feat)
 
     #######################################################
@@ -816,7 +806,9 @@ def test_ogr_shape_23a(tmp_path):
     geom = ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(POINT (0 0))")
     dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
     dst_feat.SetGeometry(geom)
-    with gdal.quiet_errors():
+    with pytest.raises(
+        Exception, match="Attempt to write non-polygon .* to POLYGON type shapefile"
+    ):
         shape_lyr.CreateFeature(dst_feat)
 
     # This geometry will be dealt as a multipolygon
@@ -1064,6 +1056,7 @@ def test_ogr_shape_27():
 # Test reading a 3 GB .DBF (#3011)
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_shape_28(tmp_path):
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
@@ -1550,10 +1543,8 @@ def test_ogr_shape_38(tmp_vsimem):
     assert gdal.VSIStatL(tmp_vsimem / "test35.shp") is not None
 
     with ogr.Open(tmp_vsimem, update=1) as ds:
-        with gdal.quiet_errors():
-            lyr = ds.CreateLayer("test35")
-
-        assert lyr is None, "should not have created a new layer"
+        with pytest.raises(Exception, match="Layer .* already exists"):
+            ds.CreateLayer("test35")
 
 
 ###############################################################################
@@ -2114,33 +2105,23 @@ def test_ogr_shape_53(tmp_vsimem):
     lyr.CreateField(fd)
 
     # GetFeature() on a invalid FID
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        feat = lyr.GetFeature(-1)
-    assert feat is None and gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception, match="feature id .* out of available range"):
+        lyr.GetFeature(-1)
 
     # SetFeature() on a invalid FID
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        ret = lyr.SetFeature(feat)
-        feat = None
-    assert ret != 0
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    with pytest.raises(Exception, match="Non existing feature"):
+        lyr.SetFeature(feat)
 
     # SetFeature() on a invalid FID
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        feat.SetFID(1000)
-        ret = lyr.SetFeature(feat)
-        feat = None
-    assert ret != 0
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(1000)
+    with pytest.raises(Exception, match="Non existing feature"):
+        lyr.SetFeature(feat)
 
     # DeleteFeature() on a invalid FID
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteFeature(-1)
-    assert ret != 0
+    with pytest.raises(Exception, match="Non existing feature"):
+        lyr.DeleteFeature(-1)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
@@ -2151,41 +2132,30 @@ def test_ogr_shape_53(tmp_vsimem):
 
     # Try deleting an already deleted feature
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteFeature(0)
-    assert ret != 0
+    with pytest.raises(Exception, match="Non existing feature"):
+        lyr.DeleteFeature(0)
 
     # Test DeleteField() on a invalid index
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteField(-1)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(Exception, match="Invalid field index"):
+        lyr.DeleteField(-1)
 
     # Test ReorderFields() with invalid permutation
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.ReorderFields([1])
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(Exception, match="Bad value for element 0"):
+        lyr.ReorderFields([1])
 
     # Test AlterFieldDefn() on a invalid index
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        fd = ogr.FieldDefn("foo2", ogr.OFTString)
-        ret = lyr.AlterFieldDefn(-1, fd, 0)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    fd = ogr.FieldDefn("foo2", ogr.OFTString)
+    with pytest.raises(Exception, match="Invalid field index"):
+        lyr.AlterFieldDefn(-1, fd, 0)
 
     # Test AlterFieldDefn() when attempting to convert from OFTString to something else
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        fd = ogr.FieldDefn("foo", ogr.OFTInteger)
-        ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    fd = ogr.FieldDefn("foo", ogr.OFTInteger)
+    with pytest.raises(Exception, match="Can only convert to OFTString"):
+        lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
 
     # Test DROP SPATIAL INDEX ON layer without index
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
-    assert gdal.GetLastErrorMsg() != ""
+    with gdaltest.error_raised(gdal.CE_Warning, "has no spatial index"):
+        ds.ExecuteSQL("DROP SPATIAL INDEX ON ogr_shape_53")
 
     # Re-create a feature
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2209,63 +2179,61 @@ def test_ogr_shape_53(tmp_vsimem):
     # Test CreateField()
     fd = ogr.FieldDefn("bar", ogr.OFTString)
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.CreateField(fd)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.CreateField(fd)
 
     # Test ReorderFields()
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.ReorderFields([0])
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.ReorderFields([0])
 
     # Test DeleteField()
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteField(0)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.DeleteField(0)
 
     # Test AlterFieldDefn()
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        fd = ogr.FieldDefn("foo2", ogr.OFTString)
-        ret = lyr.AlterFieldDefn(0, fd, 0)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    fd = ogr.FieldDefn("foo2", ogr.OFTString)
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.AlterFieldDefn(0, fd, 0)
 
     # Test CreateFeature()
     feat = ogr.Feature(lyr.GetLayerDefn())
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.CreateFeature(feat)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.CreateFeature(feat)
 
     # Test DeleteFeature()
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteFeature(0)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.DeleteFeature(0)
 
     # Test SetFeature()
     feat = lyr.GetNextFeature()
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.SetFeature(feat)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        lyr.SetFeature(feat)
 
     # Test REPACK
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = ds.ExecuteSQL("REPACK ogr_shape_53")
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(Exception, match="REPACK .* failed"):
+        ds.ExecuteSQL("REPACK ogr_shape_53")
 
     # Test RECOMPUTE EXTENT ON
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
-    assert gdal.GetLastErrorMsg() != ""
+    with pytest.raises(
+        Exception, match="unsupported operation on a read-only datasource"
+    ):
+        ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
 
     feat = None
     lyr = None
@@ -2276,19 +2244,19 @@ def test_ogr_shape_53(tmp_vsimem):
     ds = ogr.Open(tmp_vsimem / "ogr_shape_53.shp", update=1)
     lyr = ds.GetLayer(0)
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.DeleteFeature(0)
-    assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
+    with pytest.raises(Exception, match="Attempt to delete .* no .dbf file"):
+        lyr.DeleteFeature(0)
 
     # Test REPACK
     ds.ExecuteSQL("REPACK ogr_shape_53")
 
-    lyr = None
-    ds = None
+
+def test_ogr_shape_dbf_only_extent(tmp_vsimem):
+
+    gdal.CopyFile("data/idlink.dbf", tmp_vsimem / "idlink.dbf")
 
     # Tests on a DBF only
-    ds = ogr.Open("data/idlink.dbf")
+    ds = ogr.Open(tmp_vsimem / "idlink.dbf", update=True)
     lyr = ds.GetLayer(0)
 
     # Test GetExtent()
@@ -2296,13 +2264,10 @@ def test_ogr_shape_53(tmp_vsimem):
     lyr.GetExtent()
 
     # Test RECOMPUTE EXTENT ON
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_53")
-    assert gdal.GetLastErrorMsg() != ""
-
-    lyr = None
-    ds = None
+    with pytest.raises(
+        Exception, match="operation is not permitted on a layer without .SHP"
+    ):
+        ds.ExecuteSQL("RECOMPUTE EXTENT ON idlink")
 
 
 ###############################################################################
@@ -2413,15 +2378,8 @@ def test_ogr_shape_54(tmp_vsimem):
     # Test corner case where we cannot reopen a closed layer
     ideletedlayer = 0
     gdal.Unlink(ds_name / ("layer%03d.shp" % ideletedlayer))
-    with gdal.quiet_errors():
-        lyr = ds.GetLayerByName("layer%03d" % ideletedlayer)
-    if lyr is not None:
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            lyr.ResetReading()
-            lyr.GetNextFeature()
-        assert gdal.GetLastErrorMsg() != ""
-    gdal.ErrorReset()
+    with pytest.raises(Exception, match="Failed to open file"):
+        ds.GetLayerByName("layer%03d" % ideletedlayer)
 
     ideletedlayer = 1
     gdal.Unlink(ds_name / ("layer%03d.dbf" % ideletedlayer))
@@ -2442,30 +2400,33 @@ def test_ogr_shape_54(tmp_vsimem):
 # Test that we cannot add more fields that the maximum allowed
 
 
-def test_ogr_shape_55(tmp_vsimem):
+@pytest.mark.parametrize(
+    "max_field_count,field_type,error",
+    (
+        (int((65535 - 33) / 32), ogr.OFTInteger, "Header length limit reached"),  # 2046
+        (int(65535 / 80), ogr.OFTString, "Record length limit reached"),  # 819
+    ),
+)
+def test_ogr_shape_55(tmp_vsimem, max_field_count, field_type, error):
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
     ds_name = tmp_vsimem / "ogr_shape_55"
     ds = shape_drv.CreateDataSource(ds_name)
     lyr = ds.CreateLayer("ogr_shape_55")
 
-    max_field_count = int((65535 - 33) / 32)  # 2046
-
     for i in range(max_field_count):
         if i == 255:
-            gdal.ErrorReset()
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTInteger))
-        if i == 255:
-            gdal.PopErrorHandler()
-            assert (
-                gdal.GetLastErrorMsg() != ""
-            ), "expecting a warning for 256th field added"
-        assert ret == 0, "failed creating field foo%d" % i
+            expected = (gdal.CE_Warning, "Creating a 256th field")
+        else:
+            expected = (gdal.CE_None,)
+
+        with gdaltest.error_raised(*expected):
+            ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, field_type))
+            assert ret == 0
 
     i = max_field_count
-    with gdal.quiet_errors():
-        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTInteger))
-    assert ret != 0, "should have failed creating field foo%d" % i
+    with pytest.raises(Exception, match=error):
+        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, field_type))
+        assert ret != 0, "should have failed creating field foo%d" % i
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     for i in range(max_field_count):
@@ -2476,50 +2437,6 @@ def test_ogr_shape_55(tmp_vsimem):
     for i in range(max_field_count):
         feat.SetField(i, i)
     lyr.CreateFeature(feat)
-
-    ds = None
-
-
-###############################################################################
-# Test that we cannot add more fields that the maximum allowed record length
-
-
-def test_ogr_shape_56(tmp_vsimem):
-    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    ds_name = tmp_vsimem / "ogr_shape_56"
-    ds = shape_drv.CreateDataSource(ds_name)
-    lyr = ds.CreateLayer("ogr_shape_56")
-
-    max_field_count = int(65535 / 80)  # 819
-
-    for i in range(max_field_count):
-        if i == 255:
-            gdal.ErrorReset()
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTString))
-        if i == 255:
-            gdal.PopErrorHandler()
-            assert (
-                gdal.GetLastErrorMsg() != ""
-            ), "expecting a warning for 256th field added"
-        assert ret == 0, "failed creating field foo%d" % i
-
-    i = max_field_count
-    with gdal.quiet_errors():
-        ret = lyr.CreateField(ogr.FieldDefn("foo%d" % i, ogr.OFTString))
-    assert ret != 0, "should have failed creating field foo%d" % i
-
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    for i in range(max_field_count):
-        feat.SetField(i, "foo%d" % i)
-    lyr.CreateFeature(feat)
-
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    for i in range(max_field_count):
-        feat.SetField(i, "foo%d" % i)
-    lyr.CreateFeature(feat)
-
-    ds = None
 
 
 ###############################################################################
@@ -2812,17 +2729,13 @@ def test_ogr_shape_63(tmp_vsimem):
     chinese_str = struct.pack("B" * 6, 229, 144, 141, 231, 167, 176)
     chinese_str = chinese_str.decode("UTF-8")
 
-    with gdal.quiet_errors():
-        ret = lyr.AlterFieldDefn(
+    with pytest.raises(Exception, match="cannot convert to ISO-8859-1"):
+        lyr.AlterFieldDefn(
             0, ogr.FieldDefn(chinese_str, ogr.OFTString), ogr.ALTER_NAME_FLAG
         )
 
-    assert ret != 0
-
-    with gdal.quiet_errors():
-        ret = lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
-
-    assert ret != 0
+    with pytest.raises(Exception, match="cannot convert to ISO-8859-1"):
+        lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
 
     ds = None
 
@@ -2867,9 +2780,8 @@ def test_ogr_shape_64(tmp_vsimem):
     assert lyr.GetName() == "a.c"
 
     # Test that we cannot create a duplicate layer
-    with gdal.quiet_errors():
-        lyr = ds.CreateLayer("a.b")
-    assert lyr is None
+    with pytest.raises(Exception, match="Layer .* already exists"):
+        ds.CreateLayer("a.b")
 
     ds = None
 
@@ -2911,26 +2823,22 @@ def test_ogr_shape_65():
 def test_ogr_shape_66(tmp_path):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar.dbf")
-    with gdal.quiet_errors():
-        lyr = ds.CreateLayer("bar", geom_type=ogr.wkbNone)
-    assert lyr is None
+    with pytest.raises(Exception, match="Failed to create Shape DBF file"):
+        ds.CreateLayer("bar", geom_type=ogr.wkbNone)
     ds = None
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar.shp")
-    with gdal.quiet_errors():
-        lyr = ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
-    assert lyr is None
+    with pytest.raises(Exception, match="Failed to create file"):
+        ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
     ds = None
 
-    with gdal.quiet_errors():
-        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar")
-    assert ds is None
+    with pytest.raises(Exception, match="Failed to create directory"):
+        ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/i_dont_exist/bar")
 
     f = open(tmp_path / "foo", "wb")
     f.close()
-    with gdal.quiet_errors():
-        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_path / "foo")
-    assert ds is None
+    with pytest.raises(Exception, match="foo is not a directory"):
+        ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_path / "foo")
 
 
 ###############################################################################
@@ -3006,9 +2914,10 @@ def test_ogr_shape_68(tmp_path):
             assert lyr.GetGeomType() == ogr.wkbNone
             lyr = ds.GetLayerByName("mixedcase")
             assert lyr.GetGeomType() == ogr.wkbMultiPolygon
-            with gdal.quiet_errors():
-                ret = lyr.DeleteFeature(0)
-            assert ret != 0, "expected failure on DeleteFeature()"
+            with pytest.raises(
+                Exception, match="Attempt to delete shape in shapefile with no .dbf"
+            ):
+                lyr.DeleteFeature(0)
 
             ds.ExecuteSQL("REPACK mixedcase")
 
@@ -3086,15 +2995,12 @@ def test_ogr_shape_70(tmp_path):
     # Locks the file. No way to do this on Unix easily
     f = open(tmp_path / "ogr_shape_70.dbf", "r+")
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors(), gdal.config_option("OGR_SHAPE_PACK_IN_PLACE", "NO"):
+    with pytest.raises(Exception, match="REPACK .* failed"), gdal.config_option(
+        "OGR_SHAPE_PACK_IN_PLACE", "NO"
+    ):
         ds.ExecuteSQL("REPACK ogr_shape_70")
-    errmsg = gdal.GetLastErrorMsg()
-    ds = None
 
     f.close()
-
-    assert errmsg != ""
 
 
 ###############################################################################
@@ -3114,17 +3020,13 @@ def test_ogr_shape_71(tmp_path):
     shutil.copy("data/poly.dbf", tmp_path / "ogr_shape_71.dbf")
     old_mode = os.stat(tmp_path / "ogr_shape_71.dbf").st_mode
     os.chmod(tmp_path / "ogr_shape_71.dbf", stat.S_IREAD)
-    with gdal.quiet_errors():
-        ds = ogr.Open(tmp_path / "ogr_shape_71.shp", update=1)
-    ok = ds is None
-    ds = None
+    with pytest.raises(Exception, match="cannot be opened in update mode"):
+        ogr.Open(tmp_path / "ogr_shape_71.shp", update=1)
     os.chmod(tmp_path / "ogr_shape_71.dbf", old_mode)
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
         tmp_path / "ogr_shape_71.shp"
     )
-
-    assert ok
 
 
 ###############################################################################
@@ -3157,9 +3059,8 @@ def test_ogr_shape_72(tmp_path):
     lyr = ds.GetLayer(0)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
-    with gdal.quiet_errors():
-        ret = lyr.CreateFeature(feat)
-    assert ret != 0
+    with pytest.raises(Exception, match="maximum file size .* has been reached"):
+        lyr.CreateFeature(feat)
     ds = None
 
     f = open(tmp_path / "ogr_shape_72.shp", "rb+")
@@ -3174,9 +3075,8 @@ def test_ogr_shape_72(tmp_path):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
     gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ret = lyr.CreateFeature(feat)
-    assert ret != 0
+    with pytest.raises(Exception, match="Error .* writing object .* to .shp"):
+        lyr.CreateFeature(feat)
     ds = None
 
     # Test creating a feature over 2 GB file limit -> should succeed with warning
@@ -3869,9 +3769,8 @@ def test_ogr_shape_89(tmp_vsimem):
 
     ds = ogr.Open(tmp_vsimem / "ogr_shape_89.shp")
     lyr = ds.GetLayer(0)
-    with gdal.quiet_errors():
-        f = lyr.GetNextFeature()
-    assert f is None or f.GetGeometryRef() is None
+    with pytest.raises(Exception, match="Error .* reading object"):
+        lyr.GetNextFeature()
     ds = None
 
     f = gdal.VSIFOpenL(tmp_vsimem / "ogr_shape_89.shp", "rb+")
@@ -4358,9 +4257,9 @@ def test_ogr_shape_100(tmp_path, variant):
     assert f["foo"] == "2"
     assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2,3 3)"
 
-    with gdal.quiet_errors():
-        f = lyr.GetFeature(1)
-    assert f is None, variant
+    with pytest.raises(Exception, match="feature id .* out of available range"):
+        lyr.GetFeature(1)
+
     lyr.ResetReading()
     assert lyr.GetFeatureCount() == 1, variant
     f = lyr.GetNextFeature()
@@ -5017,9 +4916,8 @@ def test_ogr_shape_110_write_invalid_multipatch(tmp_vsimem):
     # Create a shape
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(POINT(0 0))"))
-    lyr.CreateFeature(f)
-
-    ds = None
+    with pytest.raises(Exception, match="Unsupported geometry type"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5105,14 +5003,15 @@ def test_ogr_shape_112_delete_layer(tmp_vsimem):
     ds = None
 
     ds = ogr.Open(dirname)
-    with gdal.quiet_errors():
-        assert ds.DeleteLayer(0) != 0
+    with pytest.raises(Exception, match="opened read-only"):
+        ds.DeleteLayer(0)
     ds = None
 
     ds = ogr.Open(dirname, update=1)
-    with gdal.quiet_errors():
-        assert ds.DeleteLayer(-1) != 0
-        assert ds.DeleteLayer(1) != 0
+    with pytest.raises(Exception, match="not in legal range"):
+        ds.DeleteLayer(-1)
+    with pytest.raises(Exception, match="not in legal range"):
+        ds.DeleteLayer(1)
     gdal.FileFromMemBuffer(dirname / "test.cpg", "foo")
     assert ds.DeleteLayer(0) == 0
     assert not gdal.VSIStatL(dirname / "test.shp")
@@ -5189,11 +5088,11 @@ def test_ogr_shape_114_shz(tmp_path):
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
-    with gdal.quiet_errors():
-        assert not ds.CreateLayer("foo")
+    with pytest.raises(Exception, match="shz only supports one single layer"):
+        ds.CreateLayer("foo")
     assert ds.TestCapability(ogr.ODsCDeleteLayer) == 0
-    with gdal.quiet_errors():
-        assert ds.DeleteLayer(0) == ogr.OGRERR_FAILURE
+    with pytest.raises(Exception, match="shz does not support layer deletion"):
+        ds.DeleteLayer(0)
     assert lyr.DeleteFeature(1) == 0
     ds = None
 
@@ -5301,8 +5200,8 @@ def test_ogr_shape_115_shp_zip(tmp_path):
     # Check lock file
     ds2 = ogr.Open(filename, update=1)
     lyr2 = ds2.GetLayer(0)
-    with gdal.quiet_errors():
-        assert lyr2.DeleteFeature(2) != 0
+    with pytest.raises(Exception, match="Another task is editing"):
+        lyr2.DeleteFeature(2)
     ds2 = None
     ds = None
 
@@ -5419,9 +5318,8 @@ def test_ogr_shape_write_point_z_non_finite(tmp_vsimem):
     g.AddPoint(0, 0, float("inf"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-    ds = None
+    with pytest.raises(Exception, match="non-finite values"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5437,9 +5335,8 @@ def test_ogr_shape_write_linestring_z_non_finite(tmp_vsimem):
     g.AddPoint(0, 1, float("inf"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-    ds = None
+    with pytest.raises(Exception, match="non-finite values"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5457,9 +5354,8 @@ def test_ogr_shape_write_multilinestring_z_non_finite(tmp_vsimem):
     g.AddGeometry(ls)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-    ds = None
+    with pytest.raises(Exception, match="non-finite values"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5479,9 +5375,8 @@ def test_ogr_shape_write_polygon_z_non_finite(tmp_vsimem):
     g.AddGeometry(ls)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-    ds = None
+    with pytest.raises(Exception, match="non-finite values"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5503,9 +5398,8 @@ def test_ogr_shape_write_multipolygon_z_non_finite(tmp_vsimem):
     g.AddGeometry(p)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-    ds = None
+    with pytest.raises(Exception, match="non-finite values"):
+        lyr.CreateFeature(f)
 
 
 ###############################################################################
@@ -5709,22 +5603,18 @@ def test_ogr_shape_alter_geom_field_defn(tmp_vsimem):
 
     # Wrong index
     new_geom_field_defn = ogr.GeomFieldDefn("", ogr.wkbPoint)
-    with gdal.quiet_errors():
-        assert (
-            lyr.AlterGeomFieldDefn(
-                -1, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
-            )
-            != ogr.OGRERR_NONE
+    with pytest.raises(Exception, match="Invalid field index"):
+        lyr.AlterGeomFieldDefn(
+            -1, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
         )
 
     # Changing geometry type ==> unsupported
     new_geom_field_defn = ogr.GeomFieldDefn("", ogr.wkbLineString)
-    with gdal.quiet_errors():
-        assert (
-            lyr.AlterGeomFieldDefn(
-                0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
-            )
-            != ogr.OGRERR_NONE
+    with pytest.raises(
+        Exception, match="Altering the geometry field type is not supported"
+    ):
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
         )
 
     # Setting coordinate epoch ==> unsupported
@@ -5733,15 +5623,10 @@ def test_ogr_shape_alter_geom_field_defn(tmp_vsimem):
     srs_with_epoch.ImportFromEPSG(4326)
     srs_with_epoch.SetCoordinateEpoch(2022)
     new_geom_field_defn.SetSpatialRef(srs_with_epoch)
-    with gdal.quiet_errors():
-        assert (
-            lyr.AlterGeomFieldDefn(
-                0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
-            )
-            != ogr.OGRERR_NONE
+    with pytest.raises(Exception, match="Setting a coordinate epoch is not supported"):
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG
         )
-
-    ds = None
 
 
 ###############################################################################
@@ -5980,6 +5865,7 @@ def test_ogr_shape_arrow_stream():
 # Test GetArrowStream()
 
 
+@gdaltest.disable_exceptions()
 def test_ogr_shape_arrow_stream_fid_optim(tmp_vsimem):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
