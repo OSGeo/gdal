@@ -33,6 +33,7 @@ RUN apk add --no-cache \
     basisu-dev \
     blosc-dev \
     brunsli-dev \
+    cargo \
     ccache \
     cfitsio-dev \
     cmake \

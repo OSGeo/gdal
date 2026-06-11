@@ -1663,6 +1663,40 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
     Control whether to use statically built Arrow libraries. Defaults to OFF when Parquet is found.
 
 
+``Pcodec``
+**********
+
+The `Pcodec <https://github.com/pcodec/pcodec>`_ library is an optional
+dependency for the :ref:`raster.zarr` driver.
+
+See :ref:`raster.zarr.pcodec` for details.
+
+.. option:: GDAL_USE_PCODEC=ON/OFF
+
+    Control whether to use ``pcodec``.
+    Defaults to ON when the ``pcodec`` C library (``cpcodec``) is found,
+    or ``git`` and a Rust toolchain are available.
+
+.. option:: PCODEC_C_INCLUDE_DIR
+
+    Path to an include directory with the ``pcodec.h`` header file.
+
+.. option:: PCODEC_C_LIBRARY
+
+    Path to a shared or static library file with ``cpcodec`` in its name.
+
+.. option:: CORROSION_SOURCE_DIR
+
+    Path to a checkout of https://github.com/corrosion-rs/corrosion.git
+
+.. option:: PCODEC_SOURCE_DIR
+
+    Path to a checkout of https://github.com/pcodec/pcodec.git
+
+``PCODEC_C_INCLUDE_DIR`̀` and ``PCODEC_C_LIBRARY`` are used in priority over
+``CORROSION_SOURCE_DIR`̀` and ``PCODEC_SOURCE_DIR``.
+
+
 PCRE2
 *****
 
@@ -2535,7 +2569,7 @@ For more details on how to build and use the C# bindings read the dedicated sect
 
 .. option:: CSHARP_APPLICATION_VERSION
 
-    Sets the .NET target Framework (in TFM format) to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_. 
+    Sets the .NET target Framework (in TFM format) to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_.
     Defaults to the highest version installed on the build system, i.e. `latest`.
 
 .. option:: GDAL_CSHARP_ONLY=OFF/ON

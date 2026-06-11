@@ -7,6 +7,7 @@ RUN apk add \
     basisu-dev \
     blosc-dev \
     brunsli-dev \
+    cargo \
     ccache \
     cfitsio-dev \
     cmake \

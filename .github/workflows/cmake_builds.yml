@@ -431,6 +431,8 @@ jobs:
           rm -rf C:/Strawberry || /bin/true
           rm -rf "C:/Program Files/OpenSSL/lib" || /bin/true
           rm -rf "C:/hostedtoolcache/windows/Python" || /bin/true
+          # Below link.exe would otherwise be picked up by rust instead of MSVC one
+          rm -f "C:/Program Files/Git/usr/bin/link.exe" || /bin/true
 
     - name: Install dependency
       shell: bash -l {0}

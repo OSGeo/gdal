@@ -2313,6 +2313,10 @@ void GDALRegister_Zarr()
     GDALDriver *poDriver = new ZarrDriver();
     ZARRDriverSetCommonMetadata(poDriver);
 
+#ifdef HAVE_PCODEC
+    poDriver->SetMetadataItem("HAVE_PCODEC", "YES");
+#endif
+
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
     poDriver->pfnCreate = ZarrDataset::Create;

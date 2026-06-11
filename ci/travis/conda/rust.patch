@@ -1,0 +1,156 @@
+diff --git a/recipe/recipe.yaml b/recipe/recipe.yaml
+index 6ae5e82..77e86b7 100644
+--- a/recipe/recipe.yaml
++++ b/recipe/recipe.yaml
+@@ -35,6 +35,7 @@ outputs:
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
+         - swig
++        - rust
+       host:
+         - blosc
+         - expat
+@@ -103,6 +104,7 @@ outputs:
+         - ${{ compiler('cxx') }}
+         - ${{ compiler('c') }}
+         - ${{ stdlib('c') }}
++        - rust
+       host:
+       run_exports:
+         - ${{ pin_subpackage('libgdal-core', upper_bound='x.x') }}
+@@ -139,6 +141,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -183,6 +186,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -227,6 +231,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -278,6 +283,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -324,6 +330,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -368,6 +375,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -412,6 +420,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -456,6 +465,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -500,6 +510,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -547,6 +558,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -591,6 +603,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -641,6 +654,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -685,6 +699,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -732,6 +747,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -776,6 +792,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -820,6 +837,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - if: not win
+           then: pkg-config
+         - ninja
+@@ -905,6 +923,7 @@ outputs:
+         - ${{ compiler('c') }}
+         - ${{ stdlib("c") }}
+         - ${{ compiler('cxx') }}
++        - rust
+         - cmake
+         - ninja
+         - if: build_platform != target_platform

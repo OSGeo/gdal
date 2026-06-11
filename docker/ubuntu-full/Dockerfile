@@ -85,7 +85,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libarrow-dev${APT_ARCH_SUFFIX} \
        libarrow-acero-dev${APT_ARCH_SUFFIX} \
        libarrow-dataset-dev${APT_ARCH_SUFFIX} \
-       libparquet-dev${APT_ARCH_SUFFIX}
+       libparquet-dev${APT_ARCH_SUFFIX} \
+       cargo${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE

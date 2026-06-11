@@ -72,6 +72,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
        libmuparser-dev${APT_ARCH_SUFFIX} \
+       cargo${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
 RUN mkdir proj gdal

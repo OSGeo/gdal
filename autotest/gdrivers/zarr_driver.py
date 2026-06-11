@@ -9260,3 +9260,47 @@ def test_zarr_add_georeferencing_convention_spatial_proj(tmp_vsimem):
             input=gdal.GetDriverByName("MEM").Create("", 1, 1),
             convention="spatial_proj",
         )
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        "int16",
+        "uint16",
+        "int32",
+        "uint32",
+        "int64",
+        "uint64",
+        "float16",
+        "float32",
+        "float64",
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_zarr_driver_v3_decode_pcodec(dtype):
+
+    if gdal.GetDriverByName("Zarr").GetMetadataItem("HAVE_PCODEC") is None:
+        pytest.skip("pcodec support not available")
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    ar = np.array([[1, 2], [3, 4]], dtype=dtype)
+
+    dirname = f"data/zarr/v3/pcodec_{dtype}.zarr"
+    if not os.path.exists(dirname):
+        import zarr
+
+        zarr.array(
+            ar,
+            chunk_shape=(2, 4),
+            codecs=[zarr.codecs.numcodecs.PCodec()],
+            store=dirname,
+        )
+
+    ds = gdal.Open(dirname)
+    np.testing.assert_equal(ds.ReadAsArray(), ar)

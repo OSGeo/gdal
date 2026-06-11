@@ -31,6 +31,8 @@ build:
   number: 2112
 EOL
 
+patch -p1 < ../ci/travis/conda/rust.patch
+
 # single quote intended to avoid $base expansion
 # shellcheck disable=SC2016
 yq -y -s '.[0] as $base | .[1] as $patch | ($base * $patch) | .source = $patch.source' recipe/recipe.yaml recipe/recipe_clobber.yaml > recipe/recipe_patched.yaml

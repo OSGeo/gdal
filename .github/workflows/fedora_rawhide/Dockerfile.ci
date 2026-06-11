@@ -2,7 +2,7 @@ FROM fedora:rawhide@sha256:64de49837325632232088e59c20518565a9d657095f9f3c2fa603
 
 RUN dnf upgrade -y
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
-RUN dnf install -y clang make diffutils ccache cmake \
+RUN dnf install -y clang make diffutils cargo ccache cmake git \
       libxml2-devel libxslt-devel expat-devel xerces-c-devel \
       zlib-devel xz-devel libzstd-devel blosc-devel libarchive-devel \
       giflib-devel libjpeg-devel libpng-devel \
