@@ -352,8 +352,6 @@ Hidden feature: symbolic links and subdatasets
   ::
 
       gdal raster convert <input> <shortcut.vrt>
-      # and for this example
-      gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDR_10m.xml
 
 As those Sentinel 2 filenames are quite long, you can of course create symbolic links
 to them with:
@@ -361,7 +359,7 @@ to them with:
 ::
 
   $ ln -s S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml s2_TDR.xml
-  
+
 
 But even better you can also use them to point to subdatasets, which are not
 actual files:
@@ -370,6 +368,14 @@ actual files:
 
   $ ln -s SENTINEL2_L2A:s2_TDR.xml:10m:EPSG_32634 s2_TDR_10m.xml
 
+  (or on Windows)
+
+  $ gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDR_10m.xml
+
+Check that this works with GDAL
+
+::
+
   $ gdal raster info s2_TDR_10m.xml
 
 And that also works with QGIS
@@ -377,6 +383,19 @@ And that also works with QGIS
 ::
 
   $ qgis s2_TDR_10m.xml
+
+
+Let's repeat that with other tiles:
+
+::
+
+  $ ln -s SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TER_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TER_10m.xml
+  $ ln -s SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDS_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDS_10m.xml
+
+  (or on Windows)
+
+  $ gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TER_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TER_10m.xml
+  $ gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDS_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDS_10m.xml
 
 
 Short version
