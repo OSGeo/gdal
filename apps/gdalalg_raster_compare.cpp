@@ -42,13 +42,11 @@
 /************************************************************************/
 
 GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
-    : GDALRasterPipelineStepAlgorithm(
-          NAME, DESCRIPTION, HELP_URL,
-          ConstructorOptions()
-              .SetStandaloneStep(standaloneStep)
-              .SetInputDatasetMaxCount(1)
-              .SetInputDatasetHelpMsg(_("Input raster dataset"))
-              .SetAddDefaultArguments(false))
+    : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(standaloneStep)
+                                          .SetInputDatasetMaxCount(1)
+                                          .SetAddDefaultArguments(false))
 {
     if (standaloneStep)
     {

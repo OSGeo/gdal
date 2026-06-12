@@ -90,12 +90,19 @@ void GDALPipelineStepAlgorithm::AddRasterInputArgs(
     AddOpenOptionsArg(&m_openOptions)
         .SetHiddenForCLI(hiddenForCLI)
         .SetAvailableInPipelineStep(false);
+
+    const int nDatasetType = openForMixedRasterVector
+                                 ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
+                                 : GDAL_OF_RASTER;
     auto &arg =
         AddInputDatasetArg(
-            &m_inputDataset,
-            openForMixedRasterVector ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
-                                     : GDAL_OF_RASTER,
-            false, m_constructorOptions.inputDatasetHelpMsg.c_str())
+            &m_inputDataset, nDatasetType, false,
+            m_constructorOptions.inputDatasetHelpMsg.empty() &&
+                    m_constructorOptions.inputDatasetMaxCount == 1
+                ? CPLSPrintf(
+                      "Input %s dataset",
+                      GDALAlgorithmArgDatasetTypeName(nDatasetType).c_str())
+                : m_constructorOptions.inputDatasetHelpMsg.c_str())
             .SetDatasetInputFlags(m_constructorOptions.inputDatasetInputFlags)
             .SetMinCount(m_constructorOptions.inputDatasetRequired ? 1 : 0)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
@@ -177,7 +184,12 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI)
         .SetAvailableInPipelineStep(false);
     auto &datasetArg =
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR, false)
+        AddInputDatasetArg(
+            &m_inputDataset, GDAL_OF_VECTOR, false,
+            m_constructorOptions.inputDatasetHelpMsg.empty() &&
+                    m_constructorOptions.inputDatasetMaxCount == 1
+                ? "Input vector dataset"
+                : m_constructorOptions.inputDatasetHelpMsg.c_str())
             .SetMinCount(m_constructorOptions.inputDatasetRequired ? 1 : 0)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
             .SetDatasetInputFlags(m_constructorOptions.inputDatasetInputFlags)
