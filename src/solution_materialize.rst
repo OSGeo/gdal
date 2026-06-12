@@ -22,8 +22,23 @@ Exercise solution for materializing pipeline intermediate result
             ! \
             tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP
 
-
 .. note::
 
       Original idea was to use COG output instead of regular GeoTIFF, but fails
       currently because of https://github.com/OSGeo/gdal/issues/14730
+
+.. only:: html
+
+   .. image:: ../images/solution_materialize.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/solution_materialize.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../images/solution_materialize.svg

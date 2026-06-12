@@ -12,13 +12,21 @@ Utilities demonstrated
 ----------------------
 
 - `gdal dataset identify <https://gdal.org/en/stable/programs/gdal_dataset_identify.html>`__
-- `gdal raster info <https://gdal.org/en/stable/programs/gdal_vector_info.html>`__
+- `gdal raster info <https://gdal.org/en/stable/programs/gdal_raster_info.html>`__
 
 
 Scanning a folder for GDAL datasets
 -----------------------------------
 
-Let's use `gdal dataset identify <https://gdal.org/en/stable/programs/gdal_dataset_identify.html>`__
+First, make sure you are in the directory containing the workshop datasets (the exact location depends on your setup):
+
+::
+
+    $ cd gdal_cli_workshop_data-master
+    # Windows
+    $ cd /c/gdal/gdal_cli_workshop_data-master
+
+Now let's use `gdal dataset identify <https://gdal.org/en/stable/programs/gdal_dataset_identify.html>`__
 in recursive mode in the current directory:
 
 ::
@@ -330,6 +338,7 @@ dataset with ``qgis S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714
 you will see that values at 0 actually correspond to a NoData value. Something
 to keep in mind and take into account in further processing.
 
+.. _symlinks:
 
 Hidden feature: symbolic links and subdatasets
 ----------------------------------------------
@@ -338,11 +347,13 @@ Hidden feature: symbolic links and subdatasets
 
   Only works as a true symbolic link for Linux and MacOSX, sorry...
 
-  But for Windows, you can almost have the same behavior by doing
+  But for Windows, you can have almost the same behavior by doing
 
   ::
 
       gdal raster convert <input> <shortcut.vrt>
+      # and for this example
+      gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDR_10m.xml
 
 As those Sentinel 2 filenames are quite long, you can of course create symbolic links
 to them with:

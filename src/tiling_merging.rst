@@ -8,9 +8,11 @@ Raster mosaic
 -------------
 
 Let's create a virtual mosaic in `VRT <https://gdal.org/en/stable/drivers/raster/vrt.html>`__
-format
+format using `gdal raster mosaic <https://gdal.org/en/stable/programs/gdal_raster_mosaic.html>`__
 
 ::
+
+    # run from the workshop data directory
 
     $ gdal raster mosaic \
         --input-nodata 0 \
@@ -32,6 +34,7 @@ Let's open :file:`s2.vrt` in QGIS
 Raster tiling
 -------------
 
+Using `gdal raster tile <https://gdal.org/en/stable/programs/gdal_raster_tile.html>`__
 
 ::
 
@@ -61,11 +64,11 @@ Now let's generate the individual files:
     $ gdal raster tile s2_rgb_clamped.vrt s2_tiled --format JPEG
 
 
-and check the result:
+and check the result (if Firefox is not installed, manually open the file in the browser):
 
 ::
 
-    $ firefox s2_tiled/leaflet.html 
+    $ firefox s2_tiled/leaflet.html
 
 
 Doing everything at the same time using a pipeline
@@ -88,6 +91,21 @@ Using `gdal raster pipeline <https://gdal.org/en/stable/programs/gdal_raster_pip
             ! \
             tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP
 
+.. only:: html
+
+   .. image:: ../images/tile_merging.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/tile_merging.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../images/tile_merging.svg
 
 and check the result:
 
@@ -122,15 +140,15 @@ a top-level GDAL attribute:
 
 ::
 
-    $ gdal vector convert  timisoara.osm.pbf --layer points --oo CONFIG_FILE=osm_conf_amenity.ini amenity.gpkg
+    $ gdal vector convert timisoara.osm.pbf --layer points --oo CONFIG_FILE=osm_conf_amenity.ini amenity.gpkg
 
 And let's create a partition around the values of that field:
 
 ::
 
-    $ gdal vector partition amenity.gpkg --field amenity amenity_partitionned
+    $ gdal vector partition amenity.gpkg --field amenity amenity_partitioned
 
-    $ gdal vsi ls -lR amenity_partitionned
+    $ gdal vsi ls -lR amenity_partitioned
 
 
 ::
@@ -313,5 +331,5 @@ Example:
 
 ::
 
-    $ gdal vector concat $(find amenity_partitionned -name "*.gpkg") concatenated.gpkg
+    $ gdal vector concat $(find amenity_partitioned -name "*.gpkg") concatenated.gpkg
 

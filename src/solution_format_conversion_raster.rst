@@ -34,7 +34,7 @@ or
 
    ::
 
-       $ gdal raster info --stats TDR_rgb_byte_jpeg.tif
+       $ gdal raster info --stats TDR_rgb.tif
 
    ::
 

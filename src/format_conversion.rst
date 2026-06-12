@@ -8,7 +8,8 @@ Raster
 ++++++
 
 Let's try converting a Sentinel 2 dataset to Cloud-optimized GeoTIFF
-(`COG <https://gdal.org/en/stable/drivers/raster/cog.html>`__)
+(`COG <https://gdal.org/en/stable/drivers/raster/cog.html>`__) using
+`gdal raster convert <https://gdal.org/en/stable/programs/gdal_raster_convert.html>`__
 
 ::
 
@@ -58,21 +59,27 @@ Exercise
 
        .. hint::
 
+           Use `gdal raster scale <https://gdal.org/en/stable/programs/gdal_raster_scale.html>`__
+
+3. Improve the visual result by reducing the effect of extreme pixel values (outliers) using statistical clamping.
+
+   .. collapse:: (hint)
+
+       .. hint::
+
            Use `gdal raster select <https://gdal.org/en/stable/programs/gdal_raster_select.html>`__
-           and `gdal raster scale <https://gdal.org/en/stable/programs/gdal_raster_scale.html>`__
 
            You can improve the visual result by clamping the input range to
            2 standard deviations of the mean.
 
-   |
-
-   ==> :ref:`solution_format_conversion_raster`.
+==> :ref:`solution_format_conversion_raster`.
 
 
 Vector
 ++++++
 
 Convert the :file:`timisoara.osm.pbf` to GeoPackage, with the ``other_tags`` field as JSON
+using `gdal vector convert <https://gdal.org/en/stable/programs/gdal_vector_convert.html>`__
 
 ::
 

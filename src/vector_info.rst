@@ -15,7 +15,9 @@ Getting vector layer names
 
 ::
 
-    $ gdal vector info timisoara.osm.pbf --summary 
+    # run from the workshop data directory
+
+    $ gdal vector info timisoara.osm.pbf --summary
 
 Output:
 
