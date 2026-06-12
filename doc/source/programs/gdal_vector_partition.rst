@@ -71,7 +71,7 @@ Program-Specific Options
     The order into which fields are specified matter to determine the directory
     hierarchy.
 
-    Starting with GDAL 3.13, geometry field names can be specified (``OGR_GEOMETRY``
+    Starting with GDAL 3.14, geometry field names can be specified (``_ogr_geometry_``
     being the generic name for the first geometry field). Partitioning on
     geometry fields is done on the geometry type. This can be useful for file
     formats where a single geometry type per layer is allowed.
@@ -179,7 +179,7 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector pipeline ! read input.gpkg ! set-geom-type --multi ! partition out_directory --scheme flat --field OGR_GEOMETRY --format "ESRI Shapefile"
+        $ gdal vector pipeline ! read input.gpkg ! set-geom-type --multi ! partition out_directory --scheme flat --field _ogr_geometry_ --format "ESRI Shapefile"
 
 .. example::
    :title: Split a file into files with at most 100,000 features.

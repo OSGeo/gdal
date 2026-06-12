@@ -983,6 +983,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_explode",
+        "gdal-vector-explode",
+        "Explode fields or geometries of a vector dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_explode_collections",
         "gdal-vector-explode-collections",
         "Explode geometries of type collection of a vector dataset",

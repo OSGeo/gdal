@@ -110,12 +110,13 @@ class GDALVectorRenameLayerAlgorithmLayer final
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorRenameLayerAlgorithmLayer)
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
         poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         apoOutFeatures.push_back(std::move(poSrcFeature));
+        return true;
     }
 
   public:

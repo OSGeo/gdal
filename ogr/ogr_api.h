@@ -407,6 +407,8 @@ const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);
 OGRFieldSubType CPL_DLL OGR_GetFieldSubTypeByName(const char *);
 int CPL_DLL OGR_AreTypeSubTypeCompatible(OGRFieldType eType,
                                          OGRFieldSubType eSubType);
+bool CPL_DLL OGR_GetFieldTypeIsList(OGRFieldType);
+OGRFieldType CPL_DLL OGR_GetFieldTypeAsScalar(OGRFieldType);
 
 /* OGRGeomFieldDefnH */
 

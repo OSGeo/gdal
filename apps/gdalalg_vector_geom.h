@@ -125,13 +125,14 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
     virtual std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const = 0;
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
         auto poDstFeature = TranslateFeature(std::move(poSrcFeature));
         if (poDstFeature)
             apoOutFeatures.push_back(std::move(poDstFeature));
+        return true;
     }
 
   private:

@@ -3104,8 +3104,7 @@ const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 {
     const auto poLayerDefn = GetLayerDefn();
     if (poLayerDefn->GetGeomFieldCount() > 0)
-        return const_cast<OGRSpatialReference *>(
-            poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+        return poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef();
     else
         return nullptr;
 }

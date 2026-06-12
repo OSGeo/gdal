@@ -14,6 +14,7 @@
 
 #include "cpl_vsi.h"
 #include "cpl_mem_cache.h"
+#include "ogr_p.h"
 
 #include <algorithm>
 #include <set>
@@ -1008,9 +1009,21 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             int nIdx = poSrcFeatureDefn->GetFieldIndex(fieldName.c_str());
             if (nIdx < 0)
             {
-                if (fieldName == "OGR_GEOMETRY" &&
+                if (EQUAL(fieldName.c_str(), "OGR_GEOMETRY") &&
                     poSrcFeatureDefn->GetGeomFieldCount() > 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "'%s' is deprecated. Please use '%s' instead",
+                             "OGR_GEOMETRY",
+                             OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
                     nIdx = 0;
+                }
+                else if (EQUAL(fieldName.c_str(),
+                               OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) &&
+                         poSrcFeatureDefn->GetGeomFieldCount() > 0)
+                {
+                    nIdx = 0;
+                }
                 else
                     nIdx =
                         poSrcFeatureDefn->GetGeomFieldIndex(fieldName.c_str());
@@ -1029,7 +1042,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     f.nIdx = nIdx;
                     f.bIsGeom = true;
                     if (fieldName.empty())
-                        f.encodedFieldName = "OGR_GEOMETRY";
+                        f.encodedFieldName =
+                            OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
                     else
                         f.encodedFieldName = PercentEncode(fieldName);
                     asFields.push_back(std::move(f));

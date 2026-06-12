@@ -186,7 +186,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         return m_poFeatureDefn.get();
     }
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
@@ -203,6 +203,8 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         if (m_unsetFID)
             poSrcFeature->SetFID(OGRNullFID);
         apoOutFeatures.push_back(std::move(poSrcFeature));
+
+        return true;
     }
 
     int TestCapability(const char *pszCap) const override

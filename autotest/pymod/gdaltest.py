@@ -2234,3 +2234,37 @@ def run_and_parse_completion_output(cmd_line):
     if res and res.endswith(sep):
         res = res[0 : -len(sep)]
     return res.split(sep)
+
+
+###############################################################################
+#
+
+
+def algorithm_check_ogrsf(alg, tmp_path):
+
+    if gdal.GetDriverByName("GDALG") is None:
+        pytest.skip("requires GDALG driver")
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip("test_ogrsf not available")
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+
+    alg["output"] = gdalg_filename
+    alg["output-format"] = "GDALG"
+
+    assert alg.Run()
+
+    gdalg_contents = json.load(open(gdalg_filename))
+    gdalg_contents["relative_paths_relative_to_this_file"] = False
+    json.dump(gdalg_contents, open(gdalg_filename, "w"))
+
+    ret = runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

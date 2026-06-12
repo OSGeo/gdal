@@ -238,7 +238,7 @@ Examples
 
    .. code-block:: bash
 
-      gdal pipeline read dem.tif !
+      gdal pipeline read dem.tif ! \
           zonal-stats \
             --zones watersheds.shp \
             --stat max_center_x \
@@ -248,3 +248,24 @@ Examples
             --y max_center_y \
             --output-crs EPSG:4326 ! \
           write out.geojson
+
+
+.. example::
+   :title: Extract locations of pixels having a nonzero population
+
+   .. code-block:: bash
+
+      gdal pipeline read pop.tif ! \
+          zonal-stats \
+            --zones admin.shp \
+            --include-field NAME \
+            --stat center_x \
+            --stat center_y \
+            --stat values ! \
+          explode --fields ALL ! \
+          make-point \
+            --x center_x \
+            --y center_y \
+            --output-crs EPSG:4326 ! \
+          write out.gpkg
+
