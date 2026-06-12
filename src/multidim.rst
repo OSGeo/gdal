@@ -13,9 +13,16 @@ Extracting NOAA Global Forecast System (GFS) data available from https://registr
 
 ::
 
-    $ gdal mdim convert "/vsis3/noaa-gfs-bdp-pds/gdas.20260519/00/atmos/gdas.t00z.sfcanl.nc" --config AWS_NO_SIGN_REQUEST=YES --array /tmp2m --output 20260519_00_tmp2m.nc --overwrite
+    $ gdal mdim convert "/vsis3/noaa-gfs-bdp-pds/gdas.20260519/00/atmos/gdas.t00z.sfcanl.nc" --config AWS_NO_SIGN_REQUEST=YES --array /tmp2m --output 20260519_00_tmp2m.nc
 
-    $ gdal mdim convert "/vsis3/noaa-gfs-bdp-pds/gdas.20260519/06/atmos/gdas.t06z.sfcanl.nc" --config AWS_NO_SIGN_REQUEST=YES --array /tmp2m --output 20260519_06_tmp2m.nc --overwrite
+    $ gdal mdim convert "/vsis3/noaa-gfs-bdp-pds/gdas.20260519/06/atmos/gdas.t06z.sfcanl.nc" --config AWS_NO_SIGN_REQUEST=YES --array /tmp2m --output 20260519_06_tmp2m.nc
+
+.. warning::
+
+  The above may only work properly on Linux due to limitations in the netCDF driver
+  regarding working with files in ``/vsi`` virtual file systems, hence the
+  converted file :file:`20260519_06_tmp2m.nc` is provided in the input datasets.
+
 
 Inspecting
 ----------
