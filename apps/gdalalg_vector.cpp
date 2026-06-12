@@ -92,7 +92,7 @@ GDALVectorAlgorithm::GDALVectorAlgorithm()
     RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
     RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorIndexAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorMakePointAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorPartitionAlgorithmStandalone>();

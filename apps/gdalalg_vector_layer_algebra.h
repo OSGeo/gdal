@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_LAYER_ALGEBRA_INCLUDED
 #define GDALALG_VECTOR_LAYER_ALGEBRA_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 #include <limits>
 
@@ -23,7 +23,8 @@
 /*                   GDALVectorLayerAlgebraAlgorithm                    */
 /************************************************************************/
 
-class GDALVectorLayerAlgebraAlgorithm final : public GDALAlgorithm
+class GDALVectorLayerAlgebraAlgorithm /* non final */
+    : public GDALVectorPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "layer-algebra";
@@ -32,28 +33,24 @@ class GDALVectorLayerAlgebraAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_layer_algebra.html";
 
-    GDALVectorLayerAlgebraAlgorithm();
+    explicit GDALVectorLayerAlgebraAlgorithm(bool standaloneStep = false);
+
+    bool IsNativelyStreamingCompatible() const override
+    {
+        return false;
+    }
+
+    bool
+    CanHandleNextStep(GDALPipelineStepAlgorithm *poNextStep) const override;
 
   private:
     std::string m_operation{};
 
-    std::vector<std::string> m_inputFormats{};
-    std::vector<std::string> m_openOptions{};
-    GDALArgDatasetValue m_inputDataset{};
-    GDALArgDatasetValue m_methodDataset{};
     std::string m_inputLayerName{};
+    GDALArgDatasetValue m_methodDataset{};
     std::string m_methodLayerName{};
 
     // Output arguments
-    GDALArgDatasetValue m_outputDataset{};
-    std::string m_format{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_overwrite = false;
-    bool m_update = false;
-    bool m_overwriteLayer = false;
-    bool m_appendLayer = false;
-    std::string m_outputLayerName{};
     std::string m_geometryType{};
 
     std::string m_inputPrefix{};
@@ -66,7 +63,24 @@ class GDALVectorLayerAlgebraAlgorithm final : public GDALAlgorithm
     bool m_noMethodFields = false;
     bool m_allMethodFields = false;
 
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+};
+
+/************************************************************************/
+/*              GDALVectorLayerAlgebraAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorLayerAlgebraAlgorithmStandalone final
+    : public GDALVectorLayerAlgebraAlgorithm
+{
+  public:
+    GDALVectorLayerAlgebraAlgorithmStandalone()
+        : GDALVectorLayerAlgebraAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALVectorLayerAlgebraAlgorithmStandalone() override;
 };
 
 //! @endcond

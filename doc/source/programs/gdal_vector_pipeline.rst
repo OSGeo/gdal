@@ -170,6 +170,15 @@ info
 
 Details for options can be found in :ref:`gdal_vector_info`.
 
+layer-algebra
+**************
+
+.. versionadded:: 3.14
+
+.. program-output:: gdal vector pipeline --help-doc=layer-algebra
+
+Details for options can be found in :ref:`gdal_vector_layer_algebra`.
+
 limit
 *****
 

@@ -261,7 +261,10 @@ def test_gdal_vector_layer_algebra_overwrite(tmp_vsimem):
         )
 
     # Test update
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(
+        Exception,
+        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it",
+    ):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -424,7 +427,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         assert ds.GetLayer(1).GetName() == "output2"
         assert ds.GetLayer(1).GetFeatureCount() == 10
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -435,7 +438,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
             update=True,
         )
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -446,7 +449,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
             append=True,
         )
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -490,7 +493,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         assert ds.GetLayer(1).GetFeatureCount() == 10
 
     # --append to non existing layer
-    with pytest.raises(Exception, match="Layer 'wrong' does not exist"):
+    with pytest.raises(Exception, match="Cannot find layer 'wrong'"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -503,7 +506,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         )
 
     # --overwrite-layer non existing layer
-    with pytest.raises(Exception, match="Layer 'wrong' does not exist"):
+    with pytest.raises(Exception, match="Cannot find layer 'wrong'"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -518,7 +521,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
     # --update to existing layer
     with pytest.raises(
         Exception,
-        match=r"Output layer 'output2' already exists. Specify --overwrite, --overwrite-layer, --append or --update \+ --output-layer with a different name",
+        match=r"Layer 'output2' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it",
     ):
         gdal.Run(
             "vector",
@@ -769,3 +772,51 @@ def test_gdal_vector_layer_algebra_erase():
         ogrtest.check_feature_geometry(
             f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
         )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdal_vector_layer_algebra_pipeline(tmp_vsimem):
+
+    input_ds, method_ds = get_input_method_datasets()
+
+    gdal.alg.vector.convert(input=input_ds, output=tmp_vsimem / "input.gpkg")
+    gdal.alg.vector.convert(input=method_ds, output=tmp_vsimem / "method.gpkg")
+
+    def check_out_ds(out_ds):
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetName() == "output"
+        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+        assert out_lyr.GetFeatureCount() == 2
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo"
+        assert f["method_b"] == "bar"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo2"
+        assert f["method_b"] == "bar2"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (-3 4)"
+
+    with gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg"
+    ) as alg:
+        out_ds = alg.Output()
+        check_out_ds(out_ds)
+
+    # No next usable step
+    with gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! edit"
+    ) as alg:
+        out_ds = alg.Output()
+        check_out_ds(out_ds)
+
+    gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! write {tmp_vsimem}/out.gpkg"
+    )
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        check_out_ds(out_ds)
