@@ -211,6 +211,12 @@ def test_vsis3_sync_multithreaded_download(
         ).size
         == 4
     )
+    assert (
+        gdal.VSIStatL(
+            tmp_vsimem / "test_vsis3_no_sign_request_sync/test_dummy/empty_file"
+        ).size
+        == 0
+    )
 
 
 ###############################################################################
