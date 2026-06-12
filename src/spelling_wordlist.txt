@@ -16,6 +16,7 @@ executables
 gdal
 gdalg
 geospatial
+Girvin
 grayscale
 gridding
 hillshade
