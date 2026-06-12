@@ -2662,8 +2662,11 @@ bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
 
     if (poSrcDS)
     {
+        auto poVRTRootGroup = GetRootVRTGroup();
         const auto nDims(GetDimensionCount());
-        if (nDims == 1 && m_dims[0]->GetSize() > 2 &&
+        if ((!poVRTRootGroup ||
+             poVRTRootGroup->GetGuessRegularySpacedArrays()) &&
+            nDims == 1 && m_dims[0]->GetSize() > 2 &&
             m_dims[0]->GetSize() < 10 * 1000 * 1000)
         {
             std::vector<double> adfTmp(
