@@ -353,7 +353,7 @@ Hidden feature: symbolic links and subdatasets
 
       gdal raster convert <input> <shortcut.vrt>
       # and for this example
-      gdal raster convert SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDR_10m.xml
+      gdal raster convert --of VRT SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 s2_TDR_10m.xml
 
 As those Sentinel 2 filenames are quite long, you can of course create symbolic links
 to them with:
