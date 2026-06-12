@@ -1648,7 +1648,7 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
     {
         bool &m_bVal;
 
-        InHaveMaskFileSetter(bool &bVal) : m_bVal(bVal)
+        explicit InHaveMaskFileSetter(bool &bVal) : m_bVal(bVal)
         {
             m_bVal = true;
         }
