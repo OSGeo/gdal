@@ -1340,7 +1340,14 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
                 if (!STARTS_WITH_CI(pszOption, "ARRAY:"))
                     aosDatasetCO.AddString(pszOption);
             }
-            GDALValidateCreationOptions(this, aosDatasetCO.List());
+
+            const char *pszOptionList =
+                GetMetadataItem(GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST);
+            CPLString osDriver;
+            osDriver.Printf("driver %s", GetDescription());
+            GDALValidateOptions(GDALDriver::ToHandle(this), pszOptionList,
+                                aosDatasetCO.List(),
+                                "mulitdim dataset creation option", osDriver);
         }
         else
         {
