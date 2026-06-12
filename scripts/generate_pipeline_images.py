@@ -69,7 +69,6 @@ gdal raster pipeline \
     hillshade ! \
     blend --input [ read dem.tif ! color-map --color-map test.cpt ] --overlay _PIPE_ --operator hsv-value ! \
     write out.tif --overwrite
-        tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP
 """
     output_fn = f"{IMAGE_ROOT}/solution_dem1.svg"
     generate_diagram(
@@ -91,7 +90,6 @@ gdal raster pipeline \
     hillshade ! \
     blend --input [ read dem.tif color-map --color-map test.cpt ] --overlay _PIPE_ --operator hsv-value ! \
     write out.tif --overwrite
-        tile --min-zoom 10 s2_tiled_min_zoom10 --format WEBP
 """
     output_fn = f"{IMAGE_ROOT}/solution_dem2.svg"
     generate_diagram(
