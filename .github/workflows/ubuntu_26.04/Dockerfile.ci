@@ -62,6 +62,7 @@ RUN apt-get update && \
     mariadb-client-core \
     netcdf-bin \
     openjdk-8-jdk-headless \
+    parallel \
     poppler-utils \
     postgis \
     postgresql-client \

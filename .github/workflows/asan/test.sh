@@ -47,6 +47,10 @@ mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
 # in some parts of Xerces)
 export SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME=YES
 
+if [ "$NPROC" = "" ]; then
+  NPROC=3
+fi
+
 # NOTE: `find ... -exec` always exits with 0 even when the tests failed.
 # That turns out to be what we want here though, since we want
 # to not fail when the address sanitizer finds errors.
@@ -60,8 +64,8 @@ find -L \
         ! -name ogr_gpsbabel.py `# new-delete-type-mismatch error in gpsbabel binary that we can't suppress` \
         ! -name "__init__.py" \
         ! -path 'ogr/data/*' \
-    -print \
-    -exec ./pytest_wrapper.sh {} \; \
+    -print0 \
+    | parallel -0 -j $NPROC --group ./pytest_wrapper.sh {} \; \
     | tee ./test-output.txt
 
 # Check if the tests failed and error out.
