@@ -429,9 +429,9 @@ GDALDataset *LERCDataset::Open(GDALOpenInfo *poOpenInfo)
         nDepth > static_cast<unsigned>(std::numeric_limits<int>::max()) /
                      nLercBands ||
         static_cast<size_t>(nCols) * nRows >
-            (std::numeric_limits<size_t>::max() - 1) / nDTSize ||
+            (std::numeric_limits<size_t>::max() / 2) / nDTSize ||
         static_cast<size_t>(nCols) * nRows * nDTSize >
-            (std::numeric_limits<size_t>::max() - 1) /
+            (std::numeric_limits<size_t>::max() / 2) /
                 (static_cast<size_t>(nDepth) * nLercBands) ||
         (nRAMSize > 0 &&
          static_cast<GIntBig>(nCols) * nRows * nDTSize * nDepth * nLercBands >
