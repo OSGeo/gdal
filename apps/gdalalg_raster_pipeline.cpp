@@ -17,6 +17,7 @@
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_blend.h"
+#include "gdalalg_raster_clean_collar.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_compare.h"
@@ -187,6 +188,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterAspectAlgorithm>();
     registry.Register<GDALRasterBlendAlgorithm>();
 
+    registry.Register<GDALRasterCleanCollarAlgorithm>();
     registry.Register<GDALRasterClipAlgorithm>(
         addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME));
 
@@ -363,6 +365,14 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::
         const std::string &helpURL, bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(name, description, helpURL,
                                       standaloneStep)
+{
+}
+
+GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, const ConstructorOptions &options)
+    : GDALRasterPipelineStepAlgorithm(name, description, helpURL, options)
 {
 }
 

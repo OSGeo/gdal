@@ -29,6 +29,8 @@ This is often used to "fix up" lossy compressed air photos so that color pixels 
 treated as transparent when mosaicing. The output format must use lossless compression
 if either alpha band or mask band is not set.
 
+Since GDAL 3.14, :program:`gdal raster clean-collar` can be used as a step of a pipeline.
+
 Program-Specific Options
 ------------------------
 

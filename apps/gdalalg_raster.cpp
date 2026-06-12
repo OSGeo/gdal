@@ -82,7 +82,7 @@ GDALRasterAlgorithm::GDALRasterAlgorithm()
     RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterBlendAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
-    RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
+    RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterCompareAlgorithmStandalone>();
