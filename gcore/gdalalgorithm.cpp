@@ -5934,6 +5934,11 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
                 datasetType = outputArg->GetDatasetType();
             }
 
+            const char *pszMDCreationOptionList =
+                (datasetType == GDAL_OF_MULTIDIM_RASTER)
+                    ? GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST
+                    : GDAL_DMD_CREATIONOPTIONLIST;
+
             auto outputFormat = GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
             if (outputFormat && outputFormat->GetType() == GAAT_STRING &&
                 outputFormat->IsExplicitlySet())
@@ -5943,7 +5948,7 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
                 if (poDriver)
                 {
                     AddOptionsSuggestions(
-                        poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST),
+                        poDriver->GetMetadataItem(pszMDCreationOptionList),
                         datasetType, currentValue, oRet);
                 }
                 return oRet;
@@ -5984,7 +5989,7 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
                                         oVisitedExtensions.insert(pszExt);
                                         if (AddOptionsSuggestions(
                                                 poDriver->GetMetadataItem(
-                                                    GDAL_DMD_CREATIONOPTIONLIST),
+                                                    pszMDCreationOptionList),
                                                 datasetType, currentValue,
                                                 oRet))
                                         {
