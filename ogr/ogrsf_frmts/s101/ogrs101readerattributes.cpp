@@ -428,11 +428,31 @@ bool OGRS101Reader::InferFeatureDefn(
         std::string osFieldDomainName{};
     };
 
-    using PathVectorAndAttrIdx = std::pair<PathVector, int>;
-    std::map<PathVectorAndAttrIdx, OGRAttrDef> oMapFieldTypes;
+    struct Key
+    {
+        PathVector path{};
+        int iField = 0;
+        bool bMultipleFields = false;
+
+        Key(const PathVector &pathIn, int iFieldIn, bool bMultipleFieldsIn)
+            : path(pathIn), iField(iFieldIn), bMultipleFields(bMultipleFieldsIn)
+        {
+        }
+
+        bool operator<(const Key &other) const
+        {
+            return path < other.path ||
+                   (path == other.path &&
+                    (iField < other.iField ||
+                     (iField == other.iField && !bMultipleFields &&
+                      other.bMultipleFields)));
+        }
+    };
+
+    std::map<Key, OGRAttrDef> oMapFieldTypes;
 
     std::vector<S101AttrDef> asS101AttrDefs;
-    std::map<PathVectorAndAttrIdx, int> mapPathToCount;
+    std::map<Key, int> mapPathToCount;
     bool bFoundValidAssocField = false;
 
     // Iterate over the records (in the index of interest) to fill the
@@ -626,8 +646,8 @@ bool OGRS101Reader::InferFeatureDefn(
                 }
             }
 
-            const auto key =
-                std::make_pair(sAttrDef.oReversedPath, sAttrDef.iField);
+            const auto key = Key(sAttrDef.oReversedPath, sAttrDef.iField,
+                                 sAttrDef.bMultipleFields);
             ++mapPathToCount[key];
 
             // Must be kept in that scope to create a OGR attribute even if
@@ -865,10 +885,10 @@ bool OGRS101Reader::InferFeatureDefn(
     }
 
     // Final pass to transform oMapFieldTypes into OGRField instances.
-    for (const auto &[oReversedPathAndFieldIndex, sOGRAttrDef] : oMapFieldTypes)
+    for (const auto &[key, sOGRAttrDef] : oMapFieldTypes)
     {
-        const auto &oReversedPath = oReversedPathAndFieldIndex.first;
-        const int iField = oReversedPathAndFieldIndex.second;
+        const auto &oReversedPath = key.path;
+        const int iField = key.iField;
 
         const std::string osAttrName =
             BuildFieldName(oReversedPath, pszAttrFieldName, iField,

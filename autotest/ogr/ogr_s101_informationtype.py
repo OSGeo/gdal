@@ -632,3 +632,56 @@ def test_ogr_s101_read_information_type_time_field():
         },
         "id": 1,
     }
+
+
+###############################################################################
+# Test file with InformationType record
+
+
+def test_ogr_s101_read_information_type_with_inas_ossfuzz_523213300():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = ogr.Open("data/s101/information_type_with_inas_ossfuzz_523213300.000")
+
+    lyr = ds.GetLayerByName("informationType")
+    f = lyr.GetNextFeature()
+    assert f.ExportToJson(as_object=True) == {
+        "type": "Feature",
+        "geometry": None,
+        "properties": {
+            "recordId": 1,
+            "recordVersion": 1,
+            "informationType": "SpatialQuality",
+            "infoAssociationRecordId[1]": 1,
+            "infoAssociationCode[1]": "SpatialAssociation",
+            "infoAssociationRoleCode[1]": "defines",
+            "infoAssociationRecordId[2]": 1,
+            "infoAssociationCode[2]": "SpatialAssociation",
+            "infoAssociationRoleCode[2]": "defines",
+            "association_text": None,
+            "association[1]_text": "INAS",
+            "association[2]_text": "INAS",
+        },
+        "id": 1,
+    }
+
+    f = lyr.GetNextFeature()
+    assert f.ExportToJson(as_object=True) == {
+        "type": "Feature",
+        "geometry": None,
+        "properties": {
+            "recordId": 2,
+            "recordVersion": 1,
+            "informationType": "SpatialQuality",
+            "infoAssociationRecordId[1]": 1,
+            "infoAssociationCode[1]": "SpatialAssociation",
+            "infoAssociationRoleCode[1]": "defines",
+            "infoAssociationRecordId[2]": None,
+            "infoAssociationCode[2]": None,
+            "infoAssociationRoleCode[2]": None,
+            "association_text": "INAS",
+            "association[1]_text": None,
+            "association[2]_text": None,
+        },
+        "id": 2,
+    }
