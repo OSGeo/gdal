@@ -21,7 +21,8 @@ Extracting NOAA Global Forecast System (GFS) data available from https://registr
 
   The above may only work properly on Linux due to limitations in the netCDF driver
   regarding working with files in ``/vsi`` virtual file systems, hence the
-  converted file :file:`20260519_06_tmp2m.nc` is provided in the input datasets.
+  converted files :file:`20260519_00_tmp2m.nc` and  :file:`20260519_06_tmp2m.nc`
+  are provided in the input datasets.
 
 
 Inspecting
