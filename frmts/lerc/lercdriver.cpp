@@ -221,7 +221,8 @@ CPLErr LERCBand::IReadBlock(int, int nBlockYOff, void *pData)
         {
             const unsigned char *pSrcMask =
                 pabyMask +
-                static_cast<size_t>(nBand - 1) * nRasterXSize * nRasterYSize +
+                static_cast<size_t>(poGDS->m_nMaskCount == 1 ? 0 : nBand - 1) *
+                    nRasterXSize * nRasterYSize +
                 static_cast<size_t>(nBlockYOff) * nRasterXSize;
             if (eDataType == GDT_Float32)
             {
