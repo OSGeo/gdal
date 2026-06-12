@@ -27,6 +27,7 @@ copyright = "2026, Even Rouault".format(today_date.year)
 extensions = [
     "sphinx.ext.githubpages",  # to generate .nojekyll
     "sphinx_toolbox.collapse",
+    "sphinxcontrib.cairosvgconverter",
 ]
 
 # File extensions of source files
