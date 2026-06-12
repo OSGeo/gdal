@@ -13,13 +13,13 @@ from datetime import date
 
 project = "GDAL CLI Tutorial Workshop"
 title = "GDAL CLI Tutorial Workshop"
-author = "Even Rouault"
+author = "Even Rouault and Seth Girvin"
 
 today_date = date.today() # or use a specific date
 #today_date = date(2026, 3, 1)
 today_fmt = "%d %b %Y"
 
-copyright = "2026, Even Rouault".format(today_date.year)
+copyright = "2026, Even Rouault and Seth Girvin".format(today_date.year)
 
 # %% General configuration
 

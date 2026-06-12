@@ -34,5 +34,5 @@ explore how to use the new capabilities from Python.
 Copyright and License
 ---------------------
 
-The material, test datasets excluded, is Copyright 2026, Even Rouault and
-licensed under the MIT license.
+The material, test datasets excluded, is Copyright 2026, Even Rouault and Seth Girvin,
+and is licensed under the MIT license.
