@@ -226,8 +226,7 @@ def test_vrtmask_7(tmp_vsimem):
     msk_cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     ds = None
 
-    with pytest.raises(OSError):
-        os.remove(tmp_vsimem / "vrtmask_7_rgba.tif.msk")
+    assert not os.path.exists(tmp_vsimem / "vrtmask_7_rgba.tif.msk")
 
     assert alpha_cs == expected_msk_cs, "did not get expected alpha band checksum"
 
@@ -328,19 +327,22 @@ def test_vrtmask_11():
     # Cannot create mask band at raster band level when a dataset mask band already exists
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception,
+        match="Cannot create mask band at raster band level when a dataset mask band already exists",
+    ):
         ds.GetRasterBand(1).CreateMaskBand(0)
 
     # This VRT dataset has already a mask band
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="VRT dataset has already a mask band"):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     # This VRT band has already a mask band
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
     ds.GetRasterBand(1).CreateMaskBand(0)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="VRT band has already a mask band"):
         ds.GetRasterBand(1).CreateMaskBand(0)
 
     ds = gdal.Translate("", "data/byte.tif", format="VRT")
