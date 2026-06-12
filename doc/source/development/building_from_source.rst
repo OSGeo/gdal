@@ -1674,8 +1674,12 @@ See :ref:`raster.zarr.pcodec` for details.
 .. option:: GDAL_USE_PCODEC=ON/OFF
 
     Control whether to use ``pcodec``.
-    Defaults to ON when the ``pcodec`` C library (``cpcodec``) is found,
-    or ``git`` and a Rust toolchain are available.
+    Defaults to ON when the ``pcodec`` C library (``cpcodec``) is found automatically,
+    or by setting ``PCODEC_C_INCLUDE_DIR`` and ``PCODEC_C_LIBRARY``.
+
+    If an already built ``cpcodec`` library is not available, ``GDAL_USE_PCODEC``
+    can be explicitly set to ON to download ``pcodec`` sources using ``git``.
+    This requires a Rust toolchain to be available.
 
 .. option:: PCODEC_C_INCLUDE_DIR
 

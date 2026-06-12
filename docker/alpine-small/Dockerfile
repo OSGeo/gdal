@@ -157,6 +157,7 @@ RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
         -DCMAKE_BUILD_TYPE=Release \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DGDAL_USE_PCODEC=ON \
         -DBUILD_TESTING=OFF \
     && ninja \
     && DESTDIR="/build" ninja install \
@@ -209,6 +210,7 @@ COPY --from=builder --link  /build_proj/usr/lib/ /usr/lib/
 
 COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/share/doc/ /usr/share/doc/
 COPY --from=builder --link  /build/usr/include/ /usr/include/
 COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 

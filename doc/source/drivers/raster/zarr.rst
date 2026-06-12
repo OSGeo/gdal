@@ -777,7 +777,8 @@ There are two main ways to add support for this codec:
 - either the ``cpcodec`` library is already installed on the system, in which
   case the ``PCODEC_C_INCLUDE_DIR`` CMake variable must be set to point to
   the directory where :file:`pcodec.h` is located, and ``PCODEC_C_LIBRARY``
-  must be set to the path of :file:`libpcodec.a/.so/.lib`. This mode takes
+  must be set to the path of :file:`libpcodec.a/.so/.lib`. When both are set and
+  ``GDAL_USE_PCODEC`` has not been explicitly set, it is set to ``ON``. This mode takes
   precedence over the one described below.
 
 - or, if you have a Rust toolchain available, the GDAL CMake build system
@@ -788,6 +789,8 @@ There are two main ways to add support for this codec:
   Alternatively, if you wish to download those packages yourself, you can
   set the ``CORROSION_SOURCE_DIR`` and ``PCODEC_SOURCE_DIR`` CMake variables
   to point to the locations of the downloaded packages.
+  That mode requires explicit setting of ``GDAL_USE_PCODEC`` to ``ON``, in
+  particular for user consent to ``pcodec`` license (Apache v2).
 
 Examples
 --------

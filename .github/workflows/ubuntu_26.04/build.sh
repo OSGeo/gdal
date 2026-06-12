@@ -18,7 +18,8 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DOracle_ROOT=/opt/instantclient_19_9 \
     -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON \
     -DGDAL_USE_TIFF_INTERNAL:BOOL=ON \
-    -DCSHARP_BINDINGS=OFF 
+    -DGDAL_USE_PCODEC=ON \
+    -DCSHARP_BINDINGS=OFF
 
 echo "Test turning GDAL drivers off"
 cp CMakeCache.txt CMakeCache.txt.bak
