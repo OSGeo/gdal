@@ -728,8 +728,8 @@ bool GDALPipelineStepAlgorithm::CreateDatasetSingleOutputLayerIfNeeded(
     outputLayerName = poWriteStep->GetOutputLayerName();
     if (outputLayerName.empty() && poDstDS->GetLayerCount() > 1)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "--%s must be specified", GDAL_ARG_NAME_OUTPUT_LAYER);
+        ReportError(CE_Failure, CPLE_AppDefined, "--%s must be specified",
+                    GDAL_ARG_NAME_OUTPUT_LAYER);
         return false;
     }
 
