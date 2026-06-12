@@ -4099,7 +4099,7 @@ int VSICurlHandle::Close()
 /************************************************************************/
 
 VSICurlFilesystemHandlerBase::VSICurlFilesystemHandlerBase()
-    : oCacheFileProp{100 * 1024}, oCacheDirList{1024, 0}
+    : oCacheDirList{1024, 0}
 {
 }
 
@@ -4296,17 +4296,7 @@ void VSICurlFilesystemHandlerBase::AddRegion(const char *pszURL,
 bool VSICurlFilesystemHandlerBase::GetCachedFileProp(const char *pszURL,
                                                      FileProp &oFileProp)
 {
-    CPLMutexHolder oHolder(&hMutex);
-    bool inCache;
-    if (oCacheFileProp.tryGet(std::string(pszURL), inCache))
-    {
-        if (VSICURLGetCachedFileProp(pszURL, oFileProp))
-        {
-            return true;
-        }
-        oCacheFileProp.remove(std::string(pszURL));
-    }
-    return false;
+    return VSICURLGetCachedFileProp(pszURL, oFileProp);
 }
 
 /************************************************************************/
@@ -4316,8 +4306,6 @@ bool VSICurlFilesystemHandlerBase::GetCachedFileProp(const char *pszURL,
 void VSICurlFilesystemHandlerBase::SetCachedFileProp(const char *pszURL,
                                                      FileProp &oFileProp)
 {
-    CPLMutexHolder oHolder(&hMutex);
-    oCacheFileProp.insert(std::string(pszURL), true);
     VSICURLSetCachedFileProp(pszURL, oFileProp);
 }
 
@@ -4399,7 +4387,7 @@ void VSICurlFilesystemHandlerBase::InvalidateCachedData(const char *pszURL)
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    oCacheFileProp.remove(std::string(pszURL));
+    VSICURLInvalidateCachedFileProp(pszURL);
 
     // Invalidate all cached regions for this URL
     std::list<FilenameOffsetPair> keysToRemove;
@@ -4428,12 +4416,7 @@ void VSICurlFilesystemHandlerBase::ClearCache()
 
     GetRegionCache()->clear();
 
-    {
-        const auto lambda = [](const lru11::KeyValuePair<std::string, bool> &kv)
-        { VSICURLInvalidateCachedFileProp(kv.key.c_str()); };
-        oCacheFileProp.cwalk(lambda);
-        oCacheFileProp.clear();
-    }
+    VSICURLDestroyCacheFileProp();
 
     oCacheDirList.clear();
     nCachedFilesInDirList = 0;
@@ -4468,18 +4451,6 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
             poRegionCache->remove(key);
     }
 
-    {
-        std::list<std::string> keysToRemove;
-        auto lambda = [&keysToRemove,
-                       &osURL](const lru11::KeyValuePair<std::string, bool> &kv)
-        {
-            if (strncmp(kv.key.c_str(), osURL.c_str(), osURL.size()) == 0)
-                keysToRemove.push_back(kv.key);
-        };
-        oCacheFileProp.cwalk(lambda);
-        for (const auto &key : keysToRemove)
-            oCacheFileProp.remove(key);
-    }
     VSICURLInvalidateCachedFilePropPrefix(osURL.c_str());
 
     {
