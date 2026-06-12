@@ -41,6 +41,7 @@ class CPL_DLL GDALDefaultOverviews
 
     bool bCheckedForMask;
     bool bOwnMaskDS;
+    bool m_bInHaveMaskFile = false;
     GDALDataset *poMaskDS;
 
     // For "overview datasets" we record base level info so we can

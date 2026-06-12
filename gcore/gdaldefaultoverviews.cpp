@@ -1637,6 +1637,31 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
                                        const char *pszBasename)
 
 {
+    if (m_bInHaveMaskFile)
+    {
+        CPLDebug("GDAL",
+                 "GDALDefaultOverviews::HaveMaskFile(): called recursively");
+        return false;
+    }
+
+    struct InHaveMaskFileSetter
+    {
+        bool &m_bVal;
+
+        InHaveMaskFileSetter(bool &bVal) : m_bVal(bVal)
+        {
+            m_bVal = true;
+        }
+
+        ~InHaveMaskFileSetter()
+        {
+            m_bVal = false;
+        }
+    };
+
+    InHaveMaskFileSetter setter(m_bInHaveMaskFile);
+    CPL_IGNORE_RET_VAL(setter);
+
     /* -------------------------------------------------------------------- */
     /*      Have we already checked for masks?                              */
     /* -------------------------------------------------------------------- */
