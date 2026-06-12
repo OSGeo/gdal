@@ -584,37 +584,9 @@ void KML::print(unsigned short nNum)
 bool KML::isHandled(std::string const &elem) const
 {
     return isLeaf(elem) || isFeature(elem) || isFeatureContainer(elem) ||
-           isContainer(elem) || isRest(elem);
-}
-
-bool KML::isLeaf(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isFeature(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isFeatureContainer(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isContainer(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isRest(std::string const & /* elem */) const
-{
-    return false;
-}
-
-void KML::findLayers(KMLNode * /* poNode */, int /* bKeepEmptyContainers */)
-{
-    // idle
+           isContainer(elem) || isRest(elem) || elem == "Schema" ||
+           elem == "SimpleField" || elem == "SchemaData" ||
+           elem == "SimpleData" || elem == "ExtendedData";
 }
 
 bool KML::hasOnlyEmpty() const

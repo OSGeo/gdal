@@ -58,7 +58,7 @@ class KMLNode
 
     void addContent(std::string const &text);
     void appendContent(std::string const &text);
-    std::string getContent(std::size_t index) const;
+    const std::string &getContent(std::size_t index) const;
     void deleteContent(std::size_t index);
     std::size_t numContent() const;
 
@@ -78,6 +78,13 @@ class KMLNode
         return b25D_;
     }
 
+    typedef std::vector<Attribute *> kml_attributes_t;
+
+    const kml_attributes_t &getAttributes() const
+    {
+        return voAttributes_;
+    }
+
   private:
     typedef std::vector<KMLNode *> kml_nodes_t;
     kml_nodes_t *pvpoChildren_ = nullptr;
@@ -85,8 +92,7 @@ class KMLNode
     typedef std::vector<std::string> kml_content_t;
     kml_content_t *pvsContent_ = nullptr;
 
-    typedef std::vector<Attribute *> kml_attributes_t;
-    kml_attributes_t *pvoAttributes_ = nullptr;
+    kml_attributes_t voAttributes_{};
 
     KMLNode *poParent_ = nullptr;
     std::size_t nLevel_ = 0;
