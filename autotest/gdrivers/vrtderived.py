@@ -29,10 +29,6 @@ pytestmark = pytest.mark.skipif(
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
 
 
 def _xmlsearch(root, nodetype, name):
@@ -130,12 +126,11 @@ def test_vrtderived_2(tmp_vsimem):
     md["source_0"] = simpleSourceXML
 
     vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
-    with gdal.quiet_errors():
-        cs = vrt_ds.GetRasterBand(1).Checksum()
-    assert cs == -1
-    with gdal.quiet_errors():
-        ret = vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, " ")
-    assert ret != 0
+    with pytest.raises(Exception, match="I/O read error"):
+        vrt_ds.GetRasterBand(1).Checksum()
+
+    with pytest.raises(Exception, match="Writing .* is not supported"):
+        vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, " ")
     vrt_ds = None
 
     xmlstring = gdal.VSIFile(filename, "r").read()
@@ -198,9 +193,8 @@ def test_vrtderived_4(tmp_vsimem):
         "PixelFunctionType=dummy",
         "SourceTransferType=Invalid",
     ]
-    with gdal.quiet_errors():
-        ret = vrt_ds.AddBand(gdal.GDT_UInt8, options)
-    assert ret != 0, "invalid SourceTransferType value not detected"
+    with pytest.raises(Exception, match="invalid SourceTransferType"):
+        vrt_ds.AddBand(gdal.GDT_UInt8, options)
 
 
 ###############################################################################
@@ -364,14 +358,17 @@ def test_vrtderived_8():
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "NO"):
         ds = gdal.Open("data/vrt/n43_hillshade.vrt")
-        with gdal.quiet_errors():
-            cs = ds.GetRasterBand(1).Checksum()
-    assert cs == -1, "invalid checksum"
+        with pytest.raises(
+            Exception, match="Python code .* has been explicitly disabled"
+        ):
+            ds.GetRasterBand(1).Checksum()
 
     ds = gdal.Open("data/vrt/n43_hillshade.vrt")
-    with gdal.quiet_errors():
-        cs = ds.GetRasterBand(1).Checksum()
-    assert cs == -1, "invalid checksum"
+    with pytest.raises(
+        Exception,
+        match="If you trust the code .* set the GDAL_VRT_ENABLE_PYTHON configuration option",
+    ):
+        ds.GetRasterBand(1).Checksum()
 
 
 ###############################################################################
@@ -383,29 +380,29 @@ def test_vrtderived_9():
     pytest.importorskip("numpy")
 
     # Missing PixelFunctionType
-    with gdal.quiet_errors():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+    with pytest.raises(Exception, match="PixelFunctionType missing"):
+        gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionLanguage>Python</PixelFunctionLanguage>
   </VRTRasterBand>
 </VRTDataset>
 """)
-    assert ds is None
 
     # Unsupported PixelFunctionLanguage
-    with gdal.quiet_errors():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+    with pytest.raises(Exception, match="Unsupported PixelFunctionLanguage"):
+        gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>identity</PixelFunctionType>
     <PixelFunctionLanguage>foo</PixelFunctionLanguage>
   </VRTRasterBand>
 </VRTDataset>
 """)
-    assert ds is None
 
     # PixelFunctionCode can only be used with Python
-    with gdal.quiet_errors():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+    with pytest.raises(
+        Exception, match="PixelFunctionCode can only be used with Python"
+    ):
+        gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>identity</PixelFunctionType>
     <PixelFunctionCode><![CDATA[
@@ -416,22 +413,20 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    assert ds is None
 
     # BufferRadius can only be used with Python
-    with gdal.quiet_errors():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+    with pytest.raises(Exception, match="BufferRadius can only be used with Python"):
+        gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>identity</PixelFunctionType>
     <BufferRadius>1</BufferRadius>
   </VRTRasterBand>
 </VRTDataset>
 """)
-    assert ds is None
 
     # Invalid BufferRadius
-    with gdal.quiet_errors():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
+    with pytest.raises(Exception, match="Invalid value for BufferRadius"):
+        gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>identity</PixelFunctionType>
     <PixelFunctionLanguage>Python</PixelFunctionLanguage>
@@ -439,7 +434,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    assert ds is None
 
     # Error at Python code compilation (indentation error)
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -454,11 +448,9 @@ syntax_error
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="IndentationError"):
+            ds.GetRasterBand(1).Checksum()
 
     # Error at run time (in global code)
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -474,11 +466,9 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="NameError"):
+            ds.GetRasterBand(1).Checksum()
 
     # Error at run time (in pixel function)
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -493,11 +483,9 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="NameError"):
+            ds.GetRasterBand(1).Checksum()
 
     # User exception
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -512,11 +500,9 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="my exception"):
+            ds.GetRasterBand(1).Checksum()
 
     # unknown_function
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -531,11 +517,9 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="unknown_function"):
+            ds.GetRasterBand(1).Checksum()
 
     # uncallable object
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -549,11 +533,9 @@ uncallable_object = True
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="uncallable_object"):
+            ds.GetRasterBand(1).Checksum()
 
     # unknown_module
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
@@ -563,11 +545,9 @@ uncallable_object = True
   </VRTRasterBand>
 </VRTDataset>
 """)
-    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdaltest.error_handler():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(Exception, match="No module named 'unknown_module'"):
+            ds.GetRasterBand(1).Checksum()
 
 
 def vrtderived_code_that_only_makes_sense_with_GDAL_VRT_ENABLE_PYTHON_equal_IF_SAFE_but_that_is_now_disabled():
@@ -658,11 +638,11 @@ def test_vrtderived_10():
 
     # GDAL_VRT_TRUSTED_MODULES not defined
     ds = gdal.Open(content)
-    with gdal.quiet_errors():
-        cs = ds.GetRasterBand(1).Checksum()
-    if cs != -1:
-        print(gdal.GetLastErrorMsg())
-        pytest.fail("invalid checksum")
+    with pytest.raises(
+        Exception,
+        match="current policy is to trust only code from .* GDAL_VRT_PYTHON_TRUSTED_MODULES",
+    ):
+        ds.GetRasterBand(1).Checksum()
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES *NOT* matching our module
     for val in [
@@ -672,13 +652,11 @@ def test_vrtderived_10():
         "vrtderive.*" "vrtderivedX.*",
     ]:
         ds = gdal.Open(content)
-        with gdal.config_option(
-            "GDAL_VRT_PYTHON_TRUSTED_MODULES", val
-        ), gdaltest.error_handler():
-            cs = ds.GetRasterBand(1).Checksum()
-        if cs != -1:
-            print(gdal.GetLastErrorMsg())
-            pytest.fail("invalid checksum")
+        with gdal.config_option("GDAL_VRT_PYTHON_TRUSTED_MODULES", val):
+            with pytest.raises(
+                Exception, match=f"current policy is to trust only code from .*{val}"
+            ):
+                ds.GetRasterBand(1).Checksum()
 
     # GDAL_VRT_PYTHON_TRUSTED_MODULES matching our module
     for val in [
@@ -731,11 +709,9 @@ def test_vrtderived_11():
 # Test all data types with python code
 
 
-def test_vrtderived_12():
-
-    pytest.importorskip("numpy")
-
-    for dt in [
+@pytest.mark.parametrize(
+    "dt",
+    [
         "Byte",
         "Int8",
         "UInt16",
@@ -752,60 +728,63 @@ def test_vrtderived_12():
         "CFloat16",
         "CFloat32",
         "CFloat64",
-    ]:
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
-<VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
-    <ColorInterp>Gray</ColorInterp>
-    <PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
-    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
-</VRTRasterBand>
-</VRTDataset>""" % dt)
+    ],
+)
+@gdaltest.disable_exceptions()
+def test_vrtderived_12(dt):
 
-        with gdal.config_option(
-            "GDAL_VRT_ENABLE_PYTHON", "YES"
-        ), gdaltest.error_handler():
-            cs = ds.GetRasterBand(1).Checksum()
-        # CInt16/CInt32/CFloat16 do not map to native numpy types
-        if dt == "CInt16" or dt == "CInt32" or dt == "CFloat16":
-            expected_cs = [-1]  # error
-        elif dt == "Float16":
-            # Might or might not be supported by GDAL
-            expected_cs = [-1, 100]
+    pytest.importorskip("numpy")
+
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="10" rasterYSize="10">
+<VRTRasterBand dataType="{dt}" band="1" subClass="VRTDerivedRasterBand">
+<ColorInterp>Gray</ColorInterp>
+<PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
+<PixelFunctionLanguage>Python</PixelFunctionLanguage>
+</VRTRasterBand>
+</VRTDataset>""")
+
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"), gdal.quiet_errors():
+        cs = ds.GetRasterBand(1).Checksum()
+    # CInt16/CInt32/CFloat16 do not map to native numpy types
+    if dt == "CInt16" or dt == "CInt32" or dt == "CFloat16":
+        expected_cs = [-1]  # error
+    elif dt == "Float16":
+        # Might or might not be supported by GDAL
+        expected_cs = [-1, 100]
+    else:
+        expected_cs = [100]
+    if cs not in expected_cs:
+        print(dt)
+        print(gdal.GetLastErrorMsg())
+        if len(expected_cs) == 1:
+            pytest.fail(
+                "invalid checksum, datatype %s, have %d, expected %d"
+                % (dt, cs, expected_cs[0])
+            )
         else:
-            expected_cs = [100]
-        if cs not in expected_cs:
-            print(dt)
-            print(gdal.GetLastErrorMsg())
-            if len(expected_cs) == 1:
-                pytest.fail(
-                    "invalid checksum, datatype %s, have %d, expected %d"
-                    % (dt, cs, expected_cs[0])
-                )
-            else:
-                pytest.fail(
-                    "invalid checksum, datatype %s, have %d, expected one of [%d, %d]"
-                    % (dt, cs, expected_cs[0], expected_cs[1])
-                )
+            pytest.fail(
+                "invalid checksum, datatype %s, have %d, expected one of [%d, %d]"
+                % (dt, cs, expected_cs[0], expected_cs[1])
+            )
 
-    # Same for SourceTransferType
-    for dt in ["CInt16", "CInt32", "CFloat16"]:
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
-<VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
-    <SourceTransferType>Byte</SourceTransferType>
-    <ColorInterp>Gray</ColorInterp>
-    <PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
-    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+
+@pytest.mark.parametrize("dt", ["CInt16", "CInt32", "CFloat16"])
+def test_vrtderived_12_bis(dt):
+
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="10" rasterYSize="10">
+<VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+<SourceTransferType>{dt}</SourceTransferType>
+<ColorInterp>Gray</ColorInterp>
+<PixelFunctionType>vrtderived.one_pix_func</PixelFunctionType>
+<PixelFunctionLanguage>Python</PixelFunctionLanguage>
 </VRTRasterBand>
-</VRTDataset>""" % dt)
+</VRTDataset>""")
 
-        with gdal.config_option(
-            "GDAL_VRT_ENABLE_PYTHON", "YES"
-        ), gdaltest.error_handler():
-            cs = ds.GetRasterBand(1).Checksum()
-        if cs != -1:
-            print(dt)
-            print(gdal.GetLastErrorMsg())
-            pytest.fail("invalid checksum")
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with pytest.raises(
+            Exception, match="data type not supported for SourceTransferType"
+        ):
+            ds.GetRasterBand(1).Checksum()
 
 
 ###############################################################################
@@ -989,6 +968,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 
 
 @pytest.mark.parametrize("dtype", range(1, gdal.GDT_TypeCount))
+@gdaltest.disable_exceptions()
 def test_vrt_derived_dtype(tmp_vsimem, dtype):
 
     gdaltest.importorskip_gdal_array()
@@ -1251,7 +1231,7 @@ def test_vrt_pixelfn_expression(
             "A*B + C",
             [("A", 77), ("B", 63)],
             "exprtk",
-            "Undefined symbol",
+            "(Undefined symbol|Failed to parse)",
             id="exprtk undefined variable",
         ),
         pytest.param(
@@ -1265,7 +1245,7 @@ def test_vrt_pixelfn_expression(
             "(".join(["asin", "sin", "acos", "cos"] * 100) + "(X" + 100 * 4 * ")",
             [("X", 0.5)],
             "exprtk",
-            "exceeds maximum allowed stack depth",
+            "(exceeds maximum allowed stack depth|Failed to parse)",
             id="expression is too complex",
         ),
         pytest.param(
@@ -1287,25 +1267,15 @@ def test_vrt_pixelfn_expression(
 def test_vrt_pixelfn_expression_invalid(
     tmp_vsimem, expression, sources, dialect, exception
 ):
-    gdaltest.importorskip_gdal_array()
-    pytest.importorskip("numpy")
 
     if not gdaltest.gdal_has_vrt_expression_dialect(dialect):
         pytest.skip(f"Expression dialect {dialect} is not available")
 
-    messages = []
-
-    def handle(ecls, ecode, emsg):
-        messages.append(emsg)
-
     xml = vrt_expression_xml(tmp_vsimem, expression, dialect, sources)
 
-    with gdaltest.error_handler(handle):
-        ds = gdal.Open(xml)
-        if ds:
-            assert ds.ReadAsArray() is None
-
-    assert exception in "".join(messages)
+    ds = gdal.Open(xml)
+    with pytest.raises(Exception, match=exception):
+        ds.ReadRaster()
 
 
 def test_vrt_pixelfn_expression_coordinates():
