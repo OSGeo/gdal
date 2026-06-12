@@ -2453,12 +2453,6 @@ the ``install`` CMake target.
     ``deb`` when it is detected that the Python installation looks for
     the ``site-packages`` subdirectory. Otherwise it is unspecified.
 
-.. option:: GDAL_PYTHON_INSTALL_LIB
-
-    This option can be specified to set the value of the ``--install-lib``
-    option of ``python3 setup.py install``. It is only taken into account on
-    MacOS systems, when the Python installation is a framework.
-
 .. note::
 
     The Python bindings are made of several modules (osgeo.gdal, osgeo.ogr, etc.)
@@ -2535,7 +2529,7 @@ For more details on how to build and use the C# bindings read the dedicated sect
 
 .. option:: CSHARP_APPLICATION_VERSION
 
-    Sets the .NET target Framework (in TFM format) to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_. 
+    Sets the .NET target Framework (in TFM format) to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_.
     Defaults to the highest version installed on the build system, i.e. `latest`.
 
 .. option:: GDAL_CSHARP_ONLY=OFF/ON
