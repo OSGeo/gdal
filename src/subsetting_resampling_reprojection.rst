@@ -11,6 +11,8 @@ Use `gdal raster resize <https://gdal.org/en/stable/programs/gdal_raster_resize.
 
 ::
 
+    # run from the workshop data directory
+
     $ gdal raster resize \
         SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TER_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 \
         10m_bands_to_20m.tif \
@@ -40,6 +42,14 @@ Let's compare them with `gdal raster compare <https://gdal.org/en/stable/program
 
 Let's do that in Python
 -----------------------
+
+First,open a Python interpreter in the directory containing the workshop datasets:
+
+::
+
+    $ python
+
+Next, paste the following code snippet into the interpreter to perform the same operation as in the previous command-line example:
 
 .. code-block:: python
 
@@ -88,7 +98,7 @@ and `gdal vector clip <https://gdal.org/en/stable/programs/gdal_vector_clip.html
 
 ::
 
-    $ gdal vector clip timisoara_points.gpkg \
+    $ gdal vector clip timisoara.gpkg --layer points \
         timisoara_points_clipped.gpkg \
         --like clip.tif
 
@@ -97,7 +107,7 @@ Exercise
 --------
 
 Clip :file:`SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TER_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634`
-with a circle centered on Timișoara center (45.7558° N, 21.2322° E) with a radius of 1 km.`
+with a circle centered on Timișoara center (45.7558° N, 21.2322° E) with a radius of 1 km.
 
 .. collapse:: (hint)
 
@@ -392,7 +402,6 @@ And make sure it includes overviews.
         1. Use the ``--input-nodata`` and ``--add-alpha`` options
 
         2. Use `gdal raster overview add <https://gdal.org/en/stable/programs/gdal_raster_overview_add.html>`__
-           or think to a format whose generation with GDAL automatically includes
-           overviews.
+           or use a format whose generation with GDAL automatically includes overviews.
 
 ==> :ref:`solution_reproject`.

@@ -457,6 +457,8 @@ Now let's check we got the GDAL we expected:
 
     GDAL 3.13.1 "Iowa City", released 2026/06/01
 
+.. _mysys2:
+
 Install a Bash shell
 ++++++++++++++++++++
 

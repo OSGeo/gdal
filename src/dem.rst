@@ -21,6 +21,23 @@ https://ec.europa.eu/eurostat/web/gisco/geodata/digital-elevation-model/eu-dem
 
 25 GB... hum
 
+.. _no_pathconv:
+
+.. note::
+
+    If you are using the :ref:`MSYS2 on Windows environment <mysys2>`, you may see the error below:
+
+    ::
+
+        ERROR 3: list: 'C:\gdal\msys64\vsicurl\https;\\gisco-services.ec.europa.eu\dem\100k\EU_DEM_mosaic_1000K.ZIP' does not exist or cannot be accessed
+
+    This is caused by MSYS2 path conversion (see https://www.msys2.org/docs/filesystem-paths/), which rewrites the URL passed to GDAL and breaks `/vsicurl/`.
+    Fix it by disabling path conversion for the rest of this tutorial session with:
+
+    ::
+
+        $ export MSYS_NO_PATHCONV=1
+
 Let's have a look inside:
 
 ::
@@ -56,7 +73,7 @@ Successful attempt
 ------------------
 
 Fortunately https://github.com/OpenTopography/OT_BulkAccess_COGs/blob/main/OT_BulkAccessCOGs.ipynb
-gives a good hints:
+provides a useful hint, with a VRT example:
 
 ::
 
@@ -87,11 +104,13 @@ Now we can selectively download DEM covering our 3 Sentinel 2 tiles with:
 
 ::
 
+    # run from the workshop data directory
+
     $ gdal raster clip \
         /vsicurl/https://opentopography.s3.sdsc.edu/raster/SRTM_GL1/SRTM_GL1_srtm.vrt \
         dem.tif \
         --like s2.vrt \
-        --co COMPRESS=LZW --co TILED=YES --co PREDICTOR=2
+        --co COMPRESS=LZW --co TILED=YES --co PREDICTOR=2 --overwrite
 
 
 Other successful attempt (using ``/vsis3/``)
@@ -146,7 +165,7 @@ Let's list the bucket content
 
     You can streamline the access to such buckets by setting the credentials in
     a :file:`${HOME}/.gdal/gdalrc` file (or :file:`${USERPROFILE}/.gdal/gdalrc`
-    on Windows)
+    on Windows and MYSYS2 e.g. :file:`C:\\Users\\my_user_name\\.gdal\\gdalrc`)
 
     ::
 
@@ -303,13 +322,30 @@ and write is a :file:`.gdalg.json` file
         blend [ read dem.tif ! hillshade ] --operator hsv-value ! \
         write dem_pipeline.gdalg.json
 
+.. only:: html
+
+   .. image:: ../images/dem.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/dem.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../images/dem.svg
+
+
 And let's open it in QGIS.
 
 Exercise
 --------
 
 Modify the above pipeline:
- 
+
 1. such that the hillshade stage appears first and the ``color-map`` one is
    done as a nested input pipeline.
 

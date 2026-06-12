@@ -9,7 +9,8 @@ Pixel-wise computations
 
 Using `gdal raster calc <https://gdal.org/en/stable/programs/gdal_raster_calc.html>`__
 
-It performs pixel-wise calculations on one or more input GDAL dataset.
+It performs pixel-wise calculations on one or more input GDAL datasets. This example uses the ``s2_TER_10m.xml``
+dataset created in the :ref:`symlinks` section of the tutorial.
 
 Let's compute a grayscale view using the well-known formula:
 
@@ -51,7 +52,7 @@ Exercise
    and do not create any materialized (i.e. actual image) file in the process.
 
 3. Create a .gdalg.json file with a simple pipeline computing the NDVI for one file,
-   and replay that pipeline using `substitions <https://gdal.org/en/stable/programs/gdal_pipeline.html#substitutions>`__
+   and replay that pipeline using `substitutions <https://gdal.org/en/stable/programs/gdal_pipeline.html#substitutions>`__
    to apply it to another Sentinel 2 tile
 
 
@@ -94,7 +95,7 @@ First let find out the extent of our DEM:
 
 ::
 
-    $ gdal raster info dem.tif 
+    $ gdal raster info dem.tif
 
 ::
 
@@ -111,6 +112,23 @@ Let's extract (but not clip) provinces that intersects that extent
     $ gdal vector filter --bbox=19.6854167,45.0565278,22.4426389,46.9537500 \
         /vsizip/ne_10m_admin_1_states_provinces.zip admin_1_around_timis.gpkg
 
+.. note::
+
+    If you are using the :ref:`MSYS2 on Windows environment <mysys2>`, and you set
+    ``MSYS_NO_PATHCONV=1`` in the :ref:`VSI tutorial <no_pathconv>` you may see the error below:
+
+    ::
+
+        ERROR 4: C:/gdal/msys64/vsizip/ne_10m_admin_1_states_provinces.zip: No such file or directory
+
+    Switch path conversion back on with:
+
+    ::
+
+        $ export MSYS_NO_PATHCONV=0
+
+When run successfully the output will be:
+
 ::
 
     Warning 1: A geometry of type MULTIPOLYGON is inserted into layer ne_10m_admin_1_states_provinces of geometry type POLYGON, which is not normally allowed by the GeoPackage specification, but the driver will however do it. To create a conformant GeoPackage, if using ogr2ogr, the -nlt option can be used to override the layer geometry type. This warning will no longer be emitted for this combination of layer and feature geometry type.
@@ -123,6 +141,22 @@ Not critical, but we can fix it cleanly with:
         filter --bbox=19.6854167,45.0565278,22.4426389,46.9537500 ! \
         set-geom-type --geometry-type MULTIPOLYGON ! \
         write admin_1_around_timis.gpkg --overwrite
+
+.. only:: html
+
+   .. image:: ../images/pixel_operations.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/pixel_operations.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../images/pixel_operations.svg
 
 And finally:
 
