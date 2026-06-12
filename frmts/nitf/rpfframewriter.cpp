@@ -3486,6 +3486,9 @@ CADRGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int bStrict,
                 return nullptr;
             }
 
+            if (pfnProgress)
+                pfnProgress(1.0, "", pProgressData);
+
             return std::make_unique<NITFDummyDataset>();
         }
     }

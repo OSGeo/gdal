@@ -7520,6 +7520,7 @@ def test_nitf_create_copy_cadrg_color_table_per_frame(
     creationOptions = [
         "PRODUCT_TYPE=CADRG",
         "SCALE=10000000",
+        "IC=C4",  # just to test bugfix for https://github.com/OSGeo/gdal/issues/14709
     ]
     if color_table_per_frame:
         creationOptions.append("COLOR_TABLE_PER_FRAME=YES")

@@ -4642,7 +4642,7 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             return nullptr;
         }
 
-        if (EQUAL(pszIC, "NC"))
+        else if (EQUAL(pszIC, "NC"))
             /* ok */;
         else if (EQUAL(pszIC, "C8"))
         {
