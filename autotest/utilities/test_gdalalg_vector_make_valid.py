@@ -272,3 +272,18 @@ def test_gdalalg_vector_make_valid_3d():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiPolygon25D
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_make_valid_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! make-valid ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"

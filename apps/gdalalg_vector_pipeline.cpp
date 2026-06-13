@@ -401,10 +401,10 @@ void GDALVectorPipelineOutputLayer::ResetReading()
 }
 
 /************************************************************************/
-/*          GDALVectorPipelineOutputLayer::GetNextRawFeature()          */
+/*           GDALVectorPipelineOutputLayer::GetNextFeature()            */
 /************************************************************************/
 
-OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
+OGRFeature *GDALVectorPipelineOutputLayer::GetNextFeature()
 {
     if (m_idxInPendingFeatures < m_pendingFeatures.size())
     {
@@ -421,6 +421,7 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
             std::unique_ptr<OGRFeature>(m_srcLayer.GetNextFeature());
         if (!poSrcFeature)
             return nullptr;
+        // It is the job of TranslateFeature() to apply layer filters
         if (!TranslateFeature(std::move(poSrcFeature), m_pendingFeatures))
         {
             return nullptr;
@@ -431,6 +432,16 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
     OGRFeature *poFeature = m_pendingFeatures[0].release();
     m_idxInPendingFeatures = 1;
     return poFeature;
+}
+
+/************************************************************************/
+/*            GDALVectorPipelineOutputLayer::PassesFilters()            */
+/************************************************************************/
+
+bool GDALVectorPipelineOutputLayer::PassesFilters(const OGRFeature *poFeature)
+{
+    return (!m_poFilterGeom || FilterGeometry(poFeature->GetGeometryRef())) &&
+           (!m_poAttrQuery || m_poAttrQuery->Evaluate(poFeature));
 }
 
 /************************************************************************/
@@ -594,8 +605,7 @@ bool GDALVectorPipelinePassthroughLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
-    if ((!m_poFilterGeom || FilterGeometry(poSrcFeature->GetGeometryRef())) &&
-        (!m_poAttrQuery || m_poAttrQuery->Evaluate(poSrcFeature.get())))
+    if (PassesFilters(poSrcFeature.get()))
     {
         apoOutFeatures.push_back(std::move(poSrcFeature));
     }

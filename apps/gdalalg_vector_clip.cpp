@@ -132,7 +132,10 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
                     auto poDstFeature =
                         std::unique_ptr<OGRFeature>(poSrcFeature->Clone());
                     poDstFeature->SetGeometry(poSubGeom);
-                    apoOutFeatures.push_back(std::move(poDstFeature));
+                    if (PassesFilters(poDstFeature.get()))
+                    {
+                        apoOutFeatures.push_back(std::move(poDstFeature));
+                    }
                 }
             }
             else if (OGR_GT_GetCollection(eFeatGeomType) ==
@@ -141,14 +144,20 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
                 poIntersection = OGRGeometryFactory::forceTo(
                     std::move(poIntersection), m_eSrcLayerGeomType);
                 poSrcFeature->SetGeometry(std::move(poIntersection));
-                apoOutFeatures.push_back(std::move(poSrcFeature));
+                if (PassesFilters(poSrcFeature.get()))
+                {
+                    apoOutFeatures.push_back(std::move(poSrcFeature));
+                }
             }
             else if (m_eFlattenSrcLayerGeomType == wkbGeometryCollection)
             {
                 auto poGeomColl = std::make_unique<OGRGeometryCollection>();
                 poGeomColl->addGeometry(std::move(poIntersection));
                 poSrcFeature->SetGeometry(std::move(poGeomColl));
-                apoOutFeatures.push_back(std::move(poSrcFeature));
+                if (PassesFilters(poSrcFeature.get()))
+                {
+                    apoOutFeatures.push_back(std::move(poSrcFeature));
+                }
             }
             // else discard geometries of incompatible type with the
             // layer geometry type
@@ -156,7 +165,10 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         else
         {
             poSrcFeature->SetGeometry(std::move(poIntersection));
-            apoOutFeatures.push_back(std::move(poSrcFeature));
+            if (PassesFilters(poSrcFeature.get()))
+            {
+                apoOutFeatures.push_back(std::move(poSrcFeature));
+            }
         }
 
         return true;

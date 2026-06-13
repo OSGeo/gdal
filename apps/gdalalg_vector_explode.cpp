@@ -448,7 +448,7 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
                 {
                     std::unique_ptr<OGRGeometry> poSrcGeom;
 
-                    if (iDstFeature == 0)
+                    if (apoOutFeatures.empty())
                     {
                         poSrcGeom.reset(
                             poSrcFeature->StealGeometry(iGeomField));
@@ -466,7 +466,8 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
             }
 
             poDstFeature->SetFID(m_nextFID++);
-            apoOutFeatures.push_back(std::move(poDstFeature));
+            if (PassesFilters(poDstFeature.get()))
+                apoOutFeatures.push_back(std::move(poDstFeature));
         }
 
         return true;
