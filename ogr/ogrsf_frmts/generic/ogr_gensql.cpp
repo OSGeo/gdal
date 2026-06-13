@@ -1230,11 +1230,11 @@ bool OGRGenSQLResultsLayer::PrepareSummary() const
 typedef std::vector<std::unique_ptr<OGRFeature>> VectorOfUniquePtrFeature;
 
 static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
-                                             void *pFeatureList)
+                                             const void *pFeatureList)
 
 {
-    auto &apoFeatures =
-        *(static_cast<VectorOfUniquePtrFeature *>(pFeatureList));
+    const auto &apoFeatures =
+        *(static_cast<const VectorOfUniquePtrFeature *>(pFeatureList));
     swq_expr_node *poRetNode = nullptr;
 
     CPLAssert(op->eNodeType == SNT_COLUMN);
@@ -1251,7 +1251,7 @@ static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
         return nullptr;
     }
 
-    OGRFeature *poFeature = apoFeatures[op->table_index].get();
+    const OGRFeature *poFeature = apoFeatures[op->table_index].get();
 
     /* -------------------------------------------------------------------- */
     /*      Fetch the value.                                                */
