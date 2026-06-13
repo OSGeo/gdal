@@ -5,7 +5,6 @@ set(_SOURCES
     hdf-eos/HDFEOSVersion.h
     hdf-eos/EHapi.c
     hdf-eos/GDapi.c
-    hdf-eos/gctp_wrap.c
     hdf-eos/SWapi.c
     hdf-eos/helper.c
     hdf4compat.h
