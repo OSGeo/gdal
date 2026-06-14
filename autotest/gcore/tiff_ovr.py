@@ -1235,7 +1235,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     ds.BuildOverviews("cubic", overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs_band1_overview0 = 21296
+    expected_cs_band1_overview0 = 21615
     assert (
         cs == expected_cs_band1_overview0
     ), "Checksum is %d. Expected checksum is %d for overview 0." % (
@@ -1244,7 +1244,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     )
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs_band3_overview1 = 1994
+    expected_cs_band3_overview1 = 2027
     assert (
         cs == expected_cs_band3_overview1
     ), "Checksum is %d. Expected checksum is %d for overview 1." % (

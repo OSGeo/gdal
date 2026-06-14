@@ -1415,12 +1415,7 @@ def test_gdalalg_raster_tile_rgba_partially_opaque(tmp_vsimem, skip_blank):
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
         assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
-            [
-                23761,
-                23390,
-                14544,
-                16124,
-            ],
+            [23888, 23455, 14526, 16124],
             abs=10,
         )
 

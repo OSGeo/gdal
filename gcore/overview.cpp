@@ -2755,17 +2755,19 @@ GDALResampleConvolutionHorizontal(const T *pChunk, const double *padfWeights,
 template <class T, bool bHasNaN>
 static inline void GDALResampleConvolutionHorizontalWithMask(
     const T *pChunk, const GByte *pabyMask, const double *padfWeights,
-    int nSrcPixelCount, double &dfVal, double &dfWeightSum)
+    int nSrcPixelCount, double &dfWeightValMaskSum, double &dfWeightMaskSum,
+    double &dfWeightSum)
 {
-    dfVal = 0;
+    dfWeightValMaskSum = 0;
+    dfWeightMaskSum = 0;
     dfWeightSum = 0;
     int i = 0;
     for (; i < nSrcPixelCount - 3; i += 4)
     {
-        double dfWeight0 = padfWeights[i + 0] * pabyMask[i + 0];
-        double dfWeight1 = padfWeights[i + 1] * pabyMask[i + 1];
-        double dfWeight2 = padfWeights[i + 2] * pabyMask[i + 2];
-        double dfWeight3 = padfWeights[i + 3] * pabyMask[i + 3];
+        double dfWeightMask0 = padfWeights[i + 0] * pabyMask[i + 0];
+        double dfWeightMask1 = padfWeights[i + 1] * pabyMask[i + 1];
+        double dfWeightMask2 = padfWeights[i + 2] * pabyMask[i + 2];
+        double dfWeightMask3 = padfWeights[i + 3] * pabyMask[i + 3];
 
         const auto MulNaNAware = [](double v, double &w, double &val)
         {
@@ -2780,27 +2782,32 @@ static inline void GDALResampleConvolutionHorizontalWithMask(
             val += v * w;
         };
 
-        MulNaNAware(double(pChunk[i + 0]), dfWeight0, dfVal);
-        MulNaNAware(double(pChunk[i + 1]), dfWeight1, dfVal);
-        MulNaNAware(double(pChunk[i + 2]), dfWeight2, dfVal);
-        MulNaNAware(double(pChunk[i + 3]), dfWeight3, dfVal);
-        dfWeightSum += dfWeight0 + dfWeight1 + dfWeight2 + dfWeight3;
+        MulNaNAware(double(pChunk[i + 0]), dfWeightMask0, dfWeightValMaskSum);
+        MulNaNAware(double(pChunk[i + 1]), dfWeightMask1, dfWeightValMaskSum);
+        MulNaNAware(double(pChunk[i + 2]), dfWeightMask2, dfWeightValMaskSum);
+        MulNaNAware(double(pChunk[i + 3]), dfWeightMask3, dfWeightValMaskSum);
+        dfWeightMaskSum +=
+            dfWeightMask0 + dfWeightMask1 + dfWeightMask2 + dfWeightMask3;
+        dfWeightSum += padfWeights[i + 0] + padfWeights[i + 1] +
+                       padfWeights[i + 2] + padfWeights[i + 3];
     }
     for (; i < nSrcPixelCount; ++i)
     {
-        const double dfWeight = padfWeights[i] * pabyMask[i];
+        const double dfWeightMask = padfWeights[i] * pabyMask[i];
         if constexpr (bHasNaN)
         {
             if (!std::isnan(pChunk[i]))
             {
-                dfVal += double(pChunk[i]) * dfWeight;
-                dfWeightSum += dfWeight;
+                dfWeightValMaskSum += double(pChunk[i]) * dfWeightMask;
+                dfWeightMaskSum += dfWeightMask;
+                dfWeightSum += padfWeights[i];
             }
         }
         else
         {
-            dfVal += double(pChunk[i]) * dfWeight;
-            dfWeightSum += dfWeight;
+            dfWeightValMaskSum += double(pChunk[i]) * dfWeightMask;
+            dfWeightMaskSum += dfWeightMask;
+            dfWeightSum += padfWeights[i];
         }
     }
 }
@@ -3121,10 +3128,12 @@ inline double GDALResampleConvolutionHorizontal<GUInt16>(
 template <class T>
 static inline void GDALResampleConvolutionHorizontalWithMaskSSE2(
     const T *pChunk, const GByte *pabyMask, const double *padfWeightsAligned,
-    int nSrcPixelCount, double &dfVal, double &dfWeightSum)
+    int nSrcPixelCount, double &dfWeightValMaskSum, double &dfWeightMaskSum,
+    double &dfWeightSum)
 {
     int i = 0;  // Used after for.
-    XMMReg4Double v_acc = XMMReg4Double::Zero();
+    XMMReg4Double v_acc_val_mask_weight = XMMReg4Double::Zero();
+    XMMReg4Double v_acc_mask_weight = XMMReg4Double::Zero();
     XMMReg4Double v_acc_weight = XMMReg4Double::Zero();
     for (; i < nSrcPixelCount - 3; i += 4)
     {
@@ -3132,17 +3141,21 @@ static inline void GDALResampleConvolutionHorizontalWithMaskSSE2(
         const XMMReg4Double v_mask = XMMReg4Double::Load4Val(pabyMask + i);
         XMMReg4Double v_weight =
             XMMReg4Double::Load4ValAligned(padfWeightsAligned + i);
-        v_weight *= v_mask;
-        v_acc += v_pixels * v_weight;
         v_acc_weight += v_weight;
+        v_weight *= v_mask;
+        v_acc_val_mask_weight += v_pixels * v_weight;
+        v_acc_mask_weight += v_weight;
     }
 
-    dfVal = v_acc.GetHorizSum();
+    dfWeightValMaskSum = v_acc_val_mask_weight.GetHorizSum();
+    dfWeightMaskSum = v_acc_mask_weight.GetHorizSum();
     dfWeightSum = v_acc_weight.GetHorizSum();
     for (; i < nSrcPixelCount; ++i)
     {
-        const double dfWeight = padfWeightsAligned[i] * pabyMask[i];
-        dfVal += pChunk[i] * dfWeight;
+        const double dfWeight = padfWeightsAligned[i];
+        const double dfWeightMask = dfWeight * pabyMask[i];
+        dfWeightValMaskSum += pChunk[i] * dfWeightMask;
+        dfWeightMaskSum += dfWeightMask;
         dfWeightSum += dfWeight;
     }
 }
@@ -3154,23 +3167,23 @@ static inline void GDALResampleConvolutionHorizontalWithMaskSSE2(
 template <>
 inline void GDALResampleConvolutionHorizontalWithMask<GByte, false>(
     const GByte *pChunk, const GByte *pabyMask,
-    const double *padfWeightsAligned, int nSrcPixelCount, double &dfVal,
-    double &dfWeightSum)
+    const double *padfWeightsAligned, int nSrcPixelCount,
+    double &dfWeightValMaskSum, double &dfWeightMaskSum, double &dfWeightSum)
 {
     GDALResampleConvolutionHorizontalWithMaskSSE2(
-        pChunk, pabyMask, padfWeightsAligned, nSrcPixelCount, dfVal,
-        dfWeightSum);
+        pChunk, pabyMask, padfWeightsAligned, nSrcPixelCount,
+        dfWeightValMaskSum, dfWeightMaskSum, dfWeightSum);
 }
 
 template <>
 inline void GDALResampleConvolutionHorizontalWithMask<GUInt16, false>(
     const GUInt16 *pChunk, const GByte *pabyMask,
-    const double *padfWeightsAligned, int nSrcPixelCount, double &dfVal,
-    double &dfWeightSum)
+    const double *padfWeightsAligned, int nSrcPixelCount,
+    double &dfWeightValMaskSum, double &dfWeightMaskSum, double &dfWeightSum)
 {
     GDALResampleConvolutionHorizontalWithMaskSSE2(
-        pChunk, pabyMask, padfWeightsAligned, nSrcPixelCount, dfVal,
-        dfWeightSum);
+        pChunk, pabyMask, padfWeightsAligned, nSrcPixelCount,
+        dfWeightValMaskSum, dfWeightMaskSum, dfWeightSum);
 }
 
 /************************************************************************/
@@ -3903,35 +3916,57 @@ static CPLErr GDALResampleChunk_ConvolutionT(
                     }
                 }
 
-                double dfVal = 0.0;
+                double dfSumWeightedVal = 0.0;
+                double dfSumWeightedAlpha = 0.0;
                 if constexpr (std::is_floating_point_v<T>)
                 {
                     if (bHasNaN)
                     {
                         GDALResampleConvolutionHorizontalWithMask<T, true>(
                             pChunk + j, pabyChunkNodataMask + j, padfWeights,
-                            nSrcPixelCount, dfVal, dfWeightSum);
+                            nSrcPixelCount, dfSumWeightedVal,
+                            dfSumWeightedAlpha, dfWeightSum);
                     }
                     else
                     {
                         GDALResampleConvolutionHorizontalWithMask<T, false>(
                             pChunk + j, pabyChunkNodataMask + j, padfWeights,
-                            nSrcPixelCount, dfVal, dfWeightSum);
+                            nSrcPixelCount, dfSumWeightedVal,
+                            dfSumWeightedAlpha, dfWeightSum);
                     }
                 }
                 else
                 {
                     GDALResampleConvolutionHorizontalWithMask<T, false>(
                         pChunk + j, pabyChunkNodataMask + j, padfWeights,
-                        nSrcPixelCount, dfVal, dfWeightSum);
+                        nSrcPixelCount, dfSumWeightedVal, dfSumWeightedAlpha,
+                        dfWeightSum);
                 }
                 const size_t nTempOffset =
                     static_cast<size_t>(iSrcLineOff) * nDstXSize + iDstPixel -
                     nDstXOff;
-                if (dfWeightSum > 0.0)
+                if (dfSumWeightedAlpha > 0.0)
                 {
-                    padfHorizontalFiltered[nTempOffset] = dfVal / dfWeightSum;
-                    pabyChunkNodataMaskHorizontalFiltered[nTempOffset] = 1;
+                    padfHorizontalFiltered[nTempOffset] =
+                        dfSumWeightedVal / dfSumWeightedAlpha;
+                    // Not entirely clear if clamping values in the horizontal filter
+                    // is the right thing to do, but otherwise, for
+                    // https://github.com/OSGeo/gdal/issues/14728
+                    // with very small values of alpha, we get very strong under
+                    // and over shoots.
+                    if constexpr (std::is_same_v<T, uint8_t>)
+                    {
+                        padfHorizontalFiltered[nTempOffset] = std::clamp(
+                            padfHorizontalFiltered[nTempOffset], 0.0, 255.0);
+                    }
+                    else if constexpr (std::is_same_v<T, uint16_t>)
+                    {
+                        padfHorizontalFiltered[nTempOffset] = std::clamp(
+                            padfHorizontalFiltered[nTempOffset], 0.0, 65535.0);
+                    }
+                    const double dfAlpha = dfSumWeightedAlpha / dfWeightSum;
+                    pabyChunkNodataMaskHorizontalFiltered[nTempOffset] =
+                        static_cast<uint8_t>(std::min(dfAlpha + 0.5, 255.0));
                 }
                 else
                 {
