@@ -46,8 +46,15 @@ step of a :ref:`gdal_mdim_pipeline`.
 
 The following options are available:
 
-Standard options
-++++++++++++++++
+Program-Specific Options
+------------------------
+
+.. option:: -f, --of, --format, --output-format json|text
+
+    .. versionadded:: 3.14
+
+    Which output format to use. Default is JSON, unless the program is invoked
+    from command line, in which case it is text.
 
 .. option:: --summary
 
@@ -108,11 +115,110 @@ Examples
 --------
 
 .. example::
-   :title: Getting information on the file :file:`netcdf-4d.nc` as JSON output
+   :title: Getting information on the file :file:`netcdf-4d.nc` as text output
 
    .. code-block:: console
 
        $ gdal mdim info netcdf-4d.nc
+
+   .. code-block::
+
+        Driver: netCDF
+
+        Structural metadata:
+          NC_FORMAT  CLASSIC
+
+        Dimensions:
+          Name (path)  Size      Type      Direction
+          -----------  ----  ------------  ---------
+          /levelist       2  VERTICAL
+          /longitude     10  HORIZONTAL_X  EAST
+          /latitude      10  HORIZONTAL_Y  NORTH
+          /time           4  TEMPORAL
+
+        Coordinates (indexing variables):
+          Name (path)   Dimension    Type                 Unit
+          -----------  -----------  -------  -------------------------------
+          /levelist    (levelist)   Int32    millibars
+          /longitude   (longitude)  Float32  degrees_east
+          /latitude    (latitude)   Float32  degrees_north
+          /time        (time)       Float64  hours since 1900-01-01 00:00:00
+
+        Data variables:
+          Name (path)  Type   Unit      Shape       Chunk size
+          -----------  -----  ----  --------------  ----------
+
+         (/time, /levelist, /latitude, /longitude):
+          /t           Int32        [4, 2, 10, 10]  (unknown)
+
+        Attributes:
+             Name       Type    Value
+          -----------  ------  --------
+          Conventions  String  "CF-1.5"
+
+        Arrays:
+
+          - /levelist:
+              Dimensions:  (/levelist)
+              Shape:       [2]
+              Type:        Int32
+              Unit:        millibars
+
+              Attributes:
+                  Name      Type        Value
+                ---------  ------  ----------------
+                long_name  String  "pressure_level"
+
+          - /longitude:
+              Dimensions:  (/longitude)
+              Shape:       [10]
+              Type:        Float32
+              Unit:        degrees_east
+
+              Attributes:
+                    Name        Type      Value
+                -------------  ------  -----------
+                standard_name  String  "longitude"
+                long_name      String  "longitude"
+                axis           String  "X"
+
+          - /latitude:
+              Dimensions:  (/latitude)
+              Shape:       [10]
+              Type:        Float32
+              Unit:        degrees_north
+
+              Attributes:
+                    Name        Type     Value
+                -------------  ------  ----------
+                standard_name  String  "latitude"
+                long_name      String  "latitude"
+                axis           String  "Y"
+
+          - /time:
+              Dimensions:  (/time)
+              Shape:       [4]
+              Type:        Float64
+              Unit:        hours since 1900-01-01 00:00:00
+
+              Attributes:
+                    Name        Type     Value
+                -------------  ------  ----------
+                standard_name  String  "time"
+                calendar       String  "standard"
+
+          - /t:
+              Dimensions:    (/time, /levelist, /latitude, /longitude)
+              Shape:         [4, 2, 10, 10]
+              Type:          Int32
+              Nodata value:  -32767
+
+.. example::
+   :title: Getting information on the file :file:`netcdf-4d.nc` as JSON output
+
+   .. code-block:: console
+
+       $ gdal mdim info --format json netcdf-4d.nc
 
    .. code-block:: json
 
