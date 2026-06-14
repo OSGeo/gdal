@@ -1,4 +1,4 @@
-pytest>=6.0.0
+pytest>=6.0.0,<9.1.0
 pytest-sugar
 pytest-env
 pytest-benchmark
