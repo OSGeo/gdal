@@ -1939,6 +1939,9 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     bool initializedAsync = false;  ///< True after first grk_decompress() call
     PostPreload cachedPostPreload_{};    ///< Cached first-call tile grid info
     bool hasCachedPostPreload_ = false;  ///< True after first decompressAsynch
+    bool bSwathOnlyWarned_ = false;      ///< Throttle no-AdviseRead warning
+    bool bAdviseReadCalled_ = false;     ///< True if AdviseRead() was invoked
+    bool bSyncFallback_ = false;         ///< True when sync fallback taken
     VSILFILE *m_ovFp = nullptr;  ///< Private file handle for overview codec
 
     /**
@@ -2023,6 +2026,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         fullDecompress_ = (nXOff == m_nX0 && nYOff == m_nY0 &&
                            nXSize == nParentXSize && nYSize == nParentYSize);
         initializedAsync = false;
+        bAdviseReadCalled_ = true;
 
         return CE_None;
     }
@@ -2358,9 +2362,9 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // trigger post-processing (wait(nullptr) -> postMulti_).
         const int nTotalTiles = (postPreload.tile_x1 - postPreload.tile_x0) *
                                 (postPreload.tile_y1 - postPreload.tile_y0);
-        bool canUseFastPath =
-            (nTotalTiles > 1 && m_codec && m_codec->psImage && iLevel == 0 &&
-             eBufType != GDT_Float32 && eBufType != GDT_Float64);
+        bool canUseFastPath = (nTotalTiles > 1 && m_codec && m_codec->psImage &&
+                               iLevel == 0 && eBufType != GDT_Float32 &&
+                               eBufType != GDT_Float64 && !bSyncFallback_);
         if (canUseFastPath)
         {
             for (int i = 0; i < nBandCount && canUseFastPath; ++i)
@@ -2750,16 +2754,17 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                     (swath_y0 + swath_height + th - 1) / th);
             }
 
-            // Call grk_decompress_wait with swath coordinates to
-            // trigger TileCompletion row-based tile cleanup.
-            // This avoids re-calling grk_decompress() which would
-            // create a new TileCompletion that never gets notified.
-            grk_wait_swath sw = {};
-            sw.x0 = cached.x0;
-            sw.y0 = cached.y0;
-            sw.x1 = cached.x1;
-            sw.y1 = cached.y1;
-            grk_decompress_wait(m_codec->pCodec, &sw);
+            // Sync fallback already decoded all; no async queue to wait on.
+            if (!bSyncFallback_)
+            {
+                // grk_decompress_wait() triggers row-based tile cleanup.
+                grk_wait_swath sw = {};
+                sw.x0 = cached.x0;
+                sw.y0 = cached.y0;
+                sw.x1 = cached.x1;
+                sw.y1 = cached.y1;
+                grk_decompress_wait(m_codec->pCodec, &sw);
+            }
 
             return cached;
         }
@@ -2772,6 +2777,158 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             (m_codec && m_codec->psImage) ? m_codec->psImage->numcomps : 0;
         const bool needPersistentTiles =
             (!this->bSingleTiled && nBandCount > 0 && nBandCount < nTotalComps);
+
+        // Partial read with no AdviseRead: async locks the decode window to
+        // the first swath, corrupting later out-of-window reads. Fall back to
+        // synchronous per-swath decode (slower, but order-safe). Full-image
+        // reads are already safe on the async path.
+        const int nFullX = nParentXSize >> iLevel;
+        const int nFullY = nParentYSize >> iLevel;
+        const bool bPartial = (swath_x0 != 0 || swath_y0 != 0 ||
+                               swath_width < nFullX || swath_height < nFullY);
+        const bool bMissingAdviseRead =
+            bPartial && !this->fullDecompress_ && !bAdviseReadCalled_ &&
+            area_x0_ == 0 && area_y0_ == 0 && area_x1_ == 0 && area_y1_ == 0;
+
+        if (bMissingAdviseRead)
+        {
+            if (!bSwathOnlyWarned_)
+            {
+                bSwathOnlyWarned_ = true;
+                CPLDebug("GROK",
+                         "JP2Grok : partial read of '%s' without prior "
+                         "AdviseRead. Falling back to synchronous "
+                         "per-swath decompression for correctness. "
+                         "Call GDALDataset::AdviseRead() with the "
+                         "target window before the first "
+                         "RasterIO/ReadBlock to recover async "
+                         "performance.",
+                         m_osFilename.c_str());
+            }
+
+            // grk_decompress_update() only works pre-decode; recreate the
+            // codec to retarget the swath.
+            if (initializedAsync)
+            {
+                delete m_codec;
+                m_codec = new GRKCodecWrapper();
+
+                // Prefer native I/O: Grok reads the file itself, faster than
+                // routing every block through VSILFILE callbacks (especially
+                // over the network). Only use a VSILFILE when Grok cannot read
+                // the path (e.g. /vsimem, /vsicurl).
+                if (GrokCanRead(m_osFilename.c_str()))
+                {
+                    if (m_ovFp)
+                    {
+                        VSIFCloseL(m_ovFp);
+                        m_ovFp = nullptr;
+                    }
+                    m_codec->open(nullptr, nCodeStreamStart);
+                }
+                else
+                {
+                    VSILFILE *fp = fp_;
+                    if (iLevel > 0)
+                    {
+                        // Overview: fresh private handle resets file position.
+                        if (m_ovFp)
+                        {
+                            VSIFCloseL(m_ovFp);
+                            m_ovFp = nullptr;
+                        }
+                        m_ovFp = VSIFOpenL(m_osFilename.c_str(), "rb");
+                        if (!m_ovFp)
+                        {
+                            CPLError(CE_Failure, CPLE_OpenFailed,
+                                     "sync fallback: reopen failed");
+                            return rc;
+                        }
+                        fp = m_ovFp;
+                    }
+                    m_codec->open(fp, nCodeStreamStart);
+                }
+                uint32_t nTileW = 0, nTileH = 0;
+                int numRes = 0;
+                if (!m_codec->setUpDecompress(
+                        GetNumThreads(), m_osFilename.c_str(),
+                        nCodeStreamLength, &nTileW, &nTileH, &numRes))
+                {
+                    delete m_codec;
+                    m_codec = nullptr;
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "sync fallback: codec reinit failed");
+                    return rc;
+                }
+                CPLErrorReset();
+                initializedAsync = false;
+                hasCachedPostPreload_ = false;
+            }
+
+            grk_decompress_parameters decompressParams = {};
+            decompressParams.asynchronous = false;
+            decompressParams.simulate_synchronous = false;
+            decompressParams.decompress_callback = nullptr;
+            decompressParams.decompress_callback_user_data = nullptr;
+            // Keep tile images cached for CopyTiles.
+            decompressParams.core.tile_cache_strategy = GRK_TILE_CACHE_IMAGE;
+            if (!this->bSingleTiled)
+                decompressParams.core.skip_allocate_composite = true;
+            decompressParams.core.reduce = iLevel;
+            // Decode only the requested swath window (reduced coords).
+            decompressParams.dw_reduced = true;
+            decompressParams.dw_x0 = swath_x0;
+            decompressParams.dw_y0 = swath_y0;
+            decompressParams.dw_x1 = swath_x0 + swath_width;
+            decompressParams.dw_y1 = swath_y0 + swath_height;
+
+            if (!grk_decompress_update(&decompressParams, m_codec->pCodec))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "grk_decompress_update() failed (sync fallback)");
+                return rc;
+            }
+            if (!grk_decompress(m_codec->pCodec, nullptr))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "grk_decompress() failed (sync fallback)");
+                return rc;
+            }
+            initializedAsync = true;
+            bSyncFallback_ = true;
+
+            // PostPreload for the swath; CopyTiles runs tile-by-tile, so
+            // rowCopyDone_ stays false.
+            rc.asynch_ = true;
+            rc.rowCopyDone_ = false;
+            rc.x0 = swath_x0;
+            rc.y0 = swath_y0;
+            rc.x1 = swath_x0 + swath_width;
+            rc.y1 = swath_y0 + swath_height;
+
+            const uint32_t tw = m_nTileWidth ? m_nTileWidth : 1;
+            const uint32_t th = m_nTileHeight ? m_nTileHeight : 1;
+            // Size the tile grid from reduced full-image dims; psImage->x1 is
+            // unreliable in sync mode for overview codecs.
+            const uint32_t reducedFullW =
+                static_cast<uint32_t>(nParentXSize >> iLevel);
+            const uint32_t reducedFullH =
+                static_cast<uint32_t>(nParentYSize >> iLevel);
+            rc.num_tile_cols =
+                static_cast<uint16_t>((reducedFullW + tw - 1) / tw);
+            rc.tile_x0 = static_cast<uint16_t>(swath_x0 / tw);
+            rc.tile_y0 = static_cast<uint16_t>(swath_y0 / th);
+            rc.tile_x1 = static_cast<uint16_t>(
+                std::min<uint32_t>((swath_x0 + swath_width + tw - 1) / tw,
+                                   (reducedFullW + tw - 1) / tw));
+            rc.tile_y1 = static_cast<uint16_t>(
+                std::min<uint32_t>((swath_y0 + swath_height + th - 1) / th,
+                                   (reducedFullH + th - 1) / th));
+
+            // Don't cache: the next swath must recreate the codec for its
+            // own window.
+            return rc;
+        }
 
         if (!initializedAsync)
         {
@@ -2797,6 +2954,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 if (area_x0_ == 0 && area_y0_ == 0 && area_x1_ == 0 &&
                     area_y1_ == 0)
                 {
+                    // No AdviseRead, but this swath covers the full image;
+                    // use it as the decode window.
                     decompressParams.dw_x0 = swath_x0;
                     decompressParams.dw_y0 = swath_y0;
                     decompressParams.dw_x1 = swath_x0 + swath_width;
