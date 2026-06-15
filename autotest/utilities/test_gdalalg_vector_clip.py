@@ -1181,3 +1181,34 @@ def test_gdalalg_vector_clip_pipeline_layer_interleaved(tmp_vsimem):
         f = lyr.GetNextFeature()
         assert f["osm_id"] == "1"
         assert f["highway"] == "motorway"
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "COMPOUNDCURVE ((0 0,1 1))",
+        "MULTICURVE ((0 0,1 1))",
+        "CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0))",
+        "MULTISURFACE (((0 0,0 1,1 1,1 0,0 0)))",
+    ],
+)
+def test_gdalalg_vector_clip_curve_geoms(wkt):
+
+    input_geom = ogr.CreateGeometryFromWkt(wkt)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer", geom_type=input_geom.GetGeometryType())
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(input_geom)
+    src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline="read ! clip --bbox=0,0,1,1 ! write --format=MEM --output unnamed",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        assert g.GetGeometryType() == input_geom.GetGeometryType(), g.ExportToWkt()
+        assert g.GetEnvelope() == input_geom.GetEnvelope(), g.ExportToWkt()
