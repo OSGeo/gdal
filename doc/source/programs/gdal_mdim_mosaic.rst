@@ -67,6 +67,8 @@ Different typical use cases that can be addressed by this program are:
 By default, a target array is created for each array with two or more dimensions.
 This behavior can be restricted to specific arrays using the :option:`--array` option.
 
+Starting with GDAL 3.14, :program:`gdal mdim mosaic` can be used as a step of a :ref:`gdal_mdim_pipeline`.
+
 The following options are available:
 
 Standard options

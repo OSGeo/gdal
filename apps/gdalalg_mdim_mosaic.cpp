@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_mdim_mosaic.h"
+#include "gdalalg_mdim_write.h"
 
 #include "cpl_conv.h"
 #include "cpl_vsi_virtual.h"
@@ -31,25 +32,23 @@
 /*          GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()          */
 /************************************************************************/
 
-GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm(bool bStandalone)
+    : GDALMdimPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                    ConstructorOptions()
+                                        .SetStandaloneStep(bStandalone)
+                                        .SetAddDefaultArguments(false)
+                                        .SetAutoOpenInputDatasets(false)
+                                        .SetInputDatasetInputFlags(GADV_NAME)
+                                        .SetInputDatasetMaxCount(INT_MAX))
 {
-    AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_CREATE_MULTIDIMENSIONAL});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER});
-    AddInputDatasetArg(&m_inputDatasets, GDAL_OF_MULTIDIM_RASTER)
-        .SetDatasetInputFlags(GADV_NAME)
-        .SetDatasetOutputFlags(0)
-        .SetAutoOpenDataset(false)
-        .SetMinCount(1);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
+    AddMdimInputArgs(/* openForMixedMdimVector = */ false,
+                     /* hiddenForCLI = */ false, /* acceptRaster = */ true);
+    if (bStandalone)
+    {
+        AddProgressArg();
+        AddMdimOutputArgs(false);
+    }
+
     AddArrayNameArg(&m_array, _("Name of array(s) to mosaic."));
 }
 
@@ -596,7 +595,7 @@ bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
     GDALProgressFunc pfnProgress, void *pProgressData,
     CPLStringList &aosInputDatasetNames) const
 {
-    for (auto &ds : m_inputDatasets)
+    for (auto &ds : m_inputDataset)
     {
         if (ds.GetName()[0] == '@')
         {
@@ -638,47 +637,48 @@ bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
 }
 
 /************************************************************************/
-/*                  GDALMdimMosaicAlgorithm::RunImpl()                  */
+/*                  GDALMdimMosaicAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                      void *pProgressData)
+bool GDALMdimMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    if (m_outputFormat.empty())
+    GDALDriver *poOutDrv = nullptr;
+    if (m_standaloneStep)
     {
-        const auto aosFormats =
-            CPLStringList(GDALGetOutputDriversForDatasetName(
-                m_outputDataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
-                /* bSingleMatch = */ true,
-                /* bWarn = */ true));
-        if (aosFormats.size() != 1)
+        if (m_format.empty())
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot guess driver for %s",
-                        m_outputDataset.GetName().c_str());
+            const auto aosFormats =
+                CPLStringList(GDALGetOutputDriversForDatasetName(
+                    m_outputDataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
+                    /* bSingleMatch = */ true,
+                    /* bWarn = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s",
+                            m_outputDataset.GetName().c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
+        }
+        poOutDrv = GetGDALDriverManager()->GetDriverByName(m_format.c_str());
+        if (!poOutDrv)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
+                        m_format.c_str());
             return false;
         }
-        m_outputFormat = aosFormats[0];
-    }
-    auto poOutDrv =
-        GetGDALDriverManager()->GetDriverByName(m_outputFormat.c_str());
-    if (!poOutDrv)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
-                    m_outputFormat.c_str());
-        return false;
     }
 
-    const bool bIsVRT = EQUAL(m_outputFormat.c_str(), "VRT");
+    const double dfIntermediatePercentage = !m_standaloneStep ? 1.0 : 0.1;
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+        GDALCreateScaledProgress(0.0, dfIntermediatePercentage,
+                                 ctxt.m_pfnProgress, ctxt.m_pProgressData),
+        GDALDestroyScaledProgress);
 
     CPLStringList aosInputDatasetNames;
-    const double dfIntermediatePercentage = bIsVRT ? 1.0 : 0.1;
-    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
-        GDALCreateScaledProgress(0.0, dfIntermediatePercentage, pfnProgress,
-                                 pProgressData),
-        GDALDestroyScaledProgress);
     if (!GetInputDatasetNames(GDALScaledProgress, pScaledData.get(),
                               aosInputDatasetNames))
         return false;
@@ -892,17 +892,37 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    pScaledData.reset(GDALCreateScaledProgress(dfIntermediatePercentage, 1.0,
-                                               pfnProgress, pProgressData));
-    auto poOutDS = std::unique_ptr<GDALDataset>(
-        poOutDrv->CreateCopy(m_outputDataset.GetName().c_str(), poVRTDS.get(),
-                             false, CPLStringList(m_creationOptions).List(),
-                             GDALScaledProgress, pScaledData.get()));
-
-    if (poOutDS)
-        m_outputDataset.Set(std::move(poOutDS));
+    if (poOutDrv)
+    {
+        auto poOutDS = std::unique_ptr<GDALDataset>(poOutDrv->CreateCopy(
+            m_outputDataset.GetName().c_str(), poVRTDS.get(), false,
+            CPLStringList(m_creationOptions).List(), GDALScaledProgress,
+            pScaledData.get()));
+        if (poOutDS)
+            m_outputDataset.Set(std::move(poOutDS));
+    }
+    else
+    {
+        m_outputDataset.Set(std::move(poVRTDS));
+    }
 
     return m_outputDataset.GetDatasetRef() != nullptr;
 }
+
+/************************************************************************/
+/*                  GDALMdimMosaicAlgorithm::RunImpl()                  */
+/************************************************************************/
+
+bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                      void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunStep(stepCtxt);
+}
+
+GDALMdimMosaicAlgorithmStandalone::~GDALMdimMosaicAlgorithmStandalone() =
+    default;
 
 //! @endcond

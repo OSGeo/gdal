@@ -14,6 +14,7 @@
 #include "gdalalg_mdim_read.h"
 #include "gdalalg_mdim_write.h"
 #include "gdalalg_mdim_info.h"
+#include "gdalalg_mdim_mosaic.h"
 #include "gdalalg_mdim_reproject.h"
 
 #include "cpl_conv.h"
@@ -112,6 +113,9 @@ void GDALMdimPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALMdimReadAlgorithm>(
         addSuffixIfNeeded(GDALMdimReadAlgorithm::NAME));
 
+    registry.Register<GDALMdimMosaicAlgorithm>(
+        addSuffixIfNeeded(GDALMdimMosaicAlgorithm::NAME));
+
     registry.Register<GDALMdimWriteAlgorithm>(
         addSuffixIfNeeded(GDALMdimWriteAlgorithm::NAME));
 
@@ -157,7 +161,7 @@ std::string GDALMdimPipelineAlgorithm::GetUsageForCLI(
     if (shortUsage)
         return ret;
 
-    ret += "\n<PIPELINE> is of the form: read [READ-OPTIONS] "
+    ret += "\n<PIPELINE> is of the form: read|mosaic [READ-OPTIONS] "
            "( ! <STEP-NAME> [STEP-OPTIONS] )* ! info|write "
            "[WRITE-OPTIONS]\n";
 
@@ -188,12 +192,20 @@ std::string GDALMdimPipelineAlgorithm::GetUsageForCLI(
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
+    {
+        const auto name = GDALMdimMosaicAlgorithm::NAME;
+        ret += '\n';
+        auto alg = GetStepAlg(name);
+        alg->SetCallPath({name});
+        ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
+    }
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         auto alg = GetStepAlg(name);
         assert(alg);
         if (alg->CanBeFirstStep() && !alg->CanBeMiddleStep() &&
-            !alg->IsHidden() && name != GDALMdimReadAlgorithm::NAME)
+            !alg->IsHidden() && name != GDALMdimReadAlgorithm::NAME &&
+            name != GDALMdimMosaicAlgorithm::NAME)
         {
             ret += '\n';
             alg->SetCallPath({name});

@@ -13,7 +13,7 @@
 #ifndef GDALALG_MDIM_MOSAIC_INCLUDED
 #define GDALALG_MDIM_MOSAIC_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalmdimpipelinestepalgorithm.h"
 
 #include "gdal_multidim.h"
 
@@ -26,7 +26,8 @@
 /*                       GDALMdimMosaicAlgorithm                        */
 /************************************************************************/
 
-class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
+class GDALMdimMosaicAlgorithm /* non final*/
+    : public GDALMdimPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "mosaic";
@@ -35,18 +36,17 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         "multidimensional datasets.";
     static constexpr const char *HELP_URL = "/programs/gdal_mdim_mosaic.html";
 
-    explicit GDALMdimMosaicAlgorithm();
+    explicit GDALMdimMosaicAlgorithm(bool standaloneStep = false);
+
+    bool CanBeFirstStep() const override
+    {
+        return true;
+    }
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    std::string m_outputFormat{};
-    std::vector<GDALArgDatasetValue> m_inputDatasets{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
     std::vector<std::string> m_array{};
 
     // Describes a dimension of the mosaic array.
@@ -100,6 +100,21 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
 
     bool BuildArrayParameters(const CPLStringList &aosInputDatasetNames,
                               std::vector<ArrayParameters> &aoArrayParameters);
+};
+
+/************************************************************************/
+/*                  GDALMdimMosaicAlgorithmStandalone                   */
+/************************************************************************/
+
+class GDALMdimMosaicAlgorithmStandalone final : public GDALMdimMosaicAlgorithm
+{
+  public:
+    GDALMdimMosaicAlgorithmStandalone()
+        : GDALMdimMosaicAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALMdimMosaicAlgorithmStandalone() override;
 };
 
 //! @endcond
