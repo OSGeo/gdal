@@ -15,3 +15,4 @@ leak:FcConfigSubstituteWithPat
 # For: test_ogrsf -ro ADBC:autotest/ogr/data/parquet/partitioned_flat/*.parquet
 leak:sqlite3MemMalloc
 leak:/usr/lib/cargo/bin/coreutils
+leak:/usr/bin/perl
