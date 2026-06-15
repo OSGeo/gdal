@@ -222,7 +222,9 @@ bool GDALVectorExplodeCollectionsAlgorithmLayer::TranslateFeature(
                             poNewFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
                             poNewFeature->SetFID(m_nextFID);
                             ++m_nextFID;
-                            apoOutFeatures.push_back(std::move(poNewFeature));
+                            if (PassesFilters(poNewFeature.get()))
+                                apoOutFeatures.push_back(
+                                    std::move(poNewFeature));
                         }
                         else
                         {
@@ -252,7 +254,8 @@ bool GDALVectorExplodeCollectionsAlgorithmLayer::TranslateFeature(
             poCurFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
             poCurFeature->SetFID(m_nextFID);
             ++m_nextFID;
-            apoOutFeatures.push_back(std::move(poCurFeature));
+            if (PassesFilters(poCurFeature.get()))
+                apoOutFeatures.push_back(std::move(poCurFeature));
         }
     }
 

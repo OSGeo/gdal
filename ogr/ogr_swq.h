@@ -116,7 +116,7 @@ struct CPL_UNSTABLE_API swq_evaluation_context
 };
 
 typedef swq_expr_node *(*swq_field_fetcher)(swq_expr_node *op,
-                                            void *record_handle);
+                                            const void *record_handle);
 typedef swq_expr_node *(*swq_op_evaluator)(
     swq_expr_node *op, swq_expr_node **sub_field_values,
     const swq_evaluation_context &sContext);
@@ -127,7 +127,7 @@ class swq_custom_func_registrar;
 
 class CPL_UNSTABLE_API swq_expr_node
 {
-    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, const void *record,
                             const swq_evaluation_context &sContext,
                             int nRecLevel);
     void reset();
@@ -146,7 +146,7 @@ class CPL_UNSTABLE_API swq_expr_node
     explicit swq_expr_node(int);
     explicit swq_expr_node(GIntBig);
     explicit swq_expr_node(double);
-    explicit swq_expr_node(OGRGeometry *);
+    explicit swq_expr_node(const OGRGeometry *);
     explicit swq_expr_node(swq_op);
 
     ~swq_expr_node();
@@ -158,7 +158,7 @@ class CPL_UNSTABLE_API swq_expr_node
     swq_field_type Check(swq_field_list *, int bAllowFieldsInSecondaryTables,
                          int bAllowMismatchTypeOnFieldComparison,
                          swq_custom_func_registrar *poCustomFuncRegistrar);
-    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, const void *record,
                             const swq_evaluation_context &sContext);
     swq_expr_node *Clone();
 

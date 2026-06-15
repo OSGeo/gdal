@@ -2117,7 +2117,7 @@ class CPL_DLL OGRFeatureQuery
                    swq_custom_func_registrar *poCustomFuncRegistrar = nullptr);
     OGRErr Compile(const OGRFeatureDefn *, const char *, int bCheck = TRUE,
                    swq_custom_func_registrar *poCustomFuncRegistrar = nullptr);
-    int Evaluate(OGRFeature *);
+    int Evaluate(const OGRFeature *);
 
     GIntBig *EvaluateAgainstIndices(OGRLayer *, OGRErr *);
 

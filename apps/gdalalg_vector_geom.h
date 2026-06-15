@@ -130,7 +130,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
         auto poDstFeature = TranslateFeature(std::move(poSrcFeature));
-        if (poDstFeature)
+        if (poDstFeature && PassesFilters(poDstFeature.get()))
             apoOutFeatures.push_back(std::move(poDstFeature));
         return true;
     }

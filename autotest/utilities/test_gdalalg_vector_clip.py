@@ -1166,3 +1166,18 @@ def test_gdalalg_vector_clip_on_aspatial_layer():
         ds = alg.Output()
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 1
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_clip_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! clip --bbox=-180,-90,180,90 ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"
