@@ -350,17 +350,14 @@ class GDALVectorAlgorithmLayerProgressHelper
 
 /** Class that implements GetNextFeature() by forwarding to
  * OGRLayerWithTranslateFeature::TranslateFeature() implementation, which
- * might return several features.
+ * might return several features, and must apply layer filters.
  */
 class GDALVectorPipelineOutputLayer /* non final */
-    : public OGRLayerWithTranslateFeature,
-      public OGRGetNextFeatureThroughRaw<GDALVectorPipelineOutputLayer>
+    : public OGRLayerWithTranslateFeature
 {
   protected:
     explicit GDALVectorPipelineOutputLayer(OGRLayer &oSrcLayer);
     ~GDALVectorPipelineOutputLayer() override;
-
-    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorPipelineOutputLayer)
 
     OGRLayer &m_srcLayer;
 
@@ -369,9 +366,12 @@ class GDALVectorPipelineOutputLayer /* non final */
         m_translateError = true;
     }
 
+    bool PassesFilters(OGRFeature *poFeature);
+
   public:
     void ResetReading() override;
-    OGRFeature *GetNextRawFeature();
+
+    OGRFeature *GetNextFeature() override final;
 
   private:
     std::vector<std::unique_ptr<OGRFeature>> m_pendingFeatures{};
