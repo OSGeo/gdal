@@ -120,7 +120,7 @@ class GDALVectorDecoratedDataset /* non final */
 /*                       GDALVectorOutputDataset                        */
 /************************************************************************/
 
-class GDALVectorOutputDataset final : public GDALVectorDecoratedDataset
+class GDALVectorOutputDataset : public GDALVectorDecoratedDataset
 {
 
   public:
@@ -133,7 +133,8 @@ class GDALVectorOutputDataset final : public GDALVectorDecoratedDataset
 
     const OGRLayer *GetLayer(int idx) const override
     {
-        return m_layers[idx].get();
+        return idx >= 0 && idx < GetLayerCount() ? m_layers[idx].get()
+                                                 : nullptr;
     }
 
     int TestCapability(const char *) const override;
