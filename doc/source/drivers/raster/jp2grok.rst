@@ -70,6 +70,22 @@ When a JPEG2000 file contains multiple tiles, GDAL will additionally
 dispatch tile processing across threads for parallel CopyTileData
 operations during decoding.
 
+Performance: AdviseRead
+-----------------------
+
+The driver decompresses asynchronously, scheduling tile decode in the
+background while the caller is still consuming earlier rows.  To do
+this efficiently it needs to know the read window up front so it can
+restrict the codestream decode to the targeted precincts/tiles and
+overlap T2 parse with T1 decode.
+
+For best performance, callers that know which window they are about
+to read should call ``GDALDataset::AdviseRead`` (or the C API
+``GDALDatasetAdviseRead``) with that window *before* issuing the
+first ``RasterIO`` / ``ReadBlock``.  Without the hint the driver
+falls back to synchronous, per-swath decompression, which can be much
+slower, especially when decompressing over the network.
+
 Open Options
 --------------
 
