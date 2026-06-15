@@ -1181,6 +1181,20 @@ static void WriteAbsolutePath(VRTSimpleSource *poSource, const char *dsFileName)
 }
 
 /************************************************************************/
+/*                       IsTransientSrcDataset()                        */
+/************************************************************************/
+
+static bool IsTransientSrcDataset(const char *dsFileName, GDALDatasetH hDS)
+{
+    auto hDriver = GDALGetDatasetDriver(hDS);
+    return !hDriver || dsFileName[0] == '\0' ||  // could be a unnamed VRT file
+                                                 // Inner pipeline
+           (dsFileName[0] == '[' &&
+            dsFileName[strlen(dsFileName) - 1] == ']') ||
+           EQUAL(GDALGetDescription(hDriver), "MEM");
+}
+
+/************************************************************************/
 /*                         CreateVRTSeparate()                          */
 /************************************************************************/
 
@@ -1221,10 +1235,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
         GDALDatasetH hSourceDS;
         bool bDropRef = false;
         if (nSrcDSCount == nInputFiles &&
-            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
-            (dsFileName[0] == '\0' ||  // could be a unnamed VRT file
-             EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])),
-                   "MEM")))
+            IsTransientSrcDataset(dsFileName, pahSrcDS[i]))
         {
             hSourceDS = pahSrcDS[i];
         }
@@ -1505,10 +1516,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
         bool bDropRef = false;
 
         if (nSrcDSCount == nInputFiles &&
-            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
-            (dsFileName[0] == '\0' ||  // could be a unnamed VRT file
-             EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])),
-                   "MEM")))
+            IsTransientSrcDataset(dsFileName, pahSrcDS[i]))
         {
             hSourceDS = pahSrcDS[i];
         }
