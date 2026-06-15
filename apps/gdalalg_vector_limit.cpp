@@ -48,17 +48,20 @@ namespace
 /*                      GDALVectorReadLimitedLayer                      */
 /************************************************************************/
 
-class GDALVectorReadLimitedLayer : public OGRLayer
+class GDALVectorReadLimitedLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<GDALVectorReadLimitedLayer>
 {
   public:
     GDALVectorReadLimitedLayer(OGRLayer &layer, int featureLimit)
         : m_srcLayer(layer), m_featureLimit(featureLimit), m_featuresRead(0)
     {
+        SetDescription(layer.GetDescription());
     }
 
     ~GDALVectorReadLimitedLayer() override;
 
-    OGRFeature *GetNextFeature() override
+    OGRFeature *GetNextRawFeature()
     {
         if (m_featuresRead < m_featureLimit)
         {
@@ -68,6 +71,8 @@ class GDALVectorReadLimitedLayer : public OGRLayer
         return nullptr;
     }
 
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(GDALVectorReadLimitedLayer)
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
         return m_srcLayer.GetLayerDefn();
@@ -75,7 +80,10 @@ class GDALVectorReadLimitedLayer : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override
     {
-        return std::min(m_featureLimit, m_srcLayer.GetFeatureCount(bForce));
+        if (m_poFilterGeom || m_poAttrQuery)
+            return OGRLayer::GetFeatureCount(bForce);
+        else
+            return std::min(m_featureLimit, m_srcLayer.GetFeatureCount(bForce));
     }
 
     void ResetReading() override
@@ -97,6 +105,29 @@ class GDALVectorReadLimitedLayer : public OGRLayer
 
 GDALVectorReadLimitedLayer::~GDALVectorReadLimitedLayer() = default;
 
+/************************************************************************/
+/*                     GDALVectorReadLimitedDataset                     */
+/************************************************************************/
+
+class GDALVectorReadLimitedDataset final : public GDALVectorOutputDataset
+{
+  public:
+    GDALVectorReadLimitedDataset(GDALDataset *poSrcDS)
+        : GDALVectorOutputDataset(poSrcDS)
+    {
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, ODsCMeasuredGeometries) ||
+            EQUAL(pszCap, ODsCZGeometries))
+        {
+            return m_srcDS.TestCapability(pszCap);
+        }
+        return false;
+    }
+};
+
 }  // namespace
 
 /************************************************************************/
@@ -111,7 +142,7 @@ bool GDALVectorLimitAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    auto outDS = std::make_unique<GDALVectorOutputDataset>(poSrcDS);
+    auto outDS = std::make_unique<GDALVectorReadLimitedDataset>(poSrcDS);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {

@@ -12,7 +12,9 @@
 ###############################################################################
 
 import json
+import os
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -1041,6 +1043,30 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
     with gdal.OpenEx(dst_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 3
         assert ds.GetLayer(1).GetFeatureCount() == 3
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_pipeline_limit_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    input_filename = os.path.join(os.getcwd(), "../ogr/data/poly.shp")
+    gdalg_filename = tmp_path / "out.gdalg.json"
+    with gdal.alg.vector.pipeline(
+        pipeline=f"read {input_filename} ! limit --limit 8 ! write {gdalg_filename}"
+    ):
+        pass
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
 
 
 @pytest.mark.require_driver("GPKG")
