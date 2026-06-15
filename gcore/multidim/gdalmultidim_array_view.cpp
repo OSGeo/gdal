@@ -15,6 +15,7 @@
 #include "gdal_pam_multidim.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
 #include <limits>
 
 //! @cond Doxygen_Suppress
@@ -301,6 +302,28 @@ bool GDALSlicedMDArray::IAdviseRead(const GUInt64 *arrayStartIdx,
                                     CSLConstList papszOptions) const
 {
     PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
+    const size_t nDims = GetDimensionCount();
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        const auto iParent = m_mapDimIdxToParentDimIdx[i];
+        if (iParent != static_cast<size_t>(-1))
+        {
+            if (m_parentRanges[iParent].m_nIncr < 0)
+            {
+                m_parentStart[iParent] -= (-m_parentRanges[iParent].m_nIncr) *
+                                              m_parentCount[iParent] -
+                                          1;
+            }
+            m_parentCount[iParent] = static_cast<size_t>(std::min<uint64_t>(
+                {static_cast<uint64_t>(std::numeric_limits<size_t>::max()),
+                 static_cast<uint64_t>(
+                     m_parentCount[iParent] *
+                     std::abs(m_parentRanges[iParent].m_nIncr)),
+                 static_cast<uint64_t>(
+                     m_poParent->GetDimensions()[iParent]->GetSize() -
+                     m_parentStart[iParent])}));
+        }
+    }
     return m_poParent->AdviseRead(m_parentStart.data(), m_parentCount.data(),
                                   papszOptions);
 }
