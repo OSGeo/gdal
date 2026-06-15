@@ -59,13 +59,13 @@ Ubuntu version:
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libdeflate, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite,
   muparser
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
+* GDAL Python (Python 3.14 for Ubuntu 26.04)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
-## Full: `ghcr.io/osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
+## Full: `ghcr.io/osgeo/gdal:ubuntu-full-latest` (aliased to `ghcr.io/osgeo/gdal`)
 
 * Image size: ~ 1.48 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
@@ -75,9 +75,9 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate, libparquet, libjxl,
   muparser, exprtk
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
+* GDAL Python (Python 3.14 for Ubuntu 26.04)
 * GDAL Java JNI bindings
-* *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 500 MB)
+* *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 700 MB)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
