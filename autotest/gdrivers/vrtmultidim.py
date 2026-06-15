@@ -156,8 +156,11 @@ def test_vrtmultidim_attribute():
     attrs = ar.GetAttributes()
     assert len(attrs) == 1
 
-    with pytest.raises(Exception, match="Missing name attribute on Attribute"):
-        gdal.OpenEx(
+
+@pytest.mark.parametrize(
+    "xml,error",
+    (
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute MISSING_name="foo">
@@ -166,11 +169,10 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Unhandled content for DataType or Missing"):
-        gdal.OpenEx(
+            "Missing name attribute on Attribute",
+            id="missing_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute name="foo">
@@ -179,12 +181,10 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    # FIXME: This doesn't seem like the correct error message
-    with pytest.raises(Exception, match="No such file or directory"):
-        gdal.OpenEx(
+            "Unhandled content for DataType or Missing",
+            id="missing_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute name="foo">
@@ -193,6 +193,16 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
+            "Unknown DataType",
+            id="invalid_datatype",
+        ),
+    ),
+)
+def test_vrtmultidim_attribute_invalid(xml, error):
+
+    with pytest.raises(Exception, match=error):
+        gdal.OpenEx(
+            xml,
             gdal.OF_MULTIDIM_RASTER,
         )
 
@@ -268,18 +278,20 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert Y.GetDimensionCount() == 1
     assert Y.GetDimensions()[0].GetSize() == 30
 
-    with pytest.raises(Exception, match="Missing name attribute on Group"):
-        gdal.OpenEx(
+
+@pytest.mark.parametrize(
+    "xml,error",
+    (
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Group MISSING_name="subgroup"/>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Missing name attribute on Array"):
-        gdal.OpenEx(
+            "Missing name attribute on Group",
+            id="missing_group_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array MISSING_name="X">
@@ -287,11 +299,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Unhandled content for DataType or Missing"):
-        gdal.OpenEx(
+            "Missing name attribute on Array",
+            id="missing_array_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -299,12 +310,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    # FIXME: This doesn't seem like the correct error message
-    with pytest.raises(Exception, match="No such file or directory"):
-        gdal.OpenEx(
+            "Unhandled content for DataType or Missing",
+            id="missing_array_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -312,11 +321,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Missing ref attribute on DimensionRef"):
-        gdal.OpenEx(
+            "Unknown DataType",
+            id="invalid_array_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -325,11 +333,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Cannot find dimension INVALID in this group"):
-        gdal.OpenEx(
+            "Missing ref attribute on DimensionRef",
+            id="missing_dimensionref_ref",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -338,11 +345,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Cannot find dimension /INVALID"):
-        gdal.OpenEx(
+            "Cannot find dimension INVALID in this group",
+            id="invalid_dimensionref_ref",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -351,11 +357,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-
-    with pytest.raises(Exception, match="Cannot find group INVALID_GROUP"):
-        gdal.OpenEx(
+            "Cannot find dimension /INVALID",
+            id="invalid_dimensionref_ref_2",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -364,6 +369,16 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
+            "Cannot find group INVALID_GROUP",
+            id="invalid_dimensionref_ref_3",
+        ),
+    ),
+)
+def test_vrtmultidim_missing_or_invalid_attributes(xml, error):
+
+    with pytest.raises(Exception, match=error):
+        gdal.OpenEx(
+            xml,
             gdal.OF_MULTIDIM_RASTER,
         )
 
