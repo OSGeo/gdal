@@ -584,8 +584,8 @@ std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
         if (poFoundDim == nullptr || poFoundDim->GetSize() != poDim->GetSize())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "One input dimension is not a VRTDimension "
-                     "or a VRTDimension of this dataset");
+                     "One input dimension is not a VRTDimension, "
+                     "or is not a VRTDimension of this dataset");
             return nullptr;
         }
     }

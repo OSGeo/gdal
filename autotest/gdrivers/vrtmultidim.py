@@ -1314,10 +1314,9 @@ def test_vrtmultidim_createmultidimensional():
         rg.CreateMDArray("", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
     with pytest.raises(Exception, match="array .* already exists"):
         rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
-    # FIXME: error message saems wrong
     with pytest.raises(
         Exception,
-        match="One input dimension is not a VRTDimension or a VRTDimension of this dataset",
+        match="One input dimension is not a VRTDimension",
     ):
         rg.CreateMDArray(
             "ar2", [dim_other], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
