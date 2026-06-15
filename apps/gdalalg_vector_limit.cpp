@@ -112,7 +112,7 @@ GDALVectorReadLimitedLayer::~GDALVectorReadLimitedLayer() = default;
 class GDALVectorReadLimitedDataset final : public GDALVectorOutputDataset
 {
   public:
-    GDALVectorReadLimitedDataset(GDALDataset *poSrcDS)
+    explicit GDALVectorReadLimitedDataset(GDALDataset *poSrcDS)
         : GDALVectorOutputDataset(poSrcDS)
     {
     }
