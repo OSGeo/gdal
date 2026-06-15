@@ -2941,7 +2941,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                 {
                     auto poMemDS = std::make_unique<MEMDataset>();
                     auto *poLayer = poMemDS->CreateLayer(
-                        "", poWktGeom->getSpatialReference(),
+                        "layer", poWktGeom->getSpatialReference(),
                         poWktGeom->getGeometryType());
 
                     auto poFeatureDefn = poLayer->GetLayerDefn();

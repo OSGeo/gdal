@@ -1121,28 +1121,28 @@ def test_gdalalg_vector_pipeline_read_execute_sql(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_gdalalg_vector_pipeline_read_wkt(tmp_vsimem, srid):
 
-    gdal.alg.vector.pipeline(
-        f'read "{srid}LINESTRING (3 3, 4 4)" ! write {tmp_vsimem}/out.shp'
-    )
+    with gdal.alg.vector.pipeline(
+        f'read "{srid}LINESTRING (3 3, 4 4)" ! write --format=MEM --output unnamed'
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayerCount() == 1
 
-    ds = gdal.OpenEx(tmp_vsimem / "out.shp")
-    assert ds.GetLayerCount() == 1
+        lyr = ds.GetLayer(0)
+        assert lyr.GetName() == "layer"
+        assert lyr.GetGeomType() == ogr.wkbLineString
+        assert lyr.GetFeatureCount() == 1
 
-    lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == ogr.wkbMultiLineString
-    assert lyr.GetFeatureCount() == 1
+        if srid:
+            assert lyr.GetSpatialRef().GetAuthorityCode() == srid.replace(
+                "SRID=", ""
+            ).strip(";")
+        else:
+            assert lyr.GetSpatialRef() is None
 
-    if srid:
-        assert lyr.GetSpatialRef().GetAttrValue("AUTHORITY", 1) == srid.replace(
-            "SRID=", ""
-        ).strip(";")
-    else:
-        assert lyr.GetSpatialRef() is None
-
-    assert (
-        lyr.GetNextFeature().GetGeometryRef().ExportToWkt()
-        == "MULTILINESTRING ((3 3,4 4))"
-    )
+        assert (
+            lyr.GetNextFeature().GetGeometryRef().ExportToWkt()
+            == "LINESTRING (3 3,4 4)"
+        )
 
 
 @pytest.mark.parametrize(
