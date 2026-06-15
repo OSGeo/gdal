@@ -1855,11 +1855,15 @@ def test_cog_mask_band_overviews(tmp_vsimem):
         )
 
     ds = gdal.Open(filename)
-    assert [ds.GetRasterBand(i + 1).GetOverview(2).Checksum() for i in range(3)] == [
-        51556,
-        39258,
-        23928,
+    expected_cs_list = [
+        [52046, 39711, 24164],  # amd64 / arm64
+        [52051, 39749, 24162],  # i386, s390x
+        [52051, 39752, 24162],  # MSVC
+        [52046, 39713, 24164],  # gcc 9 / ubuntu 20.04
     ]
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(2).Checksum() for i in range(3)
+    ] in expected_cs_list
 
     ds = gdal.Open(f"{filename}.msk.ovr.tmp")
     assert ds.GetMetadataItem("INTERNAL_MASK_FLAGS_1") == "2"

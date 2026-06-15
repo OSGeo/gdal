@@ -701,7 +701,7 @@ def test_rasterio_9():
         )
         assert data is not None
         cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
-        assert cs == 18981
+        assert cs == 7558
         assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 
@@ -1323,7 +1323,7 @@ def test_rasterio_lanczos_nodata():
         0,
         0,
         22461,
-        22484,
+        22485,
         22464,
         22495,
         22633,
@@ -1333,7 +1333,7 @@ def test_rasterio_lanczos_nodata():
         0,
         22481,
         22466,
-        22500,
+        22499,
         22534,
         22536,
         22571,
@@ -1341,16 +1341,16 @@ def test_rasterio_lanczos_nodata():
         0,
         0,
         22460,
-        22460,
-        22547,
-        22538,
+        22451,
+        22546,
+        22539,
         22456,
         22572,
         0,
         0,
         0,
         0,
-        22504,
+        22508,
         22496,
         22564,
         22563,

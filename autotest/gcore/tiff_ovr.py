@@ -1235,7 +1235,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     ds.BuildOverviews("cubic", overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs_band1_overview0 = 21296
+    expected_cs_band1_overview0 = 21615
     assert (
         cs == expected_cs_band1_overview0
     ), "Checksum is %d. Expected checksum is %d for overview 0." % (
@@ -1244,7 +1244,7 @@ def test_tiff_ovr_32(tmp_path, both_endian):
     )
 
     cs = ds.GetRasterBand(3).GetOverview(1).Checksum()
-    expected_cs_band3_overview1 = 1994
+    expected_cs_band3_overview1 = 2027
     assert (
         cs == expected_cs_band3_overview1
     ), "Checksum is %d. Expected checksum is %d for overview 1." % (
@@ -3263,3 +3263,23 @@ def test_tiff_ovr_external_but_internal_mask(tmp_path):
         assert (
             ds.GetRasterBand(1).GetOverview(1).GetMaskBand().ReadRaster() == b"\x00\xff"
         )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_bugfix_gh_14728_cubic_low_alpha_values(tmp_vsimem):
+
+    gdal.CopyFile("data/gtiff/fix_14728.tif", tmp_vsimem / "test.tif")
+    ds = gdal.Open(tmp_vsimem / "test.tif", gdal.GA_Update)
+    ds.BuildOverviews("CUBIC", [16])
+    # Would be [255, 255] without the fix
+    assert [
+        struct.unpack(
+            "B", ds.GetRasterBand(1).GetOverview(0).ReadRaster(271, 380, 1, 1)
+        )[0],
+        struct.unpack(
+            "B", ds.GetRasterBand(2).GetOverview(0).ReadRaster(271, 380, 1, 1)
+        )[0],
+    ] == [156, 25]
