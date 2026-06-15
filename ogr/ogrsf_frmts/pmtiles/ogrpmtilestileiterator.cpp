@@ -369,8 +369,8 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
                             pmtiles::zxy_to_tileid(zxy.z + 1, 0, 0) - nTileId)
                     {
                         // Hit on /vsis3/us-west-2.opendata.source.coop/protomaps/openstreetmap/v4.pmtiles
-                        sCurrentEntry.run_length =
-                            pmtiles::zxy_to_tileid(zxy.z + 1, 0, 0) - nTileId;
+                        sCurrentEntry.run_length = static_cast<uint32_t>(
+                            pmtiles::zxy_to_tileid(zxy.z + 1, 0, 0) - nTileId);
                     }
 
                     topContext.nIdxInRunLength++;
