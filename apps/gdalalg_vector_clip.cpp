@@ -112,9 +112,27 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
         poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
 
+        auto eFeatGeomType = wkbFlatten(poIntersection->getGeometryType());
+
+        // Promote non-curve geometries to curve layer geometry type if needed.
+        if (OGR_GT_IsNonLinear(m_eFlattenSrcLayerGeomType) &&
+            !OGR_GT_IsNonLinear(eFeatGeomType))
+        {
+            poIntersection = OGRGeometryFactory::forceTo(
+                std::move(poIntersection), m_eSrcLayerGeomType);
+            eFeatGeomType = wkbFlatten(poIntersection->getGeometryType());
+            if (eFeatGeomType == m_eFlattenSrcLayerGeomType)
+            {
+                poSrcFeature->SetGeometry(std::move(poIntersection));
+                if (PassesFilters(poSrcFeature.get()))
+                {
+                    apoOutFeatures.push_back(std::move(poSrcFeature));
+                }
+                return true;
+            }
+        }
+
         const auto eSrcGeomType = wkbFlatten(poGeom->getGeometryType());
-        const auto eFeatGeomType =
-            wkbFlatten(poIntersection->getGeometryType());
         if (eFeatGeomType != eSrcGeomType &&
             m_eFlattenSrcLayerGeomType != wkbUnknown &&
             m_eFlattenSrcLayerGeomType != eFeatGeomType)
