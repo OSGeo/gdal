@@ -266,7 +266,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         auto poDstGroup = poDstDS->GetRootVRTGroup();
         if (!poDstGroup)
             return nullptr;
-        poDstGroup->SetGuessRegularySpacedArrays(
+        poDstGroup->SetGuessRegularlySpacedArrays(
             CPLTestBool(CSLFetchNameValueDef(
                 papszOptions, "GUESS_REGULARLY_SPACED_ARRAYS", "YES")));
         if (GDALDriver::DefaultCreateCopyMultiDimensional(

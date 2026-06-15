@@ -2665,7 +2665,7 @@ bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
         auto poVRTRootGroup = GetRootVRTGroup();
         const auto nDims(GetDimensionCount());
         if ((!poVRTRootGroup ||
-             poVRTRootGroup->GetGuessRegularySpacedArrays()) &&
+             poVRTRootGroup->GetGuessRegularlySpacedArrays()) &&
             nDims == 1 && m_dims[0]->GetSize() > 2 &&
             m_dims[0]->GetSize() < 10 * 1000 * 1000)
         {
