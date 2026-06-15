@@ -302,9 +302,8 @@ bool GDALVectorRenameLayerAlgorithm::RunStep(GDALPipelineStepRunContext &)
     std::map<std::string, int> oMapCountNames;
     bool bNonUniqueNames = false;
     const int nLayerCount = poSrcDS->GetLayerCount();
-    for (int i = 0; i < nLayerCount; ++i)
+    for (const OGRLayer *poSrcLayer : poSrcDS->GetLayers())
     {
-        const OGRLayer *poSrcLayer = poSrcDS->GetLayer(i);
         if ((m_inputLayerName == poSrcLayer->GetDescription() ||
              nLayerCount == 1) &&
             !m_outputLayerName.empty())
