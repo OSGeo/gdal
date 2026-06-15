@@ -76,18 +76,21 @@ GDALGroup::GetMDArrayNames(CPL_UNUSED CSLConstList papszOptions) const
  *
  * This is the same as the C function GDALGroupGetMDArrayFullNamesRecursive().
  *
- * @param papszGroupOptions Driver specific options determining how groups
+ * @param papszGroupDiscoverOptions Driver specific options determining how groups
  * should be retrieved. Pass nullptr for default behavior.
- * @param papszArrayOptions Driver specific options determining how arrays
+ * @param papszArrayDiscoverOptions Driver specific options determining how arrays
  * should be retrieved. Pass nullptr for default behavior.
+ * @param papszGroupOpenOptions Driver specific options determining how a group should
+ * be opened.  Pass nullptr for default behavior.
  *
  * @return the array full names.
  *
  * @since 3.11
  */
-std::vector<std::string>
-GDALGroup::GetMDArrayFullNamesRecursive(CSLConstList papszGroupOptions,
-                                        CSLConstList papszArrayOptions) const
+std::vector<std::string> GDALGroup::GetMDArrayFullNamesRecursive(
+    CSLConstList papszGroupDiscoverOptions,
+    CSLConstList papszArrayDiscoverOptions,
+    CSLConstList papszGroupOpenOptions) const
 {
     std::vector<std::string> ret;
     std::list<std::shared_ptr<GDALGroup>> stackGroups;
@@ -98,7 +101,7 @@ GDALGroup::GetMDArrayFullNamesRecursive(CSLConstList papszGroupOptions,
         stackGroups.erase(stackGroups.begin());
         const GDALGroup *poCurGroup = groupPtr ? groupPtr.get() : this;
         for (const std::string &arrayName :
-             poCurGroup->GetMDArrayNames(papszArrayOptions))
+             poCurGroup->GetMDArrayNames(papszArrayDiscoverOptions))
         {
             std::string osFullName = poCurGroup->GetFullName();
             if (!osFullName.empty() && osFullName.back() != '/')
@@ -108,9 +111,10 @@ GDALGroup::GetMDArrayFullNamesRecursive(CSLConstList papszGroupOptions,
         }
         auto insertionPoint = stackGroups.begin();
         for (const auto &osSubGroup :
-             poCurGroup->GetGroupNames(papszGroupOptions))
+             poCurGroup->GetGroupNames(papszGroupDiscoverOptions))
         {
-            auto poSubGroup = poCurGroup->OpenGroup(osSubGroup);
+            auto poSubGroup =
+                poCurGroup->OpenGroup(osSubGroup, papszGroupOpenOptions);
             if (poSubGroup)
                 stackGroups.insert(insertionPoint, std::move(poSubGroup));
         }
@@ -143,6 +147,87 @@ GDALGroup::OpenMDArray(CPL_UNUSED const std::string &osName,
                        CPL_UNUSED CSLConstList papszOptions) const
 {
     return nullptr;
+}
+
+/************************************************************************/
+/*                            GetMDArrays()                             */
+/************************************************************************/
+
+/** Open and return all multidimensional arrays of this group.
+ *
+ * @param papszDiscoverOptions Driver specific options determining how arrays
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszOpenOptions Driver specific options determining how an array should
+ * be opened.  Pass nullptr for default behavior.
+ *
+ * @return the arrays
+ * @since GDAL 3.14
+ */
+std::vector<std::shared_ptr<GDALMDArray>>
+GDALGroup::GetMDArrays(CSLConstList papszDiscoverOptions,
+                       CSLConstList papszOpenOptions) const
+{
+    std::vector<std::shared_ptr<GDALMDArray>> ret;
+    for (const auto &osName : GetMDArrayNames(papszDiscoverOptions))
+    {
+        if (auto poMDArray = OpenMDArray(osName, papszOpenOptions))
+            ret.push_back(std::move(poMDArray));
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                        GetMDArraysRecursive()                        */
+/************************************************************************/
+
+/** Open and return all multidimensional arrays of this group and its subgroups.
+ *
+ * @param papszGroupDiscoverOptions Driver specific options determining how groups
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszArrayDiscoverOptions Driver specific options determining how arrays
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszGroupOpenOptions Driver specific options determining how a group should
+ * be opened.  Pass nullptr for default behavior.
+ * @param papszArrayOpenOptions Driver specific options determining how an array should
+ * be opened.  Pass nullptr for default behavior.
+ *
+ * @return the arrays
+ * @since GDAL 3.14
+ */
+std::vector<std::shared_ptr<GDALMDArray>>
+GDALGroup::GetMDArraysRecursive(CSLConstList papszGroupDiscoverOptions,
+                                CSLConstList papszArrayDiscoverOptions,
+                                CSLConstList papszGroupOpenOptions,
+                                CSLConstList papszArrayOpenOptions) const
+{
+    std::vector<std::shared_ptr<GDALMDArray>> ret;
+    std::list<std::shared_ptr<GDALGroup>> stackGroups;
+    stackGroups.push_back(nullptr);  // nullptr means this
+    while (!stackGroups.empty())
+    {
+        std::shared_ptr<GDALGroup> groupPtr = std::move(stackGroups.front());
+        stackGroups.erase(stackGroups.begin());
+        const GDALGroup *poCurGroup = groupPtr ? groupPtr.get() : this;
+        for (const std::string &arrayName :
+             poCurGroup->GetMDArrayNames(papszArrayDiscoverOptions))
+        {
+            auto poArray =
+                poCurGroup->OpenMDArray(arrayName, papszArrayOpenOptions);
+            if (poArray)
+                ret.push_back(std::move(poArray));
+        }
+        auto insertionPoint = stackGroups.begin();
+        for (const auto &osSubGroup :
+             poCurGroup->GetGroupNames(papszGroupDiscoverOptions))
+        {
+            auto poSubGroup =
+                poCurGroup->OpenGroup(osSubGroup, papszGroupOpenOptions);
+            if (poSubGroup)
+                stackGroups.insert(insertionPoint, std::move(poSubGroup));
+        }
+    }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -193,6 +278,76 @@ GDALGroup::OpenGroup(CPL_UNUSED const std::string &osName,
                      CPL_UNUSED CSLConstList papszOptions) const
 {
     return nullptr;
+}
+
+/************************************************************************/
+/*                             GetGroups()                              */
+/************************************************************************/
+
+/** Open and return all subgroups of this group.
+ *
+ * @param papszDiscoverOptions Driver specific options determining how subgroups
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszOpenOptions Driver specific options determining how a subgroup should
+ * be opened. Pass nullptr for default behavior.
+ *
+ * @return the subgroups
+ * @since GDAL 3.14
+ */
+std::vector<std::shared_ptr<GDALGroup>>
+GDALGroup::GetGroups(CSLConstList papszDiscoverOptions,
+                     CSLConstList papszOpenOptions) const
+{
+    std::vector<std::shared_ptr<GDALGroup>> ret;
+    for (const auto &osName : GetGroupNames(papszDiscoverOptions))
+    {
+        if (auto poSubGroup = OpenGroup(osName, papszOpenOptions))
+            ret.push_back(std::move(poSubGroup));
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                    GetMDArrayFullNamesRecursive()                    */
+/************************************************************************/
+
+/** Open and return all subgroups of this group, in a recursive way.
+ *
+ * @param papszDiscoverOptions Driver specific options determining how subgroups
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszOpenOptions Driver specific options determining how a subgroup should
+ * be opened. Pass nullptr for default behavior.
+ *
+ * @return the subgroups
+ * @since GDAL 3.14
+ */
+std::vector<std::shared_ptr<GDALGroup>>
+GDALGroup::GetGroupsRecursive(CSLConstList papszDiscoverOptions,
+                              CSLConstList papszOpenOptions) const
+{
+    std::vector<std::shared_ptr<GDALGroup>> ret;
+    std::list<std::shared_ptr<GDALGroup>> stackGroups;
+    stackGroups.push_back(nullptr);  // nullptr means this
+    while (!stackGroups.empty())
+    {
+        std::shared_ptr<GDALGroup> groupPtr = std::move(stackGroups.front());
+        stackGroups.erase(stackGroups.begin());
+        const GDALGroup *poCurGroup = groupPtr ? groupPtr.get() : this;
+        auto insertionPoint = stackGroups.begin();
+        for (const auto &osSubGroup :
+             poCurGroup->GetGroupNames(papszDiscoverOptions))
+        {
+            auto poSubGroup =
+                poCurGroup->OpenGroup(osSubGroup, papszOpenOptions);
+            if (poSubGroup)
+            {
+                ret.push_back(poSubGroup);
+                stackGroups.insert(insertionPoint, std::move(poSubGroup));
+            }
+        }
+    }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -268,7 +423,7 @@ OGRLayer *GDALGroup::OpenVectorLayer(CPL_UNUSED const std::string &osName,
  *
  * This is the same as the C function GDALGroupGetDimensions().
  *
- * @param papszOptions Driver specific options determining how groups
+ * @param papszOptions Driver specific options determining how dimensions
  * should be retrieved. Pass nullptr for default behavior.
  *
  * @return the dimensions.
@@ -277,6 +432,82 @@ std::vector<std::shared_ptr<GDALDimension>>
 GDALGroup::GetDimensions(CPL_UNUSED CSLConstList papszOptions) const
 {
     return {};
+}
+
+/************************************************************************/
+/*                       GetDimensionsRecursive()                       */
+/************************************************************************/
+
+/** Return all dimensions arrays of this group, its arrays, its subgroups,
+ * in a recursive way
+ *
+ * @param papszDimensionDiscoverOptions Driver specific options determining how dimensions
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszGroupDiscoverOptions Driver specific options determining how groups
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszArrayDiscoverOptions Driver specific options determining how arrays
+ * should be retrieved. Pass nullptr for default behavior.
+ * @param papszGroupOpenOptions Driver specific options determining how a group should
+ * be opened.  Pass nullptr for default behavior.
+ * @param papszArrayOpenOptions Driver specific options determining how an array should
+ * be opened.  Pass nullptr for default behavior.
+ *
+ * @return the dimensions
+ * @since GDAL 3.14
+ */
+std::vector<std::shared_ptr<GDALDimension>>
+GDALGroup::GetDimensionsRecursive(CSLConstList papszDimensionDiscoverOptions,
+                                  CSLConstList papszGroupDiscoverOptions,
+                                  CSLConstList papszArrayDiscoverOptions,
+                                  CSLConstList papszGroupOpenOptions,
+                                  CSLConstList papszArrayOpenOptions) const
+{
+    std::set<std::string> setDimensionNames;
+    std::vector<std::shared_ptr<GDALDimension>> ret;
+
+    const auto AddDimensions =
+        [&setDimensionNames,
+         &ret](const std::vector<std::shared_ptr<GDALDimension>> &apoDims)
+    {
+        for (const auto &poDim : apoDims)
+        {
+            const std::string &osName = poDim->GetFullName();
+            if (osName.empty() || osName.front() != '/')
+                ret.push_back(poDim);
+            else if (setDimensionNames.insert(osName).second)
+                ret.push_back(poDim);
+        }
+    };
+
+    std::list<std::shared_ptr<GDALGroup>> stackGroups;
+    stackGroups.push_back(nullptr);  // nullptr means this
+    while (!stackGroups.empty())
+    {
+        std::shared_ptr<GDALGroup> groupPtr = std::move(stackGroups.front());
+        stackGroups.erase(stackGroups.begin());
+        const GDALGroup *poCurGroup = groupPtr ? groupPtr.get() : this;
+
+        AddDimensions(poCurGroup->GetDimensions(papszDimensionDiscoverOptions));
+
+        for (const std::string &arrayName :
+             poCurGroup->GetMDArrayNames(papszArrayDiscoverOptions))
+        {
+            if (auto poMDArray = OpenMDArray(arrayName, papszArrayOpenOptions))
+            {
+                AddDimensions(poMDArray->GetDimensions());
+            }
+        }
+        auto insertionPoint = stackGroups.begin();
+        for (const auto &osSubGroup :
+             poCurGroup->GetGroupNames(papszGroupDiscoverOptions))
+        {
+            auto poSubGroup =
+                poCurGroup->OpenGroup(osSubGroup, papszGroupOpenOptions);
+            if (poSubGroup)
+                stackGroups.insert(insertionPoint, std::move(poSubGroup));
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

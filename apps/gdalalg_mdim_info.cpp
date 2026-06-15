@@ -48,8 +48,7 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm(bool standaloneStep,
         AddMdimHiddenInputDatasetArg();
     }
 
-    AddOutputFormatArg(&m_format).SetHidden().SetDefault("json").SetChoices(
-        "json", "text");
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddArg("summary", 0,
            _("Report only group and array hierarchy, without detailed "
              "information on attributes or dimensions."),
@@ -120,8 +119,13 @@ bool GDALMdimInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
+
     CPLStringList aosOptions;
 
+    aosOptions.AddString("-format");
+    aosOptions.AddString(m_format);
     if (m_stdout)
         aosOptions.AddString("-stdout");
     if (m_summary)

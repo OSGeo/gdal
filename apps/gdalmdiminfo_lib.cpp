@@ -14,11 +14,14 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include "cpl_enumerate.h"
 #include "cpl_json.h"
 #include "cpl_json_streaming_writer.h"
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 #include "gdalargumentparser.h"
+
+#include <algorithm>
 #include <limits>
 #include <set>
 
@@ -45,6 +48,7 @@ struct GDALMultiDimInfoOptions
     CPLStringList aosArrayOptions{};
     std::string osArrayName{};
     bool bStats = false;
+    std::string osFormat = "json";
 };
 
 /************************************************************************/
@@ -1196,6 +1200,798 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
 }
 
 /************************************************************************/
+/*                     GDALMultiDimTextOutputDumper                     */
+/************************************************************************/
+
+using TableType = std::vector<std::vector<std::string>>;
+
+struct GDALMultiDimTextOutputDumper
+{
+    const GDALMultiDimInfoOptions &m_sOptions;
+    std::string m_osOutput{};
+
+    explicit GDALMultiDimTextOutputDumper(
+        const GDALMultiDimInfoOptions *psOptions)
+        : m_sOptions(*psOptions)
+    {
+    }
+
+    void AddLine(const std::string &osLine = std::string())
+    {
+        if (m_sOptions.bStdoutOutput)
+        {
+            printf("%s\n", osLine.c_str());
+        }
+        else
+        {
+            m_osOutput += osLine;
+            m_osOutput += '\n';
+        }
+    }
+
+    void DumpTable(const TableType &lines, int nIndentSpaces = 2,
+                   const std::vector<size_t> &anColSizeIn = {},
+                   bool headerLineSeparator = true,
+                   bool bLeftPadNumbers = true);
+
+    void
+    DumpAttributes(const std::vector<std::shared_ptr<GDALAttribute>> &apoAttrs,
+                   int nIndentSpaces);
+
+    void DumpStructuralInfo(CSLConstList papszStructuralInfo,
+                            int nIndentSpaces);
+
+    void DumpArray(const std::shared_ptr<GDALMDArray> &poArray);
+
+    std::set<std::string>
+    DumpDimensionsSummary(const std::shared_ptr<GDALGroup> &group);
+
+    void DumpArraysSummary(
+        const std::shared_ptr<GDALGroup> &group,
+        const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays);
+
+    void DrumpGroupsSummary(const std::shared_ptr<GDALGroup> &group);
+};
+
+/************************************************************************/
+/*                             DumpTable()                              */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DumpTable(
+    const TableType &lines, int nIndentSpaces,
+    const std::vector<size_t> &anColSizeIn, bool headerLineSeparator,
+    bool bLeftPadNumbers)
+{
+    // Compute column max size if needed
+    std::vector<size_t> anColSizeTmp;
+    if (anColSizeIn.empty())
+    {
+        for (const auto &line : lines)
+        {
+            if (line.size() > anColSizeTmp.size())
+                anColSizeTmp.resize(line.size());
+            for (const auto [idxCol, col] : cpl::enumerate(line))
+            {
+                anColSizeTmp[idxCol] =
+                    std::max(anColSizeTmp[idxCol], col.size());
+            }
+        }
+    }
+    const auto &anColSize = anColSizeIn.empty() ? anColSizeTmp : anColSizeIn;
+
+    // Check which columns are numeric-only
+    std::vector<bool> abIsNumbersOnly(anColSize.size(), true);
+    for (const auto [idxLine, line] : cpl::enumerate(lines))
+    {
+        CPLAssert(abIsNumbersOnly.size() >= line.size());
+        if (!headerLineSeparator || idxLine > 0)
+        {
+            for (const auto [idxCol, col] : cpl::enumerate(line))
+            {
+                abIsNumbersOnly[idxCol] =
+                    abIsNumbersOnly[idxCol] &&
+                    CPLGetValueType(col.c_str()) != CPL_VALUE_STRING;
+            }
+        }
+    }
+
+    // Now actually print table
+    for (const auto [idxLine, line] : cpl::enumerate(lines))
+    {
+        CPLAssert(anColSize.size() >= line.size());
+        std::string osFormattedLine(nIndentSpaces, ' ');
+        for (const auto [idxCol, col] : cpl::enumerate(line))
+        {
+            if (idxCol > 0)
+                osFormattedLine += "  ";
+            if (idxLine == 0 && headerLineSeparator)
+            {
+                const size_t nLeftPadding =
+                    (anColSize[idxCol] - col.size()) / 2;
+                osFormattedLine += std::string(nLeftPadding, ' ');
+                osFormattedLine += col;
+                osFormattedLine += std::string(
+                    anColSize[idxCol] - col.size() - nLeftPadding, ' ');
+            }
+            else if (!bLeftPadNumbers || !abIsNumbersOnly[idxCol])
+            {
+                osFormattedLine += col;
+                osFormattedLine +=
+                    std::string(anColSize[idxCol] - col.size(), ' ');
+            }
+            else
+            {
+                osFormattedLine +=
+                    std::string(anColSize[idxCol] - col.size(), ' ');
+                osFormattedLine += col;
+            }
+        }
+        AddLine(osFormattedLine);
+
+        if (idxLine == 0 && headerLineSeparator)
+        {
+            osFormattedLine = std::string(nIndentSpaces, ' ');
+            for (size_t idxCol = 0; idxCol < line.size(); ++idxCol)
+            {
+                if (idxCol > 0)
+                    osFormattedLine += "  ";
+                osFormattedLine += std::string(anColSize[idxCol], '-');
+            }
+            AddLine(osFormattedLine);
+        }
+    }
+}
+
+/************************************************************************/
+/*                            TypeToString()                            */
+/************************************************************************/
+
+static std::string TypeToString(const GDALExtendedDataType &dt,
+                                bool emitCompoundName = true)
+{
+    std::string ret;
+    switch (dt.GetClass())
+    {
+        case GEDTC_STRING:
+            ret = "String";
+            break;
+
+        case GEDTC_NUMERIC:
+            ret = GDALGetDataTypeName(dt.GetNumericDataType());
+            break;
+
+        case GEDTC_COMPOUND:
+        {
+            if (emitCompoundName && !dt.GetName().empty())
+            {
+                ret = dt.GetName();
+                ret += ": ";
+            }
+            ret += '{';
+            bool firstComp = true;
+            const auto &components = dt.GetComponents();
+            for (const auto &comp : components)
+            {
+                if (!firstComp)
+                    ret += ", ";
+                firstComp = false;
+                ret += comp->GetName();
+                ret += ": ";
+                ret += TypeToString(comp->GetType(), false);
+            }
+            ret += '}';
+            break;
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                           DumpAttributes()                           */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DumpAttributes(
+    const std::vector<std::shared_ptr<GDALAttribute>> &apoAttrs,
+    int nIndentSpaces)
+{
+    if (!apoAttrs.empty())
+    {
+        AddLine();
+        AddLine(std::string(nIndentSpaces, ' ').append("Attributes:"));
+        TableType attrs;
+        attrs.push_back({"Name", "Type", "Value"});
+
+        for (const auto &poAttr : apoAttrs)
+        {
+            CPLJSonStreamingWriter serializer(nullptr, nullptr);
+            serializer.SetPrettyFormatting(false);
+            DumpAttrValue(poAttr, serializer);
+            std::string osAttrVal = serializer.GetString();
+            constexpr size_t MAX_COLS = 80;
+            if (osAttrVal.size() <= MAX_COLS)
+            {
+                attrs.push_back({poAttr->GetName(),
+                                 TypeToString(poAttr->GetDataType()),
+                                 osAttrVal});
+            }
+            else
+            {
+                bool bFirstLineAttr = true;
+                while (osAttrVal.size() > MAX_COLS)
+                {
+                    auto nLastBreak = osAttrVal.find_last_of(" ,\n", MAX_COLS);
+                    if (nLastBreak == std::string::npos)
+                        nLastBreak = osAttrVal.find_first_of(" ,\n");
+                    if (nLastBreak != std::string::npos)
+                    {
+                        auto osVal = osAttrVal.substr(0, nLastBreak);
+                        if (osAttrVal[nLastBreak] != ' ' &&
+                            osAttrVal[nLastBreak] != '\n')
+                            osVal += osAttrVal[nLastBreak];
+                        attrs.push_back(
+                            {bFirstLineAttr ? poAttr->GetName() : std::string(),
+                             bFirstLineAttr
+                                 ? TypeToString(poAttr->GetDataType())
+                                 : std::string(),
+                             osVal});
+                        osAttrVal = osAttrVal.substr(nLastBreak + 1);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    bFirstLineAttr = false;
+                }
+                attrs.push_back(
+                    {bFirstLineAttr ? poAttr->GetName() : std::string(),
+                     bFirstLineAttr ? TypeToString(poAttr->GetDataType())
+                                    : std::string(),
+                     osAttrVal});
+            }
+        }
+        DumpTable(attrs, nIndentSpaces + 2);
+    }
+}
+
+/************************************************************************/
+/*                         DimsToShapeString()                          */
+/************************************************************************/
+
+static std::string
+DimsToShapeString(const std::vector<std::shared_ptr<GDALDimension>> &dims)
+{
+    std::string s("[");
+    for (const auto &poDim : dims)
+    {
+        if (s.size() > 1)
+            s += ", ";
+        s += std::to_string(poDim->GetSize());
+    }
+    s += ']';
+    return s;
+}
+
+/************************************************************************/
+/*                            DimsToString()                            */
+/************************************************************************/
+
+static std::string
+DimsToString(const std::vector<std::shared_ptr<GDALDimension>> &dims,
+             const std::string &osSameDimGroup)
+{
+    std::string s("(");
+    for (const auto &poDim : dims)
+    {
+        if (s.size() > 1)
+            s += ", ";
+        else if (!osSameDimGroup.empty())
+        {
+            s += osSameDimGroup;
+            s += '/';
+        }
+        const std::string &osFullname = poDim->GetFullName();
+        if (!osFullname.empty())
+        {
+            s += osSameDimGroup.empty()
+                     ? osFullname
+                     : osFullname.substr(osSameDimGroup.size() + 1);
+        }
+        else
+        {
+            s += "(unnamed)";
+        }
+    }
+    s += ')';
+    return s;
+}
+
+/************************************************************************/
+/*                         DimsToSameDimGroup()                         */
+/************************************************************************/
+
+/** Return the prefix shared by all dimensions if there is one, or empty string
+ * otherwise.
+ */
+static std::string
+DimsToSameDimGroup(const std::vector<std::shared_ptr<GDALDimension>> &dims)
+{
+    std::string osSameDimGroup;
+    for (const auto &poDim : dims)
+    {
+        std::string osDimGroup = poDim->GetFullName();
+        const auto nPos = osDimGroup.rfind('/');
+        if (nPos != std::string::npos)
+        {
+            osDimGroup.resize(nPos);
+            if (osSameDimGroup.empty())
+            {
+                osSameDimGroup = osDimGroup;
+            }
+            else if (osSameDimGroup != osDimGroup)
+            {
+                return {};
+            }
+        }
+        else
+        {
+            return {};
+        }
+    }
+    return osSameDimGroup;
+}
+
+/************************************************************************/
+/*                         BlockSizeToString()                          */
+/************************************************************************/
+
+template <class T>
+static std::string BlockSizeToString(const std::vector<T> &anBlockSize,
+                                     bool *pbAllZero = nullptr)
+{
+    std::string s("[");
+    if (pbAllZero)
+        *pbAllZero = true;
+    for (const auto nSize : anBlockSize)
+    {
+        if (s.size() > 1)
+            s += ", ";
+        s += std::to_string(nSize);
+        if (pbAllZero)
+            *pbAllZero = *pbAllZero && nSize == 0;
+    }
+    s += ']';
+    return s;
+}
+
+/************************************************************************/
+/*                    WriteToStdoutWithSpaceIndent()                    */
+/************************************************************************/
+
+static void WriteToStdoutWithSpaceIndent(const char *pszText, void *pUserData)
+{
+    const int *pnIndent = static_cast<const int *>(pUserData);
+    printf("%s", pszText);
+    if (pszText[0] == '\n')
+        printf("%s", std::string(*pnIndent, ' ').c_str());
+}
+
+/************************************************************************/
+/*          GDALMultiDimTextOutputDumper::DumpStructuralInfo()          */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DumpStructuralInfo(
+    CSLConstList papszStructuralInfo, int nIndentSpaces)
+{
+    AddLine();
+    AddLine(std::string(nIndentSpaces, ' ').append("Structural metadata:"));
+
+    TableType info;
+
+    int i = 1;
+    for (const auto &[pszKey, pszValue] :
+         cpl::IterateNameValue(papszStructuralInfo,
+                               /* bReturnNullKeyIfNotNameValue = */ true))
+    {
+        std::vector<std::string> line;
+        if (pszKey)
+        {
+            line.push_back(pszKey);
+        }
+        else
+        {
+            line.push_back(CPLSPrintf("metadata_%d", i));
+            ++i;
+        }
+        line.push_back(pszValue);
+        info.push_back(std::move(line));
+    }
+    DumpTable(info, nIndentSpaces + 2, {}, false);
+}
+
+/************************************************************************/
+/*              GDALMultiDimTextOutputDumper::DumpArray()               */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DumpArray(
+    const std::shared_ptr<GDALMDArray> &poArray)
+{
+    AddLine();
+    AddLine("  - " + poArray->GetFullName() + ":");
+
+    constexpr int INDENT_LEVEL = 6;
+
+    TableType props;
+    const auto &dims = poArray->GetDimensions();
+    props.push_back(
+        {"Dimensions:", DimsToString(dims, DimsToSameDimGroup(dims))});
+    props.push_back({"Shape:", DimsToShapeString(dims)});
+    bool bAllZero = true;
+    std::string osChunkSize =
+        BlockSizeToString(poArray->GetBlockSize(), &bAllZero);
+    if (!bAllZero)
+        props.push_back({"Chunk size:", std::move(osChunkSize)});
+
+    const auto &dt = poArray->GetDataType();
+    props.push_back({"Type:", TypeToString(dt)});
+    const std::string &osUnit = poArray->GetUnit();
+    if (!osUnit.empty())
+        props.push_back({"Unit:", osUnit});
+
+    if (const auto nodata = poArray->GetRawNoDataValue())
+    {
+        CPLJSonStreamingWriter serializer(nullptr, nullptr);
+        serializer.SetPrettyFormatting(false);
+        DumpValue(serializer, static_cast<const GByte *>(nodata), dt);
+        props.push_back({"Nodata value:", serializer.GetString()});
+    }
+    DumpTable(props, INDENT_LEVEL, {},
+              /* headerLineSeparator =  */ false,
+              /* bLeftPadNumbers = */ false);
+
+    DumpAttributes(poArray->GetAttributes(), INDENT_LEVEL);
+
+    if (const auto poSRS = poArray->GetSpatialRef())
+    {
+        AddLine();
+        std::string osCRS;
+        EmitTextDisplayOfCRS(poSRS.get(), "AUTO", "Coordinate Reference System",
+                             [&osCRS](const std::string &s) { osCRS += s; });
+        const CPLStringList aosLines(
+            CSLTokenizeString2(osCRS.c_str(), "\n", 0));
+        for (const char *pszLine : aosLines)
+            AddLine(std::string(INDENT_LEVEL, ' ').append(pszLine));
+    }
+
+    if (CSLConstList papszStructuralInfo = poArray->GetStructuralInfo())
+    {
+        DumpStructuralInfo(papszStructuralInfo, INDENT_LEVEL);
+    }
+
+    if (m_sOptions.bStats)
+    {
+        double dfMin = 0.0;
+        double dfMax = 0.0;
+        double dfMean = 0.0;
+        double dfStdDev = 0.0;
+        GUInt64 nValidCount = 0;
+        if (poArray->GetStatistics(false, true, &dfMin, &dfMax, &dfMean,
+                                   &dfStdDev, &nValidCount, nullptr,
+                                   nullptr) == CE_None)
+        {
+            AddLine();
+            AddLine(std::string(INDENT_LEVEL, ' ').append("Statistics:"));
+
+            TableType stats;
+            if (nValidCount > 0)
+            {
+                stats.push_back({"min", std::to_string(dfMin)});
+                stats.push_back({"max", std::to_string(dfMax)});
+                stats.push_back({"mean", std::to_string(dfMean)});
+                stats.push_back({"stddev", std::to_string(dfStdDev)});
+            }
+            stats.push_back(
+                {"valid sample count", std::to_string(nValidCount)});
+
+            DumpTable(stats, INDENT_LEVEL + 2, {}, false);
+        }
+    }
+
+    if (m_sOptions.bDetailed)
+    {
+        if (dims.empty())
+        {
+            std::vector<GByte> abyTmp(dt.GetSize());
+            poArray->Read(nullptr, nullptr, nullptr, nullptr, dt, &abyTmp[0]);
+            CPLJSonStreamingWriter serializer(nullptr, nullptr);
+            DumpValue(serializer, &abyTmp[0], dt);
+
+            AddLine();
+            AddLine(std::string(INDENT_LEVEL, ' ')
+                        .append("Value: ")
+                        .append(serializer.GetString()));
+        }
+        else
+        {
+            AddLine();
+            AddLine(std::string(INDENT_LEVEL, ' ').append("Values:"));
+
+            int nIndent = INDENT_LEVEL;
+            CPLJSonStreamingWriter serializer(m_sOptions.bStdoutOutput
+                                                  ? WriteToStdoutWithSpaceIndent
+                                                  : nullptr,
+                                              &nIndent);
+            std::vector<GUInt64> startIdx(dims.size());
+            std::vector<GUInt64> dimSizes;
+            for (const auto &dim : dims)
+                dimSizes.emplace_back(dim->GetSize());
+            if (m_sOptions.bStdoutOutput)
+                printf("%s", std::string(INDENT_LEVEL, ' ').c_str());
+            DumpArrayRec(poArray, serializer, 0, dimSizes, startIdx,
+                         &m_sOptions);
+            if (!m_sOptions.bStdoutOutput)
+            {
+                AddLine(std::string(INDENT_LEVEL, ' ')
+                            .append(CPLString(serializer.GetString())
+                                        .replaceAll(
+                                            '\n', std::string("\n").append(
+                                                      std::string(INDENT_LEVEL,
+                                                                  ' ')))));
+            }
+            else
+            {
+                AddLine();
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*        GDALMultiDimTextOutputDumper:: DumpDimensionsSummary()        */
+/************************************************************************/
+
+std::set<std::string> GDALMultiDimTextOutputDumper::DumpDimensionsSummary(
+    const std::shared_ptr<GDALGroup> &group)
+{
+    std::set<std::string> oSetIndexingVariablePaths;
+
+    const auto dims = group->GetDimensionsRecursive();
+    if (!dims.empty())
+    {
+        AddLine();
+        AddLine("Dimensions:");
+        TableType lines;
+        lines.push_back({"Name (path)", "Size", "Type", "Direction"});
+        for (const auto &poDim : dims)
+        {
+            std::vector<std::string> line{
+                poDim->GetFullName(), std::to_string(poDim->GetSize()),
+                poDim->GetType(), poDim->GetDirection()};
+            lines.push_back(std::move(line));
+            const auto poIndexingVariable = poDim->GetIndexingVariable();
+            if (poIndexingVariable)
+            {
+                const auto &osIndexingVarPath =
+                    poIndexingVariable->GetFullName();
+                if (!osIndexingVarPath.empty() && osIndexingVarPath[0] == '/')
+                {
+                    oSetIndexingVariablePaths.insert(osIndexingVarPath);
+                }
+            }
+        }
+        DumpTable(lines);
+    }
+
+    return oSetIndexingVariablePaths;
+}
+
+/************************************************************************/
+/*          GDALMultiDimTextOutputDumper:: DumpArraysSummary()          */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DumpArraysSummary(
+    const std::shared_ptr<GDALGroup> &group,
+    const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays)
+{
+    const std::set<std::string> oSetIndexingVariablePaths =
+        DumpDimensionsSummary(group);
+
+    TableType linesCoordinateArrays;
+    TableType linesScalarArrays;
+    std::map<std::string, TableType> linesDataArrays;
+    for (const auto &poArray : apoArrays)
+    {
+        const auto &dims = poArray->GetDimensions();
+        if (cpl::contains(oSetIndexingVariablePaths, poArray->GetFullName()))
+        {
+            if (linesCoordinateArrays.empty())
+                linesCoordinateArrays.push_back(
+                    {"Name (path)", "Dimension", "Type", "Unit"});
+            std::string osDimension;
+            for (const auto &poDim : dims)
+            {
+                if (osDimension.empty())
+                    osDimension = '(';
+                else
+                    osDimension += ", ";
+                osDimension += poDim->GetName();
+            }
+            if (!osDimension.empty())
+                osDimension += ')';
+            std::vector<std::string> line{
+                poArray->GetFullName(), std::move(osDimension),
+                TypeToString(poArray->GetDataType()), poArray->GetUnit()};
+            linesCoordinateArrays.push_back(std::move(line));
+        }
+        else if (dims.empty())
+        {
+            if (linesScalarArrays.empty())
+                linesScalarArrays.push_back({"Name (path)", "Type", "Unit"});
+            std::vector<std::string> line{poArray->GetFullName(),
+                                          TypeToString(poArray->GetDataType()),
+                                          poArray->GetUnit()};
+            linesScalarArrays.push_back(std::move(line));
+        }
+        else
+        {
+            const std::string osSameDimGroup = DimsToSameDimGroup(dims);
+
+            bool bAllZero = true;
+            std::string osChunkSize =
+                BlockSizeToString(poArray->GetBlockSize(), &bAllZero);
+
+            std::vector<std::string> line{
+                poArray->GetFullName(), TypeToString(poArray->GetDataType()),
+                poArray->GetUnit(), DimsToShapeString(dims),
+                bAllZero ? std::string("(unknown)") : osChunkSize};
+            linesDataArrays[DimsToString(dims, osSameDimGroup)].push_back(
+                std::move(line));
+        }
+    }
+
+    if (!linesCoordinateArrays.empty())
+    {
+        AddLine();
+        AddLine("Coordinates (indexing variables):");
+        DumpTable(linesCoordinateArrays);
+    }
+
+    if (!linesDataArrays.empty())
+    {
+        AddLine();
+        AddLine("Data variables:");
+
+        TableType headerLine;
+        headerLine.push_back(
+            {"Name (path)", "Type", "Unit", "Shape", "Chunk size"});
+
+        std::vector<size_t> anColSizeDataVars;
+        anColSizeDataVars.resize(headerLine[0].size());
+        for (const auto [iCol, col] : cpl::enumerate(headerLine[0]))
+            anColSizeDataVars[iCol] = col.size();
+        for (const auto &[_, lines] : linesDataArrays)
+        {
+            for (const auto &line : lines)
+            {
+                for (const auto [iCol, col] : cpl::enumerate(line))
+                {
+                    anColSizeDataVars[iCol] =
+                        std::max(anColSizeDataVars[iCol], col.size());
+                }
+            }
+        }
+
+        DumpTable(headerLine, 2, anColSizeDataVars);
+        for (const auto &[path, lines] : linesDataArrays)
+        {
+            AddLine();
+            AddLine(" " + path + ":");
+            DumpTable(lines, 2, anColSizeDataVars, false);
+        }
+    }
+
+    if (!linesScalarArrays.empty())
+    {
+        AddLine();
+        AddLine("Scalar arrays:");
+        DumpTable(linesScalarArrays);
+    }
+}
+
+/************************************************************************/
+/*          GDALMultiDimTextOutputDumper::DrumpGroupsSummary()          */
+/************************************************************************/
+
+void GDALMultiDimTextOutputDumper::DrumpGroupsSummary(
+    const std::shared_ptr<GDALGroup> &group)
+{
+    const auto apoGroups = group->GetGroupsRecursive();
+    if (!apoGroups.empty())
+    {
+        AddLine();
+        AddLine("Groups:");
+        std::vector<std::vector<std::string>> groupNames;
+        for (auto &poGroup : apoGroups)
+            groupNames.push_back(CPLStringList(
+                CSLTokenizeString2(poGroup->GetFullName().c_str(), "/", 0)));
+        std::sort(groupNames.begin(), groupNames.end());
+        for (const auto &groupName : groupNames)
+        {
+            std::string osLine("  ");
+            for (const auto &part : groupName)
+            {
+                osLine += '/';
+                osLine += part;
+            }
+            AddLine(osLine);
+        }
+    }
+}
+
+/************************************************************************/
+/*                             DumpAsText()                             */
+/************************************************************************/
+
+static char *DumpAsText(const std::shared_ptr<GDALGroup> &group,
+                        const char *pszDriverName,
+                        const GDALMultiDimInfoOptions *psOptions)
+{
+    GDALMultiDimTextOutputDumper dumper(psOptions);
+
+    CPLStringList aosOptionsGetArray(psOptions->aosArrayOptions);
+    if (psOptions->bDetailed)
+        aosOptionsGetArray.SetNameValue("SHOW_ALL", "YES");
+
+    const auto apoArrays =
+        group->GetMDArraysRecursive(nullptr, aosOptionsGetArray.List());
+
+    if (psOptions->osArrayName.empty())
+    {
+        dumper.AddLine(
+            std::string("Driver: ")
+                .append(pszDriverName ? pszDriverName : "(unknown)"));
+
+        if (CSLConstList papszStructuralInfo = group->GetStructuralInfo())
+        {
+            dumper.DumpStructuralInfo(papszStructuralInfo, 0);
+        }
+
+        dumper.DumpArraysSummary(group, apoArrays);
+
+        dumper.DrumpGroupsSummary(group);
+    }
+
+    if ((!psOptions->bSummary || !psOptions->osArrayName.empty()) &&
+        !apoArrays.empty())
+    {
+        if (psOptions->osArrayName.empty())
+        {
+            dumper.DumpAttributes(group->GetAttributes(), 0);
+            dumper.AddLine();
+        }
+
+        dumper.AddLine("Arrays:");
+        for (const auto &poArray : apoArrays)
+        {
+            if (psOptions->osArrayName.empty() ||
+                poArray->GetName() == psOptions->osArrayName ||
+                poArray->GetFullName() == psOptions->osArrayName)
+            {
+                dumper.DumpArray(poArray);
+            }
+        }
+    }
+
+    if (psOptions->bStdoutOutput)
+    {
+        return VSIStrdup("ok");
+    }
+    else
+    {
+        return VSIStrdup(dumper.m_osOutput.c_str());
+    }
+}
+
+/************************************************************************/
 /*                           WriteToStdout()                            */
 /************************************************************************/
 
@@ -1203,6 +1999,10 @@ static void WriteToStdout(const char *pszText, void *)
 {
     printf("%s", pszText);
 }
+
+/************************************************************************/
+/*                GDALMultiDimInfoAppOptionsGetParser()                 */
+/************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
     GDALMultiDimInfoOptions *psOptions,
@@ -1277,6 +2077,11 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
         .store_into(psOptions->bStats)
         .help(_("Read and display image statistics."));
 
+    argParser->add_argument("-format")
+        .hidden()
+        .store_into(psOptions->osFormat)
+        .help(_("Output format."));
+
     // Only used by gdalmdiminfo binary to write output to stdout instead of in a string, in JSON mode
     argParser->add_argument("-stdout").flag().hidden().store_into(
         psOptions->bStdoutOutput);
@@ -1349,60 +2154,70 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
 
     std::set<std::string> alreadyDumpedDimensions;
     std::set<std::string> alreadyDumpedArrays;
+
     try
     {
-        if (psOptions->osArrayName.empty())
+        const char *pszDriverName = nullptr;
+        auto poDriver = poDS->GetDriver();
+        if (poDriver)
+            pszDriverName = poDriver->GetDescription();
+
+        if (psOptions->osFormat == "text")
         {
-            const char *pszDriverName = nullptr;
-            auto poDriver = poDS->GetDriver();
-            if (poDriver)
-                pszDriverName = poDriver->GetDescription();
-            DumpGroup(group, group, pszDriverName, serializer, psOptions,
-                      alreadyDumpedDimensions, alreadyDumpedArrays, true, true);
+            return DumpAsText(group, pszDriverName, psOptions);
         }
         else
         {
-            auto curGroup = group;
-            CPLStringList aosTokens(
-                CSLTokenizeString2(psOptions->osArrayName.c_str(), "/", 0));
-            for (int i = 0; i < aosTokens.size() - 1; i++)
+            if (psOptions->osArrayName.empty())
             {
-                auto curGroupNew = curGroup->OpenGroup(aosTokens[i]);
-                if (!curGroupNew)
+                DumpGroup(group, group, pszDriverName, serializer, psOptions,
+                          alreadyDumpedDimensions, alreadyDumpedArrays, true,
+                          true);
+            }
+            else
+            {
+                auto curGroup = group;
+                CPLStringList aosTokens(
+                    CSLTokenizeString2(psOptions->osArrayName.c_str(), "/", 0));
+                for (int i = 0; i < aosTokens.size() - 1; i++)
+                {
+                    auto curGroupNew = curGroup->OpenGroup(aosTokens[i]);
+                    if (!curGroupNew)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot find group %s", aosTokens[i]);
+                        return nullptr;
+                    }
+                    curGroup = std::move(curGroupNew);
+                }
+                const char *pszArrayName = aosTokens.back();
+                auto array(curGroup->OpenMDArray(pszArrayName));
+                if (!array)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot find group %s", aosTokens[i]);
+                             "Cannot find array %s", pszArrayName);
                     return nullptr;
                 }
-                curGroup = std::move(curGroupNew);
+                DumpArray(group, array, serializer, psOptions,
+                          alreadyDumpedDimensions, alreadyDumpedArrays, true,
+                          true, true);
             }
-            const char *pszArrayName = aosTokens.back();
-            auto array(curGroup->OpenMDArray(pszArrayName));
-            if (!array)
+
+            if (psOptions->bStdoutOutput)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find array %s",
-                         pszArrayName);
-                return nullptr;
+                printf("\n");
+                return VSIStrdup("ok");
             }
-            DumpArray(group, array, serializer, psOptions,
-                      alreadyDumpedDimensions, alreadyDumpedArrays, true, true,
-                      true);
+            else
+            {
+                return VSIStrdup(serializer.GetString().c_str());
+            }
         }
     }
     catch (const std::exception &e)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
         return nullptr;
-    }
-
-    if (psOptions->bStdoutOutput)
-    {
-        printf("\n");
-        return VSIStrdup("ok");
-    }
-    else
-    {
-        return VSIStrdup(serializer.GetString().c_str());
     }
 }
 

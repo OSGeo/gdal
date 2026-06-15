@@ -391,14 +391,33 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
                 CSLConstList papszOptions = nullptr) const;
 
     std::vector<std::string> GetMDArrayFullNamesRecursive(
-        CSLConstList papszGroupOptions = nullptr,
-        CSLConstList papszArrayOptions = nullptr) const;
+        CSLConstList papszGroupDiscoverOptions = nullptr,
+        CSLConstList papszArrayDiscoverOptions = nullptr,
+        CSLConstList papszGroupOpenOptions = nullptr) const;
+
+    std::vector<std::shared_ptr<GDALMDArray>>
+    GetMDArrays(CSLConstList papszDiscoverOptions = nullptr,
+                CSLConstList papszOpenOptions = nullptr) const;
+
+    std::vector<std::shared_ptr<GDALMDArray>>
+    GetMDArraysRecursive(CSLConstList papszGroupDiscoverOptions = nullptr,
+                         CSLConstList papszArrayDiscoverOptions = nullptr,
+                         CSLConstList papszGroupOpenOptions = nullptr,
+                         CSLConstList papszArrayOpenOptions = nullptr) const;
 
     virtual std::vector<std::string>
     GetGroupNames(CSLConstList papszOptions = nullptr) const;
     virtual std::shared_ptr<GDALGroup>
     OpenGroup(const std::string &osName,
               CSLConstList papszOptions = nullptr) const;
+
+    std::vector<std::shared_ptr<GDALGroup>>
+    GetGroups(CSLConstList papszDiscoverOptions = nullptr,
+              CSLConstList papszOpenOptions = nullptr) const;
+
+    std::vector<std::shared_ptr<GDALGroup>>
+    GetGroupsRecursive(CSLConstList papszDiscoverOptions = nullptr,
+                       CSLConstList papszOpenOptions = nullptr) const;
 
     virtual std::vector<std::string>
     GetVectorLayerNames(CSLConstList papszOptions = nullptr) const;
@@ -408,6 +427,13 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     virtual std::vector<std::shared_ptr<GDALDimension>>
     GetDimensions(CSLConstList papszOptions = nullptr) const;
+
+    std::vector<std::shared_ptr<GDALDimension>>
+    GetDimensionsRecursive(CSLConstList papszDimensionDiscoverOptions = nullptr,
+                           CSLConstList papszGroupDiscoverOptions = nullptr,
+                           CSLConstList papszArrayDiscoverOptions = nullptr,
+                           CSLConstList papszGroupOpenOptions = nullptr,
+                           CSLConstList papszArrayOpenOptions = nullptr) const;
 
     virtual std::shared_ptr<GDALGroup>
     CreateGroup(const std::string &osName, CSLConstList papszOptions = nullptr);
