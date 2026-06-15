@@ -5788,6 +5788,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
 #endif
     }
 
+#ifdef HAVE_MUPARSER
     {
         const auto Calc = [](const auto &a, const auto &b, const auto &c)
         {
@@ -5795,11 +5796,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                     a * (1 - b) / c - 2 * a - 3 + 4) /
                        gdal::pow(3.0, a) * gdal::pow(b, 2.0) +
                    gdal::abs(-a) + gdal::fabs(-a) + gdal::sqrt(a) +
-                   gdal::log10(a)
-#ifdef HAVE_MUPARSER
-                   + gdal::log(a) + gdal::pow(a, b)
-#endif
-                ;
+                   gdal::log10(a) + gdal::log(a) + gdal::pow(a, b);
         };
 
         auto formula = Calc(firstBand, secondBand, thirdBand);
@@ -5873,7 +5870,6 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                   CE_None);
         EXPECT_NEAR(adfMinMax[0], (FIRST + SECOND + THIRD) / 3, 1e-14);
 
-#ifdef HAVE_MUPARSER
         EXPECT_EQ((firstBand > 1.4).GetRasterDataType(), GDT_Byte);
         EXPECT_EQ((firstBand > 1.4).ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
@@ -6048,8 +6044,8 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                       .ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
         EXPECT_EQ(adfMinMax[0], THIRD);
-#endif
     }
+#endif
 
 #ifdef HAVE_MUPARSER
     {

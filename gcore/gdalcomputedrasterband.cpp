@@ -15,6 +15,8 @@
 
 #include <cmath>
 #include <limits>
+#include <set>
+#include <utility>
 
 /************************************************************************/
 /*                         GDALComputedDataset                          */
@@ -24,25 +26,24 @@ class GDALComputedDataset final : public GDALDataset
 {
     friend class GDALComputedRasterBand;
 
-    const GDALComputedRasterBand::Operation m_op;
+    std::string m_expr{};
     CPLStringList m_aosOptions{};
-    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
-        m_bandDS{};
-    std::vector<GDALRasterBand *> m_poBands{};
+    std::vector<std::pair<std::string, GDALRasterBand *>> m_apoBands{};
     VRTDataset m_oVRTDS;
+
+    std::pair<bool, std::string> AddSourceBand(const GDALRasterBand *band);
 
     void AddSources(GDALComputedRasterBand *poBand);
 
     static const char *
-    OperationToFunctionName(GDALComputedRasterBand::Operation op);
+    OperationToFunctionName(GDALComputedRasterBand::Operation op,
+                            bool bForceMuparser = false);
 
     GDALComputedDataset &operator=(const GDALComputedDataset &) = delete;
     GDALComputedDataset(GDALComputedDataset &&) = delete;
     GDALComputedDataset &operator=(GDALComputedDataset &&) = delete;
 
   public:
-    GDALComputedDataset(const GDALComputedDataset &other);
-
     GDALComputedDataset(GDALComputedRasterBand *poBand, int nXSize, int nYSize,
                         GDALDataType eDT, int nBlockXSize, int nBlockYSize,
                         GDALComputedRasterBand::Operation op,
@@ -111,41 +112,26 @@ static bool IsComparisonOperator(GDALComputedRasterBand::Operation op)
 }
 
 /************************************************************************/
-/*                        GDALComputedDataset()                         */
+/*                           AddSourceBand()                            */
 /************************************************************************/
 
-GDALComputedDataset::GDALComputedDataset(const GDALComputedDataset &other)
-    : GDALDataset(), m_op(other.m_op), m_aosOptions(other.m_aosOptions),
-      m_poBands(other.m_poBands),
-      m_oVRTDS(other.GetRasterXSize(), other.GetRasterYSize(),
-               other.m_oVRTDS.GetBlockXSize(), other.m_oVRTDS.GetBlockYSize())
+/** Returns a pair (bIsExprBand, osBandName) */
+std::pair<bool, std::string>
+GDALComputedDataset::AddSourceBand(const GDALRasterBand *band)
 {
-    nRasterXSize = other.nRasterXSize;
-    nRasterYSize = other.nRasterYSize;
-
-    auto poBand = new GDALComputedRasterBand(
-        const_cast<const GDALComputedRasterBand &>(
-            *cpl::down_cast<GDALComputedRasterBand *>(
-                const_cast<GDALComputedDataset &>(other).GetRasterBand(1))),
-        true);
-    SetBand(1, poBand);
-
-    GDALGeoTransform gt;
-    if (const_cast<VRTDataset &>(other.m_oVRTDS).GetGeoTransform(gt) == CE_None)
+    auto bandDS = band->GetDataset();
+    if (auto poComputedDS = dynamic_cast<GDALComputedDataset *>(bandDS))
     {
-        m_oVRTDS.SetGeoTransform(gt);
+        m_apoBands.insert(m_apoBands.end(), poComputedDS->m_apoBands.begin(),
+                          poComputedDS->m_apoBands.end());
+        return {true, poComputedDS->m_expr};
     }
-
-    if (const auto *poSRS =
-            const_cast<VRTDataset &>(other.m_oVRTDS).GetSpatialRef())
+    else
     {
-        m_oVRTDS.SetSpatialRef(poSRS);
+        std::string osName = CPLSPrintf("band_%p", band);
+        m_apoBands.emplace_back(osName, const_cast<GDALRasterBand *>(band));
+        return {false, osName};
     }
-
-    m_oVRTDS.AddBand(other.m_oVRTDS.GetRasterBand(1)->GetRasterDataType(),
-                     m_aosOptions.List());
-
-    AddSources(poBand);
 }
 
 /************************************************************************/
@@ -157,18 +143,37 @@ GDALComputedDataset::GDALComputedDataset(
     int nBlockXSize, int nBlockYSize, GDALComputedRasterBand::Operation op,
     const GDALRasterBand *firstBand, double *pFirstConstant,
     const GDALRasterBand *secondBand, double *pSecondConstant)
-    : m_op(op), m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
+    : m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
 {
     CPLAssert(firstBand != nullptr || secondBand != nullptr);
+    std::string osFirstBand;
+    bool bCanUseBuiltin = true;
     if (firstBand)
-        m_poBands.push_back(const_cast<GDALRasterBand *>(firstBand));
+    {
+        const auto [bIsExprBand, name] = AddSourceBand(firstBand);
+        bCanUseBuiltin = bCanUseBuiltin && !bIsExprBand;
+        if (bIsExprBand)
+            osFirstBand = "(";
+        osFirstBand += name;
+        if (bIsExprBand)
+            osFirstBand += ')';
+    }
+    std::string osSecondBand;
     if (secondBand)
-        m_poBands.push_back(const_cast<GDALRasterBand *>(secondBand));
+    {
+        const auto [bIsExprBand, name] = AddSourceBand(secondBand);
+        bCanUseBuiltin = bCanUseBuiltin && !bIsExprBand;
+        if (bIsExprBand)
+            osSecondBand = "(";
+        osSecondBand += name;
+        if (bIsExprBand)
+            osSecondBand += ')';
+    }
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    if (auto poSrcDS = m_poBands.front()->GetDataset())
+    if (auto poSrcDS = m_apoBands.front().second->GetDataset())
     {
         GDALGeoTransform gt;
         if (poSrcDS->GetGeoTransform(gt) == CE_None)
@@ -188,7 +193,19 @@ GDALComputedDataset::GDALComputedDataset(
         // Just for code coverage...
         CPL_IGNORE_RET_VAL(GDALComputedDataset::OperationToFunctionName(op));
 #endif
-        m_aosOptions.SetNameValue("subclass", "VRTSourcedRasterBand");
+
+        m_expr = osFirstBand;
+        if (m_apoBands.size() > 1)
+        {
+            m_aosOptions.SetNameValue("subclass", "VRTDerivedRasterBand");
+            m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                      m_expr.c_str());
+        }
+        else
+        {
+            m_aosOptions.SetNameValue("subclass", "VRTSourcedRasterBand");
+        }
     }
     else
     {
@@ -198,32 +215,34 @@ GDALComputedDataset::GDALComputedDataset(
             m_aosOptions.SetNameValue("PixelFunctionType", "expression");
             if (firstBand && secondBand)
             {
-                m_aosOptions.SetNameValue(
-                    "_PIXELFN_ARG_expression",
-                    CPLSPrintf(
-                        "source1 %s source2",
-                        GDALComputedDataset::OperationToFunctionName(op)));
+                m_expr = osFirstBand;
+                m_expr += ' ';
+                m_expr += GDALComputedDataset::OperationToFunctionName(op);
+                m_expr += ' ';
+                m_expr += osSecondBand;
             }
             else if (firstBand && pSecondConstant)
             {
-                m_aosOptions.SetNameValue(
-                    "_PIXELFN_ARG_expression",
-                    CPLSPrintf("source1 %s %.17g",
-                               GDALComputedDataset::OperationToFunctionName(op),
-                               *pSecondConstant));
+                m_expr = osFirstBand;
+                m_expr += ' ';
+                m_expr += GDALComputedDataset::OperationToFunctionName(op);
+                m_expr += ' ';
+                m_expr += CPLSPrintf("%.17g", *pSecondConstant);
             }
             else if (pFirstConstant && secondBand)
             {
-                m_aosOptions.SetNameValue(
-                    "_PIXELFN_ARG_expression",
-                    CPLSPrintf(
-                        "%.17g %s source1", *pFirstConstant,
-                        GDALComputedDataset::OperationToFunctionName(op)));
+                m_expr = CPLSPrintf("%.17g", *pFirstConstant);
+                m_expr += ' ';
+                m_expr += GDALComputedDataset::OperationToFunctionName(op);
+                m_expr += ' ';
+                m_expr += osSecondBand;
             }
             else
             {
                 CPLAssert(false);
             }
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                      m_expr.c_str());
         }
         else if (op == GDALComputedRasterBand::Operation::OP_SUBTRACT &&
                  pSecondConstant)
@@ -231,6 +250,8 @@ GDALComputedDataset::GDALComputedDataset(
             m_aosOptions.SetNameValue("PixelFunctionType", "sum");
             m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
                                       CPLSPrintf("%.17g", -(*pSecondConstant)));
+            m_expr = osFirstBand;
+            m_expr += CPLSPrintf(" - %.17g", *pSecondConstant);
         }
         else if (op == GDALComputedRasterBand::Operation::OP_DIVIDE)
         {
@@ -240,16 +261,23 @@ GDALComputedDataset::GDALComputedDataset(
                 m_aosOptions.SetNameValue(
                     "_PIXELFN_ARG_k",
                     CPLSPrintf("%.17g", 1.0 / (*pSecondConstant)));
+                m_expr = osFirstBand;
+                m_expr += CPLSPrintf(" * %.17g", 1.0 / (*pSecondConstant));
             }
             else if (pFirstConstant)
             {
                 m_aosOptions.SetNameValue("PixelFunctionType", "inv");
                 m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
                                           CPLSPrintf("%.17g", *pFirstConstant));
+                m_expr = CPLSPrintf("%.17g / ", *pFirstConstant);
+                m_expr += osSecondBand;
             }
             else
             {
                 m_aosOptions.SetNameValue("PixelFunctionType", "div");
+                m_expr = osFirstBand;
+                m_expr += " / ";
+                m_expr += osSecondBand;
             }
         }
         else if (op == GDALComputedRasterBand::Operation::OP_LOG)
@@ -259,16 +287,22 @@ GDALComputedDataset::GDALComputedDataset(
             CPLAssert(!pFirstConstant);
             CPLAssert(!pSecondConstant);
             m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+            m_expr = "log(";
+            m_expr += osFirstBand;
+            m_expr += ')';
             m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
-                                      "log(source1)");
+                                      m_expr.c_str());
         }
         else if (op == GDALComputedRasterBand::Operation::OP_POW)
         {
             if (firstBand && secondBand)
             {
                 m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+                m_expr = osFirstBand;
+                m_expr += " ^ ";
+                m_expr += osSecondBand;
                 m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
-                                          "source1 ^ source2");
+                                          m_expr.c_str());
             }
             else if (firstBand && pSecondConstant)
             {
@@ -276,12 +310,18 @@ GDALComputedDataset::GDALComputedDataset(
                 m_aosOptions.SetNameValue(
                     "_PIXELFN_ARG_power",
                     CPLSPrintf("%.17g", *pSecondConstant));
+                m_expr = osFirstBand;
+                m_expr += " ^ ";
+                m_expr += CPLSPrintf("%.17g", *pSecondConstant);
             }
             else if (pFirstConstant && secondBand)
             {
                 m_aosOptions.SetNameValue("PixelFunctionType", "exp");
                 m_aosOptions.SetNameValue("_PIXELFN_ARG_base",
                                           CPLSPrintf("%.17g", *pFirstConstant));
+                m_expr = CPLSPrintf("%.17g", *pFirstConstant);
+                m_expr += " ^ ";
+                m_expr += osSecondBand;
             }
             else
             {
@@ -290,11 +330,73 @@ GDALComputedDataset::GDALComputedDataset(
         }
         else
         {
-            m_aosOptions.SetNameValue("PixelFunctionType",
-                                      OperationToFunctionName(op));
-            if (pSecondConstant)
-                m_aosOptions.SetNameValue(
-                    "_PIXELFN_ARG_k", CPLSPrintf("%.17g", *pSecondConstant));
+            if (firstBand && secondBand)
+            {
+                if (op == GDALComputedRasterBand::Operation::OP_MIN ||
+                    op == GDALComputedRasterBand::Operation::OP_MAX ||
+                    op == GDALComputedRasterBand::Operation::OP_MEAN)
+                {
+                    m_expr +=
+                        GDALComputedDataset::OperationToFunctionName(op, true);
+                    m_expr += '(';
+                    m_expr += osFirstBand;
+                    m_expr += ',';
+                    m_expr += osSecondBand;
+                    m_expr += ')';
+                }
+                else
+                {
+                    m_expr = osFirstBand;
+                    m_expr += ' ';
+                    m_expr +=
+                        GDALComputedDataset::OperationToFunctionName(op, true);
+                    m_expr += ' ';
+                    m_expr += osSecondBand;
+                }
+            }
+            else if (firstBand && pSecondConstant)
+            {
+                m_expr = osFirstBand;
+                m_expr += ' ';
+                m_expr +=
+                    GDALComputedDataset::OperationToFunctionName(op, true);
+                m_expr += ' ';
+                m_expr += CPLSPrintf("%.17g", *pSecondConstant);
+            }
+            else if (pFirstConstant && secondBand)
+            {
+                m_expr = CPLSPrintf("%.17g", *pFirstConstant);
+                m_expr += ' ';
+                m_expr +=
+                    GDALComputedDataset::OperationToFunctionName(op, true);
+                m_expr += ' ';
+                m_expr += osSecondBand;
+            }
+            else
+            {
+                m_expr = GDALComputedDataset::OperationToFunctionName(op, true);
+                m_expr += '(';
+                m_expr += osFirstBand;
+                m_expr += ')';
+            }
+
+            if (bCanUseBuiltin)
+            {
+                m_aosOptions.SetNameValue("PixelFunctionType",
+                                          OperationToFunctionName(op));
+                if (pSecondConstant)
+                {
+                    m_aosOptions.SetNameValue(
+                        "_PIXELFN_ARG_k",
+                        CPLSPrintf("%.17g", *pSecondConstant));
+                }
+            }
+            else
+            {
+                m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+                m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                          m_expr.c_str());
+            }
         }
     }
     m_aosOptions.SetNameValue("_PIXELFN_ARG_propagateNoData", "true");
@@ -313,15 +415,24 @@ GDALComputedDataset::GDALComputedDataset(
     GDALComputedRasterBand *poBand, int nXSize, int nYSize, GDALDataType eDT,
     int nBlockXSize, int nBlockYSize, GDALComputedRasterBand::Operation op,
     const std::vector<const GDALRasterBand *> &bands, double constant)
-    : m_op(op), m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
+    : m_oVRTDS(nXSize, nYSize, nBlockXSize, nBlockYSize)
 {
+    bool bCanUseBuiltin = true;
+    std::vector<std::string> aosNames;
     for (const GDALRasterBand *poIterBand : bands)
-        m_poBands.push_back(const_cast<GDALRasterBand *>(poIterBand));
+    {
+        const auto [bIsExprBand, name] = AddSourceBand(poIterBand);
+        bCanUseBuiltin = bCanUseBuiltin && !bIsExprBand;
+        if (!bIsExprBand)
+            aosNames.push_back(name);
+        else
+            aosNames.push_back(std::string("(").append(name).append(")"));
+    }
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    if (auto poSrcDS = m_poBands.front()->GetDataset())
+    if (auto poSrcDS = m_apoBands.front().second->GetDataset())
     {
         GDALGeoTransform gt;
         if (poSrcDS->GetGeoTransform(gt) == CE_None)
@@ -338,20 +449,52 @@ GDALComputedDataset::GDALComputedDataset(
     m_aosOptions.SetNameValue("subclass", "VRTDerivedRasterBand");
     if (op == GDALComputedRasterBand::Operation::OP_TERNARY)
     {
+        m_expr = aosNames[0];
+        m_expr += " ? ";
+        m_expr += aosNames[1];
+        m_expr += " : ";
+        m_expr += aosNames[2];
+
         m_aosOptions.SetNameValue("PixelFunctionType", "expression");
-        m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
-                                  "source1 ? source2 : source3");
+        m_aosOptions.SetNameValue("_PIXELFN_ARG_expression", m_expr.c_str());
     }
     else
     {
-        m_aosOptions.SetNameValue("PixelFunctionType",
-                                  OperationToFunctionName(op));
+        m_expr = OperationToFunctionName(op);
+        m_expr += '(';
+        bool first = true;
+        for (const auto &name : aosNames)
+        {
+            if (!first)
+                m_expr += ", ";
+            m_expr += name;
+            first = false;
+        }
         if (!std::isnan(constant))
         {
-            m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
-                                      CPLSPrintf("%.17g", constant));
+            if (!first)
+                m_expr += ", ";
+            m_expr += CPLSPrintf("%.17g", constant);
         }
-        m_aosOptions.SetNameValue("_PIXELFN_ARG_propagateNoData", "true");
+        m_expr += ')';
+
+        if (bCanUseBuiltin)
+        {
+            m_aosOptions.SetNameValue("PixelFunctionType",
+                                      OperationToFunctionName(op));
+            if (!std::isnan(constant))
+            {
+                m_aosOptions.SetNameValue("_PIXELFN_ARG_k",
+                                          CPLSPrintf("%.17g", constant));
+            }
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_propagateNoData", "true");
+        }
+        else
+        {
+            m_aosOptions.SetNameValue("PixelFunctionType", "expression");
+            m_aosOptions.SetNameValue("_PIXELFN_ARG_expression",
+                                      m_expr.c_str());
+        }
     }
     m_oVRTDS.AddBand(eDT, m_aosOptions.List());
 
@@ -414,39 +557,32 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
 
     bool hasAtLeastOneNDV = false;
     double singleNDV = 0;
-    const bool bSameNDV = HaveAllBandsSameNoDataValue(
-        m_poBands.data(), m_poBands.size(), hasAtLeastOneNDV, singleNDV);
-
-    // For inputs that are instances of GDALComputedDataset, clone them
-    // to make sure we do not depend on temporary instances,
-    // such as "a + b + c", which is evaluated as "(a + b) + c", and the
-    // temporary band/dataset corresponding to a + b will go out of scope
-    // quickly.
-    for (GDALRasterBand *&band : m_poBands)
+    std::vector<GDALRasterBand *> apoSrcBands;
+    for (auto &[_, band] : m_apoBands)
     {
-        auto poDS = band->GetDataset();
-        if (auto poComputedDS = dynamic_cast<GDALComputedDataset *>(poDS))
-        {
-            auto poComputedDSNew =
-                std::make_unique<GDALComputedDataset>(*poComputedDS);
-            band = poComputedDSNew->GetRasterBand(1);
-            m_bandDS.emplace_back(poComputedDSNew.release());
-        }
+        apoSrcBands.push_back(band);
+    }
+    const bool bSameNDV = HaveAllBandsSameNoDataValue(
+        apoSrcBands.data(), m_apoBands.size(), hasAtLeastOneNDV, singleNDV);
 
-        int bHasNoData = false;
-        const double dfNoData = band->GetNoDataValue(&bHasNoData);
-        if (bHasNoData)
+    std::set<std::string> alreadyAdded;
+    for (auto &[name, band] : m_apoBands)
+    {
+        if (alreadyAdded.insert(name).second)
         {
-            poSourcedRasterBand->AddComplexSource(band, -1, -1, -1, -1, -1, -1,
-                                                  -1, -1, 0, 1, dfNoData);
+            int bHasNoData = false;
+            const double dfNoData = band->GetNoDataValue(&bHasNoData);
+            if (bHasNoData)
+            {
+                poSourcedRasterBand->AddComplexSource(
+                    band, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, dfNoData);
+            }
+            else
+            {
+                poSourcedRasterBand->AddSimpleSource(band);
+            }
+            poSourcedRasterBand->m_papoSources.back()->SetName(name.c_str());
         }
-        else
-        {
-            poSourcedRasterBand->AddSimpleSource(band);
-        }
-        poSourcedRasterBand->m_papoSources.back()->SetName(CPLSPrintf(
-            "source%d",
-            static_cast<int>(poSourcedRasterBand->m_papoSources.size())));
     }
     if (hasAtLeastOneNDV)
     {
@@ -468,22 +604,22 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
 /************************************************************************/
 
 /* static */ const char *GDALComputedDataset::OperationToFunctionName(
-    GDALComputedRasterBand::Operation op)
+    GDALComputedRasterBand::Operation op, bool bForceMuparser)
 {
     const char *ret = "";
     switch (op)
     {
         case GDALComputedRasterBand::Operation::OP_ADD:
-            ret = "sum";
+            ret = bForceMuparser ? "+" : "sum";
             break;
         case GDALComputedRasterBand::Operation::OP_SUBTRACT:
-            ret = "diff";
+            ret = bForceMuparser ? "-" : "diff";
             break;
         case GDALComputedRasterBand::Operation::OP_MULTIPLY:
-            ret = "mul";
+            ret = bForceMuparser ? "*" : "mul";
             break;
         case GDALComputedRasterBand::Operation::OP_DIVIDE:
-            ret = "div";
+            ret = bForceMuparser ? "/" : "div";
             break;
         case GDALComputedRasterBand::Operation::OP_MIN:
             ret = "min";
@@ -522,7 +658,7 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
         case GDALComputedRasterBand::Operation::OP_TERNARY:
             break;
         case GDALComputedRasterBand::Operation::OP_ABS:
-            ret = "mod";
+            ret = bForceMuparser ? "abs" : "mod";
             break;
         case GDALComputedRasterBand::Operation::OP_SQRT:
             ret = "sqrt";
