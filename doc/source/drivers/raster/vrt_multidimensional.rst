@@ -115,7 +115,7 @@ or zero, one or several elements among *ConstantValue*, *InlineValues*, *InlineV
     <Array name="longitude">
         <DataType>Float64</DataType>
         <DimensionRef ref="longitude"/>
-        <RegularlySpacedValues start="-180" step="0.5"/>
+        <RegularlySpacedValues start="-180" increment="0.5"/>
     </Array>
 
 .. code-block:: xml
