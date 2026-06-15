@@ -35,9 +35,9 @@ Synopsis
 .. program-output:: gdal mdim pipeline --help-doc=main
 
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
-The first step must be ``read``, and the last one ``write`` or ``info``.
+The first step must be ``read`` or ``mosaic``, and the last one ``write`` or ``info``.
 Each step has its own positional or non-positional arguments.
-Apart from ``read``, ``info`` and ``write``,
+Apart from ``read``, ``mosaic``, ``info`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:
@@ -47,6 +47,12 @@ Potential steps are:
 .. program-output:: gdal mdim pipeline --help-doc=read
 
 Details for options can be found in :ref:`gdal_mdim_read`.
+
+* mosaic
+
+.. program-output:: gdal mdim pipeline --help-doc=mosaic
+
+Details for options can be found in :ref:`gdal_mdim_mosaic`.
 
 * reproject
 

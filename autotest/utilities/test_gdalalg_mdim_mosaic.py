@@ -1139,3 +1139,26 @@ def test_gdalalg_mdim_mosaic_two_sources(tmp_path):
             .Checksum()
             == 4855
         )
+
+
+def test_gdalalg_mdim_mosaic_pipeline(tmp_path):
+
+    with gdal.alg.mdim.pipeline(
+        pipeline="mosaic ../gdrivers/data/netcdf/byte.nc"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRootGroup().OpenMDArray("Band1")
+
+    with gdal.alg.mdim.pipeline(
+        pipeline=f"mosaic ../gdrivers/data/netcdf/byte.nc ! write {tmp_path}/out.vrt"
+    ):
+        pass
+    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+        assert ds.GetRootGroup().OpenMDArray("Band1")
+
+    with gdal.alg.mdim.pipeline(
+        pipeline=f"mosaic ../gdrivers/data/netcdf/byte.nc ! write {tmp_path}/out.nc"
+    ):
+        pass
+    with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
+        assert ds.GetRootGroup().OpenMDArray("Band1")

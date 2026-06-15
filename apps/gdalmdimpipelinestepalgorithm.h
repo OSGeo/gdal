@@ -34,6 +34,7 @@ class GDALMdimPipelineStepAlgorithm /* non final */
                                   const ConstructorOptions &options);
 
     friend class GDALMdimPipelineAlgorithm;
+    friend class GDALMdimMosaicAlgorithm;
 
     int GetInputType() const override
     {

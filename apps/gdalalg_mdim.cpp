@@ -41,7 +41,7 @@ GDALMdimAlgorithm::GDALMdimAlgorithm()
 
     RegisterSubAlgorithm<GDALMdimInfoAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
-    RegisterSubAlgorithm<GDALMdimMosaicAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimMosaicAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALMdimPipelineAlgorithm>();
     RegisterSubAlgorithm<GDALMdimReprojectAlgorithmStandalone>();
 }
