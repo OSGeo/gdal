@@ -259,13 +259,16 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     auto poSrcGroup = poSrcDS->GetRootGroup();
     if (poSrcGroup != nullptr)
     {
-        auto poDstDS = std::unique_ptr<GDALDataset>(
-            VRTDataset::CreateMultiDimensional(pszFilename, nullptr, nullptr));
+        auto poDstDS = VRTDataset::CreateVRTMultiDimensional(pszFilename,
+                                                             nullptr, nullptr);
         if (!poDstDS)
             return nullptr;
-        auto poDstGroup = poDstDS->GetRootGroup();
+        auto poDstGroup = poDstDS->GetRootVRTGroup();
         if (!poDstGroup)
             return nullptr;
+        poDstGroup->SetGuessRegularySpacedArrays(
+            CPLTestBool(CSLFetchNameValueDef(
+                papszOptions, "GUESS_REGULARLY_SPACED_ARRAYS", "YES")));
         if (GDALDriver::DefaultCreateCopyMultiDimensional(
                 poSrcDS, poDstDS.get(), false, nullptr, nullptr, nullptr) !=
             CE_None)
@@ -565,6 +568,15 @@ void GDALRegister_VRT()
                                       ocoList.c_str());
         }
     }
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+        "<MultiDimDatasetCreationOptionList>"
+        "   <Option name='GUESS_REGULARLY_SPACED_ARRAYS' type='boolean' "
+        "description='Whether content of 1D-arrays should be read to deduce "
+        "if they are regularly spaced. Can be slow on huge remote datasets' "
+        "default='YES'/>"
+        "</MultiDimDatasetCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,

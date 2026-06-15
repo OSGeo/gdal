@@ -2176,3 +2176,15 @@ def test_vrtmultidim_ref_vrtmultidim(tmp_vsimem):
     ) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
         array.Read()
+
+
+@pytest.mark.require_driver("netCDF")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GUESS_REGULARLY_SPACED_ARRAYS_disabled(tmp_vsimem):
+
+    src_ds = gdal.OpenEx("data/netcdf/byte.nc", gdal.OF_MULTIDIM_RASTER)
+    gdal.GetDriverByName("VRT").CreateCopy(
+        tmp_vsimem / "out.vrt", src_ds, options=["GUESS_REGULARLY_SPACED_ARRAYS=NO"]
+    )
+    with gdal.VSIFile(tmp_vsimem / "out.vrt", "rb") as f:
+        assert b"RegularlySpacedValues" not in f.read()

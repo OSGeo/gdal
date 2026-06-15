@@ -205,3 +205,15 @@ data type as the full resolution array.
             </Array>
         </Overviews>
     </Array>
+
+
+Multidimensional dataset creation option
+----------------------------------------
+
+-  .. co:: GUESS_REGULARLY_SPACED_ARRAYS
+      :choices: YES, NO
+      :default: YES
+
+      Whether content of 1D-arrays should be read to deduce if they are
+      regularly spaced. This is enabled by default, but can be slow on huge
+      remote datasets.
