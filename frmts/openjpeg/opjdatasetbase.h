@@ -307,6 +307,11 @@ struct OPJCodecWrapper
         return comp->w;
     }
 
+    static GDALDataType getDataType(CPL_UNUSED jp2_image_comp *comp)
+    {
+        return GDT_Int32;
+    }
+
     bool setUpDecompress(CPL_UNUSED int numThreads,
                          CPL_UNUSED char *pszFilename,
                          vsi_l_offset nCodeStreamLength, uint32_t *nTileW,

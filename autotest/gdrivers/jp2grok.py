@@ -1649,3 +1649,25 @@ def test_jp2grok_translate_scale_multi_tile_row():
     assert np.array_equal(ds.GetRasterBand(1).ReadAsArray(), truth)
     ds = None
     gdal.Unlink(out)
+
+
+def test_jp2grok_statistics_16bit_multi_tile():
+    # 16-bit uses Grok's int32_t code path
+    # GetStatistics reads with ReadBlock, using full/partial tiles.
+    np = pytest.importorskip("numpy")
+    arr = (np.arange(300 * 300, dtype=np.uint16) % 4096).reshape(300, 300)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 300, 300, 1, gdal.GDT_UInt16)
+    src_ds.GetRasterBand(1).WriteArray(arr)
+    out = "/vsimem/jp2grok_16bit_tiled.jp2"
+    gdal.GetDriverByName("JP2Grok").CreateCopy(
+        out,
+        src_ds,
+        options=["REVERSIBLE=YES", "QUALITY=100", "BLOCKXSIZE=128", "BLOCKYSIZE=128"],
+    )
+    ds = gdal.Open(out)
+    assert ds.GetRasterBand(1).GetBlockSize() == [128, 128]
+    smin, smax, smean, _ = ds.GetRasterBand(1).GetStatistics(False, True)
+    assert (smin, smax) == (float(arr.min()), float(arr.max()))
+    assert smean == pytest.approx(float(arr.mean()))
+    ds = None
+    gdal.Unlink(out)

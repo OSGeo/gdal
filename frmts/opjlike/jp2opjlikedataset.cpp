@@ -101,6 +101,38 @@ static CPL_INLINE GByte CLAMP_0_255(int val)
 }
 
 /************************************************************************/
+/*                           YCbCr420ToBand()                           */
+/************************************************************************/
+
+// Convert 4:2:0 YCbCr band to RGB. Supports both 16 and 32 bit source buffers
+template <typename T>
+static void YCbCr420ToBand(const T *pSrcY, uint32_t nStrideY, const T *pSrcCb,
+                           uint32_t nStrideCb, const T *pSrcCr,
+                           uint32_t nStrideCr, GByte *pDst, int nBlockXSize,
+                           int nWidthToRead, GPtrDiff_t nHeightToRead,
+                           int iBand)
+{
+    for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+    {
+        for (int i = 0; i < nWidthToRead; i++)
+        {
+            const int Y = pSrcY[j * nStrideY + i];
+            const int Cb = pSrcCb[(j / 2) * nStrideCb + (i / 2)];
+            const int Cr = pSrcCr[(j / 2) * nStrideCr + (i / 2)];
+            if (iBand == 1)
+                pDst[j * nBlockXSize + i] =
+                    CLAMP_0_255(static_cast<int>(Y + 1.402 * (Cr - 128)));
+            else if (iBand == 2)
+                pDst[j * nBlockXSize + i] = CLAMP_0_255(static_cast<int>(
+                    Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
+            else if (iBand == 3)
+                pDst[j * nBlockXSize + i] =
+                    CLAMP_0_255(static_cast<int>(Y + 1.772 * (Cb - 128)));
+        }
+    }
+}
+
+/************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
@@ -640,39 +672,27 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
             }
             else
             {
-                const auto pSrcY =
-                    static_cast<int32_t *>(localctx.psImage->comps[0].data);
-                const auto pSrcCb =
-                    static_cast<int32_t *>(localctx.psImage->comps[1].data);
-                const auto pSrcCr =
-                    static_cast<int32_t *>(localctx.psImage->comps[2].data);
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
-                {
-                    for (int i = 0; i < nWidthToRead; i++)
-                    {
-                        int Y =
-                            pSrcY[j * localctx.stride(localctx.psImage->comps) +
-                                  i];
-                        int Cb =
-                            pSrcCb[(j / 2) * localctx.stride(
-                                                 localctx.psImage->comps + 1) +
-                                   (i / 2)];
-                        int Cr =
-                            pSrcCr[(j / 2) * localctx.stride(
-                                                 localctx.psImage->comps + 2) +
-                                   (i / 2)];
-                        if (iBand == 1)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
-                                static_cast<int>(Y + 1.402 * (Cr - 128)));
-                        else if (iBand == 2)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
-                                static_cast<int>(Y - 0.34414 * (Cb - 128) -
-                                                 0.71414 * (Cr - 128)));
-                        else if (iBand == 3)
-                            pDst[j * nBlockXSize + i] = CLAMP_0_255(
-                                static_cast<int>(Y + 1.772 * (Cb - 128)));
-                    }
-                }
+                const uint32_t nStrideY =
+                    localctx.stride(localctx.psImage->comps);
+                const uint32_t nStrideCb =
+                    localctx.stride(localctx.psImage->comps + 1);
+                const uint32_t nStrideCr =
+                    localctx.stride(localctx.psImage->comps + 2);
+                const void *pY = localctx.psImage->comps[0].data;
+                const void *pCb = localctx.psImage->comps[1].data;
+                const void *pCr = localctx.psImage->comps[2].data;
+                if (CODEC::getDataType(localctx.psImage->comps) == GDT_Int16)
+                    YCbCr420ToBand(static_cast<const int16_t *>(pY), nStrideY,
+                                   static_cast<const int16_t *>(pCb), nStrideCb,
+                                   static_cast<const int16_t *>(pCr), nStrideCr,
+                                   pDst, nBlockXSize, nWidthToRead,
+                                   nHeightToRead, iBand);
+                else
+                    YCbCr420ToBand(static_cast<const int32_t *>(pY), nStrideY,
+                                   static_cast<const int32_t *>(pCb), nStrideCb,
+                                   static_cast<const int32_t *>(pCr), nStrideCr,
+                                   pDst, nBlockXSize, nWidthToRead,
+                                   nHeightToRead, iBand);
             }
 
             if (bPromoteTo8Bit)
@@ -702,41 +722,46 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 goto end;
             }
 
-            auto src =
-                static_cast<int32_t *>(localctx.psImage->comps[iBand - 1].data);
+            const GDALDataType eSrcType =
+                CODEC::getDataType(localctx.psImage->comps + iBand - 1);
+            const int nSrcTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
+            const int nSrcStride = static_cast<int>(
+                localctx.stride(localctx.psImage->comps + iBand - 1));
+            GByte *src = static_cast<GByte *>(
+                static_cast<void *>(localctx.psImage->comps[iBand - 1].data));
             if (bPromoteTo8Bit)
             {
                 for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
-                        src[j * localctx.stride(localctx.psImage->comps +
-                                                iBand - 1) +
-                            i] *= 255;
+                        const GPtrDiff_t nOff = j * nSrcStride + i;
+                        if (eSrcType == GDT_Int16)
+                            reinterpret_cast<int16_t *>(src)[nOff] *= 255;
+                        else
+                            reinterpret_cast<int32_t *>(src)[nOff] *= 255;
                     }
                 }
             }
 
-            if (static_cast<int>(localctx.stride(localctx.psImage->comps +
-                                                 iBand - 1)) == nBlockXSize &&
+            if (nSrcStride == nBlockXSize &&
                 static_cast<int>(localctx.psImage->comps[iBand - 1].h) ==
                     nBlockYSize)
             {
-                GDALCopyWords64(
-                    src, GDT_Int32, 4, pDstBuffer, eDataType, nDataTypeSize,
-                    static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                GDALCopyWords64(src, eSrcType, nSrcTypeSize, pDstBuffer,
+                                eDataType, nDataTypeSize,
+                                static_cast<GPtrDiff_t>(nBlockXSize) *
+                                    nBlockYSize);
             }
             else
             {
                 for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
                 {
-                    GDALCopyWords(
-                        src + j * localctx.stride(localctx.psImage->comps +
-                                                  iBand - 1),
-                        GDT_Int32, 4,
-                        static_cast<GByte *>(pDstBuffer) +
-                            j * nBlockXSize * nDataTypeSize,
-                        eDataType, nDataTypeSize, nWidthToRead);
+                    GDALCopyWords(src + j * nSrcStride * nSrcTypeSize, eSrcType,
+                                  nSrcTypeSize,
+                                  static_cast<GByte *>(pDstBuffer) +
+                                      j * nBlockXSize * nDataTypeSize,
+                                  eDataType, nDataTypeSize, nWidthToRead);
                 }
             }
         }
