@@ -2971,6 +2971,10 @@ bool CPL_DLL GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
 bool CPL_DLL GDALMDArrayIsRegularlySpaced(GDALMDArrayH hArray, double *pdfStart,
                                           double *pdfIncrement);
 
+GDALMDArrayH CPL_DLL GDALMDArrayBinaryOperation(
+    GDALMDArrayH hArrayLeft, GDALRasterAlgebraBinaryOperation eOp,
+    GDALMDArrayH hArrayRight) CPL_WARN_UNUSED_RESULT;
+
 #ifdef __cplusplus
 extern "C++"
 {

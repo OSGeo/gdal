@@ -3032,6 +3032,83 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
         return _gdal.MDArray_SetNoDataValueUInt64(self, value)
 
     return _gdal.MDArray_SetNoDataValueDouble(self, value)
+
+  @staticmethod
+  def _get_as_mdarray_if_possible(o):
+        if hasattr(o, "shape") and not isinstance(o, MDArray):
+            from osgeo import gdal_array
+            ds = gdal_array.OpenMultiDimensionalNumPyArray(o)
+            return ds.GetRootGroup().OpenMDArray("array")
+        else:
+            return o
+
+  def __add__(self, other):
+      """Add this array to another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_ADD, other)
+
+  # Define __array_priority__ so that numpy doesn't just forward us the first
+  # value of the array
+  __array_priority__ = 1000
+
+  def __radd__(self, other):
+      """Add this array to another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_ADD, self)
+
+  def __sub__(self, other):
+      """Subtract this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_SUB, other)
+
+  def __rsub__(self, other):
+      """Subtract this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_SUB, self)
+
+  def __mul__(self, other):
+      """Multiply this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_MUL, other)
+
+  def __rmul__(self, other):
+      """Multiply this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_MUL, self)
+
+  def __truediv__(self, other):
+      """Divide this array by another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_DIV, other)
+
+  def __rtruediv__(self, other):
+      """Divide this array by another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_DIV, self)
 %}
 
 }
