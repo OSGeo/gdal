@@ -2139,16 +2139,21 @@ def test_vrt_usemaskband(tmp_vsimem):
 
 def test_vrt_usemaskband_alpha(tmp_vsimem):
 
-    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 3, 1, 2)
-    ds.GetRasterBand(1).Fill(255)
-    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 1, b"\xff")
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 3, 1, 2) as ds:
+        # band 1 : [ 255, - , - ]
+        # band 2 : [ 0,  255, 0 ]
+        ds.GetRasterBand(1).Fill(255)
+        ds.GetRasterBand(1).CreateMaskBand(0)
+        ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xff")
+        ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
 
-    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 3, 1, 2)
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-    ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
-    ds = None
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 3, 1, 2) as ds:
+        # band 1 : [ 127, 127, 127 ]
+        # band 2 : [   0, 255,   0 ]
+        ds.GetRasterBand(1).Fill(127)
+        ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
 
     vrt_text = f"""<VRTDataset rasterXSize="3" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
@@ -2187,7 +2192,7 @@ def test_vrt_usemaskband_alpha(tmp_vsimem):
 </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert struct.unpack("B" * 3, ds.GetRasterBand(1).ReadRaster()) == (255, 127, 0)
-    assert struct.unpack("B" * 3, ds.GetRasterBand(2).ReadRaster()) == (255, 255, 0)
+    assert struct.unpack("B" * 3, ds.GetRasterBand(2).ReadRaster()) == (0, 255, 0)
 
 
 def test_vrt_check_dont_open_unneeded_source(tmp_vsimem):
