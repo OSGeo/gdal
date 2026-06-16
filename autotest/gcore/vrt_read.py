@@ -32,13 +32,6 @@ pytestmark = pytest.mark.skipif(
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
-###############################################################################
 # When imported build a list of units based on the files available.
 
 
@@ -82,12 +75,8 @@ def test_vrt_open(filename, checksum):
 def test_vrt_read_non_existing_source(filename):
 
     ds = gdal.Open(filename)
-    with gdal.quiet_errors():
-        cs = ds.GetRasterBand(1).Checksum()
-    if ds is None:
-        return
-
-    assert cs == -1
+    with pytest.raises(Exception, match="I/O read error"):
+        ds.GetRasterBand(1).Checksum()
 
     ds.GetMetadata()
     ds.GetRasterBand(1).GetMetadata()
@@ -294,8 +283,8 @@ def test_vrt_read_7(tmp_vsimem):
 
     gdal.FileFromMemBuffer(filename, content)
     ds = gdal.Open(filename)
-    with gdaltest.error_raised(gdal.CE_Failure, "Recursion detected"):
-        assert ds.GetRasterBand(1).Checksum() == -1
+    with pytest.raises(Exception, match="Recursion detected"):
+        ds.GetRasterBand(1).Checksum()
 
 
 ###############################################################################
@@ -1129,11 +1118,10 @@ def test_vrt_read_27():
 
 def test_vrt_read_28():
 
-    with gdal.quiet_errors():
-        ds = gdal.Open(
+    with pytest.raises(Exception, match="(No such file|does not exist)"):
+        gdal.Open(
             '<VRTDataset rasterXSize="1 "rasterYSize="1"><VRTRasterBand band="-2147483648"><SimpleSource></SimpleSource></VRTRasterBand></VRTDataset>'
         )
-    assert ds is None
 
 
 ###############################################################################
@@ -1337,7 +1325,9 @@ def test_vrt_invalid_srcrect():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>"""
-    assert gdal.Open(vrt_text) is None
+
+    with pytest.raises(Exception, match="Wrong values in SrcRect"):
+        gdal.Open(vrt_text)
 
 
 def test_vrt_invalid_dstrect():
@@ -1353,7 +1343,9 @@ def test_vrt_invalid_dstrect():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>"""
-    assert gdal.Open(vrt_text) is None
+
+    with pytest.raises(Exception, match="Wrong values in DstRect"):
+        gdal.Open(vrt_text)
 
 
 def test_vrt_no_explicit_dataAxisToSRSAxisMapping():
@@ -1450,8 +1442,8 @@ def test_vrt_invalid_source_band():
   </VRTRasterBand>
 </VRTDataset>"""
     ds = gdal.Open(vrt_text)
-    with gdal.quiet_errors():
-        assert ds.GetRasterBand(1).Checksum() == -1
+    with pytest.raises(Exception, match="Illegal band"):
+        ds.GetRasterBand(1).Checksum()
 
 
 @gdaltest.enable_exceptions()
@@ -1912,33 +1904,6 @@ def test_vrt_source_no_dstrect():
     gdal.Unlink(filename)
 
 
-def test_vrt_dataset_rasterio_recursion_detection():
-
-    gdal.FileFromMemBuffer(
-        "/vsimem/test.vrt",
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
-  <VRTRasterBand dataType="Byte" band="1">
-    <SimpleSource>
-      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
-      <SourceBand>1</SourceBand>
-      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
-      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
-      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
-    </SimpleSource>
-    <Overview>
-        <SourceFilename relativeToVRT="0">/vsimem/test.vrt</SourceFilename>
-        <SourceBand>1</SourceBand>
-    </Overview>
-  </VRTRasterBand>
-</VRTDataset>""",
-    )
-
-    ds = gdal.Open("/vsimem/test.vrt")
-    with gdal.quiet_errors():
-        ds.ReadRaster(0, 0, 20, 20, 10, 10)
-    gdal.Unlink("/vsimem/test.vrt")
-
-
 def test_vrt_dataset_rasterio_recursion_detection_does_not_trigger():
 
     vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
@@ -1969,6 +1934,38 @@ def test_vrt_dataset_rasterio_recursion_detection_does_not_trigger():
     ds = gdal.Open("data/rgbsmall.tif")
     ref_data = ds.ReadRaster(0, 0, 50, 50, 25, 25, resample_alg=gdal.GRIORA_Cubic)
     assert got_data == ref_data
+
+
+def test_vrt_dataset_rasterio_recursion_detection_does_not_trigger_2(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.vrt",
+        """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <Overview>
+        <SourceFilename relativeToVRT="0">{test.vrt}</SourceFilename>
+        <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+</VRTDataset>""",
+    )
+
+    with gdal.Open(tmp_vsimem / "test.vrt") as ds:
+        vrt_values = ds.ReadRaster(0, 0, 20, 20, 10, 10)
+        assert vrt_values is not None
+
+    with gdal.Open("data/byte.tif") as ds:
+        tif_values = ds.ReadRaster(0, 0, 20, 20, 10, 10)
+        assert tif_values is not None
+
+    assert vrt_values == tif_values
 
 
 def test_vrt_dataset_rasterio_non_nearest_resampling_source_with_ovr(tmp_vsimem):
@@ -2142,17 +2139,21 @@ def test_vrt_usemaskband(tmp_vsimem):
 
 def test_vrt_usemaskband_alpha(tmp_vsimem):
 
-    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 3, 1, 2)
-    ds.GetRasterBand(1).Fill(255)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xff")
-    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 1, b"\xff")
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 3, 1, 2) as ds:
+        # band 1 : [ 255, - , - ]
+        # band 2 : [ 0,  255, 0 ]
+        ds.GetRasterBand(1).Fill(255)
+        ds.GetRasterBand(1).CreateMaskBand(0)
+        ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xff")
+        ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
 
-    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 3, 1, 2)
-    ds.GetRasterBand(1).Fill(127)
-    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-    ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
-    ds = None
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 3, 1, 2) as ds:
+        # band 1 : [ 127, 127, 127 ]
+        # band 2 : [   0, 255,   0 ]
+        ds.GetRasterBand(1).Fill(127)
+        ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
 
     vrt_text = f"""<VRTDataset rasterXSize="3" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
@@ -2191,7 +2192,7 @@ def test_vrt_usemaskband_alpha(tmp_vsimem):
 </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     assert struct.unpack("B" * 3, ds.GetRasterBand(1).ReadRaster()) == (255, 127, 0)
-    assert struct.unpack("B" * 3, ds.GetRasterBand(2).ReadRaster()) == (255, 255, 0)
+    assert struct.unpack("B" * 3, ds.GetRasterBand(2).ReadRaster()) == (0, 255, 0)
 
 
 def test_vrt_check_dont_open_unneeded_source(tmp_vsimem):
@@ -2217,12 +2218,13 @@ def test_vrt_check_dont_open_unneeded_source(tmp_vsimem):
     tmpfilename = tmp_vsimem / "tmp.vrt"
     gdal.FileFromMemBuffer(tmpfilename, vrt)
 
+    # should succeed because srcwin does not touch non-existing file
     ds = gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10 10")
     assert ds is not None
 
-    with gdal.quiet_errors():
-        ds = gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10.1 10.1")
-    assert ds is None
+    # should fail because srcwin does touches non-existing file
+    with pytest.raises(Exception, match="No such file"):
+        gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10.1 10.1")
 
 
 def test_vrt_check_dont_open_unneeded_source_with_complex_source_nodata(tmp_vsimem):
@@ -2250,12 +2252,13 @@ def test_vrt_check_dont_open_unneeded_source_with_complex_source_nodata(tmp_vsim
     tmpfilename = tmp_vsimem / "tmp.vrt"
     gdal.FileFromMemBuffer(tmpfilename, vrt)
 
+    # should succeed because srcwin does not touch non-existing file
     ds = gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10 10")
     assert ds is not None
 
-    with gdal.quiet_errors():
-        ds = gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10.1 10.1")
-    assert ds is None
+    # should fail because srcwin does touches non-existing file
+    with pytest.raises(Exception, match="No such file"):
+        gdal.Translate("", tmpfilename, options="-of MEM -srcwin 0 0 10.1 10.1")
 
 
 def test_vrt_nodata_and_implicit_ovr_recursion_issue(tmp_vsimem):
@@ -2501,14 +2504,17 @@ def test_vrt_read_compute_statistics_mosaic_optimization_src_with_nodata_all():
     src_ds1.GetRasterBand(1).SetNoDataValue(10)
     src_ds2.GetRasterBand(1).SetNoDataValue(10)
 
-    with gdal.quiet_errors():
-        minmax = vrt_ds.GetRasterBand(1).ComputeRasterMinMax(False)
-    assert math.isnan(minmax[0])
-    assert math.isnan(minmax[1])
+    with pytest.raises(Exception, match="no valid pixels found"):
+        vrt_ds.GetRasterBand(1).ComputeRasterMinMax(False)
 
-    with gdal.quiet_errors():
-        vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
-        assert vrt_stats is None
+    with gdaltest.disable_exceptions():
+        minmax = vrt_ds.GetRasterBand(1).ComputeRasterMinMax(False)
+
+        assert math.isnan(minmax[0])
+        assert math.isnan(minmax[1])
+
+    with pytest.raises(Exception, match="no valid pixels found"):
+        vrt_ds.GetRasterBand(1).ComputeStatistics(False)
         assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
 
 

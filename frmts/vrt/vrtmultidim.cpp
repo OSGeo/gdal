@@ -584,8 +584,8 @@ std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
         if (poFoundDim == nullptr || poFoundDim->GetSize() != poDim->GetSize())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "One input dimension is not a VRTDimension "
-                     "or a VRTDimension of this dataset");
+                     "One input dimension is not a VRTDimension, "
+                     "or is not a VRTDimension of this dataset");
             return nullptr;
         }
     }
@@ -650,6 +650,11 @@ static GDALExtendedDataType ParseDataType(const CPLXMLNode *psNode)
     else
     {
         const auto eDT = GDALGetDataTypeByName(psType->psChild->pszValue);
+        if (eDT == GDT_Unknown)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Unknown DataType: %s",
+                     psType->psChild->pszValue);
+        }
         dt = GDALExtendedDataType::Create(eDT);
     }
     return dt;
