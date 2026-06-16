@@ -357,6 +357,12 @@ struct GRKCodecWrapper
         return comp->stride;
     }
 
+    // Grok decodes low-precision components into int16_t buffers
+    static GDALDataType getDataType(jp2_image_comp *comp)
+    {
+        return comp->data_type == GRK_INT_16 ? GDT_Int16 : GDT_Int32;
+    }
+
     /**
      * @brief Opens a @ref VSILFILE virtual file
      *
