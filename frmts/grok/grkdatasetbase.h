@@ -1948,6 +1948,13 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     bool bSwathOnlyWarned_ = false;      ///< Throttle no-AdviseRead warning
     bool bAdviseReadCalled_ = false;     ///< True if AdviseRead() was invoked
     bool bSyncFallback_ = false;         ///< True when sync fallback taken
+    bool bDecodeConsumed_ = false;   ///< grk_decompress() has run; codec spent
+    bool bCachePersistent_ = false;  ///< cached decode kept tiles (CACHE_IMAGE)
+    int cacheServedY1_ = 0;          ///< bottom row drained from cached decode
+    int decWinX0_ = 0;  ///< cached decode window (this level coords)
+    int decWinY0_ = 0;
+    int decWinX1_ = 0;
+    int decWinY1_ = 0;
     VSILFILE *m_ovFp = nullptr;  ///< Private file handle for overview codec
 
     /**
@@ -2032,6 +2039,9 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         fullDecompress_ = (nXOff == m_nX0 && nYOff == m_nY0 &&
                            nXSize == nParentXSize && nYSize == nParentYSize);
         initializedAsync = false;
+        // New region: drop the prior decode's result cache.
+        hasCachedPostPreload_ = false;
+        bSyncFallback_ = false;
         bAdviseReadCalled_ = true;
 
         return CE_None;
@@ -2660,6 +2670,71 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     }
 
     /**
+     * @brief Rebuilds m_codec for a fresh decode (codec is single-shot).
+     * @return true on success; false (m_codec == nullptr) on failure.
+     */
+    bool reinitCodec(void)
+    {
+        delete m_codec;
+        m_codec = new GRKCodecWrapper();
+
+        if (GrokCanRead(m_osFilename.c_str()))
+        {
+            if (m_ovFp)
+            {
+                VSIFCloseL(m_ovFp);
+                m_ovFp = nullptr;
+            }
+            m_codec->open(nullptr, nCodeStreamStart);
+        }
+        else
+        {
+            VSILFILE *fp = fp_;
+            if (iLevel > 0)
+            {
+                // Overview: fresh private handle resets file position.
+                if (m_ovFp)
+                {
+                    VSIFCloseL(m_ovFp);
+                    m_ovFp = nullptr;
+                }
+                m_ovFp = VSIFOpenL(m_osFilename.c_str(), "rb");
+                if (!m_ovFp)
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "reinitCodec: reopen failed");
+                    delete m_codec;
+                    m_codec = nullptr;
+                    return false;
+                }
+                fp = m_ovFp;
+            }
+            m_codec->open(fp, nCodeStreamStart);
+        }
+
+        uint32_t nTileW = 0, nTileH = 0;
+        int numRes = 0;
+        if (!m_codec->setUpDecompress(GetNumThreads(), m_osFilename.c_str(),
+                                      nCodeStreamLength, &nTileW, &nTileH,
+                                      &numRes))
+        {
+            delete m_codec;
+            m_codec = nullptr;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "reinitCodec: codec reinit failed");
+            return false;
+        }
+        CPLErrorReset();
+
+        initializedAsync = false;
+        hasCachedPostPreload_ = false;
+        bSyncFallback_ = false;
+        bDecodeConsumed_ = false;
+        cacheServedY1_ = 0;
+        return true;
+    }
+
+    /**
      * @brief Initializes or reuses Grok async decompression.
      *
      * On first call (initializedAsync=false), configures decompress params
@@ -2731,6 +2806,20 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             CPLErrorReset();
         }
 
+        // Reuse the cache only for resident tiles: a non-persistent decode
+        // drains forward, so a backward/out-of-window swath needs a rebuild.
+        if (hasCachedPostPreload_)
+        {
+            const int reqY1 = swath_y0 + swath_height;
+            const bool within =
+                swath_x0 >= decWinX0_ && swath_y0 >= decWinY0_ &&
+                swath_x0 + swath_width <= decWinX1_ && reqY1 <= decWinY1_;
+            const bool reusable =
+                within && (bCachePersistent_ || swath_y0 >= cacheServedY1_);
+            if (!reusable && !reinitCodec())
+                return rc;
+        }
+
         // After the first decompress completes, tile data stays in the
         // codec's tile cache.  Call grk_decompress_wait() for each
         // swath to get correct tile coordinates and trigger tile
@@ -2772,6 +2861,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 grk_decompress_wait(m_codec->pCodec, &sw);
             }
 
+            cacheServedY1_ =
+                std::max(cacheServedY1_, static_cast<int>(cached.y1));
             return cached;
         }
 
@@ -2814,62 +2905,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
             // grk_decompress_update() only works pre-decode; recreate the
             // codec to retarget the swath.
-            if (initializedAsync)
-            {
-                delete m_codec;
-                m_codec = new GRKCodecWrapper();
-
-                // Prefer native I/O: Grok reads the file itself, faster than
-                // routing every block through VSILFILE callbacks (especially
-                // over the network). Only use a VSILFILE when Grok cannot read
-                // the path (e.g. /vsimem, /vsicurl).
-                if (GrokCanRead(m_osFilename.c_str()))
-                {
-                    if (m_ovFp)
-                    {
-                        VSIFCloseL(m_ovFp);
-                        m_ovFp = nullptr;
-                    }
-                    m_codec->open(nullptr, nCodeStreamStart);
-                }
-                else
-                {
-                    VSILFILE *fp = fp_;
-                    if (iLevel > 0)
-                    {
-                        // Overview: fresh private handle resets file position.
-                        if (m_ovFp)
-                        {
-                            VSIFCloseL(m_ovFp);
-                            m_ovFp = nullptr;
-                        }
-                        m_ovFp = VSIFOpenL(m_osFilename.c_str(), "rb");
-                        if (!m_ovFp)
-                        {
-                            CPLError(CE_Failure, CPLE_OpenFailed,
-                                     "sync fallback: reopen failed");
-                            return rc;
-                        }
-                        fp = m_ovFp;
-                    }
-                    m_codec->open(fp, nCodeStreamStart);
-                }
-                uint32_t nTileW = 0, nTileH = 0;
-                int numRes = 0;
-                if (!m_codec->setUpDecompress(
-                        GetNumThreads(), m_osFilename.c_str(),
-                        nCodeStreamLength, &nTileW, &nTileH, &numRes))
-                {
-                    delete m_codec;
-                    m_codec = nullptr;
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "sync fallback: codec reinit failed");
-                    return rc;
-                }
-                CPLErrorReset();
-                initializedAsync = false;
-                hasCachedPostPreload_ = false;
-            }
+            if (initializedAsync && !reinitCodec())
+                return rc;
 
             grk_decompress_parameters decompressParams = {};
             decompressParams.asynchronous = false;
@@ -2902,6 +2939,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             }
             initializedAsync = true;
             bSyncFallback_ = true;
+            bDecodeConsumed_ = true;
 
             // PostPreload for the swath; CopyTiles runs tile-by-tile, so
             // rowCopyDone_ stays false.
@@ -2938,6 +2976,10 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
         if (!initializedAsync)
         {
+            // Spent codec from a prior decode cannot be retargeted; rebuild.
+            if (bDecodeConsumed_ && !reinitCodec())
+                return rc;
+
             grk_decompress_parameters decompressParams = {};
             decompressParams.asynchronous = true;
             decompressParams.simulate_synchronous = true;
@@ -2976,6 +3018,24 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 }
             }
 
+            // Record decoded window + tile strategy for cache-reuse checks.
+            bCachePersistent_ = needPersistentTiles;
+            cacheServedY1_ = 0;
+            if (this->fullDecompress_)
+            {
+                decWinX0_ = 0;
+                decWinY0_ = 0;
+                decWinX1_ = nFullX;
+                decWinY1_ = nFullY;
+            }
+            else
+            {
+                decWinX0_ = static_cast<int>(decompressParams.dw_x0);
+                decWinY0_ = static_cast<int>(decompressParams.dw_y0);
+                decWinX1_ = static_cast<int>(decompressParams.dw_x1);
+                decWinY1_ = static_cast<int>(decompressParams.dw_y1);
+            }
+
             if (!grk_decompress_update(&decompressParams, m_codec->pCodec))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -2989,6 +3049,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 return rc;
             }
             initializedAsync = true;
+            bDecodeConsumed_ = true;
         }
 
         // For multi-tile images, wait row-by-row to advance
@@ -3069,6 +3130,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
         cachedPostPreload_ = rc;
         hasCachedPostPreload_ = true;
+        cacheServedY1_ = std::max(cacheServedY1_, static_cast<int>(rc.y1));
 
         return rc;
     }
