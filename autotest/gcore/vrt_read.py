@@ -1118,7 +1118,7 @@ def test_vrt_read_27():
 
 def test_vrt_read_28():
 
-    with pytest.raises(Exception, match="No such file"):
+    with pytest.raises(Exception, match="(No such file|does not exist)"):
         gdal.Open(
             '<VRTDataset rasterXSize="1 "rasterYSize="1"><VRTRasterBand band="-2147483648"><SimpleSource></SimpleSource></VRTRasterBand></VRTDataset>'
         )
