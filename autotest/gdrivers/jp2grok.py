@@ -1671,3 +1671,29 @@ def test_jp2grok_statistics_16bit_multi_tile():
     assert smean == pytest.approx(float(arr.mean()))
     ds = None
     gdal.Unlink(out)
+
+
+def test_jp2grok_reuse_dataset_consecutive_reads():
+    # Two reads on the same dataset instance must both be correct: the
+    # single-shot codec is rebuilt for the second operation.
+    np = pytest.importorskip("numpy")
+    truth = _truth(SYNC_SRC)
+    ds = gdal.Open(SYNC_SRC)
+    out1 = gdal.Translate("", ds, format="MEM")
+    out2 = gdal.Translate("", ds, format="MEM")
+    assert np.array_equal(out1.GetRasterBand(1).ReadAsArray(), truth)
+    assert np.array_equal(out2.GetRasterBand(1).ReadAsArray(), truth)
+
+
+def test_jp2grok_partial_reads_after_full_no_advise():
+    # Full read (drains the codec) then partial reads on the same instance
+    # without a new AdviseRead: each must rebuild/reuse correctly.
+    np = pytest.importorskip("numpy")
+    truth = _truth(SYNC_SRC)
+    ds = gdal.Open(SYNC_SRC)
+    full = gdal.Translate("", ds, format="MEM")
+    assert np.array_equal(full.GetRasterBand(1).ReadAsArray(), truth)
+    band = ds.GetRasterBand(1)
+    for x, y, w, h in [(0, 0, 100, 100), (200, 200, 100, 100), (0, 400, 100, 100)]:
+        got = band.ReadAsArray(x, y, w, h)
+        assert np.array_equal(got, truth[y : y + h, x : x + w])
