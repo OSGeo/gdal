@@ -1673,6 +1673,38 @@ def test_jp2grok_statistics_16bit_multi_tile():
     gdal.Unlink(out)
 
 
+def _jp2grok_checksums_in_subprocess(src, num_threads):
+    # The driver resolves Grok's thread count once per process (std::call_once),
+    # so single-threaded mode must be exercised in a fresh process
+    import subprocess
+
+    code = (
+        "import sys; from osgeo import gdal; gdal.UseExceptions();"
+        "ds = gdal.OpenEx(sys.argv[1], allowed_drivers=['JP2Grok']);"
+        "print(' '.join(str(ds.GetRasterBand(b + 1).Checksum())"
+        " for b in range(ds.RasterCount)))"
+    )
+    env = dict(os.environ)
+    env["GDAL_NUM_THREADS"] = str(num_threads)
+    out = subprocess.check_output(
+        [sys.executable, "-c", code, os.path.abspath(src)], env=env
+    )
+    return out.decode().strip()
+
+
+@pytest.mark.parametrize(
+    "src", ["data/jpeg2000/byte.jp2", "data/jpeg2000/tile_size_16.jp2"]
+)
+def test_jp2grok_single_threaded_matches_multi(src):
+    # GDAL_NUM_THREADS=1 runs Grok fully single-threaded
+    # output must match multi-threaded decode.
+    if not os.path.exists(src):
+        pytest.skip(f"{src} not available")
+    st = _jp2grok_checksums_in_subprocess(src, 1)
+    mt = _jp2grok_checksums_in_subprocess(src, 8)
+    assert st == mt
+
+
 def test_jp2grok_reuse_dataset_consecutive_reads():
     # Two reads on the same dataset instance must both be correct: the
     # single-shot codec is rebuilt for the second operation.
