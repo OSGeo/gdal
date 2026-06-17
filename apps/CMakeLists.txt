@@ -181,6 +181,12 @@ if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
 endif()
 
+if (GDAL_USE_MUPARSER)
+  target_compile_definitions(appslib PRIVATE -DHAVE_MUPARSER=1)
+else()
+  target_compile_definitions(appslib PRIVATE -DHAVE_MUPARSER=0)
+endif()
+
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 if (GDAL_USE_GEOS)

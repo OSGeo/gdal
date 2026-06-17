@@ -18,6 +18,8 @@
 class GDALRasterBand;
 class GDALDataset;
 
+#include <algorithm>
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -77,7 +79,26 @@ class GDALRasterCompareAlgorithm /* non final */
                                    const std::string &metadataDomain,
                                    CSLConstList aosRef, CSLConstList aosInput);
 
+    static constexpr const char *METRIC_ALL = "all";
+    static constexpr const char *METRIC_NONE = "none";
+    static constexpr const char *METRIC_DIFF = "diff";
+    static constexpr const char *METRIC_RMSD = "RMSD";
+    static constexpr const char *METRIC_PSNR = "PSNR";
+
+    bool HasMetric(const char *pszMetric) const
+    {
+        CPLAssert(!EQUAL(pszMetric, METRIC_ALL));
+        return std::find(m_metrics.begin(), m_metrics.end(), pszMetric) !=
+                   m_metrics.end() ||
+               (!EQUAL(pszMetric, METRIC_NONE) &&
+                std::find(m_metrics.begin(), m_metrics.end(), METRIC_ALL) !=
+                    m_metrics.end());
+    }
+
     GDALArgDatasetValue m_referenceDataset{};
+
+    static constexpr const char *METRIC_DEFAULT = METRIC_DIFF;
+    std::vector<std::string> m_metrics{METRIC_DEFAULT};
     bool m_skipAllOptional = false;
     bool m_skipBinary = false;
     bool m_skipCRS = false;
