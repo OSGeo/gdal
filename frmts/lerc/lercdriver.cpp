@@ -426,8 +426,10 @@ GDALDataset *LERCDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-    // nCols * nRows limitation is due to liblerc assuming it fits on int
+    // nCols * nRows * nDepth limitation is due to liblerc assuming it fits on int
+    // Cf third_party/LercLib/Lerc.cpp#L381
     if (nCols > std::numeric_limits<int>::max() / nRows ||
+        nCols * nRows > std::numeric_limits<int>::max() / nDepth ||
         nDepth > static_cast<unsigned>(std::numeric_limits<int>::max()) /
                      nLercBands ||
         static_cast<size_t>(nCols) * nRows >
