@@ -1936,12 +1936,13 @@ CPLErr VRTDerivedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                                double *pdfMax, double *pdfMean,
                                                double *pdfStdDev,
                                                GDALProgressFunc pfnProgress,
-                                               void *pProgressData)
+                                               void *pProgressData,
+                                               CSLConstList papszOptions)
 
 {
     return GDALRasterBand::ComputeStatistics(bApproxOK, pdfMin, pdfMax, pdfMean,
                                              pdfStdDev, pfnProgress,
-                                             pProgressData);
+                                             pProgressData, papszOptions);
 }
 
 /************************************************************************/

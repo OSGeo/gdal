@@ -685,8 +685,9 @@ static double GDALGetAbsoluteValFromPct(GDALRasterBand *poBand, double dfPct)
         double dfMean = 0.0;
         double dfStdDev = 0.0;
         CPLDebug("GDAL", "Computing source raster statistics...");
+        const char *const apszOptions[] = {"SET_STATISTICS=FALSE", nullptr};
         poBand->ComputeStatistics(false, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                                  nullptr, nullptr);
+                                  nullptr, nullptr, apszOptions);
     }
     return dfMin + dfPct * (dfMax - dfMin);
 }

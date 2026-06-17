@@ -196,14 +196,18 @@ CPLErr NITFProxyPamRasterBand::GetStatistics(int bApproxOK, int bForce,
 
 CPLErr NITFProxyPamRasterBand::ComputeStatistics(
     int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean,
-    double *pdfStdDev, GDALProgressFunc pfn, void *pProgressData)
+    double *pdfStdDev, GDALProgressFunc pfn, void *pProgressData,
+    CSLConstList papszOptions)
 {
     GDALRasterBand *_poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
-        CPLErr ret = _poSrcBand->ComputeStatistics(
-            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfn, pProgressData);
-        if (ret == CE_None)
+        const bool bSetStatistics =
+            CPLFetchBool(papszOptions, "SET_STATISTICS", true);
+        CPLErr ret = _poSrcBand->ComputeStatistics(bApproxOK, pdfMin, pdfMax,
+                                                   pdfMean, pdfStdDev, pfn,
+                                                   pProgressData, papszOptions);
+        if (ret == CE_None && bSetStatistics)
         {
             /* Report underlying statistics at PAM level */
             SetMetadataItem("STATISTICS_MINIMUM",

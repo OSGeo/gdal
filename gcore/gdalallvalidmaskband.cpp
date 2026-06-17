@@ -122,7 +122,7 @@ int GDALAllValidMaskBand::GetMaskFlags()
 
 CPLErr GDALAllValidMaskBand::ComputeStatistics(
     int /* bApproxOK */, double *pdfMin, double *pdfMax, double *pdfMean,
-    double *pdfStdDev, GDALProgressFunc, void * /*pProgressData*/)
+    double *pdfStdDev, GDALProgressFunc, void * /*pProgressData*/, CSLConstList)
 {
     if (pdfMin)
         *pdfMin = 255.0;

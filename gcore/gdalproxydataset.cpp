@@ -449,9 +449,10 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetStatistics,
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeStatistics,
                          (int bApproxOK, double *pdfMin, double *pdfMax,
                           double *pdfMean, double *pdfStdDev,
-                          GDALProgressFunc pfn, void *pProgressData),
+                          GDALProgressFunc pfn, void *pProgressData,
+                          CSLConstList papszOptions),
                          (bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfn,
-                          pProgressData))
+                          pProgressData, papszOptions))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetStatistics,
                          (double dfMin, double dfMax, double dfMean,
                           double dfStdDev),

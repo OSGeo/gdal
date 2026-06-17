@@ -1764,3 +1764,16 @@ def test_stats_ComputeInterBandCovarianceMatrix_interrupt():
         ds.ComputeInterBandCovarianceMatrix(
             write_into_metadata=False, callback=my_progress
         )
+
+
+###############################################################################
+
+
+def test_stats_compute_stats_do_not_set():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ds.GetRasterBand(1).Fill(1)
+    assert ds.GetRasterBand(1).ComputeStatistics(
+        False, options={"SET_STATISTICS": False}
+    ) == [1.0, 1.0, 1.0, 0.0]
+    assert ds.GetRasterBand(1).GetMetadata() == {}

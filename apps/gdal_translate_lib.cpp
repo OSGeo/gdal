@@ -1252,7 +1252,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 double dfMin, dfMax, dfMean, dfStdDev;
                 poSrcDS->GetRasterBand(i + 1)->ComputeStatistics(
                     psOptions->bApproxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                    GDALDummyProgress, nullptr);
+                    GDALDummyProgress, nullptr, nullptr);
             }
         }
 
@@ -2583,7 +2583,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             double dfMin, dfMax, dfMean, dfStdDev;
             poVDS->GetRasterBand(i + 1)->ComputeStatistics(
                 psOptions->bApproxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                GDALDummyProgress, nullptr);
+                GDALDummyProgress, nullptr, nullptr);
         }
     }
 

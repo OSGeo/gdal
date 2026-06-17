@@ -22,6 +22,11 @@ From GDAL 3.13 to GDAL 3.14
     * All methods accepting or returning ``OGRBoolean`` (aliased to ``int``)
       have been changed to use ``bool`` instead.
 
+- Changes impacting out-of-tree vector drivers:
+
+    * :cpp:func:`GDALRasterBand::ComputeStatistics` takes an additional
+      ``CSLConstList papszOptions`` parameter.
+
 From GDAL 3.12 to GDAL 3.13
 ---------------------------
 

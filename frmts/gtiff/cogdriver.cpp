@@ -980,7 +980,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
         {
             poCurDS->GetRasterBand(i)->ComputeStatistics(
                 /*bApproxOK=*/FALSE, nullptr, nullptr, nullptr, nullptr,
-                nullptr, nullptr);
+                nullptr, nullptr, nullptr);
         }
     }
     else if (bRemoveStats && bWrkHasStatistics)

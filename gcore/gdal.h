@@ -1835,6 +1835,12 @@ CPLErr CPL_DLL CPL_STDCALL
 GDALComputeRasterStatistics(GDALRasterBandH, int bApproxOK, double *pdfMin,
                             double *pdfMax, double *pdfMean, double *pdfStdDev,
                             GDALProgressFunc pfnProgress, void *pProgressData);
+CPLErr CPL_DLL GDALComputeRasterStatisticsEx(GDALRasterBandH, int bApproxOK,
+                                             double *pdfMin, double *pdfMax,
+                                             double *pdfMean, double *pdfStdDev,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData,
+                                             CSLConstList papszOptions);
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics(GDALRasterBandH hBand,
                                                    double dfMin, double dfMax,
                                                    double dfMean,

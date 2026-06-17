@@ -537,10 +537,21 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr GetStatistics(int bApproxOK, int bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,
                                  double *padfStdDev);
+
+#ifndef DOXYGEN_SKIP
+    virtual CPLErr
+    ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
+                      double *pdfMean, double *pdfStdDev, GDALProgressFunc,
+                      void *pProgressData,
+                      CSLConstList papszOptions OPTIONAL_OUTSIDE_GDAL(nullptr));
+#else
     virtual CPLErr ComputeStatistics(int bApproxOK, double *pdfMin,
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev, GDALProgressFunc,
-                                     void *pProgressData);
+                                     void *pProgressData,
+                                     CSLConstList papszOptions);
+#endif
+
     virtual CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                                  double dfStdDev);
     virtual CPLErr ComputeRasterMinMax(int bApproxOK, double *adfMinMax);

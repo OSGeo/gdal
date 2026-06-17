@@ -5364,7 +5364,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
                                          &dfStdDev) == CE_None ||
                 poSrcBand->ComputeStatistics(TRUE, &dfMin, &dfMax, &dfMean,
                                              &dfStdDev, pfnProgress,
-                                             pProgressData) == CE_None)
+                                             pProgressData, nullptr) == CE_None)
             {
                 CPLString osValue;
 

@@ -1499,9 +1499,9 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             {
                 CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 CPLErrorReset();
-                eErr =
-                    ComputeStatistics(bApproxOK, &adfMinMax[0], &adfMinMax[1],
-                                      nullptr, nullptr, nullptr, nullptr);
+                eErr = ComputeStatistics(bApproxOK, &adfMinMax[0],
+                                         &adfMinMax[1], nullptr, nullptr,
+                                         nullptr, nullptr, nullptr);
                 if (eErr == CE_Failure)
                 {
                     osLastErrorMsg = CPLGetLastErrorMsg();
@@ -1708,7 +1708,8 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                                double *pdfMax, double *pdfMean,
                                                double *pdfStdDev,
                                                GDALProgressFunc pfnProgress,
-                                               void *pProgressData)
+                                               void *pProgressData,
+                                               CSLConstList papszOptions)
 
 {
     const std::string osFctId("VRTSourcedRasterBand::ComputeStatistics");
@@ -1725,6 +1726,9 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         return CE_Failure;
     }
+
+    const bool bSetStatistics =
+        CPLFetchBool(papszOptions, "SET_STATISTICS", true);
 
     /* -------------------------------------------------------------------- */
     /*      If we have overview bands, use them for statistics.             */
@@ -1745,16 +1749,17 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 l_poDS->m_apoOverviews.clear();
                 eErr = poBand->GDALRasterBand::ComputeStatistics(
                     TRUE, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
-                    pProgressData);
+                    pProgressData, papszOptions);
                 l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
             }
             else
             {
                 eErr = poBand->ComputeStatistics(TRUE, pdfMin, pdfMax, pdfMean,
                                                  pdfStdDev, pfnProgress,
-                                                 pProgressData);
+                                                 pProgressData, papszOptions);
             }
-            if (eErr == CE_None && pdfMin && pdfMax && pdfMean && pdfStdDev)
+            if (eErr == CE_None && pdfMin && pdfMax && pdfMean && pdfStdDev &&
+                bSetStatistics)
             {
                 SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
                 SetMetadataItem(
@@ -1789,6 +1794,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             double dfMax = 0;
             double dfMean = 0;
             double dfStdDev = 0;
+            CSLConstList papszOptions = nullptr;
 
             static int CPL_STDCALL ProgressFunc(double dfComplete,
                                                 const char *pszMessage,
@@ -1923,7 +1929,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         psContext->pfnProgress == GDALDummyProgress
                     ? GDALDummyProgress
                     : Job::ProgressFunc,
-                psJob);
+                psJob, psJob->papszOptions);
             const char *pszValidPercent =
                 poSimpleSourceBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
             psJob->nValidPixels =
@@ -2046,6 +2052,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 assert(poSimpleSourceBand);
                 asJobs[i].psContext = &sContext;
                 asJobs[i].poRasterBand = poSimpleSourceBand;
+                asJobs[i].papszOptions = papszOptions;
                 if (!poQueue->SubmitJob(JobRunner, &asJobs[i]))
                 {
                     sContext.bFailure = true;
@@ -2076,6 +2083,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 Job sJob;
                 sJob.psContext = &sContext;
                 sJob.poRasterBand = poSimpleSourceBand;
+                sJob.papszOptions = papszOptions;
                 JobRunner(&sJob);
                 if (sContext.bFailure || sContext.bFallbackToBase)
                     break;
@@ -2095,7 +2103,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 "of source raster");
             return GDALRasterBand::ComputeStatistics(
                 bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
-                pProgressData);
+                pProgressData, papszOptions);
         }
 
         const uint64_t nTotalPixels =
@@ -2140,16 +2148,19 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
         if (sContext.nGlobalValidPixels > 0)
         {
-            if (bApproxOK)
+            if (bSetStatistics)
             {
-                SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
+                if (bApproxOK)
+                {
+                    SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
+                }
+                else if (GetMetadataItem("STATISTICS_APPROXIMATE"))
+                {
+                    SetMetadataItem("STATISTICS_APPROXIMATE", nullptr);
+                }
+                SetStatistics(sContext.dfGlobalMin, sContext.dfGlobalMax,
+                              dfGlobalMean, dfGlobalStdDev);
             }
-            else if (GetMetadataItem("STATISTICS_APPROXIMATE"))
-            {
-                SetMetadataItem("STATISTICS_APPROXIMATE", nullptr);
-            }
-            SetStatistics(sContext.dfGlobalMin, sContext.dfGlobalMax,
-                          dfGlobalMean, dfGlobalStdDev);
         }
         else
         {
@@ -2157,7 +2168,8 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             sContext.dfGlobalMax = 0.0;
         }
 
-        SetValidPercent(nTotalPixels, sContext.nGlobalValidPixels);
+        if (bSetStatistics)
+            SetValidPercent(nTotalPixels, sContext.nGlobalValidPixels);
 
         if (pdfMin)
             *pdfMin = sContext.dfGlobalMin;
@@ -2179,9 +2191,9 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
     }
     else
     {
-        return GDALRasterBand::ComputeStatistics(bApproxOK, pdfMin, pdfMax,
-                                                 pdfMean, pdfStdDev,
-                                                 pfnProgress, pProgressData);
+        return GDALRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
+            pProgressData, papszOptions);
     }
 }
 
