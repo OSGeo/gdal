@@ -589,4 +589,45 @@ class ZarrV3CodecSequence
     GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;
 };
 
+/************************************************************************/
+/*                          ZarrV3CodecPcodec                           */
+/************************************************************************/
+
+/** Non-standard "pcodec" (a.k.a. "pco") from https://github.com/pcodec/pcodec
+ *
+ * Also see https://numcodecs.readthedocs.io/en/stable/compression/pcodec.html
+ */
+class ZarrV3CodecPcodec /* final */ : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "numcodecs.pcodec";
+
+    explicit ZarrV3CodecPcodec();
+    ~ZarrV3CodecPcodec() override;
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+};
+
 #endif

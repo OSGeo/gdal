@@ -20,6 +20,7 @@ RUN apk add --no-cache curl unzip make libtool autoconf automake pkgconfig g++ s
 
 # For PROJ and GDAL
 RUN apk add --no-cache \
+    cargo \
     ccache \
     cmake ninja-build \
     git \
@@ -139,8 +140,13 @@ RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
         echo "Finished"; \
     fi \
     && if [ -n "${WITH_CCACHE:-}" ]; then \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
+        # Little trick to avoid issues with Python bindings
+        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        chmod +x ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        chmod +x ccache_g++.sh; \
+        export CC=$PWD/ccache_gcc.sh; \
+        export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
     && mkdir build \
@@ -151,6 +157,7 @@ RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
         -DCMAKE_BUILD_TYPE=Release \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DGDAL_USE_PCODEC=ON \
         -DBUILD_TESTING=OFF \
     && ninja \
     && DESTDIR="/build" ninja install \
@@ -203,6 +210,7 @@ COPY --from=builder --link  /build_proj/usr/lib/ /usr/lib/
 
 COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/share/doc/ /usr/share/doc/
 COPY --from=builder --link  /build/usr/include/ /usr/include/
 COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 

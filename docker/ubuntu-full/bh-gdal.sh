@@ -97,6 +97,7 @@ fi
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
         -DGDAL_USE_EXPRTK:BOOL=ON \
+        -DGDAL_USE_PCODEC=ON \
 
     ninja
     DEB_PYTHON_INSTALL_LAYOUT=deb_system DESTDIR="/build" ninja install

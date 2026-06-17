@@ -108,6 +108,28 @@ bool ZarrV3CodecSequence::InitFromJson(const std::string &osArrayName,
             bShardingFound = true;
             poCodec = std::make_unique<ZarrV3CodecShardingIndexed>();
         }
+        else if (osName == ZarrV3CodecPcodec::NAME)
+        {
+#ifdef HAVE_PCODEC
+            constexpr bool bHasPcodec = true;
+#else
+            constexpr bool bHasPcodec = false;
+#endif
+            if constexpr (bHasPcodec)
+            {
+                poCodec = std::make_unique<ZarrV3CodecPcodec>();
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "%s: Codec '%s' is supported by GDAL, but not in this "
+                    "particular build. Requires building GDAL with "
+                    "-DGDAL_USE_PCODEC=ON and with a Rust toolchain available",
+                    osArrayName.c_str(), osName.c_str());
+                return false;
+            }
+        }
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported, "%s: Unsupported codec: %s",

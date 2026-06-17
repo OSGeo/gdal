@@ -9,6 +9,7 @@ RUN apt-get update && \
     automake \
     bash \
     bash-completion \
+    cargo \
     ccache \
     cmake \
     clang \

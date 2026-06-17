@@ -760,6 +760,38 @@ Add a georeferencing convention to an existing ZARR dataset
 See :ref:`gdal_driver_zarr_add_georeferencing_convention`.
 
 
+.. _raster.zarr.pcodec:
+
+Building the Zarr driver with ``numcodecs.pcodec`` support
+----------------------------------------------------------
+
+.. versionadded:: 3.14
+
+Optional support for the `numcodecs.pcodec <https://numcodecs.readthedocs.io/en/stable/compression/pcodec.html>`__
+codec (lossless compression) requires the ``cpcodec`` C bindings library for the
+Rust ``pco`` crate from https://github.com/pcodec/pcodec/ to be available,
+and is controlled by the ``GDAL_USE_PCODEC`` CMake boolean variable.
+
+There are two main ways to add support for this codec:
+
+- either the ``cpcodec`` library is already installed on the system, in which
+  case the ``PCODEC_C_INCLUDE_DIR`` CMake variable must be set to point to
+  the directory where :file:`pcodec.h` is located, and ``PCODEC_C_LIBRARY``
+  must be set to the path of :file:`libpcodec.a/.so/.lib`. When both are set and
+  ``GDAL_USE_PCODEC`` has not been explicitly set, it is set to ``ON``. This mode takes
+  precedence over the one described below.
+
+- or, if you have a Rust toolchain available, the GDAL CMake build system
+  will, by default, automatically download
+  https://github.com/corrosion-rs/corrosion.git and
+  https://github.com/pcodec/pcodec.git (if ``git`` is available), and build
+  the required Rust crates.
+  Alternatively, if you wish to download those packages yourself, you can
+  set the ``CORROSION_SOURCE_DIR`` and ``PCODEC_SOURCE_DIR`` CMake variables
+  to point to the locations of the downloaded packages.
+  That mode requires explicit setting of ``GDAL_USE_PCODEC`` to ``ON``, in
+  particular for user consent to ``pcodec`` license (Apache v2).
+
 Examples
 --------
 

@@ -73,6 +73,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
        libmuparser-dev${APT_ARCH_SUFFIX} \
+       cargo${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
 RUN mkdir proj gdal
@@ -197,6 +198,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
+        -DGDAL_USE_PCODEC=ON \
         -DBUILD_TESTING=OFF \
     && ninja \
     && DEB_PYTHON_INSTALL_LAYOUT=deb_system DESTDIR="/build" ninja install \
@@ -268,6 +270,7 @@ COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PRE
 
 COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/share/doc/ /usr/share/doc/
 COPY --from=builder --link  /build/usr/include/ /usr/include/
 COPY --from=builder --link  /build_gdal_python/usr/ /usr/
 COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/

@@ -1663,6 +1663,44 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
     Control whether to use statically built Arrow libraries. Defaults to OFF when Parquet is found.
 
 
+``Pcodec``
+**********
+
+The `Pcodec <https://github.com/pcodec/pcodec>`_ library is an optional
+dependency for the :ref:`raster.zarr` driver.
+
+See :ref:`raster.zarr.pcodec` for details.
+
+.. option:: GDAL_USE_PCODEC=ON/OFF
+
+    Control whether to use ``pcodec``.
+    Defaults to ON when the ``pcodec`` C library (``cpcodec``) is found automatically,
+    or by setting ``PCODEC_C_INCLUDE_DIR`` and ``PCODEC_C_LIBRARY``.
+
+    If an already built ``cpcodec`` library is not available, ``GDAL_USE_PCODEC``
+    can be explicitly set to ON to download ``pcodec`` sources using ``git``.
+    This requires a Rust toolchain to be available.
+
+.. option:: PCODEC_C_INCLUDE_DIR
+
+    Path to an include directory with the ``pcodec.h`` header file.
+
+.. option:: PCODEC_C_LIBRARY
+
+    Path to a shared or static library file with ``cpcodec`` in its name.
+
+.. option:: CORROSION_SOURCE_DIR
+
+    Path to a checkout of https://github.com/corrosion-rs/corrosion.git
+
+.. option:: PCODEC_SOURCE_DIR
+
+    Path to a checkout of https://github.com/pcodec/pcodec.git
+
+``PCODEC_C_INCLUDE_DIR`̀` and ``PCODEC_C_LIBRARY`` are used in priority over
+``CORROSION_SOURCE_DIR`̀` and ``PCODEC_SOURCE_DIR``.
+
+
 PCRE2
 *****
 

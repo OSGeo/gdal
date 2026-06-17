@@ -86,7 +86,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libarrow-dev${APT_ARCH_SUFFIX} \
        libarrow-acero-dev${APT_ARCH_SUFFIX} \
        libarrow-dataset-dev${APT_ARCH_SUFFIX} \
-       libparquet-dev${APT_ARCH_SUFFIX}
+       libparquet-dev${APT_ARCH_SUFFIX} \
+       cargo${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
@@ -616,6 +617,7 @@ COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PRE
 COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
 COPY --from=builder --link  /build/usr/share/java /usr/share/java
 COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/share/doc/ /usr/share/doc/
 COPY --from=builder --link  /build/usr/include/ /usr/include/
 COPY --from=builder --link  /build_gdal_python/usr/ /usr/
 COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/

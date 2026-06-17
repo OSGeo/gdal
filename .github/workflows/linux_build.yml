@@ -295,6 +295,7 @@ jobs:
 
           # For cache
           mkdir -p .gdal
+          mkdir -p .cargo
 
           mkdir -p build-${{ matrix.id }}
           docker run --name gdal-build \
@@ -307,6 +308,7 @@ jobs:
             -e "GDAL_SOURCE_DIR=$(pwd)" \
             -u $(id -u ${USER}):$(id -g ${USER}) \
             -v $(pwd)/.gdal:/.gdal:rw \
+            -v $(pwd)/.cargo:/.cargo:rw \
             -v $(pwd):$(pwd):rw \
             -v ${{ github.workspace }}/.ccache:/.ccache:rw \
             --workdir $(pwd)/build-${{ matrix.id }} \
@@ -373,6 +375,7 @@ jobs:
             --add-host=host.docker.internal:host-gateway \
             --rm \
             -v $(pwd)/.gdal:/.gdal \
+            -v $(pwd)/.cargo:/.cargo:rw \
             -v $(pwd)/.duckdb:/.duckdb \
             -v $(pwd):$(pwd) \
             --workdir $(pwd)/build-${{ matrix.id }} \
