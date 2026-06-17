@@ -14,11 +14,10 @@
 #define GDALALG_RASTER_COMPARE_INCLUDED
 
 #include "gdalrasterpipelinestepalgorithm.h"
+#include "gdalalg_compare_common.h"
 
 class GDALRasterBand;
 class GDALDataset;
-
-#include <algorithm>
 
 //! @cond Doxygen_Suppress
 
@@ -27,7 +26,8 @@ class GDALDataset;
 /************************************************************************/
 
 class GDALRasterCompareAlgorithm /* non final */
-    : public GDALRasterPipelineStepAlgorithm
+    : public GDALRasterPipelineStepAlgorithm,
+      public GDALCompareCommon
 {
   public:
     static constexpr const char *NAME = "compare";
@@ -55,9 +55,6 @@ class GDALRasterCompareAlgorithm /* non final */
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    bool BinaryComparison(std::vector<std::string> &aosReport,
-                          GDALDataset *poRefDS, GDALDataset *poInputDS);
-
     void DatasetComparison(std::vector<std::string> &aosReport,
                            GDALDataset *poRefDS, GDALDataset *poInputDS,
                            GDALProgressFunc pfnProgress, void *pProgressData);
@@ -79,28 +76,7 @@ class GDALRasterCompareAlgorithm /* non final */
                                    const std::string &metadataDomain,
                                    CSLConstList aosRef, CSLConstList aosInput);
 
-    static constexpr const char *METRIC_ALL = "all";
-    static constexpr const char *METRIC_NONE = "none";
-    static constexpr const char *METRIC_DIFF = "diff";
-    static constexpr const char *METRIC_RMSD = "RMSD";
-    static constexpr const char *METRIC_PSNR = "PSNR";
-
-    bool HasMetric(const char *pszMetric) const
-    {
-        CPLAssert(!EQUAL(pszMetric, METRIC_ALL));
-        return std::find(m_metrics.begin(), m_metrics.end(), pszMetric) !=
-                   m_metrics.end() ||
-               (!EQUAL(pszMetric, METRIC_NONE) &&
-                std::find(m_metrics.begin(), m_metrics.end(), METRIC_ALL) !=
-                    m_metrics.end());
-    }
-
-    GDALArgDatasetValue m_referenceDataset{};
-
-    static constexpr const char *METRIC_DEFAULT = METRIC_DIFF;
-    std::vector<std::string> m_metrics{METRIC_DEFAULT};
     bool m_skipAllOptional = false;
-    bool m_skipBinary = false;
     bool m_skipCRS = false;
     bool m_skipGeotransform = false;
     bool m_skipOverview = false;
@@ -109,7 +85,6 @@ class GDALRasterCompareAlgorithm /* non final */
     bool m_skipGeolocation = false;
     bool m_skipSubdataset = false;
     // If adding a new skip flag, make sure that m_skipAll takes it into account
-    int m_retCode = 0;
 };
 
 /************************************************************************/

@@ -493,6 +493,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_mdim_compare",
+        "gdal-mdim-compare",
+        "Compare two multidimensional datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_mdim_convert",
         "gdal-mdim-convert",
         "Convert a multidimensional dataset",

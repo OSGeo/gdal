@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_mdim_pipeline.h"
+#include "gdalalg_mdim_compare.h"
 #include "gdalalg_mdim_read.h"
 #include "gdalalg_mdim_write.h"
 #include "gdalalg_mdim_info.h"
@@ -115,6 +116,9 @@ void GDALMdimPipelineAlgorithm::RegisterAlgorithms(
 
     registry.Register<GDALMdimMosaicAlgorithm>(
         addSuffixIfNeeded(GDALMdimMosaicAlgorithm::NAME));
+
+    registry.Register<GDALMdimCompareAlgorithm>(
+        addSuffixIfNeeded(GDALMdimCompareAlgorithm::NAME));
 
     registry.Register<GDALMdimWriteAlgorithm>(
         addSuffixIfNeeded(GDALMdimWriteAlgorithm::NAME));
