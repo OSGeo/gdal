@@ -1591,8 +1591,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
             }
         }
         if (data->pfnProgress &&
-            !data->pfnProgress(static_cast<double>(iCurChunk + 1) / nChunkCount,
-                               "", data->pProgressData))
+            !data->pfnProgress(static_cast<double>(iCurChunk) / nChunkCount, "",
+                               data->pProgressData))
         {
             return false;
         }
