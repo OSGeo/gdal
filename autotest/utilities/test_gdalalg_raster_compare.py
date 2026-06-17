@@ -255,6 +255,27 @@ def test_gdalalg_raster_compare_binary_comparison(tmp_vsimem):
         )
 
 
+def test_gdalalg_raster_compare_diff_by_one_pixel_everywhere(tmp_vsimem):
+
+    gdal.alg.raster.scale(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "byte.tif",
+        input_min=0,
+        input_max=255,
+        output_min=1,
+        output_max=256,
+    )
+
+    with gdal.alg.raster.compare(
+        input="../gcore/data/byte.tif",
+        reference=tmp_vsimem / "byte.tif",
+        skip_binary=True,
+    ) as alg:
+        assert alg["output-string"] == """Band 1: pixels differing: 399
+Band 1: maximum pixel value difference: 1
+"""
+
+
 def test_gdalalg_raster_compare_crs():
 
     input_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")

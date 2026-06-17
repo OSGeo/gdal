@@ -492,16 +492,16 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                 {
                     if constexpr (sizeof(Tdiff) < sizeof(size_t))
                     {
-                        return std::min(nValCount - 1,
+                        return std::min(nValCount,
                                         i + std::numeric_limits<Tdiff>::max());
                     }
                     else
                     {
                         (void)i;
-                        return nValCount - 1;
+                        return nValCount;
                     }
                 }();
-                for (; i <= innerLimit; ++i)
+                for (; i < innerLimit; ++i)
                 {
                     const Tdiff diff =
                         refValues[i] >= inputValues[i]
