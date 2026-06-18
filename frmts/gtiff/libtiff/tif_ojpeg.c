@@ -2250,7 +2250,7 @@ static int OJPEGReadBufferFill(OJPEGState *sp)
             if ((uint64_t)m > sp->in_buffer_file_togo)
                 m = (uint16_t)sp->in_buffer_file_togo;
             n = TIFFReadFile(sp->tif, sp->in_buffer, (tmsize_t)m);
-            if (n == 0)
+            if (n <= 0)
                 return (0);
             assert(n > 0);
             assert(n <= OJPEG_BUFFER);

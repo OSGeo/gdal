@@ -1305,13 +1305,14 @@ static void Luv32fromLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
     }
     while (n-- > 0)
     {
-        *luv++ =
-            (uint32_t)luv3[0] << 16 |
-            (tiff_itrunc(luv3[1] * (UVSCALE / (1 << 15)), sp->encode_meth)
-                 << 8 &
-             0xff00) |
-            (tiff_itrunc(luv3[2] * (UVSCALE / (1 << 15)), sp->encode_meth) &
-             0xff);
+        *luv++ = (uint32_t)luv3[0] << 16 |
+                 ((uint32_t)tiff_itrunc(luv3[1] * (UVSCALE / (1 << 15)),
+                                        sp->encode_meth)
+                      << 8 &
+                  0xff00) |
+                 ((uint32_t)tiff_itrunc(luv3[2] * (UVSCALE / (1 << 15)),
+                                        sp->encode_meth) &
+                  0xff);
         luv3 += 3;
     }
 }

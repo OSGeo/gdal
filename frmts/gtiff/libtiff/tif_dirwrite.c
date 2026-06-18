@@ -2161,30 +2161,45 @@ static int TIFFWriteDirectoryTagColormap(TIFF *tif, uint32_t *ndir,
 {
     static const char module[] = "TIFFWriteDirectoryTagColormap";
     uint32_t m;
+    uint32_t count;
+    uint64_t count64;
+    tmsize_t total_values;
+    tmsize_t plane_bytes;
     uint16_t *n;
     int o;
+    if (tif->tif_dir.td_bitspersample >= 32)
+    {
+        TIFFErrorExtR(tif, module, "BitsPerSample too large for Colormap");
+        return (0);
+    }
     m = 1U << tif->tif_dir.td_bitspersample;
+    count64 = _TIFFMultiply64(tif, 3U, m, module);
+    if (count64 == 0)
+        return (0);
+    count = _TIFFCastUInt64ToUInt32(tif, count64, module);
+    total_values = _TIFFCastUInt64ToSSize(tif, count64, module);
+    plane_bytes = _TIFFCastUInt64ToSSize(
+        tif, _TIFFMultiply64(tif, m, sizeof(uint16_t), module), module);
+    if (count == 0 || total_values == 0 || plane_bytes == 0)
+        return (0);
     if (dir == NULL) /* Just evaluate IFD data size and increment ndir. */
     {
-        EvaluateIFDdatasizeWrite(tif, 3 * m, sizeof(uint16_t), ndir);
+        EvaluateIFDdatasizeWrite(tif, count, sizeof(uint16_t), ndir);
         return 1;
     }
 
-    n = (uint16_t *)_TIFFmallocExt(
-        tif, (tmsize_t)(3U * (size_t)m * sizeof(uint16_t)));
+    n = (uint16_t *)_TIFFCheckMalloc(tif, total_values, sizeof(uint16_t),
+                                     module);
     if (n == NULL)
     {
         TIFFErrorExtR(tif, module, "Out of memory");
         return (0);
     }
-    _TIFFmemcpy(&n[0], tif->tif_dir.td_colormap[0],
-                (tmsize_t)((size_t)m * sizeof(uint16_t)));
-    _TIFFmemcpy(&n[m], tif->tif_dir.td_colormap[1],
-                (tmsize_t)((size_t)m * sizeof(uint16_t)));
-    _TIFFmemcpy(&n[2 * m], tif->tif_dir.td_colormap[2],
-                (tmsize_t)((size_t)m * sizeof(uint16_t)));
+    _TIFFmemcpy(&n[0], tif->tif_dir.td_colormap[0], plane_bytes);
+    _TIFFmemcpy(&n[m], tif->tif_dir.td_colormap[1], plane_bytes);
+    _TIFFmemcpy(&n[2 * m], tif->tif_dir.td_colormap[2], plane_bytes);
     o = TIFFWriteDirectoryTagCheckedShortArray(tif, ndir, dir, TIFFTAG_COLORMAP,
-                                               3 * m, n);
+                                               count, n);
     _TIFFfreeExt(tif, n);
     return (o);
 }
@@ -2194,13 +2209,27 @@ static int TIFFWriteDirectoryTagTransferfunction(TIFF *tif, uint32_t *ndir,
 {
     static const char module[] = "TIFFWriteDirectoryTagTransferfunction";
     uint32_t m;
+    uint32_t count;
+    uint64_t count64;
+    tmsize_t total_values;
+    tmsize_t plane_bytes;
     uint16_t n;
     uint16_t *o;
     int p;
     /* TIFFTAG_TRANSFERFUNCTION expects (1 or 3) pointer to arrays with
-     *  (1 << BitsPerSample) * uint16_t values.
+     * 2**BitsPerSample uint16_t values.
      */
+    if (tif->tif_dir.td_bitspersample >= 32)
+    {
+        TIFFErrorExtR(tif, module,
+                      "BitsPerSample too large for TransferFunction");
+        return (0);
+    }
     m = 1U << tif->tif_dir.td_bitspersample;
+    plane_bytes = _TIFFCastUInt64ToSSize(
+        tif, _TIFFMultiply64(tif, m, sizeof(uint16_t), module), module);
+    if (plane_bytes == 0)
+        return (0);
     /* clang-format off */
     n = (tif->tif_dir.td_samplesperpixel - tif->tif_dir.td_extrasamples) > 1 ? 3 : 1;
     /* clang-format on */
@@ -2225,36 +2254,39 @@ static int TIFFWriteDirectoryTagTransferfunction(TIFF *tif, uint32_t *ndir,
     if (n == 3)
     {
         if (!_TIFFmemcmp(tif->tif_dir.td_transferfunction[0],
-                         tif->tif_dir.td_transferfunction[2],
-                         (tmsize_t)((size_t)m * sizeof(uint16_t))) &&
+                         tif->tif_dir.td_transferfunction[2], plane_bytes) &&
             !_TIFFmemcmp(tif->tif_dir.td_transferfunction[0],
-                         tif->tif_dir.td_transferfunction[1],
-                         (tmsize_t)((size_t)m * sizeof(uint16_t))))
+                         tif->tif_dir.td_transferfunction[1], plane_bytes))
             n = 1;
     }
+    count64 = _TIFFMultiply64(tif, n, m, module);
+    if (count64 == 0)
+        return (0);
+    count = _TIFFCastUInt64ToUInt32(tif, count64, module);
+    total_values = _TIFFCastUInt64ToSSize(tif, count64, module);
+    if (count == 0 || total_values == 0)
+        return (0);
     if (dir == NULL) /* Just evaluate IFD data size and increment ndir. */
     {
-        EvaluateIFDdatasizeWrite(tif, n * m, 2, ndir);
+        EvaluateIFDdatasizeWrite(tif, count, 2, ndir);
         return 1;
     }
 
-    o = (uint16_t *)_TIFFmallocExt(
-        tif, (tmsize_t)((size_t)n * m * sizeof(uint16_t)));
+    o = (uint16_t *)_TIFFCheckMalloc(tif, total_values, sizeof(uint16_t),
+                                     module);
     if (o == NULL)
     {
         TIFFErrorExtR(tif, module, "Out of memory");
         return (0);
     }
-    _TIFFmemcpy(&o[0], tif->tif_dir.td_transferfunction[0],
-                (tmsize_t)((size_t)m * sizeof(uint16_t)));
+    _TIFFmemcpy(&o[0], tif->tif_dir.td_transferfunction[0], plane_bytes);
     if (n > 1)
-        _TIFFmemcpy(&o[m], tif->tif_dir.td_transferfunction[1],
-                    (tmsize_t)((size_t)m * sizeof(uint16_t)));
+        _TIFFmemcpy(&o[m], tif->tif_dir.td_transferfunction[1], plane_bytes);
     if (n > 2)
         _TIFFmemcpy(&o[2 * m], tif->tif_dir.td_transferfunction[2],
-                    (tmsize_t)((size_t)m * sizeof(uint16_t)));
+                    plane_bytes);
     p = TIFFWriteDirectoryTagCheckedShortArray(
-        tif, ndir, dir, TIFFTAG_TRANSFERFUNCTION, n * m, o);
+        tif, ndir, dir, TIFFTAG_TRANSFERFUNCTION, count, o);
     _TIFFfreeExt(tif, o);
     return (p);
 }

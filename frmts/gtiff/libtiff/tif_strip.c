@@ -47,6 +47,8 @@ uint32_t TIFFComputeStrip(TIFF *tif, uint32_t row, uint16_t sample)
     strip = row / td->td_rowsperstrip;
     if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
     {
+        uint64_t sample_offset;
+        uint64_t strip64;
         if (sample >= td->td_samplesperpixel)
         {
             TIFFErrorExtR(tif, module, "%lu: Sample out of range, max %lu",
@@ -54,11 +56,16 @@ uint32_t TIFFComputeStrip(TIFF *tif, uint32_t row, uint16_t sample)
                           (unsigned long)td->td_samplesperpixel);
             return (0);
         }
-        uint32_t sample_offset = _TIFFMultiply32(
-            tif, (uint32_t)sample, td->td_stripsperimage, "TIFFComputeStrip");
+        sample_offset = _TIFFMultiply64(tif, sample, td->td_stripsperimage,
+                                        "TIFFComputeStrip");
         if (sample_offset == 0 && sample != 0 && td->td_stripsperimage != 0)
             return (0);
-        strip += sample_offset;
+        strip64 = _TIFFAdd64(tif, sample_offset, strip, "TIFFComputeStrip");
+        if (strip64 == 0 && (sample_offset != 0 || strip != 0))
+            return (0);
+        strip = _TIFFCastUInt64ToUInt32(tif, strip64, "TIFFComputeStrip");
+        if (strip == 0 && strip64 != 0)
+            return (0);
     }
     return (strip);
 }

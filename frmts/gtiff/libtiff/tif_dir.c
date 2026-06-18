@@ -421,7 +421,12 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             td->td_halftonehints[1] = (uint16_t)va_arg(ap, uint16_vap);
             break;
         case TIFFTAG_COLORMAP:
-            v32 = (uint32_t)(1UL << td->td_bitspersample);
+            if (td->td_bitspersample >= 32)
+            {
+                v = td->td_bitspersample;
+                goto badvalue;
+            }
+            v32 = 1U << td->td_bitspersample;
             _TIFFsetShortArrayExt(tif, &td->td_colormap[0],
                                   va_arg(ap, uint16_t *), v32);
             _TIFFsetShortArrayExt(tif, &td->td_colormap[1],
@@ -539,11 +544,17 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
         case TIFFTAG_TRANSFERFUNCTION:
         {
             uint32_t i;
+            uint32_t count;
+            if (td->td_bitspersample >= 32)
+            {
+                v = td->td_bitspersample;
+                goto badvalue;
+            }
+            count = 1U << td->td_bitspersample;
             v = (td->td_samplesperpixel - td->td_extrasamples) > 1 ? 3 : 1;
             for (i = 0; i < v; i++)
                 _TIFFsetShortArrayExt(tif, &td->td_transferfunction[i],
-                                      va_arg(ap, uint16_t *),
-                                      1U << td->td_bitspersample);
+                                      va_arg(ap, uint16_t *), count);
             break;
         }
         case TIFFTAG_REFERENCEBLACKWHITE:

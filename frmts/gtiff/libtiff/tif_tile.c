@@ -57,16 +57,47 @@ uint32_t TIFFComputeTile(TIFF *tif, uint32_t x, uint32_t y, uint32_t z,
         uint32_t xpt_ypt = _TIFFMultiply32(tif, xpt, ypt, "TIFFComputeTile");
         uint32_t xpt_ypt_zpt =
             _TIFFMultiply32(tif, xpt_ypt, zpt, "TIFFComputeTile");
+        uint64_t z_offset;
+        uint64_t y_offset;
+        uint64_t tile64;
 
         if ((xpt_ypt == 0 && xpt != 0 && ypt != 0) ||
             (xpt_ypt_zpt == 0 && xpt_ypt != 0 && zpt != 0))
             return (0);
 
+        z_offset = _TIFFMultiply64(tif, xpt_ypt, z / dz, "TIFFComputeTile");
+        y_offset = _TIFFMultiply64(tif, xpt, y / dy, "TIFFComputeTile");
+        if ((z_offset == 0 && xpt_ypt != 0 && (z / dz) != 0) ||
+            (y_offset == 0 && xpt != 0 && (y / dy) != 0))
+            return (0);
+        tile64 = _TIFFAdd64(tif, z_offset, y_offset, "TIFFComputeTile");
+        if (tile64 == 0 && (z_offset != 0 || y_offset != 0))
+            return (0);
+        tile64 = _TIFFAdd64(tif, tile64, x / dx, "TIFFComputeTile");
+        if (tile64 == 0 && (z_offset != 0 || y_offset != 0 || (x / dx) != 0))
+            return (0);
         if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
-            tile =
-                xpt_ypt_zpt * s + xpt_ypt * (z / dz) + xpt * (y / dy) + x / dx;
-        else
-            tile = xpt_ypt * (z / dz) + xpt * (y / dy) + x / dx;
+        {
+            uint64_t sample_offset;
+            if (s >= td->td_samplesperpixel)
+            {
+                TIFFErrorExtR(
+                    tif, "TIFFComputeTile", "%lu: Sample out of range, max %lu",
+                    (unsigned long)s, (unsigned long)td->td_samplesperpixel);
+                return (0);
+            }
+            sample_offset =
+                _TIFFMultiply64(tif, xpt_ypt_zpt, s, "TIFFComputeTile");
+            if (sample_offset == 0 && xpt_ypt_zpt != 0 && s != 0)
+                return (0);
+            tile64 = _TIFFAdd64(tif, sample_offset, tile64, "TIFFComputeTile");
+            if (tile64 == 0 && (sample_offset != 0 || z_offset != 0 ||
+                                y_offset != 0 || (x / dx) != 0))
+                return (0);
+        }
+        tile = _TIFFCastUInt64ToUInt32(tif, tile64, "TIFFComputeTile");
+        if (tile == 0 && tile64 != 0)
+            return (0);
     }
     return (tile);
 }
