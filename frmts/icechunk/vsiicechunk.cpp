@@ -293,7 +293,10 @@ GetChunkRef(const IcechunkRepo &repo, const IcechunkSnapshot &snapshot,
 {
     const auto *manifestId = node.findManifestIdForChunk(anChunkIdx);
     if (!manifestId)
+    {
+        // This is not necessary an error. This can happen for sparse chunks.
         return {};
+    }
 
     const auto *manifestInfo = snapshot.GetManifestInfoFromId(*manifestId);
     if (!manifestInfo)
@@ -309,7 +312,10 @@ GetChunkRef(const IcechunkRepo &repo, const IcechunkSnapshot &snapshot,
         repo.OpenManifest(manifestInfo->strId, manifestInfo->sizeBytes,
                           manifestInfo->numChunkRefs);
     if (!manifest)
+    {
+        // OpenManifest() will have emitted an error
         return {};
+    }
 
     const auto *chunkRef = manifest->GetChunkRef(node.id, anChunkIdx);
     return {std::move(manifest), chunkRef};

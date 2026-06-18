@@ -33,6 +33,43 @@ namespace gdal::icechunk
 {
 
 /************************************************************************/
+/*                     GetFilenameFromDatasetName()                     */
+/************************************************************************/
+
+static std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
+                                              std::string &osBranchName,
+                                              std::string &osTagName)
+{
+    std::string osFilename = osDatasetName;
+    if (STARTS_WITH_CI(osFilename.c_str(), "ICECHUNK:"))
+    {
+        osFilename = osDatasetName.substr(strlen("ICECHUNK:"));
+        const size_t nQuestionMarkPos = osFilename.find('?');
+        if (nQuestionMarkPos != std::string::npos)
+        {
+            std::string osSuffix = osFilename.substr(nQuestionMarkPos + 1);
+            if (cpl::starts_with(osSuffix, "branch="))
+            {
+                osFilename.resize(nQuestionMarkPos);
+                osBranchName = osSuffix.substr(strlen("branch="));
+            }
+            else if (cpl::starts_with(osSuffix, "tag="))
+            {
+                osFilename.resize(nQuestionMarkPos);
+                osTagName = osSuffix.substr(strlen("tag="));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid Icechunk connection string");
+                return {};
+            }
+        }
+    }
+    return osFilename;
+}
+
+/************************************************************************/
 /*                            DatasetOpen()                             */
 /************************************************************************/
 
@@ -44,40 +81,16 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     std::unique_ptr<GDALOpenInfo> poTmpOpenInfo;  // keep in that scope
     std::string osBranchName;
     std::string osTagName;
-    std::string osFilename = poOpenInfo->pszFilename;
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "ICECHUNK:"))
+    std::string osFilename = GetFilenameFromDatasetName(
+        poOpenInfo->pszFilename, osBranchName, osTagName);
+    if (osFilename.empty())
+        return nullptr;  // Error emitted by GetFilenameFromDatasetName
+    if (osFilename != poOpenInfo->pszFilename)
     {
-        osFilename = poOpenInfo->pszFilename + strlen("ICECHUNK:");
-        std::string osRealFilename = osFilename;
-        const size_t nQuestionMarkPos = osFilename.find('?');
-        if (nQuestionMarkPos != std::string::npos)
-        {
-            std::string osSuffix = osRealFilename.substr(nQuestionMarkPos + 1);
-            if (cpl::starts_with(osSuffix, "branch="))
-            {
-                osRealFilename.resize(nQuestionMarkPos);
-                osBranchName = osSuffix.substr(strlen("branch="));
-            }
-            else if (cpl::starts_with(osSuffix, "tag="))
-            {
-                osRealFilename.resize(nQuestionMarkPos);
-                osTagName = osSuffix.substr(strlen("tag="));
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid Icechunk connection string");
-                return nullptr;
-            }
-        }
         poTmpOpenInfo =
-            std::make_unique<GDALOpenInfo>(osRealFilename.c_str(), GA_ReadOnly);
+            std::make_unique<GDALOpenInfo>(osFilename.c_str(), GA_ReadOnly);
         poTmpOpenInfo->nOpenFlags = poOpenInfo->nOpenFlags;
         poOpenInfo = poTmpOpenInfo.get();
-    }
-    else
-    {
-        osFilename = poOpenInfo->pszFilename;
     }
 
     auto repo = IcechunkRepo::Open(poOpenInfo->pszFilename,
@@ -109,6 +122,21 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
         }
     };
 
+    const auto ConcatBranchOrTagNames =
+        [](const std::map<std::string, std::string> &mapNameToSnapshotId)
+    {
+        std::string s;
+        for (const auto &[name, _] : mapNameToSnapshotId)
+        {
+            if (!s.empty())
+                s += ", ";
+            s += '"';
+            s += name;
+            s += '"';
+        }
+        return s;
+    };
+
     std::unique_ptr<IcechunkSnapshot> snapshot;
     if (osTagName.empty())
     {
@@ -125,18 +153,9 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
             }
             else
             {
-                std::string osBranches;
-                for (const auto &[branchName, _] : repo->GetBranches())
-                {
-                    if (!osBranches.empty())
-                        osBranches += ", ";
-                    osBranches += '"';
-                    osBranches += branchName;
-                    osBranches += '"';
-                }
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "You need to specify a branch name among %s",
-                         osBranches.c_str());
+                         ConcatBranchOrTagNames(repo->GetBranches()).c_str());
                 return nullptr;
             }
         }
@@ -147,19 +166,11 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
         {
             if (nErrorCount == CPLGetErrorCounter())
             {
-                std::string osBranches;
-                for (const auto &[branchName, _] : repo->GetBranches())
-                {
-                    if (!osBranches.empty())
-                        osBranches += ", ";
-                    osBranches += '"';
-                    osBranches += branchName;
-                    osBranches += '"';
-                }
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
                     "Invalid branch name \"%s\". Valid branch names are: %s",
-                    osBranchName.c_str(), osBranches.c_str());
+                    osBranchName.c_str(),
+                    ConcatBranchOrTagNames(repo->GetBranches()).c_str());
             }
             return nullptr;
         }
@@ -172,18 +183,10 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
         {
             if (nErrorCount == CPLGetErrorCounter())
             {
-                std::string osTags;
-                for (const auto &[tagName, _] : repo->GetTags())
-                {
-                    if (!osTags.empty())
-                        osTags += ", ";
-                    osTags += '"';
-                    osTags += tagName;
-                    osTags += '"';
-                }
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid tag name \"%s\". Valid tag names are: %s",
-                         osTagName.c_str(), osTags.c_str());
+                         osTagName.c_str(),
+                         ConcatBranchOrTagNames(repo->GetTags()).c_str());
             }
             return nullptr;
         }
@@ -255,23 +258,6 @@ static std::string TimestampInMicrosecToISO8211(uint64_t nTimestamp)
 }
 
 /************************************************************************/
-/*                     GetFilenameFromDatasetName()                     */
-/************************************************************************/
-
-static std::string GetFilenameFromDatasetName(const std::string &osDatasetName)
-{
-    std::string osFilename = osDatasetName;
-    if (STARTS_WITH_CI(osFilename.c_str(), "ICECHUNK:"))
-    {
-        osFilename = osFilename.substr(strlen("ICECHUNK:"));
-        const size_t nQuestionMarkPos = osFilename.find('?');
-        if (nQuestionMarkPos != std::string::npos)
-            osFilename.resize(nQuestionMarkPos);
-    }
-    return osFilename;
-}
-
-/************************************************************************/
 /*                          ListRefsAlgorithm                           */
 /************************************************************************/
 
@@ -318,8 +304,10 @@ class ListBranchesAlgorithm final : public ListRefsAlgorithm
 
 bool ListBranchesAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    const std::string osFilename =
-        GetFilenameFromDatasetName(m_dataset.GetName());
+    std::string osBranchName;
+    std::string osTagName;
+    const std::string osFilename = GetFilenameFromDatasetName(
+        m_dataset.GetName(), osBranchName, osTagName);
     auto repo = IcechunkRepo::Open(osFilename.c_str());
     if (!repo)
         return false;
@@ -369,8 +357,10 @@ class ListTagsAlgorithm final : public ListRefsAlgorithm
 
 bool ListTagsAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    const std::string osFilename =
-        GetFilenameFromDatasetName(m_dataset.GetName());
+    std::string osBranchName;
+    std::string osTagName;
+    const std::string osFilename = GetFilenameFromDatasetName(
+        m_dataset.GetName(), osBranchName, osTagName);
     auto repo = IcechunkRepo::Open(osFilename.c_str());
     if (!repo)
         return false;
