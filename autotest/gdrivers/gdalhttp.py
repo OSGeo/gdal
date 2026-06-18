@@ -67,7 +67,7 @@ def test_http_1():
     # Regularly fails on Travis graviton2 configuration
     gdaltest.skip_on_travis()
 
-    url = "http://gdal.org/gdalicon.png"
+    url = "https://gdal.org/en/stable/gdalicon.png"
     tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)
     try:
         tst.testOpen()
