@@ -306,6 +306,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_ZARR_DRIVER)
     DeclareDeferredZarrPlugin();
 #endif
+#if defined(DEFERRED_ICECHUNK_DRIVER)
+    DeclareDeferredIcechunkPlugin();
+#endif
 #if defined(DEFERRED_XODR_DRIVER)
     DeclareDeferredOGRXODRPlugin();
 #endif
@@ -811,6 +814,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_zarr
     GDALRegister_Zarr();
+#endif
+
+#ifdef FRMT_icechunk
+    GDALRegister_Icechunk();
 #endif
 
 #ifdef FRMT_rcm

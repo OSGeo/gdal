@@ -1538,6 +1538,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
         pfnDelete = m_poRealDriver->pfnDelete;
         pfnRename = m_poRealDriver->pfnRename;
         pfnCopyFiles = m_poRealDriver->pfnCopyFiles;
+        pfnClearCaches = m_poRealDriver->pfnClearCaches;
 
         if (strcmp(GetDescription(), m_poRealDriver->GetDescription()) != 0)
         {

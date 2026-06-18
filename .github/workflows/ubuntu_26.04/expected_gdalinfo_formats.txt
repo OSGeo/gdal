@@ -150,6 +150,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   EHdr -raster- (rw+uv): ESRI .hdr Labelled (*.bil)
   ISCE -raster- (rw+v): ISCE raster
   Zarr -raster,multidimensional raster- (rw+uvs): Zarr (*.zarr)
+  Icechunk -raster,multidimensional raster- (rov): Icechunk
   RCM -raster- (rovs): Radarsat Constellation Mission XML Product
   MiraMonRaster -raster- (rwvs): MiraMon Raster Images (*.rel, *.img)
   HTTP -raster,vector- (ro): HTTP Fetching Wrapper

@@ -758,7 +758,15 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
         if (poIndexingVariable)
         {
             serializer.AddObjKey("indexing_variable");
-            if (rootGroup->OpenMDArray(poIndexingVariable->GetFullName()))
+            bool isKnownFromRoot;
+            {
+                // For autotest/gdrivers/tiledb_multidim.py::test_tiledb_multidim_array_read_dim_label_and_spatial_ref
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                isKnownFromRoot =
+                    rootGroup->OpenMDArrayFromFullname(
+                        poIndexingVariable->GetFullName()) != nullptr;
+            }
+            if (isKnownFromRoot)
             {
                 serializer.Add(poIndexingVariable->GetFullName());
             }

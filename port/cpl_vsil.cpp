@@ -4316,30 +4316,53 @@ char **VSIFileManager::GetPrefixes()
 VSIFilesystemHandler *VSIFileManager::GetHandler(const char *pszPath)
 
 {
-    VSIFileManager *poThis = Get();
-    const size_t nPathLen = strlen(pszPath);
-
-    for (auto &[key, handler] : poThis->m_apoHandlers)
+    void (*pfnLoader)(void) = nullptr;
     {
-        const char *pszIterKey = key.c_str();
-        const size_t nIterKeyLen = key.size();
-        if (strncmp(pszPath, pszIterKey, nIterKeyLen) == 0)
-            return handler.get();
+        CPLMutexHolder oHolder(&hVSIFileManagerMutex);
 
-        // "/vsimem\foo" should be handled as "/vsimem/foo".
-        if (nIterKeyLen && nPathLen > nIterKeyLen &&
-            pszIterKey[nIterKeyLen - 1] == '/' &&
-            pszPath[nIterKeyLen - 1] == '\\' &&
-            strncmp(pszPath, pszIterKey, nIterKeyLen - 1) == 0)
-            return handler.get();
+        VSIFileManager *poThis = Get();
+        const size_t nPathLen = strlen(pszPath);
 
-        // /vsimem should be treated as a match for /vsimem/.
-        if (nPathLen + 1 == nIterKeyLen &&
-            strncmp(pszPath, pszIterKey, nPathLen) == 0)
-            return handler.get();
+        for (auto &[key, handler] : poThis->m_apoHandlers)
+        {
+            const char *pszIterKey = key.c_str();
+            const size_t nIterKeyLen = key.size();
+            if (strncmp(pszPath, pszIterKey, nIterKeyLen) == 0)
+                return handler.get();
+
+            // "/vsimem\foo" should be handled as "/vsimem/foo".
+            if (nIterKeyLen && nPathLen > nIterKeyLen &&
+                pszIterKey[nIterKeyLen - 1] == '/' &&
+                pszPath[nIterKeyLen - 1] == '\\' &&
+                strncmp(pszPath, pszIterKey, nIterKeyLen - 1) == 0)
+                return handler.get();
+
+            // /vsimem should be treated as a match for /vsimem/.
+            if (nPathLen + 1 == nIterKeyLen &&
+                strncmp(pszPath, pszIterKey, nPathLen) == 0)
+                return handler.get();
+        }
+
+        if (pszPath[0] == '/' && !poThis->m_oMapHandlerLoader.empty())
+        {
+            const char *pszNextSlash = strchr(pszPath + 1, '/');
+            if (pszNextSlash)
+            {
+                auto oIter = poThis->m_oMapHandlerLoader.find(
+                    std::string(pszPath, pszNextSlash - pszPath + 1));
+                if (oIter != poThis->m_oMapHandlerLoader.end())
+                {
+                    pfnLoader = oIter->second;
+                }
+            }
+        }
+
+        if (!pfnLoader)
+            return poThis->m_poDefaultHandler.get();
     }
 
-    return poThis->m_poDefaultHandler.get();
+    pfnLoader();
+    return GetHandler(pszPath);
 }
 
 /************************************************************************/
@@ -4362,6 +4385,8 @@ void VSIFileManager::InstallHandler(
     const std::shared_ptr<VSIFilesystemHandler> &poHandler)
 
 {
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
     if (osPrefix == "")
         Get()->m_poDefaultHandler = poHandler;
     else
@@ -4374,10 +4399,34 @@ void VSIFileManager::InstallHandler(
 
 void VSIFileManager::RemoveHandler(const std::string &osPrefix)
 {
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
     if (osPrefix == "")
         Get()->m_poDefaultHandler.reset();
     else
         Get()->m_apoHandlers.erase(osPrefix);
+}
+
+/************************************************************************/
+/*                       RegisterHandlerLoader()                        */
+/************************************************************************/
+
+/** Register a callback function that will be called the first time a
+ * prefix is queried.
+ *
+ * This is typically used for deferred loaded driver plugins that want
+ * to register a file system.
+ *
+ * @since 3.14
+ */
+
+/* static */
+void VSIFileManager::RegisterHandlerLoader(const char *pszPrefix,
+                                           void (*pfnLoadHandler)(void))
+{
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
+    Get()->m_oMapHandlerLoader[pszPrefix] = pfnLoadHandler;
 }
 
 /************************************************************************/

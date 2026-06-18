@@ -27,6 +27,7 @@ def test_gdalalg_mdim_reproject():
     ) as alg:
         ds = alg.Output()
         got = gdal.MultiDimInfo(ds)
+        # srs removed for robustness w.r.t PROJ versions
         del got["arrays"]["Band1"]["srs"]
         assert got == {
             "type": "group",
@@ -44,7 +45,14 @@ def test_gdalalg_mdim_reproject():
                     "size": 22,
                     "type": "HORIZONTAL_X",
                     "direction": "EAST",
-                    "indexing_variable": "dimX",
+                    "indexing_variable": {
+                        "dimX": {
+                            "full_name": "dimX",
+                            "datatype": "Float64",
+                            "dimensions": ["dimX"],
+                            "dimension_size": [22],
+                        }
+                    },
                 },
                 {
                     "name": "dimY",
@@ -52,7 +60,14 @@ def test_gdalalg_mdim_reproject():
                     "size": 18,
                     "type": "HORIZONTAL_Y",
                     "direction": "NORTH",
-                    "indexing_variable": "dimY",
+                    "indexing_variable": {
+                        "dimY": {
+                            "full_name": "dimY",
+                            "datatype": "Float64",
+                            "dimensions": ["dimY"],
+                            "dimension_size": [18],
+                        }
+                    },
                 },
             ],
             "arrays": {
@@ -66,7 +81,14 @@ def test_gdalalg_mdim_reproject():
                             "size": 18,
                             "type": "HORIZONTAL_Y",
                             "direction": "NORTH",
-                            "indexing_variable": "dimY",
+                            "indexing_variable": {
+                                "dimY": {
+                                    "full_name": "dimY",
+                                    "datatype": "Float64",
+                                    "dimensions": ["dimY"],
+                                    "dimension_size": [18],
+                                }
+                            },
                         },
                         {
                             "name": "dimX",
@@ -74,7 +96,14 @@ def test_gdalalg_mdim_reproject():
                             "size": 22,
                             "type": "HORIZONTAL_X",
                             "direction": "EAST",
-                            "indexing_variable": "dimX",
+                            "indexing_variable": {
+                                "dimX": {
+                                    "full_name": "dimX",
+                                    "datatype": "Float64",
+                                    "dimensions": ["dimX"],
+                                    "dimension_size": [22],
+                                }
+                            },
                         },
                     ],
                     "dimension_size": [18, 22],
@@ -83,7 +112,6 @@ def test_gdalalg_mdim_reproject():
                         "long_name": "GDAL Band Number 1",
                         "valid_range": [0, 255],
                     },
-                    # "srs" removed for robustness
                 },
                 "dimY": {
                     "full_name": "dimY",
@@ -95,7 +123,14 @@ def test_gdalalg_mdim_reproject():
                             "size": 18,
                             "type": "HORIZONTAL_Y",
                             "direction": "NORTH",
-                            "indexing_variable": "dimY",
+                            "indexing_variable": {
+                                "dimY": {
+                                    "full_name": "dimY",
+                                    "datatype": "Float64",
+                                    "dimensions": ["dimY"],
+                                    "dimension_size": [18],
+                                }
+                            },
                         }
                     ],
                     "dimension_size": [18],
@@ -110,7 +145,14 @@ def test_gdalalg_mdim_reproject():
                             "size": 22,
                             "type": "HORIZONTAL_X",
                             "direction": "EAST",
-                            "indexing_variable": "dimX",
+                            "indexing_variable": {
+                                "dimX": {
+                                    "full_name": "dimX",
+                                    "datatype": "Float64",
+                                    "dimensions": ["dimX"],
+                                    "dimension_size": [22],
+                                }
+                            },
                         }
                     ],
                     "dimension_size": [22],

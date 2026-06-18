@@ -23,7 +23,7 @@ find alg port gcore apps ogr frmts gnm autotest/cpp \( -name "*.cpp" -o -name "*
 echo "Checking for missing #include <algorithm> statements..."
 rm -f /tmp/missing_include.txt
 while read -r i; do
-   grep -e std::min -e std::max $i >/dev/null && (grep "#include <algorithm>" $i >/dev/null || echo $i) | grep -v ogr/ogrsf_frmts/flatgeobuf/flatbuffers/ | tee -a /tmp/missing_include.txt;
+   grep -e std::min -e std::max $i >/dev/null && (grep "#include <algorithm>" $i >/dev/null || echo $i) | grep -v third_party/flatbuffers/ | tee -a /tmp/missing_include.txt;
 done < /tmp/gdal_list_files.txt
 
 if test -s /tmp/missing_include.txt; then
@@ -51,7 +51,7 @@ fi
 echo "Checking for missing #include <limits> statements..."
 rm -f /tmp/missing_include.txt
 while read -r i; do
-   grep -e std::numeric_limits $i >/dev/null && (grep "#include <limits>" $i >/dev/null || echo $i) | grep -v ogr/ogrsf_frmts/flatgeobuf/flatbuffers/ | tee -a /tmp/missing_include.txt;
+   grep -e std::numeric_limits $i >/dev/null && (grep "#include <limits>" $i >/dev/null || echo $i) | grep -v third_party/flatbuffers/ | tee -a /tmp/missing_include.txt;
 done < /tmp/gdal_list_files.txt
 
 

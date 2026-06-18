@@ -3776,7 +3776,7 @@ bool ZarrArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     const auto nFileSize = VSIFTellL(fp);
     VSIFCloseL(fp);
 
-    // For Kerchunk files, get information on the actual location
+    // For Icechunk/Kerchunk files, get information on the actual location
     const CPLStringList aosMetadata(
         VSIGetFileMetadata(osFilename.c_str(), "CHUNK_INFO", nullptr));
     if (!aosMetadata.empty())

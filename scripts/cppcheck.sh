@@ -120,6 +120,8 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DSQLITE_DETERMINISTIC=0x000000800 \
         -DSQLITE_INNOCUOUS=0x000200000 \
         -DMBTILES_RASTER_CREATION_OPTIONS="" \
+        -DZSTD_VERSION_MAJOR=1 \
+        -DZSTD_VERSION_MINOR=4 \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
@@ -154,8 +156,11 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+grep -v -e "frmts/icechunk/generated/" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 # I don't want to care about flatbuffers
-grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
+grep -v -e "third_party/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # Ignore pmtiles header

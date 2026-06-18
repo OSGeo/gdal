@@ -88,6 +88,7 @@ Raster drivers
    heif
    hf2
    hfa
+   icechunk
    idrisi
    ilwis
    iris

@@ -16,7 +16,7 @@ This format is supported for read and write access, and using the traditional
 2D raster API or the multidimensional API
 
 The driver supports the Zarr V2 an V3 specifications. It also supports Kerchunk reference
-files since GDAL 3.11.
+files since GDAL 3.11. See also :ref:`raster.icechunk`.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 
@@ -833,13 +833,14 @@ See Also:
 ---------
 
 - `Zarr format and its Python implementation <https://zarr.readthedocs.io/en/stable/>`__
-- `(In progress) Zarr V3 specification <https://zarr-specs.readthedocs.io/en/core-protocol-v3.0-dev/>`__
-
+- `Zarr V3 specification <https://zarr-specs.readthedocs.io/en/core-protocol-v3.0-dev/>`__
+- :ref:`raster.icechunk`
 
 
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
+    Icechunk
     Kerchunk
     Sharding
     multiscales
