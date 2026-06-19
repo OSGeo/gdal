@@ -2744,3 +2744,29 @@ def test_icechunk_remote_test_dataset_native_icechunk_v1_NOAA_GFS():
         assert struct.unpack(
             "f", ar.Read(array_start_idx=[10, 500, 500], count=[1, 1, 1])
         ) == (0,)
+
+
+def test_icechunk_tag_selection():
+
+    dirname = "data/icechunk/tag_selection"
+    if FORCE_REGENERATE or not os.path.exists(dirname):
+
+        import icechunk as ic
+        import zarr
+
+        repo = ic.Repository.create(ic.local_filesystem_storage(dirname))
+        s = repo.writable_session("main")
+        g = zarr.group(s.store)
+        a = g.create_array(
+            "my_array", shape=(4,), dtype="int32", chunks=(4,), dimension_names=["x"]
+        )
+        a[:] = [10, 11, 12, 13]
+        repo.create_tag("v1", snapshot_id=s.commit("c1"))
+        s = repo.writable_session("main")
+        zarr.open_group(s.store)["my_array"][:] = [30, 31, 32, 33]
+        s.commit("c2")
+
+    ds = gdal.OpenEx(f"ICECHUNK:{dirname}?tag=v1", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert struct.unpack("i" * 4, ar.Read()) == (10, 11, 12, 13)

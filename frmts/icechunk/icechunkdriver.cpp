@@ -43,6 +43,7 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     std::unique_ptr<GDALOpenInfo> poTmpOpenInfo;  // keep in that scope
     std::string osBranchName;
     std::string osTagName;
+    const std::string osFullFilename = poOpenInfo->pszFilename;
     std::string osFilename = GetFilenameFromDatasetName(
         poOpenInfo->pszFilename, osBranchName, osTagName);
     if (osFilename.empty())
@@ -177,7 +178,9 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     }
 
     const std::string osVSIIcechunkFilename =
-        std::string("ZARR:\"/vsiicechunk/{").append(osFilename).append("}\"");
+        std::string("ZARR:\"/vsiicechunk/{")
+            .append(osFullFilename)
+            .append("}\"");
     GDALOpenInfo oOpenInfoZarr(osVSIIcechunkFilename.c_str(), GA_ReadOnly);
     oOpenInfoZarr.nOpenFlags = poOpenInfo->nOpenFlags;
     oOpenInfoZarr.papszOpenOptions = poOpenInfo->papszOpenOptions;
