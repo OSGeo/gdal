@@ -29,6 +29,7 @@ add_library(
 if(GDAL_ENABLE_ALGORITHMS)
 target_sources(appslib PRIVATE
   gdalalg_abstract_pipeline.cpp
+  gdalalg_compare_common.cpp
   gdalalg_clip_common.cpp
   gdalalg_convert.cpp
   gdalalg_info.cpp
@@ -41,6 +42,7 @@ target_sources(appslib PRIVATE
   gdalalg_external.cpp
   gdalalg_materialize.cpp
   gdalalg_mdim.cpp
+  gdalalg_mdim_compare.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
   gdalalg_mdim_mosaic.cpp
@@ -179,6 +181,12 @@ endif()
 
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(appslib PRIVATE STATIC_BUILD)
+endif()
+
+if (GDAL_USE_MUPARSER)
+  target_compile_definitions(appslib PRIVATE -DHAVE_MUPARSER=1)
+else()
+  target_compile_definitions(appslib PRIVATE -DHAVE_MUPARSER=0)
 endif()
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})

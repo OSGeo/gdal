@@ -181,6 +181,7 @@ method
 method-field
 method-layer
 method-prefix
+metric
 min-distance
 min-max
 min-name

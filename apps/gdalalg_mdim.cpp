@@ -15,6 +15,7 @@
 #include "gdalalg_mdim.h"
 
 #include "gdalalg_mdim_info.h"
+#include "gdalalg_mdim_compare.h"
 #include "gdalalg_mdim_convert.h"
 #include "gdalalg_mdim_mosaic.h"
 #include "gdalalg_mdim_pipeline.h"
@@ -40,6 +41,7 @@ GDALMdimAlgorithm::GDALMdimAlgorithm()
     AddOutputStringArg(&m_output);
 
     RegisterSubAlgorithm<GDALMdimInfoAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALMdimCompareAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
     RegisterSubAlgorithm<GDALMdimMosaicAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALMdimPipelineAlgorithm>();

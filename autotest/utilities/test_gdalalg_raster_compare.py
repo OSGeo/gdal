@@ -255,6 +255,27 @@ def test_gdalalg_raster_compare_binary_comparison(tmp_vsimem):
         )
 
 
+def test_gdalalg_raster_compare_diff_by_one_pixel_everywhere(tmp_vsimem):
+
+    gdal.alg.raster.scale(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "byte.tif",
+        input_min=0,
+        input_max=255,
+        output_min=1,
+        output_max=256,
+    )
+
+    with gdal.alg.raster.compare(
+        input="../gcore/data/byte.tif",
+        reference=tmp_vsimem / "byte.tif",
+        skip_binary=True,
+    ) as alg:
+        assert alg["output-string"] == """Band 1: pixels differing: 399
+Band 1: maximum pixel value difference: 1
+"""
+
+
 def test_gdalalg_raster_compare_crs():
 
     input_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
@@ -1033,7 +1054,7 @@ def test_gdalalg_raster_compare_mask():
     ) as alg:
         assert (
             alg["output-string"]
-            == "mask of band 1: pixels differing: 1\nmask of band 1: maximum pixel value difference: 1\n"
+            == "Band mask of band 1: pixels differing: 1\nBand mask of band 1: maximum pixel value difference: 1\n"
         )
 
 
@@ -1347,3 +1368,173 @@ def test_gdalalg_raster_compare_same_file_pipeline():
         pipeline="read ! compare --reference ../gcore/data/byte.tif",
     ) as alg:
         assert alg["output-string"] == ""
+
+
+def test_gdalalg_raster_compare_rmse():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="RMSD",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: RMSD: 1\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 48.1308\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr_nbits():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+    ref_ds.GetRasterBand(1).SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE")
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 9.54243\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr_floating_point():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    ref_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, array.array("f", [1, 2]))
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 3.0103\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_all():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    ref_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, array.array("f", [1, 2]))
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="all",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == """Band 1: pixels differing: 1
+Band 1: maximum pixel value difference: 1.000000
+Band 1: RMSD: 0.707107
+Band 1: PSNR (dB): 3.0103
+"""
+
+    assert tab_pct[0] == 1.0

@@ -13,7 +13,6 @@
 #include "gdalalg_raster_compare.h"
 
 #include "cpl_conv.h"
-#include "cpl_vsi_virtual.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 
@@ -70,6 +69,11 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
                            /* hiddenForCLI = */ false);
     }
 
+    AddArg("metric", 0, _("Comparison metric(s)"), &m_metrics)
+        .SetChoices(METRIC_ALL, METRIC_NONE, METRIC_DIFF, METRIC_RMSD,
+                    METRIC_PSNR)
+        .SetDefault(METRIC_DEFAULT);
+
     AddArg("skip-all-optional", 0, _("Skip all optional comparisons"),
            &m_skipAllOptional);
     AddArg("skip-binary", 0, _("Skip binary file comparison"), &m_skipBinary);
@@ -90,118 +94,6 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
         .SetHiddenForCLI()
         .SetIsInput(false)
         .SetIsOutput(true);
-}
-
-/************************************************************************/
-/*            GDALRasterCompareAlgorithm::BinaryComparison()            */
-/************************************************************************/
-
-bool GDALRasterCompareAlgorithm::BinaryComparison(
-    std::vector<std::string> &aosReport, GDALDataset *poRefDS,
-    GDALDataset *poInputDS)
-{
-    if (poRefDS->GetDescription()[0] == 0)
-    {
-        ReportError(
-            CE_Warning, CPLE_AppDefined,
-            "Reference dataset has no name. Skipping binary file comparison");
-        return false;
-    }
-
-    auto poRefDrv = poRefDS->GetDriver();
-    if (poRefDrv && EQUAL(poRefDrv->GetDescription(), "MEM"))
-    {
-        ReportError(CE_Warning, CPLE_AppDefined,
-                    "Reference dataset is a in-memory dataset. Skipping binary "
-                    "file comparison");
-        return false;
-    }
-
-    if (poInputDS->GetDescription()[0] == 0)
-    {
-        ReportError(
-            CE_Warning, CPLE_AppDefined,
-            "Input dataset has no name. Skipping binary file comparison");
-        return false;
-    }
-
-    auto poInputDrv = poInputDS->GetDriver();
-    if (poInputDrv && EQUAL(poInputDrv->GetDescription(), "MEM"))
-    {
-        ReportError(CE_Warning, CPLE_AppDefined,
-                    "Input dataset is a in-memory dataset. Skipping binary "
-                    "file comparison");
-        return false;
-    }
-
-    VSIVirtualHandleUniquePtr fpRef(VSIFOpenL(poRefDS->GetDescription(), "rb"));
-    VSIVirtualHandleUniquePtr fpInput(
-        VSIFOpenL(poInputDS->GetDescription(), "rb"));
-    if (!fpRef)
-    {
-        ReportError(CE_Warning, CPLE_AppDefined,
-                    "Reference dataset '%s' is not a file. Skipping binary "
-                    "file comparison",
-                    poRefDS->GetDescription());
-        return false;
-    }
-
-    if (!fpInput)
-    {
-        ReportError(
-            CE_Warning, CPLE_AppDefined,
-            "Input dataset '%s' is not a file. Skipping binary file comparison",
-            poInputDS->GetDescription());
-        return false;
-    }
-
-    fpRef->Seek(0, SEEK_END);
-    fpInput->Seek(0, SEEK_END);
-    const auto nRefSize = fpRef->Tell();
-    const auto nInputSize = fpInput->Tell();
-    if (nRefSize != nInputSize)
-    {
-        aosReport.push_back("Reference file has size " +
-                            std::to_string(nRefSize) +
-                            " bytes, whereas input file has size " +
-                            std::to_string(nInputSize) + " bytes.");
-
-        return false;
-    }
-
-    constexpr size_t BUF_SIZE = 1024 * 1024;
-    std::vector<GByte> abyRef(BUF_SIZE);
-    std::vector<GByte> abyInput(BUF_SIZE);
-
-    fpRef->Seek(0, SEEK_SET);
-    fpInput->Seek(0, SEEK_SET);
-
-    do
-    {
-        const size_t nRefRead = fpRef->Read(abyRef.data(), 1, BUF_SIZE);
-        const size_t nInputRead = fpInput->Read(abyInput.data(), 1, BUF_SIZE);
-
-        if (nRefRead != BUF_SIZE && fpRef->Tell() != nRefSize)
-        {
-            aosReport.push_back("Failed to fully read reference file");
-            return false;
-        }
-
-        if (nInputRead != BUF_SIZE && fpInput->Tell() != nRefSize)
-        {
-            aosReport.push_back("Failed to fully read input file");
-            return false;
-        }
-
-        if (abyRef != abyInput)
-        {
-            aosReport.push_back(
-                "Reference file and input file differ at the binary level.");
-            return false;
-        }
-    } while (fpRef->Tell() < nRefSize);
-
-    return true;
 }
 
 /************************************************************************/
@@ -487,16 +379,16 @@ static void CompareVectors(size_t nValCount, const T *refValues,
                 {
                     if constexpr (sizeof(Tdiff) < sizeof(size_t))
                     {
-                        return std::min(nValCount - 1,
+                        return std::min(nValCount,
                                         i + std::numeric_limits<Tdiff>::max());
                     }
                     else
                     {
                         (void)i;
-                        return nValCount - 1;
+                        return nValCount;
                     }
                 }();
-                for (; i <= innerLimit; ++i)
+                for (; i < innerLimit; ++i)
                 {
                     const Tdiff diff =
                         refValues[i] >= inputValues[i]
@@ -690,7 +582,7 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
     bool doBandBasedPixelComparison = true;
     // Do not do band-by-band pixel difference if there are too many interleaved
     // bands as this could be extremely slow
-    if (nBands > 10)
+    if (nBands > 10 && !HasMetric(METRIC_NONE))
     {
         const char *pszRefInterleave = poRefDS->GetMetadataItem(
             GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
@@ -699,6 +591,12 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
         if ((pszRefInterleave && EQUAL(pszRefInterleave, "PIXEL")) ||
             (pszInputInterleave && EQUAL(pszInputInterleave, "PIXEL")))
         {
+            if (m_metrics != std::vector<std::string>{METRIC_DIFF})
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Given the pixel-interleaved nature of the dataset, "
+                         "only --metrics=diff would be supported");
+            }
             doBandBasedPixelComparison = false;
         }
     }
@@ -715,7 +613,7 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
         GDALDestroyScaledProgress(pScaledProgress);
     }
 
-    if (!doBandBasedPixelComparison)
+    if (!doBandBasedPixelComparison && HasMetric(METRIC_DIFF))
     {
         const auto eReqDT =
             GDALDataTypeUnion(poRefDS->GetRasterBand(1)->GetRasterDataType(),
@@ -882,10 +780,11 @@ static void ComparePixels(std::vector<std::string> &aosReport,
     }
     if (countDiffPixels)
     {
-        aosReport.push_back(
-            bandId + ": pixels differing: " + std::to_string(countDiffPixels));
+        aosReport.push_back("Band " + bandId + ": pixels differing: " +
+                            std::to_string(countDiffPixels));
 
-        std::string reportMessage(bandId);
+        std::string reportMessage("Band ");
+        reportMessage += bandId;
         reportMessage += ": maximum pixel value difference: ";
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -1099,27 +998,151 @@ void GDALRasterCompareAlgorithm::BandComparison(
         static_cast<uint64_t>(poRefBand->GetXSize()) * poRefBand->GetYSize();
     uint64_t nTotalPixels = nBasePixels;
     const int nOvrCount = poRefBand->GetOverviewCount();
-    for (int i = 0; i < nOvrCount; ++i)
+    if (!m_skipOverview && nOvrCount == poInputBand->GetOverviewCount())
     {
-        auto poOvrBand = poRefBand->GetOverview(i);
-        const uint64_t nOvrPixels =
-            static_cast<uint64_t>(poOvrBand->GetXSize()) *
-            poOvrBand->GetYSize();
-        nTotalPixels += nOvrPixels;
+        for (int i = 0; i < nOvrCount; ++i)
+        {
+            auto poOvrBand = poRefBand->GetOverview(i);
+            const uint64_t nOvrPixels =
+                static_cast<uint64_t>(poOvrBand->GetXSize()) *
+                poOvrBand->GetYSize();
+            nTotalPixels += nOvrPixels;
+        }
     }
 
+    int nCountMetrics = 0;
     if (doBandBasedPixelComparison)
     {
-        void *pScaledProgress =
-            GDALCreateScaledProgress(0.0,
-                                     static_cast<double>(nBasePixels) /
-                                         static_cast<double>(nTotalPixels),
-                                     pfnProgress, pProgressData);
+        if (HasMetric(METRIC_DIFF))
+            ++nCountMetrics;
+        if (HasMetric(METRIC_RMSD) || HasMetric(METRIC_PSNR))
+            ++nCountMetrics;
+    }
+
+    double dfLastPct = 0;
+    if (doBandBasedPixelComparison && HasMetric(METRIC_DIFF))
+    {
+        double dfNewLastPct =
+            dfLastPct + static_cast<double>(nBasePixels) /
+                            static_cast<double>(nTotalPixels * nCountMetrics);
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgress(GDALCreateScaledProgress(dfLastPct, dfNewLastPct,
+                                                     pfnProgress,
+                                                     pProgressData),
+                            GDALDestroyScaledProgress);
+        dfLastPct = dfNewLastPct;
         ComparePixels(aosReport, bandId, poRefBand, poInputBand,
                       pScaledProgress ? GDALScaledProgress : nullptr,
-                      pScaledProgress);
-        GDALDestroyScaledProgress(pScaledProgress);
+                      pScaledProgress.get());
     }
+
+    if (doBandBasedPixelComparison &&
+        (HasMetric(METRIC_RMSD) || HasMetric(METRIC_PSNR)))
+    {
+        // For PSNR on floating point image, we need to compute min and max of
+        // reference band
+        const bool bIsInteger =
+            CPL_TO_BOOL(GDALDataTypeIsInteger(poRefBand->GetRasterDataType()));
+        const double dfScalingProgress =
+            HasMetric(METRIC_PSNR) && !bIsInteger ? 0.5 : 1;
+        double dfNewLastPct =
+            dfLastPct + dfScalingProgress * static_cast<double>(nBasePixels) /
+                            static_cast<double>(nTotalPixels * nCountMetrics);
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
+            pScaledProgress(GDALCreateScaledProgress(dfLastPct, dfNewLastPct,
+                                                     pfnProgress,
+                                                     pProgressData),
+                            GDALDestroyScaledProgress);
+        dfLastPct = dfNewLastPct;
+
+        auto diffBand = (*poRefBand) - (*poInputBand);
+        auto squaredDiffBand = diffBand * diffBand;
+        double dfMeanSquareError = 0;
+        if (squaredDiffBand.ComputeStatistics(
+                /* bApproxOK = */ false,
+                /* pdfMin = */ nullptr,
+                /* pdfMax = */ nullptr, &dfMeanSquareError,
+                /* pdfStdDev = */ nullptr,
+                pScaledProgress ? GDALScaledProgress : nullptr,
+                pScaledProgress.get(), nullptr) == CE_None)
+        {
+            const double dfRMSD = std::sqrt(dfMeanSquareError);
+            if (dfRMSD > 0)
+            {
+                if (HasMetric(METRIC_RMSD))
+                {
+                    aosReport.push_back(CPLSPrintf("Band %s: RMSD: %g",
+                                                   bandId.c_str(), dfRMSD));
+                }
+
+                if (HasMetric(METRIC_PSNR))
+                {
+                    if (bIsInteger)
+                    {
+                        double dfMaxAmplitude;
+                        const char *pszNBITS = poRefBand->GetMetadataItem(
+                            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
+                        if (pszNBITS)
+                            dfMaxAmplitude = std::pow(2.0, atoi(pszNBITS)) - 1;
+                        else
+                            dfMaxAmplitude =
+                                std::pow(2.0,
+                                         GDALGetDataTypeSizeBits(
+                                             poRefBand->GetRasterDataType())) -
+                                1;
+
+                        const double dfPSNR_dB =
+                            20 * std::log10(dfMaxAmplitude / dfRMSD);
+                        aosReport.push_back(CPLSPrintf("Band %s: PSNR (dB): %g",
+                                                       bandId.c_str(),
+                                                       dfPSNR_dB));
+                    }
+                    else
+                    {
+                        dfNewLastPct =
+                            dfLastPct + dfScalingProgress *
+                                            static_cast<double>(nBasePixels) /
+                                            static_cast<double>(nTotalPixels *
+                                                                nCountMetrics);
+                        pScaledProgress.reset(GDALCreateScaledProgress(
+                            dfLastPct, dfNewLastPct, pfnProgress,
+                            pProgressData));
+                        dfLastPct = dfNewLastPct;
+                        double dfMin = 0;
+                        double dfMax = 0;
+                        const char *const apszOptions[] = {
+                            "SET_STATISTICS=FALSE", nullptr};
+                        if (poRefBand->ComputeStatistics(
+                                /* bApproxOK = */ false, &dfMin, &dfMax,
+                                nullptr, nullptr,
+                                pScaledProgress ? GDALScaledProgress : nullptr,
+                                pScaledProgress.get(), apszOptions) == CE_None)
+                        {
+                            const double dfPSNR_dB =
+                                20 * std::log10((dfMax - dfMin) / dfRMSD);
+                            aosReport.push_back(
+                                CPLSPrintf("Band %s: PSNR (dB): %g",
+                                           bandId.c_str(), dfPSNR_dB));
+                        }
+                        else
+                        {
+                            aosReport.push_back(
+                                std::string("Error during PSNR computation: ")
+                                    .append(CPLGetLastErrorMsg()));
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            aosReport.push_back(
+                std::string("Error during RMSD/PSNR computation: ")
+                    .append(CPLGetLastErrorMsg()));
+        }
+    }
+
+    CPL_IGNORE_RET_VAL(dfLastPct);
 
     if (!m_skipOverview)
     {
@@ -1288,6 +1311,21 @@ bool GDALRasterCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     auto poInputDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poInputDS);
 
+    if constexpr (!HAVE_MUPARSER)
+    {
+        for (const char *pszMetric : {METRIC_RMSD, METRIC_PSNR})
+        {
+            if (HasMetric(pszMetric))
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "%s metric not supported in a GDAL build without "
+                         "MuParser support",
+                         pszMetric);
+                return false;
+            }
+        }
+    }
+
     if (m_skipAllOptional)
     {
         m_skipBinary = true;
@@ -1304,7 +1342,7 @@ bool GDALRasterCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (!m_skipBinary)
     {
-        if (BinaryComparison(aosReport, poRefDS, poInputDS))
+        if (BinaryComparison(this, aosReport, poRefDS, poInputDS))
         {
             return true;
         }

@@ -1591,8 +1591,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
             }
         }
         if (data->pfnProgress &&
-            !data->pfnProgress(static_cast<double>(iCurChunk + 1) / nChunkCount,
-                               "", data->pProgressData))
+            !data->pfnProgress(static_cast<double>(iCurChunk) / nChunkCount, "",
+                               data->pProgressData))
         {
             return false;
         }
@@ -1723,4 +1723,131 @@ std::vector<std::shared_ptr<GDALMDArray>>
 GDALMDArray::GetCoordinateVariables() const
 {
     return {};
+}
+
+/************************************************************************/
+/*                              GetSelf()                               */
+/************************************************************************/
+
+/**
+ * \brief Return a shared_ptr on this array
+ *
+ * @return a a shared_ptr on this array, or nullptr if none can be constructed
+ *
+ * @since GDAL 3.14
+ */
+
+std::shared_ptr<GDALMDArray> GDALMDArray::GetSelf() const
+{
+    return std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
+}
+
+/************************************************************************/
+/*                    CopyContiguousBufferToBuffer()                    */
+/************************************************************************/
+
+/**
+ * \brief Copy a contiguous buffer into a possibly non contiguous one.
+ *
+ * @param nDims Number of dimensions
+ * @param count Number of values along each dimension
+ * @param pSrcBuffer Pointer to source buffer. Can be nullptr for an all-zero source
+ * @param srcType Source data type
+ * @param pDstBuffer Pointer to destination buffer
+ * @param dstType Destination data type
+ * @param dstStride Destination stride along each dimension (in terms of
+ *                  number of data types, not bytes)
+ *
+ * @since GDAL 3.14
+ */
+
+/* static */
+void GDALMDArray::CopyContiguousBufferToBuffer(
+    const size_t nDims, const size_t *count, const void *pSrcBuffer,
+    const GDALExtendedDataType &srcType, void *pDstBuffer,
+    const GDALExtendedDataType &dstType, const GPtrDiff_t *dstStride)
+{
+    if (nDims == 0)
+    {
+        if (pSrcBuffer)
+        {
+            GDALExtendedDataType::CopyValue(pSrcBuffer, srcType, pDstBuffer,
+                                            dstType);
+        }
+        else
+        {
+            memset(pDstBuffer, 0, dstType.GetSize());
+        }
+        return;
+    }
+
+    // +1 just to make some gcc versions not emit -Wnull-dereference false positives
+    std::vector<GByte *> dstPtrStack(nDims + 1);
+    std::vector<size_t> dstStrideBytes(nDims + 1);
+    std::vector<size_t> anCurCount(nDims + 1);
+    const size_t nSrcDTSize = srcType.GetSize();
+    const size_t nDstDTSize = dstType.GetSize();
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anCurCount[i] = count[i];
+        dstStrideBytes[i] = dstStride[i] * nDstDTSize;
+    }
+
+    const GByte *pabySrc = static_cast<const GByte *>(pSrcBuffer);
+    dstPtrStack[0] = static_cast<GByte *>(pDstBuffer);
+
+    std::vector<GByte> abyZero(nDstDTSize);
+
+    const bool bLastDstStrideFitsOnInt =
+        dstStride[nDims - 1] >= INT_MIN / static_cast<GPtrDiff_t>(nDstDTSize) &&
+        dstStride[nDims - 1] <= INT_MAX / static_cast<GPtrDiff_t>(nDstDTSize);
+    const bool bZeroCopyWordsOptim =
+        dstType.GetClass() == GEDTC_NUMERIC && bLastDstStrideFitsOnInt;
+    const size_t nCountLastDim = anCurCount[nDims - 1];
+
+    size_t dimIdx = 0;
+lbl_next_depth:
+    if (dimIdx + 1 == nDims)
+    {
+        if (pabySrc)
+        {
+            GDALExtendedDataType::CopyValues(
+                pabySrc, srcType, 1, dstPtrStack[dimIdx], dstType,
+                dstStride[nDims - 1], nCountLastDim);
+            pabySrc += nCountLastDim * nSrcDTSize;
+        }
+        else if (bZeroCopyWordsOptim)
+        {
+            GDALCopyWords64(abyZero.data(), dstType.GetNumericDataType(), 0,
+                            dstPtrStack[dimIdx], dstType.GetNumericDataType(),
+                            static_cast<int>(dstStride[nDims - 1] * nDstDTSize),
+                            nCountLastDim);
+        }
+        else
+        {
+            GByte *pabyDst = dstPtrStack[dimIdx];
+            for (size_t i = 0; i < nCountLastDim; ++i)
+            {
+                memset(pabyDst, 0, nDstDTSize);
+                pabyDst += dstStride[nDims - 1];
+            }
+        }
+    }
+    else
+    {
+        anCurCount[dimIdx] = count[dimIdx];
+        while (true)
+        {
+            dimIdx++;
+            dstPtrStack[dimIdx] = dstPtrStack[dimIdx - 1];
+            goto lbl_next_depth;
+        lbl_return_to_caller:
+            dimIdx--;
+            if (--anCurCount[dimIdx] == 0)
+                break;
+            dstPtrStack[dimIdx] += dstStrideBytes[dimIdx];
+        }
+    }
+    if (dimIdx > 0)
+        goto lbl_return_to_caller;
 }

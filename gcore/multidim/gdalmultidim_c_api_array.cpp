@@ -1716,3 +1716,68 @@ bool GDALMDArrayIsRegularlySpaced(GDALMDArrayH hArray, double *pdfStart,
     VALIDATE_POINTER1(hArray, __func__, false);
     return hArray->m_poImpl->IsRegularlySpaced(*pdfStart, *pdfIncrement);
 }
+
+/************************************************************************/
+/*                     GDALMDArrayBinaryOperation()                     */
+/************************************************************************/
+
+/** Perform a binary operation between a left and right array.
+ *
+ * Currently only GRABO_ADD, GRABO_SUB, GRABO_MUL and GRABO_DIV are supported.
+ *
+ * The resulting array is lazy evaluated.
+ *
+ * The resulting array type is Float64.
+ *
+ * The operation is nodata-aware.
+ *
+ * This is the same as GDALMDArray::operator+(), GDALMDArray::operator-(),
+ * GDALMDArray::operator*() and GDALMDArray::operator/().
+ *
+ * @return a new GDALMDArray, or nullptr.
+ * Must be released with GDALMDArrayRelease()
+ *
+ * @since 3.14
+ */
+
+GDALMDArrayH GDALMDArrayBinaryOperation(GDALMDArrayH hArrayLeft,
+                                        GDALRasterAlgebraBinaryOperation eOp,
+                                        GDALMDArrayH hArrayRight)
+{
+    VALIDATE_POINTER1(hArrayLeft, __func__, nullptr);
+    VALIDATE_POINTER1(hArrayRight, __func__, nullptr);
+    std::shared_ptr<GDALMDArray> res;
+    switch (eOp)
+    {
+        case GRABO_ADD:
+            res = (*(hArrayLeft->m_poImpl)) + hArrayRight->m_poImpl;
+            break;
+
+        case GRABO_SUB:
+            res = (*(hArrayLeft->m_poImpl)) - hArrayRight->m_poImpl;
+            break;
+
+        case GRABO_MUL:
+            res = (*(hArrayLeft->m_poImpl)) * hArrayRight->m_poImpl;
+            break;
+
+        case GRABO_DIV:
+            res = (*(hArrayLeft->m_poImpl)) / hArrayRight->m_poImpl;
+            break;
+
+        case GRABO_POW:
+        case GRABO_GT:
+        case GRABO_GE:
+        case GRABO_LT:
+        case GRABO_LE:
+        case GRABO_EQ:
+        case GRABO_NE:
+        case GRABO_LOGICAL_AND:
+        case GRABO_LOGICAL_OR:
+            CPLError(CE_Failure, CPLE_NotSupported, "Operator not supported");
+            break;
+    }
+    if (!res)
+        return nullptr;
+    return new GDALMDArrayHS(res);
+}

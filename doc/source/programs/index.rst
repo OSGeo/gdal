@@ -299,6 +299,7 @@ Multidimensional raster commands
 
    gdal_mdim
    gdal_mdim_info
+   gdal_mdim_compare
    gdal_mdim_convert
    gdal_mdim_mosaic
    gdal_mdim_pipeline
@@ -310,6 +311,7 @@ Multidimensional raster commands
 
     - :ref:`gdal_mdim`: Entry point for multidimensional commands
     - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
+    - :ref:`gdal_mdim_compare`: Compare two multidimensional datasets
     - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
     - :ref:`gdal_mdim_mosaic`: Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets.
     - :ref:`gdal_mdim_read`: Read a multidimensional dataset (pipeline only)

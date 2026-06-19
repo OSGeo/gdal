@@ -296,7 +296,8 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr ComputeStatistics(int bApproxOK, double *pdfMin,
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev, GDALProgressFunc,
-                                     void *pProgressData) override;
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
     /*virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                 double dfMean, double dfStdDev );*/
     CPLErr ComputeRasterMinMax(int, double *) override;

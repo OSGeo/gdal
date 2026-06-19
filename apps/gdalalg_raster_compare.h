@@ -14,6 +14,7 @@
 #define GDALALG_RASTER_COMPARE_INCLUDED
 
 #include "gdalrasterpipelinestepalgorithm.h"
+#include "gdalalg_compare_common.h"
 
 class GDALRasterBand;
 class GDALDataset;
@@ -25,7 +26,8 @@ class GDALDataset;
 /************************************************************************/
 
 class GDALRasterCompareAlgorithm /* non final */
-    : public GDALRasterPipelineStepAlgorithm
+    : public GDALRasterPipelineStepAlgorithm,
+      public GDALCompareCommon
 {
   public:
     static constexpr const char *NAME = "compare";
@@ -53,9 +55,6 @@ class GDALRasterCompareAlgorithm /* non final */
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
-    bool BinaryComparison(std::vector<std::string> &aosReport,
-                          GDALDataset *poRefDS, GDALDataset *poInputDS);
-
     void DatasetComparison(std::vector<std::string> &aosReport,
                            GDALDataset *poRefDS, GDALDataset *poInputDS,
                            GDALProgressFunc pfnProgress, void *pProgressData);
@@ -77,9 +76,7 @@ class GDALRasterCompareAlgorithm /* non final */
                                    const std::string &metadataDomain,
                                    CSLConstList aosRef, CSLConstList aosInput);
 
-    GDALArgDatasetValue m_referenceDataset{};
     bool m_skipAllOptional = false;
-    bool m_skipBinary = false;
     bool m_skipCRS = false;
     bool m_skipGeotransform = false;
     bool m_skipOverview = false;
@@ -88,7 +85,6 @@ class GDALRasterCompareAlgorithm /* non final */
     bool m_skipGeolocation = false;
     bool m_skipSubdataset = false;
     // If adding a new skip flag, make sure that m_skipAll takes it into account
-    int m_retCode = 0;
 };
 
 /************************************************************************/

@@ -54,6 +54,47 @@ Program-Specific Options
 
     The dataset that is considered correct, referred to as the reference dataset.
 
+.. option:: --metric diff|RMSE|PSNR|all|none
+
+    .. versionadded:: 3.14
+
+    Comparison metric(s) to apply
+
+    * ``diff`` (the default): compute the number of pixels that differ between
+      the reference and the input band, and the maximum absolute value of the
+      differences.
+
+    * ``RMSD``: compute the `Root Mean Square Deviation <https://en.wikipedia.org/wiki/Root_mean_square_deviation>`__
+      between the reference and the input band.
+      This is the standard deviation of the band that would be the difference
+      between both bands. Its expressed in the unit of the values of the bands.
+
+     .. math::
+
+           \mathrm{MSD} = \frac{1}{N}\sum_{i=1}^{N}(\mathrm{REF}_i - \mathrm{INPUT}_i)^2
+
+     .. math::
+
+           \mathrm{RMSD} = \sqrt{\mathrm{MSD}}
+
+    * ``PSNR``: compute the `Peak Signal-to-Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`__
+      between the reference and the input band. PSNR is related to RMSD, but
+      expressed as a logarithmic quantity using the decibel scale, that is
+      independent from the unit and intensity of the values of the bands.
+
+      .. math::
+
+           \mathrm{PSNR} = 20 \log_{10}\left(\frac{\mathrm{MAX}_I}{\mathrm{RMSD}}\right)
+
+      For bands of integer data types, :math:`\mathrm{MAX}_I` is the maximum
+      value allowed by the data type. For bands of floating point data type,
+      it is the difference between the maximum and minimum values of the pixels
+      of the reference band.
+
+    * ``all``: enable all above metrics.
+
+    * ``none``: disable all above metrics.
+
 .. option:: --skip-all-optional
 
     Whether to skip all optional tests. This is an alias to defining all other

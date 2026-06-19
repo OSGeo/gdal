@@ -171,7 +171,8 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                          double *padfStdDev) override;
     CPLErr ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
                              double *pdfMean, double *pdfStdDev,
-                             GDALProgressFunc, void *pProgressData) override;
+                             GDALProgressFunc, void *pProgressData,
+                             CSLConstList papszOptions) override;
     CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                          double dfStdDev) override;
     CPLErr ComputeRasterMinMax(int, double *) override;

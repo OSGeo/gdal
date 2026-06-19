@@ -1014,7 +1014,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData) override;
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc pfnProgress,
@@ -1277,7 +1278,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData) override;
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc pfnProgress,

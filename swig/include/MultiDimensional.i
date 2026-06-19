@@ -1328,6 +1328,14 @@ RETURN_NONE GetRegularSpacing(double argout[2]) {
 %clear (RETURN_NONE);
 #endif
 
+  %apply Pointer NONNULL {GDALMDArrayHS* other};
+  %newobject BinaryOpArray;
+  GDALMDArrayHS* BinaryOpArray(GDALRasterAlgebraBinaryOperation op, GDALMDArrayHS* other)
+  {
+      return GDALMDArrayBinaryOperation(self, op, other);
+  }
+  %clear GDALMDArrayHS* other;
+
 } /* extend */
 }; /* GDALMDArrayH */
 

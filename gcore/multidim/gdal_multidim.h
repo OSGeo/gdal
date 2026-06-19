@@ -1032,6 +1032,8 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual bool SetScale(double dfScale,
                           GDALDataType eStorageType = GDT_Unknown);
 
+    std::shared_ptr<GDALMDArray> GetSelf() const;
+
     std::shared_ptr<GDALMDArray> GetView(const std::string &viewExpr) const;
 
     std::shared_ptr<GDALMDArray> operator[](const std::string &fieldName) const;
@@ -1143,6 +1145,22 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData,
                                   CSLConstList papszOptions);
+
+    bool HasSameShapeAs(const GDALMDArray &other) const;
+
+    static void CopyContiguousBufferToBuffer(
+        const size_t nDims, const size_t *count, const void *pSrcBuffer,
+        const GDALExtendedDataType &srcType, void *pDstBuffer,
+        const GDALExtendedDataType &dstType, const GPtrDiff_t *dstStride);
+
+    std::shared_ptr<GDALMDArray> operator+(
+        const std::shared_ptr<GDALMDArray> &other) const CPL_WARN_UNUSED_RESULT;
+    std::shared_ptr<GDALMDArray> operator-(
+        const std::shared_ptr<GDALMDArray> &other) const CPL_WARN_UNUSED_RESULT;
+    std::shared_ptr<GDALMDArray> operator*(
+        const std::shared_ptr<GDALMDArray> &other) const CPL_WARN_UNUSED_RESULT;
+    std::shared_ptr<GDALMDArray> operator/(
+        const std::shared_ptr<GDALMDArray> &other) const CPL_WARN_UNUSED_RESULT;
 
     //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;

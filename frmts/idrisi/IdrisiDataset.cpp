@@ -497,7 +497,7 @@ IdrisiDataset::~IdrisiDataset()
             IdrisiRasterBand *poBand =
                 cpl::down_cast<IdrisiRasterBand *>(GetRasterBand(i + 1));
             poBand->ComputeStatistics(false, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                                      nullptr, nullptr);
+                                      nullptr, nullptr, nullptr);
             /*
               dfMin = poBand->GetMinimum( &bSuccessMin );
               dfMax = poBand->GetMaximum( &bSuccessMax );

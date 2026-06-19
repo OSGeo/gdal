@@ -828,7 +828,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 ret = poDS->GetRasterBand(i + 1)->ComputeStatistics(
                           m_approxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
                           pScaledProgress ? GDALScaledProgress : nullptr,
-                          pScaledProgress) == CE_None;
+                          pScaledProgress, nullptr) == CE_None;
                 GDALDestroyScaledProgress(pScaledProgress);
             }
         }

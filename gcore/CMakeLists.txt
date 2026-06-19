@@ -65,6 +65,7 @@ target_sources(gcore PRIVATE
   multidim/gdalmultidim_array_gltorthorectification.cpp
   multidim/gdalmultidim_array_gridded.cpp
   multidim/gdalmultidim_array_mask.cpp
+  multidim/gdalmultidim_array_maths.cpp
   multidim/gdalmultidim_array_meshgrid.cpp
   multidim/gdalmultidim_array_regularly_spaced.cpp
   multidim/gdalmultidim_array_resampled.cpp

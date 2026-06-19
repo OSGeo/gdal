@@ -256,8 +256,8 @@ public:
 %apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
 %feature ("kwargs") ComputeStatistics;
   CPLErr ComputeStatistics( bool approx_ok, double *min, double *max, double *mean, double *stddev,
-                            GDALProgressFunc callback = NULL, void* callback_data=NULL){
-    return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
+                            GDALProgressFunc callback = NULL, void* callback_data=NULL, char **options=NULL){
+    return GDALComputeRasterStatisticsEx( self, approx_ok, min, max, mean, stddev, callback, callback_data, options );
   }
 %clear (CPLErr);
 

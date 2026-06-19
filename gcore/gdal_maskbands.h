@@ -60,7 +60,8 @@ class CPL_DLL GDALAllValidMaskBand final : public GDALRasterBand
 
     CPLErr ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
                              double *pdfMean, double *pdfStdDev,
-                             GDALProgressFunc, void *pProgressData) override;
+                             GDALProgressFunc, void *pProgressData,
+                             CSLConstList papszOptions) override;
 };
 
 /* ******************************************************************** */
