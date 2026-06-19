@@ -4293,7 +4293,7 @@ void netCDFDataset::SetProjectionFromVar(
     if (!m_oSRS.IsEmpty())
     {
         OGRSpatialReference oGeogCRS;
-        oGeogCRS.CopyGeogCSFrom(&m_oSRS);
+        oGeogCRS.CopyGeogCSFrom(&m_oSRS, true);
         const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
 
         std::string osWKTTmp = oGeogCRS.exportToWkt(apszOptions);

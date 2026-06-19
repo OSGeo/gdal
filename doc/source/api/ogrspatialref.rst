@@ -19,3 +19,9 @@ Spatial Reference System C++ API
 
 .. doxygenfile:: ogr_spatialref.h
    :project: api
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    bInnerMostGeogCRS
