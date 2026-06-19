@@ -1241,6 +1241,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(TIFF *tif,
         *pdest = new_dest;
 
         bytes_read = TIFFReadFile(tif, (char *)*pdest + already_read, to_read);
+        if (bytes_read < 0)
+            return TIFFReadDirEntryErrIo;
         already_read += bytes_read;
         if (bytes_read != to_read)
         {
