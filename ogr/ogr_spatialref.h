@@ -415,6 +415,8 @@ class CPL_DLL OGRSpatialReference
                      double dfConvertToRadians = 0.0);
     OGRErr SetWellKnownGeogCS(const char *);
     OGRErr CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS);
+    OGRErr CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS,
+                          bool bInnerMostGeogCRS);
     OGRErr SetVertCS(const char *pszVertCSName, const char *pszVertDatumName,
                      int nVertDatumClass = 2005);
     OGRErr SetCompoundCS(const char *pszName,

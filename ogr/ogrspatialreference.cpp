@@ -3813,8 +3813,30 @@ OGRErr OSRSetWellKnownGeogCS(OGRSpatialReferenceH hSRS, const char *pszName)
  *
  * @return OGRERR_NONE on success or an error code.
  */
-
 OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS)
+
+{
+    return CopyGeogCSFrom(poSrcSRS, false);
+}
+
+/**
+ * \brief Copy GEOGCS from another OGRSpatialReference.
+ *
+ * The GEOGCS information is copied into this OGRSpatialReference from another.
+ * If this object has a PROJCS root already, the GEOGCS is installed within
+ * it, otherwise it is installed as the root.
+ *
+ * @param poSrcSRS the spatial reference to copy the GEOGCS information from.
+ * @param bInnerMostGeogCRS Whether the inner-most geographic CRS must be used.
+ *                          This setting makes a difference if this CRS is a
+ *                          derived geographic CRS. Setting bInnerMostGeogCRS
+ *                          to true will then extract its base CRS.
+ *
+ * @return OGRERR_NONE on success or an error code.
+ * @since 3.13.2
+ */
+OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS,
+                                           bool bInnerMostGeogCRS)
 
 {
     TAKE_OPTIONAL_LOCK();
@@ -3836,6 +3858,15 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS)
     if (!geodCRS)
     {
         return OGRERR_FAILURE;
+    }
+
+    if (bInnerMostGeogCRS && poSrcSRS->IsDerivedGeographic())
+    {
+        auto baseCRS = proj_get_source_crs(d->getPROJContext(), geodCRS);
+        if (!baseCRS)
+            return OGRERR_FAILURE;
+        proj_destroy(geodCRS);
+        geodCRS = baseCRS;
     }
 
     /* -------------------------------------------------------------------- */

@@ -3193,6 +3193,30 @@ def test_netcdf_81():
 
 
 ###############################################################################
+# netCDF file in rotated_pole projection with rlon/rlat coordinates
+
+
+@pytest.mark.require_proj(9, 0, 0)
+def test_netcdf_rlon():
+
+    ds = gdal.Open("data/netcdf/rlon.nc")
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 3
+
+    srs = ds.GetSpatialRef()
+    assert srs.IsDerivedGeographic()
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (143.95, 0.1, 0.0, -27.75, 0.0, -0.1)
+    assert gt == pytest.approx(expected_gt)
+
+    geoloc_md = ds.GetMetadata("GEOLOCATION")
+    assert (
+        geoloc_md["SRS"]
+        == 'GEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Sphere",6371000,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]'
+    )
+
+
+###############################################################################
 # Write netCDF file in rotated_pole projection
 
 
