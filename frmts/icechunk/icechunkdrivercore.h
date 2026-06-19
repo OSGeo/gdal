@@ -18,6 +18,7 @@
 constexpr const char *FS_PREFIX = "/vsiicechunk/";
 
 constexpr const char *DRIVER_NAME = "Icechunk";
+constexpr const char *ICECHUNK_PREFIX = "ICECHUNK:";
 
 // cf https://icechunk.io/en/stable/reference/spec/#node-paths
 constexpr const unsigned char abySIG[] = "ICE"

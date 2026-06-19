@@ -170,29 +170,11 @@ VSIIcechunkFileSystem::SplitFilename(const char *pszFilename)
         {
             ref.osRootFilenameWithBranchOrTag = osRootFilename;
 
-            const size_t nQuestionMarkPos = osRootFilename.find('?');
-            if (nQuestionMarkPos != std::string::npos)
-            {
-                std::string osSuffix =
-                    osRootFilename.substr(nQuestionMarkPos + 1);
-                if (cpl::starts_with(osSuffix, "branch="))
-                {
-                    ref.osRootFilename =
-                        osRootFilename.substr(0, nQuestionMarkPos);
-                    ref.osBranchName = osSuffix.substr(strlen("branch="));
-                }
-                else if (cpl::starts_with(osSuffix, "tag="))
-                {
-                    ref.osRootFilename =
-                        osRootFilename.substr(0, nQuestionMarkPos);
-                    ref.osTagName = osSuffix.substr(strlen("tag="));
-                }
-            }
-            else
-            {
-                ref.osRootFilename = osRootFilename;
+            ref.osRootFilename = GetFilenameFromDatasetName(
+                osRootFilename, ref.osBranchName, ref.osTagName);
+            if (ref.osBranchName.empty() && ref.osTagName.empty())
                 ref.osBranchName = "main";
-            }
+
             ref.osKey = *pszFilename == 0 ? "/" : pszFilename;
         }
     }

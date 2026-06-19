@@ -21,6 +21,43 @@ namespace gdal::icechunk
 {
 
 /************************************************************************/
+/*                     GetFilenameFromDatasetName()                     */
+/************************************************************************/
+
+std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
+                                       std::string &osBranchName,
+                                       std::string &osTagName)
+{
+    std::string osFilename = osDatasetName;
+    if (STARTS_WITH_CI(osFilename.c_str(), ICECHUNK_PREFIX))
+    {
+        osFilename = osDatasetName.substr(strlen(ICECHUNK_PREFIX));
+        const size_t nQuestionMarkPos = osFilename.find('?');
+        if (nQuestionMarkPos != std::string::npos)
+        {
+            std::string osSuffix = osFilename.substr(nQuestionMarkPos + 1);
+            if (cpl::starts_with(osSuffix, "branch="))
+            {
+                osFilename.resize(nQuestionMarkPos);
+                osBranchName = osSuffix.substr(strlen("branch="));
+            }
+            else if (cpl::starts_with(osSuffix, "tag="))
+            {
+                osFilename.resize(nQuestionMarkPos);
+                osTagName = osSuffix.substr(strlen("tag="));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid Icechunk connection string");
+                return {};
+            }
+        }
+    }
+    return osFilename;
+}
+
+/************************************************************************/
 /*                           DecompressFile()                           */
 /************************************************************************/
 

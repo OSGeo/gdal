@@ -272,6 +272,42 @@ def test_icechunk_ClearMemoryCaches(tmp_vsimem):
         ar.Read()
 
 
+def test_icechunk_open_branch():
+
+    with gdal.OpenEx(
+        "ICECHUNK:data/icechunk/scalar_array?branch=main", gdal.OF_MULTIDIM_RASTER
+    ) as ds:
+        assert ds.GetRootGroup().GetMDArrayNames() == ["my_array"]
+
+    with pytest.raises(Exception, match="Invalid branch name"):
+        gdal.OpenEx(
+            "ICECHUNK:data/icechunk/scalar_array?branch=non_existing",
+            gdal.OF_MULTIDIM_RASTER,
+        )
+
+
+def test_icechunk_open_tag():
+
+    with gdal.OpenEx(
+        "ICECHUNK:data/icechunk/scalar_array_v1?tag=my_tag", gdal.OF_MULTIDIM_RASTER
+    ) as ds:
+        assert ds.GetRootGroup().GetMDArrayNames() == ["my_array"]
+
+    with pytest.raises(Exception, match="Invalid tag name"):
+        gdal.OpenEx(
+            "ICECHUNK:data/icechunk/scalar_array_v1?tag=non_existing",
+            gdal.OF_MULTIDIM_RASTER,
+        )
+
+
+def test_icechunk_open_unknown_parameter():
+
+    with pytest.raises(Exception, match="Invalid Icechunk connection string"):
+        gdal.OpenEx(
+            "ICECHUNK:data/icechunk/scalar_array_v1?foo=bar", gdal.OF_MULTIDIM_RASTER
+        )
+
+
 def test_icechunk_algs_error():
 
     with pytest.raises(Exception, match="Cannot open data/zarr/v3/test.zr3"):

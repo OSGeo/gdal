@@ -31,6 +31,10 @@ constexpr bool IS_DEBUG_BUILD = false;
 void VSIInstallIcechunkFileSystem();
 void VSIIcechunkFileSystemClearCaches();
 
+std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
+                                       std::string &osBranchName,
+                                       std::string &osTagName);
+
 std::pair<std::unique_ptr<unsigned char, VSIFreeReleaser>, size_t>
 DecompressFile(const char *pszFilename, VSIVirtualHandle *poFile,
                int nExpectedFileType, int *pnVersion = nullptr);

@@ -22,7 +22,7 @@
 
 int IcechunkDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "ICECHUNK:") ||
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, ICECHUNK_PREFIX) ||
         poOpenInfo->IsSingleAllowedDriver(DRIVER_NAME))
     {
         return true;
@@ -72,7 +72,7 @@ void IcechunkDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Icechunk");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "ICECHUNK:");
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, ICECHUNK_PREFIX);
 
     poDriver->DeclareAlgorithm({LIST_BRANCHES});
     poDriver->DeclareAlgorithm({LIST_TAGS});
