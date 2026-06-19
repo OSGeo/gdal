@@ -510,6 +510,11 @@ VSIIcechunkFileSystem::Open(const char *pszFilename, const char *pszAccess,
                 return fp;
             }
         }
+        else
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                     info.osFilename.c_str());
+        }
     }
     else if (info.dataOwner)
     {

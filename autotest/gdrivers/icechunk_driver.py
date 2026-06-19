@@ -2776,3 +2776,44 @@ def test_icechunk_tag_selection():
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("my_array")
     assert struct.unpack("i" * 4, ar.Read()) == (10, 11, 12, 13)
+
+
+@pytest.mark.require_curl()
+@pytest.mark.network
+def test_icechunk_remote_missing_virtual_ref():
+
+    dirname = "data/icechunk/missing_virtual_ref"
+    if FORCE_REGENERATE or not os.path.exists(dirname):
+
+        import icechunk as ic
+        import zarr
+
+        pfx = "s3://icechunk-public-data/"
+        cfg = ic.RepositoryConfig.default()
+        cfg.set_virtual_chunk_container(
+            ic.VirtualChunkContainer(
+                pfx, ic.s3_store(region="us-east-1", anonymous=True)
+            )
+        )
+        repo = ic.Repository.create(
+            ic.local_filesystem_storage(dirname),
+            config=cfg,
+            authorize_virtual_chunk_access={pfx: None},
+        )
+        s = repo.writable_session("main")
+        g = zarr.group(s.store)
+        g.create_array(
+            "my_array", shape=(4,), dtype="int32", chunks=(4,), dimension_names=["x"]
+        )
+        s.store.set_virtual_ref(
+            "my_array/c/0", pfx + "does-not-exist", offset=0, length=16
+        )
+        s.commit("c")
+
+    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    with pytest.raises(
+        Exception, match="Cannot open /vsis3/icechunk-public-data/does-not-exist"
+    ):
+        ar.Read()
