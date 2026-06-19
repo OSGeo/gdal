@@ -2722,6 +2722,12 @@ def test_icechunk_remote_test_dataset_native_icechunk_v2_GLAD_LCLU():
             "B", ar.Read(array_start_idx=[0, 500, 500], count=[1, 1, 1])
         ) == (255,)
 
+        # Check that we don't hit flatbuffers default limitation to 1 million
+        # tables in verification code. See https://github.com/OSGeo/gdal/issues/14830
+        assert (
+            ar.Read(array_start_idx=[0, 280000, 720000], count=[1, 16, 16]) is not None
+        )
+
 
 @pytest.mark.require_curl()
 @pytest.mark.network

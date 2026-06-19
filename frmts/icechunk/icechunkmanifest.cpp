@@ -96,7 +96,11 @@ IcechunkManifest::Open(const char *pszFilename)
         return nullptr;
 
     {
-        Verifier verifier(buffer.get(), size);
+        // By default max_tables is 1 million, which can be insufficient for
+        // some datasets. See https://github.com/OSGeo/gdal/issues/14830
+        const uoffset_t max_tables = static_cast<uoffset_t>(
+            std::min<uint64_t>(size, std::numeric_limits<uoffset_t>::max()));
+        Verifier verifier(buffer.get(), size, /* max_depth = */ 64, max_tables);
         if (!VerifyManifestBuffer(verifier))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
