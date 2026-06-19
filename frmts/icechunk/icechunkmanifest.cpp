@@ -259,14 +259,12 @@ IcechunkManifest::Open(const char *pszFilename)
                 return nullptr;
             }
 
-#ifdef DEBUG
             chunkRef.checksumLastModified = ref->checksum_last_modified();
 
             if (const auto checksumEtag = ref->checksum_etag())
             {
                 chunkRef.checksumEtag = GetString(checksumEtag);
             }
-#endif
 
             int nAlternativeCount = 0;
             if (const auto inlineContent = ref->inline_())

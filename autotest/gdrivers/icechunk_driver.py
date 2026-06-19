@@ -2388,6 +2388,63 @@ def test_icechunk_manifest_inconsistent_chunk_ref_count(tmp_path):
         ar.Read()
 
 
+def test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified(tmp_path):
+
+    rootdirname = Path(
+        "data/icechunk/test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified"
+    )
+
+    if FORCE_REGENERATE or not os.path.exists(rootdirname):
+
+        manifest = {
+            "id": {"bytes": [2] * 12},
+            "arrays": [
+                {
+                    "node_id": {"bytes": [0] * 8},
+                    "refs": [
+                        {
+                            "index": [0],
+                            "chunk_id": {"bytes": [0] * 12},
+                            "offset": 0,
+                            "length": 1,
+                            "checksum_last_modified": 1,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        _create_simple_repo_and_snapshot_with_manifest_file(
+            tmp_path,
+            rootdirname,
+            "081040G2081040G20810",
+            manifest,
+            manifest_num_chunk_refs=1,
+        )
+
+        os.mkdir(rootdirname / "chunks", 0o755)
+        open(rootdirname / "chunks" / "00000000000000000000", "wb").write(b"\x01")
+
+    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar
+
+    with pytest.raises(
+        Exception,
+        match=r"Last modified timestamp verification on .* failed",
+    ):
+        ar.Read()
+
+    ds = gdal.OpenEx(
+        f"ICECHUNK:{rootdirname}?ignore-timestamp-etag=yes", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar
+    assert ar.Read() == b"\x01"
+
+
 def test_icechunk_manifest_inconsistent_chunk_ref_dim(tmp_path):
 
     rootdirname = Path(

@@ -26,8 +26,10 @@ namespace gdal::icechunk
 
 std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
                                        std::string &osBranchName,
-                                       std::string &osTagName)
+                                       std::string &osTagName,
+                                       bool &ignoreTimestampEtag)
 {
+    ignoreTimestampEtag = false;
     std::string osFilename = osDatasetName;
     if (STARTS_WITH_CI(osFilename.c_str(), ICECHUNK_PREFIX))
     {
@@ -35,22 +37,31 @@ std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
         const size_t nQuestionMarkPos = osFilename.find('?');
         if (nQuestionMarkPos != std::string::npos)
         {
-            std::string osSuffix = osFilename.substr(nQuestionMarkPos + 1);
-            if (cpl::starts_with(osSuffix, "branch="))
+            const std::string osSuffix =
+                osFilename.substr(nQuestionMarkPos + 1);
+            osFilename.resize(nQuestionMarkPos);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(osSuffix.c_str(), "&", 0));
+            for (const char *pszToken : aosTokens)
             {
-                osFilename.resize(nQuestionMarkPos);
-                osBranchName = osSuffix.substr(strlen("branch="));
-            }
-            else if (cpl::starts_with(osSuffix, "tag="))
-            {
-                osFilename.resize(nQuestionMarkPos);
-                osTagName = osSuffix.substr(strlen("tag="));
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid Icechunk connection string");
-                return {};
+                if (EQUAL(pszToken, "ignore-timestamp-etag=yes"))
+                {
+                    ignoreTimestampEtag = true;
+                }
+                else if (STARTS_WITH(pszToken, "branch="))
+                {
+                    osBranchName = pszToken + strlen("branch=");
+                }
+                else if (STARTS_WITH(pszToken, "tag="))
+                {
+                    osTagName = pszToken + strlen("tag=");
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid Icechunk connection string");
+                    return {};
+                }
             }
         }
     }

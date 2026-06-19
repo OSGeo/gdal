@@ -48,6 +48,7 @@ class VSIIcechunkFileSystem final : public VSIFilesystemHandler
         std::string osBranchName{};
         std::string osTagName{};
         std::string osKey{};
+        bool ignoreTimestampEtag = false;
     };
 
     VSIIcechunkFileSystem()
@@ -171,7 +172,8 @@ VSIIcechunkFileSystem::SplitFilename(const char *pszFilename)
             ref.osRootFilenameWithBranchOrTag = osRootFilename;
 
             ref.osRootFilename = GetFilenameFromDatasetName(
-                osRootFilename, ref.osBranchName, ref.osTagName);
+                osRootFilename, ref.osBranchName, ref.osTagName,
+                ref.ignoreTimestampEtag);
             if (ref.osBranchName.empty() && ref.osTagName.empty())
                 ref.osBranchName = "main";
 
@@ -421,6 +423,39 @@ VSIIcechunkFileSystem::GetFileInfo(const char *pszFilename)
                                 GetChunkFilename(*manifest, *chunkRef);
                             if (!info.osFilename.empty())
                             {
+                                if (!ref.ignoreTimestampEtag &&
+                                    chunkRef->checksumLastModified > 0)
+                                {
+                                    VSIStatBufL sStat;
+                                    if (VSIStatL(info.osFilename.c_str(),
+                                                 &sStat) != 0)
+                                    {
+                                        CPLError(CE_Failure, CPLE_AppDefined,
+                                                 "Stat() on %s failed",
+                                                 info.osFilename.c_str());
+                                        return {};
+                                    }
+                                    if (static_cast<int64_t>(sStat.st_mtime) !=
+                                        static_cast<int64_t>(
+                                            chunkRef->checksumLastModified))
+                                    {
+                                        CPLError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "Last modified timestamp "
+                                            "verification on %s failed: got "
+                                            "%" PRId64
+                                            ", expected %u. If you want to "
+                                            "ignore this check, append "
+                                            "'?ignore-timestamp-etag=yes' to "
+                                            "the connection string",
+                                            info.osFilename.c_str(),
+                                            static_cast<int64_t>(
+                                                sStat.st_mtime),
+                                            chunkRef->checksumLastModified);
+                                        return {};
+                                    }
+                                }
+
                                 info.nOffset = chunkRef->offset;
                                 info.nSize = chunkRef->length;
                             }

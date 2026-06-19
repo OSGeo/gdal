@@ -55,10 +55,8 @@ class IcechunkManifest final : public IcechunkFile
         // Virtual reference
         std::string location{};
 
-#ifdef DEBUG
         uint32_t checksumLastModified = 0;
         std::string checksumEtag{};
-#endif
     };
 
     struct ArrayManifest
