@@ -356,8 +356,7 @@ static std::string GetChunkFilename(const IcechunkManifest &manifest,
                     CE_Failure, CPLE_AppDefined,
                     "Access to non-network chunk location '%s' disabled by "
                     "default. Set the ICECHUNK_ALLOW_LOCAL_CHUNK_LOCATION "
-                    "cICECHUNK_ALLOW_LOCAL_CHUNK_LOCATION configuration option "
-                    "to YES to enable it.",
+                    "configuration option to YES to enable it.",
                     chunkRef.location.c_str());
             }
         }
