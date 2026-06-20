@@ -15,7 +15,9 @@
 #include "gdal_pam_multidim.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
 
 /************************************************************************/
@@ -364,6 +366,12 @@ class GDALMathOperationMDArray final : public GDALPamMDArray
     mutable std::vector<double> m_leftValues{};
     mutable std::vector<double> m_rightValues{};
 
+    inline bool IsInvalid(double dfLeft) const
+    {
+        return std::isnan(dfLeft) ||
+               (m_bHasNoDataLeft && m_dfNoDataLeft == dfLeft);
+    }
+
     inline bool IsInvalidTuple(double dfLeft, double dfRight) const
     {
         return std::isnan(dfLeft) ||
@@ -371,6 +379,10 @@ class GDALMathOperationMDArray final : public GDALPamMDArray
                std::isnan(dfRight) ||
                (m_bHasNoDataRight && m_dfNoDataRight == dfRight);
     }
+
+    template <class Op>
+    void PerformOperation(double *leftValues, const double *rightValues,
+                          size_t nElts, bool bIntegerAndAllValid) const;
 };
 
 /************************************************************************/
@@ -421,6 +433,84 @@ GDALMathOperationMDArray::Create(const std::shared_ptr<GDALMDArray> &arrayLeft,
 }
 
 /************************************************************************/
+/*             GDALMathOperationMDArray::PerformOperation()             */
+/************************************************************************/
+
+template <class Op>
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+void GDALMathOperationMDArray::PerformOperation(double *leftValues,
+                                                const double *rightValues,
+                                                size_t nElts,
+                                                bool bIntegerAndAllValid) const
+{
+    if (bIntegerAndAllValid)
+    {
+        if (!rightValues)
+        {
+            for (size_t i = 0; i < nElts; ++i)
+            {
+                leftValues[i] = Op()(leftValues[i], leftValues[i]);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < nElts; ++i)
+            {
+                leftValues[i] = Op()(leftValues[i], rightValues[i]);
+            }
+        }
+    }
+    else
+    {
+        if (!rightValues)
+        {
+            if ((!m_bHasNoDataLeft || std::isnan(m_dfNoDataLeft)) &&
+                std::isnan(m_dfNoData))
+            {
+                for (size_t i = 0; i < nElts; ++i)
+                {
+                    leftValues[i] = Op()(leftValues[i], leftValues[i]);
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < nElts; ++i)
+                {
+                    if (IsInvalid(leftValues[i]))
+                        leftValues[i] = m_dfNoData;
+                    else
+                        leftValues[i] = Op()(leftValues[i], leftValues[i]);
+                }
+            }
+        }
+        else
+        {
+            if ((!m_bHasNoDataLeft || std::isnan(m_dfNoDataLeft)) &&
+                (!m_bHasNoDataRight || std::isnan(m_dfNoDataRight)) &&
+                std::isnan(m_dfNoData))
+            {
+                for (size_t i = 0; i < nElts; ++i)
+                {
+                    leftValues[i] = Op()(leftValues[i], rightValues[i]);
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < nElts; ++i)
+                {
+                    if (IsInvalidTuple(leftValues[i], rightValues[i]))
+                        leftValues[i] = m_dfNoData;
+                    else
+                        leftValues[i] = Op()(leftValues[i], rightValues[i]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                  GDALMathOperationMDArray::IRead()                   */
 /************************************************************************/
 
@@ -457,6 +547,24 @@ bool GDALMathOperationMDArray::IRead(const GUInt64 *arrayStartIdx,
         return true;
     }
 
+    // Check if the output buffer is in contiguous row major order
+    // If this is true and its type is also the type of the array, we can
+    // directly read the left array into the output buffer and update it in
+    // place.
+    bool bRowMajorBufferStride = true;
+    GPtrDiff_t nExpectedStrideValue = 1;
+    for (size_t i = nDims; i > 0; /* decremented in loop */)
+    {
+        --i;
+        if (bufferStride[i] != nExpectedStrideValue)
+        {
+            bRowMajorBufferStride = false;
+            break;
+        }
+        nExpectedStrideValue = static_cast<GPtrDiff_t>(nExpectedStrideValue *
+                                                       apoDims[i]->GetSize());
+    }
+
     size_t nElts = 1;
     bool bFullArrayRequested = true;
     for (size_t i = 0; i < nDims; ++i)
@@ -465,12 +573,26 @@ bool GDALMathOperationMDArray::IRead(const GUInt64 *arrayStartIdx,
         if (bFullArrayRequested)
             bFullArrayRequested = (count[i] == apoDims[i]->GetSize());
     }
+
+    const bool bLeftValuesAllocNeeded =
+        !bRowMajorBufferStride || bufferDataType != m_dt;
+
+    // We can skip both I/O and memory allocations if operating on the same
+    // array.
+    const bool bRightValuesAllocNeeded = m_arrayLeft != m_arrayRight;
+
     try
     {
-        if (nElts > m_leftValues.size())
-            m_leftValues.resize(nElts);
-        if (nElts > m_rightValues.size())
-            m_rightValues.resize(nElts);
+        if (bLeftValuesAllocNeeded)
+        {
+            if (nElts > m_leftValues.size())
+                m_leftValues.resize(nElts);
+        }
+        if (bRightValuesAllocNeeded)
+        {
+            if (nElts > m_rightValues.size())
+                m_rightValues.resize(nElts);
+        }
     }
     catch (const std::exception &)
     {
@@ -479,102 +601,55 @@ bool GDALMathOperationMDArray::IRead(const GUInt64 *arrayStartIdx,
         return false;
     }
 
+    double *leftValues = bLeftValuesAllocNeeded
+                             ? m_leftValues.data()
+                             : static_cast<double *>(pDstBuffer);
+
     const bool ret = m_arrayLeft->Read(arrayStartIdx, count, arrayStep, nullptr,
-                                       m_dt, m_leftValues.data()) &&
-                     m_arrayRight->Read(arrayStartIdx, count, arrayStep,
-                                        nullptr, m_dt, m_rightValues.data());
+                                       m_dt, leftValues) &&
+                     (!bRightValuesAllocNeeded ||
+                      m_arrayRight->Read(arrayStartIdx, count, arrayStep,
+                                         nullptr, m_dt, m_rightValues.data()));
+
+    const double *rightValues =
+        bRightValuesAllocNeeded ? m_rightValues.data() : nullptr;
+
     if (ret)
     {
         switch (m_op)
         {
             case Operation::OP_ADD:
             {
-                if (bIntegerAndAllValid)
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        m_leftValues[i] += m_rightValues[i];
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        if (IsInvalidTuple(m_leftValues[i], m_rightValues[i]))
-                            m_leftValues[i] = m_dfNoData;
-                        else
-                            m_leftValues[i] += m_rightValues[i];
-                    }
-                }
+                PerformOperation<std::plus<double>>(leftValues, rightValues,
+                                                    nElts, bIntegerAndAllValid);
                 break;
             }
             case Operation::OP_SUBTRACT:
             {
-                if (bIntegerAndAllValid)
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        m_leftValues[i] -= m_rightValues[i];
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        if (IsInvalidTuple(m_leftValues[i], m_rightValues[i]))
-                            m_leftValues[i] = m_dfNoData;
-                        else
-                            m_leftValues[i] -= m_rightValues[i];
-                    }
-                }
+                PerformOperation<std::minus<double>>(
+                    leftValues, rightValues, nElts, bIntegerAndAllValid);
                 break;
             }
             case Operation::OP_MULTIPLY:
             {
-                if (bIntegerAndAllValid)
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        m_leftValues[i] *= m_rightValues[i];
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        if (IsInvalidTuple(m_leftValues[i], m_rightValues[i]))
-                            m_leftValues[i] = m_dfNoData;
-                        else
-                            m_leftValues[i] *= m_rightValues[i];
-                    }
-                }
+                PerformOperation<std::multiplies<double>>(
+                    leftValues, rightValues, nElts, bIntegerAndAllValid);
                 break;
             }
             case Operation::OP_DIVIDE:
             {
-                if (bIntegerAndAllValid)
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        m_leftValues[i] /= m_rightValues[i];
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < nElts; ++i)
-                    {
-                        if (IsInvalidTuple(m_leftValues[i], m_rightValues[i]))
-                            m_leftValues[i] = m_dfNoData;
-                        else
-                            m_leftValues[i] /= m_rightValues[i];
-                    }
-                }
+                PerformOperation<std::divides<double>>(
+                    leftValues, rightValues, nElts, bIntegerAndAllValid);
                 break;
             }
         }
 
-        CopyContiguousBufferToBuffer(nDims, count, m_leftValues.data(), m_dt,
-                                     pDstBuffer, bufferDataType, bufferStride);
+        if (bLeftValuesAllocNeeded)
+        {
+            CopyContiguousBufferToBuffer(nDims, count, leftValues, m_dt,
+                                         pDstBuffer, bufferDataType,
+                                         bufferStride);
+        }
     }
 
     if (bFullArrayRequested)

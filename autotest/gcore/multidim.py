@@ -2089,25 +2089,35 @@ def test_multidim_get_regular_spacing():
     assert varY.GetRegularSpacing() is None
 
 
-def _get_arithmetic_arrays():
+def _get_arithmetic_arrays(type, has_nodata):
     drv = gdal.GetDriverByName("MEM")
     mem_ds = drv.CreateMultiDimensional("")
     rg = mem_ds.GetRootGroup()
     dimX = rg.CreateDimension("X", None, None, 2)
     dimY = rg.CreateDimension("Y", None, None, 3)
 
-    ar = rg.CreateMDArray(
-        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-    )
+    ar = rg.CreateMDArray("ar", [dimY, dimX], gdal.ExtendedDataType.Create(type))
+    if has_nodata:
+        ar.SetNoDataValueDouble(100)
     ar_vals = [0, 10, 20, 30, 40, 50, 60]
-    ar.Write(array.array("B", ar_vals))
-    ar2 = rg.CreateMDArray(
-        "ar2", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-    )
+    ar.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar_vals))
+    ar2 = rg.CreateMDArray("ar2", [dimY, dimX], gdal.ExtendedDataType.Create(type))
+    if has_nodata:
+        ar2.SetNoDataValueDouble(100)
     ar2_vals = [6, 5, 4, 3, 2, 1]
-    ar2.Write(array.array("B", ar2_vals))
+    ar2.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar2_vals))
 
     return ar, ar_vals, ar2, ar2_vals
+
+
+def _assert_equal_nan_aware(left, right):
+
+    assert len(left) == len(right)
+    for x, y in zip(left, right):
+        if math.isnan(x):
+            assert math.isnan(y)
+        else:
+            assert x == y
 
 
 @pytest.mark.parametrize(
@@ -2119,14 +2129,19 @@ def _get_arithmetic_arrays():
         pytest.param(operator.truediv, id="div"),
     ],
 )
-def test_multidim_array_arithmetic_operator(op):
+@pytest.mark.parametrize("type", [gdal.GDT_Byte, gdal.GDT_Float32])
+@pytest.mark.parametrize("has_nodata", [True, False])
+def test_multidim_array_arithmetic_operator(op, type, has_nodata):
 
-    ar, ar_vals, ar2, ar2_vals = _get_arithmetic_arrays()
+    ar, ar_vals, ar2, ar2_vals = _get_arithmetic_arrays(type, has_nodata)
     res_ar = op(ar, ar2)
     assert [(x.GetName(), x.GetSize()) for x in res_ar.GetDimensions()] == [
         (x.GetName(), x.GetSize()) for x in ar.GetDimensions()
     ]
-    assert res_ar.GetNoDataValueAsRaw() is None
+    if has_nodata:
+        assert res_ar.GetNoDataValueAsDouble() == 100.0
+    else:
+        assert res_ar.GetNoDataValueAsRaw() is None
     assert res_ar.GetUnit() == ""
     assert res_ar.GetDataType().GetNumericDataType() == gdal.GDT_Float64
     assert res_ar.GetSpatialRef() is None
@@ -2134,6 +2149,20 @@ def test_multidim_array_arithmetic_operator(op):
     assert list(struct.unpack("d" * 6, res_ar.Read())) == [
         op(x, y) for x, y in zip(ar_vals, ar2_vals)
     ]
+
+    res_ar2_ar2 = op(ar2, ar2)
+    assert list(struct.unpack("d" * 6, res_ar2_ar2.Read())) == [
+        op(x, y) for x, y in zip(ar2_vals, ar2_vals)
+    ]
+
+    if has_nodata:
+        ar2_vals[-1] = 100
+        ar2.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar2_vals))
+        res_ar2_ar2 = op(ar2, ar2)
+        _assert_equal_nan_aware(
+            list(struct.unpack("d" * 6, res_ar2_ar2.Read())),
+            [op(x, y) for x, y in zip(ar2_vals, ar2_vals)][0:-1] + [100],
+        )
 
 
 @pytest.mark.parametrize(
@@ -2325,16 +2354,6 @@ def test_multidim_array_arithmetic_block_size():
 
     assert (ar + ar_no_block_size).GetBlockSize() == [0, 0]
     assert (ar_no_block_size + ar).GetBlockSize() == [0, 0]
-
-
-def _assert_equal_nan_aware(left, right):
-
-    assert len(left) == len(right)
-    for x, y in zip(left, right):
-        if math.isnan(x):
-            assert math.isnan(y)
-        else:
-            assert x == y
 
 
 def test_multidim_array_arithmetic_nodata_finite_same():
