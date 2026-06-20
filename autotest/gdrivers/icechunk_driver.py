@@ -2870,3 +2870,14 @@ def test_icechunk_remote_missing_virtual_ref():
         Exception, match="Cannot open /vsis3/icechunk-public-data/does-not-exist"
     ):
         ar.Read()
+
+
+def test_icechunk_repo_named_repo(tmp_vsimem):
+
+    dirname = "data/icechunk/scalar_array"
+    gdal.alg.vsi.copy(source=dirname, destination=tmp_vsimem / "repo", recursive=True)
+
+    ds = gdal.Open(f"{tmp_vsimem}/repo", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar.Read() == array.array("i", [1])

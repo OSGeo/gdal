@@ -203,38 +203,59 @@ std::unique_ptr<IcechunkRepo> IcechunkRepo::Open(const char *pszFilename,
     VSIVirtualHandleUniquePtr tmpFp;
     if (!fp)
     {
-        if (strcmp(CPLGetFilename(pszFilename), "repo") != 0)
+        for (int iAttempt = 1; iAttempt <= 2; ++iAttempt)
         {
-            osFilename =
-                CPLFormFilenameSafe(osFilename.c_str(), "repo", nullptr);
-            tmpFp = VSIFilesystemHandler::OpenStatic(osFilename.c_str(), "rb");
-            // For network file systems, try to read one byte
-            char chDummy = 1;
-            if (tmpFp && tmpFp->Read(&chDummy, 1) != 1)
+            if (iAttempt == 2 ||
+                strcmp(CPLGetFilename(pszFilename), "repo") != 0)
             {
-                tmpFp.reset();
-            }
+                osFilename =
+                    CPLFormFilenameSafe(osFilename.c_str(), "repo", nullptr);
+                tmpFp =
+                    VSIFilesystemHandler::OpenStatic(osFilename.c_str(), "rb");
+                // For network file systems, try to read one byte
+                char chDummy = 1;
+                if (tmpFp && tmpFp->Read(&chDummy, 1) != 1)
+                {
+                    tmpFp.reset();
+                }
 
-            if (tmpFp)
-            {
-                CPL_IGNORE_RET_VAL(tmpFp->Seek(0, SEEK_SET));
-                pszFilename = osFilename.c_str();
+                if (tmpFp)
+                {
+                    CPL_IGNORE_RET_VAL(tmpFp->Seek(0, SEEK_SET));
+                    pszFilename = osFilename.c_str();
+                }
+                else
+                {
+                    VSIStatBufL sStat;
+                    if (VSIStatL(
+                            CPLFormFilenameSafe(pszFilename, "refs", nullptr)
+                                .c_str(),
+                            &sStat) == 0)
+                    {
+                        // Icechunk v1
+                        return OpenV1(pszFilename);
+                    }
+                }
+                break;
             }
             else
             {
-                VSIStatBufL sStat;
-                if (VSIStatL(CPLFormFilenameSafe(pszFilename, "refs", nullptr)
-                                 .c_str(),
-                             &sStat) == 0)
+                tmpFp = VSIFilesystemHandler::OpenStatic(pszFilename, "rb");
+                // For network file systems, try to read one byte
+                char chDummy = 1;
+                if (!tmpFp || tmpFp->Read(&chDummy, 1) != 1)
                 {
-                    // Icechunk v1
-                    return OpenV1(pszFilename);
+                    tmpFp.reset();
+                    // This might be a repository named "repo". Retry with
+                    // that assumption
+                }
+                else
+                {
+                    if (tmpFp)
+                        CPL_IGNORE_RET_VAL(tmpFp->Seek(0, SEEK_SET));
+                    break;
                 }
             }
-        }
-        else
-        {
-            tmpFp = VSIFilesystemHandler::OpenStatic(pszFilename, "rb");
         }
 
         fp = tmpFp.get();
