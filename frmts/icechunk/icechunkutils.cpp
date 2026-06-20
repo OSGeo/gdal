@@ -133,6 +133,13 @@ DecompressFile(const char *pszFilename, VSIVirtualHandle *poFile,
         }
     }
 
+    if (memcmp(pabyRaw, abySIG, SIG_SIZE) != 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "%s: Icechunk signature not found", pszFilename);
+        return ret;
+    }
+
     const int nVersion = pabyRaw[SIG_SIZE + IMPLEMENTATION_NAME_SIZE];
     if (nVersion != 1 && nVersion != 2)
     {
