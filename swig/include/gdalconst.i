@@ -193,6 +193,17 @@
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;
 %constant OF_VERBOSE_ERROR = GDAL_OF_VERBOSE_ERROR;
+#if defined(SWIGPYTHON)
+// Extension to C valid open flags to be able to restore GDAL < 3.14
+// behavior of gdal.OpenEx() being silent by default on errors when
+// GDAL_OF_VERBOSE_ERROR isn't set when exceptions are disabled.
+// With GDAL 3.14, GDAL_OF_VERBOSE_ERROR is always implictly set, unless
+// GDAL_OF_SILENT_ERROR is set.
+%{
+#define GDAL_OF_SILENT_ERROR    (1ULL << 63)
+%}
+%constant unsigned long long OF_SILENT_ERROR = GDAL_OF_SILENT_ERROR;
+#endif
 %constant OF_THREAD_SAFE = GDAL_OF_THREAD_SAFE;
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)

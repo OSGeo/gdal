@@ -118,9 +118,9 @@ def test_gti_no_metadata(tmp_vsimem):
     del index_ds
 
     with pytest.raises(Exception):
-        gdal.Open(index_filename)
+        gdal.Open(index_filename, gdal.OF_RASTER)
 
-    vrt_ds = gdal.OpenEx(index_filename, allowed_drivers=["GTI"])
+    vrt_ds = gdal.Open(index_filename, allowed_drivers=["GTI"])
     assert vrt_ds.GetDriver().GetDescription() == "GTI"
     check_basic(vrt_ds, src_ds)
     assert (
@@ -196,9 +196,7 @@ def test_gti_several_layers(tmp_vsimem):
     ):
         gdal.Open("GTI:" + index_filename)
 
-    assert (
-        gdal.OpenEx("GTI:" + index_filename, open_options=["LAYER=index"]) is not None
-    )
+    assert gdal.Open("GTI:" + index_filename, open_options=["LAYER=index"]) is not None
 
     index_ds = ogr.Open(index_filename, update=1)
     index_ds.SetMetadataItem("TILE_INDEX_LAYER", "index")
@@ -2962,7 +2960,7 @@ def test_gti_open_options(tmp_vsimem):
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
-    vrt_ds = gdal.OpenEx(index_filename, open_options=["RESX=30", "RESY=30"])
+    vrt_ds = gdal.Open(index_filename, open_options=["RESX=30", "RESY=30"])
     assert vrt_ds.GetGeoTransform() == pytest.approx(
         (440720.0, 30.0, 0.0, 3751320.0, 0.0, -30.0)
     )
@@ -3380,7 +3378,7 @@ def test_gti_sql(tmp_vsimem):
     assert gti_ds.GetRasterBand(2).ComputeRasterMinMax() == (0, 0)
     assert gti_ds.GetRasterBand(3).ComputeRasterMinMax() == (0, 0)
 
-    gti_ds = gdal.OpenEx(
+    gti_ds = gdal.Open(
         f"GTI:{tmp_vsimem}/index.db",
         open_options=[
             "SQL=WITH target_version AS (SELECT tile_id,max(version) AS version FROM tileindex GROUP BY tile_id) SELECT * FROM tileindex INNER JOIN target_version ON target_version.tile_id=tileindex.tile_id AND target_version.version=tileindex.version",
@@ -3397,10 +3395,10 @@ def test_gti_sql(tmp_vsimem):
 
     # Invalid SQL
     with pytest.raises(Exception, match="syntax error"):
-        gdal.OpenEx(f"GTI:{tmp_vsimem}/index.db", open_options=["SQL=invalid"])
+        gdal.Open(f"GTI:{tmp_vsimem}/index.db", open_options=["SQL=invalid"])
 
     # Invalid Spatial SQL
-    gti_ds = gdal.OpenEx(
+    gti_ds = gdal.Open(
         f"GTI:{tmp_vsimem}/index.db",
         open_options=[
             "SQL=SELECT * FROM tileindex",
@@ -3492,7 +3490,7 @@ def test_gti_reprojected_no_out_of_sync_warning(index_filename):
     origins, amplifying the floor/ceil grid-snap that triggers the mismatch.
     Regression test for https://github.com/OSGeo/gdal/issues/13944."""
 
-    gti_ds = gdal.OpenEx(index_filename, open_options=["WARPING_MEMORY=100MB"])
+    gti_ds = gdal.Open(index_filename, open_options=["WARPING_MEMORY=100MB"])
     with gdaltest.error_raised(gdal.CE_None):
         gti_ds.ReadRaster(0, 0, 500, 500)
 
@@ -3607,7 +3605,7 @@ def test_gti_srs_open_option_spatial_filter(tmp_vsimem):
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=REPROJECT"]
     )
     assert ds is not None
@@ -3628,7 +3626,7 @@ def test_gti_srs_behavior_invalid(tmp_vsimem):
     del index_ds
 
     with pytest.raises(Exception, match="Invalid value for SRS_BEHAVIOR"):
-        gdal.OpenEx(
+        gdal.Open(
             index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=INVALID"]
         )
 
@@ -3647,7 +3645,7 @@ def test_gti_srs_mismatch_no_behavior_warns(tmp_vsimem):
     del index_ds
 
     with gdaltest.error_raised(gdal.CE_Warning, match="SRS_BEHAVIOR"):
-        ds = gdal.OpenEx(index_filename, open_options=["SRS=EPSG:3857"])
+        ds = gdal.Open(index_filename, open_options=["SRS=EPSG:3857"])
     assert ds is not None
     assert ds.GetSpatialRef().GetAuthorityCode() == "3857"
 
@@ -3666,7 +3664,7 @@ def test_gti_srs_behavior_override(tmp_vsimem):
     del index_ds
 
     with gdaltest.error_raised(gdal.CE_None):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=OVERRIDE"]
         )
     assert ds is not None
@@ -3688,7 +3686,7 @@ def test_gti_srs_no_layer_srs_silent(tmp_vsimem):
     del index_ds
 
     with gdaltest.error_raised(gdal.CE_None):
-        ds = gdal.OpenEx(index_filename, open_options=["SRS=EPSG:3857"])
+        ds = gdal.Open(index_filename, open_options=["SRS=EPSG:3857"])
     assert ds is not None
     assert ds.GetSpatialRef().GetAuthorityCode() == "3857"
 

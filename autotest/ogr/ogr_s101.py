@@ -130,7 +130,7 @@ def _alter_xml(
 
     if exception_text is None:
         with gdaltest.error_raised(gdal.CE_None):
-            ds = gdal.OpenEx(tmp_000, open_options=["STRICT=NO"])
+            ds = gdal.Open(tmp_000, open_options=["STRICT=NO"])
             assert ds is not None
             return ds
 
@@ -146,12 +146,12 @@ def _alter_xml(
 
         if recoverable:
             with gdaltest.error_raised(gdal.CE_Warning, match=exception_text):
-                ds = gdal.OpenEx(tmp_000, open_options=["STRICT=NO"])
+                ds = gdal.Open(tmp_000, open_options=["STRICT=NO"])
                 assert ds is not None
                 return ds
         else:
             with pytest.raises(Exception, match=regexp):
-                gdal.OpenEx(tmp_000, open_options=["STRICT=NO"])
+                gdal.Open(tmp_000, open_options=["STRICT=NO"])
             return None
     else:
         ds = ogr.Open(tmp_000)
@@ -160,7 +160,7 @@ def _alter_xml(
                 for f in lyr:
                     pass
 
-        ds = gdal.OpenEx(tmp_000, open_options=["STRICT=NO"])
+        ds = gdal.Open(tmp_000, open_options=["STRICT=NO"])
         assert ds is not None
         if recoverable:
             with gdaltest.error_raised(gdal.CE_Warning, match=exception_text):

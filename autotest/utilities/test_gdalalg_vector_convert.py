@@ -29,7 +29,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
     convert = get_convert_alg()
     assert convert.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
 
-    with gdal.OpenEx(out_filename, gdal.OF_UPDATE) as ds:
+    with gdal.Open(out_filename, gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
         for i in range(10):
             ds.GetLayer(0).DeleteFeature(i + 1)
@@ -38,7 +38,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
     with pytest.raises(Exception, match="already exists"):
         convert.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 0
 
     convert = get_convert_alg()
@@ -46,7 +46,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
         ["--overwrite", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
     convert = get_convert_alg()
@@ -54,7 +54,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
         ["--append", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 20
 
     convert = get_convert_alg()
@@ -62,7 +62,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
         ["--update", "--nln", "layer2", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 20
         assert ds.GetLayerByName("layer2").GetFeatureCount() == 10
 
@@ -79,7 +79,7 @@ def test_gdalalg_vector_convert_base(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 10
         assert ds.GetLayerByName("layer2").GetFeatureCount() == 10
 
@@ -98,7 +98,7 @@ def test_gdalalg_vector_convert_append_without_existing_file(tmp_vsimem):
         creation_option={"ADD_GPKG_OGR_CONTENTS": "NO"},
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 10
         with ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE name = 'gpkg_ogr_contents'"
@@ -108,7 +108,7 @@ def test_gdalalg_vector_convert_append_without_existing_file(tmp_vsimem):
         input="../ogr/data/poly.shp", output=out_filename, append=True
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 20
 
 
@@ -125,7 +125,7 @@ def test_gdalalg_vector_convert_dsco(tmp_vsimem):
         ["../ogr/data/poly.shp", out_filename, "--co", "ADD_GPKG_OGR_CONTENTS=NO"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         with ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE name = 'gpkg_ogr_contents'"
         ) as lyr:
@@ -142,7 +142,7 @@ def test_gdalalg_vector_convert_lco(tmp_vsimem):
         ["../ogr/data/poly.shp", out_filename, "--lco", "FID=my_fid"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFIDColumn() == "my_fid"
 
 
@@ -163,7 +163,7 @@ def test_gdalalg_vector_convert_progress(tmp_vsimem):
 
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -204,7 +204,7 @@ def test_gdalalg_vector_convert_vsistdout(tmp_vsimem):
     convert["output-format"] = "GeoJSON"
     assert convert.Run()
     assert convert.Finalize()
-    assert gdal.OpenEx(f"{tmp_vsimem}/tmp.json") is not None
+    assert gdal.Open(f"{tmp_vsimem}/tmp.json") is not None
 
 
 @pytest.mark.require_driver("OpenFileGDB")
@@ -346,7 +346,7 @@ def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver
     }
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+    with gdal.Open("../ogr/data/poly.shp") as poly_ds:
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
 
@@ -371,7 +371,7 @@ def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver
 def test_gdalalg_vector_convert_no_create_empty_layers(output_format):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+    with gdal.Open("../ogr/data/poly.shp") as poly_ds:
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
 
@@ -649,7 +649,7 @@ def test_gdalalg_vector_convert_multiple_geometry_fields(tmp_vsimem):
         ],
     )
 
-    with gdal.OpenEx(dst_fname) as dst_ds:
+    with gdal.Open(dst_fname) as dst_ds:
         assert dst_ds.GetLayerCount() == 1
         dst_lyr = dst_ds.GetLayer(0)
 
@@ -664,7 +664,7 @@ def test_gdalalg_vector_convert_multiple_geometry_fields(tmp_vsimem):
         overwrite=True,
     )
 
-    with gdal.OpenEx(dst_fname) as dst_ds:
+    with gdal.Open(dst_fname) as dst_ds:
         assert dst_ds.GetLayerCount() == 1
         dst_lyr = dst_ds.GetLayer(0)
 

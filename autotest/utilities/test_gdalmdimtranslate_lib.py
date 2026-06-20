@@ -979,7 +979,7 @@ def test_gdalmdimtranslate_from_gtiff_multiband(tmp_vsimem):
         format="VRT",
     )
 
-    ds = gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("foo")
     assert ar.GetDimensionCount() == 3

@@ -317,7 +317,7 @@ def test_gdalalg_mdim_mosaic_labelled_axis_2D_array(tmp_path):
         input=[tmp_path / "test1.nc", tmp_path / "test2.nc"],
         output=tmp_path / "out.nc",
     )
-    with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
         ar = ds.GetRootGroup().OpenMDArray("test")
         dims = ar.GetDimensions()
         assert dims[0].GetName() == "z"
@@ -756,7 +756,7 @@ def test_gdalalg_mdim_mosaic_error_no_indexing_var(tmp_path):
         array="test",
         output_format="VRT",
     )
-    with gdal.OpenEx(tmp_path / "test1.zarr", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "test1.zarr", gdal.OF_MULTIDIM_RASTER) as ds:
         ar = ds.GetRootGroup().OpenMDArray("test")
         dims = ar.GetDimensions()
         assert dims[0].GetName() == "z"
@@ -1088,7 +1088,7 @@ def test_gdalalg_mdim_mosaic_copy_blocksize_not_same(tmp_path):
 
     gdal.Run("mdim", "mosaic", input=tmp_path / "test*.nc", output=tmp_path / "out.nc")
 
-    with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
         assert ds.GetRootGroup().OpenMDArray("test").GetBlockSize() == [0, 0]
 
 
@@ -1113,7 +1113,7 @@ def test_gdalalg_mdim_mosaic_two_sources(tmp_path):
         output=tmp_path / "out.vrt",
     )
 
-    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         assert (
             ds.GetRootGroup()
             .OpenMDArray("Band1")
@@ -1130,7 +1130,7 @@ def test_gdalalg_mdim_mosaic_two_sources(tmp_path):
         overwrite=True,
     )
 
-    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         assert (
             ds.GetRootGroup()
             .OpenMDArray("Band1")
@@ -1153,12 +1153,12 @@ def test_gdalalg_mdim_mosaic_pipeline(tmp_path):
         pipeline=f"mosaic ../gdrivers/data/netcdf/byte.nc ! write {tmp_path}/out.vrt"
     ):
         pass
-    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         assert ds.GetRootGroup().OpenMDArray("Band1")
 
     with gdal.alg.mdim.pipeline(
         pipeline=f"mosaic ../gdrivers/data/netcdf/byte.nc ! write {tmp_path}/out.nc"
     ):
         pass
-    with gdal.OpenEx(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.nc", gdal.OF_MULTIDIM_RASTER) as ds:
         assert ds.GetRootGroup().OpenMDArray("Band1")

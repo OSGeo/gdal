@@ -201,7 +201,7 @@ def test_ogr_ogcapi_features(remove_type_application_json):
     global_remove_type_application_json = remove_type_application_json
 
     try:
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
             gdal.OF_VECTOR,
             open_options=["CACHE=NO", "API=ITEMS"],
@@ -217,7 +217,7 @@ def test_ogr_ogcapi_features(remove_type_application_json):
 
         del ds
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             sub_ds_uri, gdal.OF_VECTOR, open_options=["CACHE=NO", "API=ITEMS"]
         )
         assert ds is not None
@@ -254,7 +254,7 @@ def test_ogr_ogcapi_features(remove_type_application_json):
 )
 def test_ogr_ogcapi_vector_tiles(vector_format):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_VECTOR,
         open_options=["CACHE=NO", "API=TILES", f"VECTOR_FORMAT={vector_format}"],
@@ -270,7 +270,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
 
     # Remove the format specifier from the URL so we can test the formats
     sub_ds_uri = sub_ds_uri.replace("?f=json", "")
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         sub_ds_uri,
         gdal.OF_VECTOR,
         open_options=["CACHE=NO", "API=TILES", f"VECTOR_FORMAT={vector_format}"],
@@ -308,7 +308,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
 @pytest.mark.require_driver("WMS")
 def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_RASTER,
         open_options=["CACHE=NO", f"API={api}"],
@@ -320,7 +320,7 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
     del ds
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         sub_ds_uri,
         gdal.OF_RASTER,
         open_options=["CACHE=NO", f"API={api}"],
@@ -372,7 +372,7 @@ def test_ogc_api_wrong_collection(api, of_type):
         Exception,
         match=r"HTTP error code : 400, <h1>GNOSIS Map Server \(OGCAPI\) - 400 Bad Request</h1><h3>Invalid data collection</h3>",
     ):
-        gdal.OpenEx(
+        gdal.Open(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
@@ -391,7 +391,7 @@ def test_ogc_api_wrong_collection(api, of_type):
 def test_wrong_url(api, of_type):
 
     with pytest.raises(Exception, match="File Not Found"):
-        gdal.OpenEx(
+        gdal.Open(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/NOT_FOUND/",
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
@@ -401,7 +401,7 @@ def test_wrong_url(api, of_type):
 @pytest.mark.require_driver("WMS")
 def test_ogc_api_raster_tiles():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m",
         gdal.OF_RASTER,
         open_options=["API=TILES", "CACHE=NO", "TILEMATRIXSET=WorldMercatorWGS84Quad"],
@@ -440,7 +440,7 @@ def test_ogc_api_raster_tiles():
 @pytest.mark.require_driver("WMS")
 def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
         gdal.OF_RASTER,
         open_options=[

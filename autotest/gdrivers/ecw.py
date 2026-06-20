@@ -1885,7 +1885,7 @@ def test_ecw_43():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )
@@ -2181,7 +2181,7 @@ def test_ecw_49():
 @gdaltest.disable_exceptions()
 def test_ecw_read_uint32_jpeg2000():
 
-    ds = gdal.OpenEx("data/jpeg2000/uint32_2x2_lossless_nbits_20.j2k", gdal.OF_RASTER)
+    ds = gdal.Open("data/jpeg2000/uint32_2x2_lossless_nbits_20.j2k", gdal.OF_RASTER)
     if gdaltest.ecw_drv.major_version == 3:
         assert ds is not None
     else:

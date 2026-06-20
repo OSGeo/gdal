@@ -1101,7 +1101,7 @@ def test_pdf_layers(poppler_or_pdfium):
     assert cs3 == cs2, "did not get expected checksum"
 
     # Turn another sublayer on
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/pdf/adobe_style_geospatial.pdf",
         open_options=["LAYERS=Layers.Measured_Grid"],
     )
@@ -1146,7 +1146,7 @@ def test_pdf_layers_with_same_name_on_different_pages(poppler_or_pdfium):
         ]
         cs_all = ds.GetRasterBand(1).Checksum()
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             f"PDF:{page}:data/pdf/layer_with_same_name_on_different_pages.pdf",
             open_options=["LAYERS_OFF=Map_Frame.Map.States"],
         )
@@ -1338,7 +1338,7 @@ def test_pdf_write_ogr(tmp_path, poppler_or_pdfium):
         ]
         for opt in rendering_options:
             gdal.ErrorReset()
-            ds = gdal.OpenEx(out_file, open_options=["RENDERING_OPTIONS=%s" % opt])
+            ds = gdal.Open(out_file, open_options=["RENDERING_OPTIONS=%s" % opt])
             cs = ds.GetRasterBand(1).Checksum()
             # When misconfigured Poppler with fonts, use this to avoid error
             if "TEXT" in opt and gdal.GetLastErrorMsg().find("font") >= 0:
@@ -1669,13 +1669,13 @@ def test_pdf_password(poppler_or_pdfium_or_podofo):
 
     # Wrong password
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/pdf/byte_enc.pdf", open_options=["USER_PWD=wrong_password"]
         )
     assert ds is None
 
     # Correct password
-    ds = gdal.OpenEx("data/pdf/byte_enc.pdf", open_options=["USER_PWD=user_password"])
+    ds = gdal.Open("data/pdf/byte_enc.pdf", open_options=["USER_PWD=user_password"])
     assert ds is not None
 
     import test_cli_utilities
@@ -3178,7 +3178,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
     with gdal.VSIFile(tmp_vsimem / "test.pdf", "wb") as f:
         f.write(open("data/pdf/test_ogc_bp.pdf", "rb").read())
 
-    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=144"]) as ds:
+    with gdal.Open(tmp_vsimem / "test.pdf", open_options=["DPI=144"]) as ds:
         assert ds.RasterXSize == 40
         assert ds.RasterYSize == 40
         assert ds.GetRasterBand(1).XSize == 40
@@ -3194,7 +3194,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
         assert ds.GetMetadataItem("DPI") == "72"
     assert gdal.VSIStatL(tmp_vsimem / "test.pdf.aux.xml") is None
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "test.pdf", open_options=["DPI=144", "SAVE_DPI_TO_PAM=YES"]
     ) as ds:
         assert ds.RasterXSize == 40
@@ -3217,7 +3217,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
         assert ds.GetRasterBand(1).YSize == 40
         assert ds.GetMetadataItem("DPI") == "144"
 
-    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=72"]) as ds:
+    with gdal.Open(tmp_vsimem / "test.pdf", open_options=["DPI=72"]) as ds:
         assert ds.RasterXSize == 20
         assert ds.RasterYSize == 20
         assert ds.GetRasterBand(1).XSize == 20

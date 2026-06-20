@@ -71,7 +71,7 @@ def test_ogr_pmtiles_read_basic():
 
 def test_ogr_pmtiles_read_JSON_FIELD():
 
-    ds = gdal.OpenEx("data/pmtiles/poly.pmtiles", open_options=["JSON_FIELD=YES"])
+    ds = gdal.Open("data/pmtiles/poly.pmtiles", open_options=["JSON_FIELD=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["json"] == """{
@@ -86,7 +86,7 @@ def test_ogr_pmtiles_read_JSON_FIELD():
 
 def test_ogr_pmtiles_read_ZOOM_LEVEL():
 
-    ds = gdal.OpenEx("data/pmtiles/poly.pmtiles", open_options=["ZOOM_LEVEL=0"])
+    ds = gdal.Open("data/pmtiles/poly.pmtiles", open_options=["ZOOM_LEVEL=0"])
     assert ds.GetMetadataItem("ZOOM_LEVEL") == "0"
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -107,7 +107,7 @@ def test_ogr_pmtiles_read_ZOOM_LEVEL():
 def test_ogr_pmtiles_read_ZOOM_LEVEL_invalid(zoom_level):
 
     with pytest.raises(Exception, match="Invalid zoom level"):
-        gdal.OpenEx(
+        gdal.Open(
             "data/pmtiles/poly.pmtiles", open_options=["ZOOM_LEVEL=" + str(zoom_level)]
         )
 
@@ -140,7 +140,7 @@ def test_ogr_pmtiles_read_ZOOM_LEVEL_invalid(zoom_level):
 )
 def test_ogr_pmtiles_read_CLIP(clip, envelope):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/pmtiles/ne_10m_admin_0_france.pmtiles", open_options=["CLIP=" + clip]
     )
     lyr = ds.GetLayer(0)
@@ -170,7 +170,7 @@ def test_ogr_pmtiles_read_CLIP(clip, envelope):
 @pytest.mark.parametrize("iterator_threshold", [None, "1"])
 def test_ogr_pmtiles_read_ZOOM_LEVEL_AUTO(zoom_level_auto, fc, iterator_threshold):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/pmtiles/ne_10m_admin_0_france.pmtiles",
         open_options=["ZOOM_LEVEL_AUTO=" + zoom_level_auto],
     )
@@ -391,7 +391,7 @@ def test_ogr_pmtiles_write_from_mbtiles():
         assert expected_md == out_ds.GetMetadata()
         out_ds = None
 
-        src_ds_sqlite3 = gdal.OpenEx(mbtiles_filename, allowed_drivers=["SQLite"])
+        src_ds_sqlite3 = gdal.Open(mbtiles_filename, allowed_drivers=["SQLite"])
         with src_ds_sqlite3.ExecuteSQL(
             "SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles"
         ) as lyr:
@@ -507,7 +507,7 @@ def test_ogr_pmtiles_write_from_mbtiles_deduplication():
         for key in expected:
             assert got[key] == expected[key], (key, got)
 
-        src_ds_sqlite3 = gdal.OpenEx(mbtiles_filename, allowed_drivers=["SQLite"])
+        src_ds_sqlite3 = gdal.Open(mbtiles_filename, allowed_drivers=["SQLite"])
         with src_ds_sqlite3.ExecuteSQL(
             "SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles"
         ) as lyr:
@@ -611,7 +611,7 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
 
 def test_ogr_pmtiles_read_with_many_directories():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/pmtiles/subset7_truncated.pmtiles", open_options=["ZOOM_LEVEL=0"]
     )
     lyr = ds.GetLayer(0)

@@ -720,7 +720,7 @@ def test_jpegxl_apply_orientation(orientation):
     if open_options is None or "APPLY_ORIENTATION" not in open_options:
         pytest.skip()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpegxl/exif_orientation/F%d.jxl" % orientation,
         open_options=["APPLY_ORIENTATION=YES"],
     )

@@ -2125,7 +2125,7 @@ def test_grib_grib2_read_subgrids(use_idx):
     # gdal_translate ../autotest/gcore/data/byte.tif band2.tif -scale 0 255 255 0
     # gdalbuildvrt -separate tmp.vrt band1.tif band2.tif
     # gdal_translate tmp.vrt ../autotest/gdrivers/data/grib/subgrids.grib2 -co "BAND_1_PDS_TEMPLATE_ASSEMBLED_VALUES=2 2 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "BAND_2_PDS_TEMPLATE_ASSEMBLED_VALUES=2 3 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)" -co WRITE_SUBGRIDS=YES
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/grib/subgrids.grib2",
         open_options=(["USE_IDX=YES"] if use_idx else ["USE_IDX=NO"]),
     )
@@ -2291,7 +2291,7 @@ def test_grib_grib2_sidecar():
     assert ds_idx.GetRasterBand(2).Checksum() == 59986
     assert ds_idx.GetRasterBand(6).Checksum() == 206
 
-    ds_no_idx = gdal.OpenEx(
+    ds_no_idx = gdal.Open(
         "data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
         gdal.GA_ReadOnly,
         open_options=["USE_IDX=NO"],
@@ -2321,7 +2321,7 @@ def test_grib_grib2_sidecar_vsisubfile():
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetDescription() == "REFD:1 hybrid level:10 hour fcst"
 
-    ds_ref = gdal.OpenEx(
+    ds_ref = gdal.Open(
         "/vsisubfile/0_5359,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
         open_options=["USE_IDX=NO"],
     )
@@ -2335,7 +2335,7 @@ def test_grib_grib2_sidecar_vsisubfile():
     assert ds.GetRasterBand(1).GetDescription() == "REFD:2 hybrid level:10 hour fcst"
     assert ds.GetRasterBand(2).GetDescription() == "REFC:entire atmosphere:10 hour fcst"
 
-    ds_ref = gdal.OpenEx(
+    ds_ref = gdal.Open(
         f"/vsisubfile/5359_{size},data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
         open_options=["USE_IDX=NO"],
     )
@@ -2380,7 +2380,7 @@ def test_grib_grib1_2_mix_sidecar():
     ):
         assert ds_idx.GetRasterBand(18).Checksum() == 4794
 
-    ds_no_idx = gdal.OpenEx(
+    ds_no_idx = gdal.Open(
         "data/grib/broken_combined_grib2_grib1.grb2",
         gdal.GA_ReadOnly,
         open_options=["USE_IDX=NO"],

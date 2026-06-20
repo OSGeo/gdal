@@ -81,7 +81,7 @@ def reopen_sqlite_db(ds, update=False, **kwargs):
     if update:
         flags |= gdal.OF_UPDATE
 
-    return gdal.OpenEx(ds_loc, flags, **kwargs)
+    return gdal.Open(ds_loc, flags, **kwargs)
 
 
 ###############################################################################
@@ -3350,7 +3350,7 @@ def test_ogr_sqlite_unique(tmp_vsimem):
 
 def test_ogr_sqlite_prelude_statements(require_spatialite):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/sqlite/poly_spatialite.sqlite",
         open_options=[
             "PRELUDE_STATEMENTS=ATTACH DATABASE 'data/sqlite/poly_spatialite.sqlite' AS other"
@@ -3540,7 +3540,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     ds = None
 
     # test with no relationships
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
     ds.ExecuteSQL(
@@ -3551,7 +3551,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
     assert ds.GetRelationship("xxx") is None
     rel = ds.GetRelationship("test_relation_a_test_relation_b")
@@ -3572,7 +3572,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3594,7 +3594,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3628,7 +3628,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
         "CREATE TABLE test_relation_e(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid) ON DELETE CASCADE)"
     )
     ds = None
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3687,7 +3687,7 @@ def test_ogr_sqlite_alter_relations(tmp_vsimem):
     relationship.SetLeftTableFields(["o_pkey"])
     relationship.SetRightTableFields(["dest_pkey"])
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     # no tables yet
     assert not ds.AddRelationship(relationship)
@@ -3783,7 +3783,7 @@ def test_ogr_sqlite_alter_relations(tmp_vsimem):
     assert not ds.AddRelationship(relationship)
 
     # reopen and ensure that existing features remain unmodified in layers
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     layer_origin = ds.GetLayerByName("origin_table")
     layer_dest = ds.GetLayerByName("dest_table")
@@ -4435,7 +4435,7 @@ def test_ogr_sqlite_schema_override(
         # Check error if expected_field_types is empty
         if not expected_field_types:
             with gdaltest.disable_exceptions():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     sqlite_db,
                     gdal.OF_VECTOR | gdal.OF_READONLY,
                     open_options=open_options,
@@ -4447,7 +4447,7 @@ def test_ogr_sqlite_schema_override(
                 assert ds is None
         else:
 
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 sqlite_db,
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,

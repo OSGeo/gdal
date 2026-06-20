@@ -254,7 +254,7 @@ def test_ogr_s57_write_2(tmp_path):
             options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL SOUNDG",
         )
 
-    ds = gdal.OpenEx(dst_filename, open_options=["RETURN_PRIMITIVES=ON"])
+    ds = gdal.Open(dst_filename, open_options=["RETURN_PRIMITIVES=ON"])
 
     assert ds is not None
 

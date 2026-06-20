@@ -77,6 +77,8 @@ typedef GDALMDArrayHS GDALMDArrayHS;
 typedef GDALAttributeHS GDALAttributeHS;
 typedef GDALDimensionHS GDALDimensionHS;
 
+#define GDAL_OF_SILENT_ERROR    (1ULL << 63)
+
 %}
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
@@ -927,7 +929,7 @@ GDALDatasetShadow* Open( char const* name ) {
 }
 %}
 
-#else
+#elif !defined(SWIGPYTHON)
 %newobject Open;
 %inline %{
 GDALDatasetShadow* Open( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
@@ -948,6 +950,9 @@ GDALDatasetShadow* Open( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
 #endif
 
 %newobject OpenEx;
+#ifdef SWIGPYTHON
+%rename (Open) OpenEx;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) OpenEx;
 #endif
@@ -955,15 +960,32 @@ GDALDatasetShadow* Open( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
 %apply (char **options) {char** open_options};
 %apply (char **options) {char** sibling_files};
 %inline %{
-GDALDatasetShadow* OpenEx( char const* path, unsigned int nOpenFlags = 0,
+GDALDatasetShadow* OpenEx( char const* path,
+#ifdef SWIGPYTHON
+                           GUIntBig nOpenFlags = 0,
+#else
+                           unsigned int nOpenFlags = 0,
+#endif
                            char** allowed_drivers = NULL, char** open_options = NULL,
                            char** sibling_files = NULL ) {
   CPLErrorReset();
 #ifdef SWIGPYTHON
-  if( GetUseExceptions() )
+  if ((nOpenFlags & GDAL_OF_SILENT_ERROR) == 0)
+  {
       nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
+  }
+  else
+  {
+      if ((nOpenFlags & GDAL_OF_VERBOSE_ERROR) != 0)
+      {
+          CPLError(CE_Failure, CPLE_IllegalArg,
+                   "gdal.OF_VERBOSE_ERROR and gdal.OF_SILENT_ERROR cannot both be set");
+          return NULL;
+      }
+      nOpenFlags &= ~GDAL_OF_SILENT_ERROR;
+  }
 #endif
-  GDALDatasetShadow *ds = GDALOpenEx( path, nOpenFlags, allowed_drivers,
+  GDALDatasetShadow *ds = GDALOpenEx( path, (unsigned int)nOpenFlags, allowed_drivers,
                                       open_options, sibling_files );
 #ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
@@ -2398,6 +2420,9 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 // return True for a gdal.Dataset. We can't include it in gdal_python.i
 // because Dataset is not defined at that point.
 %pythoncode %{
+
+OpenEx = Open
+
 ogr.DataSource = Dataset
 ogr.Driver = Driver
 %}

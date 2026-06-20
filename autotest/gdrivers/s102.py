@@ -85,7 +85,7 @@ def test_s102_basic(filename):
 
 
 def test_s102_elevation():
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/s102/test_s102_v2.1.h5", open_options=["DEPTH_OR_ELEVATION=ELEVATION"]
     )
     assert ds.RasterCount == 2
@@ -122,7 +122,7 @@ def test_s102_elevation():
 
 
 def test_s102_north_up_no():
-    ds = gdal.OpenEx("data/s102/test_s102_v2.1.h5", open_options=["NORTH_UP=NO"])
+    ds = gdal.Open("data/s102/test_s102_v2.1.h5", open_options=["NORTH_UP=NO"])
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
@@ -171,7 +171,7 @@ def test_s102_identify_fallback_through_HDF5_driver():
 
 
 def test_s102_multidim():
-    ds = gdal.OpenEx("data/s102/test_s102_v2.1.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/s102/test_s102_v2.1.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArrayFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values"
@@ -272,7 +272,7 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
     assert rat.GetValueAsDouble(4, 1) == 5.5
     assert rat.GetValueAsString(4, 2) == "e"
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f'S102:"{filename}":{quality_group_name}',
         open_options=["NORTH_UP=NO"],
     )
@@ -286,7 +286,7 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
 
 def test_s102_QualityOfSurvey_multidim():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/s102/test_s102_v2.2_with_QualityOfSurvey_nodata_0.h5",
         gdal.OF_MULTIDIM_RASTER,
     )

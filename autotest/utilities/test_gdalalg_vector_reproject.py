@@ -29,7 +29,7 @@ def get_reproject_alg():
 def test_gdalalg_vector_reproject_dataset_getnextfeature():
 
     alg = get_reproject_alg()
-    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    src_ds = gdal.Open("../ogr/data/osm/test.pbf")
     alg["input"] = src_ds
     alg["dst-crs"] = "EPSG:4326"
 

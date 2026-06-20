@@ -31,7 +31,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_vrtmultidim_dimension():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="2" type="foo" direction="bar" indexingVariable="X"/>
@@ -61,7 +61,7 @@ def test_vrtmultidim_dimension():
     assert dim_1.GetSize() == 1234567890123
 
     with pytest.raises(Exception, match="Missing name"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group MISSING_name="/">
         </Group>
@@ -70,7 +70,7 @@ def test_vrtmultidim_dimension():
         )
 
     with pytest.raises(Exception, match="Missing name"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="INVALID">
         </Group>
@@ -79,7 +79,7 @@ def test_vrtmultidim_dimension():
         )
 
     with pytest.raises(Exception, match="Missing name attribute on Dimension"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension MISSING_name="X" size="1"/>
@@ -91,7 +91,7 @@ def test_vrtmultidim_dimension():
     with pytest.raises(
         Exception, match="Invalid value for size attribute on Dimension"
     ):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" MISSING_size="1"/>
@@ -103,7 +103,7 @@ def test_vrtmultidim_dimension():
 
 def test_vrtmultidim_attribute():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Attribute name="foo">
@@ -201,7 +201,7 @@ def test_vrtmultidim_attribute():
 def test_vrtmultidim_attribute_invalid(xml, error):
 
     with pytest.raises(Exception, match=error):
-        gdal.OpenEx(
+        gdal.Open(
             xml,
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -209,7 +209,7 @@ def test_vrtmultidim_attribute_invalid(xml, error):
 
 def test_vrtmultidim_subgroup_and_cross_references():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="20" indexingVariable="X"/>
@@ -377,7 +377,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
 def test_vrtmultidim_missing_or_invalid_attributes(xml, error):
 
     with pytest.raises(Exception, match=error):
-        gdal.OpenEx(
+        gdal.Open(
             xml,
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -385,7 +385,7 @@ def test_vrtmultidim_missing_or_invalid_attributes(xml, error):
 
 def test_vrtmultidim_srs():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="4"/>
@@ -415,7 +415,7 @@ def test_vrtmultidim_srs():
 
 def test_vrtmultidim_nodata_unit_offset_scale():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar1">
@@ -459,7 +459,7 @@ def test_vrtmultidim_nodata_unit_offset_scale():
 
 def test_vrtmultidim_RegularlySpacedValues():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="4"/>
@@ -481,7 +481,7 @@ def test_vrtmultidim_RegularlySpacedValues():
     ) == (11.0, 32.0)
 
     with pytest.raises(Exception, match="start attribute missing"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" size="4"/>
@@ -496,7 +496,7 @@ def test_vrtmultidim_RegularlySpacedValues():
         )
 
     with pytest.raises(Exception, match="increment attribute missing"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" size="4"/>
@@ -513,7 +513,7 @@ def test_vrtmultidim_RegularlySpacedValues():
 
 def test_vrtmultidim_ConstantValue():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -550,7 +550,7 @@ def test_vrtmultidim_ConstantValue():
     assert struct.unpack("d", ar.Read()) == (50,)
 
     with pytest.raises(Exception, match="Wrong number of values in offset"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -568,7 +568,7 @@ def test_vrtmultidim_ConstantValue():
         )
 
     with pytest.raises(Exception, match="Wrong value in offset"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -586,7 +586,7 @@ def test_vrtmultidim_ConstantValue():
         )
 
     with pytest.raises(Exception, match="Wrong number of values in count"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -604,7 +604,7 @@ def test_vrtmultidim_ConstantValue():
         )
 
     with pytest.raises(Exception, match="Wrong value in count"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -622,7 +622,7 @@ def test_vrtmultidim_ConstantValue():
         )
 
     with pytest.raises(Exception, match="Wrong value in count"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -642,7 +642,7 @@ def test_vrtmultidim_ConstantValue():
 
 def test_vrtmultidim_InlineValues():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -691,7 +691,7 @@ def test_vrtmultidim_InlineValues():
     assert struct.unpack("d", ar.Read()) == (50,)
 
     with pytest.raises(Exception, match="(Invalid content|Integer overflow)"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4000000"/>
@@ -733,7 +733,7 @@ def test_vrtmultidim_Source():
 </VRTDataset>""",
         )
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -941,7 +941,7 @@ def test_vrtmultidim_Source():
 
         # Check that the cache is correctly working by opening a second
         # dataset after having remove the source
-        ds2 = gdal.OpenEx(
+        ds2 = gdal.Open(
             """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -970,7 +970,7 @@ def test_vrtmultidim_Source():
 
     # Check that the cache is correctly working: we should get an error
     # now that all referencing arrays have been cleaned up
-    ds2 = gdal.OpenEx(
+    ds2 = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -998,7 +998,7 @@ def test_vrtmultidim_Source():
 
 def test_vrtmultidim_Source_classic_dataset():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -1135,7 +1135,7 @@ def test_vrtmultidim_serialize():
     </Group>
 </VRTDataset>""",
     )
-    ds = gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfile, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
     rg = ds.GetRootGroup()
     ds = None
     attr = rg.CreateAttribute("foo", [], gdal.ExtendedDataType.CreateString())
@@ -1362,7 +1362,7 @@ def test_vrtmultidim_createmultidimensional():
 """
     _validate(got_data)
 
-    with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetBlockSize() == [2]
@@ -1945,7 +1945,7 @@ def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
     gdal.Run(
         "mdim convert", input="data/hdf5/deflate.h5", output=tmp_vsimem / "out.vrt"
     )
-    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         info = array.GetRawBlockInfo([0, 0])
@@ -1970,7 +1970,7 @@ def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
 def test_vrtmultidim_GetRawBlockInfo_unblocked(tmp_vsimem):
 
     gdal.Run("mdim convert", input="data/netcdf/byte.nc", output=tmp_vsimem / "out.vrt")
-    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         with pytest.raises(Exception, match="block size for dimension 0 is unknown"):
@@ -2004,7 +2004,7 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
         output=tmp_path / "out.vrt",
     )
 
-    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         for y in range(10):
@@ -2018,7 +2018,7 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
 
 def test_vrtmultidim_overview_by_ref():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2045,7 +2045,7 @@ def test_vrtmultidim_overview_by_ref():
 
 def test_vrtmultidim_overview_by_ref_wrong():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2069,7 +2069,7 @@ def test_vrtmultidim_overview_by_ref_wrong():
 
 def test_vrtmultidim_overview_inline():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2123,7 +2123,7 @@ def test_vrtmultidim_overview_inline():
 def test_vrtmultidim_overview_inline_wrong():
 
     with pytest.raises(Exception, match="Missing name attribute on Array"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Array name="ar">
@@ -2142,7 +2142,7 @@ def test_vrtmultidim_overview_inline_wrong():
 def test_vrtmultidim_ref_vrtmultidim(tmp_vsimem):
 
     # Check we don't dead lock on dataset closing
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/vrt/multidim_ref_multidim_vrt.vrt", gdal.OF_MULTIDIM_RASTER
     ) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
@@ -2153,7 +2153,7 @@ def test_vrtmultidim_ref_vrtmultidim(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_vrtmultidim_GUESS_REGULARLY_SPACED_ARRAYS_disabled(tmp_vsimem):
 
-    src_ds = gdal.OpenEx("data/netcdf/byte.nc", gdal.OF_MULTIDIM_RASTER)
+    src_ds = gdal.Open("data/netcdf/byte.nc", gdal.OF_MULTIDIM_RASTER)
     gdal.GetDriverByName("VRT").CreateCopy(
         tmp_vsimem / "out.vrt", src_ds, options=["GUESS_REGULARLY_SPACED_ARRAYS=NO"]
     )

@@ -131,7 +131,6 @@ def expand_dsn(f):
 def gdal_find_files(monkeypatch):
 
     monkeypatch.setattr(gdal, "Open", expand_dsn(gdal.Open))
-    monkeypatch.setattr(gdal, "OpenEx", expand_dsn(gdal.OpenEx))
     monkeypatch.setattr(gdal, "Run", expand_dsn(gdal.Run))
     monkeypatch.setattr(
         gdal.Algorithm,

@@ -37,7 +37,7 @@ def test_gdalalg_raster_select(tmp_vsimem):
         ],
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterCount == 4
         assert (
             ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALPHA + gdal.GMF_PER_DATASET

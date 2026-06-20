@@ -408,7 +408,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         method="../ogr/data/poly.shp",
         output=tmp_vsimem / "out.gpkg",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg") as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg") as ds:
         assert ds.GetLayer(0).GetName() == "output"
 
     gdal.Run(
@@ -421,7 +421,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         update=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"
@@ -470,7 +470,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         append=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"
@@ -486,7 +486,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         overwrite_layer=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"

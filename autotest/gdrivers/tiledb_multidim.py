@@ -131,7 +131,7 @@ def test_tiledb_multidim_basic():
         group.DeleteAttribute("to_be_deleted")
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         assert rg
         assert rg.GetGroupNames() == ["group"]
@@ -238,7 +238,7 @@ def test_tiledb_multidim_array_data_types(gdal_data_type):
         ar.Write(b"\0" * (ar.GetDataType().GetSize() * dim0.GetSize()))
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetDataType() == gdal.ExtendedDataType.Create(gdal_data_type)
@@ -275,7 +275,7 @@ def test_tiledb_multidim_array_nodata():
         ar.SetNoDataValue(1.5)
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetNoDataValueAsDouble() == 1.5
@@ -316,7 +316,7 @@ def test_tiledb_multidim_array_nodata_cannot_be_set_after_finalize():
             ar.SetNoDataValue(1.5)
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert math.isnan(ar.GetNoDataValueAsDouble())
@@ -353,7 +353,7 @@ def test_tiledb_multidim_array_blocksize():
         )
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetBlockSize() == [2, 4]
@@ -389,7 +389,7 @@ def test_tiledb_multidim_array_compression():
         )
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetStructuralInfo() == {"FILTER_LIST": "ZSTD"}
@@ -420,7 +420,7 @@ def test_tiledb_multidim_array_same_name_as_dim():
         rg.CreateMDArray("t", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("t")
         assert ar.GetDimensions()[0].GetName() == "t_dim"
@@ -559,7 +559,7 @@ def test_tiledb_multidim_array_read_dim_label_and_spatial_ref(epsg_code, axis_ma
         ar.SetSpatialRef(srs)
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         dims = ar.GetDimensions()
@@ -623,7 +623,7 @@ def test_tiledb_multidim_array_read_gdal_raster_classic():
 
     def test():
         gdal.Translate(filename, "data/small_world.tif", format="TileDB")
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         dims = ar.GetDimensions()
@@ -673,7 +673,7 @@ def test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes():
             format="TileDB",
             creationOptions=["INTERLEAVE=ATTRIBUTES", "CREATE_GROUP=NO"],
         ),
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         assert rg.GetMDArrayNames() == [
             filename[len("tmp/") :] + ".TDB_VALUES_%d" % i for i in range(1, 3 + 1)
@@ -709,7 +709,7 @@ def test_tiledb_multidim_translate_from_netcdf():
         gdal.MultiDimTranslate(
             filename, "data/netcdf/netcdf-4d.nc", format="TileDB", arraySpecs=["t"]
         )
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("t")
         assert ar.GetDimensionCount() == 4
@@ -734,7 +734,7 @@ def test_tiledb_multidim_translate_from_netcdf():
 def test_tiledb_multidim_open_converted_by_tiledb_cf_netcdf_convert():
 
     filename = "data/tiledb/byte_epsg_3949_cf1.tiledb"
-    ds = gdal.Open(filename)
+    ds = gdal.Open(filename, gdal.OF_RASTER)
     assert (
         ds.GetSpatialRef().ExportToProj4()
         == "+proj=lcc +lat_0=49 +lon_0=3 +lat_1=48.25 +lat_2=49.75 +x_0=1700000 +y_0=8200000 +ellps=GRS80 +units=m +no_defs"
@@ -767,7 +767,7 @@ def test_tiledb_multidim_two_2D_arrays(tmp_path):
         )
 
     def reopen_readonly():
-        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetDimensionCount() == 2

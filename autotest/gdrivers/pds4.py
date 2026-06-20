@@ -165,7 +165,7 @@ def validate_xml(filename):
         force_download=True,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "GMLAS:" + filename,
         open_options=[
             "VALIDATE=YES",
@@ -886,11 +886,15 @@ def test_pds4_13():
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.Open("PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:3:1")
+        ds = gdal.Open(
+            "PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:3:1", gdal.OF_RASTER
+        )
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.Open("PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:1:3")
+        ds = gdal.Open(
+            "PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:1:3", gdal.OF_RASTER
+        )
     assert ds is None
 
 
@@ -981,7 +985,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(
@@ -1018,7 +1022,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(
@@ -1050,7 +1054,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(

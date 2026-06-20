@@ -506,9 +506,9 @@ def test_ogr_wfs_fake_wfs_server(using_wfs_prefix):
     try:
         with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
             if using_wfs_prefix:
-                ds = gdal.OpenEx("WFS:http://127.0.0.1:%d/fakewfs" % port)
+                ds = gdal.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
             else:
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "http://127.0.0.1:%d/fakewfs" % port, allowed_drivers=["WFS"]
                 )
 
@@ -1354,25 +1354,25 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(
     assert lyr_defn.GetFieldCount() == 10
     assert lyr_defn.GetGeomFieldCount() == 1
 
-    ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
+    ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 9
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "YES"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 9
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 10
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint")
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 9
@@ -2010,7 +2010,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(
             got_extent = lyr.GetExtent()
         assert got_extent == (0.0, 0.0, 0.0, 0.0)
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "WFS:/vsimem/wfs_endpoint", open_options=["TRUST_CAPABILITIES_BOUNDS=YES"]
         )
         lyr = ds.GetLayer(1)

@@ -544,7 +544,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 
     with gdal.config_option("MSSQLSPATIAL_BCP_SIZE", "2"):
 
-        source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
+        source_ds = gdal.Open("data/poly.shp", gdal.OF_VECTOR)
 
         assert source_ds
 
@@ -573,7 +573,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
     """Test issue GH https://github.com/OSGeo/gdal/issues/1128"""
 
-    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
+    source_ds = gdal.Open("data/shp/testpoly.shp", gdal.OF_VECTOR)
 
     assert source_ds
 

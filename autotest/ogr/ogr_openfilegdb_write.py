@@ -1373,7 +1373,7 @@ def test_ogr_openfilegdb_write_feature_dataset_no_crs(tmp_vsimem):
     assert lyr is not None
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["my_feature_dataset"]
@@ -1438,7 +1438,7 @@ def test_ogr_openfilegdb_write_feature_dataset_crs(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     lyr = ds.GetLayerByName("inherited_srs")
     srs = lyr.GetSpatialRef()
     assert srs is not None
@@ -2463,7 +2463,7 @@ def test_ogr_openfilegdb_write_domains(tmp_vsimem):
     assert ds.AddFieldDomain(domain)
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 4
 
     domain = ds.GetFieldDomain("int_range_domain")
@@ -2576,7 +2576,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     items_lyr = ds.GetLayerByName("GDB_Items")
     f = items_lyr.GetFeature(1)
@@ -2591,7 +2591,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     assert f["Name"] == "dest_table"
     dest_table_uuid = f["UUID"]
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     assert ds.AddRelationship(relationship)
 
@@ -2746,7 +2746,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     assert f["DestID"] == relationship_uuid
     assert f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {"my_relationship"}
 
     # one to many
@@ -2758,7 +2758,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     # should be rejected -- duplicate name
     assert not ds.AddRelationship(relationship)
@@ -2776,7 +2776,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetBackwardPathLabel("backward label")
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -2885,7 +2885,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("destination_fk", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     relationship = gdal.Relationship(
         "many_to_many",
@@ -2905,7 +2905,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetMappingTableName("many_to_many")
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3025,7 +3025,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     relationship = gdal.Relationship(
         "many_to_many_auto",
@@ -3038,7 +3038,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
 
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3084,7 +3084,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
         "my_one_to_many_relationship",
         "many_to_many",
     }
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3124,7 +3124,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetBackwardPathLabel("my new backward label")
     assert ds.UpdateRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3150,7 +3150,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("new_dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     relationship = gdal.Relationship(
         "my_one_to_many_relationship",
         "new_origin_table",
@@ -3161,7 +3161,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetRightTableFields(["new_dest_pkey"])
     assert ds.UpdateRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",

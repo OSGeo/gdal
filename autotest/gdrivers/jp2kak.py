@@ -569,7 +569,7 @@ def test_jp2kak_20():
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )

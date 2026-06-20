@@ -100,7 +100,7 @@ def test_stacta_basic():
 def test_stacta_east_hemisphere():
 
     # Test a json file with min_tile_col = 1 at zoom level 2
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacta/test_east_hemisphere.json", open_options=["WHOLE_METATILE=YES"]
     )
     assert ds.RasterCount == 3
@@ -398,12 +398,12 @@ def test_stacta_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
     with gdaltest.vsi_open(tmp_vsimem / "WorldCRS84Quad/0/0/0.tif", "wb") as fdest:
         fdest.write(open("data/stacta/WorldCRS84Quad/0/0/0.tif", "rb").read())
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["STACTA"])
+    ds = gdal.Open(filename, allowed_drivers=["STACTA"])
     assert ds.GetDriver().GetDescription() == "STACTA"
 
 

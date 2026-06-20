@@ -145,7 +145,7 @@ def test_fits_read_empty_primary_hdu():
     filename = "data/fits/empty_primary_hdu.fits"
     assert os.path.exists(filename)
     with gdal.quiet_errors():
-        assert gdal.Open(filename) is None
+        assert gdal.Open(filename, gdal.OF_RASTER) is None
 
 
 def test_fits_read_image_in_second_hdu():
@@ -245,7 +245,7 @@ def test_fits_open_raster_only_in_vector_mode():
     with gdal.quiet_errors():
         assert ogr.Open(filename) is None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/fits/image_in_second_and_fourth_hdu_table_in_third.fits", gdal.OF_VECTOR
     )
     assert ds.GetMetadata("SUBDATASETS") == {}
@@ -257,7 +257,7 @@ def test_fits_open_vector_only_in_raster_mode():
     filename = "data/fits/binary_table.fits"
     assert os.path.exists(filename)
     with gdal.quiet_errors():
-        assert gdal.Open(filename) is None
+        assert gdal.Open(filename, gdal.OF_RASTER) is None
     assert "but contains binary table" in gdal.GetLastErrorMsg()
 
 
@@ -265,17 +265,17 @@ def test_fits_open_vector_only_in_raster_mode():
 def test_fits_open_mix_mode():
 
     # Raster only content
-    ds = gdal.OpenEx("data/fits/byte_merc.fits", gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = gdal.Open("data/fits/byte_merc.fits", gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds.RasterCount != 0
     assert ds.GetLayerCount() == 0
 
     # Vector only content
-    ds = gdal.OpenEx("data/fits/binary_table.fits", gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = gdal.Open("data/fits/binary_table.fits", gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() != 0
 
     # Mix of raster and vector
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/fits/image_in_second_and_fourth_hdu_table_in_third.fits",
         gdal.OF_RASTER | gdal.OF_VECTOR,
     )

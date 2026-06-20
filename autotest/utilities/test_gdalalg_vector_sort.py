@@ -202,7 +202,7 @@ def test_gdalalg_vector_sort_invalid_method(alg):
 @pytest.mark.parametrize("geometry_field", (None, "", "swapped_geom"))
 def test_gdalalg_vector_sort_multiple_geom_fields(alg, geometry_field):
 
-    poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    poly_ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("source", geom_type=ogr.wkbPolygon)

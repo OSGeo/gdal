@@ -126,7 +126,7 @@ def test_gdal_polygonize_2(script_path, tmp_path):
     )
 
     # Confirm we get the set of expected features in the output layer.
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     assert ds.GetDriver().ShortName == "GeoJSON"
     lyr = ds.GetLayerByName("out")
 
@@ -256,7 +256,7 @@ def test_gdal_polygonize_minus_8(script_path, tmp_path):
         "-q -8 " + test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
     )
 
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 229
     ds = None
@@ -279,7 +279,7 @@ def test_gdal_polygonize_overwrite(script_path, tmp_path, format):
         test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
     )
 
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     lyr = ds.GetLayer(0)
     initial_value = lyr.GetFeatureCount()
     ds = None
@@ -291,7 +291,7 @@ def test_gdal_polygonize_overwrite(script_path, tmp_path, format):
         test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
     )
 
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == initial_value * 2
     ds = None
@@ -306,7 +306,7 @@ def test_gdal_polygonize_overwrite(script_path, tmp_path, format):
         + outfilename,
     )
 
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == initial_value
     ds = None

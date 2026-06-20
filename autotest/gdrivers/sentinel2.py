@@ -265,7 +265,7 @@ def test_sentinel2_l1c_3():
     filename_xml = (
         "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml"
     )
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "SENTINEL2_L1C:%s:60m:EPSG_32632" % filename_xml, open_options=["ALPHA=YES"]
     )
     assert ds is not None
@@ -292,7 +292,7 @@ def test_sentinel2_l1c_4():
     filename_xml = (
         "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml"
     )
-    ds = gdal.OpenEx("SENTINEL2_L1C:%s:PREVIEW:EPSG_32632" % filename_xml)
+    ds = gdal.Open("SENTINEL2_L1C:%s:PREVIEW:EPSG_32632" % filename_xml)
     assert ds is not None
 
     assert ds.RasterCount == 3
@@ -858,7 +858,7 @@ def test_sentinel2_l1c_tile_4():
     with gdal.config_option(
         "SENTINEL2_USE_MAIN_MTD", "NO"
     ):  # Simulate absence of main MTD file
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "SENTINEL2_L1C_TILE:%s:10m" % filename_xml, open_options=["ALPHA=YES"]
         )
     assert ds is not None and gdal.GetLastErrorMsg() == ""
@@ -1433,7 +1433,7 @@ def test_sentinel2_l1b_4():
         pytest.fail()
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m",
         open_options=["ALPHA=YES"],
     )
@@ -2631,7 +2631,7 @@ def test_sentinel2_l1c_safe_compact_3():
     filename_xml = (
         "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml"
     )
-    ds = gdal.OpenEx("SENTINEL2_L1C:%s:TCI:EPSG_32632" % filename_xml)
+    ds = gdal.Open("SENTINEL2_L1C:%s:TCI:EPSG_32632" % filename_xml)
     assert ds is not None
 
     assert ds.RasterCount == 3

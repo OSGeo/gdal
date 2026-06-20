@@ -31,7 +31,7 @@ def test_gdalg_raster_from_file():
 
 def test_gdalg_raster_opened_as_vector():
     with pytest.raises(Exception):
-        gdal.OpenEx("data/gdalg/read_byte.gdalg.json", gdal.OF_VECTOR)
+        gdal.Open("data/gdalg/read_byte.gdalg.json", gdal.OF_VECTOR)
 
 
 def test_gdalg_raster_pipeline_standard():
@@ -187,7 +187,7 @@ def test_gdalg_raster_reproject_write_to_file_not_allowed():
 
 
 def test_gdalg_vector():
-    ds = gdal.OpenEx("data/gdalg/read_poly.gdalg.json", gdal.OF_VECTOR)
+    ds = gdal.Open("data/gdalg/read_poly.gdalg.json", gdal.OF_VECTOR)
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0).GetName() == "poly"
     assert ds.GetLayerByName("poly").GetName() == "poly"
@@ -206,7 +206,7 @@ def test_gdalg_vector():
 
 def test_gdalg_vector_opened_as_raster():
     with pytest.raises(Exception):
-        gdal.OpenEx("data/gdalg/read_poly.gdalg.json", gdal.OF_RASTER)
+        gdal.Open("data/gdalg/read_poly.gdalg.json", gdal.OF_RASTER)
 
 
 def test_gdalg_vector_pipeline_write_to_file_not_allowed():
@@ -481,7 +481,7 @@ def test_gdalg_alg_does_not_support_streaming():
 @pytest.mark.require_driver("netCDF")
 def test_gdalg_mdim_pipeline_standard():
     # No write step, which is the nominal way
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         json.dumps(
             {
                 "type": "gdal_streamed_alg",

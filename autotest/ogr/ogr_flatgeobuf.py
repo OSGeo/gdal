@@ -106,7 +106,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     src_name = os.path.join("data", "shp", name + ".shp")
-    shp_ds = gdal.OpenEx(src_name, open_options=["PROMOTE_TO_MULTI=NO"])
+    shp_ds = gdal.Open(src_name, open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
@@ -310,7 +310,7 @@ def test_ogr_flatgeobuf_directory():
     ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/multi_layer")
+    ds = gdal.Open("/vsimem/multi_layer")
     assert set(ds.GetFileList()) == set(
         ["/vsimem/multi_layer/bar.fgb", "/vsimem/multi_layer/foo_.fgb"]
     )
@@ -412,7 +412,7 @@ def test_ogr_flatgeobuf_alldatatypes():
 
 
 def test_ogr_flatgeobuf_mixed():
-    srcDS = gdal.OpenEx("data/testfgb/testmixed.geojson")
+    srcDS = gdal.Open("data/testfgb/testmixed.geojson")
     destDS = gdal.VectorTranslate(
         "/vsimem/test.fgb",
         srcDS=srcDS,
@@ -598,7 +598,7 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
 )
 def test_ogr_flatgeobuf_write_to_vsizip(options):
 
-    srcDS = gdal.OpenEx("data/poly.shp")
+    srcDS = gdal.Open("data/poly.shp")
     destDS = gdal.VectorTranslate(
         "/vsizip//vsimem/test.fgb.zip/test.fgb",
         srcDS=srcDS,
@@ -846,7 +846,7 @@ def test_ogr_flatgeobuf_ossfuzz_bug_29462():
 )
 def test_ogr_flatgeobuf_read_invalid_geometries(filename):
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(filename)
+        ds = gdal.Open(filename)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception, match="Fatal error parsing feature"):
             for f in lyr:
@@ -865,7 +865,7 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
     ],
 )
 def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
-    with gdal.OpenEx(filename) as ds:
+    with gdal.Open(filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         ogrtest.check_feature_geometry(f, "MULTILINESTRING ((0 0,1 1))")
@@ -876,7 +876,7 @@ def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
 
 def test_ogr_flatgeobuf_read_coordinate_metadata_wkt():
 
-    ds = gdal.OpenEx("data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb")
+    ds = gdal.Open("data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb")
     lyr = ds.GetLayer(0)
     got_srs = lyr.GetSpatialRef()
     assert got_srs is not None
@@ -897,7 +897,7 @@ def test_ogr_flatgeobuf_coordinate_epoch():
     ds.CreateLayer("foo", srs=srs)
     ds = None
 
-    ds = gdal.OpenEx(filename)
+    ds = gdal.Open(filename)
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs.GetAuthorityCode() == "4326"
@@ -937,7 +937,7 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
     ds.CreateLayer("foo", srs=srs)
     ds = None
 
-    ds = gdal.OpenEx(filename)
+    ds = gdal.Open(filename)
     lyr = ds.GetLayer(0)
     got_srs = lyr.GetSpatialRef()
     assert got_srs.IsSame(srs)
@@ -1178,7 +1178,7 @@ def test_ogr_flatgeobuf_issue_7401():
 
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
+    ds = gdal.Open("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
@@ -1623,7 +1623,7 @@ def test_ogr_flatgeobuf_write_empty_geometries_no_spatial_index(tmp_vsimem):
         f = ogr.Feature(lyr.GetLayerDefn())
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
@@ -1640,7 +1640,7 @@ def test_ogr_flatgeobuf_write_empty_file_no_spatial_index(tmp_vsimem):
             "test", geom_type=ogr.wkbPolygon, srs=srs, options=["SPATIAL_INDEX=NO"]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
         assert lyr.GetExtent(can_return_null=True) is None

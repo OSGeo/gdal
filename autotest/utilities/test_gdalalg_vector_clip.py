@@ -34,7 +34,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
         ["--bbox", "-1e10,-1e10,1e10,1e10", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename, gdal.OF_UPDATE) as ds:
+    with gdal.Open(out_filename, gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
         for i in range(10):
             ds.GetLayer(0).DeleteFeature(i + 1)
@@ -45,7 +45,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
             ["--bbox", "-1e10,-1e10,1e10,1e10", "../ogr/data/poly.shp", out_filename]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 0
 
     clip = get_clip_alg()
@@ -59,7 +59,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
     clip = get_clip_alg()
@@ -73,7 +73,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 20
 
     clip = get_clip_alg()
@@ -89,7 +89,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 20
         assert ds.GetLayerByName("layer2").GetFeatureCount() == 10
 
@@ -108,7 +108,7 @@ def test_gdalalg_vector_clip_general_behavior(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayerByName("poly").GetFeatureCount() == 10
         assert ds.GetLayerByName("layer2").GetFeatureCount() == 10
 
@@ -1057,7 +1057,7 @@ def test_gdalalg_vector_clip_like_neither_raster_no_vector():
 def test_gdalalg_vector_clip_dataset_getnextfeature():
 
     clip = get_clip_alg()
-    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    src_ds = gdal.Open("../ogr/data/osm/test.pbf")
     clip["input"] = src_ds
     clip["bbox"] = [-180, -90, 180, 90]
 

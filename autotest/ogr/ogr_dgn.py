@@ -339,7 +339,7 @@ def test_ogr_dgn_encoding(tmp_path):
         f = lyr.GetNextFeature()
         assert f["Text"] == "\xe9ven"  # ISO-8859-1
 
-    with gdal.OpenEx(filename, open_options=["ENCODING=ISO-8859-1"]) as ds:
+    with gdal.Open(filename, open_options=["ENCODING=ISO-8859-1"]) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
         f = lyr.GetNextFeature()

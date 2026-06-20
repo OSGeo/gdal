@@ -252,7 +252,7 @@ def netcdf_ncdump(fname):
 def netcdf_write_multiple_layers(output_fname, inputs, options=None):
 
     for i, input_fname in enumerate(inputs):
-        src = gdal.OpenEx(input_fname, gdal.OF_VECTOR)
+        src = gdal.Open(input_fname, gdal.OF_VECTOR)
         assert src is not None
 
         mode = "update" if i > 0 else None
@@ -489,7 +489,7 @@ def test_netcdf_9():
 
 def test_netcdf_10():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/cf_no_sphere.nc", open_options=["PRESERVE_AXIS_UNIT_IN_CRS=YES"]
     )
 
@@ -673,7 +673,7 @@ def test_netcdf_two_vars_as_subdatasets():
 
 def test_netcdf_two_vars_as_multiple_bands():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/two_vars_scale_offset.nc", open_options=["VARIABLES_AS_BANDS=YES"]
     )
     assert ds.RasterCount == 2
@@ -1094,11 +1094,11 @@ def test_netcdf_assume_longlat():
 
     # test open option and config overrides
     with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "YES"):
-        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=NO"])
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=NO"])
         srs = ds.GetSpatialRef()
         assert srs is None
     with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
-        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=YES"])
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=YES"])
         srs = ds.GetSpatialRef()
         assert srs is not None
         assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
@@ -1754,14 +1754,14 @@ def test_netcdf_44(tmp_path, f, md5):
 def test_netcdf_45(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_RASTER)
+    ds = gdal.Open("data/netcdf/test_ogr_nc3.nc", gdal.OF_RASTER)
     assert ds is None
 
     # Test that a raster cannot be opened in vector-only mode
-    ds = gdal.OpenEx("data/netcdf/cf-bug636.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/cf-bug636.nc", gdal.OF_VECTOR)
     assert ds is None
 
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "int32"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == ""
@@ -1825,10 +1825,10 @@ def test_netcdf_47(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("data/netcdf/test_ogr_nc4.nc", gdal.OF_RASTER)
+        ds = gdal.Open("data/netcdf/test_ogr_nc4.nc", gdal.OF_RASTER)
     assert ds is None
 
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc4.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/test_ogr_nc4.nc", gdal.OF_VECTOR)
 
     with gdal.quiet_errors():
         gdal.VectorTranslate(
@@ -1870,7 +1870,7 @@ def test_netcdf_47(tmp_vsimem):
 def test_netcdf_48():
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("data/netcdf/test_ogr_no_xyz_var.nc", gdal.OF_VECTOR)
+        ds = gdal.Open("data/netcdf/test_ogr_no_xyz_var.nc", gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbNone
     f = lyr.GetNextFeature()
@@ -1885,7 +1885,7 @@ def test_netcdf_48():
 def test_netcdf_49(tmp_vsimem):
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("data/netcdf/test_ogr_xyz_float.nc", gdal.OF_VECTOR)
+        ds = gdal.Open("data/netcdf/test_ogr_xyz_float.nc", gdal.OF_VECTOR)
         gdal.VectorTranslate(
             tmp_vsimem / "netcdf_49.csv",
             ds,
@@ -1916,7 +1916,7 @@ def test_netcdf_49(tmp_vsimem):
 
 def test_netcdf_read_trajectory():
 
-    ds = gdal.OpenEx("data/netcdf/trajectory.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/trajectory.nc", gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["TEMP"] == 8399
@@ -1932,7 +1932,7 @@ def test_netcdf_read_trajectory():
 
 def test_netcdf_50(tmp_path):
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
     ofile = str(tmp_path / "out.nc")
     out_ds = gdal.VectorTranslate(
         ofile,
@@ -1954,7 +1954,7 @@ def test_netcdf_50(tmp_path):
     assert src_json == out_json
     out_ds = None
 
-    out_ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    out_ds = gdal.Open(ofile, gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
     assert 'PROJCS["OSGB' in srs
@@ -1972,7 +1972,7 @@ def test_netcdf_50(tmp_path):
 @pytest.mark.require_driver("CSV")
 def test_netcdf_51(tmp_path, tmp_vsimem):
 
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
     ofile = tmp_path / "out.nc"
     # Test autogrow of string fields
     gdal.VectorTranslate(
@@ -1984,7 +1984,7 @@ def test_netcdf_51(tmp_path, tmp_vsimem):
     )
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+        ds = gdal.Open(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
             tmp_vsimem / "netcdf_51.csv",
             ds,
@@ -2018,7 +2018,7 @@ def test_netcdf_51(tmp_path, tmp_vsimem):
 """
     assert content == expected_content
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer(0)
     lyr.CreateField(ogr.FieldDefn("extra", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("extra_str", ogr.OFTString))
@@ -2029,7 +2029,7 @@ def test_netcdf_51(tmp_path, tmp_vsimem):
     assert lyr.CreateFeature(f) == 0
     ds = None
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(lyr.GetFeatureCount())
     assert f["int32"] == 1 and f["extra"] == 5 and f["extra_str"] == "foobar"
@@ -2049,7 +2049,7 @@ def test_netcdf_51(tmp_path, tmp_vsimem):
 @pytest.mark.require_driver("CSV")
 def test_netcdf_51_no_gdal_tags(tmp_path, tmp_vsimem):
 
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
     ofile = tmp_path / "out.nc"
     gdal.VectorTranslate(
         ofile,
@@ -2059,7 +2059,7 @@ def test_netcdf_51_no_gdal_tags(tmp_path, tmp_vsimem):
     )
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+        ds = gdal.Open(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
             tmp_vsimem / "netcdf_51_no_gdal_tags.csv",
             ds,
@@ -2105,7 +2105,7 @@ def test_netcdf_52(tmp_path, tmp_vsimem):
             "buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442"
         )
 
-    ds = gdal.OpenEx("data/netcdf/test_ogr_nc4.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/test_ogr_nc4.nc", gdal.OF_VECTOR)
     ofile = str(tmp_path / "out.nc")
     gdal.VectorTranslate(
         ofile,
@@ -2115,7 +2115,7 @@ def test_netcdf_52(tmp_path, tmp_vsimem):
     )
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+        ds = gdal.Open(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
             tmp_vsimem / "netcdf_52.csv",
             ds,
@@ -2148,7 +2148,7 @@ def test_netcdf_52(tmp_path, tmp_vsimem):
 """
     assert content == expected_content
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer(0)
     lyr.CreateField(ogr.FieldDefn("extra", ogr.OFTInteger))
     f = lyr.GetNextFeature()
@@ -2157,7 +2157,7 @@ def test_netcdf_52(tmp_path, tmp_vsimem):
     assert lyr.CreateFeature(f) == 0
     ds = None
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(lyr.GetFeatureCount())
     assert f["int32"] == 1 and f["extra"] == 5
@@ -2178,7 +2178,7 @@ def test_netcdf_52(tmp_path, tmp_vsimem):
 
 def test_netcdf_53(tmp_path):
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
     ofile = str(tmp_path / "out.nc")
     out_ds = gdal.VectorTranslate(
         ofile,
@@ -2199,7 +2199,7 @@ def test_netcdf_53(tmp_path):
     assert src_json == out_json
     out_ds = None
 
-    out_ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    out_ds = gdal.Open(ofile, gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
     assert 'PROJCS["OSGB' in srs
@@ -2224,7 +2224,7 @@ def test_netcdf_54(tmp_path):
     ofile = str(tmp_path / "out.nc")
     shutil.copy("data/netcdf/test_ogr_nc4.nc", ofile)
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -2235,7 +2235,7 @@ def test_netcdf_54(tmp_path):
     assert lyr.CreateFeature(f) == 0
     ds = None
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(lyr.GetFeatureCount())
     f.SetFID(-1)
@@ -2255,7 +2255,7 @@ def test_netcdf_55(tmp_path):
     ofile = str(tmp_path / "out.nc")
     shutil.copy("data/netcdf/test_ogr_nc4.nc", ofile)
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -2266,7 +2266,7 @@ def test_netcdf_55(tmp_path):
     assert lyr.CreateFeature(f) == 0
     ds = None
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(lyr.GetFeatureCount())
     f.SetFID(-1)
@@ -2306,7 +2306,7 @@ def test_netcdf_56(tmp_path):
     assert ret == 0
     ds = None
 
-    ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetFeature(lyr.GetFeatureCount())
@@ -2489,10 +2489,10 @@ def test_netcdf_59():
 def test_netcdf_60(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
-    ds = gdal.OpenEx("data/netcdf/profile.nc", gdal.OF_RASTER)
+    ds = gdal.Open("data/netcdf/profile.nc", gdal.OF_RASTER)
     assert ds is None
 
-    ds = gdal.OpenEx("data/netcdf/profile.nc", gdal.OF_VECTOR)
+    ds = gdal.Open("data/netcdf/profile.nc", gdal.OF_VECTOR)
     assert ds is not None
 
     with gdal.quiet_errors():
@@ -4228,9 +4228,7 @@ def test_states_full_layer():
 
 def test_point_write(tmp_path):
 
-    src = gdal.OpenEx(
-        "data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR
-    )
+    src = gdal.Open("data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR)
     assert src is not None
     ofile = str(tmp_path / "out.nc")
     gdal.VectorTranslate(ofile, src, format="netCDF")
@@ -4276,7 +4274,7 @@ def test_point_write(tmp_path):
 
 def test_point3D_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4324,7 +4322,7 @@ def test_point3D_write(tmp_path):
 
 def test_line_write(tmp_path):
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/line_write_test.json", gdal.OF_VECTOR)
+    src = gdal.Open("data/netcdf-sg/write-tests/line_write_test.json", gdal.OF_VECTOR)
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -4364,9 +4362,7 @@ def test_line_write(tmp_path):
 
 def test_line3D_write(tmp_path):
 
-    src = gdal.OpenEx(
-        "data/netcdf-sg/write-tests/line3D_write_test.json", gdal.OF_VECTOR
-    )
+    src = gdal.Open("data/netcdf-sg/write-tests/line3D_write_test.json", gdal.OF_VECTOR)
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -4406,7 +4402,7 @@ def test_line3D_write(tmp_path):
 
 def test_polygon_no_ir_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/polygon_no_ir_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4444,7 +4440,7 @@ def test_polygon_no_ir_write(tmp_path):
 
 def test_polygon_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/polygon_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4492,7 +4488,7 @@ def test_polygon_write(tmp_path):
 
 def test_polygon3D_no_ir_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/polygon3D_no_ir_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4530,7 +4526,7 @@ def test_polygon3D_no_ir_write(tmp_path):
 
 def test_polygon3D_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/polygon3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4578,7 +4574,7 @@ def test_polygon3D_write(tmp_path):
 
 def test_multipoint_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipoint_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4620,7 +4616,7 @@ def test_multipoint_write(tmp_path):
 
 def test_multipoint3D_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipoint3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4655,7 +4651,7 @@ def test_multipoint3D_write(tmp_path):
 
 def test_multiline_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multiline_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4697,7 +4693,7 @@ def test_multiline_write(tmp_path):
 
 def test_multiline3D_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multiline3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4732,7 +4728,7 @@ def test_multiline3D_write(tmp_path):
 
 def test_multipolygon_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4773,7 +4769,7 @@ def test_multipolygon_write(tmp_path):
 
 def test_multipolygon3D_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4825,7 +4821,7 @@ def test_multipolygon3D_write(tmp_path):
 
 def test_multipolygon_with_no_ir_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -4860,7 +4856,7 @@ def test_multipolygon_with_no_ir_write(tmp_path):
 
 def test_multipolygon3D_with_no_ir_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon3D_no_ir_write_test.json",
         gdal.OF_VECTOR,
     )
@@ -4901,7 +4897,7 @@ def test_write_buffer_restrict_correctness(tmp_path):
 
     # Tests whether or not having the write buffer restriction
     # Writes correct data.
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/Yahara_alb.json")
+    src = gdal.Open("data/netcdf-sg/write-tests/Yahara_alb.json")
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -4935,7 +4931,7 @@ def test_write_buffer_restrict_correctness(tmp_path):
 def test_write_nc_from_nc(tmp_path):
 
     # Tests writing a netCDF file (of different name than source) out from another netCDF source file
-    src = gdal.OpenEx("data/netcdf-sg/multipoint_test.nc", gdal.OF_VECTOR)
+    src = gdal.Open("data/netcdf-sg/multipoint_test.nc", gdal.OF_VECTOR)
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -4978,7 +4974,7 @@ def test_multipolygon_with_no_ir_NC4_write(tmp_path):
     # Almost identical to test_multipolygon_with_no_ir
     # except this time, it is writing an NC4 file
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -5018,7 +5014,7 @@ def test_multipolygon_with_no_ir_NC4_write(tmp_path):
 
 def test_multipolygon3D_NC4C_write(tmp_path):
 
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/multipolygon3D_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -5176,7 +5172,7 @@ def test_write_multiple_layers_one_nc_NC4(tmp_path):
         ),
     )
 
-    src = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    src = gdal.Open(ofile, gdal.OF_VECTOR)
     assert src is not None
 
     ofile2 = str(tmp_path / "out2.nc")
@@ -5259,7 +5255,7 @@ def test_write_multiple_layers_one_nc_back_to_NC3(tmp_path):
         options=["FORMAT=NC4"],
     )
 
-    src = gdal.OpenEx(ofile, gdal.OF_VECTOR)
+    src = gdal.Open(ofile, gdal.OF_VECTOR)
     assert src is not None
     ofile2 = str(tmp_path / "mlnc_noupdate3.nc")
     gdal.VectorTranslate(ofile2, src, format="netCDF")
@@ -5325,7 +5321,7 @@ def test_write_multiple_layers_one_nc_back_to_NC3(tmp_path):
 def test_SG_NC3_field_write(tmp_path):
     # Tests all the NC3 field writing capabilities with
     # buffering.
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/field_test_nc3.nc", gdal.OF_VECTOR)
+    src = gdal.Open("data/netcdf-sg/write-tests/field_test_nc3.nc", gdal.OF_VECTOR)
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -5365,7 +5361,7 @@ def test_states_full_layer_buffer_restrict_correctness(tmp_path):
     # Note: this is different than the Yahara version in that it also tests
     # Correctness of writing buffered NC_CHARs and NC_STRINGs (NC4)
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/cf1.8_states.json")
+    src = gdal.Open("data/netcdf-sg/write-tests/cf1.8_states.json")
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -5397,7 +5393,7 @@ def test_states_full_layer_buffer_restrict_correctness(tmp_path):
 
 def test_empty_polygon_read_write(tmp_path):
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/empty_polygon_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -5421,7 +5417,7 @@ def test_empty_polygon_read_write(tmp_path):
 
 def test_empty_multiline_read_write(tmp_path):
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/empty_mline_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -5445,7 +5441,7 @@ def test_empty_multiline_read_write(tmp_path):
 
 def test_empty_multipolygon_read_write(tmp_path):
     # Tests writing features to a layer of empty polygons
-    src = gdal.OpenEx(
+    src = gdal.Open(
         "data/netcdf-sg/write-tests/empty_multipolygon_write_test.json", gdal.OF_VECTOR
     )
     assert src is not None
@@ -5473,7 +5469,7 @@ def test_empty_multipolygon_read_write(tmp_path):
 def test_states_full_layer_buffer_restrict_correctness_single_datum(tmp_path):
     # Single datum regression test
 
-    src = gdal.OpenEx("data/netcdf-sg/write-tests/cf1.8_states.json")
+    src = gdal.Open("data/netcdf-sg/write-tests/cf1.8_states.json")
     assert src is not None
     assert src.GetLayerCount() == 1
 
@@ -5518,12 +5514,12 @@ def test_netcdf_uint16_netcdf4_without_fill():
 
 def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/sen3_sral_mwr_fake_standard_measurement.nc", gdal.OF_RASTER
     )
     assert not ds
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/sen3_sral_mwr_fake_standard_measurement.nc", gdal.OF_VECTOR
     )
     assert ds
@@ -5629,7 +5625,7 @@ def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning(tmp_pa
 
     gdal.ErrorReset()
     # Check that opening in raster/vector mode doesn't emit warning
-    ds = gdal.OpenEx(ofile)
+    ds = gdal.Open(ofile)
     assert gdal.GetLastErrorType() == 0
     assert ds
     assert ds.GetLayerCount() == 1
@@ -5700,7 +5696,7 @@ def test_netcdf_metadata_sentinel5():
     }
     assert json.loads(md) == expected
 
-    ds = gdal.OpenEx("data/netcdf/fake_ISO_METADATA.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/netcdf/fake_ISO_METADATA.nc", gdal.OF_MULTIDIM_RASTER)
     assert ds is not None
     rg = ds.GetRootGroup()
     assert len(rg.GetGroupNames()) == 0
@@ -6067,7 +6063,7 @@ def test_netcdf_short_as_unsigned(tmp_path):
     )
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/short_as_unsigned.nc", open_options=["HONOUR_VALID_RANGE=NO"]
     )
     assert struct.unpack("H" * 7, ds.GetRasterBand(1).ReadRaster()) == (
@@ -6090,7 +6086,7 @@ def test_netcdf_short_as_unsigned(tmp_path):
     )
     ds = None
 
-    ds = gdal.OpenEx(filename, open_options=["HONOUR_VALID_RANGE=NO"])
+    ds = gdal.Open(filename, open_options=["HONOUR_VALID_RANGE=NO"])
     assert struct.unpack("H" * 7, ds.GetRasterBand(1).ReadRaster()) == (
         2,
         1,
@@ -6109,7 +6105,7 @@ def test_netcdf_short_as_unsigned(tmp_path):
 def test_netcdf_read_unrelated_dim():
     """Test https://github.com/OSGeo/gdal/issues/6367"""
 
-    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc")
+    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc", gdal.OF_RASTER)
     # Test that "unrelated_dim" metadata is not reported
     assert ds.GetMetadata() == {"Band1#foo": "bar"}
 
@@ -6559,7 +6555,7 @@ def test_netcdf_create_metadata_with_equal_sign(tmp_path):
 
 def test_netcdf_force_opening_hdf5_file():
 
-    ds = gdal.OpenEx("data/hdf5/groups.h5", allowed_drivers=["netCDF"])
+    ds = gdal.Open("data/hdf5/groups.h5", allowed_drivers=["netCDF"])
     assert ds.GetDriver().GetDescription() == "netCDF"
 
     ds = gdal.Open(ds.GetSubDatasets()[0][0])
@@ -6746,7 +6742,7 @@ def test_netcdf_var_extra_dim_unlimited_network():
 
 def test_netcdf_LIST_ALL_ARRAYS():
 
-    ds = gdal.OpenEx("data/netcdf/byte.nc", open_options=["LIST_ALL_ARRAYS=YES"])
+    ds = gdal.Open("data/netcdf/byte.nc", open_options=["LIST_ALL_ARRAYS=YES"])
     assert set(ds.GetSubDatasets()) == set(
         [
             (
@@ -6772,7 +6768,7 @@ def test_netcdf_LIST_ALL_ARRAYS_on_dataset_without_2D_arrays(tmp_path):
         array="x",
     )
 
-    ds = gdal.OpenEx(tmp_path / "out.nc", open_options=["LIST_ALL_ARRAYS=YES"])
+    ds = gdal.Open(tmp_path / "out.nc", open_options=["LIST_ALL_ARRAYS=YES"])
     assert len(ds.GetSubDatasets()) == 1
 
 

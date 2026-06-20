@@ -476,7 +476,7 @@ def test_hdf4_read_online_11():
     ds = gdal.Open("tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf")
     assert len(ds.GetSubDatasets()) == 7
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
         open_options=["LIST_SDS=YES"],
     )

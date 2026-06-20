@@ -53,12 +53,10 @@ def test_basic_test_1():
 
 
 def test_basic_test_invalid_open_flag():
-    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+    with pytest.raises(Exception, match="not a uint64 value"):
         gdal.Open("data/byte.tif", "invalid")
 
     assert gdal.OF_RASTER not in (gdal.GA_ReadOnly, gdal.GA_Update)
-    with pytest.raises(Exception, match="invalid value for GDALAccess"):
-        gdal.Open("data/byte.tif", gdal.OF_RASTER)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
@@ -66,7 +64,8 @@ def test_basic_test_strace_non_existing_file():
 
     python_exe = sys.executable
     cmd = 'strace -f %s -c "from osgeo import gdal; ' % python_exe + (
-        "gdal.DontUseExceptions(); gdal.OpenEx('non_existing_ds', gdal.OF_RASTER)" ' " '
+        "gdal.DontUseExceptions(); gdal.Open('non_existing_ds', gdal.OF_RASTER | gdal.OF_SILENT_ERROR)"
+        ' " '
     )
     try:
         _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
@@ -355,83 +354,84 @@ def test_basic_test_10():
 
 
 ###############################################################################
-# Test gdal.OpenEx()
+# Test gdal.Open() / gdal.OpenEx()
 
 
-def test_basic_test_11():
+@pytest.mark.parametrize("method", [gdal.Open, gdal.OpenEx])
+def test_basic_test_11(method):
 
-    ds = gdal.OpenEx("data/byte.tif")
+    ds = method("data/byte.tif")
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_RASTER)
+    ds = method("data/byte.tif", gdal.OF_RASTER)
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_VECTOR)
+    ds = method("data/byte.tif", gdal.OF_VECTOR)
     assert ds is None
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = method("data/byte.tif", gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_ALL)
+    ds = method("data/byte.tif", gdal.OF_ALL)
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_UPDATE)
+    ds = method("data/byte.tif", gdal.OF_UPDATE)
     assert ds is not None
 
-    ds = gdal.OpenEx(
+    ds = method(
         "data/byte.tif",
         gdal.OF_RASTER | gdal.OF_VECTOR | gdal.OF_UPDATE | gdal.OF_VERBOSE_ERROR,
     )
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", allowed_drivers=[])
+    ds = method("data/byte.tif", allowed_drivers=[])
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", allowed_drivers=["GTiff"])
+    ds = method("data/byte.tif", allowed_drivers=["GTiff"])
     assert ds is not None
 
-    ds = gdal.OpenEx("data/byte.tif", allowed_drivers=["PNG"])
+    ds = method("data/byte.tif", allowed_drivers=["PNG"])
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("data/byte.tif", open_options=["FOO"])
+        ds = method("data/byte.tif", open_options=["FOO"])
     assert ds is not None
 
-    ar_ds = [gdal.OpenEx("data/byte.tif", gdal.OF_SHARED) for _ in range(1024)]
+    ar_ds = [method("data/byte.tif", gdal.OF_SHARED) for _ in range(1024)]
     assert ar_ds[1023] is not None
     ar_ds = None
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_RASTER)
+    ds = method("../ogr/data/poly.shp", gdal.OF_RASTER)
     assert ds is None
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    ds = method("../ogr/data/poly.shp", gdal.OF_VECTOR)
     assert ds is not None
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0) is not None
     ds.GetLayer(0).GetMetadata()
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", allowed_drivers=["ESRI Shapefile"])
+    ds = method("../ogr/data/poly.shp", allowed_drivers=["ESRI Shapefile"])
     assert ds is not None
 
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = method("../ogr/data/poly.shp", gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds is not None
 
-    ds = gdal.OpenEx("non existing")
+    ds = method("non existing", gdal.OF_SILENT_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() == ""
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx("non existing", gdal.OF_VERBOSE_ERROR)
+        ds = method("non existing", gdal.OF_VERBOSE_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
     with gdal.ExceptionMgr(useExceptions=True):
         assert gdal.GetUseExceptions()
         with pytest.raises(Exception):
-            gdal.OpenEx("non existing")
+            method("non existing")
 
     try:
         with gdal.ExceptionMgr(useExceptions=True):
             try:
-                gdal.OpenEx("non existing")
+                method("non existing")
             except Exception:
                 pass
     except Exception:
@@ -439,10 +439,10 @@ def test_basic_test_11():
 
     with gdal.ExceptionMgr(useExceptions=True):
         try:
-            gdal.OpenEx("non existing")
+            method("non existing")
         except Exception:
             pass
-        gdal.Open("data/byte.tif")
+        method("data/byte.tif")
 
 
 ###############################################################################
@@ -637,13 +637,13 @@ def test_basic_test_15():
 def test_basic_test_16():
 
     gdal.ErrorReset()
-    gdal.OpenEx("data/byte.tif", open_options=["@UNRECOGNIZED=FOO"])
+    gdal.Open("data/byte.tif", open_options=["@UNRECOGNIZED=FOO"])
     assert gdal.GetLastErrorMsg() == ""
 
     gdal.ErrorReset()
     gdal.Translate("/vsimem/temp.tif", "data/byte.tif", options="-co BLOCKYSIZE=10")
     with gdal.quiet_errors():
-        gdal.OpenEx(
+        gdal.Open(
             "/vsimem/temp.tif", gdal.OF_UPDATE, open_options=["@NUM_THREADS=INVALID"]
         )
     gdal.Unlink("/vsimem/temp.tif")
@@ -654,7 +654,7 @@ def test_basic_dict_open_options():
 
     ds1 = gdal.Open("data/byte.tif")
 
-    ds2 = gdal.OpenEx("data/byte.tif", open_options={"GEOREF_SOURCES": "TABFILE"})
+    ds2 = gdal.Open("data/byte.tif", open_options={"GEOREF_SOURCES": "TABFILE"})
 
     assert ds1.GetGeoTransform() != ds2.GetGeoTransform()
 
@@ -988,7 +988,7 @@ def test_band_use_after_dataset_close_2():
 
 
 def test_layer_use_after_dataset_close_1():
-    with gdal.OpenEx("../ogr/data/poly.shp") as ds:
+    with gdal.Open("../ogr/data/poly.shp") as ds:
         lyr = ds.GetLayer(0)
 
     # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
@@ -997,7 +997,7 @@ def test_layer_use_after_dataset_close_1():
 
 
 def test_layer_use_after_dataset_close_2():
-    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.Open("../ogr/data/poly.shp")
     lyr = ds.GetLayerByName("poly")
 
     del ds
@@ -1297,7 +1297,7 @@ def test_basic_GetDataTypeByName():
 def test_basic_exclude_driver_at_open_time():
 
     if gdal.GetDriverByName("LIBERTIFF"):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/gtiff/non_square_pixels.tif",
             gdal.OF_RASTER,
             allowed_drivers=["-GTiff", "-idonotexist"],
@@ -1305,7 +1305,7 @@ def test_basic_exclude_driver_at_open_time():
         assert ds.GetDriver().GetDescription() == "LIBERTIFF"
 
     with pytest.raises(Exception, match="not recognized"):
-        gdal.OpenEx(
+        gdal.Open(
             "data/gtiff/non_square_pixels.tif",
             gdal.OF_RASTER | gdal.OF_VERBOSE_ERROR,
             allowed_drivers=["-GTiff", "-LIBERTIFF"],

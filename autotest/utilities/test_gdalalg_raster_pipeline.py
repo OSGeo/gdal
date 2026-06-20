@@ -40,7 +40,7 @@ def test_gdalalg_raster_pipeline_read_and_write(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
     with pytest.raises(Exception, match="can only be called once per instance"):
@@ -59,7 +59,7 @@ def test_gdalalg_raster_pipeline_pipeline_arg(tmp_vsimem):
         ["--pipeline", f"! read ../gcore/data/byte.tif | | write {out_filename} !"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -75,7 +75,7 @@ def test_gdalalg_raster_pipeline_as_api(tmp_vsimem):
     assert pipeline.Finalize()
     ds = None
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -89,7 +89,7 @@ def test_gdalalg_raster_pipeline_input_through_api(tmp_vsimem):
     assert pipeline.Run()
     assert pipeline.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -117,7 +117,7 @@ def test_gdalalg_raster_pipeline_output_through_api(tmp_vsimem):
     assert pipeline.Run()
     assert pipeline.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -185,7 +185,7 @@ def test_gdalalg_raster_pipeline_quoted(tmp_vsimem):
         [f"read ../gcore/data/byte.tif ! write {out_filename}"]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -205,7 +205,7 @@ def test_gdalalg_raster_pipeline_progress(tmp_path):
         "0...10...20...30...40...50...60...70...80...90...100 - done."
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -222,7 +222,7 @@ def test_gdalalg_raster_easter_egg(tmp_path):
         f"{gdal_path} raster +gdal=pipeline +step +gdal=read +input=../gcore/data/byte.tif +step +write +output={out_filename}"
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -394,7 +394,7 @@ def test_gdalalg_raster_pipeline_write_options(tmp_vsimem):
         ["read", "../gcore/data/byte.tif", "!", "write", "--overwrite", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -416,7 +416,7 @@ def test_gdalalg_raster_pipeline_write_co(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         with ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE name = 'gpkg_ogr_contents'"
         ) as lyr:
@@ -511,7 +511,7 @@ def test_gdalalg_raster_pipeline_reproject_no_args(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
         assert ds.GetRasterBand(1).Checksum() == 4672
 
@@ -560,7 +560,7 @@ def test_gdalalg_raster_pipeline_reproject_bbox_arg(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetGeoTransform() == pytest.approx(
             (-117.641, 0.0005909090909093286, 0.0, 33.9005, 0.0, -0.0005833333333333554)
@@ -591,7 +591,7 @@ def test_gdalalg_raster_pipeline_reproject_almost_all_args(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetGeoTransform() == pytest.approx(
             (-117.641, 0.0005, 0.0, 33.9008, 0.0, -0.0004), rel=1e-8
@@ -620,7 +620,7 @@ def test_gdalalg_raster_pipeline_reproject_proj_string(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert "Lambert Azimuthal Equal Area" in ds.GetSpatialRef().ExportToWkt(
             ["FORMAT=WKT2"]
         ), ds.GetSpatialRef().ExportToWkt(["FORMAT=WKT2"])

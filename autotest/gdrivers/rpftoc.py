@@ -66,7 +66,7 @@ def test_rpftoc_2():
 
 
 def test_rpftoc_force_rgba_open_option():
-    with gdal.OpenEx(
+    with gdal.Open(
         "NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/nitf/A.TOC",
         open_options=["FORCE_RGBA=YES"],
     ) as ds:
@@ -162,7 +162,7 @@ def test_rpftoc_create_simple(tmp_vsimem):
         gdal.CE_Warning,
         match="appears to be an NITF file, but no image blocks were found on it",
     ):
-        with gdal.OpenEx(tmp_vsimem / "A.TOC", allowed_drivers=["NITF"]) as ds:
+        with gdal.Open(tmp_vsimem / "A.TOC", allowed_drivers=["NITF"]) as ds:
             tre = ds.GetMetadata("xml:TRE")[0]
 
         assert tre.startswith("""<tres>
@@ -403,9 +403,7 @@ def test_rpftoc_create_two_scales(tmp_vsimem):
         gdal.CE_Warning,
         match="appears to be an NITF file, but no image blocks were found on it",
     ):
-        with gdal.OpenEx(
-            tmp_vsimem / "final" / "A.TOC", allowed_drivers=["NITF"]
-        ) as ds:
+        with gdal.Open(tmp_vsimem / "final" / "A.TOC", allowed_drivers=["NITF"]) as ds:
             tre = ds.GetMetadata("xml:TRE")[0]
 
     # Check that 200K is before 100K

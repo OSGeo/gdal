@@ -55,7 +55,13 @@
 
 %typemap(in) GUIntBig
 {
-    $1 = (GIntBig)PyLong_AsUnsignedLongLong($input);
+    PyErr_Clear();
+    $1 = (GUIntBig)PyLong_AsUnsignedLongLong($input);
+    if( $1 == (GUIntBig)-1 && PyErr_Occurred() )
+    {
+        PyErr_SetString( PyExc_RuntimeError, "not a uint64 value");
+        SWIG_fail;
+    }
 }
 
 %typemap(out) GUIntBig

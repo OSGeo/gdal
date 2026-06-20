@@ -97,7 +97,7 @@ def test_esric_4(esric_ds):
 
 @pytest.fixture
 def tpkx_ds_extent_source_tiling_scheme():
-    return gdal.OpenEx(
+    return gdal.Open(
         "data/esric/Usa.tpkx", open_options=["EXTENT_SOURCE=TILING_SCHEME"]
     )
 
@@ -210,7 +210,7 @@ def test_tpkx_default_full_extent(extent_source):
     open_options = {}
     if extent_source:
         open_options["EXTENT_SOURCE"] = extent_source
-    ds = gdal.OpenEx("data/esric/Usa.tpkx", open_options=open_options)
+    ds = gdal.Open("data/esric/Usa.tpkx", open_options=open_options)
     assert ds.RasterXSize == 2533
     assert ds.RasterYSize == 1922
     assert ds.RasterCount == 4
@@ -245,12 +245,12 @@ def test_tpkx_ignores_oversized_lod(ignore_oversized_lods):
 
     if ignore_oversized_lods in (None, "NO"):
         with pytest.raises(RuntimeError):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "data/esric/oversizedLOD/root.json", open_options=open_options
             )
         return
 
-    ds = gdal.OpenEx("data/esric/oversizedLOD/root.json", open_options=open_options)
+    ds = gdal.Open("data/esric/oversizedLOD/root.json", open_options=open_options)
     assert ds is not None, "Dataset failed to open"
     assert ds.RasterXSize == 2147483647
     assert ds.RasterYSize == 2147483647
@@ -264,10 +264,10 @@ def test_esric_ignores_oversized_lod(ignore_oversized_lods):
 
     if ignore_oversized_lods in (None, "NO"):
         with pytest.raises(RuntimeError):
-            gdal.OpenEx("data/esric/oversizedLOD/conf.xml", open_options=open_options)
+            gdal.Open("data/esric/oversizedLOD/conf.xml", open_options=open_options)
         return
 
-    ds = gdal.OpenEx("data/esric/oversizedLOD/conf.xml", open_options=open_options)
+    ds = gdal.Open("data/esric/oversizedLOD/conf.xml", open_options=open_options)
     assert ds is not None, "Dataset failed to open"
     assert ds.RasterXSize == 2147483647
     assert ds.RasterYSize == 2147483647

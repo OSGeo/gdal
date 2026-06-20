@@ -28,7 +28,7 @@ def alg():
 
 def test_gdalalg_vector_combine(alg):
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
+    src_ds = gdal.Open("../ogr/data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
 
     alg["input"] = src_ds
     alg["output"] = ""
@@ -375,7 +375,7 @@ def test_gdalalg_vector_combine_test_ogrsf(tmp_path):
 
         src_lyr.CreateField(ogr.FieldDefn("GRP", ogr.OFTInteger))
 
-        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        with gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
             for i, src_feature in enumerate(poly_ds.GetLayer(0)):
                 dst_feature = ogr.Feature(src_lyr.GetLayerDefn())
                 dst_feature["GRP"] = i % 3

@@ -47,7 +47,7 @@ def test_gdalalg_raster_reproject(tmp_vsimem):
     assert alg.Run(my_progress) and alg.Finalize()
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4727
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
 
@@ -71,7 +71,7 @@ def test_gdalalg_raster_reproject_through_pipeline(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4727
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
 
@@ -95,7 +95,7 @@ def test_gdalalg_raster_reproject_through_pipeline_non_optimized_path(tmp_vsimem
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4727
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
 
@@ -129,7 +129,7 @@ def test_gdalalg_raster_reproject_size(tmp_vsimem):
         ],
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 10
 
@@ -148,7 +148,7 @@ def test_gdalalg_raster_reproject_bbox_crs(tmp_vsimem):
         ],
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 17
         assert ds.RasterYSize == 17
 

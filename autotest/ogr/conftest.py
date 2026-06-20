@@ -10,7 +10,7 @@ from osgeo import gdal, ogr
 @pytest.fixture(scope="module")
 def poly_feat():
 
-    with gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"]) as shp_ds:
+    with gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"]) as shp_ds:
         shp_lyr = shp_ds.GetLayer(0)
 
         return [feat for feat in shp_lyr]

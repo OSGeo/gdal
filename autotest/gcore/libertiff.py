@@ -26,9 +26,7 @@ pytestmark = pytest.mark.require_driver("LIBERTIFF")
 
 
 def libertiff_open(filename, open_options=[]):
-    return gdal.OpenEx(
-        filename, allowed_drivers=["LIBERTIFF"], open_options=open_options
-    )
+    return gdal.Open(filename, allowed_drivers=["LIBERTIFF"], open_options=open_options)
 
 
 def test_libertiff_basic():
@@ -69,7 +67,7 @@ def test_libertiff_basic():
 @pytest.mark.require_driver("GTiff")
 def test_libertiff_basic_compare_gtiff():
     ds = libertiff_open("data/byte.tif")
-    ds_ref = gdal.OpenEx("data/byte.tif", allowed_drivers=["GTiff"])
+    ds_ref = gdal.Open("data/byte.tif", allowed_drivers=["GTiff"])
     assert ds.ReadRaster() == ds_ref.ReadRaster()
     assert ds.ReadRaster(1, 2, 1, 1) == ds_ref.ReadRaster(1, 2, 1, 1)
     assert ds.ReadRaster(band_list=[1, 1]) == ds_ref.ReadRaster(band_list=[1, 1])
@@ -90,7 +88,7 @@ def test_libertiff_basic_compare_gtiff():
 def test_libertiff_3band_separate(GDAL_FORCE_CACHING):
     with gdal.config_option("GDAL_FORCE_CACHING", GDAL_FORCE_CACHING):
         ds = libertiff_open("data/rgbsmall.tif")
-    ds_ref = gdal.OpenEx("data/rgbsmall.tif", allowed_drivers=["GTiff"])
+    ds_ref = gdal.Open("data/rgbsmall.tif", allowed_drivers=["GTiff"])
     assert ds.ReadRaster() == ds_ref.ReadRaster()
     assert ds.GetRasterBand(2).ReadRaster() == ds_ref.GetRasterBand(2).ReadRaster()
     assert ds.ReadRaster(1, 2, 1, 1) == ds_ref.ReadRaster(1, 2, 1, 1)
@@ -119,7 +117,7 @@ def test_libertiff_3band_separate(GDAL_FORCE_CACHING):
 def test_libertiff_3band_pixel_interleaved(GDAL_FORCE_CACHING):
     with gdal.config_option("GDAL_FORCE_CACHING", GDAL_FORCE_CACHING):
         ds = libertiff_open("data/gtiff/rgbsmall_NONE.tif")
-    ds_ref = gdal.OpenEx("data/gtiff/rgbsmall_NONE.tif", allowed_drivers=["GTiff"])
+    ds_ref = gdal.Open("data/gtiff/rgbsmall_NONE.tif", allowed_drivers=["GTiff"])
     if False:
         assert ds.ReadRaster() == ds_ref.ReadRaster()
         assert ds.GetRasterBand(2).ReadRaster() == ds_ref.GetRasterBand(2).ReadRaster()
@@ -168,7 +166,7 @@ def test_libertiff_3band_pixel_interleaved(GDAL_FORCE_CACHING):
 def test_libertiff_4band_pixel_interleaved(GDAL_FORCE_CACHING):
     with gdal.config_option("GDAL_FORCE_CACHING", GDAL_FORCE_CACHING):
         ds = libertiff_open("data/stefan_full_rgba.tif")
-    ds_ref = gdal.OpenEx("data/stefan_full_rgba.tif", allowed_drivers=["GTiff"])
+    ds_ref = gdal.Open("data/stefan_full_rgba.tif", allowed_drivers=["GTiff"])
     assert ds.ReadRaster() == ds_ref.ReadRaster()
     assert ds.ReadRaster(buf_pixel_space=4, buf_band_space=1) == ds_ref.ReadRaster(
         buf_pixel_space=4, buf_band_space=1
@@ -333,7 +331,7 @@ def test_libertiff_check_byte(filename_middle):
     if "JPEG" in filename_middle:
         assert ds.GetRasterBand(1).Checksum() > 0
         if gdal.GetDriverByName("GTiff"):
-            ds_ref = gdal.OpenEx(
+            ds_ref = gdal.Open(
                 f"data/gtiff/byte_{filename_middle}.tif", allowed_drivers=["GTiff"]
             )
             assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
@@ -435,7 +433,7 @@ def test_libertiff_check_rgbsmall(filename_middle, NUM_THREADS):
     if "JPEG" in filename_middle:
         assert ds.GetRasterBand(1).Checksum() > 0
         if gdal.GetDriverByName("GTiff"):
-            ds_ref = gdal.OpenEx(
+            ds_ref = gdal.Open(
                 f"data/gtiff/rgbsmall_{filename_middle}.tif",
                 allowed_drivers=["GTiff"],
             )

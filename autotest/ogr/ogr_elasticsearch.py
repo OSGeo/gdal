@@ -614,12 +614,12 @@ def test_ogr_elasticsearch_4(es_url, handle_get, handle_post, handle_delete):
     ds = None
 
     # Test LAYER open option
-    ds = gdal.OpenEx(f"ES:{es_url}/fakeelasticsearch", open_options=["LAYER=a_layer"])
+    ds = gdal.Open(f"ES:{es_url}/fakeelasticsearch", open_options=["LAYER=a_layer"])
     assert ds.GetLayerCount() == 1
     ds = None
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             f"ES:{es_url}/fakeelasticsearch", open_options=["LAYER=not_a_layer"]
         )
     assert ds is None
@@ -1247,7 +1247,7 @@ def test_ogr_elasticsearch_5(es_url, handle_get, handle_put, handle_post):
 }
 """,
     )
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         gdal.OF_UPDATE,
         open_options=["BULK_INSERT=NO"],
@@ -1372,7 +1372,7 @@ def test_ogr_elasticsearch_5(es_url, handle_get, handle_put, handle_post):
     handle_get("""/fakeelasticsearch/non_geojson/my_mapping/_count?pretty""", "{}")
     lyr.CreateFeature(f)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         open_options=["FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0"],
     )
@@ -1388,7 +1388,7 @@ def test_ogr_elasticsearch_5(es_url, handle_get, handle_put, handle_post):
         f.DumpReadable()
         pytest.fail()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         open_options=[
             "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0",
@@ -1409,7 +1409,7 @@ def test_ogr_elasticsearch_5(es_url, handle_get, handle_put, handle_post):
         f.DumpReadable()
         pytest.fail()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         gdal.OF_UPDATE,
         open_options=["JSON_FIELD=YES"],
@@ -1470,7 +1470,7 @@ def test_ogr_elasticsearch_6(es_url, handle_get):
 }
 """,
     )
-    ds = gdal.OpenEx(f"ES:{es_url}/fakeelasticsearch")
+    ds = gdal.Open(f"ES:{es_url}/fakeelasticsearch")
     lyr = ds.GetLayer(0)
 
     handle_get(
@@ -2663,7 +2663,7 @@ def test_ogr_elasticsearch_authentication(tmp_vsimem):
 """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{tmp_vsimem}/fakeelasticsearch", open_options=["USERPWD=user:pwd"]
     )
     assert ds is not None
@@ -2736,7 +2736,7 @@ def test_ogr_elasticsearch_http_headers_from_env(tmp_vsimem):
             """{"version":{"number":"5.0.0"}}""",
         )
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             f"ES:{tmp_vsimem}/fakeelasticsearch",
             open_options=[
                 "FORWARD_HTTP_HEADERS_FROM_ENV=Foo=FOO,Bar=BAR,Baz=I_AM_NOT_SET"
@@ -2859,7 +2859,7 @@ def test_ogr_elasticsearch_timeout_terminate_after(es_url, handle_get, handle_po
     """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         open_options=[
             "SINGLE_QUERY_TERMINATE_AFTER=10",
@@ -3075,7 +3075,7 @@ def test_ogr_elasticsearch_aggregation_minimum(es_url, handle_get, handle_post):
     """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch", open_options=['AGGREGATION={"index":"test"}']
     )
     assert ds is not None
@@ -3114,7 +3114,7 @@ def test_ogr_elasticsearch_aggregation_minimum(es_url, handle_get, handle_post):
     )
     assert lyr.GetFeatureCount() == 2
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch", open_options=['AGGREGATION={"index":"test"}']
     )
     assert ds is not None
@@ -3172,7 +3172,7 @@ def test_ogr_elasticsearch_aggregation_minimum(es_url, handle_get, handle_post):
     ###############################################################################
     # Test all options
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch",
         open_options=[
             'AGGREGATION={"index":"test","geohash_grid":{"size":100,"precision":4},"fields":{"min":["a", "f"],"max":["b"],"avg":["c"],"sum":["d"],"count":["e"],"stats":["f"]}}'
@@ -3242,7 +3242,7 @@ def test_ogr_elasticsearch_wildcard_layer_name(es_url, handle_get, handle_delete
 
     handle_get("/fakeelasticsearch", """{"version":{"number":"6.8.0"}}""")
 
-    ds = gdal.OpenEx(f"ES:{es_url}/fakeelasticsearch")
+    ds = gdal.Open(f"ES:{es_url}/fakeelasticsearch")
 
     handle_get("""/fakeelasticsearch/_cat/indices/test*?h=i""", "test1\ntest2\n")
 
@@ -3370,7 +3370,7 @@ def test_ogr_elasticsearch_wildcard_layer_name(es_url, handle_get, handle_delete
     assert f.GetGeometryRef().ExportToWkt() == "POINT (3 50)"
 
     # Test with ADD_SOURCE_INDEX_NAME
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"ES:{es_url}/fakeelasticsearch", open_options=["ADD_SOURCE_INDEX_NAME=YES"]
     )
 

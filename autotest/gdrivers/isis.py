@@ -2146,13 +2146,13 @@ End
     }
     assert got == expected
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "in.lbl", open_options=["INCLUDE_OFFLINE_CONTENT=NO"]
     ) as ds:
         got = json.loads(ds.GetMetadata("json:ISIS3")[0])
     assert "_data" not in got["Table_FirstTable"]
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "in.lbl", open_options=["MAX_SIZE_OFFLINE_CONTENT=5"]
     ) as ds:
         with gdaltest.error_raised(

@@ -479,7 +479,7 @@ def test_pcidsk_15(tmp_path):
     ds.CreateLayer("foo")
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "pcidsk_15.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 1
 
@@ -487,7 +487,7 @@ def test_pcidsk_15(tmp_path):
     ds2 = None
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "pcidsk_15_2.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15_2.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 1
     ds = None
@@ -496,7 +496,7 @@ def test_pcidsk_15(tmp_path):
     ds = gdal.GetDriverByName("PCIDSK").Create(tmp_path / "pcidsk_15.pix", 0, 0, 0)
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "pcidsk_15.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 0
 
@@ -504,7 +504,7 @@ def test_pcidsk_15(tmp_path):
     del ds2
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "pcidsk_15_2.pix")
+    ds = gdal.Open(tmp_path / "pcidsk_15_2.pix")
     assert ds.RasterCount == 0
     assert ds.GetLayerCount() == 0
     ds = None

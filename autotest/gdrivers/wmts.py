@@ -668,7 +668,7 @@ def test_wmts_14():
         ["URL=/vsimem/nominal.xml"],
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "TILEMATRIXSET=tms"],
     ]:
-        ds = gdal.OpenEx("WMTS:", open_options=open_options)
+        ds = gdal.Open("WMTS:", open_options=open_options)
         assert ds is not None
 
     for open_options in [
@@ -677,7 +677,7 @@ def test_wmts_14():
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "ZOOM_LEVEL=30"],
     ]:
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("WMTS:", open_options=open_options)
+            ds = gdal.Open("WMTS:", open_options=open_options)
         assert ds is None
 
     ds = gdal.Open("WMTS:/vsimem/nominal.xml")
@@ -693,7 +693,7 @@ def test_wmts_14():
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["tilematrix=tm_0"])
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml", open_options=["tilematrix=tm_0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
@@ -701,7 +701,7 @@ def test_wmts_14():
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["zoom_level=0"])
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml", open_options=["zoom_level=0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
@@ -1286,7 +1286,7 @@ def test_wmts_20():
 </Capabilities>""",
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "WMTS:/vsimem/wmts_20.xml",
         open_options=["CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS=YES"],
     )
@@ -1963,7 +1963,7 @@ def test_wmts_force_opening_url(tmp_vsimem, webserver_port):
         open("data/wmts/WMTSCapabilities.xml", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMTS"])
+        gdal.Open(f"http://localhost:{webserver_port}", allowed_drivers=["WMTS"])
 
 
 ###############################################################################
@@ -2009,7 +2009,7 @@ def test_wmts_http_headers(tmp_vsimem, webserver_port, options):
         expected_headers={"Accept": "accept-val", "User-Agent": "my-user-agent"},
     )
     with gdaltest.config_options(options), webserver.install_http_handler(handler):
-        gdal.OpenEx(xmlfilename)
+        gdal.Open(xmlfilename)
 
 
 ###############################################################################
@@ -2028,9 +2028,9 @@ def test_wmts_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["WMTS"])
+    ds = gdal.Open(filename, allowed_drivers=["WMTS"])
     assert ds.GetDriver().GetDescription() == "WMTS"
 
 

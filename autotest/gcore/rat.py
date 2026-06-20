@@ -125,7 +125,7 @@ def test_rat_4(tmp_vsimem):
         ds.GetRasterBand(1).SetDefaultRAT(rat)
 
     # Verify
-    with gdal.OpenEx(tmp_vsimem / "rat_4.tif") as ds:
+    with gdal.Open(tmp_vsimem / "rat_4.tif") as ds:
         gdal_band = ds.GetRasterBand(1)
         rat = gdal_band.GetDefaultRAT()
         assert rat.GetValueAsInt(0, 0) == 111
@@ -136,12 +136,12 @@ def test_rat_4(tmp_vsimem):
     rat.CreateColumn("CLASS", gdal.GFT_String, gdal.GFU_Name)
     rat.SetValueAsInt(0, 0, 222)
     rat.SetValueAsString(0, 1, "Class1")
-    with gdal.OpenEx(tmp_vsimem / "rat_4.tif", gdal.OF_RASTER | gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "rat_4.tif", gdal.OF_RASTER | gdal.OF_UPDATE) as ds:
         gdal_band = ds.GetRasterBand(1)
         gdal_band.SetDefaultRAT(rat)
 
     # Verify
-    with gdal.OpenEx(tmp_vsimem / "rat_4.tif") as ds:
+    with gdal.Open(tmp_vsimem / "rat_4.tif") as ds:
         gdal_band = ds.GetRasterBand(1)
         rat = gdal_band.GetDefaultRAT()
         assert rat is not None

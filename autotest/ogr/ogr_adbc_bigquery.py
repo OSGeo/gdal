@@ -79,7 +79,7 @@ def module_disable_exceptions():
 
 
 def test_ogr_adbc_bigquery_read_only_basic():
-    ds = gdal.OpenEx("ADBC:", open_options=["ADBC_DRIVER=adbc_driver_bigquery"])
+    ds = gdal.Open("ADBC:", open_options=["ADBC_DRIVER=adbc_driver_bigquery"])
     assert ds.GetLayerCount() > 0
     assert (
         ds.GetLayer(gdal.GetConfigOption("GDAL_AUTOTEST_BIGQUERY_EXISTING_TABLE"))
@@ -127,7 +127,7 @@ def test_ogr_adbc_bigquery_read_only_test_ogrsf():
 def test_ogr_adbc_bigquery_write():
 
     lyr_name = gdal.GetConfigOption("GDAL_AUTOTEST_BIGQUERY_NEW_TABLE")
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "ADBC:",
         gdal.OF_VECTOR | gdal.OF_UPDATE,
         open_options=["ADBC_DRIVER=adbc_driver_bigquery"],
@@ -186,7 +186,7 @@ def test_ogr_adbc_bigquery_write():
     assert lyr.GetFeatureCount() == 1
     ds.Close()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "ADBC:",
         gdal.OF_VECTOR | gdal.OF_UPDATE,
         open_options=["ADBC_DRIVER=adbc_driver_bigquery"],

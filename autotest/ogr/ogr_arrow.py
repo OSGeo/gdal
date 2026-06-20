@@ -259,7 +259,7 @@ def test_ogr_arrow_write_from_another_dataset(
                 layerCreationOptions=layerCreationOptions,
             )
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "ARROW_IPC_STREAM:" + outfilename if open_as_stream else outfilename
         )
         lyr = ds.GetLayer(0)
@@ -759,7 +759,7 @@ def test_ogr_arrow_ipc_read_stdin(tmp_path):
             "CPL_VSISTDIN_FILE_CLOSE": "YES",
         }
     ):
-        ds = gdal.OpenEx("/vsistdin/", allowed_drivers=["ARROW"])
+        ds = gdal.Open("/vsistdin/", allowed_drivers=["ARROW"])
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f["foo"] == "bar"
@@ -979,7 +979,7 @@ def test_ogr_arrow_convert_from_geoarrow_wkb_with_extension_loaded(tmp_path):
     )
     assert err == ""
 
-    with gdal.OpenEx(tmp_path / "out.feather") as ds:
+    with gdal.Open(tmp_path / "out.feather") as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 9
 
@@ -989,9 +989,7 @@ def test_ogr_arrow_convert_from_geoarrow_wkb_with_extension_loaded(tmp_path):
 
 def test_ogr_arrow_lists_as_string_json():
 
-    ds = gdal.OpenEx(
-        "data/arrow/test.feather", open_options=["LISTS_AS_STRING_JSON=YES"]
-    )
+    ds = gdal.Open("data/arrow/test.feather", open_options=["LISTS_AS_STRING_JSON=YES"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert (

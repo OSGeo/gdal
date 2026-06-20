@@ -114,9 +114,7 @@ def test_gdalalg_raster_clip_like_postgis():
         pg_connection_string = "dbname=autotest"
 
     try:
-        pg_ds = gdal.OpenEx(
-            "PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE
-        )
+        pg_ds = gdal.Open("PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE)
         pg_ds.CreateLayer("test_gdalalg_raster_clip_like_postgis_one")
         pg_ds.CreateLayer("test_gdalalg_raster_clip_like_postgis_two")
         pg_ds.Close()
@@ -143,9 +141,7 @@ def test_gdalalg_raster_clip_like_postgis():
         ):
             alg.Run()
     finally:
-        pg_ds = gdal.OpenEx(
-            "PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE
-        )
+        pg_ds = gdal.Open("PG:" + pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE)
         pg_ds.ExecuteSQL("DROP TABLE test_gdalalg_raster_clip_like_postgis_one CASCADE")
         pg_ds.ExecuteSQL("DROP TABLE test_gdalalg_raster_clip_like_postgis_two CASCADE")
 

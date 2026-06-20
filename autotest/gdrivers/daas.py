@@ -215,7 +215,7 @@ def test_daas_authentication():
             }
         ):
             with gdal.quiet_errors():
-                gdal.OpenEx(
+                gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["X_FORWARDED_USER=user"],
@@ -264,7 +264,7 @@ def test_daas_authentication():
             }
         ):
             with gdal.quiet_errors():
-                gdal.OpenEx(
+                gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port
                 )
@@ -983,7 +983,7 @@ def test_daas_getbuffer_failure():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1143,7 +1143,7 @@ Content-Type: application/json
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port
             )
@@ -1265,7 +1265,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=PNG"],
@@ -1285,7 +1285,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=JPEG"],
@@ -1305,7 +1305,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=FOO"],
@@ -1359,7 +1359,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=JPEG2000"],
@@ -1415,7 +1415,7 @@ def test_daas_getbuffer_raw():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1552,7 +1552,7 @@ def test_daas_getbuffer(tmp_vsimem, pixel_encoding, drv_name, drv_options, mime_
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=" + pixel_encoding],
@@ -1656,7 +1656,7 @@ def test_daas_getbuffer_overview():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1778,7 +1778,7 @@ def test_daas_rasterio():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1874,7 +1874,7 @@ Content-Type: application/json
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -2013,7 +2013,7 @@ def test_daas_mask():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -2154,7 +2154,7 @@ def test_daas_png_response_4_bands_for_a_one_band_request(tmp_vsimem):
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port
             )

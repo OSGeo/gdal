@@ -496,8 +496,8 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
 
     # 1. Open without requesting a specific coverage
     query = "server=" + server + "&version=" + version
-    ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
-    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+    ds = gdal.Open("WCS:" + url + "/?" + query, open_options=options)
+    assert ds is not None, f"Open failed: WCS:{url}/?{query}"
 
     # 2. Open and request a specific coverage
     coverage = setup[server]["Coverage"]
@@ -515,17 +515,17 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
         if o != "-oo":
             options.append(o)
     options.append("GetCoverageExtra=test=none")
-    gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
-    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+    gdal.Open("WCS:" + url + "/?" + query, open_options=options)
+    assert ds is not None, f"Open failed: WCS:{url}/?{query}"
     ds = None
 
     # 3. Open and request a specific coverage, scaled
     options = [cache]
     options.append("GetCoverageExtra=test=scaled")
     options.append("INTERLEAVE=PIXEL")
-    ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
+    ds = gdal.Open("WCS:" + url + "/?" + query, open_options=options)
 
-    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+    assert ds is not None, f"Open failed: WCS:{url}/?{query}"
 
     projwin = [
         int(x) for x in setup[server]["Projwin"].replace("-projwin ", "").split()
@@ -546,9 +546,9 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
         options = [cache]
         options.append("GetCoverageExtra=test=non_scaled")
         options.append("INTERLEAVE=PIXEL")
-        ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
+        ds = gdal.Open("WCS:" + url + "/?" + query, open_options=options)
 
-        assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+        assert ds is not None, f"Open failed: WCS:{url}/?{query}"
 
         gdal.Translate(str(tmpfile_non_scaled), ds, srcWin=[0, 0, 2, 2])
 

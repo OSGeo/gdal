@@ -3227,7 +3227,7 @@ def test_tiff_read_gcp_internal_and_auxxml(
         open_options = []
         if config_option_value is not None:
             open_options += ["GEOREF_SOURCES=" + config_option_value]
-        ds = gdal.OpenEx(tmp_vsimem / "byte_gcp.tif", open_options=open_options)
+        ds = gdal.Open(tmp_vsimem / "byte_gcp.tif", open_options=open_options)
         if iteration == 0:
             gcp_count = ds.GetGCPCount()
             srs_wkt = ds.GetGCPProjection()
@@ -4917,7 +4917,7 @@ def test_tiff_read_multi_threaded(
 
     if reopen:
         ds = None
-        ds = gdal.OpenEx(tmpfile, gdal.OF_UPDATE, open_options=["NUM_THREADS=ALL_CPUS"])
+        ds = gdal.Open(tmpfile, gdal.OF_UPDATE, open_options=["NUM_THREADS=ALL_CPUS"])
 
         if write_after_reopen:
             x_off, y_off, x_size, y_size = (
@@ -5257,7 +5257,7 @@ def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
             }
         ):
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
                 )
                 with pytest.raises(
@@ -5448,7 +5448,7 @@ def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN
             }
         ):
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
                     open_options=["OVERVIEW_LEVEL=0"],
                 )
@@ -5691,7 +5691,7 @@ def test_tiff_read_multithreaded_read_fresh_file(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_tiff_read_multithreaded_read_missing_tilebytecounts_and_offsets():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gtiff/missing_tilebytecounts_and_offsets.tif",
         open_options=["NUM_THREADS=2"],
     )
