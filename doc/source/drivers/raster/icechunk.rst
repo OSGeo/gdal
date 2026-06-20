@@ -59,6 +59,9 @@ possible to select:
 * a given tag by prepending ``ICECHUNK:`` and suffixing
   ``?tag=<tag-name>`` to the Icechunk directory
 
+The ``ignore-timestamp-etag=yes`` key-value pair can also be appended to ignore
+timestamp and ETag checks for chunk files.
+
 It is also possible to point directly at the :file:`repo` file itself, or
 prefix the connection name, typically when it is a directory, with ``ICECHUNK:``
 to avoid any other driver's identification logic to trigger.

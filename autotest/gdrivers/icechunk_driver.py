@@ -2388,6 +2388,63 @@ def test_icechunk_manifest_inconsistent_chunk_ref_count(tmp_path):
         ar.Read()
 
 
+def test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified(tmp_path):
+
+    rootdirname = Path(
+        "data/icechunk/test_icechunk_manifest_inconsistent_chunk_ref_checksum_last_modified"
+    )
+
+    if FORCE_REGENERATE or not os.path.exists(rootdirname):
+
+        manifest = {
+            "id": {"bytes": [2] * 12},
+            "arrays": [
+                {
+                    "node_id": {"bytes": [0] * 8},
+                    "refs": [
+                        {
+                            "index": [0],
+                            "chunk_id": {"bytes": [0] * 12},
+                            "offset": 0,
+                            "length": 1,
+                            "checksum_last_modified": 1,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        _create_simple_repo_and_snapshot_with_manifest_file(
+            tmp_path,
+            rootdirname,
+            "081040G2081040G20810",
+            manifest,
+            manifest_num_chunk_refs=1,
+        )
+
+        os.mkdir(rootdirname / "chunks", 0o755)
+        open(rootdirname / "chunks" / "00000000000000000000", "wb").write(b"\x01")
+
+    ds = gdal.OpenEx(rootdirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar
+
+    with pytest.raises(
+        Exception,
+        match=r"Last modified timestamp verification on .* failed",
+    ):
+        ar.Read()
+
+    ds = gdal.OpenEx(
+        f"ICECHUNK:{rootdirname}?ignore-timestamp-etag=yes", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert ar
+    assert ar.Read() == b"\x01"
+
+
 def test_icechunk_manifest_inconsistent_chunk_ref_dim(tmp_path):
 
     rootdirname = Path(
@@ -2722,6 +2779,12 @@ def test_icechunk_remote_test_dataset_native_icechunk_v2_GLAD_LCLU():
             "B", ar.Read(array_start_idx=[0, 500, 500], count=[1, 1, 1])
         ) == (255,)
 
+        # Check that we don't hit flatbuffers default limitation to 1 million
+        # tables in verification code. See https://github.com/OSGeo/gdal/issues/14830
+        assert (
+            ar.Read(array_start_idx=[0, 280000, 720000], count=[1, 16, 16]) is not None
+        )
+
 
 @pytest.mark.require_curl()
 @pytest.mark.network
@@ -2744,3 +2807,70 @@ def test_icechunk_remote_test_dataset_native_icechunk_v1_NOAA_GFS():
         assert struct.unpack(
             "f", ar.Read(array_start_idx=[10, 500, 500], count=[1, 1, 1])
         ) == (0,)
+
+
+def test_icechunk_tag_selection():
+
+    dirname = "data/icechunk/tag_selection"
+    if FORCE_REGENERATE or not os.path.exists(dirname):
+
+        import icechunk as ic
+        import zarr
+
+        repo = ic.Repository.create(ic.local_filesystem_storage(dirname))
+        s = repo.writable_session("main")
+        g = zarr.group(s.store)
+        a = g.create_array(
+            "my_array", shape=(4,), dtype="int32", chunks=(4,), dimension_names=["x"]
+        )
+        a[:] = [10, 11, 12, 13]
+        repo.create_tag("v1", snapshot_id=s.commit("c1"))
+        s = repo.writable_session("main")
+        zarr.open_group(s.store)["my_array"][:] = [30, 31, 32, 33]
+        s.commit("c2")
+
+    ds = gdal.OpenEx(f"ICECHUNK:{dirname}?tag=v1", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    assert struct.unpack("i" * 4, ar.Read()) == (10, 11, 12, 13)
+
+
+@pytest.mark.require_curl()
+@pytest.mark.network
+def test_icechunk_remote_missing_virtual_ref():
+
+    dirname = "data/icechunk/missing_virtual_ref"
+    if FORCE_REGENERATE or not os.path.exists(dirname):
+
+        import icechunk as ic
+        import zarr
+
+        pfx = "s3://icechunk-public-data/"
+        cfg = ic.RepositoryConfig.default()
+        cfg.set_virtual_chunk_container(
+            ic.VirtualChunkContainer(
+                pfx, ic.s3_store(region="us-east-1", anonymous=True)
+            )
+        )
+        repo = ic.Repository.create(
+            ic.local_filesystem_storage(dirname),
+            config=cfg,
+            authorize_virtual_chunk_access={pfx: None},
+        )
+        s = repo.writable_session("main")
+        g = zarr.group(s.store)
+        g.create_array(
+            "my_array", shape=(4,), dtype="int32", chunks=(4,), dimension_names=["x"]
+        )
+        s.store.set_virtual_ref(
+            "my_array/c/0", pfx + "does-not-exist", offset=0, length=16
+        )
+        s.commit("c")
+
+    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("my_array")
+    with pytest.raises(
+        Exception, match="Cannot open /vsis3/icechunk-public-data/does-not-exist"
+    ):
+        ar.Read()

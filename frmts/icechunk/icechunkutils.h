@@ -33,7 +33,8 @@ void VSIIcechunkFileSystemClearCaches();
 
 std::string GetFilenameFromDatasetName(const std::string &osDatasetName,
                                        std::string &osBranchName,
-                                       std::string &osTagName);
+                                       std::string &osTagName,
+                                       bool &ignoreTimestampEtag);
 
 std::pair<std::unique_ptr<unsigned char, VSIFreeReleaser>, size_t>
 DecompressFile(const char *pszFilename, VSIVirtualHandle *poFile,

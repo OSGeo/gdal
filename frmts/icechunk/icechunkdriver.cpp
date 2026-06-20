@@ -43,8 +43,10 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     std::unique_ptr<GDALOpenInfo> poTmpOpenInfo;  // keep in that scope
     std::string osBranchName;
     std::string osTagName;
+    const std::string osFullFilename = poOpenInfo->pszFilename;
+    bool ignoreTimestampEtag;
     std::string osFilename = GetFilenameFromDatasetName(
-        poOpenInfo->pszFilename, osBranchName, osTagName);
+        poOpenInfo->pszFilename, osBranchName, osTagName, ignoreTimestampEtag);
     if (osFilename.empty())
         return nullptr;  // Error emitted by GetFilenameFromDatasetName
     if (osFilename != poOpenInfo->pszFilename)
@@ -177,7 +179,9 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     }
 
     const std::string osVSIIcechunkFilename =
-        std::string("ZARR:\"/vsiicechunk/{").append(osFilename).append("}\"");
+        std::string("ZARR:\"/vsiicechunk/{")
+            .append(osFullFilename)
+            .append("}\"");
     GDALOpenInfo oOpenInfoZarr(osVSIIcechunkFilename.c_str(), GA_ReadOnly);
     oOpenInfoZarr.nOpenFlags = poOpenInfo->nOpenFlags;
     oOpenInfoZarr.papszOpenOptions = poOpenInfo->papszOpenOptions;
@@ -268,8 +272,9 @@ bool ListBranchesAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     std::string osBranchName;
     std::string osTagName;
+    bool ignoreTimestampEtag = false;
     const std::string osFilename = GetFilenameFromDatasetName(
-        m_dataset.GetName(), osBranchName, osTagName);
+        m_dataset.GetName(), osBranchName, osTagName, ignoreTimestampEtag);
     auto repo = IcechunkRepo::Open(osFilename.c_str());
     if (!repo)
         return false;
@@ -321,8 +326,9 @@ bool ListTagsAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
     std::string osBranchName;
     std::string osTagName;
+    bool ignoreTimestampEtag = false;
     const std::string osFilename = GetFilenameFromDatasetName(
-        m_dataset.GetName(), osBranchName, osTagName);
+        m_dataset.GetName(), osBranchName, osTagName, ignoreTimestampEtag);
     auto repo = IcechunkRepo::Open(osFilename.c_str());
     if (!repo)
         return false;
