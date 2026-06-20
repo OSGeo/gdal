@@ -437,7 +437,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet curl libiconv icu python=3.12 pip swig numpy "pytest<9.1.0" pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
+        conda install --yes --quiet curl libiconv icu python=3.12 pip swig numpy "pytest!=9.1.0" pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
         conda install --yes --quiet proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
@@ -544,7 +544,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet proj python=3.12 swig "pytest<9.1.0" pytest-env pytest-benchmark filelock lxml cmake setuptools
+        conda install --yes --quiet proj python=3.12 swig "pytest!=9.1.0" pytest-env pytest-benchmark filelock lxml cmake setuptools
     - name: Check CMake version
       shell: bash -l {0}
       run: |
