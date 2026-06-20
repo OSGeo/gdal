@@ -842,7 +842,8 @@ def test_hdf5_multidim_block_size_structural_info():
 # Test GetRawBlockInfo()
 
 
-def test_hdf5_multidim_getrawblockinfo_chunked():
+@pytest.mark.require_driver("use_optim", [True, False])
+def test_hdf5_multidim_getrawblockinfo_chunked(use_optim):
 
     if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
         pytest.skip("libhdf5 < 1.10.5")
@@ -854,6 +855,9 @@ def test_hdf5_multidim_getrawblockinfo_chunked():
     assert block_size == [1, 2]
     y_size = var.GetDimensions()[0].GetSize()
     x_size = var.GetDimensions()[1].GetSize()
+
+    if not use_optim:
+        var.GetRawBlockInfo([1, 0])
 
     info = var.GetRawBlockInfo([0, 0])
     assert info.GetOffset() == 13908
