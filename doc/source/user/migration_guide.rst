@@ -17,6 +17,9 @@ From GDAL 3.13 to GDAL 3.14
       GDAL < 3.14 behavior can be obtained by setting the PROMOTE_TO_MULTI open
       option, or the :config:`SHAPE_PROMOTE_TO_MULTI` configuration option, to NO.
 
+    * Zarr driver: the new default value for the ``FORMAT`` creation option is
+      ``ZARR_V3`` (was ``ZARR_V2`` before)
+
 - Changes impacting C++ users:
 
     * All methods accepting or returning ``OGRBoolean`` (aliased to ``int``)

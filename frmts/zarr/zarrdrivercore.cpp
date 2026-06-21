@@ -154,7 +154,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(
         GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
         "<MultiDimDatasetCreationOptionList>"
-        "   <Option name='FORMAT' type='string-select' default='ZARR_V2'>"
+        "   <Option name='FORMAT' type='string-select' default='ZARR_V3'>"
         "     <Value>ZARR_V2</Value>"
         "     <Value>ZARR_V3</Value>"
         "   </Option>"

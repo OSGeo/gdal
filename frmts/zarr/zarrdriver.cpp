@@ -1103,7 +1103,7 @@ void ZarrDriver::InitMetadata()
                 CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
             CPLAddXMLAttributeAndValue(psFormat, "name", "FORMAT");
             CPLAddXMLAttributeAndValue(psFormat, "type", "string-select");
-            CPLAddXMLAttributeAndValue(psFormat, "default", "ZARR_V2");
+            CPLAddXMLAttributeAndValue(psFormat, "default", "ZARR_V3");
             {
                 auto poValueNode =
                     CPLCreateXMLNode(psFormat, CXT_Element, "Value");
@@ -1183,7 +1183,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
                                     CSLConstList papszOptions)
 {
     const char *pszFormat =
-        CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+        CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V3");
     std::shared_ptr<ZarrGroupBase> poRG;
     auto poSharedResource =
         ZarrSharedResource::Create(pszFilename, /*bUpdatable=*/true);
@@ -1275,7 +1275,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         }
 
         const char *pszFormat =
-            CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+            CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V3");
         auto poSharedResource =
             ZarrSharedResource::Create(pszName, /*bUpdatable=*/true);
         const bool bCreateZMetadata = CPLTestBool(CSLFetchNameValueDef(

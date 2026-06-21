@@ -1404,7 +1404,7 @@ def test_zarr_read_classic_2d(tmp_vsimem):
 
     src_ds = gdal.Open("data/byte.tif")
     gdal.GetDriverByName("ZARR").CreateCopy(
-        tmp_vsimem / "test.zarr", src_ds, strict=False
+        tmp_vsimem / "test.zarr", src_ds, strict=False, options=["FORMAT=ZARR_V2"]
     )
     ds = gdal.Open(tmp_vsimem / "test.zarr")
     assert ds is not None
@@ -1417,7 +1417,7 @@ def test_zarr_read_classic_2d(tmp_vsimem):
 def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays(tmp_vsimem):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -1564,7 +1564,9 @@ def test_zarr_write_single_array_3d(tmp_vsimem, interleave):
 
     src_ds = gdal.Open("data/rgbsmall.tif")
     gdal.GetDriverByName("ZARR").CreateCopy(
-        tmp_vsimem / "test.zarr", src_ds, options=["INTERLEAVE=" + interleave]
+        tmp_vsimem / "test.zarr",
+        src_ds,
+        options=["INTERLEAVE=" + interleave, "FORMAT=ZARR_V2"],
     )
     ds = gdal.Open(tmp_vsimem / "test.zarr")
     assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
@@ -2163,7 +2165,7 @@ def test_zarr_create_array_compressor(tmp_vsimem, compressor, options, expected_
 
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3032,7 +3034,7 @@ def test_zarr_create_array_attributes(tmp_vsimem, format):
 def test_zarr_create_array_set_crs(tmp_vsimem):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3061,7 +3063,7 @@ def test_zarr_create_array_set_crs(tmp_vsimem):
 def test_zarr_create_array_set_dimension_name(tmp_vsimem):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3292,7 +3294,7 @@ def test_zarr_write_array_content(
 def test_zarr_write_interleave(tmp_vsimem, dt, array_type):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3364,7 +3366,7 @@ def test_zarr_write_interleave(tmp_vsimem, dt, array_type):
 def test_zarr_create_array_string(tmp_vsimem, string_format, input_str, output_str):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3503,7 +3505,7 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
 def test_zarr_create_unit_offset_scale(tmp_vsimem):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr", options=["FORMAT=ZARR_V2"]
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3600,10 +3602,15 @@ def test_zarr_create(tmp_vsimem, format):
     assert ds.GetRasterBand(1).GetOffset() == 1.5
 
 
-def test_zarr_create_append_subdataset(tmp_vsimem):
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_create_append_subdataset(tmp_vsimem, format):
     def create():
         ds = gdal.GetDriverByName("Zarr").Create(
-            tmp_vsimem / "test.zarr", 3, 2, 1, options=["ARRAY_NAME=foo"]
+            tmp_vsimem / "test.zarr",
+            3,
+            2,
+            1,
+            options=["ARRAY_NAME=foo", "FORMAT=" + format],
         )
         assert ds
         ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
@@ -3615,7 +3622,7 @@ def test_zarr_create_append_subdataset(tmp_vsimem):
             3,
             2,
             1,
-            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=bar"],
+            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=bar", "FORMAT=" + format],
         )
         assert ds
         ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
@@ -3627,7 +3634,7 @@ def test_zarr_create_append_subdataset(tmp_vsimem):
             30,
             20,
             1,
-            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=baz"],
+            options=["APPEND_SUBDATASET=YES", "ARRAY_NAME=baz", "FORMAT=" + format],
         )
         assert ds
         ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
@@ -3658,10 +3665,12 @@ def test_zarr_create_append_subdataset(tmp_vsimem):
 
 
 @pytest.mark.parametrize("blocksize", ["1,2", "4000000000,4000000000,4000000000"])
-def test_zarr_create_array_invalid_blocksize(tmp_vsimem, blocksize):
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_create_array_invalid_blocksize(tmp_vsimem, blocksize, format):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            tmp_vsimem / "test.zarr"
+            tmp_vsimem / "test.zarr",
+            options=["FORMAT=" + format],
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -3746,7 +3755,11 @@ def test_zarr_read_zarr_v2_filter_bitround(tmp_vsimem):
 def test_zarr_create_with_filter(tmp_vsimem):
 
     tst = gdaltest.GDALTest(
-        "Zarr", "../../gcore/data/uint16.tif", 1, 4672, options=["FILTER=delta"]
+        "Zarr",
+        "../../gcore/data/uint16.tif",
+        1,
+        4672,
+        options=["FILTER=delta", "FORMAT=ZARR_V2"],
     )
 
     tst.testCreate(
@@ -4704,7 +4717,10 @@ def test_zarr_resize_XARRAY(tmp_vsimem, create_z_metadata):
     def create():
         ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=[
+                "CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO"),
+                "FORMAT=ZARR_V2",
+            ],
         )
         assert ds is not None
         rg = ds.GetRootGroup()
@@ -4802,7 +4818,9 @@ def test_zarr_resize_dim_referenced_twice(tmp_vsimem):
     filename = str(tmp_vsimem / "test.zarr")
 
     def create():
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename)
+        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+            filename, options=["FORMAT=ZARR_V2"]
+        )
         assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
@@ -5970,7 +5988,9 @@ def test_zarr_read_cf1_zarrv3():
 def test_zarr_write_WGS84_and_EGM96_height(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "out.zarr")
-    with gdal.GetDriverByName("Zarr").Create(tmp_filename, 1, 1) as ds:
+    with gdal.GetDriverByName("Zarr").Create(
+        tmp_filename, 1, 1, options=["FORMAT=ZARR_V2"]
+    ) as ds:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(9707)
         ds.SetSpatialRef(srs)
@@ -5987,7 +6007,9 @@ def test_zarr_write_WGS84_and_EGM96_height(tmp_vsimem):
 def test_zarr_write_UTM31N_and_EGM96_height(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "out.zarr")
-    with gdal.GetDriverByName("Zarr").Create(tmp_filename, 1, 1) as ds:
+    with gdal.GetDriverByName("Zarr").Create(
+        tmp_filename, 1, 1, options=["FORMAT=ZARR_V2"]
+    ) as ds:
         srs = osr.SpatialReference()
         srs.SetFromUserInput("EPSG:32631+5773")
         ds.SetSpatialRef(srs)
@@ -9301,3 +9323,18 @@ def test_zarr_driver_v3_decode_pcodec(dtype):
 
     ds = gdal.Open(dirname)
     np.testing.assert_equal(ds.ReadAsArray(), ar)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_default_format_is_zarr_v3(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.zarr")
+
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename) as _:
+        pass
+
+    with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "rb") as f:
+        assert json.loads(f.read())["zarr_format"] == 3
