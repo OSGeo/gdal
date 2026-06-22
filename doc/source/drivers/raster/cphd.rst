@@ -31,6 +31,7 @@ Multidimensional API support
 The CPHD driver supports the :ref:`multidim_raster_data_model` for reading operations.
 
 The driver supports:
+
 - reading groups and subgroups
 - reading multidimensional dense arrays with a numeric data type
 - reading numeric or string attributes in groups and arrays
