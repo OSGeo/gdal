@@ -310,12 +310,19 @@ bool GDALVectorEditAlgorithm::RunStep(GDALPipelineStepRunContext &)
         ret = (poSrcLayer != nullptr);
         if (ret)
         {
+            // Capture errors from VRT layers such as WFS
+            // (see issue GH # https://github.com/OSGeo/gdal/issues/14826)
+            const auto errorCount{CPLGetErrorCounter()};
             outDS->AddLayer(*poSrcLayer,
                             std::make_unique<GDALVectorEditAlgorithmLayer>(
                                 *poSrcLayer, m_activeLayer, m_outputLayerName,
                                 bChangeGeomType, eType, m_overrideCrs,
                                 m_layerMetadata, m_unsetLayerMetadata,
                                 m_unsetFID));
+            if (CPLGetErrorCounter() != errorCount)
+            {
+                ret = false;
+            }
         }
     }
 
