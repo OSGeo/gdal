@@ -1531,6 +1531,9 @@ static GDALDataset *COGCreate(const char *pszFilename, int nXSize, int nYSize,
     aosOptions.SetNameValue("BLOCKXSIZE", pszBlockSize);
     aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
 
+    // doesn't hurt on the temporary file even if final file doesn't need it
+    aosOptions.SetNameValue("BIGTIFF", "YES");
+
     bool bHasLZW = false;
     bool bHasDEFLATE = false;
     bool bHasLZMA = false;
