@@ -6950,3 +6950,16 @@ def test_netcdf_write_non_axis_aligned_geotransform(
         )
     assert warped_ds.GetGeoTransform() == pytest.approx(expected_warp_gt)
     assert warped_ds.GetRasterBand(1).Checksum() == expected_warp_cs
+
+
+###############################################################################
+# Cf https://github.com/osgeo/gdal/issues/14822
+
+
+def test_netcdf_invalid_grid_mapping_attribute():
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "'tas' references grid mapping variable 'Polar Stereographic'",
+    ):
+        gdal.Open("data/netcdf/tas_broken_grid_mapping.nc")

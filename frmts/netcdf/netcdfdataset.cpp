@@ -3297,6 +3297,18 @@ void netCDFDataset::SetProjectionFromVar(
                 }
             }
         }
+        else
+        {
+            std::string osVarName = "unknown";
+            NCDFGetVarFullName(nGroupId, nVarId, osVarName);
+
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "'%s' attribute of variable '%s' references grid mapping "
+                     "variable '%s', but no such variable exists. The spatial "
+                     "referencing of this dataset may be incorrect.",
+                     CF_GRD_MAPPING, osVarName.c_str(),
+                     osGridMappingValue.c_str());
+        }
     }
 
     // Get information about the file.
