@@ -40,6 +40,7 @@
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_set_type.h"
+#include "gdalalg_raster_shift_longitude.h"
 #include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_stack.h"
@@ -223,6 +224,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALRasterSelectAlgorithm::NAME));
 
     registry.Register<GDALRasterSetTypeAlgorithm>();
+    registry.Register<GDALRasterShiftLongitudeAlgorithm>();
     registry.Register<GDALRasterSieveAlgorithm>();
     registry.Register<GDALRasterSlopeAlgorithm>();
     registry.Register<GDALRasterStackAlgorithm>();
