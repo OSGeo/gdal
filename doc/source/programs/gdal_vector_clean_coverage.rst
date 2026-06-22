@@ -61,6 +61,7 @@ Program-Specific Options
 .. option:: --merge-strategy <MERGE-STRATEGY>
 
     Method by which overlaps or gaps should be added to adjacent polygons. Options include:
+
     - longest-border (default): add areas to the polygon with which the longest border is shared
     - max-area: add areas to the largest adjacent polygon
     - min-area: add areas to the smallest adjacent polygon
