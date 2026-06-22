@@ -221,6 +221,12 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
         case LANDSAT:
             if (pszBandname && !EQUAL(pszBandname, ""))
             {
+                if (CPLHasPathTraversal(pszBandname))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszBandname);
+                    return nullptr;
+                }
                 osChannelFilename =
                     CPLFormCIFilenameSafe(pszDirname, pszBandname, nullptr);
                 if (OpenChannel(osChannelFilename.c_str(), iBand))
