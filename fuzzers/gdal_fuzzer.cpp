@@ -86,6 +86,9 @@ int LLVMFuzzerInitialize(int * /*argc*/, char ***argv)
     CPLSetConfigOption("GDAL_SKIP", GDAL_SKIP);
 #endif
     REGISTER_FUNC();
+#ifdef REGISTER_GTiff
+    GDALRegister_GTiff();
+#endif
 
     return 0;
 }

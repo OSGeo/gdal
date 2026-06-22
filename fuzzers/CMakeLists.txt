@@ -107,6 +107,10 @@ build_fuzzer(NAME cad_fuzzer SOURCES ogr_fuzzer.cpp DEFINITIONS -DREGISTER_FUNC=
 build_fuzzer(NAME ogr_miramon_fuzzer SOURCES ogr_fuzzer.cpp DEFINITIONS -DREGISTER_FUNC=RegisterOGRMiraMon -DMEM_FILENAME="/vsimem/test.tar" -DFOR_OGR_MIRAMON)
 
 function (build_gdal_specialized_fuzzer _format _registerFunc _memfile _gdalfile)
+  if (_registerFunc STREQUAL GDALRegister_MRF)
+      # mrf can use indirectly the GTiff driver
+      set(EXTRA_DEF "-DREGISTER_GTiff")
+  endif()
   build_fuzzer(
     NAME
     ${_format}_fuzzer
@@ -115,8 +119,10 @@ function (build_gdal_specialized_fuzzer _format _registerFunc _memfile _gdalfile
     DEFINITIONS
     -DREGISTER_FUNC=${_registerFunc}
     -DMEM_FILENAME="${_memfile}"
-    -DGDAL_FILENAME="${_gdalfile}")
-endfunction ()
+    -DGDAL_FILENAME="${_gdalfile}"
+    ${EXTRA_DEF}
+    )
+endfunction()
 
 foreach (format IN ITEMS GTiff HFA)
   string(TOLOWER ${format} fuzzerName)
@@ -131,8 +137,7 @@ build_gdal_specialized_fuzzer(isce GDALRegister_ISCE "/vsimem/test.tar" "/vsitar
 build_gdal_specialized_fuzzer(roipac GDALRegister_ROIPAC "/vsimem/test.tar" "/vsitar//vsimem/test.tar/srtm.dem")
 build_gdal_specialized_fuzzer(rraster GDALRegister_RRASTER "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.grd")
 build_gdal_specialized_fuzzer(aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsitar//vsimem/test.tar/hdr.adf")
-# mrf can use indirectly the GTiff driver
-build_gdal_specialized_fuzzer(mrf "GDALRegister_MRF();GDALRegister_GTiff" "/vsimem/test.tar"
+build_gdal_specialized_fuzzer(mrf GDALRegister_MRF "/vsimem/test.tar"
                               "/vsitar//vsimem/test.tar/byte.mrf")
 build_gdal_specialized_fuzzer(gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt")
 build_gdal_specialized_fuzzer(ers GDALRegister_ERS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.ers")
