@@ -115,7 +115,9 @@ Program-Specific Options
 .. option:: --size <xsize>,<ysize>
 
     Set the size of the output file in pixels. First value is width. Second one
-    is height.
+    is height.  If width or height is set to 0,
+    the other dimension will be guessed from the resolution implied from the
+    bounding box.
 
 
 Standard Options
