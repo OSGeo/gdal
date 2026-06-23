@@ -1846,11 +1846,13 @@ void GDALMultiDimTextOutputDumper::DumpArraysSummary(
             bool bAllZero = true;
             std::string osChunkSize =
                 BlockSizeToString(poArray->GetBlockSize(), &bAllZero);
+            if (bAllZero)
+                osChunkSize = "(unknown)";
 
             std::vector<std::string> line{
                 poArray->GetFullName(), TypeToString(poArray->GetDataType()),
                 poArray->GetUnit(), DimsToShapeString(dims),
-                bAllZero ? std::string("(unknown)") : osChunkSize};
+                std::move(osChunkSize)};
             linesDataArrays[DimsToString(dims, osSameDimGroup)].push_back(
                 std::move(line));
         }
