@@ -172,10 +172,10 @@ CPLNasaEarthdataCredentialProvider::Build(
     {
         CPLStringList aosOptions;
         aosOptions.SetNameValue("CUSTOMREQUEST", "POST");
-        aosOptions.SetNameValue("USERPWD", std::string(l_osEarthdataUsername)
-                                               .append(":")
-                                               .append(l_osEarthdataPassword)
-                                               .c_str());
+        std::string osUserPwd = std::move(l_osEarthdataUsername);
+        osUserPwd += ':';
+        osUserPwd += l_osEarthdataPassword;
+        aosOptions.SetNameValue("USERPWD", osUserPwd.c_str());
         aosOptions.SetNameValue("ACCEPT", "application/json");
         std::string osURL;
         if (!cpl::starts_with(l_osEarthdataHost, "http://") &&
