@@ -634,3 +634,24 @@ def test_gdalalg_raster_create_size_guess(tmp_vsimem, size_spec, expected_size):
     assert alg.Run()
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert (ds.RasterXSize, ds.RasterYSize) == expected_size
+
+
+@pytest.mark.parametrize(
+    "bbox_spec,size_spec,expected_error",
+    [
+        ([0, 0, 1, 2], [(1 << 31) - 1, 0], "Too large computed height"),
+        ([0, 0, 2, 1], [0, (1 << 31) - 1], "Too large computed width"),
+    ],
+)
+def test_gdalalg_raster_create_size_guess_error(
+    tmp_vsimem, bbox_spec, size_spec, expected_error
+):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["size"] = size_spec
+    alg["bbox"] = bbox_spec
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    with pytest.raises(Exception, match=expected_error):
+        alg.Run()

@@ -256,13 +256,25 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
         const double ratio = (m_bbox[2] - m_bbox[0]) / (m_bbox[3] - m_bbox[1]);
         if (m_size[0] == 0)
         {
-            m_size[0] =
-                static_cast<int>(std::ceil(m_size[1] * ratio - EPSILON));
+            double dfWidth = std::ceil(m_size[1] * ratio - EPSILON);
+            if (dfWidth > INT_MAX)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Too large computed width");
+                return false;
+            }
+            m_size[0] = static_cast<int>(dfWidth);
         }
         else if (m_size[1] == 0)
         {
-            m_size[1] =
-                static_cast<int>(std::ceil(m_size[0] / ratio - EPSILON));
+            double dfHeight = std::ceil(m_size[0] / ratio - EPSILON);
+            if (dfHeight > INT_MAX)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Too large computed height");
+                return false;
+            }
+            m_size[1] = static_cast<int>(dfHeight);
         }
     }
 
