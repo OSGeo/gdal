@@ -1533,7 +1533,7 @@ DimsToSameDimGroup(const std::vector<std::shared_ptr<GDALDimension>> &dims)
             osDimGroup.resize(nPos);
             if (osSameDimGroup.empty())
             {
-                osSameDimGroup = osDimGroup;
+                osSameDimGroup = std::move(osDimGroup);
             }
             else if (osSameDimGroup != osDimGroup)
             {
