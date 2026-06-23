@@ -316,7 +316,7 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 {
     const char *textval = CPLGetXMLValue(node, pszPath, nullptr);
     if (textval)
-        return atof(textval);
+        return CPLAtof(textval);
     return def;
 }
 

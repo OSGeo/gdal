@@ -684,10 +684,10 @@ LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
 
     // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64)
-        precision = strtod(GetOptionValue("LERC_PREC", ".001"), nullptr);
+        precision = CPLStrtod(GetOptionValue("LERC_PREC", ".001"), nullptr);
     else
-        precision =
-            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), nullptr));
+        precision = std::max(
+            0.5, CPLStrtod(GetOptionValue("LERC_PREC", ".5"), nullptr));
 
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;

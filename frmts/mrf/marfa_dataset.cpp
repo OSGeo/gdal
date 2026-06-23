@@ -298,10 +298,10 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
                 // The scale value is the same as first overview
                 scale =
-                    strtod(CPLGetXMLValue(
-                               config, "Rsets.scale",
-                               CPLOPrintf("%d", panOverviewList[0]).c_str()),
-                           nullptr);
+                    CPLStrtod(CPLGetXMLValue(
+                                  config, "Rsets.scale",
+                                  CPLOPrintf("%d", panOverviewList[0]).c_str()),
+                              nullptr);
                 if (scale == 0.0)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1451,10 +1451,10 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     {
         double x0, x1, y0, y1;
 
-        x0 = atof(CPLGetXMLValue(bbox, "minx", "0"));
-        x1 = atof(CPLGetXMLValue(bbox, "maxx", "1"));
-        y1 = atof(CPLGetXMLValue(bbox, "maxy", "1"));
-        y0 = atof(CPLGetXMLValue(bbox, "miny", "0"));
+        x0 = CPLAtof(CPLGetXMLValue(bbox, "minx", "0"));
+        x1 = CPLAtof(CPLGetXMLValue(bbox, "maxx", "1"));
+        y1 = CPLAtof(CPLGetXMLValue(bbox, "maxy", "1"));
+        y0 = CPLAtof(CPLGetXMLValue(bbox, "miny", "0"));
 
         m_gt.xorig = x0;
         m_gt.xscale = (x1 - x0) / full.size.x;
