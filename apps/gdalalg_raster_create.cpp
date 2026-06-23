@@ -252,14 +252,17 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
         !(m_size[0] == 0 && m_size[1] == 0) && m_bbox.size() == 4 &&
         (m_bbox[3] - m_bbox[1] != 0) && (m_bbox[2] - m_bbox[0] != 0))
     {
+        constexpr double EPSILON = 1e-5;
         const double ratio = (m_bbox[2] - m_bbox[0]) / (m_bbox[3] - m_bbox[1]);
         if (m_size[0] == 0)
         {
-            m_size[0] = static_cast<int>(std::ceil(m_size[1] * ratio));
+            m_size[0] =
+                static_cast<int>(std::ceil(m_size[1] * ratio - EPSILON));
         }
         else if (m_size[1] == 0)
         {
-            m_size[1] = static_cast<int>(std::ceil(m_size[0] / ratio));
+            m_size[1] =
+                static_cast<int>(std::ceil(m_size[0] / ratio - EPSILON));
         }
     }
 
