@@ -428,7 +428,7 @@ GDALComputedDataset::GDALComputedDataset(
         const auto [bIsExprBand, name] = AddSourceBand(poIterBand);
         bCanUseBuiltin = bCanUseBuiltin && !bIsExprBand;
         if (!bIsExprBand)
-            aosNames.push_back(name);
+            aosNames.push_back(std::move(name));
         else
             aosNames.push_back(std::string("(").append(name).append(")"));
     }
