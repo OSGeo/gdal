@@ -1441,7 +1441,7 @@ void GDALMultiDimTextOutputDumper::DumpAttributes(
                              bFirstLineAttr
                                  ? TypeToString(poAttr->GetDataType())
                                  : std::string(),
-                             osVal});
+                             std::move(osVal)});
                         osAttrVal = osAttrVal.substr(nLastBreak + 1);
                     }
                     else
