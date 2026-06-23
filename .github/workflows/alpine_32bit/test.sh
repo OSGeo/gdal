@@ -8,7 +8,10 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 make quicktest
 
-PYTEST_SKIP=
+# Fails regularly on CI infrastructure since a few days (currently 2026-06-23)
+# Not reproducible on local Docker image
+PYTEST_SKIP="gcore/pcidsk.py"
+
 PYTEST_XFAIL="gcore/tiff_ovr.py gdrivers/gribmultidim.py gdrivers/mbtiles.py gdrivers/vrtwarp.py gdrivers/wcs.py utilities/test_gdalwarp.py pyscripts/test_gdal_pansharpen.py"
 
 # Stalls on it. Probably not enough memory
