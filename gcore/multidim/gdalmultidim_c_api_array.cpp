@@ -1689,7 +1689,7 @@ bool GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
 {
     VALIDATE_POINTER1(hArray, __func__, false);
 
-    const auto dimCount = hArray->m_poImpl->GetDimensionCount();
+    const auto &dimCount = hArray->m_poImpl->GetDimensionCount();
     if (nDimX >= dimCount || nDimY >= dimCount)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Dimension index out of range");

@@ -449,8 +449,6 @@ void DDFFieldDefn::Dump(FILE *fp, int nNestingLevel) const
 bool DDFFieldDefn::BuildSubfields()
 
 {
-    const char *pszSublist = _arrayDescr.c_str();
-
     if (_data_struct_code == dsc_concatenated)
     {
         // Split on two consecutive backslashes.
@@ -773,6 +771,7 @@ bool DDFFieldDefn::BuildSubfields()
     /*      We accomplish this by ignoring everything before the last       */
     /*      '*' in the subfield list.                                       */
     /* -------------------------------------------------------------------- */
+    const char *pszSublist = _arrayDescr.c_str();
     if (strrchr(pszSublist, '*') != nullptr)
         pszSublist = strrchr(pszSublist, '*');
 
