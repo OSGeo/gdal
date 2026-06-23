@@ -701,7 +701,7 @@ dataset-level creation options for the multidimensional API :
 
 -  .. co:: FORMAT
       :choices: ZARR_V2, ZARR_V3
-      :default: ZARR_V2
+      :default: ZARR_V3 (since GDAL 3.14, ZARR_V2 before)
 
 -  .. co:: CREATE_CONSOLIDATED_METADATA
       :choices: YES, NO
