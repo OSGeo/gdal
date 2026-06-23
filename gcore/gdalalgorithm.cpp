@@ -5254,7 +5254,8 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
 
     fieldArg.SetAutoCompleteFunction(
         [&datasetArg, layerNameArg, attributeFields, geometryFields,
-         extraValues, filterFn](const std::string &currentValue)
+         extraValues,
+         filterFn = std::move(filterFn)](const std::string &currentValue)
         {
             std::set<std::string> ret{};
             if (!datasetArg.empty())
