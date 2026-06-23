@@ -1593,8 +1593,9 @@ int DIMAPDataset::ReadImageInformation2()
     /* -------------------------------------------------------------------- */
 
     static const char *const apszMetadataTranslationStrip[] = {
-        "Acquisition_Configuration.Platform_Configuration."
-        "Ephemeris_Configuration",
+        // clang-format off
+        "Acquisition_Configuration.Platform_Configuration.Ephemeris_Configuration",
+        // clang-format on
         "EPHEMERIS_", nullptr, nullptr};
 
     if (psProductStrip != nullptr)
