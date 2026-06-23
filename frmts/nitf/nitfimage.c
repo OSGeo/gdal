@@ -2985,7 +2985,7 @@ int NITFReadICHIPB(NITFImage *psImage, NITFICHIPBInfo *psICHIP)
     }
     else
     {
-        fprintf(stdout, "Chip is already de-warped?\n");
+        CPLError(CE_Warning, CPLE_AppDefined, "Chip is already de-warped?");
     }
 
     return TRUE;
