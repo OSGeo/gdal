@@ -1073,15 +1073,16 @@ OGRSpatialReference *OGRGeoJSONReadSpatialReference(json_object *poObj)
 
             const char *pszName = json_object_get_string(poNameURL);
 
-            if (EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84"))
-                pszName = "EPSG:4326";
-
             poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (OGRERR_NONE !=
-                poSRS->SetFromUserInput(
-                    pszName,
-                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()))
+            if (EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84"))
+            {
+                CPL_IGNORE_RET_VAL(poSRS->importFromEPSG(4326));
+            }
+            else if (OGRERR_NONE !=
+                     poSRS->SetFromUserInput(
+                         pszName, OGRSpatialReference::
+                                      SET_FROM_USER_INPUT_LIMITATIONS_get()))
             {
                 delete poSRS;
                 poSRS = nullptr;
