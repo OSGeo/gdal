@@ -106,7 +106,7 @@ static GDALDataset *DatasetOpen(GDALOpenInfo *poOpenInfo)
     {
         if (osBranchName.empty())
         {
-            const auto branches = repo->GetBranches();
+            const auto &branches = repo->GetBranches();
             if (branches.empty())
             {
                 return std::make_unique<DummyDataset>().release();
