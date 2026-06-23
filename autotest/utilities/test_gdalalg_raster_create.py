@@ -614,3 +614,23 @@ def test_gdalalg_raster_create_replicate_tiling(
         expected_blockxsize,
         expected_blockysize,
     ]
+
+
+@pytest.mark.parametrize(
+    "size_spec,expected_size",
+    [
+        ((10, 0), (10, 15)),
+        ((0, 15), (10, 15)),
+    ],
+)
+def test_gdalalg_raster_create_size_guess(tmp_vsimem, size_spec, expected_size):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["size"] = size_spec
+    alg["bbox"] = [-1, -1, 1, 2]
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    assert alg.Run()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size
