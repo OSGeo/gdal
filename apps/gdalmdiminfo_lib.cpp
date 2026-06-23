@@ -1420,7 +1420,7 @@ void GDALMultiDimTextOutputDumper::DumpAttributes(
             {
                 attrs.push_back({poAttr->GetName(),
                                  TypeToString(poAttr->GetDataType()),
-                                 osAttrVal});
+                                 std::move(osAttrVal)});
             }
             else
             {
@@ -1454,7 +1454,7 @@ void GDALMultiDimTextOutputDumper::DumpAttributes(
                     {bFirstLineAttr ? poAttr->GetName() : std::string(),
                      bFirstLineAttr ? TypeToString(poAttr->GetDataType())
                                     : std::string(),
-                     osAttrVal});
+                     std::move(osAttrVal)});
             }
         }
         DumpTable(attrs, nIndentSpaces + 2);
