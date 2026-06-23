@@ -774,7 +774,7 @@ void SGeometry_PropertyScanner::open(int container_id)
             }
 
             v_ids.push_back(curr);
-            v_headers.push_back(property_name);
+            v_headers.push_back(std::move(property_name));
         }
     }
 }
