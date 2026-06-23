@@ -245,19 +245,18 @@ CPLNasaEarthdataCredentialProvider::Build(
         new CPLNasaEarthdataCredentialProvider());
     poProvider->m_osGetCredentialsURL = osGetCredentialsURL;
     poProvider->m_osEarthdataToken = l_osEarthdataToken;
-    if (!poProvider->RefreshIfNeeded())
+    std::lock_guard oLock(poProvider->m_oMutex);
+    if (!poProvider->RefreshIfNeededUnderLock())
         return nullptr;
     return poProvider;
 }
 
 /************************************************************************/
-/*        CPLNasaEarthdataCredentialProvider::RefreshIfNeeded()         */
+/*    CPLNasaEarthdataCredentialProvider::RefreshIfNeededUnderLock()    */
 /************************************************************************/
 
-bool CPLNasaEarthdataCredentialProvider::RefreshIfNeeded()
+bool CPLNasaEarthdataCredentialProvider::RefreshIfNeededUnderLock()
 {
-    std::lock_guard oLock(m_oMutex);
-
     constexpr int knExpirationDelayMargin = 60;
     if (m_osAccessKeyId.empty() ||
         time(nullptr) + knExpirationDelayMargin > m_nTokenExpirationTimestamp)
