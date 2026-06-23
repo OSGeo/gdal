@@ -244,7 +244,7 @@ CPLNasaEarthdataCredentialProvider::Build(
     auto poProvider = std::unique_ptr<CPLNasaEarthdataCredentialProvider>(
         new CPLNasaEarthdataCredentialProvider());
     poProvider->m_osGetCredentialsURL = osGetCredentialsURL;
-    poProvider->m_osEarthdataToken = l_osEarthdataToken;
+    poProvider->m_osEarthdataToken = std::move(l_osEarthdataToken);
     std::lock_guard oLock(poProvider->m_oMutex);
     if (!poProvider->RefreshIfNeededUnderLock())
         return nullptr;
