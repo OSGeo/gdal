@@ -804,8 +804,12 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         /* njunk = */ ReadInt(InDem);
         const double dxStart = DConvert(InDem, 24);
 
-        nRasterYSize =
-            static_cast<int>((extent_max.y - extent_min.y) / dydelta + 1.5);
+        const double dfRasterYSize =
+            (extent_max.y - extent_min.y) / dydelta + 1.5;
+        if (dfRasterYSize <= INT_MIN || dfRasterYSize >= INT_MAX ||
+            !std::isfinite(dfRasterYSize))
+            return FALSE;
+        nRasterYSize = static_cast<int>(dfRasterYSize);
         nRasterXSize = nProfiles;
 
         m_gt.xorig = dxStart - dxdelta / 2.0;
@@ -820,8 +824,12 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     /* -------------------------------------------------------------------- */
     else
     {
-        nRasterYSize =
-            static_cast<int>((extent_max.y - extent_min.y) / dydelta + 1.5);
+        const double dfRasterYSize =
+            (extent_max.y - extent_min.y) / dydelta + 1.5;
+        if (dfRasterYSize <= INT_MIN || dfRasterYSize >= INT_MAX ||
+            !std::isfinite(dfRasterYSize))
+            return FALSE;
+        nRasterYSize = static_cast<int>(dfRasterYSize);
         nRasterXSize = nProfiles;
 
         // Translate extents from arc-seconds to decimal degrees.
