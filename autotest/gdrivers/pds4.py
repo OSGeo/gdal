@@ -2009,3 +2009,36 @@ def test_pds4_array_3D_with_untypical_band_names(tmp_vsimem):
     assert ds.RasterXSize == 4
     assert ds.GetRasterBand(1).GetNoDataValue() == -999.0
     assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
+
+
+###############################################################################
+# Test support for browse products
+
+
+@pytest.mark.require_driver("PNG")
+def test_pds4_browse_product_png():
+
+    ds = gdal.Open("data/pds4/M044416018SE_browse.xml")
+    assert ds.RasterXSize == 10
+    assert ds.RasterYSize == 20
+    assert ds.GetRasterBand(1).Checksum() == 2435
+    assert len(ds.GetFileList()) == 2
+    assert ds.GetMetadata("xml:PDS4") is not None
+    assert ds.GetGeoTransform(can_return_null=True) is None
+    assert ds.GetSpatialRef() is None
+
+
+###############################################################################
+# Test support for browse products
+
+
+@pytest.mark.require_driver("GTIFF")
+def test_pds4_browse_product_tiff():
+
+    ds = gdal.Open("data/pds4/M044416018S_map_raw.xml")
+    assert ds.RasterXSize == 26454
+    assert ds.RasterYSize == 82056
+    assert len(ds.GetFileList()) == 2
+    assert ds.GetMetadata("xml:PDS4") is not None
+    assert ds.GetGeoTransform(can_return_null=True) is not None
+    assert ds.GetSpatialRef() is not None
