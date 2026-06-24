@@ -31,7 +31,7 @@ By default, metadata and the overview structure are not copied from the model
 input file, unless :option:`--copy-metadata` and :option:`--copy-overviews`
 are specified.
 Options :option:`--size`, :option:`--band-count`, :option:`--datatype`,
-:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :options:`--resolution`, :option:`--metadata`
+:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :option:`--resolution`, :option:`--metadata`
 can be used to override the values inherited from the model input file.
 
 For GeoTIFF output, setting the ``SPARSE_OK`` creation option to ``YES``
