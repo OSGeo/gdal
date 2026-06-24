@@ -445,7 +445,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install --yes --quiet curl libiconv icu python=3.12 pip swig numpy "pytest!=9.1.0" pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
-        conda install --yes --quiet proj geos hdf4 hdf5 kealib highfive \
+        conda install --yes --quiet proj geos hdf4 hdf5 \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
