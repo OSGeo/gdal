@@ -49,13 +49,62 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
         AddRasterOutputArgs(false);
     }
 
-    AddArg("size", 0, _("Output size in pixels"), &m_size)
+    AddArg("resolution", 0, _("Target resolution (in destination CRS units)"),
+           &m_resolution)
+        .SetMinCount(2)
+        .SetMaxCount(2)
+        .SetMinValueExcluded(0)
+        .SetRepeatedArgAllowed(false)
+        .SetDisplayHintAboutRepetition(false)
+        .SetMetaVar("<xres>,<yres>")
+        .SetMutualExclusionGroup("resolution-size");
+
+    AddArg("size", 0,
+           _("Target size in pixels (or percentage if using '%' suffix)"),
+           &m_size_str)
         .SetMinCount(2)
         .SetMaxCount(2)
         .SetMinValueIncluded(0)
         .SetRepeatedArgAllowed(false)
         .SetDisplayHintAboutRepetition(false)
-        .SetMetaVar("<width>,<height>");
+        .SetMetaVar("<width[%]>,<height[%]>")
+        .SetMutualExclusionGroup("resolution-size")
+        .AddValidationAction(
+            [this]()
+            {
+                for (const auto &s : m_size_str)
+                {
+                    char *endptr = nullptr;
+                    const double val = CPLStrtod(s.c_str(), &endptr);
+                    bool ok = false;
+                    if (endptr == s.c_str() + s.size())
+                    {
+                        if (val >= 0 && val <= INT_MAX &&
+                            static_cast<int>(val) == val)
+                        {
+                            ok = true;
+                        }
+                    }
+                    else if (endptr && ((endptr[0] == ' ' && endptr[1] == '%' &&
+                                         endptr + 2 == s.c_str() + s.size()) ||
+                                        (endptr[0] == '%' &&
+                                         endptr + 1 == s.c_str() + s.size())))
+                    {
+                        if (val >= 0)
+                        {
+                            ok = true;
+                        }
+                    }
+                    if (!ok)
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid size value: %s'", s.c_str());
+                        return false;
+                    }
+                }
+                return true;
+            });
+
     AddArg("band-count", 0, _("Number of bands"), &m_bandCount)
         .SetDefault(m_bandCount)
         .SetMinValueIncluded(0);
@@ -144,12 +193,97 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
     GDALDataset *poSrcDS = m_inputDataset.empty()
                                ? nullptr
                                : m_inputDataset.front().GetDatasetRef();
+
+    constexpr double EPSILON = 1e-5;
+
+    // Process size_str to fill m_size
+    for (size_t i = 0; i < m_size_str.size(); i++)
+    {
+        const auto &s = m_size_str[i];
+        char *endptr = nullptr;
+        const double val = CPLStrtod(s.c_str(), &endptr);
+        if (endptr &&
+            ((endptr[0] == ' ' && endptr[1] == '%' &&
+              endptr + 2 == s.c_str() + s.size()) ||
+             (endptr[0] == '%' && endptr + 1 == s.c_str() + s.size())))
+        {
+            // Percentage
+            if (!poSrcDS)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot use percentage size without input dataset");
+                return false;
+            }
+            const int refSize = (i == 0) ? poSrcDS->GetRasterXSize()
+                                         : poSrcDS->GetRasterYSize();
+            const double dfSize = std::ceil((refSize * val / 100.0) - EPSILON);
+            ;
+            if (dfSize > INT_MAX)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Computed size is too large");
+                return false;
+            }
+            m_size.push_back(static_cast<int>(dfSize));
+        }
+        else
+        {
+            m_size.push_back(static_cast<int>(val));
+        }
+    }
+
     if (poSrcDS)
     {
         if (m_size.empty())
         {
             m_size = std::vector<int>{poSrcDS->GetRasterXSize(),
                                       poSrcDS->GetRasterYSize()};
+        }
+
+        // If one of the size is 0, compute it from the other size
+        if (m_size[0] == 0 && m_size[1] > 0)
+        {
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
+            {
+                const double ratio =
+                    static_cast<double>(poSrcDS->GetRasterXSize()) /
+                    static_cast<double>(poSrcDS->GetRasterYSize());
+                const double dfWidth =
+                    std::ceil(static_cast<double>(m_size[1]) * ratio - EPSILON);
+                if (dfWidth > INT_MAX)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Computed width is too large");
+                    return false;
+                }
+                m_size[0] = static_cast<int>(dfWidth);
+            }
+            else
+            {
+                m_size[0] = poSrcDS->GetRasterXSize();
+            }
+        }
+        else if (m_size[1] == 0 && m_size[0] > 0)
+        {
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
+            {
+                const double ratio =
+                    static_cast<double>(poSrcDS->GetRasterYSize()) /
+                    static_cast<double>(poSrcDS->GetRasterXSize());
+                const double dfHeight =
+                    std::ceil(static_cast<double>(m_size[0]) * ratio - EPSILON);
+                if (dfHeight > INT_MAX)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Computed height is too large");
+                    return false;
+                }
+                m_size[1] = static_cast<int>(dfHeight);
+            }
+            else
+            {
+                m_size[1] = poSrcDS->GetRasterYSize();
+            }
         }
 
         if (!GetArg("band-count")->IsExplicitlySet())
@@ -239,11 +373,37 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
         }
     }
 
+    // If size is empty, try resolution from bbox
+    if (m_size.empty() && m_bbox.size() == 4 && m_resolution.size() == 2 &&
+        (m_bbox[3] - m_bbox[1] != 0) && (m_bbox[2] - m_bbox[0] != 0))
+    {
+        const double dfWidth =
+            std::ceil((m_bbox[2] - m_bbox[0]) / m_resolution[0] - EPSILON);
+        const double dfHeight =
+            std::ceil((m_bbox[3] - m_bbox[1]) / m_resolution[1] - EPSILON);
+        if (dfWidth > INT_MAX || dfHeight > INT_MAX)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Computed size is too large");
+            return false;
+        }
+        m_size = {static_cast<int>(dfWidth), static_cast<int>(dfHeight)};
+    }
+
     if (m_size.empty())
     {
-        ReportError(CE_Failure, CPLE_IllegalArg,
-                    "Argument 'size' should be specified, or 'like' dataset "
-                    "should be specified");
+        if (!m_resolution.empty() && m_bbox.empty())
+        {
+            ReportError(
+                CE_Failure, CPLE_IllegalArg,
+                "Cannot use resolution without 'bbox' or 'like' dataset");
+        }
+        else
+        {
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "Argument 'size' or 'resolution' or 'like' dataset "
+                        "should be specified");
+        }
         return false;
     }
 
@@ -252,7 +412,6 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
         !(m_size[0] == 0 && m_size[1] == 0) && m_bbox.size() == 4 &&
         (m_bbox[3] - m_bbox[1] != 0) && (m_bbox[2] - m_bbox[0] != 0))
     {
-        constexpr double EPSILON = 1e-5;
         const double ratio = (m_bbox[2] - m_bbox[0]) / (m_bbox[3] - m_bbox[1]);
         if (m_size[0] == 0)
         {

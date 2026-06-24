@@ -31,7 +31,7 @@ By default, metadata and the overview structure are not copied from the model
 input file, unless :option:`--copy-metadata` and :option:`--copy-overviews`
 are specified.
 Options :option:`--size`, :option:`--band-count`, :option:`--datatype`,
-:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :option:`--metadata`
+:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :options:`--resolution`, :option:`--metadata`
 can be used to override the values inherited from the model input file.
 
 For GeoTIFF output, setting the ``SPARSE_OK`` creation option to ``YES``
@@ -112,13 +112,20 @@ Program-Specific Options
     to respectively mean the special values not-a-number, positive infinity and
     minus infinity.
 
-.. option:: --size <xsize>,<ysize>
+.. option:: --size <xsize[%]>,<ysize[%]>
 
     Set the size of the output file in pixels. First value is width. Second one
-    is height.  If width or height is set to 0,
-    the other dimension will be guessed from the resolution implied from the
+    is height. If width or height is set to 0,
+    the other dimension will be guessed from the resolution implied by the
     bounding box.
+    Values can be expressed as percentages of the size of the :option:`--like` dataset,
+    if specified.
 
+.. option:: --resolution <xres>,<yres>
+
+    Set the pixel resolution of the output file in CRS units. First value is
+    width. Second one is height. If ``xres`` or ``yres`` is set to 0,
+    the other dimension will be guessed from the size implied by the bounding box.
 
 Standard Options
 ----------------
@@ -170,3 +177,24 @@ Examples
    .. code-block:: bash
 
       gdal raster create --like prototype.tif output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from an input one, but with a different size and CRS
+
+   .. code-block:: bash
+
+      gdal raster create --like prototype.tif --size=100,100 --crs=EPSG:3857 output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from a bounding box and resolution
+
+   .. code-block:: bash
+
+      gdal raster create --bbox=2,49,3,50 --resolution=0.01,0.01 output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from an input one with a different resolution
+
+   .. code-block:: bash
+
+      gdal raster create --like prototype.tif --resolution=0.01,0.01 output.tif
