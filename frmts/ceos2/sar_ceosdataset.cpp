@@ -391,20 +391,22 @@ CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Load all the pixel data associated with this scanline.          */
     /* -------------------------------------------------------------------- */
-    const int nBytesToRead = ImageDesc->BytesPerPixel * nBlockXSize;
-
-    GByte *pabyRecord = (GByte *)CPLMalloc(nBytesToRead);
+    GByte *pabyRecord = static_cast<GByte *>(
+        VSI_MALLOC2_VERBOSE(ImageDesc->BytesPerPixel, nBlockXSize));
+    if (pabyRecord == nullptr)
+        return CE_Failure;
+    const size_t nBytesToRead =
+        static_cast<size_t>(ImageDesc->BytesPerPixel) * nBlockXSize;
 
     if (VSIFSeekL(poGDS->fpImage, offset, SEEK_SET) != 0 ||
-        (int)VSIFReadL(pabyRecord, 1, nBytesToRead, poGDS->fpImage) !=
-            nBytesToRead)
+        VSIFReadL(pabyRecord, 1, nBytesToRead, poGDS->fpImage) != nBytesToRead)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading %d bytes of CEOS record data at offset %" PRIu64
-                 ".\n"
+                 "Error reading %" PRIu64
+                 " bytes of CEOS record data at offset %" PRIu64 ".\n"
                  "Reading file %s failed.",
-                 nBytesToRead, static_cast<uint64_t>(offset),
-                 poGDS->GetDescription());
+                 static_cast<uint64_t>(nBytesToRead),
+                 static_cast<uint64_t>(offset), poGDS->GetDescription());
         CPLFree(pabyRecord);
         return CE_Failure;
     }
@@ -535,20 +537,22 @@ CPLErr PALSARRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Load all the pixel data associated with this scanline.          */
     /* -------------------------------------------------------------------- */
-    const int nBytesToRead = ImageDesc->BytesPerPixel * nBlockXSize;
-
-    GByte *pabyRecord = (GByte *)CPLMalloc(nBytesToRead);
+    GByte *pabyRecord = static_cast<GByte *>(
+        VSI_MALLOC2_VERBOSE(ImageDesc->BytesPerPixel, nBlockXSize));
+    if (pabyRecord == nullptr)
+        return CE_Failure;
+    const size_t nBytesToRead =
+        static_cast<size_t>(ImageDesc->BytesPerPixel) * nBlockXSize;
 
     if (VSIFSeekL(poGDS->fpImage, offset, SEEK_SET) != 0 ||
-        (int)VSIFReadL(pabyRecord, 1, nBytesToRead, poGDS->fpImage) !=
-            nBytesToRead)
+        VSIFReadL(pabyRecord, 1, nBytesToRead, poGDS->fpImage) != nBytesToRead)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading %d bytes of CEOS record data at offset %" PRIu64
-                 ".\n"
+                 "Error reading %" PRIu64
+                 " bytes of CEOS record data at offset %" PRIu64 ".\n"
                  "Reading file %s failed.",
-                 nBytesToRead, static_cast<uint64_t>(offset),
-                 poGDS->GetDescription());
+                 static_cast<uint64_t>(nBytesToRead),
+                 static_cast<uint64_t>(offset), poGDS->GetDescription());
         CPLFree(pabyRecord);
         return CE_Failure;
     }
