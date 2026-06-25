@@ -10,7 +10,7 @@ make quicktest
 
 # Fails regularly on CI infrastructure since a few days (currently 2026-06-23)
 # Not reproducible on local Docker image
-PYTEST_SKIP="gcore/pcidsk.py"
+PYTEST_SKIP="gdrivers/pcidsk.py"
 
 PYTEST_XFAIL="gcore/tiff_ovr.py gdrivers/gribmultidim.py gdrivers/mbtiles.py gdrivers/vrtwarp.py gdrivers/wcs.py utilities/test_gdalwarp.py pyscripts/test_gdal_pansharpen.py"
 
