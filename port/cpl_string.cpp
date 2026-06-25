@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 
+#include <algorithm>
 #include <cctype>
 #include <climits>
 #include <cmath>
@@ -768,7 +769,7 @@ char **CSLTokenizeStringComplex(const char *pszString,
 /**
  * Tokenize a string.
  *
- * This function will split a string into tokens based on specified'
+ * This function will split a string into tokens based on specified
  * delimiter(s) with a variety of options.  The returned result is a
  * string list that should be freed with CSLDestroy() when no longer
  * needed.
@@ -822,6 +823,15 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
     if (pszString == nullptr)
         return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
 
+    return cpl::tokenize_string(pszString, pszDelimiters, nCSLTFlags)
+        .StealList();
+}
+
+namespace cpl
+{
+CPLStringList tokenize_string(std::string_view str, std::string_view delimiters,
+                              int nCSLTFlags)
+{
     CPLStringList oRetList;
     const bool bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS) != 0;
     const bool bHonourStringsSingleQuotes =
@@ -830,70 +840,49 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
     const bool bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES) != 0;
     const bool bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES) != 0;
 
-    char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
-    size_t nTokenMax = 10;
-
-    while (*pszString != '\0')
+    size_t pos = 0;
+    std::string token;
+    while (pos < str.size())
     {
+        token.clear();
         bool bInString = false;
         bool bInStringSingleQuote = false;
-        bool bStartString = true;
-        size_t nTokenLen = 0;
 
         // Try to find the next delimiter, marking end of token.
-        for (; *pszString != '\0'; ++pszString)
+        while (pos < str.size())
         {
-            // Extend token buffer if we are running close to its end.
-            if (nTokenLen >= nTokenMax - 3)
-            {
-                if (nTokenMax > std::numeric_limits<size_t>::max() / 2)
-                {
-                    CPLFree(pszToken);
-                    return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
-                }
-                nTokenMax = nTokenMax * 2;
-                char *pszNewToken = static_cast<char *>(
-                    VSI_REALLOC_VERBOSE(pszToken, nTokenMax));
-                if (pszNewToken == nullptr)
-                {
-                    CPLFree(pszToken);
-                    return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
-                }
-                pszToken = pszNewToken;
-            }
-
             // End if this is a delimiter skip it and break.
             if (!bInString && !bInStringSingleQuote &&
-                strchr(pszDelimiters, *pszString) != nullptr)
+                delimiters.find(str[pos]) != std::string_view::npos)
             {
-                ++pszString;
+                pos++;
                 break;
             }
 
             // If this is a quote, and we are honouring constant
             // strings, then process the constant strings, with out delim
             // but don't copy over the quotes.
-            if (bHonourStrings && !bInStringSingleQuote && *pszString == '"')
+            if (bHonourStrings && !bInStringSingleQuote && str[pos] == '"')
             {
                 if (nCSLTFlags & CSLT_PRESERVEQUOTES)
                 {
-                    pszToken[nTokenLen] = *pszString;
-                    ++nTokenLen;
+                    token.push_back(str[pos]);
                 }
 
                 bInString = !bInString;
+                pos++;
                 continue;
             }
             else if (bHonourStringsSingleQuotes && !bHonourStrings &&
-                     *pszString == '\'')
+                     str[pos] == '\'')
             {
                 if (nCSLTFlags & CSLT_PRESERVEQUOTES)
                 {
-                    pszToken[nTokenLen] = *pszString;
-                    ++nTokenLen;
+                    token.push_back(str[pos]);
                 }
 
                 bInStringSingleQuote = !bInStringSingleQuote;
+                pos++;
                 continue;
             }
 
@@ -902,70 +891,62 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
              * processing them we will unescape the quotes and \\ sequence
              * reduces to \
              */
-            if (bInString && pszString[0] == '\\')
+            if (bInString && str[pos] == '\\')
             {
-                if (pszString[1] == '"' || pszString[1] == '\\')
+                if (pos + 1 < str.size() &&
+                    (str[pos + 1] == '"' || str[pos + 1] == '\\'))
                 {
                     if (nCSLTFlags & CSLT_PRESERVEESCAPES)
                     {
-                        pszToken[nTokenLen] = *pszString;
-                        ++nTokenLen;
+                        token.push_back(str[pos]);
                     }
 
-                    ++pszString;
+                    ++pos;
                 }
             }
-            else if (bInStringSingleQuote && pszString[0] == '\\')
+            else if (bInStringSingleQuote && str[pos] == '\\')
             {
-                if (pszString[1] == '\'' || pszString[1] == '\\')
+                if (pos + 1 < str.size() &&
+                    (str[pos + 1] == '\'' || str[pos + 1] == '\\'))
                 {
                     if (nCSLTFlags & CSLT_PRESERVEESCAPES)
                     {
-                        pszToken[nTokenLen] = *pszString;
-                        ++nTokenLen;
+                        token.push_back(str[pos]);
                     }
 
-                    ++pszString;
+                    ++pos;
                 }
             }
 
-            // Strip spaces at the token start if requested.
-            if (!bInString && !bInStringSingleQuote && bStripLeadSpaces &&
-                bStartString && isspace(static_cast<unsigned char>(*pszString)))
-                continue;
-
-            bStartString = false;
-
-            pszToken[nTokenLen] = *pszString;
-            ++nTokenLen;
+            token.push_back(str[pos]);
+            pos++;
         }
-
-        // Strip spaces at the token end if requested.
-        if (!bInString && !bInStringSingleQuote && bStripEndSpaces)
-        {
-            while (nTokenLen &&
-                   isspace(static_cast<unsigned char>(pszToken[nTokenLen - 1])))
-                nTokenLen--;
-        }
-
-        pszToken[nTokenLen] = '\0';
 
         // Add the token.
-        if (pszToken[0] != '\0' || bAllowEmptyTokens)
-            oRetList.AddString(pszToken);
+        std::string_view token_view(token);
+        if (bStripLeadSpaces)
+        {
+            token_view = ltrim(token_view);
+        }
+        if (bStripEndSpaces)
+        {
+            token_view = rtrim(token_view);
+        }
+
+        if (!token_view.empty() || bAllowEmptyTokens)
+            oRetList.AddString(token_view);
     }
 
     /*
      * If the last token was empty, then we need to capture
      * it now, as the loop would skip it.
      */
-    if (*pszString == '\0' && bAllowEmptyTokens && oRetList.Count() > 0 &&
-        strchr(pszDelimiters, *(pszString - 1)) != nullptr)
+    if (!str.empty() && pos == str.size() && bAllowEmptyTokens &&
+        oRetList.Count() > 0 &&
+        delimiters.find(str[pos - 1]) != std::string_view::npos)
     {
         oRetList.AddString("");
     }
-
-    CPLFree(pszToken);
 
     if (oRetList.List() == nullptr)
     {
@@ -974,8 +955,10 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
         oRetList.Assign(static_cast<char **>(CPLCalloc(sizeof(char *), 1)));
     }
 
-    return oRetList.StealList();
+    return CPLStringList(oRetList.StealList());
 }
+
+}  // namespace cpl
 
 /**********************************************************************
  *                       CPLSPrintf()
@@ -1897,11 +1880,11 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
  * Parse NAME=VALUE string into name and value components.
  *
  * Note that if ppszKey is non-NULL, the key (or name) portion will be
- * allocated using CPLMalloc(), and returned in that pointer.  It is the
- * applications responsibility to free this string, but the application should
+ * allocated using CPLMalloc() and returned in that pointer.  It is the
+ * application's responsibility to free this string, but the application should
  * not modify or free the returned value portion.
  *
- * This function also support "NAME:VALUE" strings and will strip white
+ * This function also supports "NAME:VALUE" strings and will strip white
  * space from around the delimiter when forming name and value strings.
  *
  * Eventually CSLFetchNameValue() and friends may be modified to use
@@ -1911,7 +1894,7 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
  * @param ppszKey optional pointer though which to return the name
  * portion.
  *
- * @return the value portion (pointing into original string).
+ * @return the value portion (pointing into the original string).
  */
 
 const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey)
@@ -1943,6 +1926,40 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey)
 
     return nullptr;
 }
+
+namespace cpl
+{
+std::pair<std::string_view, std::string_view>
+parse_name_value(std::string_view svNameValue)
+{
+    for (size_t i = 0; i < svNameValue.size(); ++i)
+    {
+        if (svNameValue[i] == '=' || svNameValue[i] == ':')
+        {
+            auto parsed = std::make_pair(trim(svNameValue.substr(0, i)),
+                                         trim(svNameValue.substr(i + 1)));
+
+            if (!parsed.first.empty())
+            {
+                return parsed;
+            }
+            else
+            {
+                return std::make_pair(std::string_view(), std::string_view());
+            }
+        }
+    }
+
+    return std::make_pair(std::string_view(), std::string_view());
+}
+
+std::pair<std::string_view, std::string_view>
+parse_name_value(const char *pszNameValue)
+{
+    return parse_name_value(std::string_view(pszNameValue));
+}
+
+}  // namespace cpl
 
 /**********************************************************************
  *                       CPLParseNameValueSep()
@@ -3254,3 +3271,205 @@ std::string CPLRemoveSQLComments(const std::string &osInput)
     }
     return osSQL;
 }
+
+namespace cpl
+{
+
+static bool CaseInsensitiveCompare(unsigned char c1, unsigned char c2)
+{
+    return toupper(c1) == toupper(c2);
+}
+
+/** Check whether the start of one string is equivalent to another string,
+ *  considering case.
+ *
+ * @param str string to test
+ * @param prefix expected prefix
+ * @return true if the string starts with the prefix
+ *
+ * @since GDAL 3.11
+ */
+bool starts_with(std::string_view str, std::string_view prefix)
+{
+    return str.size() >= prefix.size() &&
+           str.compare(0, prefix.size(), prefix) == 0;
+}
+
+/** Check whether the start of one string is equivalent to another string,
+ *  not considering case.
+ *
+ * @param str string to test
+ * @param prefix expected prefix
+ * @return true if the string starts with the prefix
+ *
+ * @since GDAL 3.14
+ */
+bool starts_with_ci(std::string_view str, std::string_view prefix)
+{
+    return str.size() >= prefix.size() &&
+           std::search(str.begin(), str.end(), prefix.begin(), prefix.end(),
+                       CaseInsensitiveCompare) != str.end();
+}
+
+/** Check whether the end of one string is equivalent to another string,
+ *  considering case.
+ *
+ * @param str string to test
+ * @param suffix expected suffix
+ * @return true if the string ends with the suffix
+ *
+ * @since GDAL 3.11
+ */
+bool ends_with(std::string_view str, std::string_view suffix)
+{
+    return str.size() >= suffix.size() &&
+           (suffix.empty() || str.compare(str.size() - suffix.size(),
+                                          suffix.size(), suffix) == 0);
+}
+
+/** Check whether the end of one string is equivalent to another string,
+ *  not considering case.
+ *
+ * @param str string to test
+ * @param suffix expected suffix
+ * @return true if the string ends with the suffix
+ *
+ * @since GDAL 3.14
+ */
+bool ends_with_ci(std::string_view str, std::string_view suffix)
+{
+    return str.size() >= suffix.size() &&
+           (suffix.empty() ||
+            std::search(str.end() - suffix.size(), str.end(), suffix.begin(),
+                        suffix.end(), CaseInsensitiveCompare) != str.end());
+}
+
+/** Check whether two strings are equal, considering case.
+ *
+ * @param str1 first string to test
+ * @param str2 second string to test
+ * @return true if the strings are considered equal
+ *
+ * @since GDAL 3.14
+ */
+bool equals(std::string_view str1, std::string_view str2)
+{
+    return str1 == str2;
+}
+
+/** Check whether two strings are equal, not considering case.
+ *
+ * @param str1 first string to test
+ * @param str2 second string to test
+ * @return true if the strings are considered equal
+ *
+ * @since GDAL 3.14
+ */
+bool equals_ci(std::string_view str1, std::string_view str2)
+{
+    return str1.size() == str2.size() &&
+           std::equal(str1.begin(), str1.end(), str2.begin(),
+                      CaseInsensitiveCompare);
+}
+
+/** Remove leading and trailing whitespace from a string.
+ *  The returned string view will be a reference into the input.
+ *
+ * @param str string to trim
+ * @return trimmed string
+ *
+ * @since GDAL 3.14
+ */
+std::string_view trim(std::string_view str)
+{
+    if (str.empty())
+    {
+        return str;
+    }
+
+    size_t start = 0;
+    while (start < str.size() &&
+           isspace(static_cast<unsigned char>(str[start])))
+    {
+        start++;
+    }
+
+    if (start == str.size())
+    {
+        return str.substr(start, 0);
+    }
+
+    size_t stop = str.size();
+    while (stop > start && isspace(static_cast<unsigned char>(str[stop - 1])))
+    {
+        stop--;
+    }
+
+    return str.substr(start, stop - start);
+}
+
+std::string_view trim(const char *pszStr)
+{
+    return trim(std::string_view(pszStr));
+}
+
+/** Remove leading whitespace from a string.
+ *  The returned string view will be a reference into the input.
+ *
+ * @param str string to trim
+ * @return trimmed string
+ *
+ * @since GDAL 3.14
+ */
+std::string_view ltrim(std::string_view str)
+{
+    if (str.empty())
+    {
+        return str;
+    }
+
+    size_t start = 0;
+    while (start < str.size() &&
+           isspace(static_cast<unsigned char>(str[start])))
+    {
+        start++;
+    }
+
+    return str.substr(start);
+}
+
+std::string_view ltrim(const char *pszStr)
+{
+    return ltrim(std::string_view(pszStr));
+}
+
+/** Remove trailing whitespace from a string.
+ *  The returned string view will be a reference into the input.
+ *
+ * @param str string to trim
+ * @return trimmed string
+ *
+ * @since GDAL 3.14
+ */
+std::string_view rtrim(std::string_view str)
+{
+    if (str.empty())
+    {
+        return str;
+    }
+
+    size_t stop = str.size();
+    while (stop > 0 && isspace(static_cast<unsigned char>(str[stop - 1])))
+    {
+        stop--;
+    }
+
+    return str.substr(0, stop);
+}
+
+std::string_view rtrim(const char *pszStr)
+{
+    return rtrim(std::string_view(pszStr));
+}
+
+}  // namespace cpl

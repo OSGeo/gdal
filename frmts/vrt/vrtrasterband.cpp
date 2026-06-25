@@ -297,11 +297,21 @@ VRTParseColorTable(const CPLXMLNode *psColorTable)
             continue;
         }
 
-        const GDALColorEntry sCEntry = {
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c1", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c2", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c3", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c4", "255")))};
+        auto c1 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c1", "0"));
+        auto c2 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c2", "0"));
+        auto c3 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c3", "0"));
+        auto c4 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c4", "0"));
+
+        if (!c1.has_value() || !c2.has_value() || !c3.has_value() ||
+            !c4.has_value())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid VRT color table entry");
+            return nullptr;
+        }
+
+        const GDALColorEntry sCEntry = {c1.value(), c2.value(), c3.value(),
+                                        c4.value()};
 
         poColorTable->SetColorEntry(iEntry++, &sCEntry);
     }
@@ -436,6 +446,8 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         auto poColorTable = VRTParseColorTable(psColorTable);
         if (poColorTable)
             SetColorTable(poColorTable.get());
+        else
+            return CE_Failure;
     }
 
     /* -------------------------------------------------------------------- */

@@ -49,12 +49,14 @@
 #include <atomic>
 #include <cctype>
 #include <cerrno>
+#include <charconv>
 #include <climits>
 #include <clocale>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <mutex>
 #include <set>
 
@@ -4107,5 +4109,142 @@ int CPLGetRemainingFileDescriptorCount()
     return -1;
 #endif
 }
+
+namespace cpl
+{
+
+/** Attempt to parse a number of the designated type from a string. The string
+ *  must contain no characters other than a single number and surrounding
+ *  whitespace, and the parsed number must fit into the designated type.
+ *  If these conditions are not met, std::nullopt will be returned.
+ *
+ * @param str the string to parse
+ * @return a std::optional<T> containing the parsed value, or std::nullopt
+ *         in case of failure.
+ */
+template <typename T>
+std::optional<T> CPL_DLL strict_parse(std::string_view str)
+{
+    str = trim(str);
+
+    T result;
+    const auto begin = str.data();
+    const auto end = str.data() + str.size();
+
+    auto [ptr, ec] = std::from_chars(begin, end, result);
+
+    if (ec != std::errc())
+        return std::nullopt;
+
+    if (ptr != end)
+    {
+        // For integer types, allow decimal and trailing zeros
+        if constexpr (std::is_integral_v<T>)
+        {
+            constexpr char DIGIT_ZERO = '0';
+
+            if (*ptr++ == '.')
+            {
+                while (ptr != end)
+                {
+                    if (*ptr++ != DIGIT_ZERO)
+                    {
+                        return std::nullopt;
+                    }
+                }
+            }
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    return result;
+}
+
+template std::optional<std::int8_t>
+    CPL_DLL strict_parse<std::int8_t>(std::string_view str);
+template std::optional<std::uint8_t>
+    CPL_DLL strict_parse<std::uint8_t>(std::string_view str);
+template std::optional<std::int16_t>
+    CPL_DLL strict_parse<std::int16_t>(std::string_view str);
+template std::optional<std::uint16_t>
+    CPL_DLL strict_parse<std::uint16_t>(std::string_view str);
+template std::optional<std::int32_t>
+    CPL_DLL strict_parse<std::int32_t>(std::string_view str);
+template std::optional<std::uint32_t>
+    CPL_DLL strict_parse<std::uint32_t>(std::string_view str);
+template std::optional<std::int64_t>
+    CPL_DLL strict_parse<std::int64_t>(std::string_view str);
+template std::optional<std::uint64_t>
+    CPL_DLL strict_parse<std::uint64_t>(std::string_view str);
+
+template <>
+std::optional<double> CPL_DLL strict_parse<double>(std::string_view str)
+{
+    str = trim(str);
+
+    if (str.empty())
+    {
+        return std::nullopt;
+    }
+
+    char *end = nullptr;
+    double d = CPLStrtod(str.data(), &end);
+
+    auto i = static_cast<decltype(str.size())>(end - str.data());
+    while (i < str.size() && std::isspace(str[i]))
+    {
+        i++;
+    }
+    if (i < str.size())
+    {
+        return std::nullopt;
+    }
+
+    return d;
+}
+
+template <>
+std::optional<float> CPL_DLL strict_parse<float>(std::string_view str)
+{
+    auto d = strict_parse<double>(str);
+    if (!d)
+    {
+        return std::nullopt;
+    }
+    if (d.value() > static_cast<double>(std::numeric_limits<float>::max()) ||
+        d.value() < static_cast<double>(std::numeric_limits<float>::lowest()))
+    {
+        return std::nullopt;
+    }
+    if (std::abs(d.value()) <
+        static_cast<double>(std::numeric_limits<float>::min()))
+    {
+        return std::nullopt;
+    }
+    return static_cast<float>(d.value());
+}
+
+template <> std::optional<bool> CPL_DLL strict_parse<bool>(std::string_view str)
+{
+    str = trim(str);
+
+    if (str == "YES" || str == "ON" || str == "TRUE" || str == "1")
+        return true;
+
+    if (str == "NO" || str == "OFF" || str == "FALSE" || str == "0")
+        return false;
+
+    if (str == "yes" || str == "on" || str == "true")
+        return true;
+
+    if (str == "no" || str == "off" || str == "false")
+        return false;
+
+    return std::nullopt;
+}
+}  // namespace cpl
 
 #endif

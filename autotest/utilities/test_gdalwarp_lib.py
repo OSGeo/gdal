@@ -4927,3 +4927,33 @@ def test_gdalwarp_lib_detect_border_geoloc_array(tmp_vsimem):
     assert out_ds.GetGeoTransform() == pytest.approx(
         (-7.071067810058594, 0.1414, 0.0, 14.14213752746582, 0.0, -0.1414)
     )
+
+
+###############################################################################
+# Test parameter parsing error cases
+
+
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_invalid_source_extra(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "SOURCE_EXTRA must be a positive integer"
+    ):
+        # code path does not allow raising an exception
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            warpOptions={"SOURCE_EXTRA": "5.1"},
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_invalid_reset_dest_pixels(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Invalid value of RESET_DEST_PIXELS"):
+        # code path does not allow raising an exception
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            warpOptions={"RESET_DEST_PIXELS": "POSSIBLY"},
+        )

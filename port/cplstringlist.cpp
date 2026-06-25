@@ -471,6 +471,32 @@ CPLStringList &CPLStringList::AddString(const std::string &newString)
 }
 
 /************************************************************************/
+/*                             AddString()                              */
+/************************************************************************/
+/**
+ * Add a string to the list.
+ *
+ * A copy of the passed in string_view is made and inserted in the list.
+ *
+ * @param newString the string to add to the list.
+ * @return a reference to the CPLStringList on which it was invoked.
+ */
+
+CPLStringList &CPLStringList::AddString(std::string_view newString)
+{
+    char *pszDupString =
+        static_cast<char *>(VSI_MALLOC_VERBOSE(newString.size() + 1));
+    if (pszDupString == nullptr)
+    {
+        return *this;
+    }
+    std::memcpy(pszDupString, newString.data(), newString.size());
+    pszDupString[newString.size()] = '\0';
+
+    return AddStringDirectly(pszDupString);
+}
+
+/************************************************************************/
 /*                             push_back()                              */
 /************************************************************************/
 

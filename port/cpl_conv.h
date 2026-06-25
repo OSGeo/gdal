@@ -20,7 +20,14 @@
 #include "cpl_error.h"
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#include <charconv>
 #include <cstdint>
+#include <limits>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <optional>
+#define HAVE_STRING_VIEW
+#include <string_view>
+#endif
 #endif
 
 /**
@@ -116,6 +123,18 @@ double CPL_DLL CPLStrtodM(const char *, char **);
 double CPL_DLL CPLStrtodDelim(const char *, char **, char);
 float CPL_DLL CPLStrtof(const char *, char **);
 float CPL_DLL CPLStrtofDelim(const char *, char **, char);
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    namespace cpl
+    {
+#if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
+    double CPL_DLL strtod_delim(std::string_view, char **, char);
+#endif
+    }  // namespace cpl
+}
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Convert number to string.  This function is locale agnostic     */
@@ -250,7 +269,7 @@ extern "C++"
         const char *pszExtraReservedCharacters = nullptr)
         CPL_WARN_UNUSED_RESULT;
 
-#if defined(GDAL_COMPILATION) || __cplusplus >= 201703L
+#ifdef HAVE_STRING_VIEW
     std::string
         CPL_DLL CPLLexicallyNormalize(std::string_view svPath, char sep1,
                                       char sep2 = 0) CPL_WARN_UNUSED_RESULT;
@@ -520,8 +539,17 @@ extern "C++"
         return a / b + (((a % b) == 0) ? 0 : 1);
     }
 
+#ifdef HAVE_STRING_VIEW
+    template <typename T>
+    std::optional<T> CPL_DLL strict_parse(std::string_view str);
+#endif
+
     }  // namespace cpl
 }  // extern "C++"
+
+#ifdef HAVE_STRING_VIEW
+#undef HAVE_STRING_VIEW
+#endif
 
 #endif /* def __cplusplus */
 
