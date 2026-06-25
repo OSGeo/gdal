@@ -257,7 +257,28 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             break;
         case TIFFTAG_BITSPERSAMPLE:
             td->td_bitspersample = (uint16_t)va_arg(ap, uint16_vap);
-            _TIFFSetDefaultPostDecode(tif);
+            /*
+             * If the data require post-decoding processing to byte-swap
+             * samples, set it up here.  Note that since tags are required
+             * to be ordered, compression code can override this behavior
+             * in the setup method if it wants to roll the post decoding
+             * work in with its normal work.
+             */
+            if (tif->tif_flags & TIFF_SWAB)
+            {
+                if (td->td_bitspersample == 8)
+                    tif->tif_postdecode = _TIFFNoPostDecode;
+                else if (td->td_bitspersample == 16)
+                    tif->tif_postdecode = _TIFFSwab16BitData;
+                else if (td->td_bitspersample == 24)
+                    tif->tif_postdecode = _TIFFSwab24BitData;
+                else if (td->td_bitspersample == 32)
+                    tif->tif_postdecode = _TIFFSwab32BitData;
+                else if (td->td_bitspersample == 64)
+                    tif->tif_postdecode = _TIFFSwab64BitData;
+                else if (td->td_bitspersample == 128) /* two 64's */
+                    tif->tif_postdecode = _TIFFSwab64BitData;
+            }
             break;
         case TIFFTAG_COMPRESSION:
             v = (uint16_t)va_arg(ap, uint16_vap);

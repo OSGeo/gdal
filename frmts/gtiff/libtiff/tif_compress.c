@@ -139,36 +139,6 @@ static int _TIFFtrue(TIFF *tif)
 }
 static void _TIFFvoid(TIFF *tif) { (void)tif; }
 
-void _TIFFSetDefaultPostDecode(TIFF *tif)
-{
-    tif->tif_postdecode = _TIFFNoPostDecode;
-    /*
-     * If the data require post-decoding processing to byte-swap
-     * samples, set it up here.  Note that since tags are required
-     * to be ordered, compression code can override this behavior
-     * in the setup method if it wants to roll the post decoding
-     * work in with its normal work.
-     */
-    if (tif->tif_flags & TIFF_SWAB)
-    {
-        TIFFDirectory *td = &tif->tif_dir;
-        if (td->td_bitspersample == 16)
-            tif->tif_postdecode = _TIFFSwab16BitData;
-        else if (td->td_bitspersample == 24)
-            tif->tif_postdecode = _TIFFSwab24BitData;
-        else if (td->td_bitspersample == 32)
-            tif->tif_postdecode = _TIFFSwab32BitData;
-        else if (td->td_bitspersample == 64)
-            tif->tif_postdecode = _TIFFSwab64BitData;
-        else if (td->td_bitspersample == 128)
-        {
-            // Used for Complex 64-bit floating point.
-            // The real and imaginary parts are byte-swapped separately.
-            tif->tif_postdecode = _TIFFSwab64BitData;
-        }
-    }
-}
-
 static uint64_t _TIFFDefaultGetMaxCompressionRatio(TIFF *tif)
 {
     (void)tif;
@@ -187,7 +157,7 @@ void _TIFFSetDefaultCompressionState(TIFF *tif)
     tif->tif_decodestatus = TRUE;
     tif->tif_setupdecode = _TIFFtrue;
     tif->tif_predecode = _TIFFNoPreCode;
-    _TIFFSetDefaultPostDecode(tif);
+    tif->tif_postdecode = _TIFFNoPostDecode;
     tif->tif_decoderow = _TIFFNoRowDecode;
     tif->tif_decodestrip = _TIFFNoStripDecode;
     tif->tif_decodetile = _TIFFNoTileDecode;
