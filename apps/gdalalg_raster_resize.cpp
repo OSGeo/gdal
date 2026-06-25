@@ -39,6 +39,7 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
         .SetMetaVar("<xres>,<yres>")
         .SetMutualExclusionGroup("resolution-size");
 
+    // The same logic is applied in gdalalg_raster_create.cpp
     AddArg("size", 0,
            _("Target size in pixels (or percentage if using '%' suffix)"),
            &m_size)

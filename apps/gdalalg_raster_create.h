@@ -46,6 +46,7 @@ class GDALRasterCreateAlgorithm : public GDALRasterPipelineStepAlgorithm
 
     std::vector<int> m_size{};
     std::vector<std::string> m_size_str{};
+    std::vector<std::string> m_resolution_str{};
     std::vector<double> m_resolution{};
     int m_bandCount = 1;
     std::string m_type = "Byte";

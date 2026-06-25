@@ -740,7 +740,25 @@ def test_gdalalg_raster_create_resolution(tmp_vsimem, res_spec, expected_size):
         assert (ds.RasterXSize, ds.RasterYSize) == expected_size
 
 
-def test_gdalalg_raster_create_resolution_error(tmp_vsimem):
+@pytest.mark.parametrize(
+    "res_spec,expected_error",
+    [
+        ([0.00000000001, 0.00000000001], "create: Computed size is too large"),
+        ([0.00000000001, 1], "create: Computed size is too large"),
+        ([1, 0.00000000001], "create: Computed size is too large"),
+        (
+            ["50%", "50%"],
+            "create: Cannot use percentage resolution without input dataset",
+        ),
+        (
+            ["50%", "50%"],
+            "create: Cannot use percentage resolution without input dataset",
+        ),
+        ([-1, 1], "create: Invalid resolution value: -1"),
+        ([1, -1], "create: Invalid resolution value: -1"),
+    ],
+)
+def test_gdalalg_raster_create_resolution_error(tmp_vsimem, res_spec, expected_error):
 
     alg = get_alg()
     alg["output"] = tmp_vsimem / "out.tif"
@@ -748,9 +766,8 @@ def test_gdalalg_raster_create_resolution_error(tmp_vsimem):
     alg["bbox"] = [-1, -1, 1, 2]
     alg["burn"] = [1]
     alg["crs"] = "EPSG:4326"
-    # resolution too small
-    alg["resolution"] = [0.00000000001, 0.00000000001]
-    with pytest.raises(Exception, match="create: Computed size is too large"):
+    with pytest.raises(Exception, match=expected_error):
+        alg["resolution"] = res_spec
         alg.Run()
 
 
@@ -767,3 +784,34 @@ def test_gdalalg_raster_create_resolution_error_no_bbox(tmp_vsimem):
         match="create: Cannot use resolution without 'bbox' or 'like' dataset",
     ):
         alg.Run()
+
+
+@pytest.mark.parametrize(
+    "res_spec,expected_size",
+    [
+        (["100%", "100%"], (2, 4)),
+        (["100%", "50%"], (2, 8)),
+        (["50%", "100%"], (4, 4)),
+        (["50%", "50%"], (4, 8)),
+        (["200%", "200%"], (1, 2)),
+        (["200%", "0"], (1, 2)),
+        (["0", "200%"], (1, 2)),
+    ],
+)
+def test_gdalalg_raster_create_like_resolution_percentage(
+    tmp_vsimem, res_spec, expected_size
+):
+
+    # ref dataset is 2x4
+    ref_ds = get_ref_ds()
+    assert (ref_ds.RasterXSize, ref_ds.RasterYSize) == (2, 4)
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["like"] = ref_ds
+    alg["overwrite"] = True
+    alg["resolution"] = [str(res_spec[0]), str(res_spec[1])]
+    alg["burn"] = [1, 2]
+    assert alg.Run()
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size

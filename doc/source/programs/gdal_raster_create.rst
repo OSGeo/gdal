@@ -121,13 +121,17 @@ Program-Specific Options
     Values can be expressed as percentages of the size of the :option:`--like` dataset,
     if specified.
 
-.. option:: --resolution <xres>,<yres>
+.. option:: --resolution <xres[%]>,<yres[%]>
 
     .. versionadded:: 3.14
-    
+
     Set the pixel resolution of the output file in CRS units. First value is
     horizontal resolution. Second one is vertical resolution. If ``xres`` or ``yres`` is set to 0,
-    the other dimension will be guessed from the size implied by the bounding box.
+    the given non-zero resolution will be applied to both dimensions.
+    Values can be expressed as percentages of the resolution of the :option:`--like` dataset,
+    if specified. Note that when expressing resolution as a percentage, the value is multiplied
+    by the pixel size, so that a value of 200% will double the pixel size, and thus halve the
+    output size.
 
 Standard Options
 ----------------
@@ -188,15 +192,15 @@ Examples
       gdal raster create --like prototype.tif --size=100,0 --crs=EPSG:3857 output.tif
 
 .. example::
-   :title: Initialize a blank GeoTIFF file from a bounding box and resolution
+   :title: Initialize a blank GeoTIFF file from a bounding box and 0.01 resolution on both axes (notice the 0 value for ``yres``)
 
    .. code-block:: bash
 
-      gdal raster create --bbox=2,49,3,50 --resolution=0.01,0.01 output.tif
+      gdal raster create --bbox=2,49,3,50 --resolution=0.01,0 output.tif
 
 .. example::
-   :title: Initialize a blank GeoTIFF file from an input one with a different resolution
+   :title: Initialize a blank GeoTIFF file from an input one with a resolution which is half of the input one
 
    .. code-block:: bash
 
-      gdal raster create --like prototype.tif --resolution=0.01,0.01 output.tif
+      gdal raster create --like prototype.tif --resolution=50%,50% output.tif
