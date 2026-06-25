@@ -693,10 +693,11 @@ int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData,
         for (i = 0; i < psDInfo->nYSize * 2 + 8; i++)
             nCheckSum += pabyRecord[i];
 
-        fileCheckSum = (pabyRecord[8 + psDInfo->nYSize * 2 + 0] << 24) |
-                       (pabyRecord[8 + psDInfo->nYSize * 2 + 1] << 16) |
-                       (pabyRecord[8 + psDInfo->nYSize * 2 + 2] << 8) |
-                       pabyRecord[8 + psDInfo->nYSize * 2 + 3];
+        fileCheckSum =
+            ((unsigned)pabyRecord[8 + psDInfo->nYSize * 2 + 0] << 24) |
+            (pabyRecord[8 + psDInfo->nYSize * 2 + 1] << 16) |
+            (pabyRecord[8 + psDInfo->nYSize * 2 + 2] << 8) |
+            pabyRecord[8 + psDInfo->nYSize * 2 + 3];
 
         if (fileCheckSum > 0xff * (8 + (unsigned int)psDInfo->nYSize * 2))
         {
