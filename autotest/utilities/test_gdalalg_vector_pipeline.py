@@ -1140,3 +1140,25 @@ def test_gdalalg_vector_pipeline_read_execute_sql(tmp_vsimem):
     ds = ogr.Open(f"{tmp_vsimem}/out.shp")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("WFS")
+@pytest.mark.require_driver("VRT")
+def test_gdalalg_vector_pipeline_wfs_invalid_vrt(tmp_path):
+
+    out_filename = str(tmp_path / "out.csv")
+    vrt_filename = str(tmp_path / "out.vrt")
+    with open(vrt_filename, "wt") as f:
+        f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="layer">
+     <SrcDataSource>WFS:http://this-is-an-unreachable.url</SrcDataSource>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    with pytest.raises(
+        Exception, match="Error returned by server : Could not resolve host"
+    ):
+        gdal.alg.vector.pipeline(
+            f"read {vrt_filename} ! edit ! write {out_filename} --overwrite"
+        )
