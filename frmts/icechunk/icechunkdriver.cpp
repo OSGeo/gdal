@@ -238,6 +238,7 @@ class ListRefsAlgorithm /* non-final */ : public GDALAlgorithm
                       const std::string &osHelpURL)
         : GDALAlgorithm(osName, osDescription, osHelpURL)
     {
+        AddProgressArg(/* hidden = */ true);
         AddInputDatasetArg(&m_dataset, GDAL_OF_MULTIDIM_RASTER);
         AddOutputStringArg(&m_outputString);
     }

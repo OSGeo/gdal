@@ -3123,7 +3123,7 @@ class CPL_DLL GDALAlgorithmRegistry
                             const char *helpMessage = nullptr);
 
     /** Add \--quiet (and hidden \--progress) argument. */
-    void AddProgressArg();
+    void AddProgressArg(bool hidden = false);
 
     /** Register an action that is executed by the ValidateArguments()
      * method. If the provided function returns false, validation fails.

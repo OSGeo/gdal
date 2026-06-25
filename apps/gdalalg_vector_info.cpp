@@ -33,6 +33,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                                           .SetInputDatasetMaxCount(1)
                                           .SetAddDefaultArguments(false))
 {
+    if (standaloneStep)
+        AddProgressArg(/* hidden = */ true);
+
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(!standaloneStep);
     AddInputFormatsArg(&m_inputFormats)

@@ -42,6 +42,7 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
 
     if (standaloneStep)
     {
+        AddProgressArg(/* hidden = */ true);
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }

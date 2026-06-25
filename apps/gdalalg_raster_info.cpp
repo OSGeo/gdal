@@ -37,6 +37,7 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
 {
     if (standaloneStep)
     {
+        AddProgressArg(/* hidden = */ true);
         AddRasterInputArgs(openForMixedRasterVector,
                            /* hiddenForCLI = */ false);
     }

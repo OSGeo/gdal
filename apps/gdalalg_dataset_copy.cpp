@@ -30,6 +30,8 @@ GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
     const std::string &helpURL)
     : GDALAlgorithm(name, description, helpURL)
 {
+    AddProgressArg(/* hidden = */ true);
+
     {
         auto &arg = AddArg("source", 0, _("Source dataset name"), &m_source)
                         .SetPositional()

@@ -1407,6 +1407,7 @@ class RPFTOCAlgorithmCreate final : public GDALAlgorithm
 RPFTOCAlgorithmCreate::RPFTOCAlgorithmCreate()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    AddProgressArg(/* hidden = */ true);
     AddArg(GDAL_ARG_NAME_INPUT, 'i', _("Input directory"), &m_input)
         .SetRequired()
         .SetPositional();
