@@ -1995,7 +1995,12 @@ def _read_in_thread(f, q):
 
 
 def runexternal_out_and_err(
-    cmd, check_memleak=True, encoding="ascii", stdin=None, close_stdin=False
+    cmd,
+    check_memleak=True,
+    encoding="ascii",
+    stdin=None,
+    close_stdin=False,
+    append_returncode_to_stderr=False,
 ):
     # pylint: disable=unused-argument
     if sys.platform == "win32":
@@ -2033,6 +2038,9 @@ def runexternal_out_and_err(
     waitcode = p.wait()
     if waitcode != 0:
         ret_stderr = f"{ret_stderr}\nERROR ret code = {waitcode}"
+
+    if append_returncode_to_stderr:
+        ret_stderr = f"{ret_stderr}\nReturn code = {p.returncode}"
 
     return (ret_stdout, ret_stderr)
 

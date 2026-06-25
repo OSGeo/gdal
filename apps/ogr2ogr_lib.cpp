@@ -4519,7 +4519,17 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     /* -------------------------------------------------------------------- */
     /*      Get other info.                                                 */
     /* -------------------------------------------------------------------- */
+
+    // Capture errors from VRT layers such as WFS
+    // (see issue GH # https://github.com/OSGeo/gdal/issues/14826)
+    const auto errorCount{CPLGetErrorCounter()};
     const OGRFeatureDefn *poSrcFDefn = poSrcLayer->GetLayerDefn();
+    if (CPLGetErrorCounter() != errorCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error retrieving the source layer definition");
+        return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Find requested geometry fields.                                 */

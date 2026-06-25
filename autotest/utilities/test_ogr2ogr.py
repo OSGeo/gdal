@@ -2312,3 +2312,30 @@ def test_ogr2ogr_parquet_dataset_limit(ogr2ogr_path, tmp_path):
 
     ds = ogr.Open(out_filename)
     assert ds.GetLayer(0).GetFeatureCount() == 1
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/14826
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("WFS")
+@pytest.mark.require_driver("VRT")
+def test_ogr2ogr_invalid_wfs_vrt(ogr2ogr_path, tmp_path):
+
+    out_filename = str(tmp_path / "out.csv")
+    vrt_filename = str(tmp_path / "out.vrt")
+    with open(vrt_filename, "wt") as f:
+        f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="layer">
+     <SrcDataSource>WFS:http://this-is-an-unreachable.url</SrcDataSource>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        ogr2ogr_path + f" {out_filename} {vrt_filename}",
+        append_returncode_to_stderr=True,
+    )
+    assert "Return code = 0" not in err
+    assert "Could not resolve host:" in err
+    assert "Error retrieving the source layer definition" in err
