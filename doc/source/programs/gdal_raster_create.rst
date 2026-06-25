@@ -123,8 +123,10 @@ Program-Specific Options
 
 .. option:: --resolution <xres>,<yres>
 
+    .. versionadded:: 3.14
+    
     Set the pixel resolution of the output file in CRS units. First value is
-    width. Second one is height. If ``xres`` or ``yres`` is set to 0,
+    horizontal resolution. Second one is vertical resolution. If ``xres`` or ``yres`` is set to 0,
     the other dimension will be guessed from the size implied by the bounding box.
 
 Standard Options
@@ -183,7 +185,7 @@ Examples
 
    .. code-block:: bash
 
-      gdal raster create --like prototype.tif --size=100,100 --crs=EPSG:3857 output.tif
+      gdal raster create --like prototype.tif --size=100,0 --crs=EPSG:3857 output.tif
 
 .. example::
    :title: Initialize a blank GeoTIFF file from a bounding box and resolution
