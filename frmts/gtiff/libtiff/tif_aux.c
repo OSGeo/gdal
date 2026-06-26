@@ -56,6 +56,21 @@ uint64_t _TIFFMultiply64(TIFF *tif, uint64_t first, uint64_t second,
     return first * second;
 }
 
+uint64_t _TIFFAdd64(TIFF *tif, uint64_t first, uint64_t second,
+                    const char *where)
+{
+    if (first > UINT64_MAX - second)
+    {
+        if (tif != NULL && where != NULL)
+        {
+            TIFFErrorExtR(tif, where, "Integer overflow in %s", where);
+        }
+        return 0;
+    }
+
+    return first + second;
+}
+
 tmsize_t _TIFFMultiplySSize(TIFF *tif, tmsize_t first, tmsize_t second,
                             const char *where)
 {
@@ -81,6 +96,30 @@ tmsize_t _TIFFMultiplySSize(TIFF *tif, tmsize_t first, tmsize_t second,
     return first * second;
 }
 
+tmsize_t _TIFFAddSSize(TIFF *tif, tmsize_t first, tmsize_t second,
+                       const char *where)
+{
+    if (first < 0 || second < 0)
+    {
+        if (tif != NULL && where != NULL)
+        {
+            TIFFErrorExtR(tif, where,
+                          "Invalid argument to _TIFFAddSSize() in %s", where);
+        }
+        return 0;
+    }
+
+    if (first > TIFF_TMSIZE_T_MAX - second)
+    {
+        if (tif != NULL && where != NULL)
+        {
+            TIFFErrorExtR(tif, where, "Integer overflow in %s", where);
+        }
+        return 0;
+    }
+    return first + second;
+}
+
 tmsize_t _TIFFCastUInt64ToSSize(TIFF *tif, uint64_t val, const char *module)
 {
     if (val > (uint64_t)TIFF_TMSIZE_T_MAX)
@@ -92,6 +131,55 @@ tmsize_t _TIFFCastUInt64ToSSize(TIFF *tif, uint64_t val, const char *module)
         return 0;
     }
     return (tmsize_t)val;
+}
+
+uint32_t _TIFFCastUInt64ToUInt32(TIFF *tif, uint64_t val, const char *module)
+{
+    if (val > UINT32_MAX)
+    {
+        if (tif != NULL && module != NULL)
+        {
+            TIFFErrorExtR(tif, module, "Integer overflow");
+        }
+        return 0;
+    }
+    return (uint32_t)val;
+}
+
+tmsize_t _TIFFComputeRowOffset(TIFF *tif, tmsize_t rowstride, uint32_t row,
+                               const char *where)
+{
+    if (row == 0)
+        return 0;
+    return _TIFFMultiplySSize(tif, rowstride, (tmsize_t)row, where);
+}
+
+uint64_t _TIFFComputeBitOffset(TIFF *tif, uint32_t col, uint16_t spp,
+                               uint16_t bps, const char *where)
+{
+    uint64_t samples = _TIFFMultiply64(tif, col, spp, where);
+    if (samples == 0 && col != 0)
+        return 0;
+    return _TIFFMultiply64(tif, samples, bps, where);
+}
+
+/*
+ * Returns 0 on overflow or invalid zero-sized row inputs. Callers that
+ * intentionally allow empty rows should not use this helper directly.
+ */
+uint64_t _TIFFComputeRowSize64(TIFF *tif, uint32_t width, uint16_t spp,
+                               uint16_t bps, const char *where)
+{
+    uint64_t samples = _TIFFMultiply64(tif, width, spp, where);
+    uint64_t bits;
+    if (samples == 0)
+        return 0;
+
+    bits = _TIFFMultiply64(tif, samples, bps, where);
+    if (bits == 0)
+        return 0;
+
+    return TIFFhowmany8_64(bits);
 }
 
 void *_TIFFCheckRealloc(TIFF *tif, void *buffer, tmsize_t nmemb,
@@ -137,7 +225,7 @@ static int TIFFDefaultTransferFunction(TIFF *tif, TIFFDirectory *td)
     if (td->td_bitspersample > 24)
         return 0;
 
-    n = ((tmsize_t)1) << td->td_bitspersample;
+    n = (tmsize_t)(1ULL << td->td_bitspersample);
     nbytes = (tmsize_t)((uint64_t)n * sizeof(uint16_t));
     tf[0] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
     if (tf[0] == NULL)
@@ -199,8 +287,11 @@ static int TIFFDefaultRefBlackWhite(TIFF *tif, TIFFDirectory *td)
         for (i = 0; i < 3; i++)
         {
             td->td_refblackwhite[2 * i + 0] = 0;
-            td->td_refblackwhite[2 * i + 1] =
-                (float)((1UL << td->td_bitspersample) - 1);
+            if (td->td_bitspersample < 64)
+                td->td_refblackwhite[2 * i + 1] =
+                    (float)((1ULL << td->td_bitspersample) - 1ULL);
+            else
+                td->td_refblackwhite[2 * i + 1] = (float)UINT64_MAX;
         }
     }
     return 1;
@@ -258,7 +349,7 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
                  * 65535 even if td_bitspersamle is > 16 */
                 if (td->td_bitspersample <= 16)
                 {
-                    maxsamplevalue = (uint16_t)((1 << td->td_bitspersample) -
+                    maxsamplevalue = (uint16_t)((1U << td->td_bitspersample) -
                                                 1); /* 2**(BitsPerSample) - 1 */
                 }
                 else
@@ -295,8 +386,11 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
         }
         case TIFFTAG_DOTRANGE:
             *va_arg(ap, uint16_t *) = 0;
-            *va_arg(ap, uint16_t *) =
-                (uint16_t)((1 << td->td_bitspersample) - 1);
+            if (td->td_bitspersample <= 16)
+                *va_arg(ap, uint16_t *) =
+                    (uint16_t)((1U << td->td_bitspersample) - 1);
+            else
+                *va_arg(ap, uint16_t *) = 65535;
             return (1);
         case TIFFTAG_INKSET:
             *va_arg(ap, uint16_t *) = INKSET_CMYK;

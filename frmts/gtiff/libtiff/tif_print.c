@@ -561,13 +561,18 @@ void TIFFPrintDirectory(TIFF *tif, FILE *fd, long flags)
         if (flags & TIFFPRINT_COLORMAP)
         {
             fprintf(fd, "\n");
-            uint64_t n = 1ULL << td->td_bitspersample;
-            for (uint64_t l = 0u; l < n; l++)
-                fprintf(fd,
-                        "   %5" PRIu64 ": %5" PRIu16 " %5" PRIu16 " %5" PRIu16
-                        "\n",
-                        l, td->td_colormap[0][l], td->td_colormap[1][l],
-                        td->td_colormap[2][l]);
+            if (td->td_bitspersample >= 64)
+                fprintf(fd, "   (BitsPerSample too large to print safely)\n");
+            else
+            {
+                uint64_t n = 1ULL << td->td_bitspersample;
+                for (uint64_t l = 0u; l < n; l++)
+                    fprintf(fd,
+                            "   %5" PRIu64 ": %5" PRIu16 " %5" PRIu16
+                            " %5" PRIu16 "\n",
+                            l, td->td_colormap[0][l], td->td_colormap[1][l],
+                            td->td_colormap[2][l]);
+            }
         }
         else
             fprintf(fd, "(present)\n");
@@ -591,17 +596,24 @@ void TIFFPrintDirectory(TIFF *tif, FILE *fd, long flags)
         if (flags & TIFFPRINT_CURVES)
         {
             fprintf(fd, "\n");
-            uint64_t n = 1ULL << td->td_bitspersample;
-            for (uint64_t l = 0; l < n; l++)
+            if (td->td_bitspersample >= 64)
+                fprintf(fd, "    (BitsPerSample too large to print safely)\n");
+            else
             {
-                uint16_t i;
-                fprintf(fd, "    %2" PRIu64 ": %5" PRIu16, l,
-                        td->td_transferfunction[0][l]);
-                for (i = 1;
-                     i < td->td_samplesperpixel - td->td_extrasamples && i < 3;
-                     i++)
-                    fprintf(fd, " %5" PRIu16, td->td_transferfunction[i][l]);
-                fputc('\n', fd);
+                uint64_t n = 1ULL << td->td_bitspersample;
+                for (uint64_t l = 0; l < n; l++)
+                {
+                    uint16_t i;
+                    fprintf(fd, "    %2" PRIu64 ": %5" PRIu16, l,
+                            td->td_transferfunction[0][l]);
+                    for (i = 1;
+                         i < td->td_samplesperpixel - td->td_extrasamples &&
+                         i < 3;
+                         i++)
+                        fprintf(fd, " %5" PRIu16,
+                                td->td_transferfunction[i][l]);
+                    fputc('\n', fd);
+                }
             }
         }
         else

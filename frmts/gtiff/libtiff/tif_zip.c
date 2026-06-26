@@ -700,6 +700,13 @@ static void TIFF_zfree(void *opaque, void *ptr)
     _TIFFfreeExt((TIFF *)opaque, ptr);
 }
 
+static uint64_t ZIPGetMaxCompressionRatio(TIFF *tif)
+{
+    (void)tif;
+    /* cf https://zlib.net/zlib_tech.html */
+    return 1032;
+}
+
 int TIFFInitZIP(TIFF *tif, int scheme)
 {
     static const char module[] = "TIFFInitZIP";
@@ -766,6 +773,7 @@ int TIFFInitZIP(TIFF *tif, int scheme)
     tif->tif_encodestrip = ZIPEncode;
     tif->tif_encodetile = ZIPEncode;
     tif->tif_cleanup = ZIPCleanup;
+    tif->tif_getmaxcompressionratio = ZIPGetMaxCompressionRatio;
     /*
      * Setup predictor setup.
      */

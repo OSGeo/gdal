@@ -1241,6 +1241,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(TIFF *tif,
         *pdest = new_dest;
 
         bytes_read = TIFFReadFile(tif, (char *)*pdest + already_read, to_read);
+        if (bytes_read < 0)
+            return TIFFReadDirEntryErrIo;
         already_read += bytes_read;
         if (bytes_read != to_read)
         {
@@ -8021,7 +8023,7 @@ static void ChopUpSingleUncompressedStrip(TIFF *tif)
     /* later ( StripOffsets and StripByteCounts improperly filled) . */
     if (bytecount == 0 && tif->tif_mode != O_RDONLY)
         return;
-    offset = TIFFGetStrileByteCount(tif, 0);
+    offset = TIFFGetStrileOffset(tif, 0);
     assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
     if ((td->td_photometric == PHOTOMETRIC_YCBCR) && (!isUpSampled(tif)))
         rowblock = td->td_ycbcrsubsampling[1];
@@ -8449,14 +8451,16 @@ static uint64_t _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32_t strile,
     if (pbErr)
         *pbErr = 0;
 
-    /* Check that StripOffsets and StripByteCounts tags have the same number
-     * of declared entries. Otherwise we might take the "dirent->tdir_count <=
-     * 4" code path for one of them, and the other code path for the other one,
+    /* Avoid the "dirent->tdir_count <= 4" code path for one of
+     * StripOffsets/StripByteCounts, and the other code path for the other one,
      * which will lead to inconsistencies and potential out-of-bounds reads.
      */
-    if (td->td_stripoffset_entry.tdir_count !=
-        td->td_stripbytecount_entry.tdir_count)
+    if ((td->td_stripoffset_entry.tdir_count <= 4) !=
+        (td->td_stripbytecount_entry.tdir_count <= 4))
     {
+        TIFFErrorExtR(tif, "_TIFFGetStrileOffsetOrByteCountValue",
+                      "Inconsistent directory count between StripOffsets and "
+                      "StripByteCounts");
         if (pbErr)
             *pbErr = 1;
         return 0;

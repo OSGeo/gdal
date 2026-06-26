@@ -584,6 +584,7 @@ extern int TIFFReadRGBAImageOriented(TIFF *, uint32_t, uint32_t, uint32_t *,
                                          tmsize_t cc);
     extern tmsize_t TIFFWriteRawTile(TIFF *tif, uint32_t tile, void *data,
                                      tmsize_t cc);
+    extern uint64_t TIFFGetMaxCompressionRatio(TIFF *tif);
     extern int TIFFDataWidth(
         TIFFDataType); /* table of tag datatype widths within TIFF file. */
     extern void TIFFSetWriteOffset(TIFF *tif, toff_t off);

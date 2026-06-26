@@ -95,6 +95,7 @@ typedef int (*TIFFSeekMethod)(TIFF *, uint32_t);
 typedef void (*TIFFPostMethod)(TIFF *tif, uint8_t *buf, tmsize_t size);
 typedef uint32_t (*TIFFStripMethod)(TIFF *, uint32_t);
 typedef void (*TIFFTileMethod)(TIFF *, uint32_t *, uint32_t *);
+typedef uint64_t (*TIFFGetMaxCompressionRatioMethod)(TIFF *);
 
 struct TIFFOffsetAndDirNumber
 {
@@ -216,7 +217,9 @@ struct tiff
     TIFFVoidMethod tif_cleanup;       /* cleanup state routine */
     TIFFStripMethod tif_defstripsize; /* calculate/constrain strip size */
     TIFFTileMethod tif_deftilesize;   /* calculate/constrain tile size */
-    uint8_t *tif_data;                /* compression scheme private data */
+    /* returns maximum compression ratio for current compression method */
+    TIFFGetMaxCompressionRatioMethod tif_getmaxcompressionratio;
+    uint8_t *tif_data; /* compression scheme private data */
     /* input/output buffering */
     uint8_t *tif_rawdata;       /* raw data buffer */
     tmsize_t tif_rawdatasize;   /* # of bytes in raw data buffer */
@@ -359,7 +362,7 @@ struct TIFFOpenOptions
 */
 #if defined(HAVE_FSEEKO)
 #define fseek(stream, offset, whence) fseeko(stream, offset, whence)
-#define ftell(stream, offset, whence) ftello(stream, offset, whence)
+#define ftell(stream) ftello(stream)
 #endif
 #endif
 #if defined(_WIN32) &&                                                         \
@@ -427,7 +430,6 @@ extern "C"
     extern void _TIFFSwab64BitData(TIFF *tif, uint8_t *buf, tmsize_t cc);
     extern int TIFFFlushData1(TIFF *tif);
     extern int TIFFDefaultDirectory(TIFF *tif);
-    extern void _TIFFSetDefaultPostDecode(TIFF *tif);
     extern void _TIFFSetDefaultCompressionState(TIFF *tif);
     extern int _TIFFRewriteField(TIFF *, uint16_t, TIFFDataType, tmsize_t,
                                  void *);
@@ -464,9 +466,18 @@ extern "C"
 
     extern uint32_t _TIFFMultiply32(TIFF *, uint32_t, uint32_t, const char *);
     extern uint64_t _TIFFMultiply64(TIFF *, uint64_t, uint64_t, const char *);
+    extern uint64_t _TIFFAdd64(TIFF *, uint64_t, uint64_t, const char *);
     extern tmsize_t _TIFFMultiplySSize(TIFF *, tmsize_t, tmsize_t,
                                        const char *);
+    extern tmsize_t _TIFFAddSSize(TIFF *, tmsize_t, tmsize_t, const char *);
     extern tmsize_t _TIFFCastUInt64ToSSize(TIFF *, uint64_t, const char *);
+    extern uint32_t _TIFFCastUInt64ToUInt32(TIFF *, uint64_t, const char *);
+    extern uint64_t _TIFFComputeRowSize64(TIFF *, uint32_t, uint16_t, uint16_t,
+                                          const char *);
+    extern tmsize_t _TIFFComputeRowOffset(TIFF *, tmsize_t rowstride, uint32_t,
+                                          const char *);
+    extern uint64_t _TIFFComputeBitOffset(TIFF *, uint32_t, uint16_t, uint16_t,
+                                          const char *);
     extern void *_TIFFCheckMalloc(TIFF *, tmsize_t, tmsize_t, const char *);
     extern void *_TIFFCheckRealloc(TIFF *, void *, tmsize_t, tmsize_t,
                                    const char *);

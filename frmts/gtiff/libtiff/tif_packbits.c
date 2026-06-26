@@ -317,6 +317,16 @@ static int PackBitsDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     return (1);
 }
 
+static uint64_t PackBitsGetMaxCompressionRatio(TIFF *tif)
+{
+    (void)tif;
+
+    /* See README_for_libtiff_developpers.md for raw data used to estimate
+     * the maximum compression rate. */
+
+    return 64;
+}
+
 int TIFFInitPackBits(TIFF *tif, int scheme)
 {
     (void)scheme;
@@ -330,6 +340,8 @@ int TIFFInitPackBits(TIFF *tif, int scheme)
     tif->tif_encodestrip = PackBitsEncodeChunk;
     tif->tif_encodetile = PackBitsEncodeChunk;
 #endif
+    tif->tif_getmaxcompressionratio = PackBitsGetMaxCompressionRatio;
+
     return (1);
 }
 #endif /* PACKBITS_SUPPORT */

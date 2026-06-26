@@ -127,6 +127,9 @@ static int TIFFReadAndRealloc(TIFF *tif, tmsize_t size, tmsize_t rawdata_offset,
 
         bytes_read = TIFFReadFile(
             tif, tif->tif_rawdata + rawdata_offset + already_read, to_read);
+        if (bytes_read < 0)
+            /* Treat read errors as short reads before updating offsets. */
+            bytes_read = 0;
         already_read += bytes_read;
         if (bytes_read != to_read)
         {
@@ -337,8 +340,16 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
                       td->td_imagelength);
         return (0);
     }
+    if (td->td_rowsperstrip == 0)
+    {
+        TIFFErrorExtR(tif, tif->tif_name,
+                      "Cannot compute strip: RowsPerStrip is zero");
+        return (0);
+    }
     if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
     {
+        uint64_t sample_offset;
+        uint64_t strip64;
         if (sample >= td->td_samplesperpixel)
         {
             TIFFErrorExtR(tif, tif->tif_name,
@@ -346,8 +357,18 @@ static int TIFFSeek(TIFF *tif, uint32_t row, uint16_t sample)
                           sample, td->td_samplesperpixel);
             return (0);
         }
-        strip = (uint32_t)sample * td->td_stripsperimage +
-                row / td->td_rowsperstrip;
+        sample_offset =
+            _TIFFMultiply64(tif, sample, td->td_stripsperimage, "TIFFSeek");
+        if (sample_offset == 0 && sample != 0 && td->td_stripsperimage != 0)
+            return (0);
+        strip64 = _TIFFAdd64(tif, sample_offset, row / td->td_rowsperstrip,
+                             "TIFFSeek");
+        if (strip64 == 0 &&
+            (sample_offset != 0 || (row / td->td_rowsperstrip) != 0))
+            return (0);
+        strip = _TIFFCastUInt64ToUInt32(tif, strip64, "TIFFSeek");
+        if (strip == 0 && strip64 != 0)
+            return (0);
     }
     else
         strip = row / td->td_rowsperstrip;
@@ -618,13 +639,34 @@ tmsize_t _TIFFReadEncodedStripAndAllocBuffer(TIFF *tif, uint32_t strip,
     if (!TIFFFillStrip(tif, strip))
         return ((tmsize_t)(-1));
 
-    *buf = _TIFFmallocExt(tif, bufsizetoalloc);
+    /* Sanity checks to avoid excessive memory allocation */
+    /* Max compression ratio experimentally determined. Might be fragile...
+     * Only apply this heuristics to situations where the memory allocation
+     * would be big, to avoid breaking nominal use cases.
+     */
+    if (bufsizetoalloc > 100 * 1024 * 1024)
+    {
+        const uint64_t maxCompressionRatio = TIFFGetMaxCompressionRatio(tif);
+        if (maxCompressionRatio > 0 &&
+            (uint64_t)tif->tif_rawdatasize <
+                (uint64_t)this_stripsize / maxCompressionRatio)
+        {
+            TIFFErrorExtR(tif, TIFFFileName(tif),
+                          "Likely invalid strip byte count for strip %u. "
+                          "Uncompressed strip size is %" PRIu64 ", "
+                          "compressed one is %" PRIu64,
+                          strip, (uint64_t)this_stripsize,
+                          (uint64_t)tif->tif_rawdatasize);
+            return ((tmsize_t)(-1));
+        }
+    }
+
+    *buf = _TIFFcallocExt(tif, 1, bufsizetoalloc);
     if (*buf == NULL)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "No space for strip buffer");
         return ((tmsize_t)(-1));
     }
-    _TIFFmemset(*buf, 0, bufsizetoalloc);
 
     if ((*tif->tif_decodestrip)(tif, (uint8_t *)*buf, this_stripsize, plane) <=
         0)
@@ -790,21 +832,49 @@ int TIFFFillStrip(TIFF *tif, uint32_t strip)
         }
 
         /* To avoid excessive memory allocations: */
-        /* Byte count should normally not be larger than a number of */
-        /* times the uncompressed size plus some margin */
-        if (bytecount > 1024 * 1024)
+        const tmsize_t stripsize = TIFFStripSize(tif);
+        if (stripsize > 0)
         {
-            /* 10 and 4096 are just values that could be adjusted. */
-            /* Hopefully they are safe enough for all codecs */
-            tmsize_t stripsize = TIFFStripSize(tif);
-            if (stripsize != 0 && (bytecount - 4096) / 10 > (uint64_t)stripsize)
+            if (bytecount > 1024 * 1024 &&
+                (bytecount - 4096) / 10 > (uint64_t)stripsize)
             {
+                /* Byte count should normally not be larger than a number of */
+                /* times the uncompressed size plus some margin */
+                /* 10 and 4096 are just values that could be adjusted. */
+                /* Hopefully they are safe enough for all codecs */
+                /* What happens next will depend on whether only the bytecount
+                 */
+                /* was corrupted to a large value but the strip/tile data is */
+                /* fine. In that situation most codecs should work fine and */
+                /* only used part of the tile/strip data. If the strip/tile */
+                /* data is corrupted too, then codecs will later error out. */
                 uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-                TIFFErrorExtR(tif, module,
-                              "Too large strip byte count %" PRIu64
-                              ", strip %" PRIu32 ". Limiting to %" PRIu64,
-                              bytecount, strip, newbytecount);
+                TIFFWarningExtR(tif, module,
+                                "Too large strip byte count %" PRIu64
+                                ", strip %" PRIu32 ". Limiting to %" PRIu64,
+                                bytecount, strip, newbytecount);
                 bytecount = newbytecount;
+            }
+            else if (stripsize > 100 * 1024 * 1024)
+            {
+                /* Max compression ratio experimentally determined. Might be
+                 * fragile... Only apply this heuristics to situations where the
+                 * memory allocation would be big, to avoid breaking nominal use
+                 * cases.
+                 */
+                const uint64_t maxCompressionRatio =
+                    TIFFGetMaxCompressionRatio(tif);
+                if (maxCompressionRatio > 0 &&
+                    bytecount < (uint64_t)stripsize / maxCompressionRatio)
+                {
+                    TIFFErrorExtR(
+                        tif, module,
+                        "Likely invalid strip byte count for strip %u. "
+                        "Uncompressed strip size is %" PRIu64 ", "
+                        "compressed one is %" PRIu64,
+                        strip, (uint64_t)stripsize, bytecount);
+                    return 0;
+                }
             }
         }
 
@@ -1088,25 +1158,22 @@ tmsize_t _TIFFReadEncodedTileAndAllocBuffer(TIFF *tif, uint32_t tile,
          * Only apply this heuristics to situations where the memory allocation
          * would be big, to avoid breaking nominal use cases.
          */
-        const int maxCompressionRatio =
-            td->td_compression == COMPRESSION_ZSTD ? 33000
-            : td->td_compression == COMPRESSION_JXL
-                ?
-                /* Evaluated on a 8000x8000 tile */
-                25000 * (td->td_planarconfig == PLANARCONFIG_CONTIG
-                             ? td->td_samplesperpixel
-                             : 1)
-                : td->td_compression == COMPRESSION_LZMA ? 7000 : 1000;
-        if (bufsizetoalloc > 100 * 1000 * 1000 &&
-            tif->tif_rawdatasize < tilesize / maxCompressionRatio)
+        if (bufsizetoalloc > 100 * 1024 * 1024)
         {
-            TIFFErrorExtR(tif, TIFFFileName(tif),
-                          "Likely invalid tile byte count for tile %u. "
-                          "Uncompressed tile size is %" PRIu64 ", "
-                          "compressed one is %" PRIu64,
-                          tile, (uint64_t)tilesize,
-                          (uint64_t)tif->tif_rawdatasize);
-            return ((tmsize_t)(-1));
+            const uint64_t maxCompressionRatio =
+                TIFFGetMaxCompressionRatio(tif);
+            if (maxCompressionRatio > 0 &&
+                (uint64_t)tif->tif_rawdatasize <
+                    (uint64_t)tilesize / maxCompressionRatio)
+            {
+                TIFFErrorExtR(tif, TIFFFileName(tif),
+                              "Likely invalid tile byte count for tile %u. "
+                              "Uncompressed tile size is %" PRIu64 ", "
+                              "compressed one is %" PRIu64,
+                              tile, (uint64_t)tilesize,
+                              (uint64_t)tif->tif_rawdatasize);
+                return ((tmsize_t)(-1));
+            }
         }
     }
 
@@ -1246,21 +1313,48 @@ int TIFFFillTile(TIFF *tif, uint32_t tile)
         }
 
         /* To avoid excessive memory allocations: */
-        /* Byte count should normally not be larger than a number of */
-        /* times the uncompressed size plus some margin */
-        if (bytecount > 1024 * 1024)
+        const tmsize_t tilesize = TIFFTileSize(tif);
+        if (tilesize > 0)
         {
-            /* 10 and 4096 are just values that could be adjusted. */
-            /* Hopefully they are safe enough for all codecs */
-            tmsize_t stripsize = TIFFTileSize(tif);
-            if (stripsize != 0 && (bytecount - 4096) / 10 > (uint64_t)stripsize)
+            if (bytecount > 1024 * 1024 &&
+                (bytecount - 4096) / 10 > (uint64_t)tilesize)
             {
-                uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-                TIFFErrorExtR(tif, module,
-                              "Too large tile byte count %" PRIu64
-                              ", tile %" PRIu32 ". Limiting to %" PRIu64,
-                              bytecount, tile, newbytecount);
+                /* Byte count should normally not be larger than a number of */
+                /* times the uncompressed size plus some margin */
+                /* 10 and 4096 are just values that could be adjusted. */
+                /* Hopefully they are safe enough for all codecs */
+                /* What happens next will depend on whether only the bytecount
+                 */
+                /* was corrupted to a large value but the strip/tile data is */
+                /* fine. In that situation most codecs should work fine and */
+                /* only used part of the tile/strip data. If the strip/tile */
+                /* data is corrupted too, then codecs will later error out. */
+                uint64_t newbytecount = (uint64_t)tilesize * 10 + 4096;
+                TIFFWarningExtR(tif, module,
+                                "Too large tile byte count %" PRIu64
+                                ", tile %" PRIu32 ". Limiting to %" PRIu64,
+                                bytecount, tile, newbytecount);
                 bytecount = newbytecount;
+            }
+            else if (tilesize > 100 * 1024 * 1024)
+            {
+                /* Max compression ratio experimentally determined. Might be
+                 * fragile... Only apply this heuristics to situations where the
+                 * memory allocation would be big, to avoid breaking nominal use
+                 * cases.
+                 */
+                const uint64_t maxCompressionRatio =
+                    TIFFGetMaxCompressionRatio(tif);
+                if (maxCompressionRatio > 0 &&
+                    bytecount < (uint64_t)tilesize / maxCompressionRatio)
+                {
+                    TIFFErrorExtR(tif, module,
+                                  "Likely invalid tile byte count for tile %u. "
+                                  "Uncompressed tile size is %" PRIu64 ", "
+                                  "compressed one is %" PRIu64,
+                                  tile, (uint64_t)tilesize, bytecount);
+                    return 0;
+                }
             }
         }
 

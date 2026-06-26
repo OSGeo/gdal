@@ -190,6 +190,8 @@ typedef struct
     uint16_t h_sampling;            /* luminance sampling factors */
     uint16_t v_sampling;
     tmsize_t bytesperline; /* decompressed bytes per scanline */
+    uint32_t strile_width;
+    uint32_t strile_height;
     /* pointers to intermediate buffers when processing downsampled data */
     TIFF_JSAMPARRAY ds_buffer[MAX_COMPONENTS];
     int scancount; /* number of "scanlines" accumulated */
@@ -1152,6 +1154,47 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     return ret;
 }
 
+static int JPEGComputeStrileWidthHeightBytesPerLine(TIFF *tif, uint16_t s)
+{
+    JPEGState *sp = JState(tif);
+    TIFFDirectory *td = &tif->tif_dir;
+
+    /*
+     * Check image parameters and set decompression parameters.
+     */
+    if (isTiled(tif))
+    {
+        sp->strile_width = td->td_tilewidth;
+        sp->strile_height = td->td_tilelength;
+        sp->bytesperline = TIFFTileRowSize(tif);
+    }
+    else
+    {
+        sp->strile_width = td->td_imagewidth;
+        sp->strile_height = td->td_imagelength - tif->tif_dir.td_row;
+        if (sp->strile_height > td->td_rowsperstrip)
+            sp->strile_height = td->td_rowsperstrip;
+        sp->bytesperline = TIFFScanlineSize(tif);
+    }
+    if (td->td_planarconfig == PLANARCONFIG_SEPARATE && s > 0)
+    {
+        /*
+         * For PC 2, scale down the expected strip/tile size
+         * to match a downsampled component
+         */
+        if (sp->h_sampling == 0 || sp->v_sampling == 0)
+        {
+            TIFFErrorExtR(tif, "JPEGComputeStrileWidthHeightBytesPerLine",
+                          "JPEG horizontal or vertical sampling is zero");
+            return (0);
+        }
+        sp->strile_width = TIFFhowmany_32(sp->strile_width, sp->h_sampling);
+        sp->strile_height = TIFFhowmany_32(sp->strile_height, sp->v_sampling);
+    }
+
+    return 1;
+}
+
 /*
  * Set up for decoding a strip or tile.
  */
@@ -1160,7 +1203,6 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     JPEGState *sp = JState(tif);
     TIFFDirectory *td = &tif->tif_dir;
     static const char module[] = "JPEGPreDecode";
-    uint32_t segment_width, segment_height;
     int downsampled_output;
     int ci;
 
@@ -1188,50 +1230,21 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     tif->tif_rawcp = (uint8_t *)sp->src.next_input_byte;
     tif->tif_rawcc = (tmsize_t)sp->src.bytes_in_buffer;
 
-    /*
-     * Check image parameters and set decompression parameters.
-     */
-    if (isTiled(tif))
-    {
-        segment_width = td->td_tilewidth;
-        segment_height = td->td_tilelength;
-        sp->bytesperline = TIFFTileRowSize(tif);
-    }
-    else
-    {
-        segment_width = td->td_imagewidth;
-        segment_height = td->td_imagelength - tif->tif_dir.td_row;
-        if (segment_height > td->td_rowsperstrip)
-            segment_height = td->td_rowsperstrip;
-        sp->bytesperline = TIFFScanlineSize(tif);
-    }
-    if (td->td_planarconfig == PLANARCONFIG_SEPARATE && s > 0)
-    {
-        /*
-         * For PC 2, scale down the expected strip/tile size
-         * to match a downsampled component
-         */
-        if (sp->h_sampling == 0 || sp->v_sampling == 0)
-        {
-            TIFFErrorExtR(tif, module,
-                          "JPEG horizontal or vertical sampling is zero");
-            return (0);
-        }
-        segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
-        segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
-    }
-    if (sp->cinfo.d.image_width < segment_width ||
-        sp->cinfo.d.image_height < segment_height)
+    if (!JPEGComputeStrileWidthHeightBytesPerLine(tif, s))
+        return 0;
+
+    if (sp->cinfo.d.image_width < sp->strile_width ||
+        sp->cinfo.d.image_height < sp->strile_height)
     {
         TIFFWarningExtR(tif, module,
                         "Improper JPEG strip/tile size, "
                         "expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
-                        segment_width, segment_height, sp->cinfo.d.image_width,
-                        sp->cinfo.d.image_height);
+                        sp->strile_width, sp->strile_height,
+                        sp->cinfo.d.image_width, sp->cinfo.d.image_height);
     }
-    if (sp->cinfo.d.image_width == segment_width &&
-        sp->cinfo.d.image_height > segment_height &&
-        tif->tif_dir.td_row + segment_height == td->td_imagelength &&
+    if (sp->cinfo.d.image_width == sp->strile_width &&
+        sp->cinfo.d.image_height > sp->strile_height &&
+        tif->tif_dir.td_row + sp->strile_height == td->td_imagelength &&
         !isTiled(tif))
     {
         /* Some files have a last strip, that should be truncated, */
@@ -1241,11 +1254,11 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
         TIFFWarningExtR(tif, module,
                         "JPEG strip size exceeds expected dimensions,"
                         " expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
-                        segment_width, segment_height, sp->cinfo.d.image_width,
-                        sp->cinfo.d.image_height);
+                        sp->strile_width, sp->strile_height,
+                        sp->cinfo.d.image_width, sp->cinfo.d.image_height);
     }
-    else if (sp->cinfo.d.image_width > segment_width ||
-             sp->cinfo.d.image_height > segment_height)
+    else if (sp->cinfo.d.image_width > sp->strile_width ||
+             sp->cinfo.d.image_height > sp->strile_height)
     {
         /*
          * This case could be dangerous, if the strip or tile size has
@@ -1256,8 +1269,8 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
         TIFFErrorExtR(tif, module,
                       "JPEG strip/tile size exceeds expected dimensions,"
                       " expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
-                      segment_width, segment_height, sp->cinfo.d.image_width,
-                      sp->cinfo.d.image_height);
+                      sp->strile_width, sp->strile_height,
+                      sp->cinfo.d.image_width, sp->cinfo.d.image_height);
         return (0);
     }
     if (sp->cinfo.d.num_components !=
@@ -1460,7 +1473,18 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
         TIFFWarningExtR(tif, tif->tif_name, "fractional scanline not read");
 
     if (nrows > (tmsize_t)sp->cinfo.d.image_height)
+    {
+        /* Initialize the output buffer if the JPEG image is smaller than the
+         * strile height. */
+        memset(buf, 0, (size_t)cc);
         nrows = sp->cinfo.d.image_height;
+    }
+    else if (sp->strile_width > sp->cinfo.d.image_width)
+    {
+        /* Initialize the output buffer if the JPEG image is smaller than the
+         * strile width. */
+        memset(buf, 0, (size_t)cc);
+    }
 
     /* data is expected to be read in multiples of a scanline */
     if (nrows)
@@ -1521,7 +1545,18 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
         TIFFWarningExtR(tif, tif->tif_name, "fractional scanline not read");
 
     if (nrows > (tmsize_t)sp->cinfo.d.image_height)
+    {
+        /* Initialize the output buffer if the JPEG image is smaller than the
+         * strile height. */
+        memset(buf, 0, (size_t)cc);
         nrows = sp->cinfo.d.image_height;
+    }
+    else if (sp->strile_width > sp->cinfo.d.image_width)
+    {
+        /* Initialize the output buffer if the JPEG image is smaller than the
+         * strile width. */
+        memset(buf, 0, (size_t)cc);
+    }
 
     /* data is expected to be read in multiples of a scanline */
     if (nrows)
@@ -1647,6 +1682,13 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     if ((uint32_t)nrows > td->td_imagelength - tif->tif_dir.td_row &&
         !isTiled(tif))
         nrows = td->td_imagelength - tif->tif_dir.td_row;
+
+    /* The downsampled-data decode loop below only writes up to the JPEG
+     * codestream dimensions (and, due to the clump stride, may not cover the
+     * full caller buffer even for compliant files). Zero the whole buffer so
+     * no uninitialised heap is ever returned, mirroring the guard JPEGDecode
+     * received in 65759931ab6e (#826). */
+    memset(buf, 0, (size_t)cc);
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
     unsigned short *tmpbuf = NULL;
@@ -2157,7 +2199,6 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s)
     JPEGState *sp = JState(tif);
     TIFFDirectory *td = &tif->tif_dir;
     static const char module[] = "JPEGPreEncode";
-    uint32_t segment_width, segment_height;
     int downsampled_input;
 
     assert(sp != NULL);
@@ -2168,47 +2209,20 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s)
     }
 
     assert(!sp->cinfo.comm.is_decompressor);
-    /*
-     * Set encoding parameters for this strip/tile.
-     */
-    if (isTiled(tif))
-    {
-        segment_width = td->td_tilewidth;
-        segment_height = td->td_tilelength;
-        sp->bytesperline = TIFFTileRowSize(tif);
-    }
-    else
-    {
-        segment_width = td->td_imagewidth;
-        segment_height = td->td_imagelength - tif->tif_dir.td_row;
-        if (segment_height > td->td_rowsperstrip)
-            segment_height = td->td_rowsperstrip;
-        sp->bytesperline = TIFFScanlineSize(tif);
-    }
-    if (td->td_planarconfig == PLANARCONFIG_SEPARATE && s > 0)
-    {
-        /* for PC 2, scale down the strip/tile size
-         * to match a downsampled component
-         */
-        if (sp->h_sampling == 0 || sp->v_sampling == 0)
-        {
-            TIFFErrorExtR(tif, module,
-                          "JPEG horizontal or vertical sampling is zero");
-            return (0);
-        }
-        segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
-        segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
-    }
-    if (segment_width > (uint32_t)JPEG_MAX_DIMENSION ||
-        segment_height > (uint32_t)JPEG_MAX_DIMENSION)
+
+    if (!JPEGComputeStrileWidthHeightBytesPerLine(tif, s))
+        return 0;
+
+    if (sp->strile_width > (uint32_t)JPEG_MAX_DIMENSION ||
+        sp->strile_height > (uint32_t)JPEG_MAX_DIMENSION)
     {
         TIFFErrorExtR(tif, module,
                       "Strip/tile too large for JPEG. Maximum dimension is %d",
                       (int)JPEG_MAX_DIMENSION);
         return (0);
     }
-    sp->cinfo.c.image_width = segment_width;
-    sp->cinfo.c.image_height = segment_height;
+    sp->cinfo.c.image_width = sp->strile_width;
+    sp->cinfo.c.image_height = sp->strile_height;
     downsampled_input = FALSE;
     if (td->td_planarconfig == PLANARCONFIG_CONTIG)
     {
@@ -2809,6 +2823,33 @@ static int JPEGInitializeLibJPEG(TIFF *tif, int decompress)
     return 1;
 }
 
+static uint64_t JPEGGetMaxCompressionRatio(TIFF *tif)
+{
+    /* See README_for_libtiff_developpers.md for raw data used to estimate
+     * the maximum compression rate. */
+
+    const JPEGState *sp = JState(tif);
+    if ((tif->tif_dir.td_photometric == PHOTOMETRIC_YCBCR) &&
+        (tif->tif_dir.td_planarconfig == PLANARCONFIG_CONTIG) &&
+        (tif->tif_dir.td_samplesperpixel == 3))
+    {
+        if (sp->h_sampling == 2 && sp->v_sampling == 2)
+        {
+            if (tif->tif_dir.td_bitspersample == 12)
+                return 768;
+            else
+                return 512;
+        }
+
+        return 0; /* unknown */
+    }
+
+    if (tif->tif_dir.td_bitspersample == 12)
+        return 384;
+    else
+        return 256;
+}
+
 /* Common to tif_jpeg.c and tif_jpeg_12.c */
 static void TIFFInitJPEGCommon(TIFF *tif)
 {
@@ -2845,6 +2886,7 @@ static void TIFFInitJPEGCommon(TIFF *tif)
     tif->tif_encoderow = JPEGEncode;
     tif->tif_encodestrip = JPEGEncode;
     tif->tif_encodetile = JPEGEncode;
+    tif->tif_getmaxcompressionratio = JPEGGetMaxCompressionRatio;
     tif->tif_cleanup = JPEGCleanup;
 
     tif->tif_defstripsize = JPEGDefaultStripSize;

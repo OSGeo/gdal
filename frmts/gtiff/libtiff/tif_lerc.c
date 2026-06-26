@@ -1540,6 +1540,13 @@ int TIFFInitLERC(TIFF *tif, int scheme)
 #endif
     tif->tif_cleanup = LERCCleanup;
 
+    /* LERC compression ratio can grow to several millions */
+    /* eg. 5703725 for Lerc deflate on 16383x16383 array */
+    /* or 3829644 for regular Lerc */
+    /* See README_for_libtiff_developpers.md for raw data used to estimate
+     * the maximum compression rate. */
+    /* so we don't define tif->tif_getmaxcompressionratio */
+
     /* Default values for codec-specific fields */
     TIFFSetField(tif, TIFFTAG_LERC_VERSION, LERC_VERSION_2_4);
     TIFFSetField(tif, TIFFTAG_LERC_ADD_COMPRESSION, LERC_ADD_COMPRESSION_NONE);
