@@ -3824,8 +3824,8 @@ def test_tiff_read_stripbytecounts_count_not_same_as_stripoffsets_count():
         pytest.skip()
 
     ds = gdal.Open("data/stripbytecounts_count_not_same_as_stripoffsets_count.tif")
-    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is None
-    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") is None
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") == "170"
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") == "1"
 
 
 ###############################################################################
