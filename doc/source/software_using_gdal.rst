@@ -65,6 +65,7 @@ Free and open source
 - `Rasterio  <https://rasterio.readthedocs.io>`_  Python library and command line utilities to read and write GDAL rasters.
 - `Rasterix  <https://github.com/mogasw/rasterix/>`_  A cross platform open source utility to process raster data based on Qt and GDAL.
 - `SAGA GIS  <https://saga-gis.sourceforge.io/en/index.html>`_ A free geographic information system (GIS), with a special 'Application Programming Interface' (API) for geographic data processing.
+- `SedonaDB  <https://sedona.apache.org/sedonadb/>`_ A single-node analytical database engine with geospatial as a first-class citizen.
 - `SNAP  <http://step.esa.int/main/toolboxes/snap>`_  Sentinel Application Platform for Earth Observation processing and analysis.
 - `StarSpan  <https://github.com/Ecotrust/starspan>`_  raster/vector analysis.
 - `t-rex  <http://t-rex.tileserver.ch>`_  Vector tile server written in Rust.
