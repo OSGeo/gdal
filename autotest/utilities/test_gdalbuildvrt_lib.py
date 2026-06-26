@@ -969,15 +969,15 @@ def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
 
     inputs = []
 
-    width = 5
-    height = 5
+    width = 1
+    height = 1
 
     for i, res in enumerate(resolutions):
         fname = tmp_vsimem / f"in_{i}.tif"
         inputs.append(fname)
 
-        nx = round(width / res)
-        ny = round(height / res)
+        nx = max(1, round(width / res))
+        ny = max(1, round(height / res))
 
         with gdal.GetDriverByName("GTiff").Create(fname, nx, ny) as ds:
             ds.SetGeoTransform((0, res, 0, height, 0, -res))
