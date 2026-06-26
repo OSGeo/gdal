@@ -60,7 +60,7 @@ Free and open source
 - `PostGIS  <http://www.postgis.net>`_ spatial database extender for PostgreSQL: The raster loader and many of the raster SQL functions rely on GDAL.
 - `PostgreSQL OGR Foreign Data Wrapper <https://github.com/pramsey/pgsql-ogr-fdw>`_ Expose OGR layer as PostgreSQL foreign tables.
 - `QGIS <https://www.qgis.org>`_ A cross platform desktop GIS.
-- `R <https://www.r-project.org>`_ A free software environment for statistical computing and graphics, with bindings to GDAL via the rgdal package.
+- `R <https://www.r-project.org>`_ A free software environment for statistical computing and graphics, with GDAL support provided by the `sf <https://r-spatial.github.io/sf/>`_ and `terra <https://rspatial.github.io/terra/>`_ packages. The `gdalraster <https://firelab.github.io/gdalraster/>`_ package provides direct GDAL API bindings.
 - `rasdaman  <https://rasdaman.org>`_  "raster data manager": scalable datacube engine with APIs and query language for spatio-temporal data.
 - `Rasterio  <https://rasterio.readthedocs.io>`_  Python library and command line utilities to read and write GDAL rasters.
 - `Rasterix  <https://github.com/mogasw/rasterix/>`_  A cross platform open source utility to process raster data based on Qt and GDAL.
