@@ -378,6 +378,9 @@ class PDS4Dataset final : public RawDataset
 
     CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 
+    static std::unique_ptr<PDS4Dataset> OpenBrowse(GDALOpenInfo *,
+                                                   const CPLXMLNode *);
+
     CPL_DISALLOW_COPY_ASSIGN(PDS4Dataset)
 
   public:
@@ -498,6 +501,28 @@ class PDS4RawRasterBand final : public RawRasterBand
 
 /************************************************************************/
 /* ==================================================================== */
+/*                      PDS4BrowseImageProxyRasterBand                  */
+/*                                                                      */
+/*      proxy for bands stored in browse images                         */
+/* ==================================================================== */
+/************************************************************************/
+class PDS4BrowseImageProxyRasterBand final : public GDALProxyRasterBand
+{
+    friend class PDS4Dataset;
+
+    GDALRasterBand *m_poBaseBand{};
+
+    CPL_DISALLOW_COPY_ASSIGN(PDS4BrowseImageProxyRasterBand)
+
+  protected:
+    GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
+
+  public:
+    explicit PDS4BrowseImageProxyRasterBand(GDALRasterBand *poBaseBandIn);
+};
+
+/************************************************************************/
+/* ==================================================================== */
 /*                         PDS4WrapperRasterBand                       */
 /*                                                                      */
 /*      proxy for bands stored in other formats.                        */
@@ -514,7 +539,7 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
     bool m_bHasNoDataInt64{};
     bool m_bHasNoDataUInt64{};
     double m_dfOffset{};
-    double m_dfScale{};
+    double m_dfScale{1};
     double m_dfNoData{};
     int64_t m_nNoDataInt64{};
     uint64_t m_nNoDataUInt64{};

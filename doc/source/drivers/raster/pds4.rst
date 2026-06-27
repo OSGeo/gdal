@@ -23,13 +23,16 @@ information as well as selected other header metadata.
 A mask band is attached to each source band. The value of this mask band
 is 0 when the pixel value is one of the missing constants.
 
-Implementation of this driver was supported by the United States
+Initial implementation of this driver was supported by the United States
 Geological Survey.
 
 PDS4 is part of a family of related formats including PDS and ISIS3.
 
 The PDS4 driver supports reading and writing ASCII fixed-with, binary fixed-with
 and delimited(CSV) tables as OGR vector layers.
+
+Starting with GDAL 3.14, browse products using PNG or GeoTIFF/COG images are also
+supported in read-only mode.
 
 Driver capabilities
 -------------------
