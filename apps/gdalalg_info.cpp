@@ -26,6 +26,7 @@
 GDALInfoAlgorithm::GDALInfoAlgorithm()
     : GDALDispatcherAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    AddProgressArg(/* hidden = */ true);
     // only for the help message
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddInputDatasetArg(&m_dataset).AddAlias("dataset");
