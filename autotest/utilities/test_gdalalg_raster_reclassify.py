@@ -224,6 +224,43 @@ def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
             assert np.all(dst_val[np.where(src_val >= 128)] == 1)
 
 
+@pytest.mark.parametrize("keep_color_table", (True, False))
+def test_gdalalg_raster_reclassify_keep_color_table(
+    reclassify, tmp_vsimem, keep_color_table
+):
+
+    test_ct_data = [
+        (255, 0, 0, 255),
+        (0, 255, 0, 128),
+        (0, 0, 255, 0),
+        (255, 255, 255, 0),
+    ]
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ct = gdal.ColorTable()
+    for i, color in enumerate(test_ct_data):
+        src_ct.SetColorEntry(i, color)
+    src_ds.GetRasterBand(1).SetColorTable(src_ct)
+
+    reclassify["input"] = src_ds
+    reclassify["mapping"] = "DEFAULT=PASS_THROUGH"
+    reclassify["output-format"] = "stream"
+    reclassify["keep-color-table"] = keep_color_table
+
+    assert reclassify.Run()
+
+    dst_ds = reclassify.Output()
+
+    dst_ct = dst_ds.GetRasterBand(1).GetColorTable()
+
+    if keep_color_table:
+        assert dst_ct.GetCount() == len(test_ct_data)
+        for i, color in enumerate(test_ct_data):
+            assert dst_ct.GetColorEntry(i) == color
+    else:
+        assert dst_ct is None
+
+
 def test_gdalalg_raster_reclassify_empty_mapping(reclassify, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"

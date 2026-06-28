@@ -37,6 +37,7 @@ class GDALRasterReclassifyAlgorithm : public GDALRasterPipelineStepAlgorithm
 
     std::string m_mapping{};
     std::string m_type{};
+    bool m_keepColorTable{false};
 };
 
 /************************************************************************/
