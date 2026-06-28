@@ -339,3 +339,53 @@ def test_gdalalg_vector_set_geom_type_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+@pytest.mark.parametrize(
+    "input_geoms,expected_geom_type",
+    [
+        [["POINT (1 2)"], ogr.wkbPoint],
+        [["POINT (1 2)", None, "POINT (3 4)"], ogr.wkbPoint],
+        [["POINT (1 2)", "LINESTRING (3 4,5 6)", "POINT (3 4)"], ogr.wkbUnknown],
+        [
+            ["POLYGON ((0 0,0 1,1 1,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))"],
+            ogr.wkbMultiPolygon,
+        ],
+        [
+            ["MULTIPOLYGON (((0 0,0 1,1 1,0 0)))", "POLYGON ((0 0,0 1,1 1,0 0))"],
+            ogr.wkbMultiPolygon,
+        ],
+        [
+            ["POLYGON ((0 0,0 1,1 1,0 0))", "CURVEPOLYGON ((0 0,0 1,1 1,0 0))"],
+            ogr.wkbCurvePolygon,
+        ],
+        [
+            ["LINESTRING (0 0, 1 1)", "CIRCULARSTRING M (1 1 0, 2 2 1, 3 1 2)"],
+            ogr.wkbCompoundCurveM,
+        ],
+    ],
+)
+def test_gdalalg_vector_geom_auto(input_geoms, expected_geom_type):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+
+    src_lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("a"))
+
+    for wkt in input_geoms:
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        if wkt:
+            f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        src_lyr.CreateFeature(f)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["auto"] = True
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    lyr = out_ds.GetLayer(0)
+    assert lyr.GetGeomType() == expected_geom_type

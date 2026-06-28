@@ -41,6 +41,18 @@ The following groups of options can be combined together:
 Program-Specific Options
 ------------------------
 
+.. option:: --auto
+
+   .. versionadded:: 3.14
+
+   Automatically determine the geometry type by inspecting all input feature geometries. The most
+   restrictive geometry type will be selected. For example, if there is a mix of
+   polygons and multipolygons, the result will be multipolygons. If a common
+   geometry type cannot be determined, the generic Geometry type will be selected.
+
+   This option is mutually exclusive with :option:`--multi`, :option:`--single`,
+   :option:`--linear`, :option:`--curve`, :option:`--dim` and :option:`--geometry-type`.
+
 .. option:: --curve
 
    Force geometries to curve geometry types. e.g. ``LINESTRING`` ==> ``COMPOUNDCURVE``
@@ -167,3 +179,10 @@ Examples
    .. code-block:: bash
 
         $ gdal vector set-geom-type --linear in.gpkg out.shp --overwrite
+
+.. example::
+   :title: Convert a CSV file that contains only a single type of geometry into a properly typed GeoPackage
+
+   .. code-block:: bash
+
+        $ gdal vector set-geom-type --auto in.csv out.gpkg
