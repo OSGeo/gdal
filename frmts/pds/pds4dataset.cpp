@@ -1748,6 +1748,8 @@ PDS4Dataset::OpenBrowse(GDALOpenInfo *poOpenInfo, const CPLXMLNode *psProduct)
         return nullptr;
     const char *pszFilename =
         CPLGetXMLValue(psFileAreaBrowse, "File.file_name", nullptr);
+    if (!pszFilename)
+        return nullptr;
     const char *pszFormat = CPLGetXMLValue(
         psFileAreaBrowse, "Encoded_Image.encoding_standard_id", nullptr);
     if (CPLHasPathTraversal(pszFilename))
