@@ -176,7 +176,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                              OCI_OTYPE_NAME, OCI_DEFAULT, OCI_PTYPE_TABLE,
                              poSession->hDescribe);
 
-    if (poSession->Failed(nStatus, "OCIDescribeAny"))
+    if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
+//		    poSession->Failed(nStatus, "OCIDescribeAny"))
     {
         CPLErrorReset();
 
@@ -188,7 +189,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                                  OCI_OTYPE_NAME, OCI_DEFAULT, OCI_PTYPE_VIEW,
                                  poSession->hDescribe);
 
-        if (poSession->Failed(nStatus, "OCIDescribeAny"))
+        if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
+//		(poSession->Failed(nStatus, "OCIDescribeAny"))
         {
             CPLErrorReset();
 
@@ -200,7 +202,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                 static_cast<ub4>(osQuotedTableName.length()), OCI_OTYPE_NAME,
                 OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe);
 
-            if (poSession->Failed(nStatus, "OCIDescribeAny"))
+            if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
+//		    (poSession->Failed(nStatus, "OCIDescribeAny"))
             {
                 CPLErrorReset();
 
