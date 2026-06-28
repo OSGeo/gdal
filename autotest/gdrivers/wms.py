@@ -1369,3 +1369,23 @@ def test_wms_iiif_fake_errors(tmp_vsimem, webserver_port):
         ):
             with webserver.install_http_handler(handler):
                 gdal.Open(f"IIIF:http://localhost:{webserver_port}/my_image")
+
+
+@gdaltest.enable_exceptions()
+def test_wms_parse_layer_with_EX_GeographicBoundingBox():
+
+    ds = gdal.Open("data/wms/EX_GeographicBoundingBox_caps.xml")
+    subds = ds.GetSubDatasets()
+    name = subds[0][0]
+    prefix = "WMS:https://datacube.services.geo.ca/ows/landcover?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=top-layer&CRS=EPSG:3978&BBOX="
+    assert name.startswith(prefix)
+    bbox = [float(v) for v in name[len(prefix) :].split(",")]
+    assert bbox == pytest.approx(
+        [
+            -6105697.1922410242,
+            -1692050.8326816293,
+            6174560.6395176314,
+            4482700.1565916659,
+        ],
+        abs=10,
+    )
