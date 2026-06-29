@@ -167,7 +167,8 @@ class GDALGeosNonStreamingAlgorithmLayer
 
     std::unique_ptr<OGRFeature> GetNextProcessedFeature() override;
 
-    virtual bool ProcessGeos() = 0;
+    virtual bool ProcessGeos(GDALProgressFunc pfnProgress,
+                             void *pProgressData) = 0;
 
     /// Whether the operation should fail if non-polygonal geometries are present
     virtual bool PolygonsOnly() const = 0;

@@ -21,6 +21,43 @@
 #define GEOS_USE_ONLY_R_API
 
 #include <geos_c.h>
+
+struct GDALGEOSProgressUserData
+{
+    explicit GDALGEOSProgressUserData(GDALProgressFunc pfnProgress,
+                                      void *pProgressData)
+        : m_pfnProgress(pfnProgress), m_pProgressData(pProgressData),
+          m_bRequestedInterrupt(false)
+    {
+    }
+
+    GDALProgressFunc m_pfnProgress;
+    void *m_pProgressData;
+    bool m_bRequestedInterrupt;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALGEOSProgressUserData)
+};
+
+/** Class that automatically registers progress/interrupt handlers with GEOS on
+ *  initialization and unregisters them upon destruction. If GDAL is built
+ *  against a version of GEOS that does not support progress/interrupt handlers,
+ *  no action will be taken on initialization/destruction.
+ */
+class GDALGEOSProgressReporter
+{
+  public:
+    GDALGEOSProgressReporter(GEOSContextHandle_t hGEOSCtxt,
+                             GDALProgressFunc pfnProgress, void *pProgressData);
+    ~GDALGEOSProgressReporter();
+    GEOSContextHandle_t m_context;
+    GDALGEOSProgressUserData m_userData;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALGEOSProgressReporter)
+};
+
+void GDALGEOSProgress(double frac, const char *message, void *userData);
+int GDALGEOSCheckInterrupt(void *userData);
+
 #else
 
 namespace geos

@@ -122,6 +122,7 @@ gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 if (GDAL_USE_GEOS)
   target_compile_definitions(ogr PRIVATE -DHAVE_GEOS=1)
   gdal_target_link_libraries(ogr PRIVATE ${GEOS_TARGET})
+  target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:${GEOS_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
 endif ()
 
 if (GDAL_USE_SFCGAL)

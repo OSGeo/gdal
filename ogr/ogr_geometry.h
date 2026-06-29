@@ -578,7 +578,9 @@ class CPL_DLL OGRGeometry
 
     OGRGeometry *UnionCascaded() const CPL_WARN_UNUSED_RESULT;
 
-    OGRGeometry *UnaryUnion() const CPL_WARN_UNUSED_RESULT;
+    OGRGeometry *
+    UnaryUnion(GDALProgressFunc pfnProgress = nullptr,
+               void *pProgressData = nullptr) const CPL_WARN_UNUSED_RESULT;
 
     OGRGeometry *Difference(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
 

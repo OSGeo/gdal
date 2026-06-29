@@ -157,7 +157,7 @@ class GDALVectorCleanCoverageOutputLayer final
         return false;
     }
 
-    bool ProcessGeos() override
+    bool ProcessGeos(GDALProgressFunc, void *) override
     {
         // Perform coverage cleaning
         GEOSGeometry *coll = GEOSGeom_createCollection_r(
