@@ -239,6 +239,9 @@ struct GDALWarpAppOptions
 
     /*! Used when using a temporary TIFF file while warping */
     bool bDeleteOutputFileOnceCreated = false;
+
+    /*! set to true to customize error messages when called from "new" (GDAL 3.11) CLI or Algorithm API */
+    bool bInvokedFromGdalAlgorithm = false;
 };
 
 static CPLErr
@@ -920,9 +923,14 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
             oSRS2.SetFromUserInput(osTargetSRS.c_str());
             if (!oSRS1.IsSame(&oSRS2))
             {
+                const char *pszOutputArg = psOptions->bInvokedFromGdalAlgorithm
+                                               ? "--output-crs"
+                                               : "-t_srs";
+
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Target SRS implied by COG creation options is not "
-                         "the same as the one specified by -t_srs");
+                         "the same as the one specified by %s",
+                         pszOutputArg);
                 return false;
             }
         }
@@ -4775,13 +4783,24 @@ static GDALDatasetH GDALWarpCreateOutput(
                     if (OGRProjCTDifferentOperationsUsed(
                             psRTI->poReverseTransform))
                     {
+                        const char *pszTransformOption =
+                            psOptions->bInvokedFromGdalAlgorithm
+                                ? "--transform-option"
+                                : "-to";
+                        const char *pszCoordinateOperation =
+                            psOptions->bInvokedFromGdalAlgorithm
+                                ? ""
+                                : ", or specify a particular coordinate "
+                                  "operation with -ct";
+
                         CPLError(
                             CE_Warning, CPLE_AppDefined,
                             "Several coordinate operations are going to be "
                             "used. Artifacts may appear. You may consider "
-                            "using the -to ALLOW_BALLPARK=NO and/or "
-                            "-to ONLY_BEST=YES transform options, or specify "
-                            "a particular coordinate operation with -ct");
+                            "using the %s ALLOW_BALLPARK=NO and/or "
+                            "%s ONLY_BEST=YES transform options%s",
+                            pszTransformOption, pszTransformOption,
+                            pszCoordinateOperation);
                     }
 
                     // Stop recording
@@ -6035,6 +6054,11 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .append()
         .store_into(psOptions->anDstBands)
         .help(_("Specify the output band number in which to warp."));
+
+    // Undocumented option used by gdal vector * algorithms
+    argParser->add_argument("--invoked-from-gdal-algorithm")
+        .store_into(psOptions->bInvokedFromGdalAlgorithm)
+        .hidden();
 
     if (psOptionsForBinary)
     {
