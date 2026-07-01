@@ -463,3 +463,20 @@ def test_gdalalg_raster_reproject_hidden_alias_dst_crs():
     ) as alg:
         ds = alg.Output()
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
+
+
+@pytest.mark.require_proj(9, 1)
+def test_gdalalg_raster_reproject_warn_different_coordinate_operations():
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    srs = osr.SpatialReference(epsg=4267)  # NAD27
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-100, 2, 0, 60, 0, -2])
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "Several coordinate operations are going to be used. Artifacts may appear. You may consider using the --transform-option ALLOW_BALLPARK=NO and/or --transform-option ONLY_BEST=YES transform options",
+    ):
+        gdal.alg.raster.reproject(
+            input=src_ds, output="", output_format="MEM", output_crs="EPSG:4326"
+        )
