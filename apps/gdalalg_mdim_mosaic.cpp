@@ -761,7 +761,10 @@ bool GDALMdimMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                         }
                     }
                     if (!desc.osUnit.empty())
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
                         var->SetUnit(desc.osUnit);
+                    }
 
                     if (desc.aaValues.empty())
                     {
