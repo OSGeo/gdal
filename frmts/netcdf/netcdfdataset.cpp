@@ -4209,7 +4209,8 @@ void netCDFDataset::SetProjectionFromVar(
                         tmpGT = gtFromAttributeNorthUp;
                         if (gtFromAttributeNorthUp.IsAxisAligned())
                         {
-                            poDS->bBottomUp = true;
+                            // Axis direction depends on whether it is GDAL-style CF file
+                            poDS->bBottomUp = bIsGdalCfFile;
                         }
                     }
                     else
