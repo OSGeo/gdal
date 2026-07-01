@@ -1221,7 +1221,6 @@ def test_gdalalg_mdim_mosaic_preserves_indexing_var_unit(tmp_path):
             .GetDimensions()[0]
             .GetIndexingVariable()
         )
-        # did not work in gdal mdim mosaic 14881
         assert idx.GetUnit() == UNIT
         # plain attributes
         assert "long_name" in [a.GetName() for a in idx.GetAttributes()]
