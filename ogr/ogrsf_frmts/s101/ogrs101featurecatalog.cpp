@@ -21,6 +21,10 @@
 
 #include <mutex>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 static OGRS101FeatureCatalog::LoadingStatus geStatus =
     OGRS101FeatureCatalog::LoadingStatus::UNINIT;
 static OGRS101FeatureCatalog *gpoFeatureCatalog = nullptr;
@@ -110,15 +114,45 @@ OGRS101FeatureCatalog::OGRS101FeatureCatalog(bool bStrict) : m_bStrict(bStrict)
 /** Load the feature catalog XML file. */
 OGRS101FeatureCatalog::LoadingStatus OGRS101FeatureCatalog::Load()
 {
-    bool bError = false;
-    const std::string osFilename = GetFilename(bError);
-    if (bError)
-        return LoadingStatus::ERROR;
-    if (osFilename.empty())
-        return LoadingStatus::SKIPPED;
+    CPLXMLTreeCloser oTree(nullptr);
+    std::string osFilename;
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    osFilename = "internal ";
+    osFilename += FEATURE_CATALOG_FILENAME;
+    const char *pszContent = S101GetEmbeddedFeatureCatalog();
+    oTree.reset(CPLParseXMLString(pszContent));
+#else
+    // Try from GDAL_DATA
+    const char *pszFilename = CPLFindFile("s101", FEATURE_CATALOG_FILENAME);
+    if (pszFilename)
+    {
+        osFilename = pszFilename;
+    }
+#ifdef EMBED_RESOURCE_FILES
+    else
+    {
+        // If external file not found and we can use internal data file, use it
+        osFilename = "internal ";
+        osFilename += FEATURE_CATALOG_FILENAME;
+        const char *pszContent = S101GetEmbeddedFeatureCatalog();
+        oTree.reset(CPLParseXMLString(pszContent));
+    }
+#endif
+
+    if (!oTree)
+    {
+        bool bError = false;
+        osFilename = GetFilenameFromUserGdalPath(bError);
+        if (bError)
+            return LoadingStatus::ERROR;
+        if (osFilename.empty())
+            return LoadingStatus::SKIPPED;
+        oTree.reset(CPLParseXMLFile(osFilename.c_str()));
+    }
+#endif
 
     CPLDebugOnce("S101", "Reading feature catalog from %s", osFilename.c_str());
-    CPLXMLTreeCloser oTree(CPLParseXMLFile(osFilename.c_str()));
+
     if (!oTree)
     {
         return m_bStrict ? LoadingStatus::ERROR : LoadingStatus::SKIPPED;
@@ -145,11 +179,14 @@ OGRS101FeatureCatalog::LoadingStatus OGRS101FeatureCatalog::Load()
 }
 
 /************************************************************************/
-/*                            GetFilename()                             */
+/*                    GetFilenameFromUserGdalPath()                     */
 /************************************************************************/
 
-/** Get XML feature catalog filename. */
-std::string OGRS101FeatureCatalog::GetFilename(bool &bError) const
+/** Get XML feature catalog filename downloaded from remote URL and
+ * stored in ~/.gdal. This code path is unused for (default) builds where
+ * the feature catalog is shipped alongside GDAL. */
+std::string
+OGRS101FeatureCatalog::GetFilenameFromUserGdalPath(bool &bError) const
 {
     bError = false;
 

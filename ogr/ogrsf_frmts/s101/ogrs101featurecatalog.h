@@ -105,7 +105,7 @@ class OGRS101FeatureCatalog
     static std::pair<LoadingStatus, const OGRS101FeatureCatalog *>
     GetSingletonFeatureCatalog(bool bStrict);
 
-    std::string GetFilename(bool &bError) const;
+    std::string GetFilenameFromUserGdalPath(bool &bError) const;
 
     LoadingStatus Load();
 
