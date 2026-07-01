@@ -897,30 +897,30 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     if (hDS == nullptr)
         return CE_Failure;
 
-    char **papszFileList = GDALGetFileList(hDS);
+    const CPLStringList aosFileList(GDALGetFileList(hDS));
     GDALClose(hDS);
 
-    if (papszFileList == nullptr)
+    if (aosFileList.empty())
         return CE_Failure;
 
     /* -------------------------------------------------------------------- */
     /*      Work out the corresponding new names.                           */
     /* -------------------------------------------------------------------- */
-    char **papszNewFileList = nullptr;
+    CPLStringList aosNewFileList;
 
-    for (int i = 0; papszFileList[i] != nullptr; i++)
+    for (const char *pszFilename : cpl::Iterate(aosFileList))
     {
         CPLString osNewFilename;
 
-        if (!EQUALN(papszFileList[i], osOldPath, osOldPath.size()))
+        if (!EQUALN(pszFilename, osOldPath, osOldPath.size()))
         {
             CPLAssert(false);
             return CE_Failure;
         }
 
-        osNewFilename = osNewPath + (papszFileList[i] + osOldPath.size());
+        osNewFilename = osNewPath + (pszFilename + osOldPath.size());
 
-        papszNewFileList = CSLAddString(papszNewFileList, osNewFilename);
+        aosNewFileList.push_back(osNewFilename);
     }
 
     /* -------------------------------------------------------------------- */
@@ -933,7 +933,6 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to create directory %s:\n%s", osNewPath.c_str(),
                      VSIStrerror(errno));
-            CSLDestroy(papszNewFileList);
             return CE_Failure;
         }
     }
@@ -943,17 +942,16 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
     /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    for (int i = 0; papszFileList[i] != nullptr; i++)
+    for (int i = 0; i < aosFileList.size() && i < aosNewFileList.size(); ++i)
     {
-        if (VSIStatL(papszFileList[i], &sStatBuf) == 0 &&
+        if (VSIStatL(aosFileList[i], &sStatBuf) == 0 &&
             VSI_ISREG(sStatBuf.st_mode))
         {
-            if (CPLMoveFile(papszNewFileList[i], papszFileList[i]) != 0)
+            if (CPLMoveFile(aosNewFileList[i], aosFileList[i]) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to move %s to %s:\n%s", papszFileList[i],
-                         papszNewFileList[i], VSIStrerror(errno));
-                CSLDestroy(papszNewFileList);
+                         "Unable to move %s to %s:\n%s", aosFileList[i],
+                         aosNewFileList[i], VSIStrerror(errno));
                 return CE_Failure;
             }
         }
@@ -968,8 +966,6 @@ static CPLErr AIGRename(const char *pszNewName, const char *pszOldName)
         }
     }
 
-    CSLDestroy(papszFileList);
-    CSLDestroy(papszNewFileList);
     return CE_None;
 }
 

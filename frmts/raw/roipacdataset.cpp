@@ -316,7 +316,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     int nPixelOffset = 0;
     int nLineOffset = 0;
     vsi_l_offset nBandOffset = 0;
-    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    const int nDTSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
     bool bIntOverflow = false;
     if (eInterleave == LINE)
     {

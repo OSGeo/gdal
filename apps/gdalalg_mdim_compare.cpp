@@ -19,6 +19,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <iterator>
+#include <limits>
 #include <set>
 #include <utility>
 
@@ -237,7 +238,8 @@ bool GDALMdimCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     std::vector<
         std::pair<std::shared_ptr<GDALMDArray>, std::shared_ptr<GDALMDArray>>>
         arrayPairs;
-    uint64_t nTotalPixels = 0;
+    // not zero, to avoid false positive Coverity Scan warning
+    double dfTotalPixels = std::numeric_limits<double>::min();
     for (const auto &array : m_array)
     {
         auto poRefArray = poRefRootGroup->OpenMDArrayFromFullname(array);
@@ -258,7 +260,7 @@ bool GDALMdimCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
-        nTotalPixels += GetPixelCount(poRefArray);
+        dfTotalPixels += static_cast<double>(GetPixelCount(poRefArray));
         arrayPairs.emplace_back(std::move(poRefArray), std::move(poInputArray));
     }
 
@@ -266,11 +268,9 @@ bool GDALMdimCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     for (const auto &[poRefArray, poInputArray] : arrayPairs)
     {
         const uint64_t nThisArrayPixels = GetPixelCount(poRefArray);
-        const double dfMinPct =
-            static_cast<double>(nCurPixels) / static_cast<double>(nTotalPixels);
+        const double dfMinPct = static_cast<double>(nCurPixels) / dfTotalPixels;
         const double dfMaxPct =
-            static_cast<double>(nCurPixels + nThisArrayPixels) /
-            static_cast<double>(nTotalPixels);
+            static_cast<double>(nCurPixels + nThisArrayPixels) / dfTotalPixels;
         std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>
             pScaledProgress(GDALCreateScaledProgress(dfMinPct, dfMaxPct,
                                                      ctxt.m_pfnProgress,

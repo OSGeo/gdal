@@ -12587,7 +12587,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
         SetProjectionFromVar(nCdfId, nFirstVarId, true);
     const char *pszValue = FetchAttr(nCdfId, nFirstVarId, CF_GRD_MAPPING);
     std::string osGridMapping = pszValue ? pszValue : "";
-    aosMetadata = aosMetadataBackup;
+    aosMetadata = std::move(aosMetadataBackup);
 
     OGRSpatialReference *poSRS = nullptr;
     if (!m_oSRS.IsEmpty())

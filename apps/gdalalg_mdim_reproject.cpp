@@ -158,7 +158,7 @@ GDALMdimReprojectGroup::GDALMdimReprojectGroup(
             const auto &poDim = poSrcArray->GetDimensions()[0];
             if (poDim->GetName() == osName)
             {
-                apoIndexingVariables.push_back(poSrcArray);
+                apoIndexingVariables.push_back(std::move(poSrcArray));
             }
             else
             {
