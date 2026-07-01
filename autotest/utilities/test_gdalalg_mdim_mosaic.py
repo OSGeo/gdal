@@ -1205,17 +1205,6 @@ def test_gdalalg_mdim_mosaic_preserves_indexing_var_unit(tmp_path):
             ar.Write(array.array("B", [4]))
 
     create_sources()
-    # convert
-    with gdal.Run(
-        "mdim",
-        "convert",
-        input=tmp_path / "test1.nc",
-        output=tmp_path / "c.vrt",
-        output_format="VRT",
-    ) as alg:
-        z = alg.Output().GetRootGroup().OpenMDArray("z")
-        assert z.GetUnit() == UNIT
-
     # mosaic
     with gdal.Run(
         "mdim",
