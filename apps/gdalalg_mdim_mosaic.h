@@ -58,7 +58,8 @@ class GDALMdimMosaicAlgorithm /* non final*/
         uint64_t nSize = 0;
         uint64_t nBlockSize = 0;
         std::vector<std::shared_ptr<GDALAttribute>> attributes{};
-
+        // indexing variable unit (e.g. CF 'units')
+        std::string osUnit{};
         bool bHasIndexingVar = false;
 
         // Used for dimensions with irregular spaced labels
