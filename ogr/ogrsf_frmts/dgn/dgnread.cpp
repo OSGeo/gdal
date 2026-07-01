@@ -1077,7 +1077,8 @@ static DGNElemCore *DGNProcessElement(DGNInfo *psDGN, int nType, int nLevel)
             DGNParseCore(psDGN, psElement);
 
             // Read array
-            for (int i = 0; i < numelems; i++)
+            for (int i = 0; i < numelems && 36 + i * 4 + 4 <= psDGN->nElemBytes;
+                 i++)
             {
                 psArray->array[i] = static_cast<float>(
                     1.0 * DGN_INT32(psDGN->abyElem + 36 + i * 4) /
