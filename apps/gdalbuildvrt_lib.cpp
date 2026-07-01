@@ -442,12 +442,8 @@ static CPLString GetProjectionName(const char *pszProjection)
 
     OGRSpatialReference oSRS;
     oSRS.SetFromUserInput(pszProjection);
-    const char *pszRet = nullptr;
-    if (oSRS.IsProjected())
-        pszRet = oSRS.GetAttrValue("PROJCS");
-    else if (oSRS.IsGeographic())
-        pszRet = oSRS.GetAttrValue("GEOGCS");
-    return pszRet ? pszRet : "(null)";
+
+    return oSRS.GetName();
 }
 
 /************************************************************************/
@@ -847,7 +843,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                 CPLString osGot = GetProjectionName(proj);
                 return m_osProgramName +
                        CPLSPrintf(" does not support heterogeneous "
-                                  "projection: expected %s, got %s.",
+                                  "projection: expected \"%s\", got \"%s\".",
                                   osExpected.c_str(), osGot.c_str());
             }
         }
