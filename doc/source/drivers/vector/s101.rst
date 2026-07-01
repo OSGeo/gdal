@@ -265,16 +265,16 @@ system, but access to that file provides:
 * extra consistency checks on the validity of attributes and feature types.
 * exposing enumerated attributes as OGR field domains.
 
-The feature catalog is looked for in the GDAL data directory, or in embedded
+GDAL looks for the feature catalog in the GDAL data directory, or in the embedded
 resources when GDAL is built with ``EMBED_RESOURCE_FILES=ON``. If the
-resource file does not exist, it is then looked for in the following locations,
+resource file does not exist, the catalog file is searched in the following locations,
 by decreasing priority:
 
 * Value defined by the ``GDAL_S101_FEATURE_CATALOG`` configuration option.
 * In :file:`$INSTALL_PREFIX/share/gdal/101_Feature_Catalogue_2.0.0.xml`.
 * In :file:`$HOME/.gdal/101_Feature_Catalogue_2.0.0.xml`.
 
-Finally, if not found, an attempt is made to download it from the `IHO OHI GitHub repository <https://raw.githubusercontent.com/iho-ohi/S-101-Documentation-and-FC/fbcf8aaa72331a33668aa554e702e2a28f27cbc0/S-101FC/FeatureCatalogue.xml>`__
+Finally, if the catalog was not found, an attempt is made to download it from the `IHO OHI GitHub repository <https://raw.githubusercontent.com/iho-ohi/S-101-Documentation-and-FC/fbcf8aaa72331a33668aa554e702e2a28f27cbc0/S-101FC/FeatureCatalogue.xml>`__
 and cache it in :file:`$HOME/.gdal/101_Feature_Catalogue_2.0.0.xml`.
 
 See Also
