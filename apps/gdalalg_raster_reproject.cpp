@@ -220,6 +220,8 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLStringList aosOptions;
     std::string outputFilename;
 
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
+
     // --like provide defaults: override if not explicitly set
     if (auto poLikeDS = m_likeDataset.GetDatasetRef())
     {
