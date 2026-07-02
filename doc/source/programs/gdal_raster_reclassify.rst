@@ -88,9 +88,9 @@ Program-Specific Options
 
 .. option:: --keep-color-table
 
-   Preserve the color table of the input raster bands in the output.
-
    .. versionadded:: 3.14
+
+   Preserve the color table of the input raster bands in the output.
 
 .. option:: -m, --mapping <MAPPING>
 
