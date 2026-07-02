@@ -19,6 +19,7 @@ import shutil
 import struct
 import sys
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -762,3 +763,23 @@ def test_histogram_min_equal_max():
 
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
     assert ds.GetRasterBand(1).GetDefaultHistogram() == (-0.5, 0.5, 1, [1])
+
+
+###############################################################################
+
+
+def test_histogram_int_large_nodata():
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    data = np.array([[0, 4000000005], [4000000000, 4000000030]])
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_UInt32)
+    ds.GetRasterBand(1).WriteArray(data)
+    ds.GetRasterBand(1).SetNoDataValue(4000000000)
+
+    hist = ds.GetRasterBand(1).GetDefaultHistogram()
+
+    # raster has 3 valid pixels
+    assert np.array(hist[3]).sum() == 3
