@@ -6488,7 +6488,9 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
     }
 
     if (sNoDataValues.bGotNoDataValue &&
-        ARE_REAL_EQUAL(dfValue, sNoDataValues.dfNoDataValue))
+        (GDALDataTypeIsInteger(eDataType)
+             ? dfValue == sNoDataValues.dfNoDataValue
+             : ARE_REAL_EQUAL(dfValue, sNoDataValues.dfNoDataValue)))
     {
         bValid = false;
         return 0.0;
