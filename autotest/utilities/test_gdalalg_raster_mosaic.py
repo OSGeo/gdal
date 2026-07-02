@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import re
+
 import gdaltest
 import pytest
 
@@ -407,16 +409,21 @@ def test_gdalalg_raster_mosaic_inconsistent_characteristics():
     src1_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     src2_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     src2_ds.SetGeoTransform([3, 0.5, 0, 49, 0, -0.5])
-    srs = osr.SpatialReference()
-    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    srs.SetFromUserInput("WGS84")
-    src2_ds.SetSpatialRef(srs)
+
+    srs1 = osr.SpatialReference(epsg=2953)
+    src1_ds.SetSpatialRef(srs1)
+
+    srs2 = osr.SpatialReference("EPSG:2953+6647")
+    src2_ds.SetSpatialRef(srs2)
 
     alg = get_mosaic_alg()
     alg["input"] = [src1_ds, src2_ds]
     alg["output-format"] = "stream"
     with pytest.raises(
-        Exception, match="gdal raster mosaic does not support heterogeneous projection"
+        Exception,
+        match=re.escape(
+            'expected "NAD83(CSRS) / New Brunswick Stereographic", got "NAD83(CSRS) / New Brunswick Stereographic + CGVD2013(CGG2013) height"'
+        ),
     ):
         assert alg.Run()
 
