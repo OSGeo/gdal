@@ -78,7 +78,8 @@ class CPLNasaEarthdataCredentialProvider
      */
     const std::string &GetAccessKeyId()
     {
-        RefreshIfNeeded();
+        std::lock_guard oLock(m_oMutex);
+        RefreshIfNeededUnderLock();
         return m_osAccessKeyId;
     }
 
@@ -88,7 +89,8 @@ class CPLNasaEarthdataCredentialProvider
      */
     const std::string &GetSecretAccessKey()
     {
-        RefreshIfNeeded();
+        std::lock_guard oLock(m_oMutex);
+        RefreshIfNeededUnderLock();
         return m_osSecretAccessKey;
     }
 
@@ -98,7 +100,8 @@ class CPLNasaEarthdataCredentialProvider
      */
     const std::string &GetSessionToken()
     {
-        RefreshIfNeeded();
+        std::lock_guard oLock(m_oMutex);
+        RefreshIfNeededUnderLock();
         return m_osSessionToken;
     }
 
@@ -108,12 +111,12 @@ class CPLNasaEarthdataCredentialProvider
   private:
     CPLNasaEarthdataCredentialProvider();
 
-    bool RefreshIfNeeded();
+    bool RefreshIfNeededUnderLock();
 
     std::string m_osGetCredentialsURL{};
     std::string m_osEarthdataToken{};
 
-    // Output of RefreshIfNeeded()
+    // Output of RefreshIfNeededUnderLock()
     std::mutex m_oMutex{};
     std::string m_osAccessKeyId{};
     std::string m_osSecretAccessKey{};

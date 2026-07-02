@@ -1284,11 +1284,11 @@ CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
             // Otherwise do layer translation.
             if (!bAlreadyDone)
             {
-                char **papszOptions = CSLAddString(nullptr, "-f");
-                papszOptions = CSLAddString(papszOptions, "GeoJSON");
+                const char *const apszOpenOptions[] = {"-f", "GeoJSON",
+                                                       nullptr};
                 GDALVectorTranslateOptions *psOptions =
-                    GDALVectorTranslateOptionsNew(papszOptions, nullptr);
-                CSLDestroy(papszOptions);
+                    GDALVectorTranslateOptionsNew(
+                        const_cast<char **>(apszOpenOptions), nullptr);
                 GDALDatasetH hSrcDS = this;
                 CPLString osNewFilename(pszName_);
                 osNewFilename += ".tmp";

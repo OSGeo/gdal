@@ -39,6 +39,11 @@ GDALVectorSetGeomTypeAlgorithm::GDALVectorSetGeomTypeAlgorithm(
 
     AddGeometryTypeArg(&m_opts.m_type);
 
+    AddArg("auto", 0,
+           _("Automatically determines the most restrictive geometry type that "
+             "fits all features of a layer"),
+           &m_opts.m_auto);
+
     AddArg("multi", 0, _("Force geometries to MULTI geometry types"),
            &m_opts.m_multi)
         .SetMutualExclusionGroup("multi-single");
@@ -128,9 +133,55 @@ GDALVectorSetGeomTypeAlgorithmLayer::GDALVectorSetGeomTypeAlgorithmLayer(
           oSrcLayer, opts),
       m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
 {
-    if (!m_opts.m_featureGeomOnly)
+    const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+    if (m_opts.m_auto)
     {
-        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+        std::vector<OGRwkbGeometryType> aeGeomTypes;
+        for (int i = 0; i < nGeomFieldCount; ++i)
+        {
+            aeGeomTypes.push_back(
+                m_poFeatureDefn->GetGeomFieldDefn(i)->GetType());
+        }
+        std::vector<bool> abGeomTypeInit(nGeomFieldCount, false);
+
+        // Iterate over all features to find the most "restricted" geometry type
+        // that can fit all their geometries.
+        for (auto &&poSrcFeature : oSrcLayer)
+        {
+            for (int i = 0; i < nGeomFieldCount; ++i)
+            {
+                if (IsSelectedGeomField(i))
+                {
+                    const auto poGeom = poSrcFeature->GetGeomFieldRef(i);
+                    if (poGeom)
+                    {
+                        if (!abGeomTypeInit[i])
+                        {
+                            aeGeomTypes[i] = poGeom->getGeometryType();
+                            abGeomTypeInit[i] = true;
+                        }
+                        else if (wkbFlatten(aeGeomTypes[i]) != wkbUnknown)
+                        {
+                            aeGeomTypes[i] = OGRMergeGeometryTypesEx(
+                                aeGeomTypes[i], poGeom->getGeometryType(),
+                                /* bAllowPromotingToCurves = */ true);
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < nGeomFieldCount; ++i)
+        {
+            if (IsSelectedGeomField(i))
+            {
+                auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
+                poGeomFieldDefn->SetType(aeGeomTypes[i]);
+            }
+        }
+    }
+    else if (!m_opts.m_featureGeomOnly)
+    {
+        for (int i = 0; i < nGeomFieldCount; ++i)
         {
             if (IsSelectedGeomField(i))
             {
@@ -263,6 +314,16 @@ GDALVectorSetGeomTypeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 
 bool GDALVectorSetGeomTypeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
+    if (m_opts.m_auto &&
+        (!m_opts.m_type.empty() || m_opts.m_multi || m_opts.m_single ||
+         m_opts.m_linear || m_opts.m_curve || !m_opts.m_dim.empty()))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "--auto cannot be used with any of "
+                    "--geometry-type/multi/single/linear/multi/dim");
+        return false;
+    }
+
     if (!m_opts.m_type.empty())
     {
         if (m_opts.m_multi || m_opts.m_single || m_opts.m_linear ||

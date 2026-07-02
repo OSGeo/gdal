@@ -405,6 +405,10 @@ GDALComputedDataset::GDALComputedDataset(
     SetBand(1, poBand);
 
     AddSources(poBand);
+
+    // Otherwise coverity scan suggets adding annoying std::move()s
+    CPL_IGNORE_RET_VAL(osFirstBand);
+    CPL_IGNORE_RET_VAL(osSecondBand);
 }
 
 /************************************************************************/
@@ -424,7 +428,7 @@ GDALComputedDataset::GDALComputedDataset(
         const auto [bIsExprBand, name] = AddSourceBand(poIterBand);
         bCanUseBuiltin = bCanUseBuiltin && !bIsExprBand;
         if (!bIsExprBand)
-            aosNames.push_back(name);
+            aosNames.push_back(std::move(name));
         else
             aosNames.push_back(std::string("(").append(name).append(")"));
     }

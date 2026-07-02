@@ -22,6 +22,7 @@ array
 array-option
 ascii
 attribute-name
+auto
 aux-xml
 auxiliary
 azimuth
@@ -137,6 +138,7 @@ interval
 invert
 invisible-value
 join-style
+keep-color-table
 keep-lower-dim
 keep-nested
 kernel

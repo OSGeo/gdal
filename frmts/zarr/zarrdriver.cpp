@@ -2232,6 +2232,7 @@ class ZARRAddGeoreferencingConventionAlgorithm final : public GDALAlgorithm
                           "dataset"),
               "/programs/gdal_driver_zarr_add_georeferencing_convention.html")
     {
+        AddProgressArg(/* hidden = */ true);
         AddInputDatasetArg(&m_dataset,
                            GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
         AddArg("convention", 0, _("Georeferencing convention"),

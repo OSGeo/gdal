@@ -2281,9 +2281,10 @@ def test_netcdf_55(tmp_path):
 # Test truncation of bidimensional char variables and WKT in a vector NetCDF 3 file
 
 
+@gdaltest.disable_exceptions()
 def test_netcdf_56(tmp_path):
 
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
     ds = ogr.GetDriverByName("netCDF").CreateDataSource(
         ofile, options=["GEOMETRY_ENCODING=WKT"]
     )
@@ -2300,19 +2301,19 @@ def test_netcdf_56(tmp_path):
     lyr.CreateField(ogr.FieldDefn("txt"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["txt"] = "0123456789"
+
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-    with gdal.quiet_errors():
-        ret = lyr.CreateFeature(f)
-    assert ret == 0
+    with gdaltest.error_raised(gdal.CE_Failure, "Cannot write geometry as WKT"):
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
     ds = None
 
+    # Although CreateFeature raised an exception, the feature was still created.
     ds = gdal.Open(ofile, gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetFeature(lyr.GetFeatureCount())
-    if f["txt"] != "01234" or f.GetGeometryRef() is not None:
-        f.DumpReadable()
-        pytest.fail()
+    assert f["txt"] == "01234"
+    assert f.GetGeometryRef() is None
     ds = None
 
 

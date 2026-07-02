@@ -50,6 +50,8 @@ GDALVectorCreateAlgorithm::GDALVectorCreateAlgorithm(bool standaloneStep)
               .SetAddSkipErrorsArgument(false)
               .SetAddAppendLayerArgument(false))
 {
+    if (standaloneStep)
+        AddProgressArg(/* hidden = */ true);
 
     AddVectorInputArgs(false);
     AddVectorOutputArgs(/* hiddenForCLI = */ false,

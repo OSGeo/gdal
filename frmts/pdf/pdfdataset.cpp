@@ -7800,6 +7800,7 @@ class GDALPDFListLayersAlgorithm final : public GDALAlgorithm
                         std::string("List layers of a PDF dataset"),
                         "/drivers/raster/pdf.html")
     {
+        AddProgressArg(/* hidden = */ true);
         AddInputDatasetArg(&m_dataset, GDAL_OF_RASTER | GDAL_OF_VECTOR);
         AddOutputFormatArg(&m_format).SetDefault(m_format).SetChoices("json",
                                                                       "text");

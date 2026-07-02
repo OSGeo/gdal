@@ -606,6 +606,8 @@ class OGRGeoPackageRepackAlgorithm final : public GDALAlgorithm
         : GDALAlgorithm("repack", "Repack/vacuum in-place a GeoPackage dataset",
                         "/programs/gdal_driver_gpkg_repack.html")
     {
+        AddProgressArg(/* hidden = */ true);
+
         constexpr int type = GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE;
         auto &arg =
             AddArg("dataset", 0, _("GeoPackage dataset"), &m_dataset, type)

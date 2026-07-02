@@ -39,6 +39,7 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm(bool standaloneStep,
 {
     if (standaloneStep)
     {
+        AddProgressArg(/* hidden = */ true);
         AddMdimInputArgs(openForMixedRasterVector,
                          /* hiddenForCLI = */ false,
                          /* acceptRaster = */ false);

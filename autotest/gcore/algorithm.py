@@ -640,3 +640,18 @@ def test_algorithm_mutual_dependency_group(tmp_path):
         match=r"Argument\(s\) 'input-max' require\(s\) that the following argument\(s\) are also specified: input-min.",
     ):
         alg.Run()
+
+
+def test_gdalalgorithm_check_quiet():
+
+    def check(alg):
+        print(alg.GetName())
+        subalgs = alg.GetSubAlgorithmNames()
+        if subalgs:
+            for subalgname in subalgs:
+                subalg = alg[subalgname]
+                check(subalg)
+        else:
+            assert alg.GetArg("quiet"), alg.GetName()
+
+    check(gdal.GetGlobalAlgorithmRegistry()["gdal"])

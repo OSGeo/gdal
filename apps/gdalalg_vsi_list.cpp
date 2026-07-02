@@ -32,6 +32,8 @@
 GDALVSIListAlgorithm::GDALVSIListAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_oWriter(JSONPrint, this)
 {
+    AddProgressArg(/* hidden = */ true);
+
     auto &arg = AddArg("filename", 0, _("File or directory name"), &m_filename)
                     .SetPositional()
                     .SetRequired();

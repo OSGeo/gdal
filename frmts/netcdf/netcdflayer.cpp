@@ -1975,12 +1975,14 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     else if (m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
              poGeom != nullptr && m_bLegacyCreateMode)
     {
-        char *pszWKT = nullptr;
-        poGeom->exportToWkt(&pszWKT, wkbVariantIso);
-        int status;
+        OGRWktOptions opts;
+        opts.variant = wkbVariantIso;
+
+        std::string osWKT = poGeom->exportToWkt(opts);
+        int status = NC_NOERR;
         if (m_nWKTNCDFType == NC_STRING)
         {
-            const char *pszWKTConst = pszWKT;
+            const char *pszWKTConst = osWKT.c_str();
             status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
                                         &pszWKTConst);
         }
@@ -1988,7 +1990,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             size_t anCount[2];
             anCount[0] = 1;
-            anCount[1] = strlen(pszWKT);
+            anCount[1] = osWKT.size();
             if (anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth))
             {
                 if (m_bAutoGrowStrings)
@@ -2005,7 +2007,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     m_nWKTMaxWidth = static_cast<int>(nNewSize);
 
                     status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID,
-                                              anIndex, anCount, pszWKT);
+                                              anIndex, anCount, osWKT.c_str());
                 }
                 else
                 {
@@ -2013,16 +2015,16 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                              "Cannot write geometry as WKT. Would require %d "
                              "characters but field width is %d",
                              static_cast<int>(anCount[1]), m_nWKTMaxWidth);
-                    status = NC_NOERR;
+                    status =
+                        NC_EEDGE;  // error that would be returned had we called nc_put_var_text
                 }
             }
             else
             {
                 status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID, anIndex,
-                                          anCount, pszWKT);
+                                          anCount, osWKT.c_str());
             }
         }
-        CPLFree(pszWKT);
         NCDF_ERR(status);
         if (status != NC_NOERR)
         {

@@ -86,6 +86,12 @@ These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other co
 Program-Specific Options
 ------------------------
 
+.. option:: --keep-color-table
+
+   .. versionadded:: 3.14
+
+   Preserve the color table of the input raster bands in the output.
+
 .. option:: -m, --mapping <MAPPING>
 
    A definition of mappings between input and output pixel values, as described above.

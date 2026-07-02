@@ -49,6 +49,7 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm(bool standaloneStep)
 {
     if (standaloneStep)
     {
+        AddProgressArg(/* hidden = */ true);
         AddOutputFormatArg(&m_format, false, false,
                            _("Output format (default is 'GeoJSON' if "
                              "'position-dataset' not specified)"))

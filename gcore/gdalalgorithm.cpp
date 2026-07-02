@@ -5254,7 +5254,8 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
 
     fieldArg.SetAutoCompleteFunction(
         [&datasetArg, layerNameArg, attributeFields, geometryFields,
-         extraValues, filterFn](const std::string &currentValue)
+         extraValues,
+         filterFn = std::move(filterFn)](const std::string &currentValue)
         {
             std::set<std::string> ret{};
             if (!datasetArg.empty())
@@ -6318,13 +6319,16 @@ GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
 /*                   GDALAlgorithm::AddProgressArg()                    */
 /************************************************************************/
 
-void GDALAlgorithm::AddProgressArg()
+void GDALAlgorithm::AddProgressArg(bool hidden)
 {
-    AddArg(GDAL_ARG_NAME_QUIET, 'q',
-           _("Quiet mode (no progress bar or warning message)"), &m_quiet)
-        .SetAvailableInPipelineStep(false)
-        .SetCategory(GAAC_COMMON)
-        .AddAction([this]() { m_progressBarRequested = false; });
+    auto &arg =
+        AddArg(GDAL_ARG_NAME_QUIET, 'q',
+               _("Quiet mode (no progress bar or warning message)"), &m_quiet)
+            .SetAvailableInPipelineStep(false)
+            .SetCategory(GAAC_COMMON)
+            .AddAction([this]() { m_progressBarRequested = false; });
+    if (hidden)
+        arg.SetHidden();
 
     AddArg("progress", 0, _("Display progress bar"), &m_progressBarRequested)
         .SetAvailableInPipelineStep(false)

@@ -172,10 +172,10 @@ CPLNasaEarthdataCredentialProvider::Build(
     {
         CPLStringList aosOptions;
         aosOptions.SetNameValue("CUSTOMREQUEST", "POST");
-        aosOptions.SetNameValue("USERPWD", std::string(l_osEarthdataUsername)
-                                               .append(":")
-                                               .append(l_osEarthdataPassword)
-                                               .c_str());
+        std::string osUserPwd = std::move(l_osEarthdataUsername);
+        osUserPwd += ':';
+        osUserPwd += l_osEarthdataPassword;
+        aosOptions.SetNameValue("USERPWD", osUserPwd.c_str());
         aosOptions.SetNameValue("ACCEPT", "application/json");
         std::string osURL;
         if (!cpl::starts_with(l_osEarthdataHost, "http://") &&
@@ -244,20 +244,19 @@ CPLNasaEarthdataCredentialProvider::Build(
     auto poProvider = std::unique_ptr<CPLNasaEarthdataCredentialProvider>(
         new CPLNasaEarthdataCredentialProvider());
     poProvider->m_osGetCredentialsURL = osGetCredentialsURL;
-    poProvider->m_osEarthdataToken = l_osEarthdataToken;
-    if (!poProvider->RefreshIfNeeded())
+    poProvider->m_osEarthdataToken = std::move(l_osEarthdataToken);
+    std::lock_guard oLock(poProvider->m_oMutex);
+    if (!poProvider->RefreshIfNeededUnderLock())
         return nullptr;
     return poProvider;
 }
 
 /************************************************************************/
-/*        CPLNasaEarthdataCredentialProvider::RefreshIfNeeded()         */
+/*    CPLNasaEarthdataCredentialProvider::RefreshIfNeededUnderLock()    */
 /************************************************************************/
 
-bool CPLNasaEarthdataCredentialProvider::RefreshIfNeeded()
+bool CPLNasaEarthdataCredentialProvider::RefreshIfNeededUnderLock()
 {
-    std::lock_guard oLock(m_oMutex);
-
     constexpr int knExpirationDelayMargin = 60;
     if (m_osAccessKeyId.empty() ||
         time(nullptr) + knExpirationDelayMargin > m_nTokenExpirationTimestamp)

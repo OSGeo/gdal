@@ -119,6 +119,7 @@ int PDS4DriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return strstr(pszStr, "Product_Observational") != nullptr ||
                strstr(pszStr, "Product_Ancillary") != nullptr ||
+               strstr(pszStr, "Product_Browse") != nullptr ||
                strstr(pszStr, "Product_Collection") != nullptr;
     };
     const auto HasPDS4Schema = [](const char *pszStr)

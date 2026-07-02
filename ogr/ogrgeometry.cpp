@@ -3106,12 +3106,6 @@ OGRwkbGeometryType OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain,
     {
         if (OGR_GT_IsCurve(eFMain) && OGR_GT_IsCurve(eFExtra))
             return OGR_GT_SetModifier(wkbCompoundCurve, bHasZ, bHasM);
-
-        if (OGR_GT_IsSubClassOf(eFMain, eFExtra))
-            return OGR_GT_SetModifier(eFExtra, bHasZ, bHasM);
-
-        if (OGR_GT_IsSubClassOf(eFExtra, eFMain))
-            return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
     }
 
     // One is subclass of the other one
@@ -3122,6 +3116,15 @@ OGRwkbGeometryType OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain,
     else if (OGR_GT_IsSubClassOf(eFExtra, eFMain))
     {
         return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
+    }
+
+    if (OGR_GT_GetSingle(eFMain) == eFExtra)
+    {
+        return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
+    }
+    else if (OGR_GT_GetSingle(eFExtra) == eFMain)
+    {
+        return OGR_GT_SetModifier(eFExtra, bHasZ, bHasM);
     }
 
     // Nothing apparently in common.
