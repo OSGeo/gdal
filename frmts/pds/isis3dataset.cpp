@@ -2017,8 +2017,45 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     OGRSpatialReference oSRS;
     bool bProjectionSet = true;
 
-    if ((EQUAL(map_proj_name, "Equirectangular")) ||
-        (EQUAL(map_proj_name, "SimpleCylindrical")))
+    // The ISIS IProj projection (ProjectionName = IProj) carries its full
+    // definition in a ProjStr PROJ string. When present, use it directly and
+    // skip the per-parameter reconstruction below.
+    const char *pszProjStr = poDS->GetKeyword("IsisCube.Mapping.ProjStr", "");
+    if (pszProjStr[0] != '\0')
+    {
+        // A ProjStr that spans several label lines comes back with the line
+        // breaks embedded as literal "\n" (plus indentation), or as real
+        // control characters. Turn those into spaces before handing it to PROJ.
+        std::string osProjStr;
+        for (const char *pszIter = pszProjStr; *pszIter; ++pszIter)
+        {
+            if (pszIter[0] == '\\' &&
+                (pszIter[1] == 'n' || pszIter[1] == 'r' || pszIter[1] == 't'))
+            {
+                osProjStr += ' ';
+                ++pszIter;
+            }
+            else if (*pszIter == '\n' || *pszIter == '\r' || *pszIter == '\t')
+                osProjStr += ' ';
+            else
+                osProjStr += *pszIter;
+        }
+
+        if (oSRS.SetFromUserInput(osProjStr.c_str()) == OGRERR_NONE)
+        {
+            oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poDS->m_oSRS = std::move(oSRS);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot parse ProjStr '%s' from ISIS3 Mapping group.",
+                     osProjStr.c_str());
+        }
+        bProjectionSet = false;
+    }
+    else if ((EQUAL(map_proj_name, "Equirectangular")) ||
+             (EQUAL(map_proj_name, "SimpleCylindrical")))
     {
         oSRS.SetEquirectangular2(0.0, center_lon, center_lat, 0, 0);
     }
