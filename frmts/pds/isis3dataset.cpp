@@ -2041,7 +2041,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                 osProjStr += *pszIter;
         }
 
-        if (oSRS.SetFromUserInput(osProjStr.c_str()) == OGRERR_NONE)
+        if (oSRS.importFromProj4(osProjStr.c_str()) == OGRERR_NONE)
         {
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poDS->m_oSRS = std::move(oSRS);
