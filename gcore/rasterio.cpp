@@ -5048,16 +5048,14 @@ CPLErr GDALDataset::BlockBasedRasterIO(
         for (iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff += nChunkYSize)
         {
             const int nChunkYOff = iBufYOff + nYOff;
-            nChunkYSize = nBlockYSize - (nChunkYOff % nBlockYSize);
-            if (nChunkYOff + nChunkYSize > nYOff + nYSize)
-                nChunkYSize = (nYOff + nYSize) - nChunkYOff;
+            nChunkYSize = std::min(nBlockYSize - (nChunkYOff % nBlockYSize),
+                                   (nYOff + nYSize) - nChunkYOff);
 
             for (iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff += nChunkXSize)
             {
                 const int nChunkXOff = iBufXOff + nXOff;
-                nChunkXSize = nBlockXSize - (nChunkXOff % nBlockXSize);
-                if (nChunkXOff + nChunkXSize > nXOff + nXSize)
-                    nChunkXSize = (nXOff + nXSize) - nChunkXOff;
+                nChunkXSize = std::min(nBlockXSize - (nChunkXOff % nBlockXSize),
+                                       (nXOff + nXSize) - nChunkXOff);
 
                 GByte *pabyChunkData =
                     static_cast<GByte *>(pData) + iBufXOff * nPixelSpace +
