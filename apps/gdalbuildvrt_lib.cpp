@@ -443,7 +443,8 @@ static CPLString GetProjectionName(const char *pszProjection)
     OGRSpatialReference oSRS;
     oSRS.SetFromUserInput(pszProjection);
 
-    return oSRS.GetName();
+    const char *pszName = oSRS.GetName();
+    return pszName ? pszName : "(null)";
 }
 
 /************************************************************************/
