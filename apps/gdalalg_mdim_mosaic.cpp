@@ -90,7 +90,10 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
     desc.osDirection = poDim->GetDirection();
     const auto nSize = poDim->GetSize();
     if (poVar)
+    {
         desc.attributes = poVar->GetAttributes();
+        desc.osUnit = poVar->GetUnit();
+    }
     CPLAssert(nSize > 0);
     desc.nSize = nSize;
     desc.bHasIndexingVar = poVar != nullptr;
@@ -756,6 +759,11 @@ bool GDALMdimMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                             CPL_IGNORE_RET_VAL(
                                 dstAttr->Write(raw.data(), raw.size()));
                         }
+                    }
+                    if (!desc.osUnit.empty())
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        var->SetUnit(desc.osUnit);
                     }
 
                     if (desc.aaValues.empty())
