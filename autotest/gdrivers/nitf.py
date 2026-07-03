@@ -3123,6 +3123,17 @@ def test_nitf_73():
 
 
 ###############################################################################
+# Test reading an image subheader whose user TRE data is not NUL-terminated
+# (heap-buffer-overflow read in NITFImageAccess when parsing the first tag).
+
+
+def test_nitf_image_tre_oob_read():
+
+    with gdal.quiet_errors():
+        gdal.Open("data/nitf/image_tre_oob.ntf")
+
+
+###############################################################################
 # Test cases for CCLSTA
 #  - Simple case
 
