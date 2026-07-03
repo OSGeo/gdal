@@ -226,4 +226,38 @@ def test_fast_9():
 
 
 ###############################################################################
+# The IRS P6 "BANDS PRESENT" list drives one band-file open per digit into
+# fixed-size arrays capped at MAX_FILES (7). A header repeating a band digit
+# used to walk past that array. Check the count is clamped to 7.
+
+
+def test_fast_bands_present_count():
+
+    header = bytearray(b" " * 1600)
+
+    def put(offset, text):
+        header[offset : offset + len(text)] = text.encode("ascii")
+
+    put(52, "ACQUISITION DATE =2006/01/01")
+    put(120, "SATELLITE =IRS P6")
+    put(160, "SENSOR =LISS")
+    put(200, "GENERATING AGENCY =EUROMAP")
+    put(260, "BANDS PRESENT =" + "2" * 32)
+    put(360, "PIXELS PER LINE =4")
+    put(400, "LINES PER BAND =4")
+    put(440, "OUTPUT BITS PER PIXEL =8")
+    put(500, "BIASES AND GAINS =" + "1.0 0.0 " * 8)
+
+    dirname = "/vsimem/test_fast_bands_present"
+    gdal.FileFromMemBuffer(dirname + "/hdr.fst", bytes(header))
+    gdal.FileFromMemBuffer(dirname + "/IMAGERY2.DAT", b"\x00" * 4096)
+    try:
+        ds = gdal.Open(dirname + "/hdr.fst")
+        assert ds is not None
+        assert ds.RasterCount == 7
+    finally:
+        gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
 #
