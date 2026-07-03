@@ -41,16 +41,16 @@
 
 // Base layers
 //  .. OpenStreetMap
-var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s, referrerPolicy: 'strict-origin-when-cross-origin'});
 
 //  .. CartoDB Positron
-var cartodb = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CartoDB</a>', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+var cartodb = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CartoDB</a>', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s, referrerPolicy: 'strict-origin-when-cross-origin'});
 
 //  .. White background
-var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: %(minzoom)s, maxZoom: %(maxzoom)s, referrerPolicy: 'strict-origin-when-cross-origin'});
 
 // Overlay layers (TMS)
-var lyr = L.tileLayer('./{z}/{x}/{y}.%(tileformat)s', {tms: %(tms)s, opacity: 0.7, attribution: "%(copyright)s", minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+var lyr = L.tileLayer('./{z}/{x}/{y}.%(tileformat)s', {tms: %(tms)s, opacity: 0.7, attribution: "%(copyright)s", minZoom: %(minzoom)s, maxZoom: %(maxzoom)s}, referrerPolicy: 'strict-origin-when-cross-origin');
 
 // Map
 var map = L.map('map', {
