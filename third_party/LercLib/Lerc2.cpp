@@ -25,6 +25,9 @@ Contributors:   Thomas Maurer
 #include "Defines.h"
 #include "Lerc2.h"
 
+#include <climits>
+#include <cstdint>
+
 USING_NAMESPACE_LERC
 using namespace std;
 
@@ -260,7 +263,8 @@ bool Lerc2::ReadHeader(const Byte** ppByte, size_t& nBytesRemainingInOut, struct
   hd.microBlockSize = intVec[i++];
   hd.blobSize       = intVec[i++];
   const int dt      = intVec[i++];
-  if( dt < DT_Char || dt > DT_Undefined )
+  if (hd.nRows <= 0 || hd.nCols <= 0 || hd.nDim <= 0 || hd.numValidPixel < 0
+    || hd.microBlockSize <= 0 || hd.blobSize <= 0 || dt < DT_Char || dt > DT_Double)
     return false;
   hd.dt             = static_cast<DataType>(dt);
 
@@ -268,7 +272,8 @@ bool Lerc2::ReadHeader(const Byte** ppByte, size_t& nBytesRemainingInOut, struct
   hd.zMin           = dblVec[1];
   hd.zMax           = dblVec[2];
 
-  if (hd.nRows <= 0 || hd.nCols <= 0 || hd.nDim <= 0 || hd.numValidPixel < 0 || hd.microBlockSize <= 0 || hd.blobSize <= 0)
+  const uint64_t numPixel = (uint64_t)hd.nRows * hd.nCols;
+  if (numPixel > (uint64_t)INT_MAX || (uint64_t)hd.numValidPixel > numPixel)
     return false;
 
   *ppByte = ptr;
