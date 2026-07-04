@@ -6918,6 +6918,21 @@ def test_netcdf_open_geotransform_gt5_positive():
 
 
 ###############################################################################
+# GdalCf https://github.com/OSGeo/gdal/issues/14877
+
+
+def test_netcdf_open_geotransform_notgdalcf():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.Open("data/netcdf/short_geotransform_notgdalcf.nc")
+    assert [x for x in ds.GetGeoTransform()] == pytest.approx(
+        [-1427500.0, 5000.0, 0.0, 5592500.0, 0.0, -5000.0]
+    )
+    assert ds.GetRasterBand(1).Checksum() == 1487
+    assert ds.GetRasterBand(3).Checksum() == 1655
+
+
+###############################################################################
 #
 
 
