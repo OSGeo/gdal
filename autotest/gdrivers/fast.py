@@ -231,7 +231,7 @@ def test_fast_9():
 # used to walk past that array. Check the count is clamped to 7.
 
 
-def test_fast_bands_present_count():
+def test_fast_bands_present_count(tmp_vsimem):
 
     header = bytearray(b" " * 1600)
 
@@ -248,15 +248,12 @@ def test_fast_bands_present_count():
     put(440, "OUTPUT BITS PER PIXEL =8")
     put(500, "BIASES AND GAINS =" + "1.0 0.0 " * 8)
 
-    dirname = "/vsimem/test_fast_bands_present"
+    dirname = str(tmp_vsimem / "test_fast_bands_present")
     gdal.FileFromMemBuffer(dirname + "/hdr.fst", bytes(header))
     gdal.FileFromMemBuffer(dirname + "/IMAGERY2.DAT", b"\x00" * 4096)
-    try:
-        ds = gdal.Open(dirname + "/hdr.fst")
-        assert ds is not None
-        assert ds.RasterCount == 7
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = gdal.Open(dirname + "/hdr.fst")
+    assert ds is not None
+    assert ds.RasterCount == 7
 
 
 ###############################################################################
