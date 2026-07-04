@@ -101,7 +101,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
   USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)
-  KEA -raster- (rw+uv): KEA Image Format (.kea) (*.kea)
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   S102 -raster,multidimensional raster- (rwvs): S-102 Bathymetric Surface Product (*.h5)
   S104 -raster,multidimensional raster- (rwvs): S-104 Water Level Information for Surface Navigation Product (*.h5)
