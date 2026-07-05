@@ -92,18 +92,24 @@ if (GDAL_DEV_SUFFIX)
 endif ()
 
 # --- Detect architecture ---
-string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _proc)
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_GENERATOR_PLATFORM)
+    # For Visual Studio generators, CMAKE_SYSTEM_PROCESSOR describes the host.
+    # Use the target platform so 32-bit builds generate win-x86, not win-x64.
+    string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" _proc)
+else()
+    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _proc)
+endif()
 
-if(_proc MATCHES "^(x86_64|amd64)$")
+if(_proc MATCHES "^(x86_64|amd64|x64)$")
     set(_arch "x64")
 elseif(_proc MATCHES "^(aarch64|arm64)$")
     set(_arch "arm64")
 elseif(_proc MATCHES "^(armv7|arm)$")
     set(_arch "arm")
-elseif(_proc MATCHES "^(i[3-6]86|x86)$")
+elseif(_proc MATCHES "^(i[3-6]86|x86|win32)$")
     set(_arch "x86")
 else()
-    message(WARNING "Unknown architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+    message(WARNING "Unknown architecture: ${_proc}")
     set(_arch "x64")  # fallback
 endif()
 
