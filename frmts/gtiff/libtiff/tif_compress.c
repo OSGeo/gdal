@@ -157,7 +157,6 @@ void _TIFFSetDefaultCompressionState(TIFF *tif)
     tif->tif_decodestatus = TRUE;
     tif->tif_setupdecode = _TIFFtrue;
     tif->tif_predecode = _TIFFNoPreCode;
-    tif->tif_postdecode = _TIFFNoPostDecode;
     tif->tif_decoderow = _TIFFNoRowDecode;
     tif->tif_decodestrip = _TIFFNoStripDecode;
     tif->tif_decodetile = _TIFFNoTileDecode;
