@@ -690,7 +690,8 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
                                          BANDS_PRESENT_SIZE, TRUE);
                 if (pszTemp)
                 {
-                    for (int i = 0; pszTemp[i] != '\0'; i++)
+                    for (int i = 0; pszTemp[i] != '\0' && l_nBands < MAX_FILES;
+                         i++)
                     {
                         if (pszTemp[i] >= '2' && pszTemp[i] <= '5')
                         {
