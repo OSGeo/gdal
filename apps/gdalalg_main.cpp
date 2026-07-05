@@ -71,6 +71,8 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
             GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate("pipeline");
         if (m_subAlg)
         {
+            if (IsCalledFromCommandLine())
+                m_subAlg->SetCalledFromCommandLine();
             bool ret = m_subAlg->ParseCommandLineArguments(args);
             if (ret)
             {
@@ -88,7 +90,7 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
             }
         }
 
-        return GDALAlgorithm::ParseCommandLineArguments(args);
+        return false;
     }
     else if (args.size() == 1 && args[0].size() >= 2 && args[0][0] == '-' &&
              args[0][1] == '-')

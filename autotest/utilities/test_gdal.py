@@ -939,3 +939,11 @@ def test_gdal_symlink(gdal_path, tmp_path):
     out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} {tmp_path}/symlink.tif")
     assert out.startswith("Driver: GTiff/GeoTIFF")
     assert err == ""
+
+
+def test_gdal_implicit_pipeline_must_have_two_steps(gdal_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} read ../gcore/data/byte.tif"
+    )
+    assert "pipeline: At least 2 steps must be provided" in err
