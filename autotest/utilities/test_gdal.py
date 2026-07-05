@@ -12,6 +12,7 @@
 ###############################################################################
 
 import json
+import os
 
 import gdaltest
 import pytest
@@ -745,3 +746,20 @@ def test_gdal_drivers():
         j = alg.Output()
         assert "GTiff" in [x["short_name"] for x in j]
         assert "ESRI Shapefile" in [x["short_name"] for x in j]
+
+
+###############################################################################
+# Test that we can open a symlink whose pointed filename isn't a real
+# file, but a filename that GDAL recognizes
+
+
+def test_gdal_symlink(gdal_path, tmp_path):
+
+    if not gdaltest.support_symlink():
+        pytest.skip()
+
+    os.symlink("GTIFF_DIR:1:../gcore/data/byte.tif", tmp_path / "symlink.tif")
+
+    out, err = gdaltest.runexternal_out_and_err(f"{gdal_path} {tmp_path}/symlink.tif")
+    assert out.startswith("Driver: GTiff/GeoTIFF")
+    assert err == ""

@@ -14,6 +14,10 @@
 
 #include "gdal_priv.h"
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -110,9 +114,15 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
     // where "read" is omitted: "gdal in.tif"
     {
         VSIStatBufL sStat;
+        std::vector<char> osResolvedFilename(2048);
         for (const auto &arg : args)
         {
-            if (VSIStatL(arg.c_str(), &sStat) == 0)
+            if (VSIStatL(arg.c_str(), &sStat) == 0
+#if !defined(_WIN32)
+                || readlink(arg.c_str(), osResolvedFilename.data(),
+                            osResolvedFilename.size()) != -1
+#endif
+            )
             {
                 m_subAlg =
                     GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
