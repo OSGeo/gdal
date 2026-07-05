@@ -8567,122 +8567,119 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 {
     auto psOptions = std::make_unique<GDALVectorTranslateOptions>();
 
-    /* -------------------------------------------------------------------- */
-    /*      Pre-processing for custom syntax that ArgumentParser does not   */
-    /*      support.                                                        */
-    /* -------------------------------------------------------------------- */
-
-    CPLStringList aosArgv;
-    const int nArgc = CSLCount(papszArgv);
-    int nCountClipSrc = 0;
-    int nCountClipDst = 0;
-    for (int i = 0;
-         i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
-    {
-        if (EQUAL(papszArgv[i], "-gcp"))
-        {
-            // repeated argument of varying size: not handled by argparse.
-
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            char *endptr = nullptr;
-            /* -gcp pixel line easting northing [elev] */
-
-            psOptions->asGCPs.resize(psOptions->asGCPs.size() + 1);
-            auto &sGCP = psOptions->asGCPs.back();
-
-            const auto oPixel = cpl::strict_parse<double>(papszArgv[++i]);
-            const auto oLine = cpl::strict_parse<double>(papszArgv[++i]);
-            const auto oX = cpl::strict_parse<double>(papszArgv[++i]);
-            const auto oY = cpl::strict_parse<double>(papszArgv[++i]);
-
-            if (!oPixel.has_value() || !oLine.has_value() || !oX.has_value() ||
-                !oY.has_value())
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -gcp value");
-                return nullptr;
-            }
-
-            sGCP.Pixel() = oPixel.value();
-            sGCP.Line() = oLine.value();
-            sGCP.X() = oX.value();
-            sGCP.Y() = oY.value();
-
-            if (papszArgv[i + 1] != nullptr &&
-                (CPLStrtod(papszArgv[i + 1], &endptr) != 0.0 ||
-                 papszArgv[i + 1][0] == '0'))
-            {
-                /* Check that last argument is really a number and not a
-                 * filename */
-                /* looking like a number (see ticket #863) */
-                if (endptr && *endptr == 0)
-                    sGCP.Z() = CPLAtof(papszArgv[++i]);
-            }
-
-            /* should set id and info? */
-        }
-
-        else if (EQUAL(papszArgv[i], "-clipsrc"))
-        {
-            if (nCountClipSrc)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Duplicate argument %s",
-                         papszArgv[i]);
-                return nullptr;
-            }
-            // argparse doesn't handle well variable number of values
-            // just before the positional arguments, so we have to detect
-            // it manually and set the correct number.
-            nCountClipSrc = 1;
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
-                i + 4 < nArgc)
-            {
-                nCountClipSrc = 4;
-            }
-
-            for (int j = 0; j < 1 + nCountClipSrc; ++j)
-            {
-                aosArgv.AddString(papszArgv[i]);
-                ++i;
-            }
-            --i;
-        }
-
-        else if (EQUAL(papszArgv[i], "-clipdst"))
-        {
-            if (nCountClipDst)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Duplicate argument %s",
-                         papszArgv[i]);
-                return nullptr;
-            }
-            // argparse doesn't handle well variable number of values
-            // just before the positional arguments, so we have to detect
-            // it manually and set the correct number.
-            nCountClipDst = 1;
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
-                i + 4 < nArgc)
-            {
-                nCountClipDst = 4;
-            }
-
-            for (int j = 0; j < 1 + nCountClipDst; ++j)
-            {
-                aosArgv.AddString(papszArgv[i]);
-                ++i;
-            }
-            --i;
-        }
-
-        else
-        {
-            aosArgv.AddString(papszArgv[i]);
-        }
-    }
-
     try
     {
+        // Pre-processing for custom syntax that ArgumentParser does not support
+
+        CPLStringList aosArgv;
+        const int nArgc = CSLCount(papszArgv);
+        int nCountClipSrc = 0;
+        int nCountClipDst = 0;
+        for (int i = 0;
+             i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
+        {
+            if (EQUAL(papszArgv[i], "-gcp"))
+            {
+                // repeated argument of varying size: not handled by argparse.
+
+                CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
+                char *endptr = nullptr;
+                /* -gcp pixel line easting northing [elev] */
+
+                psOptions->asGCPs.resize(psOptions->asGCPs.size() + 1);
+                auto &sGCP = psOptions->asGCPs.back();
+
+                const auto oPixel = cpl::strict_parse<double>(papszArgv[++i]);
+                const auto oLine = cpl::strict_parse<double>(papszArgv[++i]);
+                const auto oX = cpl::strict_parse<double>(papszArgv[++i]);
+                const auto oY = cpl::strict_parse<double>(papszArgv[++i]);
+
+                if (!oPixel.has_value() || !oLine.has_value() ||
+                    !oX.has_value() || !oY.has_value())
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -gcp value");
+                    return nullptr;
+                }
+
+                sGCP.Pixel() = oPixel.value();
+                sGCP.Line() = oLine.value();
+                sGCP.X() = oX.value();
+                sGCP.Y() = oY.value();
+
+                if (papszArgv[i + 1] != nullptr &&
+                    (CPLStrtod(papszArgv[i + 1], &endptr) != 0.0 ||
+                     papszArgv[i + 1][0] == '0'))
+                {
+                    /* Check that last argument is really a number and not a
+                     * filename */
+                    /* looking like a number (see ticket #863) */
+                    if (endptr && *endptr == 0)
+                        sGCP.Z() = CPLAtof(papszArgv[++i]);
+                }
+
+                /* should set id and info? */
+            }
+
+            else if (EQUAL(papszArgv[i], "-clipsrc"))
+            {
+                if (nCountClipSrc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Duplicate argument %s", papszArgv[i]);
+                    return nullptr;
+                }
+                // argparse doesn't handle well variable number of values
+                // just before the positional arguments, so we have to detect
+                // it manually and set the correct number.
+                nCountClipSrc = 1;
+                CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+                if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
+                    i + 4 < nArgc)
+                {
+                    nCountClipSrc = 4;
+                }
+
+                for (int j = 0; j < 1 + nCountClipSrc; ++j)
+                {
+                    aosArgv.AddString(papszArgv[i]);
+                    ++i;
+                }
+                --i;
+            }
+
+            else if (EQUAL(papszArgv[i], "-clipdst"))
+            {
+                if (nCountClipDst)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Duplicate argument %s", papszArgv[i]);
+                    return nullptr;
+                }
+                // argparse doesn't handle well variable number of values
+                // just before the positional arguments, so we have to detect
+                // it manually and set the correct number.
+                nCountClipDst = 1;
+                CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+                if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
+                    i + 4 < nArgc)
+                {
+                    nCountClipDst = 4;
+                }
+
+                for (int j = 0; j < 1 + nCountClipDst; ++j)
+                {
+                    aosArgv.AddString(papszArgv[i]);
+                    ++i;
+                }
+                --i;
+            }
+
+            else
+            {
+                aosArgv.AddString(papszArgv[i]);
+            }
+        }
+
         auto argParser = GDALVectorTranslateOptionsGetParser(
             psOptions.get(), psOptionsForBinary, nCountClipSrc, nCountClipDst);
 
