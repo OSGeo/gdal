@@ -90,25 +90,25 @@ Conferences
 Upcoming
 ++++++++
 
-* European event:
-
- .. image::   ../../images/community/foss4geurope2026.png
-    :alt:     FOSS4G Europe 2026
-    :target:  https://2026.europe.foss4g.org/
-
- `FOSS4G Europe 2026 <https://2026.foss4g.org/>`__, 29 June - 3 July 2026, Timișoara, România
-
- .. spelling:word-list::
-        Timișoara
-        România
-
 * International event:
 
  .. image::   ../../images/community/foss4g2026.png
     :alt:     FOSS4G 2026
     :target:  https://2026.foss4g.org/
 
- `FOSS4G 2026 <https://2026.foss4g.org/>`__ is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+ `FOSS4G 2026 <https://2026.foss4g.org/>`__, August 30 - September 5 2026, Hiroshima, Japan, is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+
+* North-America event:
+
+ .. image::   ../../images/community/foss4gna2026.png
+    :alt:     FOSS4G North-America 2026
+    :target:  https://www.foss4gna.org/
+
+ `FOSS4G North-America 2026 <https://www.foss4gna.org/>`__, November 2-4 2026, Sacramento, CA, USA
+
+ .. spelling:word-list::
+        Sacramento
+        CA
 
 Previous
 ++++++++
