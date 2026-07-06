@@ -71,9 +71,9 @@ static double GetISISMappingDouble(const CPLJSONObject &oMapping,
 /*                        ParsePVLMappingGroup()                        */
 /************************************************************************/
 
-// Turn the text of an ISIS PVL Mapping group into a flat CPLJSONObject of
-// key -> string value. Any surrounding "Group = Mapping" / "End_Group"
-// wrapper is ignored, and a quoted value (such as ProjStr) may span lines.
+// Parse an ISIS PVL Mapping group as a flat CPLJSONObject of keys and string
+// values. Any surrounding "Group = Mapping" / "End_Group" wrapper is
+// ignored, and a quoted value (such as ProjStr) may span lines.
 
 static CPLJSONObject ParsePVLMappingGroup(const char *pszText)
 {
