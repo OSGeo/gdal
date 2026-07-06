@@ -17,23 +17,63 @@ import pytest
 from osgeo import osr
 
 ###############################################################################
-# A named ISIS projection.
+# The named ISIS projections, each fed as a Mapping group.
 
 
-def test_osr_isis_named():
+@pytest.mark.parametrize(
+    "projection,extra,proj4",
+    [
+        ("Equirectangular", "CenterLatitude = 0.0\nCenterLongitude = 0.0", "+proj=eqc"),
+        (
+            "SimpleCylindrical",
+            "CenterLatitude = 0.0\nCenterLongitude = 0.0",
+            "+proj=eqc",
+        ),
+        ("Orthographic", "CenterLatitude = 0.0\nCenterLongitude = 0.0", "+proj=ortho"),
+        ("Sinusoidal", "CenterLongitude = 0.0", "+proj=sinu"),
+        ("Mercator", "CenterLatitude = 0.0\nCenterLongitude = 0.0", "+proj=merc"),
+        (
+            "PolarStereographic",
+            "CenterLatitude = 90.0\nCenterLongitude = 0.0",
+            "+proj=stere",
+        ),
+        (
+            "TransverseMercator",
+            "CenterLatitude = 0.0\nCenterLongitude = 0.0",
+            "+proj=tmerc",
+        ),
+        (
+            "LambertConformal",
+            "CenterLatitude = 40.0\nCenterLongitude = 0.0\n"
+            "FirstStandardParallel = 30.0\nSecondStandardParallel = 50.0",
+            "+proj=lcc",
+        ),
+        (
+            "PointPerspective",
+            "CenterLatitude = 0.0\nCenterLongitude = 0.0\nDistance = 5000.0 <km>",
+            "+proj=nsper",
+        ),
+        (
+            "ObliqueCylindrical",
+            "PoleLatitude = 30.0\nPoleLongitude = 0.0\nPoleRotation = 0.0",
+            "+proj=ob_tran",
+        ),
+    ],
+)
+def test_osr_isis_named(projection, extra, proj4):
 
     srs = osr.SpatialReference()
-    assert srs.ImportFromISISPVL("""Group = Mapping
-  ProjectionName   = Equirectangular
+    mapping = f"""Group = Mapping
+  ProjectionName   = {projection}
   TargetName       = Mars
   EquatorialRadius = 3396190.0 <meters>
   PolarRadius      = 3396190.0 <meters>
-  CenterLongitude  = 0.0
-  CenterLatitude   = 0.0
-End_Group""") == 0
+  {extra}
+End_Group"""
+    assert srs.ImportFromISISPVL(mapping) == 0
     assert srs.IsProjected()
-    assert srs.GetSemiMajor() == 3396190
-    assert "+proj=eqc" in srs.ExportToProj4()
+    assert srs.GetSemiMajor() == pytest.approx(3396190)
+    assert proj4 in srs.ExportToProj4()
 
 
 ###############################################################################

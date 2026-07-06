@@ -2,9 +2,22 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation from an ISIS3 (PVL) Mapping group.
- * Author:   Oleg Alexandrov
+ *           Factored out of the ISIS3 driver (frmts/pds/isis3dataset.cpp).
+ * Author:   Trent Hare (thare@usgs.gov)
+ *           Frank Warmerdam (warmerdam@pobox.com)
+ *           Even Rouault (even.rouault at spatialys.com)
+ *           Oleg Alexandrov
  *
+ * NOTE: Original code authored by Trent and placed in the public domain as
+ * per US government policy.  I have (within my rights) appropriated it and
+ * placed it under the following license.  This is not intended to diminish
+ * Trents contribution.
  ******************************************************************************
+ * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2009-2026, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2017 Hobu Inc
+ * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS <info@nextgis.com>
  * Copyright (c) 2026, Oleg Alexandrov
  *
  * SPDX-License-Identifier: MIT
