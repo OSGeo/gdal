@@ -1938,11 +1938,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         dfULXMap = CPLAtof(pszULX);
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Build the coordinate system from the Mapping group. The         */
-    /*      conversion is shared with OGRSpatialReference::importFromISISPVL */
-    /*      so that ISIS and other callers do not need a copy of it.         */
-    /* -------------------------------------------------------------------- */
+    // Read the projection from the ISIS PVL Mapping group.
     const CPLJSONObject oMapping =
         poDS->m_oJSonLabel.GetObj("IsisCube").GetObj("Mapping");
     if (oMapping.IsValid())
