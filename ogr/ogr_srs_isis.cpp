@@ -26,8 +26,8 @@
 /*                          GetMappingString()                          */
 /************************************************************************/
 
-// Fetch a Mapping-group value as a string. A value that carries a unit is
-// stored as a { "value": ..., "unit": ... } object, so unwrap that case.
+// Read a value from the ISIS PVL Mapping group as a string. A value that
+// carries a unit is stored as a { "value", "unit" } object, so unwrap that.
 
 static CPLString GetMappingString(const CPLJSONObject &oMapping,
                                   const char *pszKey,
@@ -44,6 +44,8 @@ static CPLString GetMappingString(const CPLJSONObject &oMapping,
 /************************************************************************/
 /*                          GetMappingDouble()                          */
 /************************************************************************/
+
+// Read a value from the ISIS PVL Mapping group as a double.
 
 static double GetMappingDouble(const CPLJSONObject &oMapping,
                                const char *pszKey, double dfDefault = 0.0)
