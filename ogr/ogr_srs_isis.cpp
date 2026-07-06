@@ -168,11 +168,6 @@ static CPLJSONObject ParseISISPVLMappingGroup(const char *pszText)
  * generic form where ProjectionName is IProj and the definition is carried by
  * a ProjStr PROJ string.
  *
- * This is the same logic used by the GDAL ISIS3 driver to georeference a cube.
- * Exposing it lets applications that produce ISIS mapping groups (such as ISIS
- * itself when writing GeoTIFFs) build the coordinate system without a copy of
- * this code.
- *
  * This method is the equivalent of the C function OSRImportFromISISPVL().
  *
  * @param pszPVLMappingGroup text of the ISIS PVL Mapping group.
