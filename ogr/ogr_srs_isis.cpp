@@ -23,15 +23,15 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                          GetMappingString()                          */
+/*                        GetISISMappingString()                        */
 /************************************************************************/
 
 // Read a value from the ISIS PVL Mapping group as a string. A value that
 // carries a unit is stored as a { "value", "unit" } object, so unwrap that.
 
-static CPLString GetMappingString(const CPLJSONObject &oMapping,
-                                  const char *pszKey,
-                                  const char *pszDefault = "")
+static CPLString GetISISMappingString(const CPLJSONObject &oMapping,
+                                      const char *pszKey,
+                                      const char *pszDefault = "")
 {
     CPLJSONObject oChild = oMapping.GetObj(pszKey);
     if (oChild.GetType() == CPLJSONObject::Type::Object)
@@ -42,13 +42,13 @@ static CPLString GetMappingString(const CPLJSONObject &oMapping,
 }
 
 /************************************************************************/
-/*                          GetMappingDouble()                          */
+/*                        GetISISMappingDouble()                        */
 /************************************************************************/
 
 // Read a value from the ISIS PVL Mapping group as a double.
 
-static double GetMappingDouble(const CPLJSONObject &oMapping,
-                               const char *pszKey, double dfDefault = 0.0)
+static double GetISISMappingDouble(const CPLJSONObject &oMapping,
+                                   const char *pszKey, double dfDefault = 0.0)
 {
     CPLJSONObject oChild = oMapping.GetObj(pszKey);
     if (oChild.GetType() == CPLJSONObject::Type::Object)
@@ -211,11 +211,12 @@ OGRErr OGRSpatialReference::importFromISISPVL(const CPLJSONObject &oMapping)
 
     /***********   Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. Mars ***/
-    const CPLString target_name = GetMappingString(oMapping, "TargetName");
+    const CPLString target_name = GetISISMappingString(oMapping, "TargetName");
 
 #ifdef notdef
     const double dfLongitudeMulFactor =
-        EQUAL(GetMappingString(oMapping, "LongitudeDirection", "PositiveEast"),
+        EQUAL(GetISISMappingString(oMapping, "LongitudeDirection",
+                                   "PositiveEast"),
               "PositiveEast")
             ? 1
             : -1;
@@ -225,31 +226,34 @@ OGRErr OGRSpatialReference::importFromISISPVL(const CPLJSONObject &oMapping)
 
     /***********   Grab MAP_PROJECTION_TYPE ************/
     const CPLString map_proj_name =
-        GetMappingString(oMapping, "ProjectionName");
+        GetISISMappingString(oMapping, "ProjectionName");
 
     /***********   Grab SEMI-MAJOR ************/
-    const double semi_major = GetMappingDouble(oMapping, "EquatorialRadius");
+    const double semi_major =
+        GetISISMappingDouble(oMapping, "EquatorialRadius");
 
     /***********   Grab semi-minor ************/
-    const double semi_minor = GetMappingDouble(oMapping, "PolarRadius");
+    const double semi_minor = GetISISMappingDouble(oMapping, "PolarRadius");
 
     /***********   Grab CENTER_LAT ************/
-    const double center_lat = GetMappingDouble(oMapping, "CenterLatitude");
+    const double center_lat = GetISISMappingDouble(oMapping, "CenterLatitude");
 
     /***********   Grab CENTER_LON ************/
     const double center_lon =
-        GetMappingDouble(oMapping, "CenterLongitude") * dfLongitudeMulFactor;
+        GetISISMappingDouble(oMapping, "CenterLongitude") *
+        dfLongitudeMulFactor;
 
     /***********   Grab 1st std parallel ************/
     const double first_std_parallel =
-        GetMappingDouble(oMapping, "FirstStandardParallel");
+        GetISISMappingDouble(oMapping, "FirstStandardParallel");
 
     /***********   Grab 2nd std parallel ************/
     const double second_std_parallel =
-        GetMappingDouble(oMapping, "SecondStandardParallel");
+        GetISISMappingDouble(oMapping, "SecondStandardParallel");
 
     /***********   Grab scaleFactor ************/
-    const double scaleFactor = GetMappingDouble(oMapping, "scaleFactor", 1.0);
+    const double scaleFactor =
+        GetISISMappingDouble(oMapping, "scaleFactor", 1.0);
 
     /*** grab      LatitudeType = Planetographic ****/
     // Need to further study how ocentric/ographic will effect the gdal library
@@ -258,7 +262,7 @@ OGRErr OGRSpatialReference::importFromISISPVL(const CPLJSONObject &oMapping)
 
     // Frank - may need to talk this over
     bool bIsGeographic = true;
-    if (EQUAL(GetMappingString(oMapping, "LatitudeType"), "Planetocentric"))
+    if (EQUAL(GetISISMappingString(oMapping, "LatitudeType"), "Planetocentric"))
         bIsGeographic = false;
 
     // Set oSRS projection and parameters
@@ -283,7 +287,7 @@ OGRErr OGRSpatialReference::importFromISISPVL(const CPLJSONObject &oMapping)
     // The ISIS IProj projection (ProjectionName = IProj) carries its full
     // definition in a ProjStr PROJ string. When present, use it directly and
     // skip the per-parameter reconstruction below.
-    const CPLString osProjStrRaw = GetMappingString(oMapping, "ProjStr");
+    const CPLString osProjStrRaw = GetISISMappingString(oMapping, "ProjStr");
     if (!osProjStrRaw.empty())
     {
         // A ProjStr that spans several label lines comes back with the line
@@ -356,17 +360,21 @@ OGRErr OGRSpatialReference::importFromISISPVL(const CPLJSONObject &oMapping)
     {
         // Distance parameter is the distance to the center of the body, and is
         // given in km
-        const double distance = GetMappingDouble(oMapping, "Distance") * 1000.0;
+        const double distance =
+            GetISISMappingDouble(oMapping, "Distance") * 1000.0;
         const double height_above_ground = distance - semi_major;
         SetVerticalPerspective(center_lat, center_lon, 0, height_above_ground,
                                0, 0);
     }
     else if (EQUAL(map_proj_name, "ObliqueCylindrical"))
     {
-        const double poleLatitude = GetMappingDouble(oMapping, "PoleLatitude");
+        const double poleLatitude =
+            GetISISMappingDouble(oMapping, "PoleLatitude");
         const double poleLongitude =
-            GetMappingDouble(oMapping, "PoleLongitude") * dfLongitudeMulFactor;
-        const double poleRotation = GetMappingDouble(oMapping, "PoleRotation");
+            GetISISMappingDouble(oMapping, "PoleLongitude") *
+            dfLongitudeMulFactor;
+        const double poleRotation =
+            GetISISMappingDouble(oMapping, "PoleRotation");
         CPLString oProj4String;
         // ISIS3 rotated pole doesn't use the same conventions than PROJ ob_tran
         // Compare the sign difference in
