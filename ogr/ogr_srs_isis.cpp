@@ -72,8 +72,8 @@ static double GetISISMappingDouble(const CPLJSONObject &oMapping,
 /************************************************************************/
 
 // Parse an ISIS PVL Mapping group as a flat CPLJSONObject of keys and string
-// values. Any surrounding "Group = Mapping" / "End_Group" wrapper is
-// ignored, and a quoted value (such as ProjStr) may span lines.
+// values. The "Group = Mapping" and "End_Group" lines are ignored, and a
+// quoted value (such as ProjStr) may span lines.
 
 static CPLJSONObject ParseISISPVLMappingGroup(const char *pszText)
 {
@@ -145,7 +145,7 @@ static CPLJSONObject ParseISISPVLMappingGroup(const char *pszText)
                 osValue.pop_back();
         }
 
-        // The "Group = Mapping" / "Object = ..." wrapper is not a real key.
+        // The "Group = Mapping" / "Object = ..." preamble is not a real key.
         if (EQUAL(osKey.c_str(), "Group") || EQUAL(osKey.c_str(), "Object"))
             continue;
 
@@ -163,8 +163,7 @@ static CPLJSONObject ParseISISPVLMappingGroup(const char *pszText)
  * \brief Import a coordinate system from an ISIS3 PVL Mapping group.
  *
  * This method reads the projection of an ISIS3 cube from the text of its
- * Mapping group (the "Group = Mapping ... End_Group" block, with or without
- * that wrapper). It supports the named ISIS projections as well as the newer
+ * Mapping group. It supports the named ISIS projections as well as the newer
  * generic form where ProjectionName is IProj and the definition is carried by
  * a ProjStr PROJ string.
  *

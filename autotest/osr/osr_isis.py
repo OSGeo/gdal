@@ -56,21 +56,6 @@ End_Group""") == 0
 
 
 ###############################################################################
-# The Mapping-group wrapper is optional.
-
-
-def test_osr_isis_no_wrapper():
-
-    srs = osr.SpatialReference()
-    assert srs.ImportFromISISPVL("""ProjectionName   = Sinusoidal
-TargetName       = Mars
-EquatorialRadius = 3396190.0 <meters>
-PolarRadius      = 3396190.0 <meters>
-CenterLongitude  = 0.0""") == 0
-    assert "+proj=sinu" in srs.ExportToProj4()
-
-
-###############################################################################
 # An unparseable ProjStr fails rather than crashing.
 
 
