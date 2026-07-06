@@ -118,7 +118,7 @@ It is the event for those interested in GDAL/OGR, other FOSS geospatial technolo
 
 + `State of GDAL 3.12 & 3.13 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202026%29.pdf>`__
   by Even Rouault, Spatialys, at `FOSS4G Europe 2026 <https://2026.europe.foss4g.org/>`_ in Timișoara, Romania.
-+ `GDAL's New CLI <https://youtu.be/caprt4axc1U?t=18>`__ by Dan Baston, ISciences LLC, at `FOSS4G NA 2025 <https://www.foss4gna.org/>`_ in Washington DC, USA
++ `GDAL's New CLI <https://download.osgeo.org/gdal/presentations/FOSS4G-NA 2025.pdf>`__ by Dan Baston, ISciences LLC, at `FOSS4G NA 2025 <https://www.foss4gna.org/>`_ in Washington DC, USA.  `Recording <https://youtu.be/caprt4axc1U?t=18>`__.
 + `State of GDAL 3.10 & 3.11 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202025%29.pdf>`__
   by Even Rouault, Spatialys, at `FOSS4G Europe 2025 <https://2025.europe.foss4g.org/>`_ in Mostar, Bosnia-Herzegovina.
 + `State of GDAL 3.8 & 3.9 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202024%29.pdf>`__
