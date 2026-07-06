@@ -68,14 +68,14 @@ static double GetISISMappingDouble(const CPLJSONObject &oMapping,
 }
 
 /************************************************************************/
-/*                        ParsePVLMappingGroup()                        */
+/*                      ParseISISPVLMappingGroup()                      */
 /************************************************************************/
 
 // Parse an ISIS PVL Mapping group as a flat CPLJSONObject of keys and string
 // values. Any surrounding "Group = Mapping" / "End_Group" wrapper is
 // ignored, and a quoted value (such as ProjStr) may span lines.
 
-static CPLJSONObject ParsePVLMappingGroup(const char *pszText)
+static CPLJSONObject ParseISISPVLMappingGroup(const char *pszText)
 {
     CPLJSONObject oMapping;
     const char *pszIter = pszText;
@@ -184,7 +184,7 @@ static CPLJSONObject ParsePVLMappingGroup(const char *pszText)
 
 OGRErr OGRSpatialReference::importFromISISPVL(const char *pszPVLMappingGroup)
 {
-    return importFromISISPVL(ParsePVLMappingGroup(pszPVLMappingGroup));
+    return importFromISISPVL(ParseISISPVLMappingGroup(pszPVLMappingGroup));
 }
 
 /************************************************************************/
