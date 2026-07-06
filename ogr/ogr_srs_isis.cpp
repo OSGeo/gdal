@@ -23,12 +23,11 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                        GetMappingString()                            */
-/*                                                                      */
-/*      Fetch a Mapping-group value as a string. A value that carries   */
-/*      a unit is stored as a { "value": ..., "unit": ... } object, so  */
-/*      unwrap that case.                                               */
+/*                          GetMappingString()                          */
 /************************************************************************/
+
+// Fetch a Mapping-group value as a string. A value that carries a unit is
+// stored as a { "value": ..., "unit": ... } object, so unwrap that case.
 
 static CPLString GetMappingString(const CPLJSONObject &oMapping,
                                   const char *pszKey,
@@ -67,13 +66,12 @@ static double GetMappingDouble(const CPLJSONObject &oMapping,
 }
 
 /************************************************************************/
-/*                       ParsePVLMappingGroup()                         */
-/*                                                                      */
-/*      Turn the text of an ISIS PVL Mapping group into a flat          */
-/*      CPLJSONObject of key -> string value. Any surrounding           */
-/*      "Group = Mapping" / "End_Group" wrapper is ignored, and a       */
-/*      quoted value (such as ProjStr) may span several lines.          */
+/*                        ParsePVLMappingGroup()                        */
 /************************************************************************/
+
+// Turn the text of an ISIS PVL Mapping group into a flat CPLJSONObject of
+// key -> string value. Any surrounding "Group = Mapping" / "End_Group"
+// wrapper is ignored, and a quoted value (such as ProjStr) may span lines.
 
 static CPLJSONObject ParsePVLMappingGroup(const char *pszText)
 {
