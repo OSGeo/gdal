@@ -423,6 +423,9 @@ class CPL_DLL OGRSpatialReference
                          const OGRSpatialReference *poHorizSRS,
                          const OGRSpatialReference *poVertSRS);
 
+    std::unique_ptr<OGRSpatialReference>
+    GetCompoundComponent(int iComponent) const;
+
     void SetCoordinateEpoch(double dfCoordinateEpoch);
     double GetCoordinateEpoch() const;
 

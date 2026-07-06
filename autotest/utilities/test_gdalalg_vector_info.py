@@ -363,7 +363,7 @@ def test_gdalalg_vector_info_crs():
             """Layer Coordinate Reference System:
   - name: WGS 84 + EGM2008 height
   - ID: EPSG:9518
-  - type: Compound of Geographic
+  - type: Compound
   - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00"""
             in output_string
         )

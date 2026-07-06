@@ -395,19 +395,15 @@ std::string GDALInfoAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                        EmitTextDisplayOfCRS()                        */
+/*                     GetKnownCRSAuthNameAndCode()                     */
 /************************************************************************/
 
-void EmitTextDisplayOfCRS(
-    const OGRSpatialReference *poSRS, const std::string &osCRSFormat,
-    const std::string &osIntroText,
-    std::function<void(const std::string &)> printFunction)
+static std::pair<const char *, const char *>
+GetKnownCRSAuthNameAndCode(const OGRSpatialReference *poSRS)
 {
-    const char *pszAuthCode = poSRS->GetAuthorityCode();
     const char *pszAuthName = poSRS->GetAuthorityName();
-
-    bool bCRSAlreadyEmitted = false;
-    if (pszAuthName && pszAuthCode && osCRSFormat == "AUTO")
+    const char *pszAuthCode = poSRS->GetAuthorityCode();
+    if (pszAuthName && pszAuthCode)
     {
         OGRSpatialReference oSRSFromAuthCode;
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
@@ -421,142 +417,216 @@ void EmitTextDisplayOfCRS(
                                                   .c_str()) == OGRERR_NONE &&
             oSRSFromAuthCode.IsSame(poSRS, apszComparisonCriteria))
         {
-            std::string osCRSId;
-            if (STARTS_WITH_CI(pszAuthName, "IAU_"))
+            return {pszAuthName, pszAuthCode};
+        }
+    }
+    return {nullptr, nullptr};
+}
+
+/************************************************************************/
+/*                              GetCRSId()                              */
+/************************************************************************/
+
+static std::string GetCRSId(const char *pszAuthName, const char *pszAuthCode)
+{
+    std::string osCRSId;
+    if (STARTS_WITH_CI(pszAuthName, "IAU_"))
+    {
+        osCRSId = "urn:ogc:def:crs:IAU:";
+        osCRSId += pszAuthName + strlen("IAU_");
+        osCRSId += ':';
+        osCRSId += pszAuthCode;
+    }
+    else
+    {
+        osCRSId = pszAuthName;
+        osCRSId += ':';
+        osCRSId += pszAuthCode;
+    }
+    return osCRSId;
+}
+
+/************************************************************************/
+/*                        EmitSimplifiedOutput()                        */
+/************************************************************************/
+
+static void
+EmitSimplifiedOutput(const OGRSpatialReference *poSRS, const char *pszIndent,
+                     const char *pszAuthName, const char *pszAuthCode,
+                     std::function<void(const std::string &)> printFunction)
+{
+    printFunction(CPLSPrintf("%s- name: %s\n", pszIndent, poSRS->GetName()));
+
+    if (pszAuthName && pszAuthCode)
+        printFunction(CPLSPrintf("%s- ID: %s\n", pszIndent,
+                                 GetCRSId(pszAuthName, pszAuthCode).c_str()));
+
+    const char *pszType = "Other";
+    if (poSRS->IsCompound())
+    {
+        pszType = "Compound";
+    }
+    else if (poSRS->IsGeographic())
+    {
+        if (poSRS->GetAxesCount() == 3)
+            pszType = "Geographic 3D";
+        else
+            pszType = "Geographic 2D";
+    }
+    else if (poSRS->IsGeocentric())
+        pszType = "Geocentric";
+    else if (poSRS->IsProjected())
+        pszType = "Projected";
+    else if (poSRS->IsVertical())
+        pszType = "Vertical";
+
+    printFunction(CPLSPrintf("%s- type: %s\n", pszIndent, pszType));
+
+    if (poSRS->IsProjected() && !poSRS->IsCompound())
+    {
+        // Create a copy since we want to force the internal
+        // WKT tree model to be WKT2 as we are going to
+        // request CONVERSION
+        OGRSpatialReference oSRS(*poSRS);
+        const char *pszConversion = oSRS.GetAttrValue("CONVERSION");
+        const std::string osConversion = pszConversion ? pszConversion : "";
+        const char *pszMethod = oSRS.GetAttrValue("CONVERSION|METHOD");
+        const std::string osMethod = pszMethod ? pszMethod : "";
+        if (!osConversion.empty() && !osMethod.empty())
+        {
+            // A bit of name laundering done to deal with EPSG:3857 where
+            // osConversion = "Popular Visualisation Pseudo-Mercator"
+            // osMethod = "Popular Visualisation Pseudo Mercator"
+            // A bit unfortunate to have to do that workaround, but as it
+            // is apparently ... popular ... let's do it.
+            if (CPLString(osConversion).replaceAll('-', ' ') ==
+                CPLString(osMethod).replaceAll('-', ' '))
             {
-                osCRSId = "urn:ogc:def:crs:IAU:";
-                osCRSId += pszAuthName + strlen("IAU_");
-                osCRSId += ':';
-                osCRSId += pszAuthCode;
+                printFunction(CPLSPrintf("%s- projection type: %s\n", pszIndent,
+                                         osConversion.c_str()));
             }
-            else if (strchr(pszAuthName, '_') == nullptr)
+            else
             {
-                osCRSId = pszAuthName;
-                osCRSId += ':';
-                osCRSId += pszAuthCode;
+                printFunction(CPLSPrintf("%s- projection type: %s, %s\n",
+                                         pszIndent, osConversion.c_str(),
+                                         osMethod.c_str()));
             }
+        }
+        const char *pszLinearUnits = nullptr;
+        poSRS->GetLinearUnits(&pszLinearUnits);
+        if (pszLinearUnits)
+        {
+            printFunction(
+                CPLSPrintf("%s- units: %s\n", pszIndent, pszLinearUnits));
+        }
+    }
+    else if (poSRS->IsVertical() && !poSRS->IsCompound())
+    {
+        const char *pszLinearUnits = nullptr;
+        poSRS->GetTargetLinearUnits("VERT_CS", &pszLinearUnits);
+        if (pszLinearUnits)
+        {
+            printFunction(
+                CPLSPrintf("%s- units: %s\n", pszIndent, pszLinearUnits));
+        }
+    }
 
-            if (!osCRSId.empty())
+    double dfWest = 0;
+    double dfSouth = 0;
+    double dfEast = 0;
+    double dfNorth = 0;
+    const char *pszAreaName = nullptr;
+    if (poSRS->GetAreaOfUse(&dfWest, &dfSouth, &dfEast, &dfNorth, &pszAreaName))
+    {
+        if (pszAreaName && pszAreaName[0])
+        {
+            std::string osAreaOfUse(pszAreaName);
+            if (osAreaOfUse.back() == '.')
+                osAreaOfUse.pop_back();
+            if (osAreaOfUse.size() > 40)
             {
-                bCRSAlreadyEmitted = true;
-                printFunction(osIntroText);
-                printFunction(":\n");
-                printFunction(CPLSPrintf("  - name: %s\n", poSRS->GetName()));
+                auto nPos = osAreaOfUse.find(" - ");
+                if (nPos == std::string::npos)
+                    nPos = osAreaOfUse.find(", ");
+                if (nPos == std::string::npos)
+                    nPos = osAreaOfUse.find(' ');
+                if (nPos == std::string::npos)
+                    nPos = 40;
+                osAreaOfUse.resize(nPos);
+                osAreaOfUse += "...";
+            }
+            printFunction(CPLSPrintf("%s- area "
+                                     "of use: %s, west %.2f, south %.2f, "
+                                     "east %.2f, north %.2f\n",
+                                     pszIndent, osAreaOfUse.c_str(), dfWest,
+                                     dfSouth, dfEast, dfNorth));
+        }
+        else
+        {
+            printFunction(CPLSPrintf("%s- area "
+                                     "of use: west %.2f, south %.2f, "
+                                     "east %.2f, north %.2f\n",
+                                     pszIndent, dfWest, dfSouth, dfEast,
+                                     dfNorth));
+        }
+    }
+}
 
-                printFunction(CPLSPrintf("  - ID: %s\n", osCRSId.c_str()));
+/************************************************************************/
+/*                        EmitTextDisplayOfCRS()                        */
+/************************************************************************/
 
-                const char *pszHorizType = "Other";
-                if (poSRS->IsGeographic())
-                {
-                    if (poSRS->IsCompound())
-                        pszHorizType = "Geographic";
-                    else if (poSRS->GetAxesCount() == 3)
-                        pszHorizType = "Geographic 3D";
-                    else
-                        pszHorizType = "Geographic 2D";
-                }
-                else if (poSRS->IsGeocentric())
-                    pszHorizType = "Geocentric";
-                else if (poSRS->IsProjected())
-                    pszHorizType = "Projected";
-
-                if (poSRS->IsCompound())
-                {
-                    printFunction(
-                        CPLSPrintf("  - type: Compound of %s\n", pszHorizType));
-                }
-                else
-                {
-                    printFunction(CPLSPrintf("  - type: %s\n", pszHorizType));
-                }
-
-                if (poSRS->IsProjected())
-                {
-                    // Create a copy since we want to force the internal
-                    // WKT tree model to be WKT2 as we are going to
-                    // request CONVERSION
-                    OGRSpatialReference oSRS(*poSRS);
-                    const char *pszConversion = oSRS.GetAttrValue("CONVERSION");
-                    const std::string osConversion =
-                        pszConversion ? pszConversion : "";
-                    const char *pszMethod =
-                        oSRS.GetAttrValue("CONVERSION|METHOD");
-                    const std::string osMethod = pszMethod ? pszMethod : "";
-                    if (!osConversion.empty() && !osMethod.empty())
-                    {
-                        // A bit of name laundering done to deal with EPSG:3857 where
-                        // osConversion = "Popular Visualisation Pseudo-Mercator"
-                        // osMethod = "Popular Visualisation Pseudo Mercator"
-                        // A bit unfortunate to have to do that workaround, but as it
-                        // is apparently ... popular ... let's do it.
-                        if (CPLString(osConversion).replaceAll('-', ' ') ==
-                            CPLString(osMethod).replaceAll('-', ' '))
-                        {
-                            printFunction(
-                                CPLSPrintf("  - projection type: %s\n",
-                                           osConversion.c_str()));
-                        }
-                        else
-                        {
-                            printFunction(CPLSPrintf(
-                                "  - projection type: %s, %s\n",
-                                osConversion.c_str(), osMethod.c_str()));
-                        }
-                    }
-                    const char *pszLinearUnits = nullptr;
-                    poSRS->GetLinearUnits(&pszLinearUnits);
-                    if (pszLinearUnits)
-                    {
-                        printFunction(CPLSPrintf("  - units: "
-                                                 "%s\n",
-                                                 pszLinearUnits));
-                    }
-                }
-                double dfWest = 0;
-                double dfSouth = 0;
-                double dfEast = 0;
-                double dfNorth = 0;
-                const char *pszAreaName = nullptr;
-                if (poSRS->GetAreaOfUse(&dfWest, &dfSouth, &dfEast, &dfNorth,
-                                        &pszAreaName))
-                {
-                    if (pszAreaName && pszAreaName[0])
-                    {
-                        std::string osAreaOfUse(pszAreaName);
-                        if (osAreaOfUse.back() == '.')
-                            osAreaOfUse.pop_back();
-                        if (osAreaOfUse.size() > 40)
-                        {
-                            auto nPos = osAreaOfUse.find(" - ");
-                            if (nPos == std::string::npos)
-                                nPos = osAreaOfUse.find(", ");
-                            if (nPos == std::string::npos)
-                                nPos = osAreaOfUse.find(' ');
-                            if (nPos == std::string::npos)
-                                nPos = 40;
-                            osAreaOfUse.resize(nPos);
-                            osAreaOfUse += "...";
-                        }
-                        printFunction(
-                            CPLSPrintf("  - area "
-                                       "of use: %s, west %.2f, south %.2f, "
-                                       "east %.2f, north %.2f\n",
-                                       osAreaOfUse.c_str(), dfWest, dfSouth,
-                                       dfEast, dfNorth));
-                    }
-                    else
-                    {
-                        printFunction(
-                            CPLSPrintf("  - area "
-                                       "of use: west %.2f, south %.2f, "
-                                       "east %.2f, north %.2f\n",
-                                       dfWest, dfSouth, dfEast, dfNorth));
-                    }
-                }
+void EmitTextDisplayOfCRS(
+    const OGRSpatialReference *poSRS, const std::string &osCRSFormat,
+    const std::string &osIntroText,
+    std::function<void(const std::string &)> printFunction)
+{
+    bool bSimplifyOutput = false;
+    const auto [pszAuthName, pszAuthCode] = GetKnownCRSAuthNameAndCode(poSRS);
+    std::unique_ptr<OGRSpatialReference> poHorizPart, poVertPart;
+    const char *pszHorizAuthName = nullptr;
+    const char *pszHorizAuthCode = nullptr;
+    const char *pszVertAuthName = nullptr;
+    const char *pszVertAuthCode = nullptr;
+    if (osCRSFormat == "AUTO")
+    {
+        bSimplifyOutput = pszAuthName && pszAuthCode;
+        if (poSRS->IsCompound())
+        {
+            poHorizPart = poSRS->GetCompoundComponent(0);
+            poVertPart = poSRS->GetCompoundComponent(1);
+            if (poHorizPart && poVertPart)
+            {
+                std::tie(pszHorizAuthName, pszHorizAuthCode) =
+                    GetKnownCRSAuthNameAndCode(poHorizPart.get());
+                std::tie(pszVertAuthName, pszVertAuthCode) =
+                    GetKnownCRSAuthNameAndCode(poVertPart.get());
+                if (!bSimplifyOutput)
+                    bSimplifyOutput = pszHorizAuthName && pszHorizAuthCode &&
+                                      pszVertAuthName && pszVertAuthCode;
             }
         }
     }
-    if (!bCRSAlreadyEmitted)
+
+    if (bSimplifyOutput)
+    {
+        printFunction(osIntroText);
+        printFunction(":\n");
+
+        EmitSimplifiedOutput(poSRS, "  ", pszAuthName, pszAuthCode,
+                             printFunction);
+        if (pszHorizAuthName && pszHorizAuthCode && pszVertAuthName &&
+            pszVertAuthCode)
+        {
+            printFunction("  - Horizontal part:\n");
+            EmitSimplifiedOutput(poHorizPart.get(), "    ", pszHorizAuthName,
+                                 pszHorizAuthCode, printFunction);
+            printFunction("  - Vertical part:\n");
+            EmitSimplifiedOutput(poVertPart.get(), "    ", pszVertAuthName,
+                                 pszVertAuthCode, printFunction);
+        }
+    }
+    else
     {
         if (osCRSFormat == "PROJJSON")
         {

@@ -237,6 +237,7 @@ def test_gdalalg_raster_info_crs():
         assert "  - projection type" not in output_string
         assert "  - units" not in output_string
 
+    # Compound with a ID
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference()
     srs.SetFromUserInput("EPSG:9518")
@@ -245,13 +246,46 @@ def test_gdalalg_raster_info_crs():
         output_string = alg.Output()
         assert "name: WGS 84 + EGM2008 height\n" in output_string
         assert "ID: EPSG:9518\n" in output_string
-        assert "type: Compound of Geographic\n" in output_string
+        assert "type: Compound\n" in output_string
         assert "projection type" not in output_string
-        assert "units" not in output_string
         assert (
             "area of use: World, west -180.00, south -90.00, east 180.00, north 90.00\n"
             in output_string
         )
+        assert "Horizontal part:\n" in output_string
+        assert "name: WGS 84\n" in output_string
+        assert "ID: EPSG:4326\n" in output_string
+        assert "type: Geographic 2D\n" in output_string
+        assert "Vertical part:\n" in output_string
+        assert "name: EGM2008 height\n" in output_string
+        assert "ID: EPSG:3855\n" in output_string
+        assert "type: Vertical\n" in output_string
+        assert "units: metre\n" in output_string
+
+    # Compound without a ID
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:2953+6647")
+    src_ds.SetSpatialRef(srs)
+    with gdal.alg.raster.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert (
+            "name: NAD83(CSRS) / New Brunswick Stereographic + CGVD2013(CGG2013) height\n"
+            in output_string
+        )
+        assert "type: Compound\n" in output_string
+        assert "Horizontal part:\n" in output_string
+        assert "name: NAD83(CSRS) / New Brunswick Stereographic\n" in output_string
+        assert "ID: EPSG:2953\n" in output_string
+        assert "type: Projected\n" in output_string
+        assert (
+            "projection type: New Brunswick Stereographic (NAD83), Oblique Stereographic\n"
+            in output_string
+        )
+        assert "Vertical part:\n" in output_string
+        assert "name: CGVD2013(CGG2013) height\n" in output_string
+        assert "ID: EPSG:6647\n" in output_string
+        assert "type: Vertical\n" in output_string
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference()
