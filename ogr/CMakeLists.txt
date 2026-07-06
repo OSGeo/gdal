@@ -39,6 +39,7 @@ add_library(
   ogr_srs_esri.cpp
   ogr_srs_pci.cpp
   ogr_srs_usgs.cpp
+  ogr_srs_isis.cpp
   ogr_srs_dict.cpp
   ogr_srs_panorama.cpp
   ogr_srs_ozi.cpp

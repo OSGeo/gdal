@@ -451,6 +451,7 @@ OGRErr CPL_DLL OSRImportFromPCI(OGRSpatialReferenceH hSRS, const char *,
                                 const char *, double *);
 OGRErr CPL_DLL OSRImportFromUSGS(OGRSpatialReferenceH, long, long, double *,
                                  long);
+OGRErr CPL_DLL OSRImportFromISISPVL(OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromXML(OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromDict(OGRSpatialReferenceH, const char *,
                                  const char *);
