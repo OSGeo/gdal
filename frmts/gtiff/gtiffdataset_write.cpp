@@ -1456,7 +1456,9 @@ bool MustNotDiscardLsb<double>(double value, bool bHasNoData, double nodata)
 
 template <class T> T AdjustValue(T value, uint64_t nRoundUpBitTest);
 
-template <class T> T AdjustValueInt(T value, uint64_t nRoundUpBitTest)
+template <class T>
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW T AdjustValueInt(T value,
+                                                      uint64_t nRoundUpBitTest)
 {
     if (value >=
         static_cast<T>(std::numeric_limits<T>::max() - (nRoundUpBitTest << 1)))
