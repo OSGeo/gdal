@@ -205,7 +205,8 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
                                 oField.SetWidth(255);
                                 poFeatureDefn->AddFieldDefn(&oField);
                             }
-                            unsigned nLen = unsigned(stAttrInfo.nScale) + 1;
+                            unsigned nLen =
+                                static_cast<unsigned>(stAttrInfo.nScale + 1);
                             offset += nLen;
                             nCurrOff = nLen;
                             break;
@@ -219,7 +220,8 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
                                 poFeatureDefn->AddFieldDefn(&oField);
                             }
                             unsigned nLen =
-                                (unsigned(stAttrInfo.nScale) + 1) * 2;
+                                static_cast<unsigned>(stAttrInfo.nScale + 1) *
+                                2;
                             offset += nLen;
                             nCurrOff = nLen;
                             break;
