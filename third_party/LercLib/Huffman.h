@@ -55,8 +55,8 @@ public:
   bool ReadCodeTable(const Byte** ppByte, size_t& nBytesRemaining, int lerc2Version);
 
   bool BuildTreeFromCodes(int& numBitsLUT);
-  bool DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const;
-  bool DecodeOneValue_NoOverrunCheck(const unsigned int** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const;
+  inline bool DecodeOneValue(const Byte** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const;
+  inline static bool PushValue(Byte** ppByte, int& bitPos, unsigned int value, int len);
   void Clear();
 
 private:
@@ -141,21 +141,25 @@ private:
 
 // -------------------------------------------------------------------------- ;
 
-inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const
+inline bool Huffman::DecodeOneValue(const Byte** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const
 {
-  const size_t sizeUInt = sizeof(unsigned int);
+  const size_t s4 = sizeof(unsigned int);
 
-  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos >= 32 || nBytesRemaining < sizeUInt)
+  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos >= 32 || nBytesRemaining < s4)
     return false;
 
   // first get the next (up to) 12 bits as a copy
-  int valTmp = ((**ppSrc) << bitPos) >> (32 - numBitsLUT);
+  unsigned int temp(0);
+  memcpy(&temp, *ppSrc, s4);
+  int valTmp = (temp << bitPos) >> (32 - numBitsLUT);
+
   if (32 - bitPos < numBitsLUT)
   {
-    if (nBytesRemaining < 2 * sizeUInt)
+    if (nBytesRemaining < 2 * s4)
       return false;
 
-    valTmp |= (*(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
+    memcpy(&temp, *ppSrc + s4, s4);
+    valTmp |= temp >> (64 - bitPos - numBitsLUT);
   }
 
   if (m_decodeLUT[valTmp].first >= 0)    // if there, move the correct number of bits and done
@@ -165,8 +169,8 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRe
     if (bitPos >= 32)
     {
       bitPos -= 32;
-      (*ppSrc)++;
-      nBytesRemaining -= sizeUInt;
+      *ppSrc += s4;
+      nBytesRemaining -= s4;
     }
     return true;
   }
@@ -181,21 +185,22 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRe
   if (bitPos >= 32)
   {
     bitPos -= 32;
-    (*ppSrc)++;
-    nBytesRemaining -= sizeUInt;
+    *ppSrc += s4;
+    nBytesRemaining -= s4;
   }
 
   const Node* node = m_root;
   value = -1;
-  while (value < 0 && nBytesRemaining >= sizeUInt)
+  while (value < 0 && nBytesRemaining >= s4)
   {
-    int bit = ((**ppSrc) << bitPos) >> 31;
+    memcpy(&temp, *ppSrc, s4);
+    int bit = (temp << bitPos) >> 31;
     bitPos++;
     if (bitPos == 32)
     {
       bitPos = 0;
-      (*ppSrc)++;
-      nBytesRemaining -= sizeUInt;
+      *ppSrc += s4;
+      nBytesRemaining -= s4;
     }
 
     node = bit ? node->child1 : node->child0;
@@ -211,69 +216,43 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nBytesRe
 
 // -------------------------------------------------------------------------- ;
 
-inline bool Huffman::DecodeOneValue_NoOverrunCheck(const unsigned int** ppSrc, size_t& nBytesRemaining, int& bitPos, int numBitsLUT, int& value) const
+inline bool Huffman::PushValue(Byte** ppByte, int& bitPos, unsigned int value, int len)
 {
-  const size_t sizeUInt = sizeof(unsigned int);
+  const size_t s4 = sizeof(unsigned int);
 
-  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos >= 32)
+  if (!ppByte || !(*ppByte) || bitPos < 0 || bitPos >= 32 || len < 0 || len > 32)
     return false;
 
-  // first get the next (up to) 12 bits as a copy
-  int valTmp = ((**ppSrc) << bitPos) >> (32 - numBitsLUT);
-  if (32 - bitPos < numBitsLUT)
+  if (32 - bitPos >= len)
   {
-    valTmp |= (*(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
-  }
+    if (bitPos == 0)
+      memset(*ppByte, 0, s4);
 
-  if (m_decodeLUT[valTmp].first >= 0)    // if there, move the correct number of bits and done
-  {
-    value = m_decodeLUT[valTmp].second;
-    bitPos += m_decodeLUT[valTmp].first;
-    if (bitPos >= 32)
-    {
-      bitPos -= 32;
-      (*ppSrc)++;
-      nBytesRemaining -= sizeUInt;
-    }
-    return true;
-  }
+    unsigned int temp(0);
+    memcpy(&temp, *ppByte, s4);
+    temp |= value << (32 - bitPos - len);
+    memcpy(*ppByte, &temp, s4);
 
-  // if not there, go through the tree (slower)
-
-  if (!m_root)
-    return false;
-
-  // skip leading 0 bits before entering the tree
-  bitPos += m_numBitsToSkipInTree;
-  if (bitPos >= 32)
-  {
-    bitPos -= 32;
-    (*ppSrc)++;
-    nBytesRemaining -= sizeUInt;
-  }
-
-  const Node* node = m_root;
-  value = -1;
-  while (value < 0)
-  {
-    int bit = ((**ppSrc) << bitPos) >> 31;
-    bitPos++;
+    bitPos += len;
     if (bitPos == 32)
     {
       bitPos = 0;
-      (*ppSrc)++;
-      nBytesRemaining -= sizeUInt;
+      *ppByte += s4;
     }
-
-    node = bit ? node->child1 : node->child0;
-    if (!node)
-      return false;
-
-    if (node->value >= 0)    // reached a leaf node
-      value = node->value;
+  }
+  else
+  {
+    bitPos += len - 32;
+    unsigned int temp(0);
+    memcpy(&temp, *ppByte, s4);
+    temp |= value >> bitPos;
+    memcpy(*ppByte, &temp, s4);
+    *ppByte += s4;
+    temp = value << (32 - bitPos);
+    memcpy(*ppByte, &temp, s4);
   }
 
-  return (value >= 0);
+  return true;
 }
 
 // -------------------------------------------------------------------------- ;
