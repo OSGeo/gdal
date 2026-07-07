@@ -344,3 +344,11 @@ def test_ogr_dgn_encoding(tmp_path):
         assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
         f = lyr.GetNextFeature()
         assert f["Text"] == "\xc3\xa9ven"  # UTF-8
+
+
+def test_ogr_dgn_knot_oob():
+
+    ds = ogr.Open("data/dgn/knot_oob.dgn")
+    lyr = ds.GetLayer(0)
+    with pytest.raises(Exception, match="attr_bytes < 0"):
+        lyr.GetNextFeature()
