@@ -477,7 +477,7 @@ class netCDFDataset final : public GDALPamDataset
                           const char *pszAttr) const;
     const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr) const;
 
-    void ProcessCreationOptions();
+    bool ProcessCreationOptions();
     int DefVarDeflate(int nVarId, bool bChunkingArg = true) const;
     CPLErr AddProjectionVars(bool bDefsOnly, GDALProgressFunc pfnProgress,
                              void *pProgressData);

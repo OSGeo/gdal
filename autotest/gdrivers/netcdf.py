@@ -2759,6 +2759,147 @@ def test_netcdf_65(tmp_path):
 # from a config file
 
 
+@gdaltest.enable_exceptions()
+def test_netcdf_66_missing_config(tmp_path):
+
+    with pytest.raises(Exception, match="Cannot open file"):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=not_existing"],
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_66_malformed_xml(tmp_path):
+
+    with pytest.raises(Exception, match="not all elements have been closed"):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=<Configuration>"],
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_66_unrecognized_element(tmp_path):
+
+    myconfig = """<Configuration>
+    <unrecognized_elt/>
+</Configuration>
+"""
+
+    # unrecognized element is silently ignored
+    gdal.VectorTranslate(
+        tmp_path / "out.nc",
+        "data/netcdf/profile.nc",
+        format="netCDF",
+        datasetCreationOptions=["CONFIG_FILE=" + myconfig],
+    )
+
+    assert os.path.exists(tmp_path / "out.nc")
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_66_unsupported_attribute_type(tmp_path):
+
+    myconfig = """<Configuration>
+    <Attribute name="foo" value="bar" type="unsupported"/>
+</Configuration>
+"""
+
+    with pytest.raises(Exception, match="type='unsupported' unsupported"):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=" + myconfig],
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_66_unsupported_layer_attribute_type(tmp_path):
+
+    myconfig = """<Configuration>
+    <Layer name="x">
+    <Attribute name="foo" value="bar" type="unsupported"/>
+    </Layer>
+</Configuration>
+"""
+
+    with pytest.raises(Exception, match="type='unsupported' unsupported"):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=" + myconfig],
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_66_field_invalid_dim(tmp_path):
+
+    myconfig = """<Configuration>
+    <Field name="station" main_dim="non_existing"/>
+</Configuration>
+"""
+
+    with pytest.raises(Exception, match="Dimension 'non_existing' does not exist"):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=" + myconfig, "GEOMETRY_ENCODING=WKT"],
+        )
+
+
+@pytest.mark.parametrize(
+    "element",
+    (
+        "<DatasetCreationOption />",
+        '<DatasetCreationOption name="x" />',
+        '<DatasetCreationOption value="x" />',
+        "<LayerCreationOption/>",
+        '<LayerCreationOption name="x" />',
+        '<LayerCreationOption value="x" />',
+        "<Attribute/>",
+        '<Attribute name="x" />',
+        '<Attribute value="x" />',
+        "<Field/>",
+        '<Field name="x"><Attribute name="x"/></Field>',
+        "<Layer/>",
+        '<Layer name="x"><LayerCreationOption/></Layer>',
+        '<Layer name="x"><LayerCreationOption name="x"/></Layer>',
+        '<Layer name="x"><LayerCreationOption value="x"/></Layer>',
+        '<Layer name="x"><Attribute/></Layer>',
+        '<Layer name="x"><Attribute name="x"/></Layer>',
+        '<Layer name="x"><Attribute value="x"/></Layer>',
+        '<Layer name="x"><Field/></Layer>',
+    ),
+)
+@gdaltest.enable_exceptions()
+def test_netcdf_66_incomplete_element(tmp_path, element):
+
+    myconfig = f"<Configuration>{element}</Configuration>"
+
+    if "Field" in element and "Attribute" not in element:
+        message = "Both name and netcdf_name are missing"
+    elif "Layer" in element:
+        message = "Missing name"
+    else:
+        message = "Missing name/value"
+
+    with pytest.raises(Exception, match=message):
+        gdal.VectorTranslate(
+            tmp_path / "out.nc",
+            "data/netcdf/profile.nc",
+            format="netCDF",
+            datasetCreationOptions=["CONFIG_FILE=" + myconfig],
+        )
+
+
 @pytest.mark.require_driver("CSV")
 def test_netcdf_66(tmp_path, tmp_vsimem):
 
