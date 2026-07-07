@@ -50,44 +50,9 @@ class OGRFieldDefn;
 #define wkb25DBitInternalUse 0x80000000
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      helper function for parsing well known text format vector objects.*/
-/* -------------------------------------------------------------------- */
-
-#ifdef OGR_GEOMETRY_H_INCLUDED
-#define OGR_WKT_TOKEN_MAX 64
-
-const char CPL_DLL *OGRWktReadToken(const char *pszInput, char *pszToken);
-
-const char CPL_DLL *OGRWktReadPoints(const char *pszInput,
-                                     OGRRawPoint **ppaoPoints, double **ppadfZ,
-                                     int *pnMaxPoints, int *pnReadPoints);
-
-const char CPL_DLL *
-OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
-                  double **ppadfZ, double **ppadfM,
-                  int *flags, /* geometry flags, are we expecting Z, M, or both;
-                                 may change due to input */
-                  int *pnMaxPoints, int *pnReadPoints);
-
-void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
-std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
-                                         const OGRWktOptions &opts);
-void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double, bool,
-                                   bool);
-std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double, bool,
-                                          bool, const OGRWktOptions &opts);
-
-#endif
-
 void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chDecimalSep, int nPrecision = 15,
                              char chConversionSpecifier = 'f');
-
-#ifdef OGR_GEOMETRY_H_INCLUDED
-std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts,
-                                    int nDimIdx);
-#endif
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
                    char chConversionSpecifier);
@@ -327,3 +292,46 @@ inline void OGRRoundCoordinatesIEEE754(int nBitsPrecision, GByte *pabyBase,
 std::string CPL_DLL OGRDuplicateCharacter(const std::string &osStr, char ch);
 
 #endif /* ndef OGR_P_H_INCLUDED */
+
+/* -------------------------------------------------------------------- */
+/*      Declarations that depend on ogr_geometry.h.                     */
+/*                                                                      */
+/*      These live outside the OGR_P_H_INCLUDED guard above so that     */
+/*      they are still processed when a translation unit includes       */
+/*      ogr_geometry.h and then ogr_p.h, even if ogr_p.h had already    */
+/*      been included earlier without ogr_geometry.h. That ordering     */
+/*      arises in CMake unity builds and would otherwise leave these    */
+/*      functions undeclared. Their own guard prevents duplicate        */
+/*      declarations.                                                   */
+/* -------------------------------------------------------------------- */
+
+#if defined(OGR_GEOMETRY_H_INCLUDED) && !defined(OGR_P_H_GEOMETRY_INCLUDED)
+#define OGR_P_H_GEOMETRY_INCLUDED
+
+#define OGR_WKT_TOKEN_MAX 64
+
+const char CPL_DLL *OGRWktReadToken(const char *pszInput, char *pszToken);
+
+const char CPL_DLL *OGRWktReadPoints(const char *pszInput,
+                                     OGRRawPoint **ppaoPoints, double **ppadfZ,
+                                     int *pnMaxPoints, int *pnReadPoints);
+
+const char CPL_DLL *
+OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
+                  double **ppadfZ, double **ppadfM,
+                  int *flags, /* geometry flags, are we expecting Z, M, or both;
+                                 may change due to input */
+                  int *pnMaxPoints, int *pnReadPoints);
+
+void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
+std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
+                                         const OGRWktOptions &opts);
+void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double, bool,
+                                   bool);
+std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double, bool,
+                                          bool, const OGRWktOptions &opts);
+
+std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts,
+                                    int nDimIdx);
+
+#endif /* OGR_GEOMETRY_H_INCLUDED && !OGR_P_H_GEOMETRY_INCLUDED */
