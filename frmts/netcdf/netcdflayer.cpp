@@ -2500,6 +2500,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Dimension '%s' does not exist",
                      poConfig->m_osMainDim.c_str());
+            return OGRERR_FAILURE;
         }
     }
 

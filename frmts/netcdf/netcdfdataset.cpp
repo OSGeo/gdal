@@ -9263,7 +9263,15 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 
     // process options.
     poDS->aosCreationOptions = CSLDuplicate(papszOptions);
-    poDS->ProcessCreationOptions();
+    if (!poDS->ProcessCreationOptions())
+    {
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+        // deadlock with GDALDataset own
+        // mutex.
+        delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
+        return nullptr;
+    }
 
     if (poDS->eMultipleLayerBehavior == SEPARATE_FILES)
     {
@@ -10015,7 +10023,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
 // Note: some logic depends on bIsProjected and bIsGeoGraphic.
 // May not be known when Create() is called, see AddProjectionVars().
-void netCDFDataset::ProcessCreationOptions()
+bool netCDFDataset::ProcessCreationOptions()
 {
     const char *pszConfig = aosCreationOptions.FetchNameValue("CONFIG_FILE");
     if (pszConfig != nullptr)
@@ -10028,6 +10036,10 @@ void netCDFDataset::ProcessCreationOptions()
             {
                 aosCreationOptions.SetNameValue(osName, osValue);
             }
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -10056,7 +10068,7 @@ void netCDFDataset::ProcessCreationOptions()
         }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            CPLError(CE_Warning, CPLE_NotSupported,
                      "FORMAT=%s in not supported, using the default NC format.",
                      pszValue);
         }
@@ -10084,7 +10096,7 @@ void netCDFDataset::ProcessCreationOptions()
         }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            CPLError(CE_Warning, CPLE_NotSupported,
                      "COMPRESS=%s is not supported.", pszValue);
         }
     }
@@ -10160,6 +10172,8 @@ void netCDFDataset::ProcessCreationOptions()
 
     CPLDebug("GDAL_netCDF", "file options: format=%d compress=%d zlevel=%d",
              eFormat, eCompress, nZLevel);
+
+    return true;
 }
 
 int netCDFDataset::DefVarDeflate(int nVarId, bool bChunkingArg) const
