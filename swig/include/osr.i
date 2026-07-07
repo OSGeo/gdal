@@ -1063,6 +1063,10 @@ public:
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
 
+  OGRErr ImportFromISISPVL( char const *pszPVLMappingGroup ) {
+    return OSRImportFromISISPVL( self, pszPVLMappingGroup );
+  }
+
 %apply Pointer NONNULL {const char* const *papszLines};
 %apply (char **options) { (const char* const *papszLines) };
   OGRErr ImportFromOzi( const char* const *papszLines ) {

@@ -290,6 +290,8 @@ nitpick_ignore_regex = [
     # Deprecated classes
     (".*", "classOGRDataSource"),
     (".*", "classOGRSFDriver"),
+    # Public class referenced by importFromISISPVL but not in the API doc tree
+    (".*", "classCPLJSONObject"),
     # Internal GDAL types
     (".*", "classAxisMappingCoordinateTransformation"),
     (".*", "classCompositeCT"),

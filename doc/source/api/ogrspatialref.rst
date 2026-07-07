@@ -25,3 +25,4 @@ Spatial Reference System C++ API
 
 .. spelling:word-list::
     bInnerMostGeogCRS
+    IProj
