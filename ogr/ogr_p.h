@@ -53,8 +53,6 @@ class OGRFieldDefn;
 void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chDecimalSep, int nPrecision = 15,
                              char chConversionSpecifier = 'f');
-/* An OGRFormatDouble overload taking OGRWktOptions is declared in the
-   ogr_geometry.h-dependent section at the end of this file. */
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
                    char chConversionSpecifier);
