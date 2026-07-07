@@ -1422,7 +1422,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     }
 
     if ((poOpenInfo->eAccess == GA_ReadOnly) &&
-        (!TileDBDataset::TileDBObjectExists(poDS->m_osArrayURI)))
+        (!TileDBDataset::TileDBObjectExists(*poDS->m_ctx, poDS->m_osArrayURI)))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open %s as an array or group.",

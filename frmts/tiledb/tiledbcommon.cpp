@@ -49,9 +49,9 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
 /************************************************************************/
 /*                         TileDBObjectExists()                         */
 /************************************************************************/
-bool TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
+bool TileDBDataset::TileDBObjectExists(tiledb::Context &ctx,
+                                       const std::string &osArrayUri)
 {
-    tiledb::Context ctx;
     const auto eType = tiledb::Object::object(ctx, osArrayUri).type();
     return eType != tiledb::Object::Type::Invalid;
 }
@@ -121,10 +121,25 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
     {
         try
         {
-            tiledb::Context ctx;
+            const char *pszConfig = CSLFetchNameValue(
+                poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
+            tiledb::Context oCtx;
+
+            if (pszConfig != nullptr)
+            {
+                tiledb::Config cfg(pszConfig);
+                oCtx = tiledb::Context(cfg);
+            }
+            else
+            {
+                tiledb::Config cfg;
+                cfg["sm.enable_signal_handlers"] = "false";
+                oCtx = tiledb::Context(cfg);
+            }
+
             CPLString osArrayPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
-            if (TileDBDataset::TileDBObjectExists(osArrayPath))
+            if (TileDBDataset::TileDBObjectExists(oCtx, osArrayPath))
                 nRet = TRUE;
             else
                 nRet = FALSE;
@@ -190,21 +205,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
             const std::string osPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
 
-            // identify() identifies this as a request for a TileDB dataset but not whether it exists
-            if ((poOpenInfo->eAccess == GA_ReadOnly) &&
-                (!TileDBDataset::TileDBObjectExists(osPath)))
-            {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "Failed to open %s as an array or group.",
-                         poOpenInfo->pszFilename);
-                return nullptr;
-            }
-
-            if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
-            {
-                return TileDBDataset::OpenMultiDimensional(poOpenInfo);
-            }
-
             const char *pszConfig = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
             tiledb::Context oCtx;
@@ -219,6 +219,21 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 tiledb::Config cfg;
                 cfg["sm.enable_signal_handlers"] = "false";
                 oCtx = tiledb::Context(cfg);
+            }
+
+            // identify() identifies this as a request for a TileDB dataset but not whether it exists
+            if ((poOpenInfo->eAccess == GA_ReadOnly) &&
+                (!TileDBDataset::TileDBObjectExists(oCtx, osPath)))
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Failed to open %s as an array or group.",
+                         poOpenInfo->pszFilename);
+                return nullptr;
+            }
+
+            if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
+            {
+                return TileDBDataset::OpenMultiDimensional(poOpenInfo);
             }
 
             const auto eType = tiledb::Object::object(oCtx, osPath).type();
