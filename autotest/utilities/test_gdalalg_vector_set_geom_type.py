@@ -389,3 +389,17 @@ def test_gdalalg_vector_geom_auto(input_geoms, expected_geom_type):
     out_ds = alg["output"].GetDataset()
     lyr = out_ds.GetLayer(0)
     assert lyr.GetGeomType() == expected_geom_type
+
+
+def test_gdalalg_vector_set_geom_type_no_option():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("the_layer")
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match=r"At least, one of .* must be specified"):
+        alg.Run()
