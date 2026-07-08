@@ -1126,6 +1126,14 @@ def test_gdalalg_pipeline_invalid_last_step(gdal_path):
     )
 
     assert "Last step should be 'write', " in err
+    # Ensure there are no duplicated steps
+    pos = err.find("Last step should be ")
+    err = err[pos + len("Last step should be ") :]
+    err = err.replace("\r\n", "\n")
+    err = err[0 : err.find("\n")]
+    steps = err.replace(" or ", ", ")
+    steps = steps.split(", ")
+    assert len(steps) == len(set(steps))
 
 
 def test_gdalalg_pipeline_tee_output_string(tmp_vsimem):
