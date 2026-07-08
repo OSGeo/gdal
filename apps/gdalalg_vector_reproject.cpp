@@ -38,9 +38,16 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
         .AddHiddenAlias("s_srs");
     AddArg(GDAL_ARG_NAME_OUTPUT_CRS, 'd', _("Output CRS"), &m_dstCrs)
         .SetIsCRSArg()
-        .SetRequired()
         .AddHiddenAlias("dst-crs")
-        .AddHiddenAlias("t_srs");
+        .AddHiddenAlias("t_srs")
+        .SetMutualExclusionGroup("output-crs");
+    AddArg("like", 0, _("Dataset from which an output CRS should be extracted"),
+           &m_likeDataset, GDAL_OF_RASTER | GDAL_OF_VECTOR)
+        .SetMetaVar("DATASET")
+        .SetMutualExclusionGroup("output-crs");
+    AddArg("like-layer", 0, ("Name of the layer of the 'like' dataset"),
+           &m_likeLayer)
+        .SetMetaVar("LAYER-NAME");
 }
 
 /************************************************************************/
@@ -64,8 +71,58 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &)
     }
 
     OGRSpatialReference oDstCRS;
-    oDstCRS.SetFromUserInput(m_dstCrs.c_str());
-    oDstCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if (!m_dstCrs.empty())
+    {
+        oDstCRS.SetFromUserInput(m_dstCrs.c_str());
+        oDstCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    else if (auto *poLikeDS = m_likeDataset.GetDatasetRef())
+    {
+        if (!m_likeLayer.empty())
+        {
+            const auto *poLikeLayer =
+                poLikeDS->GetLayerByName(m_likeLayer.c_str());
+            if (!poLikeLayer)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Specified layer '%s' not found.",
+                            m_likeLayer.c_str());
+                return false;
+            }
+            if (!poLikeLayer->GetSpatialRef())
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Specified layer '%s' has no spatial reference system.",
+                    m_likeLayer.c_str());
+                return false;
+            }
+
+            oDstCRS = *poLikeLayer->GetSpatialRef();
+        }
+        else
+        {
+            const auto *poLikeCRS = poLikeDS->GetSpatialRef();
+
+            if (!poLikeCRS)
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Dataset specified by --like has no spatial reference "
+                    "system, or has multiple layers with different spatial "
+                    "reference systems. An individual layer can be specified "
+                    "with --like-layer.");
+                return false;
+            }
+            oDstCRS = *poLikeCRS;
+        }
+    }
+    else
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Must specify --output-crs or --like");
+        return false;
+    }
 
     auto reprojectedDataset =
         std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);

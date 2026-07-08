@@ -113,6 +113,89 @@ def test_gdalalg_vector_reproject_complete_dst_crs():
     assert "2193 --" not in out  # NZGD2000
 
 
+@pytest.mark.parametrize(
+    "like_layer,num_like_layers",
+    (
+        (None, 0),
+        (None, 1),
+        ("test", 2),
+        ("test2", 2),
+    ),
+)
+def test_gdalalg_vector_reproject_like_multiple_layers(like_layer, num_like_layers):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer(
+        "points", srs=osr.SpatialReference(epsg=4326), geom_type=ogr.wkbPoint
+    )
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (-72.5802 44.2626)"))
+    src_lyr.CreateFeature(f)
+
+    like_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1)
+    like_ds.SetSpatialRef(osr.SpatialReference(epsg=6589))
+    if num_like_layers > 0:
+        like_ds.CreateLayer("test", srs=osr.SpatialReference(epsg=32145))
+    if num_like_layers > 1:
+        like_ds.CreateLayer("test2", srs=osr.SpatialReference(epsg=5646))
+
+    alg = get_reproject_alg()
+    alg["input"] = src_ds
+    alg["like"] = like_ds
+    if like_layer:
+        alg["like-layer"] = like_layer
+    alg["output-format"] = "stream"
+
+    if like_layer is None and num_like_layers > 1:
+        with pytest.raises(Exception, match="multiple layers with different spatial"):
+            alg.Run()
+        return
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+
+    if num_like_layers == 0:
+        like_srs = like_ds.GetSpatialRef()
+    else:
+        like_srs = like_ds.GetLayer(like_layer or 0).GetSpatialRef()
+
+    assert dst_ds.GetLayer(0).GetSpatialRef().IsSame(like_srs)
+
+
+def test_gdalalg_vector_reproject_like_invalid_dataset():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["like"] = "/vsimem/does_not_exist"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="No such file or directory"):
+        alg.Run()
+
+
+def test_gdalalg_vector_reproject_like_layer():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["like"] = "../ogr/data/poly.shp"
+    alg["like-layer"] = "does_not_exist"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Specified layer .* not found"):
+        alg.Run()
+
+
+def test_gdalalg_vector_reproject_unspecified_dst_crs():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Must specify --output-crs or --like"):
+        alg.Run()
+
+
 ###############################################################################
 # Test from a polar projected CRS to geographic
 
