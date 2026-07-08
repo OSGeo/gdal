@@ -1658,11 +1658,11 @@ CPLErr ILWISRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             break;
         case stFloat:
             for (int iCol = 0; iCol < nBlockXSize; iCol++)
-                ((float *)pImage)[iCol] = static_cast<float *>(pData)[iCol];
+                SetValue(pImage, iCol, static_cast<float *>(pData)[iCol]);
             break;
         case stReal:
             for (int iCol = 0; iCol < nBlockXSize; iCol++)
-                ((double *)pImage)[iCol] = static_cast<double *>(pData)[iCol];
+                SetValue(pImage, iCol, static_cast<double *>(pData)[iCol]);
             break;
         default:
             CPLAssert(false);
