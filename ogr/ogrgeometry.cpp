@@ -717,7 +717,7 @@ OGRErr OGRGeometry::transformTo(const OGRSpatialReference *poSR)
 
     const OGRErr eErr = transform(poCT);
 
-    delete poCT;
+    OGRCoordinateTransformation::DestroyCT(poCT);
 
     return eErr;
 }
