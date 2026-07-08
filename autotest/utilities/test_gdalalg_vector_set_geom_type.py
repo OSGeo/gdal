@@ -401,5 +401,5 @@ def test_gdalalg_vector_set_geom_type_no_option():
     alg["output"] = ""
     alg["output-format"] = "stream"
 
-    with pytest.raises(Exception, match=r"At least, one of .* must be specified"):
+    with pytest.raises(Exception, match=r"At least one of .* must be specified"):
         alg.Run()

@@ -319,8 +319,8 @@ bool GDALVectorSetGeomTypeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         m_opts.m_dim.empty())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
-                    "At least, one of --auto, --geometry-type, --multi, "
-                    "--single, --linear, --multi or --dim must be specified");
+                    "At least one of --auto, --geometry-type, --multi, "
+                    "--single, --linear, --curve or --dim must be specified");
         return false;
     }
 
