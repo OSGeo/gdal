@@ -3126,8 +3126,9 @@ def test_ogr_geom_getcurvegeometry():
             g3.ExportToWkt()
             == "MULTICURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,1 -1,0 0))"
             or g3.ExportToWkt()
-            == "MULTICURVE (CIRCULARSTRING (2 0,1 -1,0 0),CIRCULARSTRING (0 0,1 1,2 0))"
-        )  # GEOS OverlayNG
+            == "MULTICURVE (CIRCULARSTRING (2 0,1 -1,0 0),CIRCULARSTRING (0 0,1 1,2 0))"  # GEOS OverlayNG
+            or g3.ExportToWkt() == "CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0)"  # GEOS 3.15
+        )
 
         g1 = ogr.CreateGeometryFromWkt("POINT(1 2)")
         g1 = g1.Buffer(0.5)
