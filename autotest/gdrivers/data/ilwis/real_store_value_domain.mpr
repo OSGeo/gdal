@@ -1,0 +1,18 @@
+[Ilwis]
+Type=BaseMap
+
+[BaseMap]
+Type=Map
+Domain=value.dom
+Range=0:255:1
+
+[Map]
+Type=MapStore
+Size=4 8
+GeoRef=none.grf
+
+[MapStore]
+Type=Real
+Data=real_store_value_domain.mp#
+Structure=Line
+StartOffset=0
