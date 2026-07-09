@@ -396,7 +396,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
@@ -478,7 +478,7 @@ class GDALTest:
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         if self.band > 0:
@@ -580,7 +580,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -636,7 +636,7 @@ class GDALTest:
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         for band in range(1, out_bands + 1):
@@ -669,7 +669,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -695,7 +695,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         eps = 0.00000001
@@ -727,7 +727,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -761,7 +761,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         expected_osr = osr.SpatialReference()
@@ -793,7 +793,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -844,7 +844,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -877,9 +877,9 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            mode = gdal.GA_Update
+            mode = gdal.OF_RASTER | gdal.OF_UPDATE
         else:
-            mode = gdal.GA_ReadOnly
+            mode = gdal.OF_RASTER
         new_ds = gdal.Open(new_filename, mode)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
@@ -895,7 +895,7 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
             assert (
                 new_ds.GetRasterBand(1).GetNoDataValue() is None
             ), "Got nodata value whereas none was expected"
@@ -916,7 +916,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -940,7 +940,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         assert (
@@ -961,7 +961,7 @@ class GDALTest:
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -987,7 +987,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         new_unit = new_ds.GetRasterBand(1).GetUnitType()
