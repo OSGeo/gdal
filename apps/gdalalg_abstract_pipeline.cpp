@@ -190,12 +190,16 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         for (const auto &stepName : GetStepRegistry().GetNames())
         {
             auto alg = GetStepAlg(stepName);
-            if (alg && alg->CanBeLastStep() &&
-                stepName != GDALRasterWriteAlgorithm::NAME)
+            if (alg && alg->CanBeLastStep())
             {
-                setLastStepNames.insert(CPLString(stepName)
-                                            .replaceAll(RASTER_SUFFIX, "")
-                                            .replaceAll(VECTOR_SUFFIX, ""));
+                const CPLString nameWithoutSuffix =
+                    CPLString(stepName)
+                        .replaceAll(RASTER_SUFFIX, "")
+                        .replaceAll(VECTOR_SUFFIX, "");
+                if (nameWithoutSuffix != GDALRasterWriteAlgorithm::NAME)
+                {
+                    setLastStepNames.insert(nameWithoutSuffix);
+                }
             }
         }
         std::vector<std::string> lastStepNames{GDALRasterWriteAlgorithm::NAME};
