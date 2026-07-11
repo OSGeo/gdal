@@ -324,3 +324,83 @@ class TestEnvisatMERIS(EnvisatTestBase):
                 if float(ri) != pytest.approx(float(v[i]), abs=1e-10):
                     print(r)
                     pytest.fail("Wrong GCP coordinates.")
+
+
+def _build_minimal_asar(num_dsr, geo_ds_size, num_geo_records):
+    # Build a minimal ASAR product whose "GEOLOCATION GRID ADS" advertises
+    # NUM_DSR=num_dsr, exercising EnvisatDataset::ScanForGCPs_ASAR().
+    MPH_SIZE = 1247
+    DSD_SIZE = 280
+    REC = 521
+
+    def dsd(lines):
+        b = ("".join(line + "\n" for line in lines)).encode("ascii")
+        return b + b"\n" * (DSD_SIZE - len(b))
+
+    sph_kw = (
+        b"DATA_TYPE=UWORD\n"
+        b"SAMPLE_TYPE=DETECTED\n"
+        b"LINE_LENGTH=+00000000005<samples>\n"
+    )
+    sph_size = len(sph_kw) + 2 * DSD_SIZE
+    data_offset = MPH_SIZE + sph_size
+
+    dsd_mds = dsd(
+        [
+            'DS_NAME="MDS1                        "',
+            "DS_TYPE=M",
+            'FILENAME="%s"' % (" " * 62),
+            "DS_OFFSET=+%021d<bytes>" % data_offset,
+            "DS_SIZE=+000000000000000000010<bytes>",
+            "NUM_DSR=+0000000001",
+            "DSR_SIZE=+000000000010<bytes>",
+        ]
+    )
+    dsd_geo = dsd(
+        [
+            'DS_NAME="GEOLOCATION GRID ADS        "',
+            "DS_TYPE=A",
+            'FILENAME="NOT USED%s"' % (" " * 54),
+            "DS_OFFSET=+%021d<bytes>" % data_offset,
+            "DS_SIZE=+%021d<bytes>" % geo_ds_size,
+            "NUM_DSR=+%010d" % num_dsr,
+            "DSR_SIZE=+000000000521<bytes>",
+        ]
+    )
+    sph = sph_kw + dsd_mds + dsd_geo
+
+    mph = (
+        b'PRODUCT="ASA_APG_1PXPDE00000000_000000_000000000000_00000_00000_0000.N1"\n'
+        b"PROC_STAGE=N\n"
+        b"SPH_SIZE=+%010d<bytes>\n" % sph_size + b"NUM_DSD=+0000000002\n"
+        b"DSD_SIZE=+0000000280<bytes>\n"
+    )
+    mph = mph + b"\n" * (MPH_SIZE - len(mph))
+
+    data = (bytes(range(256)) * 8)[: num_geo_records * REC]
+    return mph + sph + data
+
+
+def test_envisat_asar_scanforgcps_num_dsr_overflow(tmp_vsimem):
+    # A crafted GEOLOCATION GRID ADS with a huge NUM_DSR used to overflow the
+    # (nNumDSR + 1) * 11 GCP array size computation in ScanForGCPs_ASAR() and
+    # write past the under-allocated array. It must now be rejected instead.
+    fname = tmp_vsimem / "asar_num_dsr_overflow.n1"
+    # (390451572 + 1) * 11 == 4294967303, i.e. 7 modulo 2**32.
+    gdal.FileFromMemBuffer(
+        fname, _build_minimal_asar(390451572, geo_ds_size=521, num_geo_records=1)
+    )
+    ds = gdal.Open(fname)
+    assert ds is not None
+    assert ds.GetGCPCount() == 0
+
+
+def test_envisat_asar_scanforgcps_valid(tmp_vsimem):
+    # A well-formed geolocation grid still yields GCPs (11 per record + 11).
+    fname = tmp_vsimem / "asar_geolocation.n1"
+    gdal.FileFromMemBuffer(
+        fname, _build_minimal_asar(2, geo_ds_size=2 * 521, num_geo_records=2)
+    )
+    ds = gdal.Open(fname)
+    assert ds is not None
+    assert ds.GetGCPCount() == 33
