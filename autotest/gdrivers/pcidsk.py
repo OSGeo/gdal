@@ -771,3 +771,33 @@ def test_pcidsk_web_mercator(tmp_path):
     expected_srs = osr.SpatialReference()
     expected_srs.ImportFromEPSG(3857)
     assert ds.GetSpatialRef().IsSame(expected_srs)
+
+
+###############################################################################
+# Test that a tiled channel whose image header pixel type disagrees with the
+# tile layer data type is rejected instead of overflowing the block buffer.
+
+
+def test_pcidsk_tiled_type_mismatch(tmp_path):
+
+    filename = str(tmp_path / "mismatch.pix")
+    gdal.Translate(
+        filename,
+        "data/byte.tif",
+        options="-of PCIDSK -ot Float32 -co INTERLEAVING=TILED -co TILESIZE=16",
+    )
+
+    # The pixel type is stored in the image band header as an 8-byte field at
+    # offset 160, and independently as the tile layer data type. Change only the
+    # image header type from 32R (Float32, 4 bytes) to 8U (Byte, 1 byte); the
+    # block buffer is then sized for 1 byte per pixel while the tile still holds
+    # 4 bytes per pixel.
+    data = bytearray(open(filename, "rb").read())
+    assert data.count(b"32R     ") == 1
+    pos = data.index(b"32R     ")
+    data[pos : pos + 8] = b"8U      "
+    open(filename, "wb").write(data)
+
+    with gdal.quiet_errors():
+        ds = gdal.Open(filename)
+    assert ds is None
