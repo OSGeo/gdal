@@ -243,21 +243,26 @@ static struct curl_slist *GetGSHeaders(const std::string &osPathForOption,
 /************************************************************************/
 /*                         VSIGSHandleHelper()                          */
 /************************************************************************/
-VSIGSHandleHelper::VSIGSHandleHelper(const std::string &osEndpoint,
-                                     const std::string &osBucketObjectKey,
-                                     const std::string &osSecretAccessKey,
-                                     const std::string &osAccessKeyId,
-                                     bool bUseAuthenticationHeader,
-                                     const GOA2Manager &oManager,
-                                     const std::string &osUserProject)
+VSIGSHandleHelper::VSIGSHandleHelper(
+    const std::string &osEndpoint, const std::string &osBucketObjectKey,
+    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
+    bool bUseAuthenticationHeader, const GOA2Manager &oManager,
+    const std::string &osUserProject, const std::string &osGeneration)
     : m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
       m_osEndpoint(osEndpoint), m_osBucketObjectKey(osBucketObjectKey),
       m_osSecretAccessKey(osSecretAccessKey), m_osAccessKeyId(osAccessKeyId),
       m_bUseAuthenticationHeader(bUseAuthenticationHeader),
-      m_oManager(oManager), m_osUserProject(osUserProject)
+      m_oManager(oManager), m_osUserProject(osUserProject),
+      m_osGeneration(osGeneration)
 {
     if (m_osBucketObjectKey.find('/') == std::string::npos)
         m_osURL += "/";
+    if (!m_osGeneration.empty())
+    {
+        m_osURL += (m_osURL.find('?') == std::string::npos) ? '?' : '&';
+        m_osURL += "generation=";
+        m_osURL += m_osGeneration;
+    }
 }
 
 /************************************************************************/
@@ -773,9 +778,24 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const std::string osUserProject = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_USER_PROJECT", "");
 
+    // Optional GCS object generation (version) to read. When set, requests for
+    // this path carry a "generation=<n>" query parameter, so a specific
+    // (possibly non-current) object version is read instead of the live one.
+    // See https://cloud.google.com/storage/docs/object-versioning
+    const std::string osGeneration =
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_GENERATION", "");
+    if (!osGeneration.empty() &&
+        osGeneration.find_first_not_of("0123456789") != std::string::npos)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid GS_GENERATION value '%s': must be a positive integer",
+                 osGeneration.c_str());
+        return nullptr;
+    }
+
     return new VSIGSHandleHelper(osEndpoint, osBucketObject, osSecretAccessKey,
                                  osAccessKeyId, bUseAuthenticationHeader,
-                                 oManager, osUserProject);
+                                 oManager, osUserProject, osGeneration);
 }
 
 /************************************************************************/
@@ -789,6 +809,12 @@ void VSIGSHandleHelper::RebuildURL()
         m_osBucketObjectKey.find('/') == std::string::npos)
         m_osURL += "/";
     m_osURL += GetQueryString(false);
+    if (!m_osGeneration.empty())
+    {
+        m_osURL += (m_osURL.find('?') == std::string::npos) ? '?' : '&';
+        m_osURL += "generation=";
+        m_osURL += m_osGeneration;
+    }
 }
 
 /************************************************************************/
@@ -842,6 +868,18 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
         const auto osQueryString(GetQueryString(false));
         if (osQueryString == "?uploads" || osQueryString == "?acl")
             osCanonicalResource += osQueryString;
+    }
+    // Include the object generation in the string-to-sign so the HMAC
+    // signature covers the versioned request.
+    // TODO: this branch (HMAC/GS_SECRET_ACCESS_KEY auth) has not been verified
+    // against a real signed request; the OAuth2 bearer-token path (the common
+    // case, handled above via the Authorization header) does not rely on it.
+    if (!m_osGeneration.empty())
+    {
+        osCanonicalResource +=
+            (osCanonicalResource.find('?') == std::string::npos) ? '?' : '&';
+        osCanonicalResource += "generation=";
+        osCanonicalResource += m_osGeneration;
     }
 
     // If accessing a Google Cloud account from a GC VM, check that

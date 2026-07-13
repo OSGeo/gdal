@@ -49,6 +49,7 @@ def gs_test_config():
         "GS_OAUTH2_CLIENT_ID": "",
         "GOOGLE_APPLICATION_CREDENTIALS": "",
         "GS_USER_PROJECT": "",
+        "GS_GENERATION": "",
     }
 
     with gdaltest.config_options(options, thread_local=False):
@@ -216,6 +217,48 @@ def test_vsigs_no_sign_request_fake_server(webserver_port):
             data = gdal.VSIFReadL(1, 1, f)
             gdal.VSIFCloseL(f)
             assert len(data) == 1
+
+
+def test_vsigs_read_specific_generation(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    # The generation must be forwarded as a real "generation=<n>" query
+    # parameter, not folded into the object key, for GCS to return the pinned
+    # version instead of the live object.
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/resource?generation=123456789",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {"GS_NO_SIGN_REQUEST": "YES", "GS_GENERATION": "123456789"},
+            thread_local=False,
+        ):
+            f = open_for_read("/vsigs/gs_fake_bucket_generation/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+def test_vsigs_non_numeric_generation_rejected(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES", "GS_GENERATION": "not-a-number"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsigs/gs_fake_bucket_generation/resource")
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("GS_GENERATION") >= 0
 
 
 ###############################################################################
