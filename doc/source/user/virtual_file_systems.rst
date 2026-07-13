@@ -1320,6 +1320,13 @@ read a file within a potentially big ZIP file streamed to gdal_translate:
 
     cat file.tif.zip | gdal_translate /vsizip/{/vsistdin?buffer_limit=-1}/path/to/some.tif out.tif
 
+We observe the layer name in effect is when using /vsistdin/ is just "layer",
+
+::
+
+    $ echo | ogrinfo -if CSV /vsistdin/ -al -q
+    Layer name: layer
+
 
 .. _vsistdout:
 
