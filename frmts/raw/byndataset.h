@@ -165,7 +165,6 @@ struct BYNEllipsoids
 
 constexpr int BYN_DATUM_1_VDATUM_2 =
     6649;                          /* Compounded NAD83(CSRS) + CGVD2013 */
-constexpr int BYN_DATUM_0 = 4140;  /* ITRF2008 (GRS80 based WGS84) */
 constexpr int BYN_DATUM_1 = 4617;  /* NAD83(CSRS) */
 constexpr int BYN_VDATUM_1 = 5713; /* CGVD28 */
 constexpr int BYN_VDATUM_2 = 6647; /* CGVD2013 */
