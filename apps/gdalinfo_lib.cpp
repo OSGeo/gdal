@@ -450,10 +450,10 @@ static std::string GetCRSId(const char *pszAuthName, const char *pszAuthCode)
 /*                        EmitSimplifiedOutput()                        */
 /************************************************************************/
 
-static void
-EmitSimplifiedOutput(const OGRSpatialReference *poSRS, const char *pszIndent,
-                     const char *pszAuthName, const char *pszAuthCode,
-                     std::function<void(const std::string &)> printFunction)
+static void EmitSimplifiedOutput(
+    const OGRSpatialReference *poSRS, const char *pszIndent,
+    const char *pszAuthName, const char *pszAuthCode,
+    const std::function<void(const std::string &)> &printFunction)
 {
     printFunction(CPLSPrintf("%s- name: %s\n", pszIndent, poSRS->GetName()));
 

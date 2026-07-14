@@ -736,7 +736,17 @@ GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions,
             return CE_Failure;
         }
 
-        if (oResetDestPixels.value())
+        bool bResetDestPixels = false;
+        try
+        {
+            bResetDestPixels = oResetDestPixels.value();
+        }
+        catch (const std::exception &)
+        {
+            // to make Coverity Scan happy
+        }
+
+        if (bResetDestPixels)
         {
             for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
             {
