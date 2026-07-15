@@ -37,7 +37,7 @@
 %typemap(ret) VSI_RETVAL
 {
   /* %typemap(ret) VSI_RETVAL */
-  resultobj = PyInt_FromLong( $1 );
+  resultobj = PyLong_FromLong( $1 );
 }
 
 
@@ -259,7 +259,7 @@ TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(6)
 {
   /* %typemap(ret) OGRErr */
   if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
-    resultobj = PyInt_FromLong( $1 );
+    resultobj = PyLong_FromLong( $1 );
   }
 }
 
@@ -268,7 +268,7 @@ static PyObject *
 CreateTupleFromIntArray( const int *first, size_t size ) {
   PyObject *out = PyTuple_New( size );
   for( unsigned int i=0; i<size; i++ ) {
-    PyObject *val = PyInt_FromLong( *first );
+    PyObject *val = PyLong_FromLong( *first );
     ++first;
     PyTuple_SetItem( out, i, val );
   }
@@ -989,7 +989,7 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
       SWIG_fail;
   }
   for( int i=0; i<*$1; i++ ) {
-    PyObject *val = PyInt_FromLong( (*$2)[i] );
+    PyObject *val = PyLong_FromLong( (*$2)[i] );
     PyList_SetItem( out, i, val );
   }
   $result = out;
@@ -1831,7 +1831,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 
     /* In some cases 0 is passed instead of None. */
     /* See https://github.com/OSGeo/gdal/pull/219 */
-    if ( PyLong_Check($input) || PyInt_Check($input) )
+    if ( PyLong_Check($input) )
     {
         if( PyLong_AsLong($input) == 0 )
         {
@@ -1933,7 +1933,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(in) ( GUInt32 )  */
 
-    if (PyLong_Check($input) || PyInt_Check($input)) {
+    if (PyLong_Check($input)) {
         $1 = PyLong_AsUnsignedLong($input);
     }
 
@@ -2533,9 +2533,9 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 
 %typemap(in) (GDALDataType eType)
 {
-    if (PyInt_Check($input))
+    if (PyLong_Check($input))
     {
-        $1 = static_cast<GDALDataType>(PyInt_AsLong($input));
+        $1 = static_cast<GDALDataType>(PyLong_AsLong($input));
     }
     else
     {
@@ -2547,9 +2547,9 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
             PyObject* type_code = PyObject_CallFunctionObjArgs(fn, $input, NULL);
 
             Py_DECREF(gdal_array);
-            if (type_code && PyInt_Check(type_code))
+            if (type_code && PyLong_Check(type_code))
             {
-                $1 = static_cast<GDALDataType>(PyInt_AsLong(type_code));
+                $1 = static_cast<GDALDataType>(PyLong_AsLong(type_code));
                 Py_DECREF(type_code);
             }
             else
@@ -2799,7 +2799,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
         OSRReference((*($1))[i]);
         PyTuple_SetItem( tuple, 0,
             SWIG_NewPointerObj(SWIG_as_voidptr((*($1))[i]), SWIGTYPE_p_OSRSpatialReferenceShadow, 1 ) );
-        PyTuple_SetItem( tuple, 1, PyInt_FromLong((*($3))[i]) );
+        PyTuple_SetItem( tuple, 1, PyLong_FromLong((*($3))[i]) );
         PyList_SetItem( $result, i, tuple );
     }
 }
@@ -3410,7 +3410,7 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   $result = PyDict_New();
   for(int i = 0; i < nEntryCount; ++ i)
   {
-      PyObject *key = PyInt_FromLong( (int)(pRet[i].eGeomType) );
+      PyObject *key = PyLong_FromLong( (int)(pRet[i].eGeomType) );
       PyObject *val = PyLong_FromLongLong( pRet[i].nCount );
       PyDict_SetItem($result, key, val );
       Py_DECREF(key);
