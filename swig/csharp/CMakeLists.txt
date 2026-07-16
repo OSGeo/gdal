@@ -675,7 +675,7 @@ if (CSHARP_BUILD_SAMPLES)
               OSGeo.GDAL.Samples.GDALCsharpWarp
               OSGeo.GDAL.Samples.VSIMem
               OSGeo.GDAL.Samples.OGRFeatureEdit
-              OSGeo.GDAL.Samples.GetCRSInfo.exe)
+              OSGeo.GDAL.Samples.GetCRSInfo)
 
     # set up the tests
 endif(CSHARP_BUILD_SAMPLES)
