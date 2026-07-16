@@ -45,7 +45,7 @@ class OGRGeoJSONLayer;
 class OGRSpatialReference;
 
 /************************************************************************/
-/*                        OGRGeoJSONBaseReader                          */
+/*                         OGRGeoJSONBaseReader                         */
 /************************************************************************/
 
 class OGRGeoJSONBaseReader
@@ -229,7 +229,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
     std::set<int> &aoSetUndeterminedTypeFields);
 
 /************************************************************************/
-/*                 GeoJSON Parsing Utilities                            */
+/*                      GeoJSON Parsing Utilities                       */
 /************************************************************************/
 
 bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,

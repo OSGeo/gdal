@@ -36,7 +36,7 @@ GDALRasterPolygonEnumeratorT<
 }
 
 /************************************************************************/
-/*                    ~GDALRasterPolygonEnumeratorT()                    */
+/*                   ~GDALRasterPolygonEnumeratorT()                    */
 /************************************************************************/
 
 template <class DataType, class EqualityTest>

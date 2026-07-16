@@ -19,7 +19,7 @@
 #include <math.h>
 
 /************************************************************************/
-/*                       ~OGRPMTilesDataset()                           */
+/*                         ~OGRPMTilesDataset()                         */
 /************************************************************************/
 
 OGRPMTilesDataset::~OGRPMTilesDataset()
@@ -53,7 +53,7 @@ static void LongLatToSphericalMercator(double *x, double *y)
 }
 
 /************************************************************************/
-/*                            GetCompression()                          */
+/*                           GetCompression()                           */
 /************************************************************************/
 
 /*static*/ const char *OGRPMTilesDataset::GetCompression(uint8_t nVal)
@@ -77,7 +77,7 @@ static void LongLatToSphericalMercator(double *x, double *y)
 }
 
 /************************************************************************/
-/*                           GetTileType()                              */
+/*                            GetTileType()                             */
 /************************************************************************/
 
 /* static */
@@ -361,7 +361,7 @@ bool OGRPMTilesDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Read()                                  */
+/*                                Read()                                */
 /************************************************************************/
 
 const std::string *OGRPMTilesDataset::Read(const CPLCompressor *psDecompressor,
@@ -378,8 +378,8 @@ const std::string *OGRPMTilesDataset::Read(const CPLCompressor *psDecompressor,
         return nullptr;
     }
     m_osBuffer.resize(static_cast<size_t>(nSize));
-    m_poFile->Seek(nOffset, SEEK_SET);
-    if (m_poFile->Read(&m_osBuffer[0], m_osBuffer.size(), 1) != 1)
+    if (m_poFile->Seek(nOffset, SEEK_SET) != 0 ||
+        m_poFile->Read(&m_osBuffer[0], m_osBuffer.size(), 1) != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read %s of length %u at offset " CPL_FRMT_GUIB,
@@ -433,7 +433,7 @@ const std::string *OGRPMTilesDataset::Read(const CPLCompressor *psDecompressor,
 }
 
 /************************************************************************/
-/*                              ReadInternal()                          */
+/*                            ReadInternal()                            */
 /************************************************************************/
 
 const std::string *OGRPMTilesDataset::ReadInternal(uint64_t nOffset,
@@ -444,7 +444,7 @@ const std::string *OGRPMTilesDataset::ReadInternal(uint64_t nOffset,
 }
 
 /************************************************************************/
-/*                              ReadTileData()                          */
+/*                            ReadTileData()                            */
 /************************************************************************/
 
 const std::string *OGRPMTilesDataset::ReadTileData(uint64_t nOffset,

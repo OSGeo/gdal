@@ -37,7 +37,7 @@ constexpr int nPageSize = 4096;
 constexpr int nPageHeaderSize = 2 * static_cast<int>(sizeof(uint32_t));
 
 /************************************************************************/
-/*                    FindFreelistRangeSlot()                           */
+/*                       FindFreelistRangeSlot()                        */
 /************************************************************************/
 
 struct FreelistSlot
@@ -82,7 +82,7 @@ static FreelistSlot FindFreelistRangeSlot(uint32_t nSize)
 }
 
 /************************************************************************/
-/*                        AddEntryToFreelist()                          */
+/*                         AddEntryToFreelist()                         */
 /************************************************************************/
 
 void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
@@ -247,7 +247,7 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
 }
 
 /************************************************************************/
-/*                   GetOffsetOfFreeAreaFromFreeList()                  */
+/*                  GetOffsetOfFreeAreaFromFreeList()                   */
 /************************************************************************/
 
 uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
@@ -542,7 +542,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
 }
 
 /************************************************************************/
-/*                        CheckFreeListConsistency()                    */
+/*                      CheckFreeListConsistency()                      */
 /************************************************************************/
 
 bool FileGDBTable::CheckFreeListConsistency()
@@ -755,7 +755,7 @@ bool FileGDBTable::CheckFreeListConsistency()
 }
 
 /************************************************************************/
-/*                         DeleteFreeList()                             */
+/*                           DeleteFreeList()                           */
 /************************************************************************/
 
 void FileGDBTable::DeleteFreeList()

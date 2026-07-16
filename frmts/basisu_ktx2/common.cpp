@@ -19,7 +19,7 @@
 #include <mutex>
 
 /************************************************************************/
-/*                        GDALInitBasisUTranscoder()                    */
+/*                      GDALInitBasisUTranscoder()                      */
 /************************************************************************/
 
 void GDALInitBasisUTranscoder()
@@ -29,7 +29,7 @@ void GDALInitBasisUTranscoder()
 }
 
 /************************************************************************/
-/*                        GDALInitBasisUEncoder()                       */
+/*                       GDALInitBasisUEncoder()                        */
 /************************************************************************/
 
 void GDALInitBasisUEncoder()
@@ -52,7 +52,7 @@ void GDALRegister_BASISU_KTX2()
 }
 
 /************************************************************************/
-/*                     GDAL_KTX2_BASISU_CreateCopy()                    */
+/*                    GDAL_KTX2_BASISU_CreateCopy()                     */
 /************************************************************************/
 
 bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,

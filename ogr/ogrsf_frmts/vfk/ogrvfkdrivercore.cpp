@@ -18,7 +18,7 @@
 #include "ogrvfkdrivercore.h"
 
 /************************************************************************/
-/*                    OGRVFKDriverIdentify()                            */
+/*                        OGRVFKDriverIdentify()                        */
 /************************************************************************/
 
 int OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -53,7 +53,7 @@ int OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRVFKDriverSetCommonMetadata()                  */
+/*                   OGRVFKDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRVFKDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -80,7 +80,7 @@ void OGRVFKDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRVFKPlugin()                      */
+/*                    DeclareDeferredOGRVFKPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

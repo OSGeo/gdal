@@ -28,7 +28,7 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                        MakeKMLCoordinate()                           */
+/*                         MakeKMLCoordinate()                          */
 /************************************************************************/
 
 static void MakeKMLCoordinate(char *pszTarget, size_t nTargetLen, double x,

@@ -68,7 +68,7 @@ OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
 }
 
 /************************************************************************/
-/*                             Matches()                                */
+/*                              Matches()                               */
 /************************************************************************/
 
 bool OGRCSVLayer::Matches(const char *pszFieldName, char **papszPossibleNames)
@@ -122,7 +122,7 @@ bool OGRCSVLayer::Matches(const char *pszFieldName, char **papszPossibleNames)
 }
 
 /************************************************************************/
-/*                      BuildFeatureDefn()                              */
+/*                          BuildFeatureDefn()                          */
 /************************************************************************/
 
 void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
@@ -840,7 +840,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 std::vector<std::string> OGRCSVLayer::GetFileList()
@@ -853,7 +853,7 @@ std::vector<std::string> OGRCSVLayer::GetFileList()
 }
 
 /************************************************************************/
-/*                             OGRCSVIsTrue()                           */
+/*                            OGRCSVIsTrue()                            */
 /************************************************************************/
 
 static bool OGRCSVIsTrue(const char *pszStr)
@@ -863,7 +863,7 @@ static bool OGRCSVIsTrue(const char *pszStr)
 }
 
 /************************************************************************/
-/*                            OGRCSVIsFalse()                           */
+/*                           OGRCSVIsFalse()                            */
 /************************************************************************/
 
 static bool OGRCSVIsFalse(const char *pszStr)
@@ -1278,7 +1278,7 @@ void OGRCSVLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                        GetNextLineTokens()                           */
+/*                         GetNextLineTokens()                          */
 /************************************************************************/
 
 char **OGRCSVLayer::GetNextLineTokens()
@@ -1782,7 +1782,7 @@ int OGRCSVLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          PreCreateField()                            */
+/*                           PreCreateField()                           */
 /************************************************************************/
 
 OGRCSVCreateFieldAction
@@ -2206,7 +2206,7 @@ OGRErr OGRCSVLayer::WriteHeader()
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
@@ -2502,7 +2502,7 @@ void OGRCSVLayer::SetCRLF(bool bNewValue)
 }
 
 /************************************************************************/
-/*                       SetWriteGeometry()                             */
+/*                          SetWriteGeometry()                          */
 /************************************************************************/
 
 void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
@@ -2527,7 +2527,7 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
 }
 
 /************************************************************************/
-/*                          SetCreateCSVT()                             */
+/*                           SetCreateCSVT()                            */
 /************************************************************************/
 
 void OGRCSVLayer::SetCreateCSVT(bool bCreateCSVTIn)
@@ -2536,7 +2536,7 @@ void OGRCSVLayer::SetCreateCSVT(bool bCreateCSVTIn)
 }
 
 /************************************************************************/
-/*                          SetWriteBOM()                               */
+/*                            SetWriteBOM()                             */
 /************************************************************************/
 
 void OGRCSVLayer::SetWriteBOM(bool bWriteBOMIn)
@@ -2545,7 +2545,7 @@ void OGRCSVLayer::SetWriteBOM(bool bWriteBOMIn)
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRCSVLayer::GetFeatureCount(int bForce)
@@ -2615,7 +2615,7 @@ GIntBig OGRCSVLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          SyncToDisk()                                */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRCSVLayer::SyncToDisk()

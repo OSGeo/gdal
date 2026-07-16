@@ -15,7 +15,7 @@
 #include "gdalmultidim_priv.h"
 
 /************************************************************************/
-/*                 GDALRasterAttributeTableFromMDArrays()               */
+/*                GDALRasterAttributeTableFromMDArrays()                */
 /************************************************************************/
 
 class GDALRasterAttributeTableFromMDArrays final
@@ -418,7 +418,7 @@ GDALRasterAttributeTable *GDALRasterAttributeTableFromMDArrays::Clone() const
 }
 
 /************************************************************************/
-/*               GDALRasterAttributeTableFromMDArrays()                 */
+/*                GDALRasterAttributeTableFromMDArrays()                */
 /************************************************************************/
 
 GDALRasterAttributeTableFromMDArrays::GDALRasterAttributeTableFromMDArrays(

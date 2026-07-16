@@ -31,7 +31,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                           OGRVRTErrorHandler()                       */
+/*                         OGRVRTErrorHandler()                         */
 /************************************************************************/
 
 static void CPL_STDCALL OGRVRTErrorHandler(CPL_UNUSED CPLErr eErr,
@@ -44,7 +44,7 @@ static void CPL_STDCALL OGRVRTErrorHandler(CPL_UNUSED CPLErr eErr,
 }
 
 /************************************************************************/
-/*                         OGRVRTDriverIdentify()                       */
+/*                        OGRVRTDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRVRTDriverIdentify(GDALOpenInfo *poOpenInfo)

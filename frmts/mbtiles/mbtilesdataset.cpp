@@ -72,7 +72,7 @@ constexpr int knDEFAULT_BLOCK_SIZE = 256;
 class MBTilesBand;
 
 /************************************************************************/
-/*                         MBTILESOpenSQLiteDB()                        */
+/*                        MBTILESOpenSQLiteDB()                         */
 /************************************************************************/
 
 static GDALDatasetH MBTILESOpenSQLiteDB(const char *pszFilename,
@@ -129,10 +129,10 @@ class MBTilesDataset final : public GDALPamDataset,
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -170,7 +170,7 @@ class MBTilesDataset final : public GDALPamDataset,
     CPLString m_osClip;
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
 
-    void ParseCompressionOptions(char **papszOptions);
+    void ParseCompressionOptions(CSLConstList papszOptions);
     CPLErr FinalizeRasterRegistration();
     void ComputeTileAndPixelShifts();
     bool InitRaster(MBTilesDataset *poParentDS, int nZoomLevel, int nBandCount,
@@ -178,7 +178,8 @@ class MBTilesDataset final : public GDALPamDataset,
                     double dfGDALMaxX, double dfGDALMaxY);
 
     bool CreateInternal(const char *pszFilename, int nXSize, int nYSize,
-                        int nBandsIn, GDALDataType eDT, char **papszOptions);
+                        int nBandsIn, GDALDataType eDT,
+                        CSLConstList papszOptions);
     void InitVector(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
                     bool bZoomLevelFromSpatialFilter, bool bJsonField);
 
@@ -312,7 +313,7 @@ MBTilesBand::MBTilesBand(MBTilesDataset *poDSIn, int nTileSize)
 }
 
 /************************************************************************/
-/*                           utf8decode()                               */
+/*                             utf8decode()                             */
 /************************************************************************/
 
 static unsigned utf8decode(const char *p, const char *end, int *len)
@@ -463,7 +464,7 @@ bool MBTilesDataset::HasNonEmptyGrids()
 }
 
 /************************************************************************/
-/*                             FindKey()                                */
+/*                              FindKey()                               */
 /************************************************************************/
 
 char *MBTilesDataset::FindKey(int iPixel, int iLine)
@@ -673,7 +674,7 @@ end:
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **MBTilesBand::GetMetadataDomainList()
@@ -683,7 +684,7 @@ char **MBTilesBand::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *MBTilesBand::GetMetadataItem(const char *pszName,
@@ -813,7 +814,7 @@ const char *MBTilesBand::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int MBTilesBand::GetOverviewCount()
@@ -827,7 +828,7 @@ int MBTilesBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                              GetOverview()                           */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *MBTilesBand::GetOverview(int nLevel)
@@ -848,7 +849,7 @@ GDALRasterBand *MBTilesBand::GetOverview(int nLevel)
 }
 
 /************************************************************************/
-/*                         MBTilesDataset()                          */
+/*                           MBTilesDataset()                           */
 /************************************************************************/
 
 MBTilesDataset::MBTilesDataset()
@@ -875,7 +876,7 @@ MBTilesDataset::MBTilesDataset()
 }
 
 /************************************************************************/
-/*                        ~MBTilesDataset()                             */
+/*                          ~MBTilesDataset()                           */
 /************************************************************************/
 
 MBTilesDataset::~MBTilesDataset()
@@ -957,7 +958,7 @@ OGRErr MBTilesDataset::ICommitTransaction()
 }
 
 /************************************************************************/
-/*                         ICanIWriteBlock()                            */
+/*                          ICanIWriteBlock()                           */
 /************************************************************************/
 
 bool MBTilesDataset::ICanIWriteBlock()
@@ -980,7 +981,7 @@ bool MBTilesDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
-/*                         IFlushCacheWithErrCode()                     */
+/*                       IFlushCacheWithErrCode()                       */
 /************************************************************************/
 
 CPLErr MBTilesDataset::IFlushCacheWithErrCode(bool bAtClosing)
@@ -999,7 +1000,7 @@ CPLErr MBTilesDataset::IFlushCacheWithErrCode(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         ICanIWriteBlock()                            */
+/*                          ICanIWriteBlock()                           */
 /************************************************************************/
 
 int MBTilesDataset::GetRowFromIntoTopConvention(int nRow)
@@ -1150,7 +1151,7 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                      ComputeTileAndPixelShifts()                     */
+/*                     ComputeTileAndPixelShifts()                      */
 /************************************************************************/
 
 void MBTilesDataset::ComputeTileAndPixelShifts()
@@ -1172,7 +1173,7 @@ void MBTilesDataset::ComputeTileAndPixelShifts()
 }
 
 /************************************************************************/
-/*                      FinalizeRasterRegistration()                    */
+/*                     FinalizeRasterRegistration()                     */
 /************************************************************************/
 
 CPLErr MBTilesDataset::FinalizeRasterRegistration()
@@ -1221,7 +1222,7 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
 }
 
 /************************************************************************/
-/*                         InitRaster()                                 */
+/*                             InitRaster()                             */
 /************************************************************************/
 
 bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
@@ -1289,7 +1290,7 @@ bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *MBTilesDataset::GetSpatialRef() const
@@ -1323,7 +1324,7 @@ CPLErr MBTilesDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **MBTilesDataset::GetMetadataDomainList()
@@ -1384,7 +1385,7 @@ CSLConstList MBTilesDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *MBTilesDataset::GetMetadataItem(const char *pszName,
@@ -1412,7 +1413,7 @@ const OGRLayer *MBTilesDataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                        MBTilesVectorLayer()                          */
+/*                         MBTilesVectorLayer()                         */
 /************************************************************************/
 
 MBTilesVectorLayer::MBTilesVectorLayer(
@@ -1479,7 +1480,7 @@ MBTilesVectorLayer::MBTilesVectorLayer(
 }
 
 /************************************************************************/
-/*                       ~MBTilesVectorLayer()                          */
+/*                        ~MBTilesVectorLayer()                         */
 /************************************************************************/
 
 MBTilesVectorLayer::~MBTilesVectorLayer()
@@ -1510,7 +1511,7 @@ int MBTilesVectorLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr MBTilesVectorLayer::IGetExtent(int /* iGeomField */,
@@ -1521,7 +1522,7 @@ OGRErr MBTilesVectorLayer::IGetExtent(int /* iGeomField */,
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void MBTilesVectorLayer::ResetReading()
@@ -1544,7 +1545,7 @@ void MBTilesVectorLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                        ISetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr MBTilesVectorLayer::ISetSpatialFilter(int iGeomField,
@@ -1617,7 +1618,7 @@ OGRErr MBTilesVectorLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *MBTilesVectorLayer::GetNextFeature()
@@ -1640,7 +1641,7 @@ OGRFeature *MBTilesVectorLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig MBTilesVectorLayer::GetFeatureCount(int bForce)
@@ -1710,7 +1711,7 @@ GIntBig MBTilesVectorLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                        GetNextSrcFeature()                           */
+/*                         GetNextSrcFeature()                          */
 /************************************************************************/
 
 OGRFeature *MBTilesVectorLayer::GetNextSrcFeature()
@@ -1816,7 +1817,7 @@ MBTilesVectorLayer::CreateFeatureFrom(OGRFeature *poSrcFeature) const
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *MBTilesVectorLayer::GetNextRawFeature()
@@ -1835,7 +1836,7 @@ OGRFeature *MBTilesVectorLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
@@ -1917,7 +1918,7 @@ OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           InitVector()                               */
+/*                             InitVector()                             */
 /************************************************************************/
 
 void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
@@ -1982,7 +1983,7 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int MBTilesDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -2009,7 +2010,7 @@ int MBTilesDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        MBTilesGetMinMaxZoomLevel()                   */
+/*                     MBTilesGetMinMaxZoomLevel()                      */
 /************************************************************************/
 
 static int MBTilesGetMinMaxZoomLevel(GDALDatasetH hDS, int bHasMap,
@@ -2134,7 +2135,7 @@ static int MBTilesGetMinMaxZoomLevel(GDALDatasetH hDS, int bHasMap,
 }
 
 /************************************************************************/
-/*                   MBTilesTileCoordToWorldCoord()                     */
+/*                    MBTilesTileCoordToWorldCoord()                    */
 /************************************************************************/
 
 static double MBTilesTileCoordToWorldCoord(double dfTileCoord, int nZoomLevel)
@@ -2143,7 +2144,7 @@ static double MBTilesTileCoordToWorldCoord(double dfTileCoord, int nZoomLevel)
 }
 
 /************************************************************************/
-/*                   MBTilesWorldCoordToTileCoord()                     */
+/*                    MBTilesWorldCoordToTileCoord()                    */
 /************************************************************************/
 
 static double MBTilesWorldCoordToTileCoord(double dfWorldCoord, int nZoomLevel)
@@ -2152,7 +2153,7 @@ static double MBTilesWorldCoordToTileCoord(double dfWorldCoord, int nZoomLevel)
 }
 
 /************************************************************************/
-/*                           MBTilesGetBounds()                         */
+/*                          MBTilesGetBounds()                          */
 /************************************************************************/
 
 static bool MBTilesGetBounds(GDALDatasetH hDS, bool bUseBounds, int nMaxLevel,
@@ -2261,7 +2262,7 @@ static bool MBTilesGetBounds(GDALDatasetH hDS, bool bUseBounds, int nMaxLevel,
 }
 
 /************************************************************************/
-/*                        MBTilesCurlReadCbk()                          */
+/*                         MBTilesCurlReadCbk()                         */
 /************************************************************************/
 
 typedef struct
@@ -2403,7 +2404,7 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE *fp, void *pabyBuffer,
 }
 
 /************************************************************************/
-/*                  MBTilesGetBandCountAndTileSize()                    */
+/*                   MBTilesGetBandCountAndTileSize()                   */
 /************************************************************************/
 
 static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, GDALDatasetH &hDS,
@@ -2927,12 +2928,12 @@ end:
 }
 
 /************************************************************************/
-/*                                Create()                              */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *MBTilesDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn, GDALDataType eDT,
-                                    char **papszOptions)
+                                    CSLConstList papszOptions)
 {
 #ifdef HAVE_MVT_WRITE_SUPPORT
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
@@ -2957,12 +2958,12 @@ GDALDataset *MBTilesDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                            CreateInternal()                          */
+/*                           CreateInternal()                           */
 /************************************************************************/
 
 bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn, GDALDataType eDT,
-                                    char **papszOptions)
+                                    CSLConstList papszOptions)
 {
     if (eDT != GDT_UInt8)
     {
@@ -3103,7 +3104,7 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 typedef struct
@@ -3125,7 +3126,7 @@ static const WarpResamplingAlg asResamplingAlg[] = {
 
 GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int /*bStrict*/,
-                                        char **papszOptions,
+                                        CSLConstList papszOptions,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
@@ -3451,10 +3452,10 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                        ParseCompressionOptions()                     */
+/*                      ParseCompressionOptions()                       */
 /************************************************************************/
 
-void MBTilesDataset::ParseCompressionOptions(char **papszOptions)
+void MBTilesDataset::ParseCompressionOptions(CSLConstList papszOptions)
 {
     const char *pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
     if (pszZLevel)
@@ -3665,7 +3666,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
 }
 
 /************************************************************************/
-/*                       GDALRegister_MBTiles()                         */
+/*                        GDALRegister_MBTiles()                        */
 /************************************************************************/
 
 void GDALRegister_MBTiles()

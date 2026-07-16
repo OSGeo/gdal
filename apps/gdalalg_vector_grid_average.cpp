@@ -17,7 +17,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*    GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()  */
+/*   GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm()   */
 /************************************************************************/
 
 GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm(
@@ -52,7 +52,7 @@ GDALVectorGridAverageAlgorithm::GDALVectorGridAverageAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridAverageAlgorithm::RunImpl()              */
+/*              GDALVectorGridAverageAlgorithm::RunImpl()               */
 /************************************************************************/
 
 std::string GDALVectorGridAverageAlgorithm::GetGridAlgorithm() const

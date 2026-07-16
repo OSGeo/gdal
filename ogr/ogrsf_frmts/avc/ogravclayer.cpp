@@ -18,7 +18,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                           OGRAVCLayer()                           */
+/*                            OGRAVCLayer()                             */
 /************************************************************************/
 
 OGRAVCLayer::OGRAVCLayer(AVCFileType eSectionTypeIn, OGRAVCDataSource *poDSIn)
@@ -27,7 +27,7 @@ OGRAVCLayer::OGRAVCLayer(AVCFileType eSectionTypeIn, OGRAVCDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                          ~OGRAVCLayer()                           */
+/*                            ~OGRAVCLayer()                            */
 /************************************************************************/
 
 OGRAVCLayer::~OGRAVCLayer()

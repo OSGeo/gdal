@@ -141,7 +141,7 @@ void EarlySetConfigOptions(int argc, char **argv)
 }
 
 /************************************************************************/
-/*                          GDALRemoveBOM()                             */
+/*                           GDALRemoveBOM()                            */
 /************************************************************************/
 
 /* Remove potential UTF-8 BOM from data (must be NUL terminated) */
@@ -165,7 +165,7 @@ int ArgIsNumeric(const char *pszArg)
 }
 
 /************************************************************************/
-/*                         GDALPatternMatch()                           */
+/*                          GDALPatternMatch()                          */
 /************************************************************************/
 
 bool GDALPatternMatch(const char *input, const char *pattern)

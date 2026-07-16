@@ -44,7 +44,7 @@ static PyObject *Py_None = nullptr;
 static PyObject *gpoGDALPythonDriverModule = nullptr;
 
 /************************************************************************/
-/*                         IncRefAndReturn()                            */
+/*                          IncRefAndReturn()                           */
 /************************************************************************/
 
 static PyObject *IncRefAndReturn(PyObject *obj)
@@ -54,7 +54,7 @@ static PyObject *IncRefAndReturn(PyObject *obj)
 }
 
 /************************************************************************/
-/*                            CallPython()                              */
+/*                             CallPython()                             */
 /************************************************************************/
 
 static PyObject *CallPython(PyObject *function)
@@ -66,7 +66,7 @@ static PyObject *CallPython(PyObject *function)
 }
 
 /************************************************************************/
-/*                            CallPython()                              */
+/*                             CallPython()                             */
 /************************************************************************/
 
 static PyObject *CallPython(PyObject *function, int nVal)
@@ -79,7 +79,7 @@ static PyObject *CallPython(PyObject *function, int nVal)
 }
 
 /************************************************************************/
-/*                InitializePythonAndLoadGDALPythonDriverModule() */
+/*           InitializePythonAndLoadGDALPythonDriverModule()            */
 /************************************************************************/
 
 static bool InitializePythonAndLoadGDALPythonDriverModule()
@@ -171,7 +171,7 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
 }
 
 /************************************************************************/
-/*                           GetIntRes()                                */
+/*                             GetIntRes()                              */
 /************************************************************************/
 
 static int GetIntRes(PyObject *poObj, const char *pszFunctionName)
@@ -204,7 +204,7 @@ static int GetIntRes(PyObject *poObj, const char *pszFunctionName)
 }
 
 /************************************************************************/
-/*                           GetDict()                                  */
+/*                              GetDict()                               */
 /************************************************************************/
 
 static char **GetDict(PyObject *poDict)
@@ -235,7 +235,7 @@ static char **GetDict(PyObject *poDict)
 }
 
 /************************************************************************/
-/*                          GetStringRes()                              */
+/*                            GetStringRes()                            */
 /************************************************************************/
 
 static CPLString GetStringRes(PyObject *poObj, const char *pszFunctionName,
@@ -330,7 +330,7 @@ class PythonPluginLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          PythonPluginLayer()                         */
+/*                         PythonPluginLayer()                          */
 /************************************************************************/
 
 PythonPluginLayer::PythonPluginLayer(PyObject *poLayer)
@@ -378,7 +378,7 @@ PythonPluginLayer::PythonPluginLayer(PyObject *poLayer)
 }
 
 /************************************************************************/
-/*                          ~PythonPluginLayer()                        */
+/*                         ~PythonPluginLayer()                         */
 /************************************************************************/
 
 PythonPluginLayer::~PythonPluginLayer()
@@ -392,7 +392,7 @@ PythonPluginLayer::~PythonPluginLayer()
 }
 
 /************************************************************************/
-/*                        RefreshHonourFlags()               */
+/*                         RefreshHonourFlags()                         */
 /************************************************************************/
 
 void PythonPluginLayer::RefreshHonourFlags()
@@ -430,7 +430,7 @@ void PythonPluginLayer::RefreshHonourFlags()
 }
 
 /************************************************************************/
-/*                          SetAttributeFilter()                        */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr PythonPluginLayer::SetAttributeFilter(const char *pszFilter)
@@ -453,7 +453,7 @@ OGRErr PythonPluginLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                          StoreSpatialFilter()                        */
+/*                         StoreSpatialFilter()                         */
 /************************************************************************/
 
 void PythonPluginLayer::StoreSpatialFilter()
@@ -505,7 +505,7 @@ OGRErr PythonPluginLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                           GetName()                                  */
+/*                              GetName()                               */
 /************************************************************************/
 
 const char *PythonPluginLayer::GetName() const
@@ -532,7 +532,7 @@ const char *PythonPluginLayer::GetName() const
 }
 
 /************************************************************************/
-/*                       TestCapability()                               */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int PythonPluginLayer::TestCapability(const char *pszCap) const
@@ -565,7 +565,7 @@ int PythonPluginLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetFIDColumn()                               */
+/*                            GetFIDColumn()                            */
 /************************************************************************/
 
 const char *PythonPluginLayer::GetFIDColumn() const
@@ -597,7 +597,7 @@ const char *PythonPluginLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                        layer_featureCount()                           */
+/*                         layer_featureCount()                         */
 /************************************************************************/
 
 static PyObject *layer_featureCount(PyObject * /*m*/, PyObject *args,
@@ -625,7 +625,7 @@ static PyObject *layer_featureCount(PyObject * /*m*/, PyObject *args,
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
@@ -658,7 +658,7 @@ GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          IGetExtent()                                */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr PythonPluginLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -719,7 +719,7 @@ OGRErr PythonPluginLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                      TranslateToOGRFeature()                         */
+/*                       TranslateToOGRFeature()                        */
 /************************************************************************/
 
 OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
@@ -916,7 +916,7 @@ OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *PythonPluginLayer::GetFeature(GIntBig nFID)
@@ -946,7 +946,7 @@ OGRFeature *PythonPluginLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void PythonPluginLayer::ResetReading()
@@ -961,7 +961,7 @@ void PythonPluginLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *PythonPluginLayer::GetNextFeature()
@@ -1010,7 +1010,7 @@ OGRFeature *PythonPluginLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         GetLayerDefn()                               */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *PythonPluginLayer::GetLayerDefn() const
@@ -1029,7 +1029,7 @@ const OGRFeatureDefn *PythonPluginLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                           GetFields()                                */
+/*                             GetFields()                              */
 /************************************************************************/
 
 void PythonPluginLayer::GetFields() const
@@ -1194,7 +1194,7 @@ void PythonPluginLayer::GetFields() const
 }
 
 /************************************************************************/
-/*                         GetGeomFields()                              */
+/*                           GetGeomFields()                            */
 /************************************************************************/
 
 void PythonPluginLayer::GetGeomFields() const
@@ -1334,7 +1334,7 @@ void PythonPluginLayer::GetGeomFields() const
 }
 
 /************************************************************************/
-/*                          GetMetadata()                               */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 static char **GetMetadata(PyObject *obj, const char *pszDomain)
@@ -1376,7 +1376,7 @@ static char **GetMetadata(PyObject *obj, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetMetadata()                               */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PythonPluginLayer::GetMetadata(const char *pszDomain)
@@ -1412,7 +1412,7 @@ class PythonPluginDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                         PythonPluginDataset()                        */
+/*                        PythonPluginDataset()                         */
 /************************************************************************/
 
 PythonPluginDataset::PythonPluginDataset(GDALOpenInfo *poOpenInfo,
@@ -1465,7 +1465,7 @@ PythonPluginDataset::~PythonPluginDataset()
 }
 
 /************************************************************************/
-/*                          GetLayerCount()                             */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int PythonPluginDataset::GetLayerCount() const
@@ -1478,7 +1478,7 @@ int PythonPluginDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                            GetLayer()                                */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 OGRLayer *PythonPluginDataset::GetLayer(int idx) const
@@ -1524,7 +1524,7 @@ OGRLayer *PythonPluginDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                          GetMetadata()                               */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PythonPluginDataset::GetMetadata(const char *pszDomain)
@@ -1564,7 +1564,7 @@ class PythonPluginDriver final : public GDALDriver
 };
 
 /************************************************************************/
-/*                            LoadPlugin()                              */
+/*                             LoadPlugin()                             */
 /************************************************************************/
 
 bool PythonPluginDriver::LoadPlugin()
@@ -1666,7 +1666,7 @@ static void BuildIdentifyOpenArgs(GDALOpenInfo *poOpenInfo, PyObject *&pyArgs,
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int PythonPluginDriver::Identify(GDALOpenInfo *poOpenInfo)
@@ -1713,7 +1713,7 @@ int PythonPluginDriver::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            IdentifyEx()                              */
+/*                             IdentifyEx()                             */
 /************************************************************************/
 
 int PythonPluginDriver::IdentifyEx(GDALDriver *poDrv, GDALOpenInfo *poOpenInfo)
@@ -1722,7 +1722,7 @@ int PythonPluginDriver::IdentifyEx(GDALDriver *poDrv, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *PythonPluginDriver::Open(GDALOpenInfo *poOpenInfo)
@@ -1766,7 +1766,7 @@ GDALDataset *PythonPluginDriver::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              OpenEx()                                */
+/*                               OpenEx()                               */
 /************************************************************************/
 
 GDALDataset *PythonPluginDriver::OpenEx(GDALDriver *poDrv,
@@ -1776,7 +1776,7 @@ GDALDataset *PythonPluginDriver::OpenEx(GDALDriver *poDrv,
 }
 
 /************************************************************************/
-/*                        PythonPluginDriver()                          */
+/*                         PythonPluginDriver()                         */
 /************************************************************************/
 
 PythonPluginDriver::PythonPluginDriver(const char *pszFilename,
@@ -1791,7 +1791,7 @@ PythonPluginDriver::PythonPluginDriver(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       ~PythonPluginDriver()                          */
+/*                        ~PythonPluginDriver()                         */
 /************************************************************************/
 
 PythonPluginDriver::~PythonPluginDriver()
@@ -1807,7 +1807,7 @@ PythonPluginDriver::~PythonPluginDriver()
 }
 
 /************************************************************************/
-/*                         LoadPythonDriver()                           */
+/*                          LoadPythonDriver()                          */
 /************************************************************************/
 
 static void LoadPythonDriver(const char *pszFilename)
@@ -1896,7 +1896,7 @@ static void LoadPythonDriver(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                        AutoLoadPythonDrivers()                       */
+/*                       AutoLoadPythonDrivers()                        */
 /************************************************************************/
 
 /**

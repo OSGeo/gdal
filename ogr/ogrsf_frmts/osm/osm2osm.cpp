@@ -48,7 +48,7 @@ static const int mon_lengths[2][MONSPERYEAR] = {
 static const int year_lengths[2] = {DAYSPERNYEAR, DAYSPERLYEAR};
 
 /************************************************************************/
-/*                   CPLUnixTimeToYMDHMS()                              */
+/*                        CPLUnixTimeToYMDHMS()                         */
 /************************************************************************/
 
 /** Converts a time value since the Epoch (aka "unix" time) to a broken-down

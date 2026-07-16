@@ -36,7 +36,7 @@ class OGRDGNV8Services : public OdExDgnSystemServices,
 };
 
 /************************************************************************/
-/*                           OGRDGNV8Layer                              */
+/*                            OGRDGNV8Layer                             */
 /************************************************************************/
 
 class OGRDGNV8DataSource;
@@ -104,7 +104,7 @@ class OGRDGNV8Layer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                         OGRDGNV8DataSource                           */
+/*                          OGRDGNV8DataSource                          */
 /************************************************************************/
 
 class OGRDGNV8DataSource final : public GDALDataset
@@ -125,7 +125,7 @@ class OGRDGNV8DataSource final : public GDALDataset
     ~OGRDGNV8DataSource() override;
 
     int Open(const char *, bool bUpdate);
-    bool PreCreate(const char *, char **);
+    bool PreCreate(const char *, CSLConstList);
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

@@ -28,7 +28,7 @@
 #endif
 
 /************************************************************************/
-/*                    GDALGPKGMBTilesLikePseudoDataset()                */
+/*                  GDALGPKGMBTilesLikePseudoDataset()                  */
 /************************************************************************/
 
 GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset()
@@ -94,7 +94,7 @@ void GDALGPKGMBTilesLikePseudoDataset::SetGlobalOffsetScale(double dfOffset,
 }
 
 /************************************************************************/
-/*                      GDALGPKGMBTilesLikeRasterBand()                 */
+/*                   GDALGPKGMBTilesLikeRasterBand()                    */
 /************************************************************************/
 
 // Recent GCC versions complain about null dereference of m_poTPD in
@@ -119,7 +119,7 @@ GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
 #endif
 
 /************************************************************************/
-/*                              FlushCache()                            */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikeRasterBand::FlushCache(bool bAtClosing)
@@ -133,7 +133,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                              FlushTiles()                            */
+/*                             FlushTiles()                             */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
@@ -172,7 +172,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushTiles()
 }
 
 /************************************************************************/
-/*                             GetColorTable()                          */
+/*                           GetColorTable()                            */
 /************************************************************************/
 
 GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
@@ -271,7 +271,7 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
 }
 
 /************************************************************************/
-/*                             SetColorTable()                          */
+/*                           SetColorTable()                            */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikeRasterBand::SetColorTable(GDALColorTable *poCT)
@@ -310,7 +310,7 @@ void GDALGPKGMBTilesLikeRasterBand::AssignColorTable(const GDALColorTable *poCT)
 }
 
 /************************************************************************/
-/*                        GetColorInterpretation()                      */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp GDALGPKGMBTilesLikeRasterBand::GetColorInterpretation()
@@ -326,7 +326,7 @@ GDALColorInterp GDALGPKGMBTilesLikeRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                        SetColorInterpretation()                      */
+/*                       SetColorInterpretation()                       */
 /************************************************************************/
 
 CPLErr
@@ -350,7 +350,7 @@ GDALGPKGMBTilesLikeRasterBand::SetColorInterpretation(GDALColorInterp eInterp)
 }
 
 /************************************************************************/
-/*                        GPKGFindBestEntry()                           */
+/*                         GPKGFindBestEntry()                          */
 /************************************************************************/
 
 static int GPKGFindBestEntry(GDALColorTable *poCT, GByte c1, GByte c2, GByte c3,
@@ -412,7 +412,7 @@ void GDALGPKGMBTilesLikePseudoDataset::FillEmptyTile(GByte *pabyData)
 }
 
 /************************************************************************/
-/*                    FillEmptyTileSingleBand()                         */
+/*                      FillEmptyTileSingleBand()                       */
 /************************************************************************/
 
 void GDALGPKGMBTilesLikePseudoDataset::FillEmptyTileSingleBand(GByte *pabyData)
@@ -424,7 +424,7 @@ void GDALGPKGMBTilesLikePseudoDataset::FillEmptyTileSingleBand(GByte *pabyData)
 }
 
 /************************************************************************/
-/*                           ReadTile()                                 */
+/*                              ReadTile()                              */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
@@ -713,7 +713,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
 }
 
 /************************************************************************/
-/*                           ReadTile()                                 */
+/*                              ReadTile()                              */
 /************************************************************************/
 
 GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
@@ -806,7 +806,7 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
 }
 
 /************************************************************************/
-/*                         GetTileOffsetAndScale()                      */
+/*                       GetTileOffsetAndScale()                        */
 /************************************************************************/
 
 void GDALGPKGMBTilesLikePseudoDataset::GetTileOffsetAndScale(
@@ -841,7 +841,7 @@ void GDALGPKGMBTilesLikePseudoDataset::GetTileOffsetAndScale(
 }
 
 /************************************************************************/
-/*                           ReadTile()                                 */
+/*                              ReadTile()                              */
 /************************************************************************/
 
 GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol,
@@ -981,7 +981,7 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol,
 }
 
 /************************************************************************/
-/*                         IReadBlock()                                 */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikeRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -1350,7 +1350,7 @@ int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       WEBPSupports4Bands()                           */
+/*                         WEBPSupports4Bands()                         */
 /************************************************************************/
 
 static bool WEBPSupports4Bands()
@@ -1379,7 +1379,7 @@ static bool WEBPSupports4Bands()
 }
 
 /************************************************************************/
-/*                         GetTileId()                                  */
+/*                             GetTileId()                              */
 /************************************************************************/
 
 GIntBig GDALGPKGMBTilesLikePseudoDataset::GetTileId(int nRow, int nCol)
@@ -1395,7 +1395,7 @@ GIntBig GDALGPKGMBTilesLikePseudoDataset::GetTileId(int nRow, int nCol)
 }
 
 /************************************************************************/
-/*                           DeleteTile()                               */
+/*                             DeleteTile()                             */
 /************************************************************************/
 
 bool GDALGPKGMBTilesLikePseudoDataset::DeleteTile(int nRow, int nCol)
@@ -1448,7 +1448,7 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
 }
 
 /************************************************************************/
-/*                      ProcessInt16UInt16Tile()                        */
+/*                       ProcessInt16UInt16Tile()                       */
 /************************************************************************/
 
 template <class T>
@@ -1548,7 +1548,7 @@ static void ProcessInt16UInt16Tile(
 }
 
 /************************************************************************/
-/*                         WriteTile()                                  */
+/*                             WriteTile()                              */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTile()
@@ -2883,7 +2883,7 @@ GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartialFlush)
 }
 
 /************************************************************************/
-/*                DoPartialFlushOfPartialTilesIfNecessary()             */
+/*              DoPartialFlushOfPartialTilesIfNecessary()               */
 /************************************************************************/
 
 CPLErr
@@ -2950,7 +2950,7 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
 }
 
 /************************************************************************/
-/*                         WriteShiftedTile()                           */
+/*                          WriteShiftedTile()                          */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
@@ -3280,7 +3280,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
 }
 
 /************************************************************************/
-/*                         IWriteBlock()                                */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff,
@@ -3613,7 +3613,7 @@ double GDALGPKGMBTilesLikeRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                        SetNoDataValueInternal()                      */
+/*                       SetNoDataValueInternal()                       */
 /************************************************************************/
 
 void GDALGPKGMBTilesLikeRasterBand::SetNoDataValueInternal(double dfNoDataValue)
@@ -3634,7 +3634,7 @@ GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int GDALGeoPackageRasterBand::GetOverviewCount()
@@ -3645,7 +3645,7 @@ int GDALGeoPackageRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 GDALRasterBand *GDALGeoPackageRasterBand::GetOverview(int nIdx)
@@ -3744,7 +3744,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
 }
 
 /************************************************************************/
-/*                         LoadBandMetadata()                           */
+/*                          LoadBandMetadata()                          */
 /************************************************************************/
 
 void GDALGeoPackageRasterBand::LoadBandMetadata()
@@ -4002,7 +4002,7 @@ CPLErr GDALGeoPackageRasterBand::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         InvalidateStatistics()                       */
+/*                        InvalidateStatistics()                        */
 /************************************************************************/
 
 void GDALGeoPackageRasterBand::InvalidateStatistics()

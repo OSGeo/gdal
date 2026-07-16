@@ -21,7 +21,7 @@
 #endif
 
 /************************************************************************/
-/*    GDALVectorGridInvdistAlgorithm::GDALVectorGridInvdistAlgorithm()  */
+/*   GDALVectorGridInvdistAlgorithm::GDALVectorGridInvdistAlgorithm()   */
 /************************************************************************/
 
 GDALVectorGridInvdistAlgorithm::GDALVectorGridInvdistAlgorithm(
@@ -67,7 +67,7 @@ GDALVectorGridInvdistAlgorithm::GDALVectorGridInvdistAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridInvdistAlgorithm::RunImpl()              */
+/*              GDALVectorGridInvdistAlgorithm::RunImpl()               */
 /************************************************************************/
 
 std::string GDALVectorGridInvdistAlgorithm::GetGridAlgorithm() const

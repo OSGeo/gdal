@@ -96,7 +96,7 @@ static std::string CPLGetLowerCaseHex(const GByte *pabyData, size_t nBytes)
 }
 
 /************************************************************************/
-/*                       CPLGetLowerCaseHexSHA256()                     */
+/*                      CPLGetLowerCaseHexSHA256()                      */
 /************************************************************************/
 
 std::string CPLGetLowerCaseHexSHA256(const void *pabyData, size_t nBytes)
@@ -107,7 +107,7 @@ std::string CPLGetLowerCaseHexSHA256(const void *pabyData, size_t nBytes)
 }
 
 /************************************************************************/
-/*                       CPLGetLowerCaseHexSHA256()                     */
+/*                      CPLGetLowerCaseHexSHA256()                      */
 /************************************************************************/
 
 std::string CPLGetLowerCaseHexSHA256(const std::string &osStr)
@@ -116,7 +116,7 @@ std::string CPLGetLowerCaseHexSHA256(const std::string &osStr)
 }
 
 /************************************************************************/
-/*                       CPLAWSURLEncode()                              */
+/*                          CPLAWSURLEncode()                           */
 /************************************************************************/
 
 std::string CPLAWSURLEncode(const std::string &osURL, bool bEncodeSlash)
@@ -165,7 +165,7 @@ std::string CPLAWSGetHeaderVal(const struct curl_slist *psExistingHeaders,
 }
 
 /************************************************************************/
-/*                 CPLGetAWS_SIGN4_Signature()                          */
+/*                     CPLGetAWS_SIGN4_Signature()                      */
 /************************************************************************/
 
 // See:
@@ -293,7 +293,7 @@ static std::string CPLGetAWS_SIGN4_Signature(
 }
 
 /************************************************************************/
-/*                CPLGetAWS_SIGN4_Authorization()                       */
+/*                   CPLGetAWS_SIGN4_Authorization()                    */
 /************************************************************************/
 
 static std::string CPLGetAWS_SIGN4_Authorization(
@@ -343,7 +343,7 @@ static std::string CPLGetAWS_SIGN4_Authorization(
 }
 
 /************************************************************************/
-/*                        CPLGetAWS_SIGN4_Timestamp()                   */
+/*                     CPLGetAWS_SIGN4_Timestamp()                      */
 /************************************************************************/
 
 std::string CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp)
@@ -385,7 +385,7 @@ VSIS3HandleHelper::VSIS3HandleHelper(
 }
 
 /************************************************************************/
-/*                        ~VSIS3HandleHelper()                          */
+/*                         ~VSIS3HandleHelper()                         */
 /************************************************************************/
 
 VSIS3HandleHelper::~VSIS3HandleHelper()
@@ -395,7 +395,7 @@ VSIS3HandleHelper::~VSIS3HandleHelper()
 }
 
 /************************************************************************/
-/*                           BuildURL()                                 */
+/*                              BuildURL()                              */
 /************************************************************************/
 
 std::string VSIS3HandleHelper::BuildURL(const std::string &osEndpoint,
@@ -417,7 +417,7 @@ std::string VSIS3HandleHelper::BuildURL(const std::string &osEndpoint,
 }
 
 /************************************************************************/
-/*                           RebuildURL()                               */
+/*                             RebuildURL()                             */
 /************************************************************************/
 
 void VSIS3HandleHelper::RebuildURL()
@@ -432,7 +432,7 @@ IVSIS3LikeHandleHelper::IVSIS3LikeHandleHelper() = default;
 IVSIS3LikeHandleHelper::~IVSIS3LikeHandleHelper() = default;
 
 /************************************************************************/
-/*                        GetBucketAndObjectKey()                       */
+/*                       GetBucketAndObjectKey()                        */
 /************************************************************************/
 
 bool IVSIS3LikeHandleHelper::GetBucketAndObjectKey(const char *pszURI,
@@ -464,7 +464,7 @@ bool IVSIS3LikeHandleHelper::GetBucketAndObjectKey(const char *pszURI,
 }
 
 /************************************************************************/
-/*                      BuildCanonicalizedHeaders()                    */
+/*                     BuildCanonicalizedHeaders()                      */
 /************************************************************************/
 
 std::string IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
@@ -515,7 +515,7 @@ std::string IVSIS3LikeHandleHelper::GetRFC822DateTime()
 }
 
 /************************************************************************/
-/*                        Iso8601ToUnixTime()                           */
+/*                         Iso8601ToUnixTime()                          */
 /************************************************************************/
 
 static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
@@ -671,7 +671,7 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 }
 
 /************************************************************************/
-/*                   ReadAWSTokenFile()                                 */
+/*                          ReadAWSTokenFile()                          */
 /************************************************************************/
 
 static bool ReadAWSTokenFile(const std::string &osAWSTokenFile,
@@ -690,7 +690,7 @@ static bool ReadAWSTokenFile(const std::string &osAWSTokenFile,
 }
 
 /************************************************************************/
-/*          GetConfigurationFromAssumeRoleWithWebIdentity()             */
+/*           GetConfigurationFromAssumeRoleWithWebIdentity()            */
 /************************************************************************/
 
 bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
@@ -1074,7 +1074,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
 }
 
 /************************************************************************/
-/*                      UpdateAndWarnIfInconsistent()                   */
+/*                    UpdateAndWarnIfInconsistent()                     */
 /************************************************************************/
 
 static void UpdateAndWarnIfInconsistent(const char *pszKeyword,
@@ -1152,7 +1152,7 @@ static bool ReadAWSCredentials(const std::string &osProfile,
 }
 
 /************************************************************************/
-/*                         GetDirSeparator()                            */
+/*                          GetDirSeparator()                           */
 /************************************************************************/
 
 static const char *GetDirSeparator()
@@ -1166,7 +1166,7 @@ static const char *GetDirSeparator()
 }
 
 /************************************************************************/
-/*                          GetAWSRootDirectory()                       */
+/*                        GetAWSRootDirectory()                         */
 /************************************************************************/
 
 static std::string GetAWSRootDirectory()
@@ -1186,7 +1186,7 @@ static std::string GetAWSRootDirectory()
 }
 
 /************************************************************************/
-/*                GetConfigurationFromAWSConfigFiles()                  */
+/*                 GetConfigurationFromAWSConfigFiles()                 */
 /************************************************************************/
 
 bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
@@ -1410,7 +1410,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 }
 
 /************************************************************************/
-/*                     GetTemporaryCredentialsForRole()                 */
+/*                   GetTemporaryCredentialsForRole()                   */
 /************************************************************************/
 
 // Issue a STS AssumedRole operation to get temporary credentials for an assumed
@@ -1527,7 +1527,7 @@ static bool GetTemporaryCredentialsForRole(
 }
 
 /************************************************************************/
-/*                     GetTemporaryCredentialsForSSO()                  */
+/*                   GetTemporaryCredentialsForSSO()                    */
 /************************************************************************/
 
 // Issue a GetRoleCredentials request
@@ -1645,7 +1645,7 @@ static bool GetTemporaryCredentialsForSSO(
 }
 
 /************************************************************************/
-/*               GetOrRefreshTemporaryCredentialsForRole()              */
+/*              GetOrRefreshTemporaryCredentialsForRole()               */
 /************************************************************************/
 
 bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForRole(
@@ -1765,7 +1765,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
 }
 
 /************************************************************************/
-/*                  GetCredentialsFromProcess()                         */
+/*                     GetCredentialsFromProcess()                      */
 /************************************************************************/
 
 static bool GetCredentialsFromProcess(const std::string &osCredentialProcess,
@@ -1931,7 +1931,7 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsFromProcess(
 }
 
 /************************************************************************/
-/*                        GetConfiguration()                            */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 bool VSIS3HandleHelper::GetConfiguration(
@@ -2238,7 +2238,7 @@ bool VSIS3HandleHelper::GetConfiguration(
 }
 
 /************************************************************************/
-/*                          CleanMutex()                                */
+/*                             CleanMutex()                             */
 /************************************************************************/
 
 void VSIS3HandleHelper::CleanMutex()
@@ -2249,7 +2249,7 @@ void VSIS3HandleHelper::CleanMutex()
 }
 
 /************************************************************************/
-/*                          ClearCache()                                */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIS3HandleHelper::ClearCache()
@@ -2279,7 +2279,7 @@ void VSIS3HandleHelper::ClearCache()
 }
 
 /************************************************************************/
-/*                          BuildFromURI()                              */
+/*                            BuildFromURI()                            */
 /************************************************************************/
 
 VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
@@ -2404,7 +2404,7 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
 }
 
 /************************************************************************/
-/*                          GetQueryString()                            */
+/*                           GetQueryString()                           */
 /************************************************************************/
 
 std::string
@@ -2430,7 +2430,7 @@ IVSIS3LikeHandleHelper::GetQueryString(bool bAddEmptyValueAfterEqual) const
 }
 
 /************************************************************************/
-/*                       ResetQueryParameters()                         */
+/*                        ResetQueryParameters()                        */
 /************************************************************************/
 
 void IVSIS3LikeHandleHelper::ResetQueryParameters()
@@ -2451,7 +2451,7 @@ void IVSIS3LikeHandleHelper::AddQueryParameter(const std::string &osKey,
 }
 
 /************************************************************************/
-/*                           GetURLNoKVP()                              */
+/*                            GetURLNoKVP()                             */
 /************************************************************************/
 
 std::string IVSIS3LikeHandleHelper::GetURLNoKVP() const
@@ -2464,7 +2464,7 @@ std::string IVSIS3LikeHandleHelper::GetURLNoKVP() const
 }
 
 /************************************************************************/
-/*                          RefreshCredentials()                        */
+/*                         RefreshCredentials()                         */
 /************************************************************************/
 
 void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
@@ -2619,7 +2619,7 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
@@ -2799,7 +2799,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
 }
 
 /************************************************************************/
-/*                          SetEndpoint()                          */
+/*                            SetEndpoint()                             */
 /************************************************************************/
 
 void VSIS3HandleHelper::SetEndpoint(const std::string &osStr)
@@ -2809,7 +2809,7 @@ void VSIS3HandleHelper::SetEndpoint(const std::string &osStr)
 }
 
 /************************************************************************/
-/*                           SetRegion()                             */
+/*                             SetRegion()                              */
 /************************************************************************/
 
 void VSIS3HandleHelper::SetRegion(const std::string &osStr)
@@ -2818,7 +2818,7 @@ void VSIS3HandleHelper::SetRegion(const std::string &osStr)
 }
 
 /************************************************************************/
-/*                           SetRequestPayer()                          */
+/*                          SetRequestPayer()                           */
 /************************************************************************/
 
 void VSIS3HandleHelper::SetRequestPayer(const std::string &osStr)
@@ -2837,7 +2837,7 @@ void VSIS3HandleHelper::SetVirtualHosting(bool b)
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 std::string VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
@@ -2953,7 +2953,7 @@ void VSIS3UpdateParams::UpdateMapFromHandle(VSIS3HandleHelper *poS3HandleHelper)
 }
 
 /************************************************************************/
-/*                         UpdateHandleFromMap()                        */
+/*                        UpdateHandleFromMap()                         */
 /************************************************************************/
 
 void VSIS3UpdateParams::UpdateHandleFromMap(VSIS3HandleHelper *poS3HandleHelper)
@@ -2969,7 +2969,7 @@ void VSIS3UpdateParams::UpdateHandleFromMap(VSIS3HandleHelper *poS3HandleHelper)
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIS3UpdateParams::ClearCache()

@@ -334,7 +334,7 @@ class CPL_DLL S57Reader
     ~S57Reader();
 
     void SetClassBased(S57ClassRegistrar *, S57ClassContentExplorer *);
-    bool SetOptions(char **);
+    bool SetOptions(CSLConstList);
 
     int GetOptionFlags()
     {

@@ -528,7 +528,7 @@ bool WCSDataset100::ExtractGridInfo()
 }
 
 /************************************************************************/
-/*                      ParseCapabilities()                             */
+/*                         ParseCapabilities()                          */
 /************************************************************************/
 
 CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,

@@ -62,7 +62,7 @@ OGRErr GNMGenericLayer::SetIgnoredFields(CSLConstList papszFields)
 
 OGRErr GNMGenericLayer::Intersection(OGRLayer *pLayerMethod,
                                      OGRLayer *pLayerResult,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressArg)
 {
@@ -71,8 +71,8 @@ OGRErr GNMGenericLayer::Intersection(OGRLayer *pLayerMethod,
 }
 
 OGRErr GNMGenericLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                              char **papszOptions, GDALProgressFunc pfnProgress,
-                              void *pProgressArg)
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     return m_poLayer->Union(pLayerMethod, pLayerResult, papszOptions,
                             pfnProgress, pProgressArg);
@@ -80,7 +80,7 @@ OGRErr GNMGenericLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
 
 OGRErr GNMGenericLayer::SymDifference(OGRLayer *pLayerMethod,
                                       OGRLayer *pLayerResult,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressArg)
 {
@@ -89,7 +89,7 @@ OGRErr GNMGenericLayer::SymDifference(OGRLayer *pLayerMethod,
 }
 
 OGRErr GNMGenericLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                                 char **papszOptions,
+                                 CSLConstList papszOptions,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressArg)
 {
@@ -98,7 +98,7 @@ OGRErr GNMGenericLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
 }
 
 OGRErr GNMGenericLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                               char **papszOptions,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     return m_poLayer->Update(pLayerMethod, pLayerResult, papszOptions,
@@ -106,16 +106,16 @@ OGRErr GNMGenericLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
 }
 
 OGRErr GNMGenericLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                             char **papszOptions, GDALProgressFunc pfnProgress,
-                             void *pProgressArg)
+                             CSLConstList papszOptions,
+                             GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     return m_poLayer->Clip(pLayerMethod, pLayerResult, papszOptions,
                            pfnProgress, pProgressArg);
 }
 
 OGRErr GNMGenericLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                              char **papszOptions, GDALProgressFunc pfnProgress,
-                              void *pProgressArg)
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     return m_poLayer->Erase(pLayerMethod, pLayerResult, papszOptions,
                             pfnProgress, pProgressArg);

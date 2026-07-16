@@ -311,7 +311,7 @@ class RPFTOCProxyRasterBandRGBA final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                    Expand()                                          */
+/*                               Expand()                               */
 /************************************************************************/
 
 /* Expand the  array or indexed colors to an array of their corresponding R,G,B
@@ -345,7 +345,7 @@ void RPFTOCProxyRasterBandRGBA::Expand(void *pImage, const void *srcImage)
 }
 
 /************************************************************************/
-/*                    IReadBlock()                                      */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -502,7 +502,7 @@ class RPFTOCProxyRasterBandPalette final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                    IReadBlock()                                      */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr RPFTOCProxyRasterBandPalette::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -567,7 +567,7 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                    RPFTOCProxyRasterDataSet()                         */
+/*                      RPFTOCProxyRasterDataSet()                      */
 /************************************************************************/
 
 RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet(
@@ -596,7 +596,7 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet(
 }
 
 /************************************************************************/
-/*                    SanityCheckOK()                                   */
+/*                           SanityCheckOK()                            */
 /************************************************************************/
 
 #define WARN_ON_FAIL(x)                                                        \
@@ -655,7 +655,7 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset *sourceDS)
 }
 
 /************************************************************************/
-/*                           MakeTOCEntryName()                         */
+/*                          MakeTOCEntryName()                          */
 /************************************************************************/
 
 static const char *MakeTOCEntryName(RPFTocEntry *tocEntry)
@@ -1047,7 +1047,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
 }
 
 /************************************************************************/
-/*                             IsNITFFileTOC()                          */
+/*                           IsNITFFileTOC()                            */
 /************************************************************************/
 
 /* Check whether this NITF file is a TOC file */
@@ -1067,7 +1067,7 @@ int RPFTOCDataset::IsNITFFileTOC(NITFFile *psFile)
 }
 
 /************************************************************************/
-/*                                OpenFileTOC()                         */
+/*                            OpenFileTOC()                             */
 /************************************************************************/
 
 /* Create a dataset from a TOC file */
@@ -1319,7 +1319,7 @@ GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_RPFTOC()                       */
+/*                        GDALRegister_RPFTOC()                         */
 /************************************************************************/
 
 void GDALRegister_RPFTOC()

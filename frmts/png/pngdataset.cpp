@@ -74,7 +74,7 @@ static void png_gdal_warning(png_structp png_ptr, const char *error_message);
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
 
 /************************************************************************/
-/*                      IsCompatibleOfSingleBlock()                     */
+/*                     IsCompatibleOfSingleBlock()                      */
 /************************************************************************/
 
 bool PNGDataset::IsCompatibleOfSingleBlock() const
@@ -333,7 +333,7 @@ PNGDataset::~PNGDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PNGDataset::Close(GDALProgressFunc, void *)
@@ -354,7 +354,7 @@ CPLErr PNGDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                         LoadWholeImage()                             */
+/*                           LoadWholeImage()                           */
 /************************************************************************/
 
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
@@ -1483,7 +1483,7 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 }
 
 /************************************************************************/
-/*                        safe_png_read_rows()                          */
+/*                         safe_png_read_rows()                         */
 /************************************************************************/
 
 static bool safe_png_read_rows(png_structp hPNG, png_bytep row,
@@ -1607,7 +1607,7 @@ void PNGDataset::CollectMetadata()
 }
 
 /************************************************************************/
-/*                       CollectXMPMetadata()                           */
+/*                         CollectXMPMetadata()                         */
 /************************************************************************/
 
 // See §2.1.5 of
@@ -1790,7 +1790,7 @@ void PNGDataset::LoadICCProfile()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PNGDataset::GetMetadataDomainList()
@@ -1800,7 +1800,7 @@ char **PNGDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PNGDataset::GetMetadata(const char *pszDomain)
@@ -1817,7 +1817,7 @@ CSLConstList PNGDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                       GetMetadataItem()                              */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 const char *PNGDataset::GetMetadataItem(const char *pszName,
                                         const char *pszDomain)
@@ -2089,7 +2089,7 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
 }
 
 /************************************************************************/
-/*                        LoadWorldFile()                               */
+/*                           LoadWorldFile()                            */
 /************************************************************************/
 
 void PNGDataset::LoadWorldFile()
@@ -2136,7 +2136,7 @@ char **PNGDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          WriteMetadataAsText()                       */
+/*                        WriteMetadataAsText()                         */
 /************************************************************************/
 
 static bool IsASCII(const char *pszStr)
@@ -2292,7 +2292,7 @@ static bool safe_png_write_end(jmp_buf sSetJmpContext, png_structp png_ptr,
 
 GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -3048,7 +3048,7 @@ void GDALRegister_PNG()
 
 #ifdef SUPPORT_CREATE
 /************************************************************************/
-/*                         IWriteBlock()                                */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr PNGRasterBand::IWriteBlock(int x, int y, void *pvData)
@@ -3145,7 +3145,7 @@ CPLErr PNGRasterBand::SetColorTable(GDALColorTable *poCT)
 }
 
 /************************************************************************/
-/*                  PNGDataset::write_png_header()                      */
+/*                    PNGDataset::write_png_header()                    */
 /************************************************************************/
 
 CPLErr PNGDataset::write_png_header()
@@ -3296,7 +3296,7 @@ CPLErr PNGDataset::write_png_header()
 
 GDALDataset *PNGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBands, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (eType != GDT_UInt8 && eType != GDT_UInt16)
     {

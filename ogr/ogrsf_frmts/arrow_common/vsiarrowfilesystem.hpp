@@ -32,7 +32,7 @@
 #endif
 
 /************************************************************************/
-/*                         VSIArrowFileSystem                           */
+/*                          VSIArrowFileSystem                          */
 /************************************************************************/
 
 class VSIArrowFileSystem final : public arrow::fs::FileSystem

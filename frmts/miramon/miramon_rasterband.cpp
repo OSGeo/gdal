@@ -56,7 +56,7 @@ MMRRasterBand::~MMRRasterBand()
 }
 
 /************************************************************************/
-/*                             UpdateDataType()                         */
+/*                           UpdateDataType()                           */
 /************************************************************************/
 void MMRRasterBand::UpdateDataType()
 {
@@ -106,7 +106,7 @@ void MMRRasterBand::UpdateDataType()
 }
 
 /************************************************************************/
-/*                             GetNoDataValue()                         */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double MMRRasterBand::GetNoDataValue(int *pbSuccess)

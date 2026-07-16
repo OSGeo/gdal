@@ -37,7 +37,7 @@
 #endif
 
 /************************************************************************/
-/*                      netCDFIdentifyFormat()                          */
+/*                        netCDFIdentifyFormat()                        */
 /************************************************************************/
 
 NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)

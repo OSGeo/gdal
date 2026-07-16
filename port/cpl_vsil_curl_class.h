@@ -136,7 +136,7 @@ struct PutData
 };
 
 /************************************************************************/
-/*                     VSICurlFilesystemHandler                         */
+/*                       VSICurlFilesystemHandler                       */
 /************************************************************************/
 
 class VSICurlHandle;
@@ -346,7 +346,7 @@ class VSICurlFilesystemHandler final : public VSICurlFilesystemHandlerBase
 };
 
 /************************************************************************/
-/*                           VSICurlHandle                              */
+/*                            VSICurlHandle                             */
 /************************************************************************/
 
 class VSICurlHandle /* non final*/ : public VSIVirtualHandle
@@ -567,7 +567,7 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                  VSICurlFilesystemHandlerBaseWritable                */
+/*                 VSICurlFilesystemHandlerBaseWritable                 */
 /************************************************************************/
 
 class VSICurlFilesystemHandlerBaseWritable /* non final */
@@ -597,7 +597,7 @@ class VSICurlFilesystemHandlerBaseWritable /* non final */
 };
 
 /************************************************************************/
-/*                        IVSIS3LikeFSHandler                           */
+/*                         IVSIS3LikeFSHandler                          */
 /************************************************************************/
 
 class IVSIS3LikeFSHandler /* non final */
@@ -656,7 +656,7 @@ class IVSIS3LikeFSHandler /* non final */
 };
 
 /************************************************************************/
-/*                 IVSIS3LikeFSHandlerWithMultipartUpload               */
+/*                IVSIS3LikeFSHandlerWithMultipartUpload                */
 /************************************************************************/
 
 class IVSIS3LikeFSHandlerWithMultipartUpload /* non final */
@@ -784,7 +784,7 @@ class IVSIS3LikeFSHandlerWithMultipartUpload /* non final */
 };
 
 /************************************************************************/
-/*                          IVSIS3LikeHandle                            */
+/*                           IVSIS3LikeHandle                           */
 /************************************************************************/
 
 class IVSIS3LikeHandle /* non final */ : public VSICurlHandle
@@ -887,7 +887,7 @@ class VSIMultipartWriteHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                         VSIChunkedWriteHandle()                      */
+/*                       VSIChunkedWriteHandle()                        */
 /************************************************************************/
 
 /** Class with Write() append-only implementation using
@@ -956,7 +956,7 @@ class VSIChunkedWriteHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                        VSIAppendWriteHandle                          */
+/*                         VSIAppendWriteHandle                         */
 /************************************************************************/
 
 class VSIAppendWriteHandle CPL_NON_FINAL : public VSIVirtualHandle
@@ -1015,7 +1015,7 @@ class VSIAppendWriteHandle CPL_NON_FINAL : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                     VSIDIRWithMissingDirSynthesis                    */
+/*                    VSIDIRWithMissingDirSynthesis                     */
 /************************************************************************/
 
 struct VSIDIRWithMissingDirSynthesis /* non final */ : public VSIDIR
@@ -1032,7 +1032,7 @@ struct VSIDIRWithMissingDirSynthesis /* non final */ : public VSIDIR
 };
 
 /************************************************************************/
-/*                          VSIDIRS3Like                                */
+/*                             VSIDIRS3Like                             */
 /************************************************************************/
 
 struct VSIDIRS3Like /* non final */ : public VSIDIRWithMissingDirSynthesis
@@ -1079,7 +1079,7 @@ struct VSIDIRS3Like /* non final */ : public VSIDIRWithMissingDirSynthesis
 };
 
 /************************************************************************/
-/*                         CurlRequestHelper                            */
+/*                          CurlRequestHelper                           */
 /************************************************************************/
 
 struct CurlRequestHelper

@@ -39,7 +39,7 @@
 #define LIMIT_TYPES 1
 
 /************************************************************************/
-/*                     GDALCreatePansharpenOptions()                    */
+/*                    GDALCreatePansharpenOptions()                     */
 /************************************************************************/
 
 /** Create pansharpening options.
@@ -59,7 +59,7 @@ GDALPansharpenOptions *GDALCreatePansharpenOptions()
 }
 
 /************************************************************************/
-/*                     GDALDestroyPansharpenOptions()                   */
+/*                    GDALDestroyPansharpenOptions()                    */
 /************************************************************************/
 
 /** Destroy pansharpening options.
@@ -80,7 +80,7 @@ void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                      GDALClonePansharpenOptions()                    */
+/*                     GDALClonePansharpenOptions()                     */
 /************************************************************************/
 
 /** Clone pansharpening options.
@@ -134,7 +134,7 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                        GDALPansharpenOperation()                     */
+/*                      GDALPansharpenOperation()                       */
 /************************************************************************/
 
 /** Pansharpening operation constructor.
@@ -144,7 +144,7 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
 GDALPansharpenOperation::GDALPansharpenOperation() = default;
 
 /************************************************************************/
-/*                       ~GDALPansharpenOperation()                     */
+/*                      ~GDALPansharpenOperation()                      */
 /************************************************************************/
 
 /** Pansharpening operation destructor.
@@ -159,7 +159,7 @@ GDALPansharpenOperation::~GDALPansharpenOperation()
 }
 
 /************************************************************************/
-/*                              Initialize()                            */
+/*                             Initialize()                             */
 /************************************************************************/
 
 /** Initialize the pansharpening operation.
@@ -505,7 +505,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
 }
 
 /************************************************************************/
-/*                    WeightedBroveyWithNoData()                        */
+/*                      WeightedBroveyWithNoData()                      */
 /************************************************************************/
 
 template <class WorkDataType, class OutDataType>
@@ -591,7 +591,7 @@ template <class T> static inline T ClampAndRound(double dfVal, T nMaxValue)
 }
 
 /************************************************************************/
-/*                         WeightedBrovey()                             */
+/*                           WeightedBrovey()                           */
 /************************************************************************/
 
 template <class WorkDataType, class OutDataType, int bHasBitDepth>
@@ -1119,7 +1119,7 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
 }
 
 /************************************************************************/
-/*                           ClampValues()                              */
+/*                            ClampValues()                             */
 /************************************************************************/
 
 template <class T>
@@ -1133,7 +1133,7 @@ static void ClampValues(T *panBuffer, size_t nValues, T nMaxVal)
 }
 
 /************************************************************************/
-/*                         ProcessRegion()                              */
+/*                           ProcessRegion()                            */
 /************************************************************************/
 
 /** Executes a pansharpening operation on a rectangular region of the
@@ -1628,7 +1628,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                   PansharpenResampleJobThreadFunc()                  */
+/*                  PansharpenResampleJobThreadFunc()                   */
 /************************************************************************/
 
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
@@ -1723,7 +1723,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 }
 
 /************************************************************************/
-/*                           PansharpenChunk()                          */
+/*                          PansharpenChunk()                           */
 /************************************************************************/
 
 CPLErr GDALPansharpenOperation::PansharpenChunk(
@@ -1838,7 +1838,7 @@ GDALPansharpenOptions *GDALPansharpenOperation::GetOptions()
 }
 
 /************************************************************************/
-/*                     GDALCreatePansharpenOperation()                  */
+/*                   GDALCreatePansharpenOperation()                    */
 /************************************************************************/
 
 /** Instantiate a pansharpening operation.
@@ -1862,7 +1862,7 @@ GDALCreatePansharpenOperation(const GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                     GDALDestroyPansharpenOperation()                 */
+/*                   GDALDestroyPansharpenOperation()                   */
 /************************************************************************/
 
 /** Destroy a pansharpening operation.
@@ -1877,7 +1877,7 @@ void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
 }
 
 /************************************************************************/
-/*                       GDALPansharpenProcessRegion()                  */
+/*                    GDALPansharpenProcessRegion()                     */
 /************************************************************************/
 
 /** Executes a pansharpening operation on a rectangular region of the

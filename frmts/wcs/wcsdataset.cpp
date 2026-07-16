@@ -771,7 +771,7 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
 }
 
 /************************************************************************/
-/*                            WCSParseVersion()                         */
+/*                          WCSParseVersion()                           */
 /************************************************************************/
 
 static int WCSParseVersion(const char *version)
@@ -790,7 +790,7 @@ static int WCSParseVersion(const char *version)
 }
 
 /************************************************************************/
-/*                             Version()                                */
+/*                              Version()                               */
 /************************************************************************/
 
 const char *WCSDataset::Version() const
@@ -809,7 +809,7 @@ const char *WCSDataset::Version() const
 }
 
 /************************************************************************/
-/*                      FetchCapabilities()                             */
+/*                         FetchCapabilities()                          */
 /************************************************************************/
 
 #define WCS_HTTP_OPTIONS "TIMEOUT", "USERPWD", "HTTPAUTH"
@@ -859,7 +859,7 @@ static bool FetchCapabilities(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                      CreateFromCapabilities()                        */
+/*                       CreateFromCapabilities()                       */
 /************************************************************************/
 
 WCSDataset *WCSDataset::CreateFromCapabilities(const std::string &cache,
@@ -908,7 +908,7 @@ WCSDataset *WCSDataset::CreateFromCapabilities(const std::string &cache,
 }
 
 /************************************************************************/
-/*                        CreateFromMetadata()                          */
+/*                         CreateFromMetadata()                         */
 /************************************************************************/
 
 WCSDataset *WCSDataset::CreateFromMetadata(const std::string &cache,
@@ -972,7 +972,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const std::string &cache,
 }
 
 /************************************************************************/
-/*                        BootstrapGlobal()                             */
+/*                          BootstrapGlobal()                           */
 /************************************************************************/
 
 static WCSDataset *BootstrapGlobal(GDALOpenInfo *poOpenInfo,
@@ -1012,7 +1012,7 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                          CreateService()                             */
+/*                           CreateService()                            */
 /************************************************************************/
 
 static CPLXMLNode *CreateService(const std::string &base_url,
@@ -1032,7 +1032,7 @@ static CPLXMLNode *CreateService(const std::string &base_url,
 }
 
 /************************************************************************/
-/*                          UpdateService()                             */
+/*                           UpdateService()                            */
 /************************************************************************/
 
 #define WCS_SERVICE_OPTIONS                                                    \
@@ -1610,7 +1610,7 @@ CPLErr WCSDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *WCSDataset::GetSpatialRef() const
@@ -1648,7 +1648,7 @@ char **WCSDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **WCSDataset::GetMetadataDomainList()

@@ -146,7 +146,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -194,7 +194,7 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           HDF4ImageRasterBand()                      */
+/*                        HDF4ImageRasterBand()                         */
 /************************************************************************/
 
 HDF4ImageRasterBand::HDF4ImageRasterBand(HDF4ImageDataset *poDSIn, int nBandIn,
@@ -738,7 +738,7 @@ double HDF4ImageRasterBand::GetScale(int *pbSuccess)
 /************************************************************************/
 
 /************************************************************************/
-/*                           HDF4ImageDataset()                         */
+/*                          HDF4ImageDataset()                          */
 /************************************************************************/
 
 HDF4ImageDataset::HDF4ImageDataset()
@@ -758,7 +758,7 @@ HDF4ImageDataset::HDF4ImageDataset()
 }
 
 /************************************************************************/
-/*                            ~HDF4ImageDataset()                       */
+/*                         ~HDF4ImageDataset()                          */
 /************************************************************************/
 
 HDF4ImageDataset::~HDF4ImageDataset()
@@ -840,7 +840,7 @@ CPLErr HDF4ImageDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *HDF4ImageDataset::GetSpatialRef() const
@@ -850,7 +850,7 @@ const OGRSpatialReference *HDF4ImageDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr HDF4ImageDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -884,7 +884,7 @@ const OGRSpatialReference *HDF4ImageDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *HDF4ImageDataset::GetGCPs()
@@ -1010,7 +1010,7 @@ CPLErr HDF4ImageDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                        USGSMnemonicToCode()                          */
+/*                         USGSMnemonicToCode()                         */
 /************************************************************************/
 
 long HDF4ImageDataset::USGSMnemonicToCode(const char *pszMnemonic)
@@ -1060,7 +1060,7 @@ void HDF4ImageDataset::ToGeoref(double *pdfGeoX, double *pdfGeoY)
 }
 
 /************************************************************************/
-/*                            ReadCoordinates()                         */
+/*                          ReadCoordinates()                           */
 /************************************************************************/
 
 void HDF4ImageDataset::ReadCoordinates(const char *pszString,
@@ -1558,7 +1558,7 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 }
 
 /************************************************************************/
-/*                          GetImageDimensions()                        */
+/*                         GetImageDimensions()                         */
 /************************************************************************/
 
 void HDF4ImageDataset::GetImageDimensions(char *pszDimList)
@@ -3775,7 +3775,8 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *HDF4ImageDataset::Create(const char *pszFilename, int nXSize,
                                       int nYSize, int nBandsIn,
-                                      GDALDataType eType, char **papszOptions)
+                                      GDALDataType eType,
+                                      CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3930,7 +3931,7 @@ GDALDataset *HDF4ImageDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF4Image()                      */
+/*                       GDALRegister_HDF4Image()                       */
 /************************************************************************/
 
 void GDALRegister_HDF4Image()

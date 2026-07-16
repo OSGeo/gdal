@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALRasterCleanCollarAlgorithm                      */
+/*                    GDALRasterCleanCollarAlgorithm                    */
 /************************************************************************/
 
 class GDALRasterCleanCollarAlgorithm final : public GDALAlgorithm

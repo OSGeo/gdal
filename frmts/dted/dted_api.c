@@ -330,7 +330,7 @@ DTEDInfo *DTEDOpenEx(VSILFILE *fp, const char *pszFilename,
 }
 
 /************************************************************************/
-/*               DTEDDetectVariantWithMissingColumns()                  */
+/*                DTEDDetectVariantWithMissingColumns()                 */
 /************************************************************************/
 
 static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)

@@ -322,7 +322,7 @@ void GDALJP2Box::SetType(const char *pszType)
 }
 
 /************************************************************************/
-/*                          GetWritableBoxData()                        */
+/*                         GetWritableBoxData()                         */
 /************************************************************************/
 
 GByte *GDALJP2Box::GetWritableBoxData() const
@@ -353,7 +353,7 @@ void GDALJP2Box::SetWritableData(int nLength, const GByte *pabyDataIn)
 }
 
 /************************************************************************/
-/*                          AppendWritableData()                        */
+/*                         AppendWritableData()                         */
 /************************************************************************/
 
 void GDALJP2Box::AppendWritableData(int nLength, const void *pabyDataIn)
@@ -373,7 +373,7 @@ void GDALJP2Box::AppendWritableData(int nLength, const void *pabyDataIn)
 }
 
 /************************************************************************/
-/*                              AppendUInt32()                          */
+/*                            AppendUInt32()                            */
 /************************************************************************/
 
 void GDALJP2Box::AppendUInt32(GUInt32 nVal)
@@ -383,7 +383,7 @@ void GDALJP2Box::AppendUInt32(GUInt32 nVal)
 }
 
 /************************************************************************/
-/*                              AppendUInt16()                          */
+/*                            AppendUInt16()                            */
 /************************************************************************/
 
 void GDALJP2Box::AppendUInt16(GUInt16 nVal)
@@ -393,7 +393,7 @@ void GDALJP2Box::AppendUInt16(GUInt16 nVal)
 }
 
 /************************************************************************/
-/*                              AppendUInt8()                           */
+/*                            AppendUInt8()                             */
 /************************************************************************/
 
 void GDALJP2Box::AppendUInt8(GByte nVal)
@@ -516,7 +516,7 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc(const char *pszLabel,
 }
 
 /************************************************************************/
-/*                    CreateJUMBFDescriptionBox()                       */
+/*                     CreateJUMBFDescriptionBox()                      */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateJUMBFDescriptionBox(const GByte *pabyUUIDType,
@@ -537,7 +537,7 @@ GDALJP2Box *GDALJP2Box::CreateJUMBFDescriptionBox(const GByte *pabyUUIDType,
 }
 
 /************************************************************************/
-/*                         CreateJUMBFBox()                             */
+/*                           CreateJUMBFBox()                           */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateJUMBFBox(const GDALJP2Box *poJUMBFDescriptionBox,

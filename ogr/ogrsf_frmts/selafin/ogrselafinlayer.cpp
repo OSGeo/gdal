@@ -20,7 +20,7 @@
 #include "cpl_vsi_virtual.h"
 
 /************************************************************************/
-/*                           Utilities functions                        */
+/*                         Utilities functions                          */
 /************************************************************************/
 static void MoveOverwrite(VSILFILE *fpDest, VSILFILE *fpSource)
 {
@@ -77,7 +77,7 @@ OGRSelafinLayer::OGRSelafinLayer(GDALDataset *poDS, const char *pszLayerNameP,
 }
 
 /************************************************************************/
-/*                           ~OGRSelafinLayer()                         */
+/*                          ~OGRSelafinLayer()                          */
 /************************************************************************/
 OGRSelafinLayer::~OGRSelafinLayer()
 {
@@ -173,7 +173,7 @@ int OGRSelafinLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 OGRFeature *OGRSelafinLayer::GetFeature(GIntBig nFID)
 {
@@ -245,7 +245,7 @@ OGRFeature *OGRSelafinLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 GIntBig OGRSelafinLayer::GetFeatureCount(int bForce)
 {
@@ -270,7 +270,7 @@ GIntBig OGRSelafinLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 OGRErr OGRSelafinLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
                                    bool /* bForce*/)
@@ -288,7 +288,7 @@ OGRErr OGRSelafinLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
 {
@@ -449,7 +449,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
 {
@@ -674,7 +674,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
                                     CPL_UNUSED int bApproxOK)
@@ -796,7 +796,7 @@ OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           DeleteField()                              */
+/*                            DeleteField()                             */
 /************************************************************************/
 OGRErr OGRSelafinLayer::DeleteField(int iField)
 {
@@ -877,7 +877,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField)
 }
 
 /************************************************************************/
-/*                          ReorderFields()                             */
+/*                           ReorderFields()                            */
 /************************************************************************/
 OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
 {
@@ -954,7 +954,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap)
 }
 
 /************************************************************************/
-/*                         AlterFieldDefn()                             */
+/*                           AlterFieldDefn()                           */
 /************************************************************************/
 OGRErr OGRSelafinLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                        int /* nFlagsIn */)
@@ -992,7 +992,7 @@ OGRErr OGRSelafinLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
 {

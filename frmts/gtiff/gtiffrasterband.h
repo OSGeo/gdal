@@ -55,7 +55,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     CPLVirtualMem *GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
                                              int *pnPixelSpace,
                                              GIntBig *pnLineSpace,
-                                             char **papszOptions);
+                                             CSLConstList papszOptions);
 
   protected:
     GTiffDataset *m_poGDS = nullptr;
@@ -147,7 +147,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                      GIntBig *pnLineSpace, char **papszOptions) override final;
+                      GIntBig *pnLineSpace,
+                      CSLConstList papszOptions) override final;
 
     GDALRasterAttributeTable *GetDefaultRAT() override final;
     virtual CPLErr

@@ -1089,7 +1089,7 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
 #define OLMD_FID64 "OLMD_FID64"
 
 /************************************************************************/
-/*                  ogr_featurestyle.h related definitions.             */
+/*               ogr_featurestyle.h related definitions.                */
 /************************************************************************/
 
 /**

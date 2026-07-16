@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                GDALDatasetCopyRenameCommonAlgorithm                  */
+/*                 GDALDatasetCopyRenameCommonAlgorithm                 */
 /************************************************************************/
 
 class GDALDatasetCopyRenameCommonAlgorithm /* non-final */
@@ -39,7 +39,7 @@ class GDALDatasetCopyRenameCommonAlgorithm /* non-final */
 };
 
 /************************************************************************/
-/*                     GDALDatasetCopyAlgorithm                         */
+/*                       GDALDatasetCopyAlgorithm                       */
 /************************************************************************/
 
 class GDALDatasetCopyAlgorithm final

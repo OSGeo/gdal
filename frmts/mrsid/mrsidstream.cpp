@@ -30,7 +30,7 @@ LTIVSIStream::LTIVSIStream()
 }
 
 /************************************************************************/
-/*                             ~LTIVSIStream()                           */
+/*                           ~LTIVSIStream()                            */
 /************************************************************************/
 
 LTIVSIStream::~LTIVSIStream()
@@ -48,7 +48,7 @@ LTIVSIStream::~LTIVSIStream()
 }
 
 /************************************************************************/
-/*                              initialize()                            */
+/*                             initialize()                             */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::initialize(const char *pszFilename,
@@ -69,7 +69,7 @@ LT_STATUS LTIVSIStream::initialize(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                              initialize()                            */
+/*                             initialize()                             */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::initialize(LTIVSIStream *ltiVSIStream)
@@ -87,7 +87,7 @@ LT_STATUS LTIVSIStream::initialize(LTIVSIStream *ltiVSIStream)
 }
 
 /************************************************************************/
-/*                                 isEOF()                              */
+/*                               isEOF()                                */
 /************************************************************************/
 
 bool LTIVSIStream::isEOF()
@@ -102,7 +102,7 @@ bool LTIVSIStream::isEOF()
 }
 
 /************************************************************************/
-/*                                 isOpen()                             */
+/*                               isOpen()                               */
 /************************************************************************/
 
 bool LTIVSIStream::isOpen()
@@ -111,7 +111,7 @@ bool LTIVSIStream::isOpen()
 }
 
 /************************************************************************/
-/*                                  open()                              */
+/*                                open()                                */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::open()
@@ -121,7 +121,7 @@ LT_STATUS LTIVSIStream::open()
 }
 
 /************************************************************************/
-/*                                  close()                             */
+/*                               close()                                */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::close()
@@ -140,7 +140,7 @@ LT_STATUS LTIVSIStream::close()
 }
 
 /************************************************************************/
-/*                                   read()                             */
+/*                                read()                                */
 /************************************************************************/
 
 lt_uint32 LTIVSIStream::read(lt_uint8 *pDest, lt_uint32 nBytes)
@@ -155,7 +155,7 @@ lt_uint32 LTIVSIStream::read(lt_uint8 *pDest, lt_uint32 nBytes)
 }
 
 /************************************************************************/
-/*                                  write()                             */
+/*                               write()                                */
 /************************************************************************/
 
 lt_uint32 LTIVSIStream::write(const lt_uint8 *pSrc, lt_uint32 nBytes)
@@ -170,7 +170,7 @@ lt_uint32 LTIVSIStream::write(const lt_uint8 *pSrc, lt_uint32 nBytes)
 }
 
 /************************************************************************/
-/*                                   seek()                             */
+/*                                seek()                                */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::seek(lt_int64 nOffset, LTIOSeekDir nOrigin)
@@ -213,7 +213,7 @@ LT_STATUS LTIVSIStream::seek(lt_int64 nOffset, LTIOSeekDir nOrigin)
 }
 
 /************************************************************************/
-/*                               tell()                                 */
+/*                                tell()                                */
 /************************************************************************/
 
 lt_int64 LTIVSIStream::tell()
@@ -228,7 +228,7 @@ lt_int64 LTIVSIStream::tell()
 }
 
 /************************************************************************/
-/*                               duplicate()                            */
+/*                             duplicate()                              */
 /************************************************************************/
 
 LTIOStreamInf *LTIVSIStream::duplicate()
@@ -240,7 +240,7 @@ LTIOStreamInf *LTIVSIStream::duplicate()
 }
 
 /************************************************************************/
-/*                             getLastError()                           */
+/*                            getLastError()                            */
 /************************************************************************/
 
 LT_STATUS LTIVSIStream::getLastError() const
@@ -249,7 +249,7 @@ LT_STATUS LTIVSIStream::getLastError() const
 }
 
 /************************************************************************/
-/*                                  getID()                             */
+/*                               getID()                                */
 /************************************************************************/
 
 const char *LTIVSIStream::getID() const

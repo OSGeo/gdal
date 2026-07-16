@@ -31,7 +31,7 @@ GDALRasterStackAlgorithm::GDALRasterStackAlgorithm(bool bStandalone)
 }
 
 /************************************************************************/
-/*                   GDALRasterStackAlgorithm::RunStep()                */
+/*                 GDALRasterStackAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterStackAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

@@ -47,7 +47,7 @@ OGRS57Layer::OGRS57Layer(OGRS57DataSource *poDSIn, OGRFeatureDefn *poDefnIn,
 }
 
 /************************************************************************/
-/*                           ~OGRS57Layer()                           */
+/*                            ~OGRS57Layer()                            */
 /************************************************************************/
 
 OGRS57Layer::~OGRS57Layer()
@@ -205,7 +205,7 @@ int OGRS57Layer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRS57Layer::IGetExtent(int /*iGeomField*/, OGREnvelope *psExtent,
@@ -254,7 +254,7 @@ OGRFeature *OGRS57Layer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRS57Layer::ICreateFeature(OGRFeature *poFeature)

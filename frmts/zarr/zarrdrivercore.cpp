@@ -45,7 +45,7 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                   ZARRIsLikelyKerchunkJSONRef()                      */
+/*                    ZARRIsLikelyKerchunkJSONRef()                     */
 /************************************************************************/
 
 bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
@@ -67,7 +67,7 @@ bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverIdentify()                             */
+/*                         ZARRDriverIdentify()                         */
 /************************************************************************/
 
 int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -105,7 +105,7 @@ int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverSetCommonMetadata()                    */
+/*                    ZARRDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -129,8 +129,9 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='LIST_ALL_ARRAYS' type='boolean' "
         "description='Whether to list all arrays, and not only those whose "
         "dimension count is 2 or more' default='NO'/>"
-        "   <Option name='USE_ZMETADATA' type='boolean' description='Whether "
-        "to use consolidated metadata from .zmetadata' default='YES'/>"
+        "   <Option name='USE_CONSOLIDATED_METADATA' alias='USE_ZMETADATA' "
+        "type='boolean' description='Whether "
+        "to use consolidated metadata' default='YES'/>"
         "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "
         "description='Whether to establish an initial listing of present "
         "tiles' default='NO'/>"
@@ -158,9 +159,9 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
         "     <Value>ZARR_V2</Value>"
         "     <Value>ZARR_V3</Value>"
         "   </Option>"
-        "   <Option name='CREATE_ZMETADATA' type='boolean' "
-        "description='Whether to create consolidated metadata into .zmetadata "
-        "(Zarr V2 only)' default='YES'/>"
+        "   <Option name='CREATE_CONSOLIDATED_METADATA' "
+        "alias='CREATE_ZMETADATA' type='boolean' "
+        "description='Whether to create consolidated metadata' default='YES'/>"
         "</MultiDimDatasetCreationOptionList>");
 
     poDriver->pfnIdentify = ZARRDriverIdentify;
@@ -177,7 +178,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredZarrPlugin()                       */
+/*                     DeclareDeferredZarrPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

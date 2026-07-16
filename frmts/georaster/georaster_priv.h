@@ -163,7 +163,7 @@ class GeoRasterDataset final : public GDALDataset
     GeoRasterRasterBand *poMaskBand;
     bool bApplyNoDataArray;
     void JP2_Open(GDALAccess eAccess);
-    void JP2_CreateCopy(GDALDataset *poJP2DS, char **papszOptions,
+    void JP2_CreateCopy(GDALDataset *poJP2DS, CSLConstList papszOptions,
                         int *pnResolutions, GDALProgressFunc pfnProgress,
                         void *pProgressData);
     boolean JP2_CopyDirect(const char *pszJP2Filename, int *pnResolutions,
@@ -186,10 +186,10 @@ class GeoRasterDataset final : public GDALDataset
     static CPLErr Delete(const char *pszFilename);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;

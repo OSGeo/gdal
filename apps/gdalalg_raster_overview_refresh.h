@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                 GDALRasterOverviewAlgorithmRefresh                   */
+/*                  GDALRasterOverviewAlgorithmRefresh                  */
 /************************************************************************/
 
 class GDALRasterOverviewAlgorithmRefresh final : public GDALAlgorithm

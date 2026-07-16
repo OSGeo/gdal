@@ -236,7 +236,7 @@ OGRGmtLayer::OGRGmtLayer(GDALDataset *poDS, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           ~OGRGmtLayer()                           */
+/*                            ~OGRGmtLayer()                            */
 /************************************************************************/
 
 OGRGmtLayer::~OGRGmtLayer()
@@ -777,7 +777,7 @@ OGRErr OGRGmtLayer::CompleteHeader(OGRGeometry *poThisGeom)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGmtLayer::ICreateFeature(OGRFeature *poFeature)

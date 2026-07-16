@@ -22,7 +22,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterUpdateAlgorithm                        */
+/*                      GDALRasterUpdateAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterUpdateAlgorithm /* non final */

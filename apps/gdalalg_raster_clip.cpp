@@ -94,7 +94,7 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterClipAlgorithm::RunStep()                   */
+/*                  GDALRasterClipAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)

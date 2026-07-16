@@ -2312,7 +2312,7 @@ CPLErr CPLCloseFileInZip(void *hZip)
 }
 
 /************************************************************************/
-/*                         CPLAddFileInZip()                            */
+/*                          CPLAddFileInZip()                           */
 /************************************************************************/
 
 /** Add a file inside a ZIP file opened/created with CPLCreateZip().

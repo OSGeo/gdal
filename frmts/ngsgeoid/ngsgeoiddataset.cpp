@@ -77,7 +77,7 @@ class NGSGEOIDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                        NGSGEOIDRasterBand()                          */
+/*                         NGSGEOIDRasterBand()                         */
 /************************************************************************/
 
 NGSGEOIDRasterBand::NGSGEOIDRasterBand(NGSGEOIDDataset *poDSIn)
@@ -141,7 +141,7 @@ NGSGEOIDDataset::NGSGEOIDDataset() : fp(nullptr), bIsLittleEndian(TRUE)
 }
 
 /************************************************************************/
-/*                           ~NGSGEOIDDataset()                         */
+/*                          ~NGSGEOIDDataset()                          */
 /************************************************************************/
 
 NGSGEOIDDataset::~NGSGEOIDDataset()
@@ -153,7 +153,7 @@ NGSGEOIDDataset::~NGSGEOIDDataset()
 }
 
 /************************************************************************/
-/*                            GetHeaderInfo()                           */
+/*                           GetHeaderInfo()                            */
 /************************************************************************/
 
 int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer, GDALGeoTransform &gt,
@@ -283,7 +283,7 @@ int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer, GDALGeoTransform &gt,
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int NGSGEOIDDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -362,7 +362,7 @@ CPLErr NGSGEOIDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *NGSGEOIDDataset::GetSpatialRef() const

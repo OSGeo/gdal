@@ -41,7 +41,7 @@ class KRODataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static int Identify(GDALOpenInfo *);
 };
 
@@ -52,7 +52,7 @@ class KRODataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                             ~KRODataset()                            */
+/*                            ~KRODataset()                             */
 /************************************************************************/
 
 KRODataset::~KRODataset()
@@ -62,7 +62,7 @@ KRODataset::~KRODataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr KRODataset::Close(GDALProgressFunc, void *)
@@ -236,7 +236,7 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char ** /* papszOptions */)
+                                CSLConstList /* papszOptions */)
 {
     if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Float32)
     {
@@ -307,7 +307,7 @@ GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                         GDALRegister_KRO()                           */
+/*                          GDALRegister_KRO()                          */
 /************************************************************************/
 
 void GDALRegister_KRO()

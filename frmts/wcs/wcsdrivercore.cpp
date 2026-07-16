@@ -16,7 +16,7 @@
 #include "gdalplugindriverproxy.h"
 
 /************************************************************************/
-/*                     WCSDriverIdentify()                              */
+/*                         WCSDriverIdentify()                          */
 /************************************************************************/
 
 int WCSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -55,7 +55,7 @@ int WCSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      WCSDriverSetCommonMetadata()                    */
+/*                     WCSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void WCSDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -72,7 +72,7 @@ void WCSDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredWCSPlugin()                       */
+/*                      DeclareDeferredWCSPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -159,7 +159,7 @@ int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
 }
 
 /************************************************************************/
-/*                             SQLUnescape()                            */
+/*                            SQLUnescape()                             */
 /************************************************************************/
 
 CPLString SQLUnescape(const char *pszVal)
@@ -220,7 +220,7 @@ CPLString SQLEscapeName(const char *pszName)
 }
 
 /************************************************************************/
-/*                             SQLTokenize()                            */
+/*                            SQLTokenize()                             */
 /************************************************************************/
 
 char **SQLTokenize(const char *pszStr)
@@ -301,7 +301,7 @@ char **SQLTokenize(const char *pszStr)
 }
 
 /************************************************************************/
-/*                    SQLGetUniqueFieldUCConstraints()                  */
+/*                   SQLGetUniqueFieldUCConstraints()                   */
 /************************************************************************/
 
 /* Return set of field names (in upper case) that have a UNIQUE constraint,
@@ -684,7 +684,7 @@ bool OGRSQLiteRTreeRequiresTrustedSchemaOn()
 }
 
 /************************************************************************/
-/*               OGRSQLiteIsSpatialFunctionReturningGeometry()          */
+/*            OGRSQLiteIsSpatialFunctionReturningGeometry()             */
 /************************************************************************/
 
 bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName)
@@ -835,7 +835,7 @@ double SQLResult::GetValueAsDouble(int iColNum, int iRowNum) const
 }
 
 /************************************************************************/
-/*                  OGRSQLite_gdal_get_pixel_value_common()             */
+/*               OGRSQLite_gdal_get_pixel_value_common()                */
 /************************************************************************/
 
 void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
@@ -962,7 +962,7 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
     defined(ALLOW_FORMAT_DUMPS)
 
 /************************************************************************/
-/*                          SQLCheckLineIsSafe()                        */
+/*                         SQLCheckLineIsSafe()                         */
 /************************************************************************/
 
 bool SQLCheckLineIsSafe(const char *pszLine)

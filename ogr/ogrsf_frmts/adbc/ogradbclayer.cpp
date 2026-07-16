@@ -30,7 +30,7 @@ OGRArrowArrayToOGRFeatureAdapterLayer::~OGRArrowArrayToOGRFeatureAdapterLayer()
 }
 
 /************************************************************************/
-/*                        GetGeometryTypeFromString()                   */
+/*                     GetGeometryTypeFromString()                      */
 /************************************************************************/
 
 static OGRwkbGeometryType GetGeometryTypeFromString(const std::string &osType)
@@ -97,7 +97,7 @@ const char *OGRADBCLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                             GotError()                               */
+/*                              GotError()                              */
 /************************************************************************/
 
 bool OGRADBCLayer::GotError()
@@ -108,7 +108,7 @@ bool OGRADBCLayer::GotError()
 }
 
 /************************************************************************/
-/*                   ParseGeometryColumnCovering()                      */
+/*                    ParseGeometryColumnCovering()                     */
 /************************************************************************/
 
 //! Parse bounding box column definition
@@ -169,7 +169,7 @@ static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
 }
 
 /************************************************************************/
-/*                      ParseGeoParquetColumn()                         */
+/*                       ParseGeoParquetColumn()                        */
 /************************************************************************/
 
 static void ParseGeoParquetColumn(
@@ -561,7 +561,7 @@ OGRADBCLayer::~OGRADBCLayer()
 }
 
 /************************************************************************/
-/*                           ReplaceStatement()                         */
+/*                          ReplaceStatement()                          */
 /************************************************************************/
 
 bool OGRADBCLayer::ReplaceStatement(const char *pszNewStatement)
@@ -622,7 +622,7 @@ bool OGRADBCLayer::ReplaceStatement(const char *pszNewStatement)
 }
 
 /************************************************************************/
-/*                          GetNextRawFeature()                         */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRADBCLayer::GetNextRawFeature()
@@ -706,7 +706,7 @@ void OGRADBCLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRADBCLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -723,7 +723,7 @@ OGRErr OGRADBCLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                           IGetExtent3D()                             */
+/*                            IGetExtent3D()                            */
 /************************************************************************/
 
 OGRErr OGRADBCLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
@@ -740,7 +740,7 @@ OGRErr OGRADBCLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
 }
 
 /************************************************************************/
-/*                      GetCurrentStatement()                           */
+/*                        GetCurrentStatement()                         */
 /************************************************************************/
 
 std::string OGRADBCLayer::GetCurrentStatement() const
@@ -825,7 +825,7 @@ std::string OGRADBCLayer::GetCurrentStatement() const
 }
 
 /************************************************************************/
-/*                         UpdateStatement()                            */
+/*                          UpdateStatement()                           */
 /************************************************************************/
 
 bool OGRADBCLayer::UpdateStatement()
@@ -833,9 +833,9 @@ bool OGRADBCLayer::UpdateStatement()
     return ReplaceStatement(GetCurrentStatement().c_str());
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 OGRErr OGRADBCLayer::SetAttributeFilter(const char *pszFilter)
 {
@@ -852,7 +852,7 @@ OGRErr OGRADBCLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                        ISetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
@@ -870,7 +870,7 @@ OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRADBCLayer::TestCapability(const char *pszCap) const
@@ -925,7 +925,7 @@ int OGRADBCLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            GetDataset()                              */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRADBCLayer::GetDataset()
@@ -934,7 +934,7 @@ GDALDataset *OGRADBCLayer::GetDataset()
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRADBCLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -979,7 +979,7 @@ bool OGRADBCLayer::GetArrowStreamInternal(struct ArrowArrayStream *out_stream)
 }
 
 /************************************************************************/
-/*                    GetFeatureCountSelectCountStar()                  */
+/*                   GetFeatureCountSelectCountStar()                   */
 /************************************************************************/
 
 GIntBig OGRADBCLayer::GetFeatureCountSelectCountStar()
@@ -1002,7 +1002,7 @@ GIntBig OGRADBCLayer::GetFeatureCountSelectCountStar()
 }
 
 /************************************************************************/
-/*                      GetFeatureCountArrow()                          */
+/*                        GetFeatureCountArrow()                        */
 /************************************************************************/
 
 GIntBig OGRADBCLayer::GetFeatureCountArrow()
@@ -1042,7 +1042,7 @@ GIntBig OGRADBCLayer::GetFeatureCountArrow()
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRADBCLayer::GetFeatureCount(int bForce)
@@ -1077,7 +1077,7 @@ GIntBig OGRADBCLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                        GetFeatureCountParquet()                      */
+/*                       GetFeatureCountParquet()                       */
 /************************************************************************/
 
 GIntBig OGRADBCLayer::GetFeatureCountParquet()

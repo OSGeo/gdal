@@ -22,7 +22,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                               const char *pszDialect);
 
 /************************************************************************/
-/*                               LayerDesc                              */
+/*                              LayerDesc                               */
 /************************************************************************/
 
 class LayerDesc

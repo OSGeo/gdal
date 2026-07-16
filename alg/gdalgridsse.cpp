@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE()     */
+/*       GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE()       */
 /************************************************************************/
 
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(

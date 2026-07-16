@@ -337,7 +337,7 @@ bool GH5_CreateAttribute(hid_t loc_id, const char *pszAttrName, hid_t TypeID,
 }
 
 /************************************************************************/
-/*                        GH5_WriteAttribute()                          */
+/*                         GH5_WriteAttribute()                         */
 /************************************************************************/
 
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName,
@@ -378,7 +378,7 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName,
 }
 
 /************************************************************************/
-/*                        GH5_WriteAttribute()                          */
+/*                         GH5_WriteAttribute()                         */
 /************************************************************************/
 
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, double dfValue)
@@ -420,7 +420,7 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, double dfValue)
 }
 
 /************************************************************************/
-/*                        GH5_WriteAttribute()                          */
+/*                         GH5_WriteAttribute()                         */
 /************************************************************************/
 
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue)
@@ -527,7 +527,7 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue)
 }
 
 /************************************************************************/
-/*                        GH5_WriteAttribute()                          */
+/*                         GH5_WriteAttribute()                         */
 /************************************************************************/
 
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, unsigned nValue)

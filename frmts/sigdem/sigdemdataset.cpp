@@ -158,7 +158,7 @@ SIGDEMDataset::~SIGDEMDataset()
 
 GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int /*bStrict*/,
-                                       char ** /*papszOptions*/,
+                                       CSLConstList /*papszOptions*/,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {

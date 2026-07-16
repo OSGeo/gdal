@@ -16,7 +16,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                         OGRIDBDataSource()                          */
+/*                          OGRIDBDataSource()                          */
 /************************************************************************/
 
 OGRIDBDataSource::OGRIDBDataSource()
@@ -29,7 +29,7 @@ OGRIDBDataSource::OGRIDBDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRIDBDataSource()                         */
+/*                         ~OGRIDBDataSource()                          */
 /************************************************************************/
 
 OGRIDBDataSource::~OGRIDBDataSource()

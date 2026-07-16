@@ -102,7 +102,8 @@ class CPL_DLL GNMNetwork : public GDALDataset
      *                       specific for gnm driver.
      * @return CE_None on success
      */
-    virtual CPLErr Create(const char *pszFilename, char **papszOptions) = 0;
+    virtual CPLErr Create(const char *pszFilename,
+                          CSLConstList papszOptions) = 0;
 
     /**
      * @brief Open a network
@@ -161,7 +162,7 @@ class CPL_DLL GNMNetwork : public GDALDataset
      */
     virtual OGRLayer *GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
                               GNMGraphAlgorithmType eAlgorithm,
-                              char **papszOptions) = 0;
+                              CSLConstList papszOptions) = 0;
 
     /** Casts a handle to a pointer */
     static inline GNMNetwork *FromHandle(GNMGenericNetworkH hNet)
@@ -183,7 +184,7 @@ class CPL_DLL GNMNetwork : public GDALDataset
      * @return TRUE if exist and not overwrite or FALSE
      */
     virtual int CheckNetworkExist(const char *pszFilename,
-                                  char **papszOptions) = 0;
+                                  CSLConstList papszOptions) = 0;
 
   protected:
     //! @cond Doxygen_Suppress
@@ -216,7 +217,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
     int TestCapability(const char *) const override;
 
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
-                                char **papszOptions = nullptr) override;
+                                CSLConstList papszOptions = nullptr) override;
 
     int CloseDependentDatasets() override;
     CPLErr FlushCache(bool bAtClosing) override;
@@ -224,7 +225,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
     // GNMNetwork Interface
 
     virtual CPLErr Create(const char *pszFilename,
-                          char **papszOptions) override = 0;
+                          CSLConstList papszOptions) override = 0;
     CPLErr Delete() override;
 
     int GetVersion() const override;
@@ -414,7 +415,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
 
     virtual OGRLayer *GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
                               GNMGraphAlgorithmType eAlgorithm,
-                              char **papszOptions) override;
+                              CSLConstList papszOptions) override;
 
     /** Casts a handle to a pointer */
     static inline GNMGenericNetwork *FromHandle(GNMGenericNetworkH hNet)
@@ -436,7 +437,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
      * @return CE_None if driver is exist or CE_Failure
      */
     virtual CPLErr CheckLayerDriver(const char *pszDefaultDriverName,
-                                    char **papszOptions);
+                                    CSLConstList papszOptions);
     /**
      * @brief Check if provided OGR driver accepted as storage for network data
      * @param pszDriverName The driver name
@@ -576,36 +577,36 @@ class GNMGenericLayer final : public OGRLayer
 
     /** Intersection */
     OGRErr Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                        char **papszOptions = nullptr,
+                        CSLConstList papszOptions = nullptr,
                         GDALProgressFunc pfnProgress = nullptr,
                         void *pProgressArg = nullptr);
     /** Union */
     OGRErr Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                 char **papszOptions = nullptr,
+                 CSLConstList papszOptions = nullptr,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
     /** SymDifference */
     OGRErr SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                         char **papszOptions, GDALProgressFunc pfnProgress,
-                         void *pProgressArg);
+                         CSLConstList papszOptions,
+                         GDALProgressFunc pfnProgress, void *pProgressArg);
     /** Identity */
     OGRErr Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                    char **papszOptions = nullptr,
+                    CSLConstList papszOptions = nullptr,
                     GDALProgressFunc pfnProgress = nullptr,
                     void *pProgressArg = nullptr);
     /** Update */
     OGRErr Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                  char **papszOptions = nullptr,
+                  CSLConstList papszOptions = nullptr,
                   GDALProgressFunc pfnProgress = nullptr,
                   void *pProgressArg = nullptr);
     /** Clip */
     OGRErr Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                char **papszOptions = nullptr,
+                CSLConstList papszOptions = nullptr,
                 GDALProgressFunc pfnProgress = nullptr,
                 void *pProgressArg = nullptr);
     /** Erase */
     OGRErr Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                 char **papszOptions = nullptr,
+                 CSLConstList papszOptions = nullptr,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
 

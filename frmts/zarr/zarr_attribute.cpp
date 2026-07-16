@@ -19,7 +19,7 @@
 constexpr const char *ATTRIBUTE_GROUP_SUFFIX = "/_GLOBAL_";
 
 /************************************************************************/
-/*             ZarrAttributeGroup::ZarrAttributeGroup()                 */
+/*               ZarrAttributeGroup::ZarrAttributeGroup()               */
 /************************************************************************/
 
 ZarrAttributeGroup::ZarrAttributeGroup(const std::string &osParentName,
@@ -35,7 +35,7 @@ ZarrAttributeGroup::ZarrAttributeGroup(const std::string &osParentName,
 }
 
 /************************************************************************/
-/*                   ZarrAttributeGroup::Init()                         */
+/*                      ZarrAttributeGroup::Init()                      */
 /************************************************************************/
 
 void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
@@ -285,7 +285,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
 }
 
 /************************************************************************/
-/*                    ZarrAttributeGroup::Serialize()                   */
+/*                   ZarrAttributeGroup::Serialize()                    */
 /************************************************************************/
 
 CPLJSONObject ZarrAttributeGroup::Serialize() const
@@ -405,7 +405,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
 }
 
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
@@ -422,7 +422,7 @@ void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
 }
 
 /************************************************************************/
-/*                          ParentDeleted()                             */
+/*                           ParentDeleted()                            */
 /************************************************************************/
 
 void ZarrAttributeGroup::ParentDeleted()

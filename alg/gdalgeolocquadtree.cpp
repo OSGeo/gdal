@@ -23,7 +23,7 @@
 #include <limits>
 
 /************************************************************************/
-/*               GDALGeoLocQuadTreeGetFeatureCorners()                  */
+/*                GDALGeoLocQuadTreeGetFeatureCorners()                 */
 /************************************************************************/
 
 static bool
@@ -49,7 +49,7 @@ GDALGeoLocQuadTreeGetFeatureCorners(const GDALGeoLocTransformInfo *psTransform,
 }
 
 /************************************************************************/
-/*               GDALGeoLocQuadTreeGetFeatureBounds()                   */
+/*                 GDALGeoLocQuadTreeGetFeatureBounds()                 */
 /************************************************************************/
 
 constexpr size_t BIT_IDX_RANGE_180 = 8 * sizeof(size_t) - 1;
@@ -193,7 +193,7 @@ bool GDALGeoLocBuildQuadTree(GDALGeoLocTransformInfo *psTransform)
 }
 
 /************************************************************************/
-/*                  GDALGeoLocInverseTransformQuadtree()                */
+/*                 GDALGeoLocInverseTransformQuadtree()                 */
 /************************************************************************/
 
 void GDALGeoLocInverseTransformQuadtree(

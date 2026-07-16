@@ -28,7 +28,7 @@ typedef struct
 } ExprDumpFilterOptions;
 
 /************************************************************************/
-/*                WFS_ExprDumpGmlObjectIdFilter()                       */
+/*                   WFS_ExprDumpGmlObjectIdFilter()                    */
 /************************************************************************/
 
 static bool WFS_ExprDumpGmlObjectIdFilter(CPLString &osFilter,
@@ -86,7 +86,7 @@ static bool WFS_ExprDumpGmlObjectIdFilter(CPLString &osFilter,
 }
 
 /************************************************************************/
-/*                     WFS_ExprDumpRawLitteral()                        */
+/*                      WFS_ExprDumpRawLitteral()                       */
 /************************************************************************/
 
 static bool WFS_ExprDumpRawLitteral(CPLString &osFilter,
@@ -120,7 +120,7 @@ static bool WFS_ExprDumpRawLitteral(CPLString &osFilter,
 }
 
 /************************************************************************/
-/*                       WFS_ExprGetSRSName()                          */
+/*                         WFS_ExprGetSRSName()                         */
 /************************************************************************/
 
 static const char *WFS_ExprGetSRSName(const swq_expr_node *poExpr,
@@ -165,7 +165,7 @@ static const char *WFS_ExprGetSRSName(const swq_expr_node *poExpr,
 }
 
 /************************************************************************/
-/*                     WFS_ExprDumpAsOGCFilter()                        */
+/*                      WFS_ExprDumpAsOGCFilter()                       */
 /************************************************************************/
 
 static bool WFS_ExprDumpAsOGCFilter(CPLString &osFilter,
@@ -604,7 +604,7 @@ static bool WFS_ExprDumpAsOGCFilter(CPLString &osFilter,
 }
 
 /************************************************************************/
-/*               WFS_TurnSQLFilterToOGCFilter()                         */
+/*                    WFS_TurnSQLFilterToOGCFilter()                    */
 /************************************************************************/
 
 CPLString
@@ -642,7 +642,7 @@ WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*                  OGRWFSSpatialBooleanPredicateChecker()              */
+/*                OGRWFSSpatialBooleanPredicateChecker()                */
 /************************************************************************/
 
 static swq_field_type OGRWFSSpatialBooleanPredicateChecker(
@@ -668,7 +668,7 @@ static swq_field_type OGRWFSSpatialBooleanPredicateChecker(
 }
 
 /************************************************************************/
-/*                           OGRWFSCheckSRIDArg()                       */
+/*                         OGRWFSCheckSRIDArg()                         */
 /************************************************************************/
 
 static bool OGRWFSCheckSRIDArg(swq_expr_node *op, int iSubArgIndex)
@@ -708,7 +708,7 @@ static bool OGRWFSCheckSRIDArg(swq_expr_node *op, int iSubArgIndex)
 }
 
 /************************************************************************/
-/*                   OGRWFSMakeEnvelopeChecker()                        */
+/*                     OGRWFSMakeEnvelopeChecker()                      */
 /************************************************************************/
 
 static swq_field_type
@@ -742,7 +742,7 @@ OGRWFSMakeEnvelopeChecker(swq_expr_node *op,
 }
 
 /************************************************************************/
-/*                   OGRWFSGeomFromTextChecker()                        */
+/*                     OGRWFSGeomFromTextChecker()                      */
 /************************************************************************/
 
 static swq_field_type
@@ -780,7 +780,7 @@ OGRWFSGeomFromTextChecker(swq_expr_node *op,
 }
 
 /************************************************************************/
-/*                      OGRWFSDWithinBeyondChecker()                    */
+/*                     OGRWFSDWithinBeyondChecker()                     */
 /************************************************************************/
 
 static swq_field_type
@@ -816,7 +816,7 @@ OGRWFSDWithinBeyondChecker(swq_expr_node *op,
 }
 
 /************************************************************************/
-/*                   OGRWFSCustomFuncRegistrar                          */
+/*                      OGRWFSCustomFuncRegistrar                       */
 /************************************************************************/
 
 class OGRWFSCustomFuncRegistrar : public swq_custom_func_registrar
@@ -830,7 +830,7 @@ class OGRWFSCustomFuncRegistrar : public swq_custom_func_registrar
 };
 
 /************************************************************************/
-/*                  WFSGetCustomFuncRegistrar()                         */
+/*                     WFSGetCustomFuncRegistrar()                      */
 /************************************************************************/
 
 swq_custom_func_registrar *WFSGetCustomFuncRegistrar()
@@ -840,7 +840,7 @@ swq_custom_func_registrar *WFSGetCustomFuncRegistrar()
 }
 
 /************************************************************************/
-/*                           GetOperator()                              */
+/*                            GetOperator()                             */
 /************************************************************************/
 
 static const swq_operation OGRWFSSpatialOps[] = {

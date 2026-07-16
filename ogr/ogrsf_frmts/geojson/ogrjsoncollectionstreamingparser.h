@@ -18,7 +18,7 @@
 #include <json.h>  // JSON-C
 
 /************************************************************************/
-/*                      OGRJSONCollectionStreamingParser                */
+/*                   OGRJSONCollectionStreamingParser                   */
 /************************************************************************/
 
 /** Streaming parser for GeoJSON-like FeatureCollection */

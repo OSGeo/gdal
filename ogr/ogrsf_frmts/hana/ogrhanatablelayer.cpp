@@ -430,7 +430,7 @@ OGRHanaTableLayer::OGRHanaTableLayer(OGRHanaDataSource *datasource,
 }
 
 /************************************************************************/
-/*                        ~OGRHanaTableLayer()                          */
+/*                         ~OGRHanaTableLayer()                         */
 /************************************************************************/
 
 OGRHanaTableLayer::~OGRHanaTableLayer()
@@ -642,7 +642,7 @@ void OGRHanaTableLayer::ResetPreparedStatements()
 }
 
 /************************************************************************/
-/*                        SetStatementParameters()                      */
+/*                       SetStatementParameters()                       */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::SetStatementParameters(
@@ -1069,7 +1069,7 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(OGRFeature *feature, int fieldIndex,
 }
 
 /************************************************************************/
-/*                                IGetExtent()                          */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::IGetExtent(int geomField, OGREnvelope *extent,
@@ -1084,7 +1084,7 @@ OGRErr OGRHanaTableLayer::IGetExtent(int geomField, OGREnvelope *extent,
 }
 
 /************************************************************************/
-/*                              GetFeatureCount()                       */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRHanaTableLayer::GetFeatureCount(int force)
@@ -1095,7 +1095,7 @@ GIntBig OGRHanaTableLayer::GetFeatureCount(int force)
 }
 
 /************************************************************************/
-/*                              ResetReading()                          */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRHanaTableLayer::ResetReading()
@@ -1109,7 +1109,7 @@ void OGRHanaTableLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRHanaTableLayer::TestCapability(const char *capabilities) const
@@ -1160,7 +1160,7 @@ int OGRHanaTableLayer::TestCapability(const char *capabilities) const
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature *feature)
@@ -1320,7 +1320,7 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                            */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature *feature)
@@ -1674,7 +1674,7 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
 }
 
 /************************************************************************/
-/*                            AlterFieldDefn()                          */
+/*                           AlterFieldDefn()                           */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,
@@ -1834,7 +1834,7 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,
 }
 
 /************************************************************************/
-/*                          ClearBatches()                              */
+/*                            ClearBatches()                            */
 /************************************************************************/
 
 void OGRHanaTableLayer::ClearBatches()
@@ -1848,7 +1848,7 @@ void OGRHanaTableLayer::ClearBatches()
 }
 
 /************************************************************************/
-/*                          ColumnsChanged()                            */
+/*                           ColumnsChanged()                           */
 /************************************************************************/
 
 void OGRHanaTableLayer::ColumnsChanged()
@@ -1859,7 +1859,7 @@ void OGRHanaTableLayer::ColumnsChanged()
 }
 
 /************************************************************************/
-/*                          SetCustomColumnTypes()                      */
+/*                        SetCustomColumnTypes()                        */
 /************************************************************************/
 
 void OGRHanaTableLayer::SetCustomColumnTypes(const char *columnTypes)
@@ -1909,7 +1909,7 @@ OGRErr OGRHanaTableLayer::StartTransaction()
 }
 
 /************************************************************************/
-/*                          CommitTransaction()                         */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::CommitTransaction()
@@ -1925,7 +1925,7 @@ OGRErr OGRHanaTableLayer::CommitTransaction()
 }
 
 /************************************************************************/
-/*                          RollbackTransaction()                       */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::RollbackTransaction()

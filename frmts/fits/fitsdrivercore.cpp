@@ -18,7 +18,7 @@
 #include "fitsdrivercore.h"
 
 /************************************************************************/
-/*                     FITSDriverIdentify()                             */
+/*                         FITSDriverIdentify()                         */
 /************************************************************************/
 
 int FITSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -38,7 +38,7 @@ int FITSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      FITSDriverSetCommonMetadata()                   */
+/*                    FITSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void FITSDriverSetCommonMetadata(GDALDriver *poDriver)

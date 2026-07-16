@@ -24,7 +24,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                     VSIPluginFilesystemHandler                         */
+/*                      VSIPluginFilesystemHandler                      */
 /************************************************************************/
 
 class VSIPluginHandle;

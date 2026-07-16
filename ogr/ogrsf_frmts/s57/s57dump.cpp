@@ -32,7 +32,7 @@ int main(int nArgc, char **papszArgv)
     /* -------------------------------------------------------------------- */
     /*      Process commandline arguments.                                  */
     /* -------------------------------------------------------------------- */
-    char **papszOptions = nullptr;
+    CSLConstList papszOptions = nullptr;
     bool bReturnPrimitives = false;
     char *pszDataPath = nullptr;
 

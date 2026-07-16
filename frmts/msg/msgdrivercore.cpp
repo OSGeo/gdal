@@ -17,7 +17,7 @@
 #include "msgdrivercore.h"
 
 /************************************************************************/
-/*                     MSGDriverIdentify()                              */
+/*                         MSGDriverIdentify()                          */
 /************************************************************************/
 
 static int MSGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -28,7 +28,7 @@ static int MSGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      MSGDriverSetCommonMetadata()                    */
+/*                     MSGDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void MSGDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -42,7 +42,7 @@ void MSGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredMSGPlugin()                       */
+/*                      DeclareDeferredMSGPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

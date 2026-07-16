@@ -211,7 +211,7 @@ typedef std::unique_ptr<VSIVirtualHandle, VSIVirtualHandleCloser>
     VSIVirtualHandleUniquePtr;
 
 /************************************************************************/
-/*                        VSIProxyFileHandle                            */
+/*                          VSIProxyFileHandle                          */
 /************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -723,7 +723,7 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                              VSIDIR                                  */
+/*                                VSIDIR                                */
 /************************************************************************/
 
 struct CPL_DLL VSIDIR

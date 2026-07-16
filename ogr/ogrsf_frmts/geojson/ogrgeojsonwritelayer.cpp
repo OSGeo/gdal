@@ -19,7 +19,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                         OGRGeoJSONWriteLayer()                       */
+/*                        OGRGeoJSONWriteLayer()                        */
 /************************************************************************/
 
 OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
@@ -81,7 +81,7 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                        ~OGRGeoJSONWriteLayer()                       */
+/*                       ~OGRGeoJSONWriteLayer()                        */
 /************************************************************************/
 
 OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
@@ -158,7 +158,7 @@ void OGRGeoJSONWriteLayer::FinishWriting()
 }
 
 /************************************************************************/
-/*                           SyncToDisk()                               */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONWriteLayer::SyncToDisk()
@@ -172,7 +172,7 @@ OGRErr OGRGeoJSONWriteLayer::SyncToDisk()
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
@@ -443,7 +443,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONWriteLayer::CreateField(const OGRFieldDefn *poField,
@@ -479,7 +479,7 @@ int OGRGeoJSONWriteLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONWriteLayer::IGetExtent(int /*iGeomField*/,

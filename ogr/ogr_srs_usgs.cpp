@@ -27,7 +27,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*  GCTP projection codes.                                              */
+/*                        GCTP projection codes.                        */
 /************************************************************************/
 
 constexpr long GEO = 0L;      // Geographic
@@ -70,7 +70,7 @@ constexpr long WAGVII = 29L;  // Wagner VII
 // (added by Raj Gejjagaraguppe ARC for MODIS)
 
 /************************************************************************/
-/*  GCTP ellipsoid codes.                                               */
+/*                        GCTP ellipsoid codes.                         */
 /************************************************************************/
 
 constexpr long CLARKE1866 = 0L;
@@ -95,7 +95,7 @@ constexpr long WGS84 = 12L;
 // constexpr long SPHERE             = 19L;
 
 /************************************************************************/
-/*  Correspondence between GCTP and EPSG ellipsoid codes.               */
+/*        Correspondence between GCTP and EPSG ellipsoid codes.         */
 /************************************************************************/
 
 constexpr int aoEllipsUSGS[] = {
@@ -164,7 +164,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
 }
 
 /************************************************************************/
-/*                          importFromUSGS()                            */
+/*                           importFromUSGS()                           */
 /************************************************************************/
 
 /**
@@ -798,7 +798,7 @@ OGRErr OSRExportToUSGS(OGRSpatialReferenceH hSRS, long *piProjSys, long *piZone,
 }
 
 /************************************************************************/
-/*                           exportToUSGS()                             */
+/*                            exportToUSGS()                            */
 /************************************************************************/
 
 /**

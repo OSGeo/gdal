@@ -44,7 +44,7 @@ GDALRasterReclassifyAlgorithm::GDALRasterReclassifyAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALRasterReclassifyValidateMappings                    */
+/*                 GDALRasterReclassifyValidateMappings                 */
 /************************************************************************/
 
 static bool GDALReclassifyValidateMappings(GDALDataset &input,
@@ -64,7 +64,7 @@ static bool GDALReclassifyValidateMappings(GDALDataset &input,
 }
 
 /************************************************************************/
-/*              GDALRasterReclassifyCreateVRTDerived                    */
+/*                 GDALRasterReclassifyCreateVRTDerived                 */
 /************************************************************************/
 
 static std::unique_ptr<GDALDataset>
@@ -127,7 +127,7 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 }
 
 /************************************************************************/
-/*           GDALRasterReclassifyAlgorithm::RunStep()                   */
+/*               GDALRasterReclassifyAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALRasterReclassifyAlgorithm::RunStep(GDALPipelineStepRunContext &)

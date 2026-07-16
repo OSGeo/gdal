@@ -27,7 +27,7 @@ void GMLASResourceCache::SetCacheDirectory(const std::string &osCacheDirectory)
 }
 
 /************************************************************************/
-/*                     RecursivelyCreateDirectoryIfNeeded()             */
+/*                 RecursivelyCreateDirectoryIfNeeded()                 */
 /************************************************************************/
 
 bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded(
@@ -65,7 +65,7 @@ bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded()
 }
 
 /************************************************************************/
-/*                        GetCachedFilename()                           */
+/*                         GetCachedFilename()                          */
 /************************************************************************/
 
 std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
@@ -120,7 +120,7 @@ std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
 }
 
 /************************************************************************/
-/*                          CacheAllGML321()                            */
+/*                           CacheAllGML321()                           */
 /************************************************************************/
 
 bool GMLASXSDCache::CacheAllGML321()
@@ -182,7 +182,7 @@ bool GMLASXSDCache::CacheAllGML321()
 }
 
 /************************************************************************/
-/*                         CacheAllISO20070417()                        */
+/*                        CacheAllISO20070417()                         */
 /************************************************************************/
 
 bool GMLASXSDCache::CacheAllISO20070417()
@@ -249,7 +249,7 @@ bool GMLASXSDCache::CacheAllISO20070417()
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 VSILFILE *GMLASXSDCache::Open(const std::string &osResource,

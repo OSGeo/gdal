@@ -134,7 +134,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     typedef GDALDataset *(*CreateCallback)(const char *pszName, int nXSize,
                                            int nYSize, int nBands,
                                            GDALDataType eType,
-                                           char **papszOptions);
+                                           CSLConstList papszOptions);
 
     CreateCallback pfnCreate = nullptr;
 
@@ -145,7 +145,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     GDALDataset *(*pfnCreateEx)(GDALDriver *, const char *pszName, int nXSize,
                                 int nYSize, int nBands, GDALDataType eType,
-                                char **papszOptions) = nullptr;
+                                CSLConstList papszOptions) = nullptr;
 
     typedef GDALDataset *(*CreateMultiDimensionalCallback)(
         const char *pszName, CSLConstList papszRootGroupOptions,
@@ -167,7 +167,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     }
 
     typedef GDALDataset *(*CreateCopyCallback)(const char *, GDALDataset *, int,
-                                               char **,
+                                               CSLConstList,
                                                GDALProgressFunc pfnProgress,
                                                void *pProgressData);
 
@@ -217,7 +217,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     /* For legacy OGR drivers */
     GDALDataset *(*pfnCreateVectorOnly)(GDALDriver *, const char *pszName,
-                                        char **papszOptions) = nullptr;
+                                        CSLConstList papszOptions) = nullptr;
     CPLErr (*pfnDeleteDataSource)(GDALDriver *, const char *pszName) = nullptr;
 
     /** Whether pfnVectorTranslateFrom() can be run given the source dataset

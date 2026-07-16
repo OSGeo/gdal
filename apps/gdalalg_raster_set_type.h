@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterSetTypeAlgorithm                         */
+/*                      GDALRasterSetTypeAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterSetTypeAlgorithm /* non final */
@@ -40,7 +40,7 @@ class GDALRasterSetTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALRasterSetTypeAlgorithmStandalone                  */
+/*                 GDALRasterSetTypeAlgorithmStandalone                 */
 /************************************************************************/
 
 class GDALRasterSetTypeAlgorithmStandalone final

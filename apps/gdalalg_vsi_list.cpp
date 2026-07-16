@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALVSIListAlgorithm::GDALVSIListAlgorithm()            */
+/*             GDALVSIListAlgorithm::GDALVSIListAlgorithm()             */
 /************************************************************************/
 
 GDALVSIListAlgorithm::GDALVSIListAlgorithm()
@@ -55,7 +55,7 @@ GDALVSIListAlgorithm::GDALVSIListAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALVSIListAlgorithm::Print()                      */
+/*                    GDALVSIListAlgorithm::Print()                     */
 /************************************************************************/
 
 void GDALVSIListAlgorithm::Print(const char *str)
@@ -77,7 +77,7 @@ void GDALVSIListAlgorithm::Print(const char *str)
 }
 
 /************************************************************************/
-/*                            GetDepth()                                */
+/*                              GetDepth()                              */
 /************************************************************************/
 
 static int GetDepth(const std::string &filename)
@@ -94,7 +94,7 @@ static int GetDepth(const std::string &filename)
 }
 
 /************************************************************************/
-/*                 GDALVSIListAlgorithm::PrintEntry()                   */
+/*                  GDALVSIListAlgorithm::PrintEntry()                  */
 /************************************************************************/
 
 void GDALVSIListAlgorithm::PrintEntry(const VSIDIREntry *entry)
@@ -240,7 +240,7 @@ void GDALVSIListAlgorithm::PrintEntry(const VSIDIREntry *entry)
 }
 
 /************************************************************************/
-/*                    GDALVSIListAlgorithm::RunImpl()                   */
+/*                   GDALVSIListAlgorithm::RunImpl()                    */
 /************************************************************************/
 
 bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)

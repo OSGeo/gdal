@@ -25,7 +25,7 @@
  *=====================================================================*/
 
 /************************************************************************/
-/*                         OGRTABDataSource()                           */
+/*                          OGRTABDataSource()                          */
 /************************************************************************/
 
 OGRTABDataSource::OGRTABDataSource()
@@ -58,7 +58,7 @@ OGRTABDataSource::~OGRTABDataSource()
 /*      Create a new dataset (directory or file).                       */
 /************************************************************************/
 
-int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
+int OGRTABDataSource::Create(const char *pszName, CSLConstList papszOptions)
 
 {
     SetDescription(pszName);
@@ -269,7 +269,7 @@ const OGRLayer *OGRTABDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -532,7 +532,7 @@ char **OGRTABDataSource::GetFileList()
 }
 
 /************************************************************************/
-/*                            ExecuteSQL()                              */
+/*                             ExecuteSQL()                             */
 /************************************************************************/
 
 OGRLayer *OGRTABDataSource::ExecuteSQL(const char *pszStatement,

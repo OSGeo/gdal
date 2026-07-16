@@ -7,6 +7,15 @@ add_gdal_driver(
           zarr_filters.cpp
           zarr_attribute.cpp
           zarr_v3_codec.cpp
+          zarr_v3_codec_abstract_compressor.cpp
+          zarr_v3_codec_blosc.cpp
+          zarr_v3_codec_bytes.cpp
+          zarr_v3_codec_crc32c.cpp
+          zarr_v3_codec_gzip.cpp
+          zarr_v3_codec_sequence.cpp
+          zarr_v3_codec_sharding.cpp
+          zarr_v3_codec_transpose.cpp
+          zarr_v3_codec_zstd.cpp
           zarr_dimension.cpp
           zarr_group.cpp
           zarr_v2_group.cpp
@@ -16,6 +25,7 @@ add_gdal_driver(
           vsikerchunk.cpp
           vsikerchunk_json_ref.cpp
           vsikerchunk_parquet_ref.cpp
+          crc32c.cpp
   CORE_SOURCES
           zarrdrivercore.cpp
   PLUGIN_CAPABLE

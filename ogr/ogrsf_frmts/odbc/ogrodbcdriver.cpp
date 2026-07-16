@@ -15,7 +15,7 @@
 #include "ogrodbcdrivercore.h"
 
 /************************************************************************/
-/*                      OGRODBCDriverOpen()                             */
+/*                         OGRODBCDriverOpen()                          */
 /************************************************************************/
 
 static GDALDataset *OGRODBCDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -36,7 +36,7 @@ static GDALDataset *OGRODBCDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterOGRODBC()                            */
+/*                          RegisterOGRODBC()                           */
 /************************************************************************/
 
 void RegisterOGRODBC()

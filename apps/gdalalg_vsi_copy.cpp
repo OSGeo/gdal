@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()            */
+/*             GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()             */
 /************************************************************************/
 
 GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
@@ -69,7 +69,7 @@ GDALVSICopyAlgorithm::GDALVSICopyAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVSICopyAlgorithm::RunImpl()                   */
+/*                   GDALVSICopyAlgorithm::RunImpl()                    */
 /************************************************************************/
 
 bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -179,7 +179,7 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                 GDALVSICopyAlgorithm::CopySingle()                   */
+/*                  GDALVSICopyAlgorithm::CopySingle()                  */
 /************************************************************************/
 
 bool GDALVSICopyAlgorithm::CopySingle(const std::string &src,
@@ -206,7 +206,7 @@ bool GDALVSICopyAlgorithm::CopySingle(const std::string &src,
 }
 
 /************************************************************************/
-/*                 GDALVSICopyAlgorithm::CopyRecursive()                */
+/*                GDALVSICopyAlgorithm::CopyRecursive()                 */
 /************************************************************************/
 
 bool GDALVSICopyAlgorithm::CopyRecursive(const std::string &srcIn,

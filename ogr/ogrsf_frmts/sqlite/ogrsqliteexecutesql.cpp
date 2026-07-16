@@ -34,7 +34,7 @@
 #include "sqlite3.h"
 
 /************************************************************************/
-/*                       OGR2SQLITEExtractUnquotedString()              */
+/*                  OGR2SQLITEExtractUnquotedString()                   */
 /************************************************************************/
 
 static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
@@ -120,7 +120,7 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITEExtractLayerDesc()                    */
+/*                     OGR2SQLITEExtractLayerDesc()                     */
 /************************************************************************/
 
 static LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
@@ -157,7 +157,7 @@ static LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
 }
 
 /************************************************************************/
-/*                           OGR2SQLITEAddLayer()                       */
+/*                         OGR2SQLITEAddLayer()                         */
 /************************************************************************/
 
 static void OGR2SQLITEAddLayer(const char *&pszStart, int &nNum,
@@ -202,7 +202,7 @@ static void OGR2SQLITEAddLayer(const char *&pszStart, int &nNum,
 }
 
 /************************************************************************/
-/*                         StartsAsSQLITEKeyWord()                      */
+/*                       StartsAsSQLITEKeyWord()                        */
 /************************************************************************/
 
 static int StartsAsSQLITEKeyWord(const char *pszStr)
@@ -217,7 +217,7 @@ static int StartsAsSQLITEKeyWord(const char *pszStr)
 }
 
 /************************************************************************/
-/*                     OGR2SQLITEGetPotentialLayerNames()               */
+/*                  OGR2SQLITEGetPotentialLayerNames()                  */
 /************************************************************************/
 
 static void OGR2SQLITEGetPotentialLayerNamesInternal(
@@ -440,7 +440,7 @@ static void OGR2SQLITEGetPotentialLayerNames(
 }
 
 /************************************************************************/
-/*                   OGRSQLiteGetReferencedLayers()                     */
+/*                    OGRSQLiteGetReferencedLayers()                    */
 /************************************************************************/
 
 std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char *pszStatement)
@@ -492,7 +492,7 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
 };
 
 /************************************************************************/
-/*                         OGRSQLiteExecuteSQLLayer()                   */
+/*                      OGRSQLiteExecuteSQLLayer()                      */
 /************************************************************************/
 
 OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
@@ -507,7 +507,7 @@ OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
 }
 
 /************************************************************************/
-/*                        ~OGRSQLiteExecuteSQLLayer()                   */
+/*                     ~OGRSQLiteExecuteSQLLayer()                      */
 /************************************************************************/
 
 OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
@@ -535,7 +535,7 @@ int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*               OGR2SQLITE_IgnoreAllFieldsExceptGeometry()             */
+/*              OGR2SQLITE_IgnoreAllFieldsExceptGeometry()              */
 /************************************************************************/
 
 #ifdef HAVE_SPATIALITE
@@ -782,7 +782,7 @@ static int OGR2SQLITEDealWithSpatialColumn(
 }
 
 /************************************************************************/
-/*                          OGRSQLiteExecuteSQL()                       */
+/*                        OGRSQLiteExecuteSQL()                         */
 /************************************************************************/
 
 OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
@@ -921,7 +921,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 #else
     /* No caching version */
     poSQLiteDS = new OGRSQLiteDataSource();
-    char **papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
+    CSLConstList papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
     {
         CPLConfigOptionSetter oSetter("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO",
                                       false);

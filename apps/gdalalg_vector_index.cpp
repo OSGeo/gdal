@@ -29,7 +29,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()        */
+/*         GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()         */
 /************************************************************************/
 
 GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
@@ -140,7 +140,7 @@ GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
 }
 
 /************************************************************************/
-/*                        GDALVectorDatasetIterator                     */
+/*                      GDALVectorDatasetIterator                       */
 /************************************************************************/
 
 struct GDALVectorDatasetIterator
@@ -295,7 +295,7 @@ struct GDALVectorDatasetIterator
 };
 
 /************************************************************************/
-/*                   GDALVectorIndexAlgorithm::RunImpl()                */
+/*                 GDALVectorIndexAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

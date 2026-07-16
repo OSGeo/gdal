@@ -141,7 +141,7 @@ CPLErr BIGGifRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            BIGGIFDataset()                            */
+/*                           BIGGIFDataset()                            */
 /************************************************************************/
 
 BIGGIFDataset::BIGGIFDataset() : nLastLineRead(-1), poWorkDS(nullptr)
@@ -149,7 +149,7 @@ BIGGIFDataset::BIGGIFDataset() : nLastLineRead(-1), poWorkDS(nullptr)
 }
 
 /************************************************************************/
-/*                           ~BIGGIFDataset()                            */
+/*                           ~BIGGIFDataset()                           */
 /************************************************************************/
 
 BIGGIFDataset::~BIGGIFDataset()
@@ -161,7 +161,7 @@ BIGGIFDataset::~BIGGIFDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int BIGGIFDataset::CloseDependentDatasets()

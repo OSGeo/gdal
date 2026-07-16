@@ -311,7 +311,7 @@ DBFHandle SHPAPI_CALL DBFOpen(const char *pszFilename, const char *pszAccess)
 }
 
 /************************************************************************/
-/*                      DBFGetLenWithoutExtension()                     */
+/*                     DBFGetLenWithoutExtension()                      */
 /************************************************************************/
 
 static int DBFGetLenWithoutExtension(const char *pszBasename)
@@ -2458,7 +2458,7 @@ int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
 }
 
 /************************************************************************/
-/*                    DBFSetWriteEndOfFileChar()                        */
+/*                      DBFSetWriteEndOfFileChar()                      */
 /************************************************************************/
 
 void SHPAPI_CALL DBFSetWriteEndOfFileChar(DBFHandle psDBF, int bWriteFlag)

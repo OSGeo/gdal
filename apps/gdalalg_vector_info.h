@@ -50,7 +50,7 @@ class GDALVectorInfoAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorInfoAlgorithmStandalone                    */
+/*                  GDALVectorInfoAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorInfoAlgorithmStandalone final : public GDALVectorInfoAlgorithm

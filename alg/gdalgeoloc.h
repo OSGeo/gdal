@@ -16,7 +16,7 @@
 #include "gdal_alg_priv.h"
 
 /************************************************************************/
-/*                           GDALGeoLoc                                 */
+/*                              GDALGeoLoc                              */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -62,7 +62,7 @@ void GDALInverseBilinearInterpolation(const double x, const double y,
                                       double &i, double &j);
 
 /************************************************************************/
-/*                           ShiftGeoX()                                */
+/*                             ShiftGeoX()                              */
 /************************************************************************/
 
 // Avoid discontinuity at anti-meridian when interpolating longitude

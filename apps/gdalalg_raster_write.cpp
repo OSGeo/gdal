@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*          GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()        */
+/*         GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()         */
 /************************************************************************/
 
 GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()
@@ -30,7 +30,7 @@ GDALRasterWriteAlgorithm::GDALRasterWriteAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALRasterWriteAlgorithm::RunStep()                 */
+/*                 GDALRasterWriteAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

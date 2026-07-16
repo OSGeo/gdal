@@ -33,7 +33,7 @@ typedef enum
 } ReadMode;
 
 /************************************************************************/
-/*                            OGRGMLLayer                               */
+/*                             OGRGMLLayer                              */
 /************************************************************************/
 
 class OGRGMLLayer final : public OGRLayer
@@ -178,7 +178,7 @@ class OGRGMLDataSource final : public GDALDataset
 
     bool Open(GDALOpenInfo *poOpenInfo);
     CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
-    bool Create(const char *pszFile, char **papszOptions);
+    bool Create(const char *pszFile, CSLConstList papszOptions);
 
     int GetLayerCount() const override
     {

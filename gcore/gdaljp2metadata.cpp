@@ -1143,7 +1143,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 }
 
 /************************************************************************/
-/*                         SetSpatialRef()                              */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 void GDALJP2Metadata::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1183,7 +1183,7 @@ void GDALJP2Metadata::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             SetRPCMD()                               */
+/*                              SetRPCMD()                              */
 /************************************************************************/
 
 void GDALJP2Metadata::SetRPCMD(CSLConstList papszRPCMDIn)
@@ -1257,7 +1257,7 @@ bool GDALJP2Metadata::IsSRSCompatible(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                     GetGMLJP2GeoreferencingInfo()                    */
+/*                    GetGMLJP2GeoreferencingInfo()                     */
 /************************************************************************/
 
 void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
@@ -1386,7 +1386,7 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
 }
 
 /************************************************************************/
-/*                          CreateGMLJP2()                              */
+/*                            CreateGMLJP2()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
@@ -1567,7 +1567,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
 }
 
 /************************************************************************/
-/*                      GDALGMLJP2GetXMLRoot()                          */
+/*                        GDALGMLJP2GetXMLRoot()                        */
 /************************************************************************/
 
 static CPLXMLNode *GDALGMLJP2GetXMLRoot(CPLXMLNode *psNode)
@@ -1581,7 +1581,7 @@ static CPLXMLNode *GDALGMLJP2GetXMLRoot(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*            GDALGMLJP2PatchFeatureCollectionSubstitutionGroup()       */
+/*         GDALGMLJP2PatchFeatureCollectionSubstitutionGroup()          */
 /************************************************************************/
 
 static void
@@ -1623,7 +1623,7 @@ GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                          CreateGMLJP2V2()                            */
+/*                           CreateGMLJP2V2()                           */
 /************************************************************************/
 
 class GMLJP2V2GMLFileDesc
@@ -3245,7 +3245,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                 CreateGDALMultiDomainMetadataXML()                   */
+/*                  CreateGDALMultiDomainMetadataXML()                  */
 /************************************************************************/
 
 CPLXMLNode *
@@ -3346,7 +3346,7 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                         WriteXMLBoxes()                              */
+/*                           WriteXMLBoxes()                            */
 /************************************************************************/
 
 GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
@@ -3380,7 +3380,7 @@ GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
 }
 
 /************************************************************************/
-/*                          CreateXMPBox()                              */
+/*                            CreateXMPBox()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
@@ -3397,7 +3397,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                          CreateIPRBox()                              */
+/*                            CreateIPRBox()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
@@ -3415,7 +3415,7 @@ GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                           IsUUID_MSI()                              */
+/*                             IsUUID_MSI()                             */
 /************************************************************************/
 
 int GDALJP2Metadata::IsUUID_MSI(const GByte *abyUUID)
@@ -3424,7 +3424,7 @@ int GDALJP2Metadata::IsUUID_MSI(const GByte *abyUUID)
 }
 
 /************************************************************************/
-/*                           IsUUID_XMP()                               */
+/*                             IsUUID_XMP()                             */
 /************************************************************************/
 
 int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)

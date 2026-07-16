@@ -23,7 +23,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                        VSIChunkedWriteHandle()                       */
+/*                       VSIChunkedWriteHandle()                        */
 /************************************************************************/
 
 VSIChunkedWriteHandle::VSIChunkedWriteHandle(
@@ -37,7 +37,7 @@ VSIChunkedWriteHandle::VSIChunkedWriteHandle(
 }
 
 /************************************************************************/
-/*                      ~VSIChunkedWriteHandle()                        */
+/*                       ~VSIChunkedWriteHandle()                       */
 /************************************************************************/
 
 VSIChunkedWriteHandle::~VSIChunkedWriteHandle()
@@ -58,7 +58,7 @@ VSIChunkedWriteHandle::~VSIChunkedWriteHandle()
 }
 
 /************************************************************************/
-/*                                 Close()                              */
+/*                               Close()                                */
 /************************************************************************/
 
 int VSIChunkedWriteHandle::Close()
@@ -81,7 +81,7 @@ int VSIChunkedWriteHandle::Close()
 }
 
 /************************************************************************/
-/*                    InvalidateParentDirectory()                       */
+/*                     InvalidateParentDirectory()                      */
 /************************************************************************/
 
 void VSIChunkedWriteHandle::InvalidateParentDirectory()
@@ -96,7 +96,7 @@ void VSIChunkedWriteHandle::InvalidateParentDirectory()
 }
 
 /************************************************************************/
-/*                               Seek()                                 */
+/*                                Seek()                                */
 /************************************************************************/
 
 int VSIChunkedWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
@@ -115,7 +115,7 @@ int VSIChunkedWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 }
 
 /************************************************************************/
-/*                               Tell()                                 */
+/*                                Tell()                                */
 /************************************************************************/
 
 vsi_l_offset VSIChunkedWriteHandle::Tell()
@@ -124,7 +124,7 @@ vsi_l_offset VSIChunkedWriteHandle::Tell()
 }
 
 /************************************************************************/
-/*                               Read()                                 */
+/*                                Read()                                */
 /************************************************************************/
 
 size_t VSIChunkedWriteHandle::Read(void * /* pBuffer */, size_t /* nBytes */)
@@ -137,7 +137,7 @@ size_t VSIChunkedWriteHandle::Read(void * /* pBuffer */, size_t /* nBytes */)
 }
 
 /************************************************************************/
-/*                      ReadCallBackBufferChunked()                     */
+/*                     ReadCallBackBufferChunked()                      */
 /************************************************************************/
 
 size_t VSIChunkedWriteHandle::ReadCallBackBufferChunked(char *buffer,
@@ -387,7 +387,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
 }
 
 /************************************************************************/
-/*                        FinishChunkedTransfer()                       */
+/*                       FinishChunkedTransfer()                        */
 /************************************************************************/
 
 int VSIChunkedWriteHandle::FinishChunkedTransfer()
@@ -424,7 +424,7 @@ int VSIChunkedWriteHandle::FinishChunkedTransfer()
 }
 
 /************************************************************************/
-/*                            DoEmptyPUT()                              */
+/*                             DoEmptyPUT()                             */
 /************************************************************************/
 
 bool VSIChunkedWriteHandle::DoEmptyPUT()

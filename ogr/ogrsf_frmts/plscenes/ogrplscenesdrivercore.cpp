@@ -21,7 +21,7 @@
 #include "ogrplscenesdrivercore.h"
 
 /************************************************************************/
-/*                   OGRPLSCENESDriverIdentify()                        */
+/*                     OGRPLSCENESDriverIdentify()                      */
 /************************************************************************/
 
 int OGRPLSCENESDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -31,7 +31,7 @@ int OGRPLSCENESDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRPLSCENESDriverSetCommonMetadata()                  */
+/*                 OGRPLSCENESDriverSetCommonMetadata()                 */
 /************************************************************************/
 
 void OGRPLSCENESDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -79,7 +79,7 @@ void OGRPLSCENESDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                 DeclareDeferredOGRPLSCENESPlugin()                   */
+/*                  DeclareDeferredOGRPLSCENESPlugin()                  */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -19,7 +19,7 @@
 #include "idb_headers.h"
 
 /************************************************************************/
-/*                            OGRIDBLayer                              */
+/*                             OGRIDBLayer                              */
 /************************************************************************/
 
 class OGRIDBDataSource;
@@ -74,7 +74,7 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRIDBTableLayer                          */
+/*                           OGRIDBTableLayer                           */
 /************************************************************************/
 
 class OGRIDBTableLayer final : public OGRIDBLayer
@@ -116,7 +116,7 @@ class OGRIDBTableLayer final : public OGRIDBLayer
 };
 
 /************************************************************************/
-/*                          OGRIDBSelectLayer                          */
+/*                          OGRIDBSelectLayer                           */
 /************************************************************************/
 
 class OGRIDBSelectLayer final : public OGRIDBLayer
@@ -144,7 +144,7 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
 };
 
 /************************************************************************/
-/*                           OGRIDBDataSource                          */
+/*                           OGRIDBDataSource                           */
 /************************************************************************/
 
 class OGRIDBDataSource final : public GDALDataset

@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()    */
+/*     GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()     */
 /************************************************************************/
 
 GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
@@ -177,7 +177,7 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterFootprintAlgorithm::RunImpl()              */
+/*               GDALRasterFootprintAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -190,7 +190,7 @@ bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                 GDALRasterFootprintAlgorithm::RunStep()              */
+/*               GDALRasterFootprintAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALDatasetRenameAlgorithm                     */
+/*                      GDALDatasetRenameAlgorithm                      */
 /************************************************************************/
 
 class GDALDatasetRenameAlgorithm final

@@ -18,7 +18,7 @@
 #include "ogrxodrdrivercore.h"
 
 /************************************************************************/
-/*                    OGRXODRDriverIdentify()                           */
+/*                       OGRXODRDriverIdentify()                        */
 /************************************************************************/
 
 int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -29,7 +29,7 @@ int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRXODRDriverSetCommonMetadata()                    */
+/*                   OGRXODRDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -55,7 +55,7 @@ void OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRXODRPlugin()                     */
+/*                    DeclareDeferredOGRXODRPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

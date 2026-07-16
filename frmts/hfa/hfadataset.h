@@ -73,10 +73,10 @@ class HFADataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static CPLErr Delete(const char *pszFilename);

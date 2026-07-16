@@ -16,7 +16,7 @@
 #include "ogr_ili2.h"
 
 /************************************************************************/
-/*                           OGRILI2Layer()                              */
+/*                            OGRILI2Layer()                            */
 /************************************************************************/
 
 OGRILI2Layer::OGRILI2Layer(OGRFeatureDefn *poFeatureDefnIn,
@@ -32,7 +32,7 @@ OGRILI2Layer::OGRILI2Layer(OGRFeatureDefn *poFeatureDefnIn,
 }
 
 /************************************************************************/
-/*                           ~OGRILI2Layer()                           */
+/*                           ~OGRILI2Layer()                            */
 /************************************************************************/
 
 OGRILI2Layer::~OGRILI2Layer()

@@ -174,7 +174,7 @@ template <template <class> class Func> struct ProcessField
 /************************************************************************/
 
 /************************************************************************/
-/*                         OGRTileDBDataset()                           */
+/*                          OGRTileDBDataset()                          */
 /************************************************************************/
 
 OGRTileDBDataset::OGRTileDBDataset()
@@ -300,9 +300,9 @@ int OGRTileDBDataset::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/***********************************************************************/
-/*                            ExecuteSQL()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
 
 OGRLayer *OGRTileDBDataset::ExecuteSQL(const char *pszSQLCommand,
                                        OGRGeometry *poSpatialFilter,
@@ -311,9 +311,9 @@ OGRLayer *OGRTileDBDataset::ExecuteSQL(const char *pszSQLCommand,
     return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
-/***********************************************************************/
-/*                           ICreateLayer()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                            ICreateLayer()                            */
+/************************************************************************/
 OGRLayer *
 OGRTileDBDataset::ICreateLayer(const char *pszName,
                                const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -516,7 +516,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                          Create()                                    */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
@@ -561,7 +561,7 @@ GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
 /************************************************************************/
 
 /************************************************************************/
-/*                         OGRTileDBLayer()                             */
+/*                           OGRTileDBLayer()                           */
 /************************************************************************/
 
 OGRTileDBLayer::OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
@@ -593,7 +593,7 @@ OGRTileDBLayer::OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         ~OGRTileDBLayer()                            */
+/*                          ~OGRTileDBLayer()                           */
 /************************************************************************/
 
 OGRTileDBLayer::~OGRTileDBLayer()
@@ -656,7 +656,7 @@ OGRTileDBLayer::~OGRTileDBLayer()
 }
 
 /************************************************************************/
-/*                         InitFromStorage()                            */
+/*                          InitFromStorage()                           */
 /************************************************************************/
 
 bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
@@ -1223,7 +1223,7 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
 }
 
 /************************************************************************/
-/*                     GetDatabaseGeomColName()                         */
+/*                       GetDatabaseGeomColName()                       */
 /************************************************************************/
 
 const char *OGRTileDBLayer::GetDatabaseGeomColName()
@@ -1235,7 +1235,7 @@ const char *OGRTileDBLayer::GetDatabaseGeomColName()
 }
 
 /************************************************************************/
-/*                        SetReadBuffers()                              */
+/*                           SetReadBuffers()                           */
 /************************************************************************/
 
 void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
@@ -1601,7 +1601,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
 }
 
 /************************************************************************/
-/*                           SetupQuery()                               */
+/*                             SetupQuery()                             */
 /************************************************************************/
 
 namespace
@@ -2195,7 +2195,7 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
 }
 
 /************************************************************************/
-/*                       SwitchToReadingMode()                          */
+/*                        SwitchToReadingMode()                         */
 /************************************************************************/
 
 void OGRTileDBLayer::SwitchToReadingMode()
@@ -2242,7 +2242,7 @@ void OGRTileDBLayer::SwitchToReadingMode()
 }
 
 /************************************************************************/
-/*                       GetNextRawFeature()                            */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRTileDBLayer::GetNextRawFeature()
@@ -2266,9 +2266,9 @@ OGRFeature *OGRTileDBLayer::GetNextRawFeature()
     return TranslateCurrentFeature();
 }
 
-/***********************************************************************/
-/*                        GetColumnSubNode()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetColumnSubNode()                          */
+/************************************************************************/
 
 static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
 {
@@ -2282,9 +2282,9 @@ static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                        GetConstantSubNode()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                         GetConstantSubNode()                         */
+/************************************************************************/
 
 static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
 {
@@ -2298,9 +2298,9 @@ static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                           IsComparisonOp()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                           IsComparisonOp()                           */
+/************************************************************************/
 
 static bool IsComparisonOp(int op)
 {
@@ -2308,9 +2308,9 @@ static bool IsComparisonOp(int op)
             op == SWQ_GT || op == SWQ_GE);
 }
 
-/***********************************************************************/
-/*                       OGRFieldToTimeMS()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                          OGRFieldToTimeMS()                          */
+/************************************************************************/
 
 static int64_t OGRFieldToTimeMS(const OGRField &sField)
 {
@@ -2319,9 +2319,9 @@ static int64_t OGRFieldToTimeMS(const OGRField &sField)
         (static_cast<double>(nVal) + sField.Date.Second) * 1000 + 0.5);
 }
 
-/***********************************************************************/
-/*                       OGRFieldToDateDay()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                         OGRFieldToDateDay()                          */
+/************************************************************************/
 
 static int64_t OGRFieldToDateDay(const OGRField &sField)
 {
@@ -2337,9 +2337,9 @@ static int64_t OGRFieldToDateDay(const OGRField &sField)
     return static_cast<int64_t>(nVal / SECONDS_PER_DAY);
 }
 
-/***********************************************************************/
-/*                       OGRFieldToDateTimeMS()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                        OGRFieldToDateTimeMS()                        */
+/************************************************************************/
 
 static int64_t OGRFieldToDateTimeMS(const OGRField &sField)
 {
@@ -2360,9 +2360,9 @@ static int64_t OGRFieldToDateTimeMS(const OGRField &sField)
         (static_cast<double>(nVal) + sField.Date.Second) * 1000 + 0.5);
 }
 
-/***********************************************************************/
-/*                  CreateQueryConditionForIntType()                   */
-/***********************************************************************/
+/************************************************************************/
+/*                   CreateQueryConditionForIntType()                   */
+/************************************************************************/
 
 template <typename T>
 static std::unique_ptr<tiledb::QueryCondition>
@@ -2399,9 +2399,9 @@ CreateQueryConditionForIntType(tiledb::Context &ctx,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                     CreateQueryCondition()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                        CreateQueryCondition()                        */
+/************************************************************************/
 
 std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
     int nOperation, bool bColumnIsLeft, const swq_expr_node *poColumn,
@@ -2670,9 +2670,9 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
     return nullptr;
 }
 
-/***********************************************************************/
-/*                     CreateQueryCondition()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                        CreateQueryCondition()                        */
+/************************************************************************/
 
 std::unique_ptr<tiledb::QueryCondition>
 OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
@@ -2858,9 +2858,9 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 OGRErr OGRTileDBLayer::SetAttributeFilter(const char *pszFilter)
 {
@@ -2918,7 +2918,7 @@ OGRErr OGRTileDBLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                        GetMetadataItem()                             */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRTileDBLayer::GetMetadataItem(const char *pszName,
@@ -2940,7 +2940,7 @@ const char *OGRTileDBLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                    TranslateCurrentFeature()                         */
+/*                      TranslateCurrentFeature()                       */
 /************************************************************************/
 
 OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
@@ -3373,7 +3373,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
 }
 
 /************************************************************************/
-/*                         GetFeature()                                 */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRTileDBLayer::GetFeature(GIntBig nFID)
@@ -3392,7 +3392,7 @@ OGRFeature *OGRTileDBLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                      GetFeatureCount()                               */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRTileDBLayer::GetFeatureCount(int bForce)
@@ -3406,7 +3406,7 @@ GIntBig OGRTileDBLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         IGetExtent()                                 */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRTileDBLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -3421,7 +3421,7 @@ OGRErr OGRTileDBLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                         ResetReading()                               */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRTileDBLayer::ResetReading()
@@ -3439,7 +3439,7 @@ void OGRTileDBLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         CreateField()                                */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRTileDBLayer::CreateField(const OGRFieldDefn *poField,
@@ -3856,7 +3856,7 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
 }
 
 /************************************************************************/
-/*                       SwitchToWritingMode()                          */
+/*                        SwitchToWritingMode()                         */
 /************************************************************************/
 
 void OGRTileDBLayer::SwitchToWritingMode()
@@ -3893,7 +3893,7 @@ void OGRTileDBLayer::SwitchToWritingMode()
 }
 
 /************************************************************************/
-/*                         ICreateFeature()                             */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
@@ -4270,7 +4270,7 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          FlushArrays()                               */
+/*                            FlushArrays()                             */
 /************************************************************************/
 
 void OGRTileDBLayer::FlushArrays()
@@ -4524,7 +4524,7 @@ void OGRTileDBLayer::FlushArrays()
 }
 
 /************************************************************************/
-/*                          ResetBuffers()                              */
+/*                            ResetBuffers()                            */
 /************************************************************************/
 
 namespace
@@ -4564,7 +4564,7 @@ void OGRTileDBLayer::ResetBuffers()
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRTileDBLayer::TestCapability(const char *pszCap) const
@@ -4603,7 +4603,7 @@ int OGRTileDBLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetArrowSchema()                             */
+/*                           GetArrowSchema()                           */
 /************************************************************************/
 
 int OGRTileDBLayer::GetArrowSchema(struct ArrowArrayStream *out_stream,
@@ -4674,7 +4674,7 @@ int OGRTileDBLayer::GetArrowSchema(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                        ReleaseArrowArray()                           */
+/*                         ReleaseArrowArray()                          */
 /************************************************************************/
 
 void OGRTileDBLayer::ReleaseArrowArray(struct ArrowArray *array)
@@ -4703,7 +4703,7 @@ void OGRTileDBLayer::ReleaseArrowArray(struct ArrowArray *array)
 }
 
 /************************************************************************/
-/*                            SetNullBuffer()                           */
+/*                           SetNullBuffer()                            */
 /************************************************************************/
 
 void OGRTileDBLayer::SetNullBuffer(
@@ -4824,7 +4824,7 @@ void OGRTileDBLayer::FillBoolArray(
 }
 
 /************************************************************************/
-/*                        FillPrimitiveArray()                          */
+/*                         FillPrimitiveArray()                         */
 /************************************************************************/
 
 template <typename T>
@@ -4917,7 +4917,7 @@ void OGRTileDBLayer::FillStringOrBinaryArray(
 }
 
 /************************************************************************/
-/*                      FillTimeOrDateArray()                           */
+/*                        FillTimeOrDateArray()                         */
 /************************************************************************/
 
 void OGRTileDBLayer::FillTimeOrDateArray(
@@ -4966,7 +4966,7 @@ void OGRTileDBLayer::FillTimeOrDateArray(
 }
 
 /************************************************************************/
-/*                      FillPrimitiveListArray()                        */
+/*                       FillPrimitiveListArray()                       */
 /************************************************************************/
 
 template <typename T>
@@ -5056,7 +5056,7 @@ void OGRTileDBLayer::FillPrimitiveListArray(
 }
 
 /************************************************************************/
-/*                        FillBoolListArray()                           */
+/*                         FillBoolListArray()                          */
 /************************************************************************/
 
 void OGRTileDBLayer::FillBoolListArray(
@@ -5150,7 +5150,7 @@ void OGRTileDBLayer::FillBoolListArray(
 }
 
 /************************************************************************/
-/*                        GetNextArrowArray()                           */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *stream,

@@ -277,7 +277,7 @@ char **CSLMerge(char **papszOrig, CSLConstList papszOverride)
 }
 
 /************************************************************************/
-/*                             CSLLoad2()                               */
+/*                              CSLLoad2()                              */
 /************************************************************************/
 
 /**
@@ -700,7 +700,7 @@ int CSLFindStringCaseSensitive(CSLConstList papszList, const char *pszTarget)
 }
 
 /************************************************************************/
-/*                           CSLPartialFindString()                     */
+/*                        CSLPartialFindString()                        */
 /************************************************************************/
 
 /**
@@ -1048,7 +1048,7 @@ int CPLVASPrintf(char **buf, CPL_FORMAT_STRING(const char *fmt), va_list ap)
 }
 
 /************************************************************************/
-/*                  CPLvsnprintf_get_end_of_formatting()                */
+/*                 CPLvsnprintf_get_end_of_formatting()                 */
 /************************************************************************/
 
 static const char *CPLvsnprintf_get_end_of_formatting(const char *fmt)
@@ -1104,7 +1104,7 @@ static const char *CPLvsnprintf_get_end_of_formatting(const char *fmt)
 }
 
 /************************************************************************/
-/*                           CPLvsnprintf()                             */
+/*                            CPLvsnprintf()                            */
 /************************************************************************/
 
 #define call_native_snprintf(type)                                             \
@@ -1318,7 +1318,7 @@ int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
 }
 
 /************************************************************************/
-/*                           CPLsnprintf()                              */
+/*                            CPLsnprintf()                             */
 /************************************************************************/
 
 #if !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
@@ -1357,7 +1357,7 @@ int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt), ...)
 #endif  //  !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 
 /************************************************************************/
-/*                           CPLsprintf()                               */
+/*                             CPLsprintf()                             */
 /************************************************************************/
 
 /** sprintf() wrapper that is not sensitive to LC_NUMERIC settings.
@@ -1383,7 +1383,7 @@ int CPLsprintf(char *str, CPL_FORMAT_STRING(const char *fmt), ...)
 }
 
 /************************************************************************/
-/*                           CPLprintf()                                */
+/*                             CPLprintf()                              */
 /************************************************************************/
 
 /** printf() wrapper that is not sensitive to LC_NUMERIC settings.
@@ -1440,7 +1440,7 @@ int CPLprintf(CPL_FORMAT_STRING(const char *fmt), ...)
 }
 
 /************************************************************************/
-/*                           CPLsscanf()                                */
+/*                             CPLsscanf()                              */
 /************************************************************************/
 
 /** \brief sscanf() wrapper that is not sensitive to LC_NUMERIC settings.
@@ -1518,7 +1518,7 @@ int CPLsscanf(const char *str, CPL_SCANF_FORMAT_STRING(const char *fmt), ...)
 #endif
 
 /************************************************************************/
-/*                         CPLTestBool()                                */
+/*                            CPLTestBool()                             */
 /************************************************************************/
 
 /**
@@ -1539,7 +1539,7 @@ bool CPLTestBool(const char *pszValue)
 }
 
 /************************************************************************/
-/*                         CSLTestBoolean()                             */
+/*                           CSLTestBoolean()                           */
 /************************************************************************/
 
 /**
@@ -1563,7 +1563,7 @@ int CSLTestBoolean(const char *pszValue)
 }
 
 /************************************************************************/
-/*                         CPLTestBoolean()                             */
+/*                           CPLTestBoolean()                           */
 /************************************************************************/
 
 /**
@@ -1728,7 +1728,7 @@ int CSLFindName(CSLConstList papszStrList, const char *pszName)
 }
 
 /************************************************************************/
-/*                     CPLParseMemorySize()                             */
+/*                         CPLParseMemorySize()                         */
 /************************************************************************/
 
 /** Parse a memory size from a string.
@@ -2869,7 +2869,7 @@ GByte *CPLHexToBinary(const char *pszHex, int *pnBytes)
 }
 
 /************************************************************************/
-/*                         CPLGetValueType()                            */
+/*                          CPLGetValueType()                           */
 /************************************************************************/
 
 /**
@@ -2992,7 +2992,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
 }
 
 /************************************************************************/
-/*                              CPLStrlcpy()                            */
+/*                             CPLStrlcpy()                             */
 /************************************************************************/
 
 /**
@@ -3042,7 +3042,7 @@ size_t CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize)
 }
 
 /************************************************************************/
-/*                              CPLStrlcat()                            */
+/*                             CPLStrlcat()                             */
 /************************************************************************/
 
 /**
@@ -3091,7 +3091,7 @@ size_t CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize)
 }
 
 /************************************************************************/
-/*                              CPLStrnlen()                            */
+/*                             CPLStrnlen()                             */
 /************************************************************************/
 
 /**
@@ -3123,7 +3123,7 @@ size_t CPLStrnlen(const char *pszStr, size_t nMaxLen)
 }
 
 /************************************************************************/
-/*                            CSLParseCommandLine()                     */
+/*                        CSLParseCommandLine()                         */
 /************************************************************************/
 
 /**
@@ -3140,7 +3140,7 @@ char **CSLParseCommandLine(const char *pszCommandLine)
 }
 
 /************************************************************************/
-/*                              CPLToupper()                            */
+/*                             CPLToupper()                             */
 /************************************************************************/
 
 /** Converts a (ASCII) lowercase character to uppercase.
@@ -3155,7 +3155,7 @@ int CPLToupper(int c)
 }
 
 /************************************************************************/
-/*                              CPLTolower()                            */
+/*                             CPLTolower()                             */
 /************************************************************************/
 
 /** Converts a (ASCII) uppercase character to lowercase.
@@ -3170,7 +3170,7 @@ int CPLTolower(int c)
 }
 
 /************************************************************************/
-/*                      CPLRemoveSQLComments()                          */
+/*                        CPLRemoveSQLComments()                        */
 /************************************************************************/
 
 /** Remove SQL comments from a string

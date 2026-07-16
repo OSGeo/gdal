@@ -36,7 +36,7 @@
 char *OGR_G_ExportToKML(OGRGeometryH hGeometry, const char *pszAltitudeMode);
 
 /************************************************************************/
-/*                           OGRKMLLayer()                              */
+/*                            OGRKMLLayer()                             */
 /************************************************************************/
 
 OGRKMLLayer::OGRKMLLayer(const char *pszName,
@@ -95,7 +95,7 @@ OGRKMLLayer::OGRKMLLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                           ~OGRKMLLayer()                             */
+/*                            ~OGRKMLLayer()                            */
 /************************************************************************/
 
 OGRKMLLayer::~OGRKMLLayer()
@@ -217,7 +217,7 @@ GIntBig OGRKMLLayer::GetFeatureCount(int bForce)
 #endif
 
 /************************************************************************/
-/*                           WriteSchema()                              */
+/*                            WriteSchema()                             */
 /************************************************************************/
 
 CPLString OGRKMLLayer::WriteSchema()
@@ -301,7 +301,7 @@ CPLString OGRKMLLayer::WriteSchema()
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)

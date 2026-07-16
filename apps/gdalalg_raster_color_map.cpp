@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm()    */
+/*      GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm()      */
 /************************************************************************/
 
 GDALRasterColorMapAlgorithm::GDALRasterColorMapAlgorithm(bool standaloneStep)
@@ -55,7 +55,7 @@ bool GDALRasterColorMapAlgorithm::CanHandleNextStep(
 }
 
 /************************************************************************/
-/*               GDALRasterColorMapAlgorithm::RunStep()                 */
+/*                GDALRasterColorMapAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterColorMapAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

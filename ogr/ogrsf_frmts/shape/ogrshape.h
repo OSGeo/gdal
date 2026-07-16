@@ -52,7 +52,7 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                           bool *pbTruncationWarningEmitted, bool bRewind);
 
 /************************************************************************/
-/*                         OGRShapeGeomFieldDefn                        */
+/*                        OGRShapeGeomFieldDefn                         */
 /************************************************************************/
 
 class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn

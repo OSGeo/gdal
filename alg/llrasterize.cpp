@@ -250,7 +250,7 @@ void GDALdllImagePoint(int nRasterXSize, int nRasterYSize, int nPartCount,
 }
 
 /************************************************************************/
-/*                         GDALdllImageLine()                           */
+/*                          GDALdllImageLine()                          */
 /************************************************************************/
 
 void GDALdllImageLine(int nRasterXSize, int nRasterYSize, int nPartCount,

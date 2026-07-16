@@ -388,7 +388,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *MAPDataset::GetSpatialRef() const
@@ -409,7 +409,7 @@ CPLErr MAPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                           GetGCPCount()                              */
+/*                            GetGCPCount()                             */
 /************************************************************************/
 
 int MAPDataset::GetGCPCount()
@@ -427,7 +427,7 @@ const OGRSpatialReference *MAPDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *MAPDataset::GetGCPs()

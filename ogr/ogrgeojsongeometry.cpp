@@ -40,7 +40,7 @@ OGRGeoJSONReadMultiSurface(json_object *poObj, bool bHasM,
                            const OGRSpatialReference *poSRS);
 
 /************************************************************************/
-/*                           OGRGeoJSONGetType                          */
+/*                          OGRGeoJSONGetType                           */
 /************************************************************************/
 
 GeoJSONObject::Type OGRGeoJSONGetType(json_object *poObj)
@@ -92,7 +92,7 @@ GeoJSONObject::Type OGRGeoJSONGetType(json_object *poObj)
 }
 
 /************************************************************************/
-/*                       OGRJSONFGHasMeasure()                          */
+/*                        OGRJSONFGHasMeasure()                         */
 /************************************************************************/
 
 bool OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue)
@@ -109,7 +109,7 @@ bool OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue)
 }
 
 /************************************************************************/
-/*                          asAssocGeometryTypes[]                      */
+/*                        asAssocGeometryTypes[]                        */
 /************************************************************************/
 
 #define ASSOC(x)                                                               \
@@ -139,7 +139,7 @@ static const struct
 #undef ASSOC
 
 /************************************************************************/
-/*                   OGRGeoJSONGetOGRGeometryType()                     */
+/*                    OGRGeoJSONGetOGRGeometryType()                    */
 /************************************************************************/
 
 OGRwkbGeometryType OGRGeoJSONGetOGRGeometryType(json_object *poObj, bool bHasM)
@@ -215,7 +215,7 @@ OGRwkbGeometryType OGRGeoJSONGetOGRGeometryType(json_object *poObj, bool bHasM)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONGetGeometryName()                */
+/*                     OGRGeoJSONGetGeometryName()                      */
 /************************************************************************/
 
 const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry)
@@ -235,7 +235,7 @@ const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadGeometry                     */
+/*                        OGRGeoJSONReadGeometry                        */
 /************************************************************************/
 
 std::unique_ptr<OGRGeometry>
@@ -349,7 +349,7 @@ OGRGeoJSONReadGeometry(json_object *poObj, bool bHasM,
 }
 
 /************************************************************************/
-/*                       GetJSONConstructName()                         */
+/*                        GetJSONConstructName()                        */
 /************************************************************************/
 
 static const char *GetJSONConstructName(json_type eType)
@@ -375,7 +375,7 @@ static const char *GetJSONConstructName(json_type eType)
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONGetCoordinate()                     */
+/*                      OGRGeoJSONGetCoordinate()                       */
 /************************************************************************/
 
 static double OGRGeoJSONGetCoordinate(json_object *poObj,
@@ -406,7 +406,7 @@ static double OGRGeoJSONGetCoordinate(json_object *poObj,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadRawPoint                     */
+/*                        OGRGeoJSONReadRawPoint                        */
 /************************************************************************/
 
 static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point,
@@ -481,7 +481,7 @@ static bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadPoint                        */
+/*                         OGRGeoJSONReadPoint                          */
 /************************************************************************/
 
 std::unique_ptr<OGRPoint> OGRGeoJSONReadPoint(json_object *poObj, bool bHasM)
@@ -511,7 +511,7 @@ std::unique_ptr<OGRPoint> OGRGeoJSONReadPoint(json_object *poObj, bool bHasM)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadMultiPoint                   */
+/*                       OGRGeoJSONReadMultiPoint                       */
 /************************************************************************/
 
 std::unique_ptr<OGRMultiPoint> OGRGeoJSONReadMultiPoint(json_object *poObj,
@@ -566,7 +566,7 @@ std::unique_ptr<OGRMultiPoint> OGRGeoJSONReadMultiPoint(json_object *poObj,
 }
 
 /************************************************************************/
-/*                         OGRGeoJSONReadSimpleCurve                    */
+/*                      OGRGeoJSONReadSimpleCurve                       */
 /************************************************************************/
 
 template <class T>
@@ -639,7 +639,7 @@ static std::unique_ptr<T> OGRGeoJSONReadSimpleCurve(const char *pszFuncName,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadLineString                   */
+/*                       OGRGeoJSONReadLineString                       */
 /************************************************************************/
 
 std::unique_ptr<OGRLineString> OGRGeoJSONReadLineString(json_object *poObj,
@@ -650,7 +650,7 @@ std::unique_ptr<OGRLineString> OGRGeoJSONReadLineString(json_object *poObj,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONReadCircularString                  */
+/*                     OGRGeoJSONReadCircularString                     */
 /************************************************************************/
 
 std::unique_ptr<OGRCircularString>
@@ -661,7 +661,7 @@ OGRGeoJSONReadCircularString(json_object *poObj, bool bHasM)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadMultiLineString              */
+/*                    OGRGeoJSONReadMultiLineString                     */
 /************************************************************************/
 
 std::unique_ptr<OGRMultiLineString>
@@ -711,7 +711,7 @@ OGRGeoJSONReadMultiLineString(json_object *poObj, bool bHasM)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadLinearRing                   */
+/*                       OGRGeoJSONReadLinearRing                       */
 /************************************************************************/
 
 std::unique_ptr<OGRLinearRing> OGRGeoJSONReadLinearRing(json_object *poObj,
@@ -722,7 +722,7 @@ std::unique_ptr<OGRLinearRing> OGRGeoJSONReadLinearRing(json_object *poObj,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadPolygon                      */
+/*                        OGRGeoJSONReadPolygon                         */
 /************************************************************************/
 
 std::unique_ptr<OGRPolygon> OGRGeoJSONReadPolygon(json_object *poObj,
@@ -806,7 +806,7 @@ std::unique_ptr<OGRPolygon> OGRGeoJSONReadPolygon(json_object *poObj,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONReadMultiPolygon                 */
+/*                      OGRGeoJSONReadMultiPolygon                      */
 /************************************************************************/
 
 std::unique_ptr<OGRMultiPolygon> OGRGeoJSONReadMultiPolygon(json_object *poObj,
@@ -864,7 +864,7 @@ std::unique_ptr<OGRMultiPolygon> OGRGeoJSONReadMultiPolygon(json_object *poObj,
 }
 
 /************************************************************************/
-/*                      OGRGeoJSONReadCollection                        */
+/*                       OGRGeoJSONReadCollection                       */
 /************************************************************************/
 
 template <class T>
@@ -981,7 +981,7 @@ OGRGeoJSONReadCollection(const char *pszFuncName, const char *pszGeomTypeName,
 }
 
 /************************************************************************/
-/*                    OGRGeoJSONReadGeometryCollection                  */
+/*                   OGRGeoJSONReadGeometryCollection                   */
 /************************************************************************/
 
 std::unique_ptr<OGRGeometryCollection>
@@ -993,7 +993,7 @@ OGRGeoJSONReadGeometryCollection(json_object *poObj, bool bHasM,
 }
 
 /************************************************************************/
-/*                    OGRGeoJSONReadCompoundCurve                       */
+/*                     OGRGeoJSONReadCompoundCurve                      */
 /************************************************************************/
 
 std::unique_ptr<OGRCompoundCurve>
@@ -1005,7 +1005,7 @@ OGRGeoJSONReadCompoundCurve(json_object *poObj, bool bHasM,
 }
 
 /************************************************************************/
-/*                     OGRGeoJSONReadCurvePolygon                       */
+/*                      OGRGeoJSONReadCurvePolygon                      */
 /************************************************************************/
 
 std::unique_ptr<OGRCurvePolygon> OGRGeoJSONReadCurvePolygon(json_object *poObj,
@@ -1016,7 +1016,7 @@ std::unique_ptr<OGRCurvePolygon> OGRGeoJSONReadCurvePolygon(json_object *poObj,
 }
 
 /************************************************************************/
-/*                      OGRGeoJSONReadMultiCurve                        */
+/*                       OGRGeoJSONReadMultiCurve                       */
 /************************************************************************/
 
 std::unique_ptr<OGRMultiCurve>
@@ -1181,7 +1181,7 @@ OGRSpatialReference *OGRGeoJSONReadSpatialReference(json_object *poObj)
 }
 
 /************************************************************************/
-/*                       OGR_G_CreateGeometryFromJson                   */
+/*                     OGR_G_CreateGeometryFromJson                     */
 /************************************************************************/
 
 /** Create a OGR geometry from a GeoJSON geometry object */

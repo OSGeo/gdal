@@ -42,7 +42,7 @@
 constexpr int knREFRESH_LOCK_FILE_DELAY_SEC = 10;
 
 /************************************************************************/
-/*                          DS_SHPOpen()                                */
+/*                             DS_SHPOpen()                             */
 /************************************************************************/
 
 SHPHandle OGRShapeDataSource::DS_SHPOpen(const char *pszShapeFile,
@@ -64,7 +64,7 @@ SHPHandle OGRShapeDataSource::DS_SHPOpen(const char *pszShapeFile,
 }
 
 /************************************************************************/
-/*                           DS_DBFOpen()                               */
+/*                             DS_DBFOpen()                             */
 /************************************************************************/
 
 DBFHandle OGRShapeDataSource::DS_DBFOpen(const char *pszDBFFile,
@@ -87,7 +87,7 @@ OGRShapeDataSource::OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                             GetLayerNames()                          */
+/*                           GetLayerNames()                            */
 /************************************************************************/
 
 std::vector<CPLString> OGRShapeDataSource::GetLayerNames() const
@@ -112,7 +112,7 @@ OGRShapeDataSource::~OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                       OGRShapeDataSource::Close()                   */
+/*                     OGRShapeDataSource::Close()                      */
 /************************************************************************/
 
 CPLErr OGRShapeDataSource::Close(GDALProgressFunc, void *)
@@ -192,7 +192,7 @@ bool OGRShapeDataSource::OpenZip(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                            CreateZip()                               */
+/*                             CreateZip()                              */
 /************************************************************************/
 
 bool OGRShapeDataSource::CreateZip(const char *pszOriFilename)
@@ -521,7 +521,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
 }
 
 /************************************************************************/
-/*                             AddLayer()                               */
+/*                              AddLayer()                              */
 /************************************************************************/
 
 void OGRShapeDataSource::AddLayer(std::unique_ptr<OGRShapeLayer> poLayer)
@@ -543,7 +543,7 @@ void OGRShapeDataSource::AddLayer(std::unique_ptr<OGRShapeLayer> poLayer)
 }
 
 /************************************************************************/
-/*                        LaunderLayerName()                            */
+/*                          LaunderLayerName()                          */
 /************************************************************************/
 
 static CPLString LaunderLayerName(const char *pszLayerName)
@@ -559,7 +559,7 @@ static CPLString LaunderLayerName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -952,7 +952,7 @@ int OGRShapeDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRShapeDataSource::GetLayerCount() const
@@ -1249,7 +1249,7 @@ OGRLayer *OGRShapeDataSource::ExecuteSQL(const char *pszStatement,
 }
 
 /************************************************************************/
-/*                     GetExtensionsForDeletion()                       */
+/*                      GetExtensionsForDeletion()                      */
 /************************************************************************/
 
 const char *const *OGRShapeDataSource::GetExtensionsForDeletion()

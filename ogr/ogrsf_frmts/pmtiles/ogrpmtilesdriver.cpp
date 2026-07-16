@@ -21,7 +21,7 @@
 #endif
 
 /************************************************************************/
-/*                     OGRPMTilesDriverIdentify()                       */
+/*                      OGRPMTilesDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRPMTilesDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -32,7 +32,7 @@ static int OGRPMTilesDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OGRPMTilesDriverOpen()                         */
+/*                        OGRPMTilesDriverOpen()                        */
 /************************************************************************/
 
 static GDALDataset *OGRPMTilesDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -46,7 +46,7 @@ static GDALDataset *OGRPMTilesDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                   OGRPMTilesDriverCanVectorTranslateFrom()           */
+/*               OGRPMTilesDriverCanVectorTranslateFrom()               */
 /************************************************************************/
 
 static bool OGRPMTilesDriverCanVectorTranslateFrom(
@@ -89,7 +89,7 @@ static bool OGRPMTilesDriverCanVectorTranslateFrom(
 }
 
 /************************************************************************/
-/*                   OGRPMTilesDriverVectorTranslateFrom()              */
+/*                OGRPMTilesDriverVectorTranslateFrom()                 */
 /************************************************************************/
 
 static GDALDataset *OGRPMTilesDriverVectorTranslateFrom(
@@ -115,13 +115,13 @@ static GDALDataset *OGRPMTilesDriverVectorTranslateFrom(
 
 #ifdef HAVE_MVT_WRITE_SUPPORT
 /************************************************************************/
-/*                                Create()                              */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *OGRPMTilesDriverCreate(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eDT,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
     {
@@ -135,7 +135,7 @@ static GDALDataset *OGRPMTilesDriverCreate(const char *pszFilename, int nXSize,
 #endif
 
 /************************************************************************/
-/*                          RegisterOGRPMTiles()                        */
+/*                         RegisterOGRPMTiles()                         */
 /************************************************************************/
 
 void RegisterOGRPMTiles()

@@ -353,7 +353,7 @@ EHdrDataset::~EHdrDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr EHdrDataset::Close(GDALProgressFunc, void *)
@@ -463,7 +463,7 @@ void EHdrDataset::ResetKeyValue(const char *pszKey, const char *pszValue)
 }
 
 /************************************************************************/
-/*                           RewriteCLR()                               */
+/*                             RewriteCLR()                             */
 /************************************************************************/
 
 void EHdrDataset::RewriteCLR(GDALRasterBand *poBand) const
@@ -807,7 +807,7 @@ CPLErr EHdrDataset::ReadSTX() const
 }
 
 /************************************************************************/
-/*                      GetImageRepFilename()                           */
+/*                        GetImageRepFilename()                         */
 /************************************************************************/
 
 // Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep
@@ -1637,7 +1637,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
 GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszParamList)
+                                 CSLConstList papszParamList)
 
 {
     // Verify input options.
@@ -1754,7 +1754,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 
@@ -1810,7 +1810,7 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                        GetNoDataValue()                              */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double EHdrRasterBand::GetNoDataValue(int *pbSuccess)
@@ -1825,7 +1825,7 @@ double EHdrRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                           GetMinimum()                               */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double EHdrRasterBand::GetMinimum(int *pbSuccess)
@@ -1840,7 +1840,7 @@ double EHdrRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                           GetMaximum()                               */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double EHdrRasterBand::GetMaximum(int *pbSuccess)
@@ -1974,7 +1974,7 @@ GDALRasterAttributeTable *EHdrRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                            SetDefaultRAT()                           */
+/*                           SetDefaultRAT()                            */
 /************************************************************************/
 
 CPLErr EHdrRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)

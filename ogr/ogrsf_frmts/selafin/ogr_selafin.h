@@ -25,7 +25,7 @@ typedef enum
 } SelafinTypeDef;
 
 /************************************************************************/
-/*                             Range                                    */
+/*                                Range                                 */
 /************************************************************************/
 class Range
 {
@@ -64,7 +64,7 @@ class Range
 };
 
 /************************************************************************/
-/*                             OGRSelafinLayer                          */
+/*                           OGRSelafinLayer                            */
 /************************************************************************/
 
 class OGRSelafinLayer final : public OGRLayer
@@ -128,7 +128,7 @@ class OGRSelafinLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRSelafinDataSource                       */
+/*                         OGRSelafinDataSource                         */
 /************************************************************************/
 
 class OGRSelafinDataSource final : public GDALDataset

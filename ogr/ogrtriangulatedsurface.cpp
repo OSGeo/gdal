@@ -16,7 +16,7 @@
 #include "ogr_api.h"
 
 /************************************************************************/
-/*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
+/*       OGRTriangulatedSurface( const OGRTriangulatedSurface& )        */
 /************************************************************************/
 
 /**
@@ -32,7 +32,7 @@ OGRTriangulatedSurface::OGRTriangulatedSurface(
 }
 
 /************************************************************************/
-/*                 operator=( const OGRTriangulatedSurface&)            */
+/*              operator=( const OGRTriangulatedSurface&)               */
 /************************************************************************/
 
 /**
@@ -105,7 +105,7 @@ OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 }
 
 /************************************************************************/
-/*                         isCompatibleSubType()                        */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -173,7 +173,7 @@ OGRErr OGRTriangulatedSurface::addGeometry(const OGRGeometry *poNewGeom)
 }
 
 /************************************************************************/
-/*                     GetCasterToMultiPolygon()                        */
+/*                      GetCasterToMultiPolygon()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -207,7 +207,7 @@ OGRTriangulatedSurface::CastToMultiPolygonImpl(OGRPolyhedralSurface *poTS)
 //! @endcond
 
 /************************************************************************/
-/*                     CastToPolyhedralSurface()                        */
+/*                      CastToPolyhedralSurface()                       */
 /************************************************************************/
 
 /**

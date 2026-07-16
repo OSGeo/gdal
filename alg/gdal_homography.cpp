@@ -74,7 +74,7 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
 }
 
 /************************************************************************/
-/*                   GDALCreateHomographyTransformer()                  */
+/*                  GDALCreateHomographyTransformer()                   */
 /************************************************************************/
 
 /**
@@ -499,7 +499,7 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
 }
 
 /************************************************************************/
-/*               GDALCreateHomographyTransformerFromGCPs()              */
+/*              GDALCreateHomographyTransformerFromGCPs()               */
 /************************************************************************/
 
 /**
@@ -555,7 +555,7 @@ void GDALDestroyHomographyTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                       GDALHomographyTransform()                      */
+/*                      GDALHomographyTransform()                       */
 /************************************************************************/
 
 /**

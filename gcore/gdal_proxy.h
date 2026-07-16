@@ -84,7 +84,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
                       int nBandCount, int *panBandList,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     CPLErr CreateMaskBand(int nFlags) override;
 
@@ -185,7 +185,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
@@ -209,7 +209,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                                      GIntBig *pnLineSpace,
-                                     char **papszOptions) override;
+                                     CSLConstList papszOptions) override;
 
     CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
                               GDALRIOResampleAlg eInterpolation,

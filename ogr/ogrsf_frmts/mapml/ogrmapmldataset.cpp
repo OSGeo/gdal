@@ -36,7 +36,7 @@ static const struct
 };
 
 /************************************************************************/
-/*                     OGRMapMLReaderDataset                            */
+/*                        OGRMapMLReaderDataset                         */
 /************************************************************************/
 
 class OGRMapMLReaderLayer;
@@ -150,7 +150,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -202,7 +202,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int OGRMapMLReaderDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -213,7 +213,7 @@ int OGRMapMLReaderDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -254,7 +254,7 @@ GDALDataset *OGRMapMLReaderDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx) const
@@ -263,7 +263,7 @@ const OGRLayer *OGRMapMLReaderDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                         OGRMapMLReaderLayer()                        */
+/*                        OGRMapMLReaderLayer()                         */
 /************************************************************************/
 
 OGRMapMLReaderLayer::OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS,
@@ -474,7 +474,7 @@ OGRMapMLReaderLayer::~OGRMapMLReaderLayer()
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMapMLReaderLayer::TestCapability(const char *pszCap) const
@@ -486,7 +486,7 @@ int OGRMapMLReaderLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                              ResetReading()                          */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRMapMLReaderLayer::ResetReading()
@@ -496,7 +496,7 @@ void OGRMapMLReaderLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              ParseGeometry()                         */
+/*                           ParseGeometry()                            */
 /************************************************************************/
 
 static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
@@ -659,7 +659,7 @@ static OGRGeometry *ParseGeometry(const CPLXMLNode *psElement)
 }
 
 /************************************************************************/
-/*                            GetNextRawFeature()                       */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRMapMLReaderLayer::GetNextRawFeature()
@@ -735,7 +735,7 @@ OGRFeature *OGRMapMLReaderLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                         OGRMapMLWriterDataset()                      */
+/*                       OGRMapMLWriterDataset()                        */
 /************************************************************************/
 
 OGRMapMLWriterDataset::OGRMapMLWriterDataset(VSILFILE *fpOut) : m_fpOut(fpOut)
@@ -743,7 +743,7 @@ OGRMapMLWriterDataset::OGRMapMLWriterDataset(VSILFILE *fpOut) : m_fpOut(fpOut)
 }
 
 /************************************************************************/
-/*                        ~OGRMapMLWriterDataset()                      */
+/*                       ~OGRMapMLWriterDataset()                       */
 /************************************************************************/
 
 OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
@@ -874,13 +874,13 @@ OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eDT,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (nXSize != 0 || nYSize != 0 || nBandsIn != 0 || eDT != GDT_Unknown)
     {
@@ -959,7 +959,7 @@ GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
@@ -968,7 +968,7 @@ const OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMapMLWriterDataset::TestCapability(const char *pszCap) const
@@ -979,7 +979,7 @@ int OGRMapMLWriterDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1037,7 +1037,7 @@ OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                            AddFeature()                              */
+/*                             AddFeature()                             */
 /************************************************************************/
 
 void OGRMapMLWriterDataset::AddFeature(CPLXMLNode *psNode)
@@ -1059,7 +1059,7 @@ void OGRMapMLWriterDataset::AddFeature(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                         OGRMapMLWriterLayer()                        */
+/*                        OGRMapMLWriterLayer()                         */
 /************************************************************************/
 
 OGRMapMLWriterLayer::OGRMapMLWriterLayer(
@@ -1081,7 +1081,7 @@ OGRMapMLWriterLayer::~OGRMapMLWriterLayer()
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMapMLWriterLayer::TestCapability(const char *pszCap) const
@@ -1103,7 +1103,7 @@ OGRErr OGRMapMLWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 }
 
 /************************************************************************/
-/*                   writeLineStringCoordinates()                       */
+/*                     writeLineStringCoordinates()                     */
 /************************************************************************/
 
 void OGRMapMLWriterLayer::writeLineStringCoordinates(CPLXMLNode *psContainer,
@@ -1123,7 +1123,7 @@ void OGRMapMLWriterLayer::writeLineStringCoordinates(CPLXMLNode *psContainer,
 }
 
 /************************************************************************/
-/*                           writePolygon()                             */
+/*                            writePolygon()                            */
 /************************************************************************/
 
 void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
@@ -1155,7 +1155,7 @@ void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
 }
 
 /************************************************************************/
-/*                          writeGeometry()                             */
+/*                           writeGeometry()                            */
 /************************************************************************/
 
 void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
@@ -1270,7 +1270,7 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                          */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
@@ -1376,7 +1376,7 @@ OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                         RegisterOGRMapML()                           */
+/*                          RegisterOGRMapML()                          */
 /************************************************************************/
 
 void RegisterOGRMapML()

@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*                          GetConstructorOptions()                     */
+/*                       GetConstructorOptions()                        */
 /************************************************************************/
 
 /* static */ GDALRasterMosaicStackCommonAlgorithm::ConstructorOptions
@@ -44,7 +44,7 @@ GDALRasterMosaicStackCommonAlgorithm::GetConstructorOptions(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                  GDALRasterMosaicStackCommonAlgorithm()              */
+/*                GDALRasterMosaicStackCommonAlgorithm()                */
 /************************************************************************/
 
 GDALRasterMosaicStackCommonAlgorithm::GDALRasterMosaicStackCommonAlgorithm(
@@ -272,7 +272,7 @@ void GDALRasterMosaicStackCommonAlgorithm::SetBuildVRTOptions(
 }
 
 /************************************************************************/
-/*             GDALRasterMosaicStackCommonAlgorithm::RunImpl()          */
+/*           GDALRasterMosaicStackCommonAlgorithm::RunImpl()            */
 /************************************************************************/
 
 bool GDALRasterMosaicStackCommonAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

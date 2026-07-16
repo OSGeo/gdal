@@ -108,7 +108,7 @@ void CPL_STDCALL GDALSetCacheMax(int nNewSizeInBytes)
 }
 
 /************************************************************************/
-/*                        GDALSetCacheMax64()                           */
+/*                         GDALSetCacheMax64()                          */
 /************************************************************************/
 
 /**
@@ -281,7 +281,7 @@ int CPL_STDCALL GDALGetCacheUsed()
 }
 
 /************************************************************************/
-/*                        GDALGetCacheUsed64()                          */
+/*                         GDALGetCacheUsed64()                         */
 /************************************************************************/
 
 /**
@@ -467,7 +467,7 @@ void GDALRasterBlock::FlushDirtyBlocks()
 }
 
 /************************************************************************/
-/*                      EnterDisableDirtyBlockFlush()                   */
+/*                    EnterDisableDirtyBlockFlush()                     */
 /************************************************************************/
 
 /**
@@ -490,7 +490,7 @@ void GDALRasterBlock::EnterDisableDirtyBlockFlush()
 }
 
 /************************************************************************/
-/*                      LeaveDisableDirtyBlockFlush()                   */
+/*                    LeaveDisableDirtyBlockFlush()                     */
 /************************************************************************/
 
 /**
@@ -564,7 +564,7 @@ GDALRasterBlock::GDALRasterBlock(int nXOffIn, int nYOffIn)
 }
 
 /************************************************************************/
-/*                                  RecycleFor()                        */
+/*                             RecycleFor()                             */
 /************************************************************************/
 
 /**
@@ -616,7 +616,7 @@ GDALRasterBlock::~GDALRasterBlock()
 }
 
 /************************************************************************/
-/*                        GetEffectiveBlockSize()                       */
+/*                       GetEffectiveBlockSize()                        */
 /************************************************************************/
 
 static size_t GetEffectiveBlockSize(GPtrDiff_t nBlockSize)
@@ -1114,7 +1114,7 @@ void GDALRasterBlock::MarkClean()
 }
 
 /************************************************************************/
-/*                          DestroyRBMutex()                           */
+/*                           DestroyRBMutex()                           */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -1179,7 +1179,7 @@ int GDALRasterBlock::TakeLock()
 }
 
 /************************************************************************/
-/*                      DropLockForRemovalFromStorage()                 */
+/*                   DropLockForRemovalFromStorage()                    */
 /************************************************************************/
 
 /**

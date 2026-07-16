@@ -119,7 +119,7 @@ class OGRSOSIDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRSpatialReference *poSpatialRef = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = NULL) override;
+                           CSLConstList papszOptions = NULL) override;
 #endif
 };
 

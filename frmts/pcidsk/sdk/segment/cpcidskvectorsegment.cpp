@@ -926,7 +926,7 @@ void CPCIDSKVectorSegment::PopulateShapeIdMap()
 }
 
 /************************************************************************/
-/*                     FindNextValidByIndex()                           */
+/*                        FindNextValidByIndex()                        */
 /************************************************************************/
 /**
   * Find the next shape and the given shape index in the segment
@@ -1241,7 +1241,7 @@ void CPCIDSKVectorSegment::AddField( const std::string& name, ShapeFieldType typ
 }
 
 /************************************************************************/
-/*                        FlushSegHeaderIfNeeded()                      */
+/*                       FlushSegHeaderIfNeeded()                       */
 /************************************************************************/
 
 void CPCIDSKVectorSegment::FlushSegHeaderIfNeeded()

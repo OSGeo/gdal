@@ -175,7 +175,14 @@ with control information.
 
 .. option:: -tps
 
-    Force use of thin plate spline transformer based on available GCPs.
+    Force use of Thin Plate Spline transformer based on available GCPs.
+
+    .. warning::
+
+        Using a Thin Plate Spline transformer with more than a few
+        thousand GCPs requires significant RAM usage (at least ``numGCPs`` * ``numGCPs`` * 8 bytes)
+        and processing time.
+
 
 .. option:: -rpc
 

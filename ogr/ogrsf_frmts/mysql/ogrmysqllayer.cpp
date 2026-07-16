@@ -286,7 +286,7 @@ const char *OGRMySQLLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                         FetchSRSId()                                 */
+/*                             FetchSRSId()                             */
 /************************************************************************/
 
 int OGRMySQLLayer::FetchSRSId()

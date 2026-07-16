@@ -24,7 +24,7 @@ class KEADataset final : public GDALDataset
 {
     static H5::H5File *CreateLL(const char *pszFilename, int nXSize, int nYSize,
                                 int nBands, GDALDataType eType,
-                                char **papszParamList);
+                                CSLConstList papszParamList);
 
   public:
     // constructor/destructor
@@ -37,9 +37,9 @@ class KEADataset final : public GDALDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *pSrcDs,
-                                   int bStrict, char **papszParamList,
+                                   int bStrict, CSLConstList papszParamList,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -64,7 +64,8 @@ class KEADataset final : public GDALDataset
                        const char *pszDomain = "") override;
 
     // virtual method for adding new image bands
-    CPLErr AddBand(GDALDataType eType, char **papszOptions = nullptr) override;
+    CPLErr AddBand(GDALDataType eType,
+                   CSLConstList papszOptions = nullptr) override;
 
     // GCPs
     int GetGCPCount() override;

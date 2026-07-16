@@ -63,7 +63,7 @@ GDALRasterOverviewAlgorithmRefresh::GDALRasterOverviewAlgorithmRefresh()
 }
 
 /************************************************************************/
-/*                              PartialRefresh()                        */
+/*                           PartialRefresh()                           */
 /************************************************************************/
 
 static bool PartialRefresh(GDALDataset *poDS,
@@ -112,7 +112,7 @@ static bool PartialRefresh(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*                   PartialRefreshFromSourceTimestamp()                */
+/*                 PartialRefreshFromSourceTimestamp()                  */
 /************************************************************************/
 
 static bool
@@ -390,7 +390,7 @@ static bool PartialRefreshFromSourceExtent(
 }
 
 /************************************************************************/
-/*                     PartialRefreshFromBBOX()                         */
+/*                       PartialRefreshFromBBOX()                       */
 /************************************************************************/
 
 static bool PartialRefreshFromBBOX(GDALDataset *poDS,
@@ -441,7 +441,7 @@ static bool PartialRefreshFromBBOX(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*              GDALRasterOverviewAlgorithmRefresh::RunImpl()           */
+/*            GDALRasterOverviewAlgorithmRefresh::RunImpl()             */
 /************************************************************************/
 
 bool GDALRasterOverviewAlgorithmRefresh::RunImpl(GDALProgressFunc pfnProgress,

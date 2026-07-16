@@ -63,7 +63,7 @@ class BTDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -95,7 +95,7 @@ class BTRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           BTRasterBand()                             */
+/*                            BTRasterBand()                            */
 /************************************************************************/
 
 BTRasterBand::BTRasterBand(GDALDataset *poDSIn, VSILFILE *fp,
@@ -803,7 +803,7 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *BTDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               CPL_UNUSED char **papszOptions)
+                               CPL_UNUSED CSLConstList papszOptions)
 {
 
     /* -------------------------------------------------------------------- */

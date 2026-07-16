@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*                     GDALDatasetIdentifyAlgorithm()                   */
+/*                    GDALDatasetIdentifyAlgorithm()                    */
 /************************************************************************/
 
 GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
@@ -77,7 +77,7 @@ GDALDatasetIdentifyAlgorithm::GDALDatasetIdentifyAlgorithm()
 }
 
 /************************************************************************/
-/*                    ~GDALDatasetIdentifyAlgorithm()                   */
+/*                   ~GDALDatasetIdentifyAlgorithm()                    */
 /************************************************************************/
 
 GDALDatasetIdentifyAlgorithm::~GDALDatasetIdentifyAlgorithm() = default;
@@ -97,7 +97,7 @@ void GDALDatasetIdentifyAlgorithm::Print(const char *str)
 }
 
 /************************************************************************/
-/*                 GDALDatasetIdentifyAlgorithm::JSONPrint()            */
+/*              GDALDatasetIdentifyAlgorithm::JSONPrint()               */
 /************************************************************************/
 
 /* static */ void GDALDatasetIdentifyAlgorithm::JSONPrint(const char *pszTxt,
@@ -325,7 +325,7 @@ bool GDALDatasetIdentifyAlgorithm::Process(const char *pszTarget,
 }
 
 /************************************************************************/
-/*                  GDALDatasetIdentifyAlgorithm::RunImpl()             */
+/*               GDALDatasetIdentifyAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALDatasetIdentifyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

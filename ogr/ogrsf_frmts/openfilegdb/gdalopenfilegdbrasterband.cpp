@@ -28,9 +28,9 @@
 
 using namespace OpenFileGDB;
 
-/***********************************************************************/
-/*                         OpenRaster()                                */
-/***********************************************************************/
+/************************************************************************/
+/*                             OpenRaster()                             */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                                           const std::string &osLayerName,
@@ -841,7 +841,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                       GuessJPEGQuality()                             */
+/*                          GuessJPEGQuality()                          */
 /************************************************************************/
 
 void OGROpenFileGDBDataSource::GuessJPEGQuality(int nOverviewCount)
@@ -917,7 +917,7 @@ void OGROpenFileGDBDataSource::GuessJPEGQuality(int nOverviewCount)
 }
 
 /************************************************************************/
-/*                        ReadAuxTable()                                */
+/*                            ReadAuxTable()                            */
 /************************************************************************/
 
 // Record type=9 of table fras_ras_XXXX contains a PropertySet object,
@@ -1065,7 +1065,7 @@ void OGROpenFileGDBDataSource::ReadAuxTable(const std::string &osLayerName)
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr OGROpenFileGDBDataSource::GetGeoTransform(GDALGeoTransform &gt) const
@@ -1075,7 +1075,7 @@ CPLErr OGROpenFileGDBDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *OGROpenFileGDBDataSource::GetSpatialRef() const
@@ -1143,7 +1143,7 @@ static void SetNoDataFromMask(void *pImage, const GByte *pabyMask,
 }
 
 /************************************************************************/
-/*                         IReadBlock()                                 */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -1914,7 +1914,7 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         GetDefaultRAT()                              */
+/*                           GetDefaultRAT()                            */
 /************************************************************************/
 
 GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
@@ -1941,7 +1941,7 @@ GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*               GDALOpenFileGDBRasterAttributeTable::Clone()           */
+/*             GDALOpenFileGDBRasterAttributeTable::Clone()             */
 /************************************************************************/
 
 GDALRasterAttributeTable *GDALOpenFileGDBRasterAttributeTable::Clone() const

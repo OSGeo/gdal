@@ -72,9 +72,9 @@ constexpr const char *pszDomainInDatasetUUID =
 constexpr const char *pszDatasetsRelatedThroughUUID =
     "{725badab-3452-491b-a795-55f32d67229c}";
 
-/***********************************************************************/
-/*                       FETCH_FIELD_IDX()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                          FETCH_FIELD_IDX()                           */
+/************************************************************************/
 
 #define FETCH_FIELD_IDX_WITH_RET(idxName, varName, type, errorCode)            \
     const int idxName = oTable.GetFieldIdx(varName);                           \
@@ -90,7 +90,7 @@ constexpr const char *pszDatasetsRelatedThroughUUID =
     FETCH_FIELD_IDX_WITH_RET(idxName, varName, type, false)
 
 /************************************************************************/
-/*                      OGROpenFileGDBLayer                             */
+/*                         OGROpenFileGDBLayer                          */
 /************************************************************************/
 
 class OGROpenFileGDBDataSource;
@@ -302,7 +302,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                      OGROpenFileGDBGeomFieldDefn                     */
+/*                     OGROpenFileGDBGeomFieldDefn                      */
 /************************************************************************/
 class OGROpenFileGDBGeomFieldDefn final : public OGRGeomFieldDefn
 {
@@ -693,7 +693,7 @@ class OGROpenFileGDBSingleFeatureLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                GDALOpenFileGDBRasterAttributeTable                   */
+/*                 GDALOpenFileGDBRasterAttributeTable                  */
 /************************************************************************/
 
 class GDALOpenFileGDBRasterAttributeTable final
@@ -909,7 +909,7 @@ class GDALOpenFileGDBRasterAttributeTable final
 };
 
 /************************************************************************/
-/*                       GDALOpenFileGDBRasterBand                      */
+/*                      GDALOpenFileGDBRasterBand                       */
 /************************************************************************/
 
 class GDALOpenFileGDBRasterBand final : public GDALRasterBand

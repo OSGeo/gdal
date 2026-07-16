@@ -18,7 +18,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                          OGRLVBAGDataSource()                        */
+/*                         OGRLVBAGDataSource()                         */
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource()
@@ -59,7 +59,7 @@ int OGRLVBAGDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 }
 
 /************************************************************************/
-/*                          TryCoalesceLayers()                         */
+/*                         TryCoalesceLayers()                          */
 /************************************************************************/
 
 void OGRLVBAGDataSource::TryCoalesceLayers()

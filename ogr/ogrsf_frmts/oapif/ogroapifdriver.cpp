@@ -56,7 +56,7 @@ constexpr const char *OGC_CRS84_WKT =
     "known.\"],AREA[\"World.\"],BBOX[-90,-180,90,180]],ID[\"OGC\",\"CRS84\"]]";
 
 /************************************************************************/
-/*                           OGROAPIFDataset                             */
+/*                           OGROAPIFDataset                            */
 /************************************************************************/
 class OGROAPIFLayer;
 
@@ -134,7 +134,7 @@ class OGROAPIFDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                            OGROAPIFLayer                              */
+/*                            OGROAPIFLayer                             */
 /************************************************************************/
 
 class OGROAPIFLayer final : public OGRLayer
@@ -262,7 +262,7 @@ static bool CheckContentType(const char *pszGotContentType,
 }
 
 /************************************************************************/
-/*                         ~OGROAPIFDataset()                           */
+/*                          ~OGROAPIFDataset()                          */
 /************************************************************************/
 
 OGROAPIFDataset::~OGROAPIFDataset()
@@ -277,7 +277,7 @@ OGROAPIFDataset::~OGROAPIFDataset()
 }
 
 /************************************************************************/
-/*                               ResolveURL()                           */
+/*                             ResolveURL()                             */
 /************************************************************************/
 
 // Resolve relative links and re-inject authentication elements.
@@ -525,7 +525,7 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
 }
 
 /************************************************************************/
-/*                           DownloadJSon()                             */
+/*                            DownloadJSon()                            */
 /************************************************************************/
 
 bool OGROAPIFDataset::DownloadJSon(const CPLString &osURL,
@@ -540,7 +540,7 @@ bool OGROAPIFDataset::DownloadJSon(const CPLString &osURL,
 }
 
 /************************************************************************/
-/*                        GetLandingPageDoc()                           */
+/*                         GetLandingPageDoc()                          */
 /************************************************************************/
 
 const CPLJSONDocument &OGROAPIFDataset::GetLandingPageDoc(std::string &osURLOut)
@@ -555,7 +555,7 @@ const CPLJSONDocument &OGROAPIFDataset::GetLandingPageDoc(std::string &osURLOut)
 }
 
 /************************************************************************/
-/*                            GetAPIDoc()                               */
+/*                             GetAPIDoc()                              */
 /************************************************************************/
 
 const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc(std::string &osURLOut)
@@ -860,7 +860,7 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
 }
 
 /************************************************************************/
-/*                         LoadJSONCollections()                        */
+/*                        LoadJSONCollections()                         */
 /************************************************************************/
 
 bool OGROAPIFDataset::LoadJSONCollections(const CPLString &osResultIn,
@@ -1074,7 +1074,7 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
 }
 
 /************************************************************************/
-/*                         ConcatenateURLParts()                        */
+/*                        ConcatenateURLParts()                         */
 /************************************************************************/
 
 static std::string ConcatenateURLParts(const std::string &osPart1,
@@ -1089,7 +1089,7 @@ static std::string ConcatenateURLParts(const std::string &osPart1,
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -1243,7 +1243,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGROAPIFDataset::GetLayer(int nIndex) const
@@ -1254,7 +1254,7 @@ const OGRLayer *OGROAPIFDataset::GetLayer(int nIndex) const
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGROAPIFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -1280,7 +1280,7 @@ static bool HasGISFriendlyAxisOrder(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           OGROAPIFLayer()                             */
+/*                           OGROAPIFLayer()                            */
 /************************************************************************/
 
 OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
@@ -1432,7 +1432,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
 }
 
 /************************************************************************/
-/*                          ~OGROAPIFLayer()                             */
+/*                           ~OGROAPIFLayer()                           */
 /************************************************************************/
 
 OGROAPIFLayer::~OGROAPIFLayer()
@@ -1467,7 +1467,7 @@ OGROAPIFLayer::GetSupportedSRSList(int /*iGeomField*/)
 }
 
 /************************************************************************/
-/*                          SetActiveSRS()                              */
+/*                            SetActiveSRS()                            */
 /************************************************************************/
 
 OGRErr OGROAPIFLayer::SetActiveSRS(int /*iGeomField*/,
@@ -1507,7 +1507,7 @@ OGRErr OGROAPIFLayer::SetActiveSRS(int /*iGeomField*/,
 }
 
 /************************************************************************/
-/*                         ComputeExtent()                              */
+/*                           ComputeExtent()                            */
 /************************************************************************/
 
 void OGROAPIFLayer::ComputeExtent()
@@ -1535,7 +1535,7 @@ void OGROAPIFLayer::ComputeExtent()
 }
 
 /************************************************************************/
-/*                         SetItemAssets()                              */
+/*                           SetItemAssets()                            */
 /************************************************************************/
 
 void OGROAPIFLayer::SetItemAssets(const CPLJSONObject &oItemAssets)
@@ -1694,7 +1694,7 @@ static CPLJSONObject GetObjectExampleFromSchema(const std::string &osJSONSchema)
 }
 
 /************************************************************************/
-/*                            GetSchema()                               */
+/*                             GetSchema()                              */
 /************************************************************************/
 
 void OGROAPIFLayer::GetSchema()
@@ -1962,7 +1962,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGROAPIFLayer::ResetReading()
@@ -1989,7 +1989,7 @@ void OGROAPIFLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           AddFilters()                               */
+/*                             AddFilters()                             */
 /************************************************************************/
 
 CPLString OGROAPIFLayer::AddFilters(const CPLString &osURL)
@@ -2290,7 +2290,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGROAPIFLayer::GetFeature(GIntBig nFID)
@@ -2309,7 +2309,7 @@ OGRFeature *OGROAPIFLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                         GetNextFeature()                             */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGROAPIFLayer::GetNextFeature()
@@ -2335,7 +2335,7 @@ OGRFeature *OGROAPIFLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                      SupportsResultTypeHits()                        */
+/*                       SupportsResultTypeHits()                       */
 /************************************************************************/
 
 bool OGROAPIFLayer::SupportsResultTypeHits()
@@ -2382,7 +2382,7 @@ bool OGROAPIFLayer::SupportsResultTypeHits()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
@@ -2448,7 +2448,7 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGROAPIFLayer::IGetExtent(int iGeomField, OGREnvelope *psEnvelope,
@@ -2465,7 +2465,7 @@ OGRErr OGROAPIFLayer::IGetExtent(int iGeomField, OGREnvelope *psEnvelope,
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGROAPIFLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
@@ -2477,7 +2477,7 @@ OGRErr OGROAPIFLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 }
 
 /************************************************************************/
-/*                      OGRWF3ParseDateTime()                           */
+/*                        OGRWF3ParseDateTime()                         */
 /************************************************************************/
 
 static int OGRWF3ParseDateTime(const char *pszValue, int &nYear, int &nMonth,
@@ -2493,7 +2493,7 @@ static int OGRWF3ParseDateTime(const char *pszValue, int &nYear, int &nMonth,
 }
 
 /************************************************************************/
-/*                       SerializeDateTime()                            */
+/*                         SerializeDateTime()                          */
 /************************************************************************/
 
 static CPLString SerializeDateTime(int nDateComponents, int nYear, int nMonth,
@@ -2692,7 +2692,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                       BuildFilterCQLText()                           */
+/*                         BuildFilterCQLText()                         */
 /************************************************************************/
 
 CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node *poNode)
@@ -3035,7 +3035,7 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                        GetQueryableAttributes()                      */
+/*                       GetQueryableAttributes()                       */
 /************************************************************************/
 
 void OGROAPIFLayer::GetQueryableAttributes()
@@ -3192,7 +3192,7 @@ OGRErr OGROAPIFLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                              TestCapability()                        */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGROAPIFLayer::TestCapability(const char *pszCap) const
@@ -3230,7 +3230,7 @@ static GDALDataset *OGROAPIFDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterOGROAPIF()                         */
+/*                          RegisterOGROAPIF()                          */
 /************************************************************************/
 
 void RegisterOGROAPIF()

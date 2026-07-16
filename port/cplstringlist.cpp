@@ -141,7 +141,7 @@ CPLStringList::CPLStringList(CPLStringList &&oOther) : CPLStringList()
 }
 
 /************************************************************************/
-/*                           BoundToConstList()                         */
+/*                          BoundToConstList()                          */
 /************************************************************************/
 
 /**
@@ -767,7 +767,7 @@ int CPLStringList::FindName(const char *pszKey) const
 }
 
 /************************************************************************/
-/*                            FetchBool()                               */
+/*                             FetchBool()                              */
 /************************************************************************/
 /**
  *
@@ -987,7 +987,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*             CSLIterator::operator==(const CSLIterator &other)        */
+/*          CSLIterator::operator==(const CSLIterator &other)           */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -1011,7 +1011,7 @@ bool CSLIterator::operator==(const CSLIterator &other) const
 /*! @endcond */
 
 /************************************************************************/
-/*                      CSLNameValueIterator::operator*()               */
+/*                  CSLNameValueIterator::operator*()                   */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -1045,7 +1045,7 @@ CSLNameValueIterator::value_type CSLNameValueIterator::operator*()
 /*! @endcond */
 
 /************************************************************************/
-/*                   CSLNameValueIteratorWrapper::end()                 */
+/*                  CSLNameValueIteratorWrapper::end()                  */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */

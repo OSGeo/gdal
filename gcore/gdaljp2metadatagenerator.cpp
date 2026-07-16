@@ -109,7 +109,7 @@ class GDALGMLJP2Expr
 };
 
 /************************************************************************/
-/*                         ReportError()                                */
+/*                            ReportError()                             */
 /************************************************************************/
 
 void GDALGMLJP2Expr::ReportError(const char *pszOriStr, const char *pszStr,
@@ -146,7 +146,7 @@ void GDALGMLJP2Expr::ReportError(const char *pszOriStr, const char *pszStr,
 }
 
 /************************************************************************/
-/*                        SkipSpaces()                                  */
+/*                             SkipSpaces()                             */
 /************************************************************************/
 
 void GDALGMLJP2Expr::SkipSpaces(const char *&pszStr)
@@ -157,7 +157,7 @@ void GDALGMLJP2Expr::SkipSpaces(const char *&pszStr)
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 GDALGMLJP2Expr *GDALGMLJP2Expr::Build(const char *pszOriStr,
@@ -259,7 +259,7 @@ static const char *GDALGMLJP2HexFormatter(GByte nVal)
 }
 
 /************************************************************************/
-/*                            Evaluate()                                */
+/*                              Evaluate()                              */
 /************************************************************************/
 
 static CPLString GDALGMLJP2EvalExpr(const CPLString &osTemplate,
@@ -312,7 +312,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
 }
 
 /************************************************************************/
-/*                        GDALGMLJP2EvalExpr()                          */
+/*                         GDALGMLJP2EvalExpr()                         */
 /************************************************************************/
 
 static CPLString GDALGMLJP2EvalExpr(const CPLString &osTemplate,
@@ -347,7 +347,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString &osTemplate,
 }
 
 /************************************************************************/
-/*                      GDALGMLJP2XPathErrorHandler()                   */
+/*                    GDALGMLJP2XPathErrorHandler()                     */
 /************************************************************************/
 
 static void GDALGMLJP2XPathErrorHandler(void * /* userData */,
@@ -473,7 +473,7 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 #endif  // LIBXML2
 
 /************************************************************************/
-/*                      GDALGMLJP2GenerateMetadata()                    */
+/*                     GDALGMLJP2GenerateMetadata()                     */
 /************************************************************************/
 
 #ifdef HAVE_LIBXML2

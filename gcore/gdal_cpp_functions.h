@@ -396,6 +396,14 @@ void CPL_DLL GDALApplyENVIHeaders(GDALDataset *poDS,
                                   const CPLStringList &aosHeaders,
                                   CSLConstList papszOptions);
 
+class GDALAsyncReader;
+
+GDALAsyncReader *
+GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff, int nYOff, int nXSize,
+                          int nYSize, void *pBuf, int nBufXSize, int nBufYSize,
+                          GDALDataType eBufType, int nBandCount,
+                          int *panBandMap, int nPixelSpace, int nLineSpace,
+                          int nBandSpace, CSLConstList papszOptions);
 //! @endcond
 
 #endif

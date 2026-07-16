@@ -17,7 +17,7 @@
 #include "ogrgeojsonutils.h"
 
 /************************************************************************/
-/*                       OGRJSONFGDriverIdentify()                      */
+/*                      OGRJSONFGDriverIdentify()                       */
 /************************************************************************/
 
 static int OGRJSONFGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -38,7 +38,7 @@ static int OGRJSONFGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRJSONFGDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -59,7 +59,7 @@ static GDALDataset *OGRJSONFGDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRJSONFGDriverCreate(const char *pszName, int /* nBands */,
                                           int /* nXSize */, int /* nYSize */,
                                           GDALDataType /* eDT */,
-                                          char **papszOptions)
+                                          CSLConstList papszOptions)
 {
     auto poDS = std::make_unique<OGRJSONFGDataset>();
     if (!poDS->Create(pszName, papszOptions))
@@ -70,7 +70,7 @@ static GDALDataset *OGRJSONFGDriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                           RegisterOGRJSONFG()                        */
+/*                         RegisterOGRJSONFG()                          */
 /************************************************************************/
 
 void RegisterOGRJSONFG()

@@ -27,16 +27,16 @@ CPL_C_START
 /** Opaque type for a geocoding session */
 typedef struct _OGRGeocodingSessionHS *OGRGeocodingSessionH;
 
-OGRGeocodingSessionH CPL_DLL OGRGeocodeCreateSession(char **papszOptions);
+OGRGeocodingSessionH CPL_DLL OGRGeocodeCreateSession(CSLConstList papszOptions);
 
 void CPL_DLL OGRGeocodeDestroySession(OGRGeocodingSessionH hSession);
 
 OGRLayerH CPL_DLL OGRGeocode(OGRGeocodingSessionH hSession,
                              const char *pszQuery, char **papszStructuredQuery,
-                             char **papszOptions);
+                             CSLConstList papszOptions);
 
 OGRLayerH CPL_DLL OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
-                                    double dfLat, char **papszOptions);
+                                    double dfLat, CSLConstList papszOptions);
 
 void CPL_DLL OGRGeocodeFreeResult(OGRLayerH hLayer);
 

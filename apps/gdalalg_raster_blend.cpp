@@ -40,7 +40,7 @@ constexpr const char *SRC_OVER = "src-over";
 constexpr const char *HSV_VALUE = "hsv-value";
 
 /************************************************************************/
-/*       GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()           */
+/*         GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm()         */
 /************************************************************************/
 
 GDALRasterBlendAlgorithm::GDALRasterBlendAlgorithm(bool standaloneStep)
@@ -95,7 +95,7 @@ namespace
 {
 
 /************************************************************************/
-/*                            BlendDataset                              */
+/*                             BlendDataset                             */
 /************************************************************************/
 
 class BlendDataset final : public GDALDataset
@@ -146,7 +146,7 @@ class BlendDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                           rgb_to_hs()                                */
+/*                             rgb_to_hs()                              */
 /************************************************************************/
 
 // rgb comes in as [r,g,b] with values in the range [0,255]. The returned
@@ -203,7 +203,7 @@ static void rgb_to_hs(int r, int g, int b, float *h, float *s)
 }
 
 /************************************************************************/
-/*                           choose_among()                             */
+/*                            choose_among()                            */
 /************************************************************************/
 
 template <typename T>
@@ -228,7 +228,7 @@ static inline T choose_among(int idx, T a0, T a1, T a2, T a3, T a4, T a5)
 }
 
 /************************************************************************/
-/*                           hsv_to_rgb()                               */
+/*                             hsv_to_rgb()                             */
 /************************************************************************/
 
 // hsv comes in as [h,s,v] with hue and saturation in the range [0,1],
@@ -289,7 +289,7 @@ XMM_RGB_to_HS(const GByte *CPL_RESTRICT pInR, const GByte *CPL_RESTRICT pInG,
 #endif
 
 /************************************************************************/
-/*                         patch_value_line()                           */
+/*                          patch_value_line()                          */
 /************************************************************************/
 
 static
@@ -397,7 +397,7 @@ static
 }
 
 /************************************************************************/
-/*                          BlendBand                                   */
+/*                              BlendBand                               */
 /************************************************************************/
 
 class BlendBand final : public GDALRasterBand
@@ -459,7 +459,7 @@ class BlendBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                       BlendDataset::BlendDataset()                   */
+/*                     BlendDataset::BlendDataset()                     */
 /************************************************************************/
 
 BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
@@ -529,7 +529,7 @@ BlendDataset::BlendDataset(GDALDataset &oColorDS, GDALDataset &oOverlayDS,
 }
 
 /************************************************************************/
-/*                     ~BlendDataset::BlendDataset()                    */
+/*                    ~BlendDataset::BlendDataset()                     */
 /************************************************************************/
 
 BlendDataset::~BlendDataset()
@@ -539,7 +539,7 @@ BlendDataset::~BlendDataset()
 }
 
 /************************************************************************/
-/*                  BlendDataset::AcquireSourcePixels()                 */
+/*                 BlendDataset::AcquireSourcePixels()                  */
 /************************************************************************/
 
 bool BlendDataset::AcquireSourcePixels(int nXOff, int nYOff, int nXSize,
@@ -641,7 +641,7 @@ constexpr auto gTabInvDstA = []()
 }();
 
 /************************************************************************/
-/*                         BlendSrcOverRGBA_SSE2()                      */
+/*                       BlendSrcOverRGBA_SSE2()                        */
 /************************************************************************/
 
 #ifdef HAVE_SSE2
@@ -839,7 +839,7 @@ BlendSrcOverRGBA_Generic(const GByte *CPL_RESTRICT pabyR,
 }
 
 /************************************************************************/
-/*                       BlendDataset::IRasterIO()                      */
+/*                      BlendDataset::IRasterIO()                       */
 /************************************************************************/
 
 CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1000,7 +1000,7 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                        SrcOverRGBOneComponent()                      */
+/*                       SrcOverRGBOneComponent()                       */
 /************************************************************************/
 
 // GCC and clang do a god job a auto vectorizing the below function
@@ -1363,7 +1363,7 @@ CPLErr BlendBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }  // namespace
 
 /************************************************************************/
-/*                GDALRasterBlendAlgorithm::ValidateGlobal()            */
+/*              GDALRasterBlendAlgorithm::ValidateGlobal()              */
 /************************************************************************/
 
 bool GDALRasterBlendAlgorithm::ValidateGlobal()
@@ -1420,7 +1420,7 @@ bool GDALRasterBlendAlgorithm::ValidateGlobal()
 }
 
 /************************************************************************/
-/*                   GDALRasterBlendAlgorithm::RunStep()                */
+/*                 GDALRasterBlendAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterBlendAlgorithm::RunStep(GDALPipelineStepRunContext &)

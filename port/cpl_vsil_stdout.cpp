@@ -29,7 +29,7 @@ static VSIWriteFunction pWriteFunction = fwrite;
 static FILE *pWriteStream = stdout;
 
 /************************************************************************/
-/*                        VSIStdoutSetRedirection()                     */
+/*                      VSIStdoutSetRedirection()                       */
 /************************************************************************/
 
 /** Set an alternative write function and output file handle instead of
@@ -294,7 +294,7 @@ class VSIStdoutRedirectHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                        VSIStdoutRedirectHandle()                    */
+/*                      VSIStdoutRedirectHandle()                       */
 /************************************************************************/
 
 VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle *poHandle)
@@ -303,7 +303,7 @@ VSIStdoutRedirectHandle::VSIStdoutRedirectHandle(VSIVirtualHandle *poHandle)
 }
 
 /************************************************************************/
-/*                        ~VSIStdoutRedirectHandle()                    */
+/*                      ~VSIStdoutRedirectHandle()                      */
 /************************************************************************/
 
 VSIStdoutRedirectHandle::~VSIStdoutRedirectHandle()
@@ -424,7 +424,7 @@ int VSIStdoutRedirectFilesystemHandler::Stat(const char * /* pszFilename */,
 //! @endcond
 
 /************************************************************************/
-/*                       VSIInstallStdoutHandler()                      */
+/*                      VSIInstallStdoutHandler()                       */
 /************************************************************************/
 
 /*!

@@ -84,7 +84,7 @@ OGRErr OGRSurface::PointOnSurface(OGRPoint *poPoint) const
 }
 
 /************************************************************************/
-/*                           get_Length()                               */
+/*                             get_Length()                             */
 /************************************************************************/
 
 /**
@@ -104,7 +104,7 @@ OGRErr OGRSurface::PointOnSurface(OGRPoint *poPoint) const
  */
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 /**
@@ -136,7 +136,7 @@ OGRErr OGRSurface::PointOnSurface(OGRPoint *poPoint) const
  */
 
 /************************************************************************/
-/*                          CastToPolygon()                             */
+/*                           CastToPolygon()                            */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -157,7 +157,7 @@ OGRPolygon *OGRSurface::CastToPolygon(OGRSurface *poSurface)
 }
 
 /************************************************************************/
-/*                          CastToCurvePolygon()                        */
+/*                         CastToCurvePolygon()                         */
 /************************************************************************/
 
 /**

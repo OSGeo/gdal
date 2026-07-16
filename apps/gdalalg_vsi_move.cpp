@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALVSIMoveAlgorithm::GDALVSIMoveAlgorithm()            */
+/*             GDALVSIMoveAlgorithm::GDALVSIMoveAlgorithm()             */
 /************************************************************************/
 
 GDALVSIMoveAlgorithm::GDALVSIMoveAlgorithm()
@@ -49,7 +49,7 @@ GDALVSIMoveAlgorithm::GDALVSIMoveAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVSIMoveAlgorithm::RunImpl()                   */
+/*                   GDALVSIMoveAlgorithm::RunImpl()                    */
 /************************************************************************/
 
 bool GDALVSIMoveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

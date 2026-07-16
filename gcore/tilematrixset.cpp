@@ -27,7 +27,7 @@ namespace gdal
 {
 
 /************************************************************************/
-/*                   listPredefinedTileMatrixSets()                     */
+/*                    listPredefinedTileMatrixSets()                    */
 /************************************************************************/
 
 std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
@@ -60,7 +60,7 @@ std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
 }
 
 /************************************************************************/
-/*                              parse()                                 */
+/*                               parse()                                */
 /************************************************************************/
 
 std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
@@ -488,7 +488,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
 }
 
 /************************************************************************/
-/*                       haveAllLevelsSameTopLeft()                     */
+/*                      haveAllLevelsSameTopLeft()                      */
 /************************************************************************/
 
 bool TileMatrixSet::haveAllLevelsSameTopLeft() const
@@ -505,7 +505,7 @@ bool TileMatrixSet::haveAllLevelsSameTopLeft() const
 }
 
 /************************************************************************/
-/*                      haveAllLevelsSameTileSize()                     */
+/*                     haveAllLevelsSameTileSize()                      */
 /************************************************************************/
 
 bool TileMatrixSet::haveAllLevelsSameTileSize() const
@@ -522,7 +522,7 @@ bool TileMatrixSet::haveAllLevelsSameTileSize() const
 }
 
 /************************************************************************/
-/*                    hasOnlyPowerOfTwoVaryingScales()                  */
+/*                   hasOnlyPowerOfTwoVaryingScales()                   */
 /************************************************************************/
 
 bool TileMatrixSet::hasOnlyPowerOfTwoVaryingScales() const
@@ -541,7 +541,7 @@ bool TileMatrixSet::hasOnlyPowerOfTwoVaryingScales() const
 }
 
 /************************************************************************/
-/*                        hasVariableMatrixWidth()                      */
+/*                       hasVariableMatrixWidth()                       */
 /************************************************************************/
 
 bool TileMatrixSet::hasVariableMatrixWidth() const
@@ -600,7 +600,7 @@ TileMatrixSet::createRaster(int width, int height, int tileSize,
 }
 
 /************************************************************************/
-/*                        exportToTMSJsonV1()                           */
+/*                         exportToTMSJsonV1()                          */
 /************************************************************************/
 
 std::string TileMatrixSet::exportToTMSJsonV1() const

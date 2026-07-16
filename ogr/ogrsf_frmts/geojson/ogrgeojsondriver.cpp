@@ -70,7 +70,7 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRESRIFeatureServiceDataset                   */
+/*                     OGRESRIFeatureServiceDataset                     */
 /************************************************************************/
 
 class OGRESRIFeatureServiceDataset final : public GDALDataset
@@ -117,7 +117,7 @@ const OGRLayer *OGRESRIFeatureServiceDataset::GetLayer(int nLayer) const
 }
 
 /************************************************************************/
-/*                       OGRESRIFeatureServiceLayer()                   */
+/*                     OGRESRIFeatureServiceLayer()                     */
 /************************************************************************/
 
 OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
@@ -139,7 +139,7 @@ OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
 }
 
 /************************************************************************/
-/*                      ~OGRESRIFeatureServiceLayer()                   */
+/*                    ~OGRESRIFeatureServiceLayer()                     */
 /************************************************************************/
 
 OGRESRIFeatureServiceLayer::~OGRESRIFeatureServiceLayer()
@@ -161,7 +161,7 @@ void OGRESRIFeatureServiceLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                            GetNextFeature()                          */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
@@ -230,7 +230,7 @@ OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
@@ -287,7 +287,7 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                              IGetExtent()                            */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRESRIFeatureServiceLayer::IGetExtent(int iGeomField,
@@ -332,7 +332,7 @@ OGRErr OGRESRIFeatureServiceLayer::IGetExtent(int iGeomField,
 }
 
 /************************************************************************/
-/*                      OGRESRIFeatureServiceDataset()                  */
+/*                    OGRESRIFeatureServiceDataset()                    */
 /************************************************************************/
 
 OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
@@ -394,7 +394,7 @@ bool OGRESRIFeatureServiceDataset::MyResetReading()
 }
 
 /************************************************************************/
-/*                             LoadNextPage()                           */
+/*                            LoadNextPage()                            */
 /************************************************************************/
 
 bool OGRESRIFeatureServiceDataset::LoadNextPage()
@@ -416,7 +416,7 @@ bool OGRESRIFeatureServiceDataset::LoadNextPage()
 }
 
 /************************************************************************/
-/*                                 LoadPage()                           */
+/*                              LoadPage()                              */
 /************************************************************************/
 
 bool OGRESRIFeatureServiceDataset::LoadPage()
@@ -435,7 +435,7 @@ bool OGRESRIFeatureServiceDataset::LoadPage()
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONDriverIdentify()                    */
+/*                      OGRGeoJSONDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRGeoJSONDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
@@ -485,7 +485,7 @@ static int OGRGeoJSONDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONDriverIdentify()                    */
+/*                      OGRGeoJSONDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRGeoJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -495,7 +495,7 @@ static int OGRGeoJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRGeoJSONDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -509,7 +509,7 @@ static GDALDataset *OGRGeoJSONDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     OGRGeoJSONDriverOpenInternal()                   */
+/*                    OGRGeoJSONDriverOpenInternal()                    */
 /************************************************************************/
 
 GDALDataset *OGRGeoJSONDriverOpenInternal(GDALOpenInfo *poOpenInfo,
@@ -582,7 +582,7 @@ static GDALDataset *OGRGeoJSONDriverCreate(const char *pszName,
                                            int /* nBands */, int /* nXSize */,
                                            int /* nYSize */,
                                            GDALDataType /* eDT */,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     OGRGeoJSONDataSource *poDS = new OGRGeoJSONDataSource();
 
@@ -612,7 +612,7 @@ static CPLErr OGRGeoJSONDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                      OGRGeoJSONDriverStoreContent()                  */
+/*                    OGRGeoJSONDriverStoreContent()                    */
 /************************************************************************/
 
 void OGRGeoJSONDriverStoreContent(const char *pszSource, char *pszText)
@@ -628,7 +628,7 @@ void OGRGeoJSONDriverStoreContent(const char *pszSource, char *pszText)
 }
 
 /************************************************************************/
-/*                    OGRGeoJSONDriverStealStoredContent()              */
+/*                 OGRGeoJSONDriverStealStoredContent()                 */
 /************************************************************************/
 
 char *OGRGeoJSONDriverStealStoredContent(const char *pszSource)
@@ -646,7 +646,7 @@ char *OGRGeoJSONDriverStealStoredContent(const char *pszSource)
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONDriverUnload()                      */
+/*                       OGRGeoJSONDriverUnload()                       */
 /************************************************************************/
 
 static void OGRGeoJSONDriverUnload(GDALDriver *)
@@ -661,7 +661,7 @@ static void OGRGeoJSONDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                           RegisterOGRGeoJSON()                       */
+/*                         RegisterOGRGeoJSON()                         */
 /************************************************************************/
 
 void RegisterOGRGeoJSON()

@@ -1529,8 +1529,34 @@ const CPLJSONObject CPLJSONArray::operator[](int nIndex) const
         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject), nIndex));
 }
 
+/**
+ * Get array item by index.
+ * @param  nIndex Item index.
+ * @return        Json object.
+ *
+ */
+CPLJSONObject CPLJSONArray::operator[](size_t nIndex)
+{
+    return CPLJSONObject(CPLSPrintf("id:%d", static_cast<int>(nIndex)),
+                         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject),
+                                                   static_cast<int>(nIndex)));
+}
+
+/**
+ * Get array const item by index.
+ * @param  nIndex Item index.
+ * @return        Json object.
+ *
+ */
+const CPLJSONObject CPLJSONArray::operator[](size_t nIndex) const
+{
+    return CPLJSONObject(CPLSPrintf("id:%d", static_cast<int>(nIndex)),
+                         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject),
+                                                   static_cast<int>(nIndex)));
+}
+
 /************************************************************************/
-/*                      CPLParseKeyValueJson()                          */
+/*                        CPLParseKeyValueJson()                        */
 /************************************************************************/
 
 /** Return a string list of key/value pairs extracted from a JSON doc.

@@ -106,7 +106,7 @@ size_t OGRCompoundCurve::WkbSize() const
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                      addCurveDirectlyFromWkt()                       */
 /************************************************************************/
 
 OGRErr OGRCompoundCurve::addCurveDirectlyFromWkb(OGRGeometry *poSelf,
@@ -159,7 +159,7 @@ OGRErr OGRCompoundCurve::exportToWkb(unsigned char *pabyData,
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                      addCurveDirectlyFromWkt()                       */
 /************************************************************************/
 
 OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt(OGRGeometry *poSelf,
@@ -219,7 +219,7 @@ void OGRCompoundCurve::getEnvelope(OGREnvelope3D *psEnvelope) const
 }
 
 /************************************************************************/
-/*                               IsEmpty()                              */
+/*                              IsEmpty()                               */
 /************************************************************************/
 
 OGRBoolean OGRCompoundCurve::IsEmpty() const
@@ -296,7 +296,7 @@ void OGRCompoundCurve::Value(double dfDistance, OGRPoint *poPoint) const
 }
 
 /************************************************************************/
-/*                         CurveToLineInternal()                        */
+/*                        CurveToLineInternal()                         */
 /************************************************************************/
 
 OGRLineString *
@@ -318,7 +318,7 @@ OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                          CurveToLine()                               */
+/*                            CurveToLine()                             */
 /************************************************************************/
 
 OGRLineString *
@@ -329,7 +329,7 @@ OGRCompoundCurve::CurveToLine(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                               Equals()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCompoundCurve::Equals(const OGRGeometry *poOther) const
@@ -372,7 +372,7 @@ void OGRCompoundCurve::assignSpatialReference(const OGRSpatialReference *poSR)
 }
 
 /************************************************************************/
-/*                          getNumCurves()                              */
+/*                            getNumCurves()                            */
 /************************************************************************/
 
 /**
@@ -391,7 +391,7 @@ int OGRCompoundCurve::getNumCurves() const
 }
 
 /************************************************************************/
-/*                           getCurve()                                 */
+/*                              getCurve()                              */
 /************************************************************************/
 
 /**
@@ -415,7 +415,7 @@ OGRCurve *OGRCompoundCurve::getCurve(int iRing)
 }
 
 /************************************************************************/
-/*                           getCurve()                                 */
+/*                              getCurve()                              */
 /************************************************************************/
 
 /**
@@ -439,7 +439,7 @@ const OGRCurve *OGRCompoundCurve::getCurve(int iCurve) const
 }
 
 /************************************************************************/
-/*                           stealCurve()                               */
+/*                             stealCurve()                             */
 /************************************************************************/
 
 /**
@@ -456,7 +456,7 @@ OGRCurve *OGRCompoundCurve::stealCurve(int iCurve)
 }
 
 /************************************************************************/
-/*                            addCurve()                                */
+/*                              addCurve()                              */
 /************************************************************************/
 
 /**
@@ -584,7 +584,7 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal(OGRCurve *poCurve,
 }
 
 /************************************************************************/
-/*                          addCurve()                                  */
+/*                              addCurve()                              */
 /************************************************************************/
 
 /**
@@ -631,7 +631,7 @@ void OGRCompoundCurve::flattenTo2D()
 }
 
 /************************************************************************/
-/*                              segmentize()                            */
+/*                             segmentize()                             */
 /************************************************************************/
 
 bool OGRCompoundCurve::segmentize(double dfMaxLength)
@@ -649,7 +649,7 @@ void OGRCompoundCurve::swapXY()
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRCompoundCurve::hasCurveGeometry(int bLookForNonLinear) const
@@ -663,7 +663,7 @@ OGRBoolean OGRCompoundCurve::hasCurveGeometry(int bLookForNonLinear) const
 }
 
 /************************************************************************/
-/*                         getLinearGeometry()                        */
+/*                         getLinearGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *
@@ -674,7 +674,7 @@ OGRCompoundCurve::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                           getNumPoints()                             */
+/*                            getNumPoints()                            */
 /************************************************************************/
 
 int OGRCompoundCurve::getNumPoints() const
@@ -690,7 +690,7 @@ int OGRCompoundCurve::getNumPoints() const
 }
 
 /************************************************************************/
-/*                      OGRCompoundCurvePointIterator                   */
+/*                    OGRCompoundCurvePointIterator                     */
 /************************************************************************/
 
 class OGRCompoundCurvePointIterator final : public OGRPointIterator
@@ -739,7 +739,7 @@ OGRBoolean OGRCompoundCurvePointIterator::getNextPoint(OGRPoint *p)
 }
 
 /************************************************************************/
-/*                         getPointIterator()                           */
+/*                          getPointIterator()                          */
 /************************************************************************/
 
 OGRPointIterator *OGRCompoundCurve::getPointIterator() const
@@ -748,7 +748,7 @@ OGRPointIterator *OGRCompoundCurve::getPointIterator() const
 }
 
 /************************************************************************/
-/*                         CastToLineString()                        */
+/*                          CastToLineString()                          */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -780,7 +780,7 @@ OGRLineString *OGRCompoundCurve::CastToLineString(OGRCompoundCurve *poCC)
 }
 
 /************************************************************************/
-/*                           CastToLinearRing()                         */
+/*                          CastToLinearRing()                          */
 /************************************************************************/
 
 /**
@@ -826,7 +826,7 @@ OGRLinearRing *OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve *poCC)
 }
 
 /************************************************************************/
-/*                     GetCasterToLineString()                          */
+/*                       GetCasterToLineString()                        */
 /************************************************************************/
 
 OGRLineString *OGRCompoundCurve::CasterToLineString(OGRCurve *poCurve)
@@ -841,7 +841,7 @@ OGRCurveCasterToLineString OGRCompoundCurve::GetCasterToLineString() const
 }
 
 /************************************************************************/
-/*                        GetCasterToLinearRing()                       */
+/*                       GetCasterToLinearRing()                        */
 /************************************************************************/
 
 OGRLinearRing *OGRCompoundCurve::CasterToLinearRing(OGRCurve *poCurve)
@@ -858,7 +858,7 @@ OGRCurveCasterToLinearRing OGRCompoundCurve::GetCasterToLinearRing() const
 //! @endcond
 
 /************************************************************************/
-/*                           get_Area()                                 */
+/*                              get_Area()                              */
 /************************************************************************/
 
 double OGRCompoundCurve::get_Area() const
@@ -895,7 +895,7 @@ double OGRCompoundCurve::get_Area() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicArea()                            */
+/*                          get_GeodesicArea()                          */
 /************************************************************************/
 
 double OGRCompoundCurve::get_GeodesicArea(
@@ -918,7 +918,7 @@ double OGRCompoundCurve::get_GeodesicArea(
 }
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 double OGRCompoundCurve::get_GeodesicLength(
@@ -935,7 +935,7 @@ double OGRCompoundCurve::get_GeodesicLength(
 }
 
 /************************************************************************/
-/*                       get_AreaOfCurveSegments()                      */
+/*                      get_AreaOfCurveSegments()                       */
 /************************************************************************/
 
 /** Return area of curve segments

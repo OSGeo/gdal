@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*                        OGRArrowWritableFile                          */
+/*                         OGRArrowWritableFile                         */
 /************************************************************************/
 
 class OGRArrowWritableFile final : public arrow::io::OutputStream

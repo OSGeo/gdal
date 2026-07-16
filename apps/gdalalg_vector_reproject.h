@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorReprojectAlgorithm                      */
+/*                     GDALVectorReprojectAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorReprojectAlgorithm /* non final */
@@ -41,7 +41,7 @@ class GDALVectorReprojectAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorReprojectAlgorithmStandalone               */
+/*                GDALVectorReprojectAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorReprojectAlgorithmStandalone final

@@ -201,14 +201,15 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         (int nXOff, int nYOff, int nXSize, int nYSize,
                          int nBufXSize, int nBufYSize, GDALDataType eDT,
-                         int nBandCount, int *panBandList, char **papszOptions),
+                         int nBandCount, int *panBandList,
+                         CSLConstList papszOptions),
                         (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                          eDT, nBandCount, panBandList, papszOptions))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, (int nFlagsIn),
                         (nFlagsIn))
 
 /************************************************************************/
-/*                    UnrefUnderlyingDataset()                        */
+/*                       UnrefUnderlyingDataset()                       */
 /************************************************************************/
 
 void GDALProxyDataset::UnrefUnderlyingDataset(
@@ -474,7 +475,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                          (int nXOff, int nYOff, int nXSize, int nYSize,
                           int nBufXSize, int nBufYSize, GDALDataType eDT,
-                          char **papszOptions),
+                          CSLConstList papszOptions),
                          (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                           eDT, papszOptions))
 
@@ -513,7 +514,7 @@ RB_PROXY_METHOD_WITH_RET(GDALMaskValueRange, GMVR_UNKNOWN, GetMaskValueRange,
 
 RB_PROXY_METHOD_WITH_RET(CPLVirtualMem *, nullptr, GetVirtualMemAuto,
                          (GDALRWFlag eRWFlag, int *pnPixelSpace,
-                          GIntBig *pnLineSpace, char **papszOptions),
+                          GIntBig *pnLineSpace, CSLConstList papszOptions),
                          (eRWFlag, pnPixelSpace, pnLineSpace, papszOptions))
 
 RB_PROXY_METHOD_WITH_RET(
@@ -533,7 +534,7 @@ void GDALProxyRasterBand::EnablePixelTypeSignedByteWarning(bool b)
 }
 
 /************************************************************************/
-/*                 UnrefUnderlyingRasterBand()                        */
+/*                     UnrefUnderlyingRasterBand()                      */
 /************************************************************************/
 
 void GDALProxyRasterBand::UnrefUnderlyingRasterBand(

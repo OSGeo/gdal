@@ -44,7 +44,7 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
 }
 
 /************************************************************************/
-/*                         ~OGRVRTDataSource()                         */
+/*                         ~OGRVRTDataSource()                          */
 /************************************************************************/
 
 OGRVRTDataSource::~OGRVRTDataSource()
@@ -59,7 +59,7 @@ OGRVRTDataSource::~OGRVRTDataSource()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int OGRVRTDataSource::CloseDependentDatasets()
@@ -76,7 +76,7 @@ int OGRVRTDataSource::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                        InstantiateWarpedLayer()                      */
+/*                       InstantiateWarpedLayer()                       */
 /************************************************************************/
 
 OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
@@ -218,7 +218,7 @@ OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(CPLXMLNode *psLTree,
 }
 
 /************************************************************************/
-/*                        InstantiateUnionLayer()                       */
+/*                       InstantiateUnionLayer()                        */
 /************************************************************************/
 
 OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
@@ -562,7 +562,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(CPLXMLNode *psLTree,
 }
 
 /************************************************************************/
-/*                     InstantiateLayerInternal()                       */
+/*                      InstantiateLayerInternal()                      */
 /************************************************************************/
 
 OGRLayer *
@@ -598,7 +598,7 @@ OGRVRTDataSource::InstantiateLayerInternal(CPLXMLNode *psLTree,
 }
 
 /************************************************************************/
-/*                        OGRVRTOpenProxiedLayer()                      */
+/*                       OGRVRTOpenProxiedLayer()                       */
 /************************************************************************/
 
 struct PooledInitData
@@ -618,7 +618,7 @@ static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 }
 
 /************************************************************************/
-/*                     OGRVRTFreeProxiedLayerUserData()                 */
+/*                   OGRVRTFreeProxiedLayerUserData()                   */
 /************************************************************************/
 
 static void OGRVRTFreeProxiedLayerUserData(void *pUserData)
@@ -651,7 +651,7 @@ OGRLayer *OGRVRTDataSource::InstantiateLayer(CPLXMLNode *psLTree,
 }
 
 /************************************************************************/
-/*                           CountOGRVRTLayers()                        */
+/*                         CountOGRVRTLayers()                          */
 /************************************************************************/
 
 static int CountOGRVRTLayers(const CPLXMLNode *psTree)
@@ -796,7 +796,7 @@ bool OGRVRTDataSource::IsInForbiddenNames(const char *pszOtherDSName) const
 }
 
 /************************************************************************/
-/*                             GetFileList()                             */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **OGRVRTDataSource::GetFileList()

@@ -17,7 +17,7 @@
 #include "gribdrivercore.h"
 
 /************************************************************************/
-/*                     GRIBDriverIdentify()                             */
+/*                         GRIBDriverIdentify()                         */
 /************************************************************************/
 
 int GRIBDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -42,7 +42,7 @@ int GRIBDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     GRIBDriverSetCommonMetadata()                    */
+/*                    GRIBDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void GRIBDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -73,7 +73,7 @@ void GRIBDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredGRIBPlugin()                       */
+/*                     DeclareDeferredGRIBPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                         GDALRasterTPIAlgorithm                       */
+/*                        GDALRasterTPIAlgorithm                        */
 /************************************************************************/
 
 class GDALRasterTPIAlgorithm /* non final */
@@ -42,7 +42,7 @@ class GDALRasterTPIAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                    GDALRasterTPIAlgorithmStandalone                  */
+/*                   GDALRasterTPIAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterTPIAlgorithmStandalone final : public GDALRasterTPIAlgorithm

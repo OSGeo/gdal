@@ -176,7 +176,7 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
 #endif
 
 /************************************************************************/
-/*           gdal_json_object_new_double_or_str_for_non_finite()        */
+/*         gdal_json_object_new_double_or_str_for_non_finite()          */
 /************************************************************************/
 
 static json_object *
@@ -208,7 +208,7 @@ gdal_json_object_new_double_significant_digits(double dfVal,
 }
 
 /************************************************************************/
-/*                     GDALWarpAppOptionsGetParser()                    */
+/*                    GDALWarpAppOptionsGetParser()                     */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -355,7 +355,7 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
 }
 
 /************************************************************************/
-/*                       GDALInfoAppGetParserUsage()                    */
+/*                     GDALInfoAppGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALInfoAppGetParserUsage()
@@ -377,7 +377,7 @@ std::string GDALInfoAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALInfo()                               */
+/*                              GDALInfo()                              */
 /************************************************************************/
 
 /**
@@ -2308,7 +2308,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
 }
 
 /************************************************************************/
-/*                             GDALInfoOptionsNew()                     */
+/*                         GDALInfoOptionsNew()                         */
 /************************************************************************/
 
 /**
@@ -2372,7 +2372,7 @@ GDALInfoOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                             GDALInfoOptionsFree()                    */
+/*                        GDALInfoOptionsFree()                         */
 /************************************************************************/
 
 /**

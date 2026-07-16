@@ -56,7 +56,7 @@ GDALPipelineStepAlgorithm::GDALPipelineStepAlgorithm(
 }
 
 /************************************************************************/
-/*       GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()    */
+/*     GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()      */
 /************************************************************************/
 
 void GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()
@@ -73,7 +73,7 @@ void GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()
 }
 
 /************************************************************************/
-/*             GDALPipelineStepAlgorithm::AddRasterInputArgs()          */
+/*           GDALPipelineStepAlgorithm::AddRasterInputArgs()            */
 /************************************************************************/
 
 void GDALPipelineStepAlgorithm::AddRasterInputArgs(
@@ -104,7 +104,7 @@ void GDALPipelineStepAlgorithm::AddRasterInputArgs(
 }
 
 /************************************************************************/
-/*             GDALPipelineStepAlgorithm::AddRasterOutputArgs()         */
+/*           GDALPipelineStepAlgorithm::AddRasterOutputArgs()           */
 /************************************************************************/
 
 void GDALPipelineStepAlgorithm::AddRasterOutputArgs(bool hiddenForCLI)
@@ -136,7 +136,7 @@ void GDALPipelineStepAlgorithm::AddRasterOutputArgs(bool hiddenForCLI)
 }
 
 /************************************************************************/
-/*             GDALPipelineStepAlgorithm::AddVectorInputArgs()         */
+/*           GDALPipelineStepAlgorithm::AddVectorInputArgs()            */
 /************************************************************************/
 
 void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
@@ -163,7 +163,7 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
 }
 
 /************************************************************************/
-/*             GDALPipelineStepAlgorithm::AddVectorOutputArgs()         */
+/*           GDALPipelineStepAlgorithm::AddVectorOutputArgs()           */
 /************************************************************************/
 
 void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
@@ -408,7 +408,7 @@ void GDALPipelineStepAlgorithm::SetInputDataset(GDALDataset *poDS)
 }
 
 /************************************************************************/
-/*                          ProcessGDALGOutput()                        */
+/*                         ProcessGDALGOutput()                         */
 /************************************************************************/
 
 GDALAlgorithm::ProcessGDALGOutputRet
@@ -427,7 +427,7 @@ GDALPipelineStepAlgorithm::ProcessGDALGOutput()
 }
 
 /************************************************************************/
-/*          GDALPipelineStepAlgorithm::CheckSafeForStreamOutput()       */
+/*        GDALPipelineStepAlgorithm::CheckSafeForStreamOutput()         */
 /************************************************************************/
 
 bool GDALPipelineStepAlgorithm::CheckSafeForStreamOutput()
@@ -446,7 +446,7 @@ bool GDALPipelineStepAlgorithm::CheckSafeForStreamOutput()
 }
 
 /************************************************************************/
-/*                 GDALPipelineStepAlgorithm::Finalize()                */
+/*                GDALPipelineStepAlgorithm::Finalize()                 */
 /************************************************************************/
 
 bool GDALPipelineStepAlgorithm::Finalize()
@@ -461,7 +461,7 @@ bool GDALPipelineStepAlgorithm::Finalize()
 GDALAlgorithmStepRegistry::~GDALAlgorithmStepRegistry() = default;
 
 /************************************************************************/
-/*                       GDALPipelineAlgorithm                          */
+/*                        GDALPipelineAlgorithm                         */
 /************************************************************************/
 
 GDALPipelineAlgorithm::GDALPipelineAlgorithm()

@@ -190,7 +190,7 @@ CPLErr GenBinBitRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            GenBinDataset()                             */
+/*                           GenBinDataset()                            */
 /************************************************************************/
 
 GenBinDataset::GenBinDataset()
@@ -200,7 +200,7 @@ GenBinDataset::GenBinDataset()
 }
 
 /************************************************************************/
-/*                            ~GenBinDataset()                          */
+/*                           ~GenBinDataset()                           */
 /************************************************************************/
 
 GenBinDataset::~GenBinDataset()
@@ -210,7 +210,7 @@ GenBinDataset::~GenBinDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GenBinDataset::Close(GDALProgressFunc, void *)
@@ -730,7 +730,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_GenBin()                        */
+/*                        GDALRegister_GenBin()                         */
 /************************************************************************/
 
 void GDALRegister_GenBin()

@@ -55,7 +55,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             git make ninja-build cmake unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
-            patchelf \
             rsync
 
 # Setup build env for GDAL
@@ -109,6 +108,7 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
         cmake . \
 	-G Ninja \
+        -DPROJ_OUTPUT_NAME=internalproj \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
@@ -128,16 +128,9 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     fi \
     && cd .. \
     && rm -rf proj \
-    && PROJ_SO=$(readlink -f /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | awk 'BEGIN {FS="libproj.so."} {print $2}') \
-    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
-    && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
-    && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
+    && PROJ_SO=$(readlink -f /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so | awk 'BEGIN {FS="libinternalproj.so."} {print $2}') \
     && ${GCC_ARCH}-linux-gnu-strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    && patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i; done
+    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
 ARG GDAL_VERSION=master

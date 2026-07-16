@@ -70,7 +70,7 @@ static void OGRGEOSWarningHandler(const char *fmt, ...)
 #endif
 
 /************************************************************************/
-/*                            OGRWktOptions()                             */
+/*                           OGRWktOptions()                            */
 /************************************************************************/
 
 int OGRWktOptions::getDefaultPrecision()
@@ -90,7 +90,7 @@ bool OGRWktOptions::getDefaultRound()
 OGRGeometry::OGRGeometry() = default;
 
 /************************************************************************/
-/*                   OGRGeometry( const OGRGeometry& )                  */
+/*                  OGRGeometry( const OGRGeometry& )                   */
 /************************************************************************/
 
 /**
@@ -105,7 +105,7 @@ OGRGeometry::OGRGeometry(const OGRGeometry &other)
 }
 
 /************************************************************************/
-/*                   OGRGeometry( OGRGeometry&& )                       */
+/*                     OGRGeometry( OGRGeometry&& )                     */
 /************************************************************************/
 
 /**
@@ -151,7 +151,7 @@ OGRGeometry &OGRGeometry::operator=(const OGRGeometry &other)
 }
 
 /************************************************************************/
-/*                    operator=( OGRGeometry&&)                         */
+/*                      operator=( OGRGeometry&&)                       */
 /************************************************************************/
 
 /**
@@ -857,7 +857,7 @@ OGRwkbGeometryType OGRGeometry::getIsoGeometryType() const
 }
 
 /************************************************************************/
-/*                  OGRGeometry::segmentize()                           */
+/*                      OGRGeometry::segmentize()                       */
 /************************************************************************/
 /**
  *
@@ -884,7 +884,7 @@ bool OGRGeometry::segmentize(CPL_UNUSED double dfMaxLength)
 }
 
 /************************************************************************/
-/*                         OGR_G_Segmentize()                           */
+/*                          OGR_G_Segmentize()                          */
 /************************************************************************/
 
 /**
@@ -1010,7 +1010,7 @@ int OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                    OGR_G_CoordinateDimension()                       */
+/*                     OGR_G_CoordinateDimension()                      */
 /************************************************************************/
 /**
  *
@@ -1179,7 +1179,7 @@ void OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
 }
 
 /************************************************************************/
-/*                    OGR_G_Set3D()                                     */
+/*                            OGR_G_Set3D()                             */
 /************************************************************************/
 
 /**
@@ -1204,7 +1204,7 @@ void OGR_G_Set3D(OGRGeometryH hGeom, int bIs3D)
 }
 
 /************************************************************************/
-/*                    OGR_G_SetMeasured()                               */
+/*                         OGR_G_SetMeasured()                          */
 /************************************************************************/
 
 /**
@@ -1374,7 +1374,7 @@ int OGR_G_WkbSize(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                         OGR_G_WkbSizeEx()                            */
+/*                          OGR_G_WkbSizeEx()                           */
 /************************************************************************/
 /**
  * \brief Returns size of related binary representation.
@@ -1467,7 +1467,7 @@ void OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)
 }
 
 /************************************************************************/
-/*                        importFromWkb()                               */
+/*                           importFromWkb()                            */
 /************************************************************************/
 
 /**
@@ -1559,7 +1559,7 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
 }
 
 /************************************************************************/
-/*                       OGRGeometry::exportToWkb()                     */
+/*                      OGRGeometry::exportToWkb()                      */
 /************************************************************************/
 
 /* clang-format off */
@@ -1778,7 +1778,7 @@ OGRErr OGR_G_ImportFromWkt(OGRGeometryH hGeom, char **ppszSrcText)
 }
 
 /************************************************************************/
-/*                        importPreambleFromWkt()                      */
+/*                       importPreambleFromWkt()                        */
 /************************************************************************/
 
 // Returns -1 if processing must continue.
@@ -2002,7 +2002,7 @@ OGRErr OGR_G_ExportToWkt(OGRGeometryH hGeom, char **ppszSrcText)
 }
 
 /************************************************************************/
-/*                      OGR_G_ExportToIsoWkt()                          */
+/*                        OGR_G_ExportToIsoWkt()                        */
 /************************************************************************/
 
 /**
@@ -2232,7 +2232,7 @@ void OGR_G_Empty(OGRGeometryH hGeom)
  */
 
 /************************************************************************/
-/*                         OGR_G_IsEmpty()                              */
+/*                           OGR_G_IsEmpty()                            */
 /************************************************************************/
 
 /**
@@ -2373,7 +2373,7 @@ int OGR_G_IsValid(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                              IsSimple()                               */
+/*                              IsSimple()                              */
 /************************************************************************/
 
 /**
@@ -2443,7 +2443,7 @@ int OGR_G_IsSimple(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                              IsRing()                               */
+/*                               IsRing()                               */
 /************************************************************************/
 
 /**
@@ -2516,7 +2516,7 @@ int OGR_G_IsRing(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                     OGRFromOGCGeomType()                             */
+/*                         OGRFromOGCGeomType()                         */
 /************************************************************************/
 
 /** Map OGC geometry format type to corresponding OGR constants.
@@ -2589,7 +2589,7 @@ OGRwkbGeometryType OGRFromOGCGeomType(const char *pszGeomType)
 }
 
 /************************************************************************/
-/*                     OGRToOGCGeomType()                               */
+/*                          OGRToOGCGeomType()                          */
 /************************************************************************/
 
 /** Map OGR geometry format constants to corresponding OGC geometry type.
@@ -3143,7 +3143,7 @@ char *OGRGeometry::exportToKML() const
 }
 
 /************************************************************************/
-/*                            exportToJson()                             */
+/*                            exportToJson()                            */
 /************************************************************************/
 
 /**
@@ -3212,7 +3212,7 @@ int OGRGetGenerate_DB2_V72_BYTE_ORDER()
 }
 
 /************************************************************************/
-/*                          createGEOSContext()                         */
+/*                         createGEOSContext()                          */
 /************************************************************************/
 
 /** Create a new GEOS context.
@@ -3249,7 +3249,7 @@ void OGRGeometry::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                          convertToGEOSGeom()                         */
+/*                         convertToGEOSGeom()                          */
 /************************************************************************/
 
 static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
@@ -3351,13 +3351,12 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
     }
     else if (eType == wkbPolyhedralSurface || eType == wkbTIN)
     {
-        OGRGeometry *poGC = OGRGeometryFactory::forceTo(
-            poLinearGeom->clone(),
+        auto poGC = OGRGeometryFactory::forceTo(
+            std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
             OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
                                poLinearGeom->IsMeasured()),
             nullptr);
-        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC);
-        delete poGC;
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC.get());
     }
     else if (eType == wkbGeometryCollection)
     {
@@ -3382,18 +3381,17 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
         }
         if (bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */)
         {
-            OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
-                poLinearGeom->clone(),
+            auto poMultiPolygon = OGRGeometryFactory::forceTo(
+                std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
                 OGR_GT_SetModifier(wkbMultiPolygon, poLinearGeom->Is3D(),
                                    poLinearGeom->IsMeasured()),
                 nullptr);
-            OGRGeometry *poGCDest = OGRGeometryFactory::forceTo(
-                poMultiPolygon,
+            auto poGCDest = OGRGeometryFactory::forceTo(
+                std::move(poMultiPolygon),
                 OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
                                    poLinearGeom->IsMeasured()),
                 nullptr);
-            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest);
-            delete poGCDest;
+            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest.get());
         }
         else
         {
@@ -3414,7 +3412,7 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 /**
@@ -3448,7 +3446,7 @@ OGRBoolean OGRGeometry::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 }
 
 /************************************************************************/
-/*                         getLinearGeometry()                        */
+/*                         getLinearGeometry()                          */
 /************************************************************************/
 
 /**
@@ -3481,7 +3479,7 @@ OGRGeometry::getLinearGeometry(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                             getCurveGeometry()                       */
+/*                          getCurveGeometry()                          */
 /************************************************************************/
 
 /**
@@ -3712,7 +3710,7 @@ double OGRGeometry::Distance3D(
 }
 
 /************************************************************************/
-/*                           OGR_G_Distance3D()                         */
+/*                          OGR_G_Distance3D()                          */
 /************************************************************************/
 /**
  * \brief Returns the 3D distance between two geometries
@@ -3744,7 +3742,7 @@ double OGR_G_Distance3D(OGRGeometryH hFirst, OGRGeometryH hOther)
 }
 
 /************************************************************************/
-/*                       OGRGeometryRebuildCurves()                     */
+/*                      OGRGeometryRebuildCurves()                      */
 /************************************************************************/
 
 #ifdef HAVE_GEOS
@@ -3825,7 +3823,7 @@ static OGRGeometry *BuildGeometryFromTwoGeoms(
 }
 
 /************************************************************************/
-/*                       OGRGEOSBooleanPredicate()                      */
+/*                      OGRGEOSBooleanPredicate()                       */
 /************************************************************************/
 
 static OGRBoolean OGRGEOSBooleanPredicate(
@@ -3852,7 +3850,7 @@ static OGRBoolean OGRGEOSBooleanPredicate(
 #endif  // HAVE_GEOS
 
 /************************************************************************/
-/*                            MakeValid()                               */
+/*                             MakeValid()                              */
 /************************************************************************/
 
 /**
@@ -3984,8 +3982,10 @@ OGRGeometry *OGRGeometry::MakeValid(CSLConstList papszOptions) const
                 !OGR_GT_IsSubClassOf(poOGRProduct->getGeometryType(),
                                      wkbGeometryCollection))
             {
-                poOGRProduct = OGRGeometryFactory::forceTo(poOGRProduct,
-                                                           getGeometryType());
+                poOGRProduct = OGRGeometryFactory::forceTo(
+                                   std::unique_ptr<OGRGeometry>(poOGRProduct),
+                                   getGeometryType())
+                                   .release();
             }
 #endif
         }
@@ -3997,7 +3997,7 @@ OGRGeometry *OGRGeometry::MakeValid(CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                         OGR_G_MakeValid()                            */
+/*                          OGR_G_MakeValid()                           */
 /************************************************************************/
 
 /**
@@ -4029,7 +4029,7 @@ OGRGeometryH OGR_G_MakeValid(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                         OGR_G_MakeValidEx()                            */
+/*                         OGR_G_MakeValidEx()                          */
 /************************************************************************/
 
 /**
@@ -4060,7 +4060,7 @@ OGRGeometryH OGR_G_MakeValidEx(OGRGeometryH hGeom, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                            Normalize()                               */
+/*                             Normalize()                              */
 /************************************************************************/
 
 /**
@@ -4109,7 +4109,7 @@ OGRGeometry *OGRGeometry::Normalize() const
 }
 
 /************************************************************************/
-/*                         OGR_G_Normalize()                            */
+/*                          OGR_G_Normalize()                           */
 /************************************************************************/
 
 /**
@@ -4247,7 +4247,7 @@ OGRGeometryH OGR_G_ConvexHull(OGRGeometryH hTarget)
 }
 
 /************************************************************************/
-/*                             ConcaveHull()                            */
+/*                            ConcaveHull()                             */
 /************************************************************************/
 
 /**
@@ -4310,7 +4310,7 @@ OGRGeometry *OGRGeometry::ConcaveHull(double dfRatio, bool bAllowHoles) const
 }
 
 /************************************************************************/
-/*                          OGR_G_ConcaveHull()                         */
+/*                         OGR_G_ConcaveHull()                          */
 /************************************************************************/
 /**
  * \brief Compute "concave hull" of a geometry.
@@ -4351,7 +4351,7 @@ OGRGeometryH OGR_G_ConcaveHull(OGRGeometryH hTarget, double dfRatio,
 }
 
 /************************************************************************/
-/*                            Boundary()                                */
+/*                              Boundary()                              */
 /************************************************************************/
 
 /**
@@ -4417,7 +4417,7 @@ OGRGeometry *OGRGeometry::getBoundary() const
 //! @endcond
 
 /************************************************************************/
-/*                         OGR_G_Boundary()                             */
+/*                           OGR_G_Boundary()                           */
 /************************************************************************/
 /**
  * \brief Compute boundary.
@@ -5074,7 +5074,7 @@ OGRGeometryH OGR_G_Union(OGRGeometryH hThis, OGRGeometryH hOther)
 }
 
 /************************************************************************/
-/*                               UnionCascaded()                        */
+/*                           UnionCascaded()                            */
 /************************************************************************/
 
 /**
@@ -5137,7 +5137,7 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
 }
 
 /************************************************************************/
-/*                            OGR_G_UnionCascaded()                     */
+/*                        OGR_G_UnionCascaded()                         */
 /************************************************************************/
 
 /**
@@ -5174,7 +5174,7 @@ OGRGeometryH OGR_G_UnionCascaded(OGRGeometryH hThis)
 }
 
 /************************************************************************/
-/*                               UnaryUnion()                           */
+/*                             UnaryUnion()                             */
 /************************************************************************/
 
 /**
@@ -5235,7 +5235,7 @@ OGRGeometry *OGRGeometry::UnaryUnion() const
 }
 
 /************************************************************************/
-/*                            OGR_G_UnaryUnion()                        */
+/*                          OGR_G_UnaryUnion()                          */
 /************************************************************************/
 
 /**
@@ -5393,7 +5393,7 @@ OGRGeometryH OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
 }
 
 /************************************************************************/
-/*                        SymDifference()                               */
+/*                           SymDifference()                            */
 /************************************************************************/
 
 /**
@@ -5476,7 +5476,7 @@ OGRGeometry::SymmetricDifference(const OGRGeometry *poOtherGeom) const
 //! @endcond
 
 /************************************************************************/
-/*                      OGR_G_SymDifference()                           */
+/*                        OGR_G_SymDifference()                         */
 /************************************************************************/
 
 /**
@@ -5897,7 +5897,7 @@ OGRBoolean OGRGeometry::Contains(const OGRGeometry *poOtherGeom) const
 }
 
 /************************************************************************/
-/*                            OGR_G_Contains()                            */
+/*                           OGR_G_Contains()                           */
 /************************************************************************/
 
 /**
@@ -6273,7 +6273,7 @@ OGRGeometryH OGR_G_PointOnSurface(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                          PointOnSurfaceInternal()                    */
+/*                       PointOnSurfaceInternal()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -6354,7 +6354,7 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
 }
 
 /************************************************************************/
-/*                         OGR_G_Simplify()                             */
+/*                           OGR_G_Simplify()                           */
 /************************************************************************/
 
 /**
@@ -6384,7 +6384,7 @@ OGRGeometryH OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
 }
 
 /************************************************************************/
-/*                         SimplifyPreserveTopology()                   */
+/*                      SimplifyPreserveTopology()                      */
 /************************************************************************/
 
 /**
@@ -6432,7 +6432,7 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(double dTolerance) const
 }
 
 /************************************************************************/
-/*                     OGR_G_SimplifyPreserveTopology()                 */
+/*                   OGR_G_SimplifyPreserveTopology()                   */
 /************************************************************************/
 
 /**
@@ -6464,7 +6464,7 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
 }
 
 /************************************************************************/
-/*                           roundCoordinates()                         */
+/*                          roundCoordinates()                          */
 /************************************************************************/
 
 /** Round coordinates of the geometry to the specified precision.
@@ -6541,7 +6541,7 @@ void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
 }
 
 /************************************************************************/
-/*                           SetPrecision()                             */
+/*                            SetPrecision()                            */
 /************************************************************************/
 
 /** Set the geometry's precision, rounding all its coordinates to the precision
@@ -6639,7 +6639,7 @@ OGRGeometryH OGR_G_SetPrecision(OGRGeometryH hThis, double dfGridSize,
 }
 
 /************************************************************************/
-/*                         DelaunayTriangulation()                      */
+/*                       DelaunayTriangulation()                        */
 /************************************************************************/
 
 /**
@@ -6687,7 +6687,7 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance,
 #endif
 
 /************************************************************************/
-/*                     OGR_G_DelaunayTriangulation()                    */
+/*                    OGR_G_DelaunayTriangulation()                     */
 /************************************************************************/
 
 /**
@@ -6721,7 +6721,7 @@ OGRGeometryH OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
 }
 
 /************************************************************************/
-/*                   ConstrainedDelaunayTriangulation()                 */
+/*                  ConstrainedDelaunayTriangulation()                  */
 /************************************************************************/
 
 /**
@@ -6772,7 +6772,7 @@ OGRGeometry *OGRGeometry::ConstrainedDelaunayTriangulation() const
 }
 
 /************************************************************************/
-/*                 OGR_G_ConstrainedDelaunayTriangulation()             */
+/*               OGR_G_ConstrainedDelaunayTriangulation()               */
 /************************************************************************/
 
 /**
@@ -7068,7 +7068,7 @@ struct _OGRPreparedGeometry
 #endif
 
 /************************************************************************/
-/*                       OGRHasPreparedGeometrySupport()                */
+/*                   OGRHasPreparedGeometrySupport()                    */
 /************************************************************************/
 
 /** Returns if GEOS has prepared geometry support.
@@ -7084,7 +7084,7 @@ int OGRHasPreparedGeometrySupport()
 }
 
 /************************************************************************/
-/*                         OGRCreatePreparedGeometry()                  */
+/*                     OGRCreatePreparedGeometry()                      */
 /************************************************************************/
 
 /** Creates a prepared geometry.
@@ -7128,7 +7128,7 @@ OGRPreparedGeometryH OGRCreatePreparedGeometry(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                        OGRDestroyPreparedGeometry()                  */
+/*                     OGRDestroyPreparedGeometry()                     */
 /************************************************************************/
 
 /** Destroys a prepared geometry.
@@ -7151,7 +7151,7 @@ void OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
 }
 
 /************************************************************************/
-/*                      OGRPreparedGeometryIntersects()                 */
+/*                   OGRPreparedGeometryIntersects()                    */
 /************************************************************************/
 
 /** Returns whether a prepared geometry intersects with a geometry.
@@ -7230,7 +7230,7 @@ int OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
 }
 
 /************************************************************************/
-/*                       OGRGeometryFromEWKB()                          */
+/*                        OGRGeometryFromEWKB()                         */
 /************************************************************************/
 
 OGRGeometry *OGRGeometryFromEWKB(GByte *pabyEWKB, int nLength, int *pnSRID,
@@ -7255,7 +7255,7 @@ OGRGeometry *OGRGeometryFromEWKB(GByte *pabyEWKB, int nLength, int *pnSRID,
 }
 
 /************************************************************************/
-/*                     OGRGeometryFromHexEWKB()                         */
+/*                       OGRGeometryFromHexEWKB()                       */
 /************************************************************************/
 
 OGRGeometry *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
@@ -7277,7 +7277,7 @@ OGRGeometry *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
 }
 
 /************************************************************************/
-/*                       OGRGeometryToHexEWKB()                         */
+/*                        OGRGeometryToHexEWKB()                        */
 /************************************************************************/
 
 char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
@@ -7383,7 +7383,7 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
 }
 
 /************************************************************************/
-/*                       importPreambleFromWkb()                       */
+/*                       importPreambleFromWkb()                        */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -7628,7 +7628,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
 //! @endcond
 
 /************************************************************************/
-/*                          OGR_GT_Flatten()                            */
+/*                           OGR_GT_Flatten()                           */
 /************************************************************************/
 /**
  * \brief Returns the 2D geometry type corresponding to the passed geometry
@@ -7657,7 +7657,7 @@ OGRwkbGeometryType OGR_GT_Flatten(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                          OGR_GT_HasZ()                               */
+/*                            OGR_GT_HasZ()                             */
 /************************************************************************/
 /**
  * \brief Return if the geometry type is a 3D geometry type.
@@ -7680,7 +7680,7 @@ int OGR_GT_HasZ(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                          OGR_GT_HasM()                               */
+/*                            OGR_GT_HasM()                             */
 /************************************************************************/
 /**
  * \brief Return if the geometry type is a measured type.
@@ -7701,7 +7701,7 @@ int OGR_GT_HasM(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                           OGR_GT_SetZ()                              */
+/*                            OGR_GT_SetZ()                             */
 /************************************************************************/
 /**
  * \brief Returns the 3D geometry type corresponding to the passed geometry
@@ -7724,7 +7724,7 @@ OGRwkbGeometryType OGR_GT_SetZ(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                           OGR_GT_SetM()                              */
+/*                            OGR_GT_SetM()                             */
 /************************************************************************/
 /**
  * \brief Returns the measured geometry type corresponding to the passed
@@ -7749,7 +7749,7 @@ OGRwkbGeometryType OGR_GT_SetM(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                        OGR_GT_SetModifier()                          */
+/*                         OGR_GT_SetModifier()                         */
 /************************************************************************/
 /**
  * \brief Returns a XY, XYZ, XYM or XYZM geometry type depending on parameter.
@@ -7776,7 +7776,7 @@ OGRwkbGeometryType OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ,
 }
 
 /************************************************************************/
-/*                        OGR_GT_IsSubClassOf)                          */
+/*                         OGR_GT_IsSubClassOf)                         */
 /************************************************************************/
 /**
  * \brief Returns if a type is a subclass of another one
@@ -7829,7 +7829,7 @@ int OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType)
 }
 
 /************************************************************************/
-/*                       OGR_GT_GetCollection()                         */
+/*                        OGR_GT_GetCollection()                        */
 /************************************************************************/
 /**
  * \brief Returns the collection type that can contain the passed geometry type
@@ -7888,7 +7888,7 @@ OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                         OGR_GT_GetSingle()                           */
+/*                          OGR_GT_GetSingle()                          */
 /************************************************************************/
 /**
  * \brief Returns the non-collection type that be contained in the passed
@@ -7945,7 +7945,7 @@ OGRwkbGeometryType OGR_GT_GetSingle(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                        OGR_GT_GetCurve()                             */
+/*                          OGR_GT_GetCurve()                           */
 /************************************************************************/
 /**
  * \brief Returns the curve geometry type that can contain the passed geometry
@@ -7994,7 +7994,7 @@ OGRwkbGeometryType OGR_GT_GetCurve(OGRwkbGeometryType eType)
 }
 
 /************************************************************************/
-/*                        OGR_GT_GetLinear()                          */
+/*                          OGR_GT_GetLinear()                          */
 /************************************************************************/
 /**
  * \brief Returns the non-curve geometry type that can contain the passed
@@ -8060,7 +8060,7 @@ int OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
 }
 
 /************************************************************************/
-/*                         OGR_GT_IsSurface()                           */
+/*                          OGR_GT_IsSurface()                          */
 /************************************************************************/
 
 /**
@@ -8080,7 +8080,7 @@ int OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
 }
 
 /************************************************************************/
-/*                          OGR_GT_IsNonLinear()                        */
+/*                         OGR_GT_IsNonLinear()                         */
 /************************************************************************/
 
 /**
@@ -8105,7 +8105,7 @@ int OGR_GT_IsNonLinear(OGRwkbGeometryType eGeomType)
 }
 
 /************************************************************************/
-/*                          CastToError()                               */
+/*                            CastToError()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8120,7 +8120,7 @@ OGRGeometry *OGRGeometry::CastToError(OGRGeometry *poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                          OGRexportToSFCGAL()                         */
+/*                         OGRexportToSFCGAL()                          */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8274,7 +8274,7 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                          SFCGALexportToOGR()                         */
+/*                         SFCGALexportToOGR()                          */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8422,7 +8422,7 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
 //! @endcond
 
 /************************************************************************/
-/*                    roundCoordinatesIEEE754()                         */
+/*                      roundCoordinatesIEEE754()                       */
 /************************************************************************/
 
 /** Round coordinates of a geometry, exploiting characteristics of the IEEE-754
@@ -8496,7 +8496,7 @@ void OGRGeometry::roundCoordinatesIEEE754(
 }
 
 /************************************************************************/
-/*                             visit()                                  */
+/*                               visit()                                */
 /************************************************************************/
 
 void OGRDefaultGeometryVisitor::_visit(OGRSimpleCurve *poGeom)
@@ -8686,7 +8686,7 @@ void OGRGeometryUniquePtrDeleter::operator()(OGRGeometry *poGeom) const
 //! @endcond
 
 /************************************************************************/
-/*                  OGRPreparedGeometryUniquePtrDeleter                 */
+/*                 OGRPreparedGeometryUniquePtrDeleter                  */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8699,7 +8699,7 @@ void OGRPreparedGeometryUniquePtrDeleter::operator()(
 //! @endcond
 
 /************************************************************************/
-/*                     HomogenizeDimensionalityWith()                  */
+/*                    HomogenizeDimensionalityWith()                    */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8721,7 +8721,7 @@ void OGRGeometry::HomogenizeDimensionalityWith(OGRGeometry *poOtherGeom)
 //! @endcond
 
 /************************************************************************/
-/*                  OGRGeomCoordinateBinaryPrecision::SetFrom()         */
+/*             OGRGeomCoordinateBinaryPrecision::SetFrom()              */
 /************************************************************************/
 
 /** Set binary precision options from resolution.
@@ -8747,7 +8747,7 @@ void OGRGeomCoordinateBinaryPrecision::SetFrom(
 }
 
 /************************************************************************/
-/*                        OGRwkbExportOptionsCreate()                   */
+/*                     OGRwkbExportOptionsCreate()                      */
 /************************************************************************/
 
 /**
@@ -8764,7 +8764,7 @@ OGRwkbExportOptions *OGRwkbExportOptionsCreate()
 }
 
 /************************************************************************/
-/*                        OGRwkbExportOptionsDestroy()                  */
+/*                     OGRwkbExportOptionsDestroy()                     */
 /************************************************************************/
 
 /**
@@ -8780,7 +8780,7 @@ void OGRwkbExportOptionsDestroy(OGRwkbExportOptions *psOptions)
 }
 
 /************************************************************************/
-/*                   OGRwkbExportOptionsSetByteOrder()                  */
+/*                  OGRwkbExportOptionsSetByteOrder()                   */
 /************************************************************************/
 
 /**
@@ -8818,7 +8818,7 @@ void OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *psOptions,
 }
 
 /************************************************************************/
-/*                   OGRwkbExportOptionsSetPrecision()                  */
+/*                  OGRwkbExportOptionsSetPrecision()                   */
 /************************************************************************/
 
 /**
@@ -8839,7 +8839,7 @@ void OGRwkbExportOptionsSetPrecision(
 }
 
 /************************************************************************/
-/*                             IsRectangle()                            */
+/*                            IsRectangle()                             */
 /************************************************************************/
 
 /**
@@ -8919,13 +8919,13 @@ void OGRGeometry::removeEmptyParts()
 }
 
 /************************************************************************/
-/*                      ~IOGRGeometryVisitor()                          */
+/*                        ~IOGRGeometryVisitor()                        */
 /************************************************************************/
 
 IOGRGeometryVisitor::~IOGRGeometryVisitor() = default;
 
 /************************************************************************/
-/*                    ~IOGRConstGeometryVisitor()                       */
+/*                     ~IOGRConstGeometryVisitor()                      */
 /************************************************************************/
 
 IOGRConstGeometryVisitor::~IOGRConstGeometryVisitor() = default;

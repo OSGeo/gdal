@@ -17,7 +17,7 @@
 #include "cpl_minixml.h"
 
 /************************************************************************/
-/*                            OGRGMLASLayer()                           */
+/*                           OGRGMLASLayer()                            */
 /************************************************************************/
 
 OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
@@ -129,7 +129,7 @@ OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
 }
 
 /************************************************************************/
-/*                            OGRGMLASLayer()                           */
+/*                           OGRGMLASLayer()                            */
 /************************************************************************/
 
 OGRGMLASLayer::OGRGMLASLayer(const char *pszLayerName)
@@ -144,7 +144,7 @@ OGRGMLASLayer::OGRGMLASLayer(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                        GetSWEChildAndType()                          */
+/*                         GetSWEChildAndType()                         */
 /************************************************************************/
 
 static CPLXMLNode *GetSWEChildAndType(CPLXMLNode *psNode, OGRFieldType &eType,
@@ -182,7 +182,7 @@ static CPLXMLNode *GetSWEChildAndType(CPLXMLNode *psNode, OGRFieldType &eType,
 }
 
 /************************************************************************/
-/*              ProcessDataRecordOfDataArrayCreateFields()               */
+/*              ProcessDataRecordOfDataArrayCreateFields()              */
 /************************************************************************/
 
 void OGRGMLASLayer::ProcessDataRecordOfDataArrayCreateFields(
@@ -243,7 +243,7 @@ void OGRGMLASLayer::ProcessDataRecordOfDataArrayCreateFields(
 }
 
 /************************************************************************/
-/*                ProcessDataRecordCreateFields()                       */
+/*                   ProcessDataRecordCreateFields()                    */
 /************************************************************************/
 
 void OGRGMLASLayer::ProcessDataRecordCreateFields(
@@ -364,7 +364,7 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
 }
 
 /************************************************************************/
-/*                             SetSWEValue()                            */
+/*                            SetSWEValue()                             */
 /************************************************************************/
 
 static void SetSWEValue(OGRFeature *poFeature, const CPLString &osFieldName,
@@ -445,7 +445,7 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
 }
 
 /************************************************************************/
-/*                             PostInit()                               */
+/*                              PostInit()                              */
 /************************************************************************/
 
 void OGRGMLASLayer::PostInit(bool bIncludeGeometryXML)
@@ -923,7 +923,7 @@ void OGRGMLASLayer::PostInit(bool bIncludeGeometryXML)
 }
 
 /************************************************************************/
-/*                   CreateCompoundFoldedMappings()                     */
+/*                    CreateCompoundFoldedMappings()                    */
 /************************************************************************/
 
 // In the case we have nested elements but we managed to fold into top
@@ -984,7 +984,7 @@ OGRGMLASLayer::~OGRGMLASLayer()
 }
 
 /************************************************************************/
-/*                        DeleteTargetIndex()                           */
+/*                         DeleteTargetIndex()                          */
 /************************************************************************/
 
 static void DeleteTargetIndex(std::map<CPLString, int> &oMap, int nIdx)
@@ -1053,7 +1053,7 @@ bool OGRGMLASLayer::RemoveField(int nIdx)
 }
 
 /************************************************************************/
-/*                        InsertTargetIndex()                           */
+/*                         InsertTargetIndex()                          */
 /************************************************************************/
 
 static void InsertTargetIndex(std::map<CPLString, int> &oMap, int nIdx)
@@ -1066,7 +1066,7 @@ static void InsertTargetIndex(std::map<CPLString, int> &oMap, int nIdx)
 }
 
 /************************************************************************/
-/*                            InsertNewField()                          */
+/*                           InsertNewField()                           */
 /************************************************************************/
 
 void OGRGMLASLayer::InsertNewField(int nInsertPos,
@@ -1126,7 +1126,7 @@ void OGRGMLASLayer::InsertNewField(int nInsertPos,
 }
 
 /************************************************************************/
-/*                       GetOGRFieldIndexFromXPath()                    */
+/*                     GetOGRFieldIndexFromXPath()                      */
 /************************************************************************/
 
 int OGRGMLASLayer::GetOGRFieldIndexFromXPath(const CPLString &osXPath) const
@@ -1138,7 +1138,7 @@ int OGRGMLASLayer::GetOGRFieldIndexFromXPath(const CPLString &osXPath) const
 }
 
 /************************************************************************/
-/*                       GetXPathFromOGRFieldIndex()                    */
+/*                     GetXPathFromOGRFieldIndex()                      */
 /************************************************************************/
 
 CPLString OGRGMLASLayer::GetXPathFromOGRFieldIndex(int nIdx) const
@@ -1156,7 +1156,7 @@ CPLString OGRGMLASLayer::GetXPathFromOGRFieldIndex(int nIdx) const
 }
 
 /************************************************************************/
-/*                      GetOGRGeomFieldIndexFromXPath()                 */
+/*                   GetOGRGeomFieldIndexFromXPath()                    */
 /************************************************************************/
 
 int OGRGMLASLayer::GetOGRGeomFieldIndexFromXPath(const CPLString &osXPath) const
@@ -1168,7 +1168,7 @@ int OGRGMLASLayer::GetOGRGeomFieldIndexFromXPath(const CPLString &osXPath) const
 }
 
 /************************************************************************/
-/*                     GetFCFieldIndexFromOGRFieldIdx()                 */
+/*                   GetFCFieldIndexFromOGRFieldIdx()                   */
 /************************************************************************/
 
 int OGRGMLASLayer::GetFCFieldIndexFromOGRFieldIdx(int iOGRFieldIdx) const
@@ -1180,7 +1180,7 @@ int OGRGMLASLayer::GetFCFieldIndexFromOGRFieldIdx(int iOGRFieldIdx) const
 }
 
 /************************************************************************/
-/*                     GetFCFieldIndexFromXPath()                       */
+/*                      GetFCFieldIndexFromXPath()                      */
 /************************************************************************/
 
 int OGRGMLASLayer::GetFCFieldIndexFromXPath(const CPLString &osXPath) const
@@ -1192,7 +1192,7 @@ int OGRGMLASLayer::GetFCFieldIndexFromXPath(const CPLString &osXPath) const
 }
 
 /************************************************************************/
-/*                  GetFCFieldIndexFromOGRGeomFieldIdx()                */
+/*                 GetFCFieldIndexFromOGRGeomFieldIdx()                 */
 /************************************************************************/
 
 int OGRGMLASLayer::GetFCFieldIndexFromOGRGeomFieldIdx(
@@ -1205,7 +1205,7 @@ int OGRGMLASLayer::GetFCFieldIndexFromOGRGeomFieldIdx(
 }
 
 /************************************************************************/
-/*                 GetXPathOfFieldLinkForAttrToOtherLayer()             */
+/*               GetXPathOfFieldLinkForAttrToOtherLayer()               */
 /************************************************************************/
 
 CPLString OGRGMLASLayer::GetXPathOfFieldLinkForAttrToOtherLayer(
@@ -1224,7 +1224,7 @@ CPLString OGRGMLASLayer::GetXPathOfFieldLinkForAttrToOtherLayer(
 }
 
 /************************************************************************/
-/*                           LaunderFieldName()                         */
+/*                          LaunderFieldName()                          */
 /************************************************************************/
 
 CPLString OGRGMLASLayer::LaunderFieldName(const CPLString &osFieldName)
@@ -1271,7 +1271,7 @@ CPLString OGRGMLASLayer::LaunderFieldName(const CPLString &osFieldName)
 }
 
 /************************************************************************/
-/*                     CreateLinkForAttrToOtherLayer()                  */
+/*                   CreateLinkForAttrToOtherLayer()                    */
 /************************************************************************/
 
 /* Create a new field to contain the PKID of the feature pointed by this */
@@ -1418,7 +1418,7 @@ CPLString OGRGMLASLayer::CreateLinkForAttrToOtherLayer(
 }
 
 /************************************************************************/
-/*                              GetLayerDefn()                          */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn() const
@@ -1447,7 +1447,7 @@ const OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                              ResetReading()                          */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRGMLASLayer::ResetReading()
@@ -1457,7 +1457,7 @@ void OGRGMLASLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              InitReader()                            */
+/*                             InitReader()                             */
 /************************************************************************/
 
 bool OGRGMLASLayer::InitReader()
@@ -1475,7 +1475,7 @@ bool OGRGMLASLayer::InitReader()
 }
 
 /************************************************************************/
-/*                          GetNextRawFeature()                         */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRGMLASLayer::GetNextRawFeature()
@@ -1487,7 +1487,7 @@ OGRFeature *OGRGMLASLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                            EvaluateFilter()                          */
+/*                           EvaluateFilter()                           */
 /************************************************************************/
 
 bool OGRGMLASLayer::EvaluateFilter(OGRFeature *poFeature)
@@ -1498,7 +1498,7 @@ bool OGRGMLASLayer::EvaluateFilter(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            GetNextFeature()                          */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRGMLASLayer::GetNextFeature()

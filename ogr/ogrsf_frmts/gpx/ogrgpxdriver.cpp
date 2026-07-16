@@ -23,7 +23,7 @@
 #include "ogr_core.h"
 
 /************************************************************************/
-/*                               Identify()                             */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRGPXDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -61,10 +61,12 @@ static GDALDataset *OGRGPXDriverOpen(GDALOpenInfo *poOpenInfo)
 /*                               Create()                               */
 /************************************************************************/
 
-static GDALDataset *
-OGRGPXDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, CPL_UNUSED char **papszOptions)
+static GDALDataset *OGRGPXDriverCreate(const char *pszName,
+                                       CPL_UNUSED int nBands,
+                                       CPL_UNUSED int nXSize,
+                                       CPL_UNUSED int nYSize,
+                                       CPL_UNUSED GDALDataType eDT,
+                                       CPL_UNUSED CSLConstList papszOptions)
 {
     OGRGPXDataSource *poDS = new OGRGPXDataSource();
 

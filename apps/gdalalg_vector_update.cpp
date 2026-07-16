@@ -65,7 +65,7 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                  GDALVectorUpdateAlgorithm::RunStep()                */
+/*                 GDALVectorUpdateAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -333,14 +333,14 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                  ~GDALVectorUpdateAlgorithmStandalone()              */
+/*                ~GDALVectorUpdateAlgorithmStandalone()                */
 /************************************************************************/
 
 GDALVectorUpdateAlgorithmStandalone::~GDALVectorUpdateAlgorithmStandalone() =
     default;
 
 /************************************************************************/
-/*              GDALVectorUpdateAlgorithmStandalone::RunImpl()          */
+/*            GDALVectorUpdateAlgorithmStandalone::RunImpl()            */
 /************************************************************************/
 
 bool GDALVectorUpdateAlgorithmStandalone::RunImpl(GDALProgressFunc pfnProgress,

@@ -17,7 +17,7 @@
 #include "commoncore.h"
 
 /************************************************************************/
-/*                     KTX2DriverIdentify()                             */
+/*                         KTX2DriverIdentify()                         */
 /************************************************************************/
 
 int KTX2DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -35,7 +35,7 @@ int KTX2DriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      KTX2DriverSetCommonMetadata()                   */
+/*                    KTX2DriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void KTX2DriverSetCommonMetadata(GDALDriver *poDriver)

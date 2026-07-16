@@ -61,7 +61,7 @@ void OGRAPISpyOpen(const char *pszName, int bUpdate, int iSnapshot,
 void OGRAPISpyPreClose(GDALDatasetH hDS);
 void OGRAPISpyPostClose();
 void OGRAPISpyCreateDataSource(GDALDriverH hDriver, const char *pszName,
-                               char **papszOptions, GDALDatasetH hDS);
+                               CSLConstList papszOptions, GDALDatasetH hDS);
 void OGRAPISpyDeleteDataSource(GDALDriverH hDriver, const char *pszName);
 
 void OGRAPISpy_DS_GetLayerCount(GDALDatasetH hDS);
@@ -75,8 +75,8 @@ void OGRAPISpy_DS_ReleaseResultSet(GDALDatasetH hDS, OGRLayerH hLayer);
 
 void OGRAPISpy_DS_CreateLayer(GDALDatasetH hDS, const char *pszName,
                               OGRSpatialReferenceH hSpatialRef,
-                              OGRwkbGeometryType eType, char **papszOptions,
-                              OGRLayerH hLayer);
+                              OGRwkbGeometryType eType,
+                              CSLConstList papszOptions, OGRLayerH hLayer);
 void OGRAPISpy_DS_DeleteLayer(GDALDatasetH hDS, int iLayer);
 
 void OGRAPISpy_Dataset_StartTransaction(GDALDatasetH hDS, int bForce);

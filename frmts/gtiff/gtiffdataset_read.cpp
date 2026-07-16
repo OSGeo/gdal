@@ -181,7 +181,7 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       ReadCompressedData()                           */
+/*                         ReadCompressedData()                         */
 /************************************************************************/
 
 CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
@@ -395,7 +395,7 @@ struct GTiffDecompressJob
 };
 
 /************************************************************************/
-/*                     ThreadDecompressionFunc()                        */
+/*                      ThreadDecompressionFunc()                       */
 /************************************************************************/
 
 /* static */ void GTiffDataset::ThreadDecompressionFunc(void *pData)
@@ -956,7 +956,7 @@ struct GTiffDecompressJob
 }
 
 /************************************************************************/
-/*                    IsMultiThreadedReadCompatible()                   */
+/*                   IsMultiThreadedReadCompatible()                    */
 /************************************************************************/
 
 bool GTiffDataset::IsMultiThreadedReadCompatible() const
@@ -978,7 +978,7 @@ bool GTiffDataset::IsMultiThreadedReadCompatible() const
 }
 
 /************************************************************************/
-/*                        MultiThreadedRead()                           */
+/*                         MultiThreadedRead()                          */
 /************************************************************************/
 
 CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
@@ -1473,7 +1473,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                        FetchBufferVirtualMemIO                       */
+/*                       FetchBufferVirtualMemIO                        */
 /************************************************************************/
 
 class FetchBufferVirtualMemIO final
@@ -1538,7 +1538,7 @@ class FetchBufferVirtualMemIO final
 };
 
 /************************************************************************/
-/*                         VirtualMemIO()                               */
+/*                            VirtualMemIO()                            */
 /************************************************************************/
 
 int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1656,7 +1656,7 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                   CopyContigByteMultiBand()                          */
+/*                      CopyContigByteMultiBand()                       */
 /************************************************************************/
 
 static inline void CopyContigByteMultiBand(const GByte *CPL_RESTRICT pabySrc,
@@ -1733,7 +1733,7 @@ static inline void CopyContigByteMultiBand(const GByte *CPL_RESTRICT pabySrc,
 }
 
 /************************************************************************/
-/*                         CommonDirectIO()                             */
+/*                           CommonDirectIO()                           */
 /************************************************************************/
 
 // #define DEBUG_REACHED_VIRTUAL_MEM_IO
@@ -2875,7 +2875,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                           DirectIO()                                 */
+/*                              DirectIO()                              */
 /************************************************************************/
 
 CPLErr GTiffDataset::CommonDirectIOClassic(
@@ -2890,7 +2890,7 @@ CPLErr GTiffDataset::CommonDirectIOClassic(
 }
 
 /************************************************************************/
-/*                           DirectIO()                                 */
+/*                              DirectIO()                              */
 /************************************************************************/
 
 // Reads directly bytes from the file using ReadMultiRange(), and by-pass
@@ -3468,7 +3468,7 @@ int GTiffDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GTIFFExtendMemoryFile()                     */
+/*                       GTIFFExtendMemoryFile()                        */
 /************************************************************************/
 
 static bool GTIFFExtendMemoryFile(const CPLString &osTmpFilename,
@@ -3499,7 +3499,7 @@ static bool GTIFFExtendMemoryFile(const CPLString &osTmpFilename,
 }
 
 /************************************************************************/
-/*                         GTIFFMakeBufferedStream()                    */
+/*                      GTIFFMakeBufferedStream()                       */
 /************************************************************************/
 
 static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
@@ -4010,7 +4010,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      GTiffDatasetSetAreaOrPointMD()                  */
+/*                    GTiffDatasetSetAreaOrPointMD()                    */
 /************************************************************************/
 
 static void GTiffDatasetSetAreaOrPointMD(GTIF *hGTIF,
@@ -4095,7 +4095,7 @@ void GTiffDataset::LookForProjection()
 }
 
 /************************************************************************/
-/*                      LookForProjectionFromGeoTIFF()                  */
+/*                    LookForProjectionFromGeoTIFF()                    */
 /************************************************************************/
 
 void GTiffDataset::LookForProjectionFromGeoTIFF()
@@ -4214,7 +4214,7 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 }
 
 /************************************************************************/
-/*               GetSidecarFilenameWithReplacedExtension()    ¨         */
+/*            GetSidecarFilenameWithReplacedExtension()    ¨            */
 /************************************************************************/
 
 std::string
@@ -5806,7 +5806,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 }
 
 /************************************************************************/
-/*                         GetSiblingFiles()                            */
+/*                          GetSiblingFiles()                           */
 /************************************************************************/
 
 CSLConstList GTiffDataset::GetSiblingFiles()
@@ -5836,7 +5836,7 @@ CSLConstList GTiffDataset::GetSiblingFiles()
 }
 
 /************************************************************************/
-/*                   IdentifyAuthorizedGeoreferencingSources()          */
+/*              IdentifyAuthorizedGeoreferencingSources()               */
 /************************************************************************/
 
 void GTiffDataset::IdentifyAuthorizedGeoreferencingSources()
@@ -5863,7 +5863,7 @@ void GTiffDataset::IdentifyAuthorizedGeoreferencingSources()
 }
 
 /************************************************************************/
-/*                     LoadGeoreferencingAndPamIfNeeded()               */
+/*                  LoadGeoreferencingAndPamIfNeeded()                  */
 /************************************************************************/
 
 void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
@@ -6184,7 +6184,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GTiffDataset::GetSpatialRef() const
@@ -6256,7 +6256,7 @@ const OGRSpatialReference *GTiffDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *GTiffDataset::GetGCPs()
@@ -6268,7 +6268,7 @@ const GDAL_GCP *GTiffDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GTiffDataset::GetMetadataDomainList()
@@ -6614,7 +6614,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         LoadEXIFMetadata()                           */
+/*                          LoadEXIFMetadata()                          */
 /************************************************************************/
 
 void GTiffDataset::LoadEXIFMetadata()
@@ -6664,7 +6664,7 @@ void GTiffDataset::LoadEXIFMetadata()
 }
 
 /************************************************************************/
-/*                           LoadMetadata()                             */
+/*                            LoadMetadata()                            */
 /************************************************************************/
 void GTiffDataset::LoadMetadata()
 {
@@ -6783,7 +6783,7 @@ bool GTiffDataset::HasOptimizedReadMultiRange()
 }
 
 /************************************************************************/
-/*                         CacheMultiRange()                            */
+/*                          CacheMultiRange()                           */
 /************************************************************************/
 
 static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
@@ -7278,7 +7278,7 @@ void *GTiffDataset::CacheMultiRange(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                         CheckCOGLayout()                             */
+/*                           CheckCOGLayout()                           */
 /************************************************************************/
 
 bool GTiffDataset::CheckCOGLayout()

@@ -60,7 +60,7 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
 #endif
 
 /************************************************************************/
-/*                        GDALGetDataLimits()                           */
+/*                         GDALGetDataLimits()                          */
 /************************************************************************/
 /**
  * Compute the limits of values that can be placed in Tout in terms of
@@ -113,7 +113,7 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
 }
 
 /************************************************************************/
-/*                          GDALClampValue()                            */
+/*                           GDALClampValue()                           */
 /************************************************************************/
 /**
  * Clamp values of type T to a specified range
@@ -129,7 +129,7 @@ inline T GDALClampValue(const T tValue, const T tMax, const T tMin)
 }
 
 /************************************************************************/
-/*                          GDALClampDoubleValue()                            */
+/*                        GDALClampDoubleValue()                        */
 /************************************************************************/
 /**
  * Clamp double values to a specified range, this uses the same
@@ -251,7 +251,7 @@ template <> inline bool GDALIsValueExactAs<double>(double)
 }
 
 /************************************************************************/
-/*                          GDALCopyWord()                              */
+/*                            GDALCopyWord()                            */
 /************************************************************************/
 
 // Integer input and output: clamp the input
@@ -876,7 +876,7 @@ inline void GDALCopyWord(const Tin tValueIn, Tout &tValueOut)
 }
 
 /************************************************************************/
-/*                         GDALCopy4Words()                             */
+/*                           GDALCopy4Words()                           */
 /************************************************************************/
 /**
  * Copy 4 packed words to 4 packed words, optionally rounding if appropriate
@@ -896,7 +896,7 @@ inline void GDALCopy4Words(const Tin *pValueIn, Tout *const pValueOut)
 }
 
 /************************************************************************/
-/*                         GDALCopy8Words()                             */
+/*                           GDALCopy8Words()                           */
 /************************************************************************/
 /**
  * Copy 8 packed words to 8 packed words, optionally rounding if appropriate

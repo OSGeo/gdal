@@ -46,7 +46,7 @@
 // #include "symbol_renames.h"
 
 /************************************************************************/
-/*                           OGRGeoJSONDataSource()                     */
+/*                        OGRGeoJSONDataSource()                        */
 /************************************************************************/
 
 OGRGeoJSONDataSource::OGRGeoJSONDataSource()
@@ -60,7 +60,7 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
 }
 
 /************************************************************************/
-/*                           ~OGRGeoJSONDataSource()                    */
+/*                       ~OGRGeoJSONDataSource()                        */
 /************************************************************************/
 
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
@@ -69,7 +69,7 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRGeoJSONDataSource::Close(GDALProgressFunc, void *)
@@ -90,7 +90,7 @@ CPLErr OGRGeoJSONDataSource::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                 DealWithOgrSchemaOpenOption()                       */
+/*                    DealWithOgrSchemaOpenOption()                     */
 /************************************************************************/
 
 bool OGRGeoJSONDataSource::DealWithOgrSchemaOpenOption(
@@ -130,7 +130,7 @@ bool OGRGeoJSONDataSource::DealWithOgrSchemaOpenOption(
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
@@ -262,7 +262,7 @@ int OGRGeoJSONDataSource::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                           GetLayer()                                 */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer) const
@@ -279,7 +279,7 @@ const OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -683,11 +683,11 @@ int OGRGeoJSONDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 int OGRGeoJSONDataSource::Create(const char *pszName,
-                                 char ** /* papszOptions */)
+                                 CSLConstList /* papszOptions */)
 {
     CPLAssert(nullptr == fpOut_);
 
@@ -727,7 +727,7 @@ int OGRGeoJSONDataSource::Create(const char *pszName,
 }
 
 /************************************************************************/
-/*                           SetGeometryTranslation()                   */
+/*                       SetGeometryTranslation()                       */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::SetGeometryTranslation(GeometryTranslation type)
@@ -736,7 +736,7 @@ void OGRGeoJSONDataSource::SetGeometryTranslation(GeometryTranslation type)
 }
 
 /************************************************************************/
-/*                           SetAttributesTranslation()                 */
+/*                      SetAttributesTranslation()                      */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::SetAttributesTranslation(AttributesTranslation type)
@@ -745,7 +745,7 @@ void OGRGeoJSONDataSource::SetAttributesTranslation(AttributesTranslation type)
 }
 
 /************************************************************************/
-/*                  PRIVATE FUNCTIONS IMPLEMENTATION                    */
+/*                   PRIVATE FUNCTIONS IMPLEMENTATION                   */
 /************************************************************************/
 
 bool OGRGeoJSONDataSource::Clear()
@@ -782,7 +782,7 @@ bool OGRGeoJSONDataSource::Clear()
 }
 
 /************************************************************************/
-/*                           ReadFromFile()                             */
+/*                            ReadFromFile()                            */
 /************************************************************************/
 
 int OGRGeoJSONDataSource::ReadFromFile(GDALOpenInfo *poOpenInfo,
@@ -824,7 +824,7 @@ int OGRGeoJSONDataSource::ReadFromFile(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                           ReadFromService()                          */
+/*                          ReadFromService()                           */
 /************************************************************************/
 
 int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
@@ -917,7 +917,7 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                       RemoveJSonPStuff()                             */
+/*                          RemoveJSonPStuff()                          */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::RemoveJSonPStuff()
@@ -942,7 +942,7 @@ void OGRGeoJSONDataSource::RemoveJSonPStuff()
 }
 
 /************************************************************************/
-/*                           LoadLayers()                               */
+/*                             LoadLayers()                             */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
@@ -1113,7 +1113,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                          SetOptionsOnReader()                        */
+/*                         SetOptionsOnReader()                         */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo *poOpenInfo,
@@ -1205,7 +1205,7 @@ void OGRGeoJSONDataSource::CheckExceededTransferLimit(json_object *poObj)
 }
 
 /************************************************************************/
-/*                            AddLayer()                                */
+/*                              AddLayer()                              */
 /************************************************************************/
 
 void OGRGeoJSONDataSource::AddLayer(OGRGeoJSONLayer *poLayer)
@@ -1222,7 +1222,7 @@ void OGRGeoJSONDataSource::AddLayer(OGRGeoJSONLayer *poLayer)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)

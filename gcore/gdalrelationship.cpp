@@ -29,7 +29,7 @@
  */
 
 /************************************************************************/
-/*                  GDALRelationshipCreate()                            */
+/*                       GDALRelationshipCreate()                       */
 /************************************************************************/
 
 /**
@@ -60,7 +60,7 @@ GDALRelationshipCreate(const char *pszName, const char *pszLeftTableName,
 }
 
 /************************************************************************/
-/*                  GDALDestroyRelationship()                           */
+/*                      GDALDestroyRelationship()                       */
 /************************************************************************/
 
 /**
@@ -76,7 +76,7 @@ void CPL_STDCALL GDALDestroyRelationship(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetName()                           */
+/*                      GDALRelationshipGetName()                       */
 /************************************************************************/
 
 /**
@@ -95,7 +95,7 @@ const char *GDALRelationshipGetName(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetCardinality()                    */
+/*                   GDALRelationshipGetCardinality()                   */
 /************************************************************************/
 
 /**
@@ -135,7 +135,7 @@ const char *GDALRelationshipGetLeftTableName(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetRightTableName()                 */
+/*                 GDALRelationshipGetRightTableName()                  */
 /************************************************************************/
 
 /**
@@ -158,7 +158,7 @@ const char *GDALRelationshipGetRightTableName(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetMappingTableName()               */
+/*                GDALRelationshipGetMappingTableName()                 */
 /************************************************************************/
 
 /**
@@ -182,7 +182,7 @@ const char *GDALRelationshipGetMappingTableName(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipSetMappingTableName()               */
+/*                GDALRelationshipSetMappingTableName()                 */
 /************************************************************************/
 /**
  * \brief Sets the name of the mapping table for many-to-many relationships.
@@ -204,7 +204,7 @@ void GDALRelationshipSetMappingTableName(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetLeftTableFields()                */
+/*                 GDALRelationshipGetLeftTableFields()                 */
 /************************************************************************/
 
 /**
@@ -230,7 +230,7 @@ char **GDALRelationshipGetLeftTableFields(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                 GDALRelationshipGetRightTableFields()                */
+/*                GDALRelationshipGetRightTableFields()                 */
 /************************************************************************/
 
 /**
@@ -256,7 +256,7 @@ char **GDALRelationshipGetRightTableFields(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipSetLeftTableFields()                */
+/*                 GDALRelationshipSetLeftTableFields()                 */
 /************************************************************************/
 
 /**
@@ -281,7 +281,7 @@ void GDALRelationshipSetLeftTableFields(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                 GDALRelationshipSetRightTableFields()                */
+/*                GDALRelationshipSetRightTableFields()                 */
 /************************************************************************/
 
 /**
@@ -306,7 +306,7 @@ void GDALRelationshipSetRightTableFields(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*           GDALRelationshipGetLeftMappingTableFields()                */
+/*             GDALRelationshipGetLeftMappingTableFields()              */
 /************************************************************************/
 
 /**
@@ -333,7 +333,7 @@ GDALRelationshipGetLeftMappingTableFields(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*          GDALRelationshipGetRightMappingTableFields()                */
+/*             GDALRelationshipGetRightMappingTableFields()             */
 /************************************************************************/
 
 /**
@@ -360,7 +360,7 @@ GDALRelationshipGetRightMappingTableFields(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*           GDALRelationshipSetLeftMappingTableFields()                */
+/*             GDALRelationshipSetLeftMappingTableFields()              */
 /************************************************************************/
 
 /**
@@ -385,7 +385,7 @@ void GDALRelationshipSetLeftMappingTableFields(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*              GDALRelationshipSetRightMappingTableFields()            */
+/*             GDALRelationshipSetRightMappingTableFields()             */
 /************************************************************************/
 
 /**
@@ -410,7 +410,7 @@ void GDALRelationshipSetRightMappingTableFields(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetType()                           */
+/*                      GDALRelationshipGetType()                       */
 /************************************************************************/
 
 /**
@@ -429,7 +429,7 @@ GDALRelationshipType GDALRelationshipGetType(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipSetType()                           */
+/*                      GDALRelationshipSetType()                       */
 /************************************************************************/
 
 /**
@@ -447,7 +447,7 @@ void GDALRelationshipSetType(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetForwardPathLabel()               */
+/*                GDALRelationshipGetForwardPathLabel()                 */
 /************************************************************************/
 
 /**
@@ -482,7 +482,7 @@ const char *GDALRelationshipGetForwardPathLabel(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                  GDALRelationshipSetForwardPathLabel()               */
+/*                GDALRelationshipSetForwardPathLabel()                 */
 /************************************************************************/
 /**
  * \brief Sets the label of the forward path for the relationship.
@@ -514,7 +514,7 @@ void GDALRelationshipSetForwardPathLabel(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetForwardPathLabel()               */
+/*                GDALRelationshipGetForwardPathLabel()                 */
 /************************************************************************/
 
 /**
@@ -550,7 +550,7 @@ GDALRelationshipGetBackwardPathLabel(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                 GDALRelationshipSetBackwardPathLabel()               */
+/*                GDALRelationshipSetBackwardPathLabel()                */
 /************************************************************************/
 /**
  * \brief Sets the label of the backward path for the relationship.
@@ -581,7 +581,7 @@ void GDALRelationshipSetBackwardPathLabel(GDALRelationshipH hRelationship,
 }
 
 /************************************************************************/
-/*                  GDALRelationshipGetRelatedTableType()               */
+/*                GDALRelationshipGetRelatedTableType()                 */
 /************************************************************************/
 
 /**
@@ -611,7 +611,7 @@ const char *GDALRelationshipGetRelatedTableType(GDALRelationshipH hRelationship)
 }
 
 /************************************************************************/
-/*                 GDALRelationshipSetRelatedTableType()                */
+/*                GDALRelationshipSetRelatedTableType()                 */
 /************************************************************************/
 /**
  * \brief Sets the type string of the related table.

@@ -16,7 +16,7 @@
 #include <cstdlib>
 
 /************************************************************************/
-/*                           OGRJMLWriterLayer()                        */
+/*                         OGRJMLWriterLayer()                          */
 /************************************************************************/
 
 OGRJMLWriterLayer::OGRJMLWriterLayer(const char *pszLayerName,
@@ -59,7 +59,7 @@ OGRJMLWriterLayer::OGRJMLWriterLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                        ~OGRJMLWriterLayer()                          */
+/*                         ~OGRJMLWriterLayer()                         */
 /************************************************************************/
 
 OGRJMLWriterLayer::~OGRJMLWriterLayer()
@@ -99,7 +99,7 @@ OGRJMLWriterLayer::~OGRJMLWriterLayer()
 }
 
 /************************************************************************/
-/*                         WriteColumnDeclaration()                     */
+/*                       WriteColumnDeclaration()                       */
 /************************************************************************/
 
 void OGRJMLWriterLayer::WriteColumnDeclaration(const char *pszName,
@@ -133,7 +133,7 @@ void OGRJMLWriterLayer::WriteColumnDeclaration(const char *pszName,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRJMLWriterLayer::ICreateFeature(OGRFeature *poFeature)

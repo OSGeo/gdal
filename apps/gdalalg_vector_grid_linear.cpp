@@ -31,7 +31,7 @@ GDALVectorGridLinearAlgorithm::GDALVectorGridLinearAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridLinearAlgorithm::RunImpl()              */
+/*               GDALVectorGridLinearAlgorithm::RunImpl()               */
 /************************************************************************/
 
 std::string GDALVectorGridLinearAlgorithm::GetGridAlgorithm() const

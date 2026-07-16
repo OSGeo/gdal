@@ -77,7 +77,7 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALRasterUpdateAlgorithm::RunStep()                  */
+/*                 GDALRasterUpdateAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &stepCtxt)
@@ -252,7 +252,7 @@ bool GDALRasterUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &stepCtxt)
 }
 
 /************************************************************************/
-/*                GDALRasterUpdateAlgorithm::RunImpl()                  */
+/*                 GDALRasterUpdateAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALRasterUpdateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

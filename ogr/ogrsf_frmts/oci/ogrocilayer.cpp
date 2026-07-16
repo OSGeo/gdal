@@ -16,7 +16,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                           OGROCILayer()                               */
+/*                            OGROCILayer()                             */
 /************************************************************************/
 
 OGROCILayer::OGROCILayer(OGROCIDataSource *poDSIn) : poDS(poDSIn)
@@ -39,7 +39,7 @@ OGROCILayer::OGROCILayer(OGROCIDataSource *poDSIn) : poDS(poDSIn)
 }
 
 /************************************************************************/
-/*                            ~OGROCILayer()                             */
+/*                            ~OGROCILayer()                            */
 /************************************************************************/
 
 OGROCILayer::~OGROCILayer()

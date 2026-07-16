@@ -13,7 +13,7 @@
 #include "ogr_geopackage.h"
 
 /************************************************************************/
-/*                        OGRGeoPackageSelectLayer()                    */
+/*                      OGRGeoPackageSelectLayer()                      */
 /************************************************************************/
 
 OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer(
@@ -42,7 +42,7 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer(
 }
 
 /************************************************************************/
-/*                       ~OGRGeoPackageSelectLayer()                    */
+/*                     ~OGRGeoPackageSelectLayer()                      */
 /************************************************************************/
 
 OGRGeoPackageSelectLayer::~OGRGeoPackageSelectLayer()

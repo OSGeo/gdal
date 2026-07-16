@@ -51,7 +51,7 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                   GDALRasterCalcAlgorithmStandalone                  */
+/*                  GDALRasterCalcAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterCalcAlgorithmStandalone final : public GDALRasterCalcAlgorithm

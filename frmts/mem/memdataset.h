@@ -35,7 +35,7 @@ GDALRasterBandH CPL_DLL MEMCreateRasterBandEx(GDALDataset *, int, GByte *,
 CPL_C_END
 
 /************************************************************************/
-/*                            MEMDataset                                */
+/*                              MEMDataset                              */
 /************************************************************************/
 
 class MEMRasterBand;
@@ -76,7 +76,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     // cppcheck-suppress unusedPrivateFunction
     static GDALDataset *CreateBase(const char *pszFilename, int nXSize,
                                    int nYSize, int nBands, GDALDataType eType,
-                                   char **papszParamList);
+                                   CSLConstList papszParamList);
 
   protected:
     bool CanBeCloned(int nScopeFlags, bool bCanShareState) const override;
@@ -105,7 +105,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
                    const OGRSpatialReference *poSRS) override;
     virtual CPLErr AddBand(GDALDataType eType,
-                           char **papszOptions = nullptr) override;
+                           CSLConstList papszOptions = nullptr) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount,
@@ -127,7 +127,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static MEMDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                               int nBands, GDALDataType eType,
-                              char **papszParamList);
+                              CSLConstList papszParamList);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,

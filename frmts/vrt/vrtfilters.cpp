@@ -425,7 +425,7 @@ VRTKernelFilteredSource::VRTKernelFilteredSource()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTKernelFilteredSource::GetType() const

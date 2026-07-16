@@ -94,7 +94,7 @@ RawRasterBand::RawRasterBand(GDALDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                          RawRasterBand::Create()                     */
+/*                       RawRasterBand::Create()                        */
 /************************************************************************/
 
 std::unique_ptr<RawRasterBand>
@@ -133,7 +133,7 @@ RawRasterBand::RawRasterBand(VSILFILE *fpRawLIn, vsi_l_offset nImgOffsetIn,
 }
 
 /************************************************************************/
-/*                          RawRasterBand::Create()                     */
+/*                       RawRasterBand::Create()                        */
 /************************************************************************/
 
 std::unique_ptr<RawRasterBand>
@@ -333,7 +333,7 @@ RawRasterBand::~RawRasterBand()
 }
 
 /************************************************************************/
-/*                              IsBIP()                                 */
+/*                               IsBIP()                                */
 /************************************************************************/
 
 bool RawRasterBand::IsBIP() const
@@ -427,7 +427,7 @@ CPLErr RawRasterBand::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                      NeedsByteOrderChange()                          */
+/*                        NeedsByteOrderChange()                        */
 /************************************************************************/
 
 bool RawRasterBand::NeedsByteOrderChange() const
@@ -442,7 +442,7 @@ bool RawRasterBand::NeedsByteOrderChange() const
 }
 
 /************************************************************************/
-/*                          DoByteSwap()                                */
+/*                             DoByteSwap()                             */
 /************************************************************************/
 
 void RawRasterBand::DoByteSwap(void *pBuffer, size_t nValues, int nByteSkip,
@@ -841,7 +841,7 @@ CPLErr RawRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         FlushCurrentLine()                           */
+/*                          FlushCurrentLine()                          */
 /************************************************************************/
 
 bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
@@ -916,7 +916,7 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
 }
 
 /************************************************************************/
-/*                             AccessBlock()                            */
+/*                            AccessBlock()                             */
 /************************************************************************/
 
 CPLErr RawRasterBand::AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize,
@@ -1509,13 +1509,13 @@ GDALColorInterp RawRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                           GetVirtualMemAuto()                        */
+/*                         GetVirtualMemAuto()                          */
 /************************************************************************/
 
 CPLVirtualMem *RawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                 int *pnPixelSpace,
                                                 GIntBig *pnLineSpace,
-                                                char **papszOptions)
+                                                CSLConstList papszOptions)
 {
     CPLAssert(pnPixelSpace);
     CPLAssert(pnLineSpace);
@@ -1566,7 +1566,7 @@ CPLVirtualMem *RawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 /************************************************************************/
-/*                            RawDataset()                              */
+/*                             RawDataset()                             */
 /************************************************************************/
 
 RawDataset::RawDataset()
@@ -1574,7 +1574,7 @@ RawDataset::RawDataset()
 }
 
 /************************************************************************/
-/*                           ~RawDataset()                              */
+/*                            ~RawDataset()                             */
 /************************************************************************/
 
 // It's pure virtual function but must be defined, even if empty.
@@ -1748,7 +1748,7 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                  RAWDatasetCheckMemoryUsage()                        */
+/*                     RAWDatasetCheckMemoryUsage()                     */
 /************************************************************************/
 
 bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands, int nDTSize,
@@ -1834,7 +1834,7 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands, int nDTSize,
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -1918,7 +1918,7 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                        ClearCachedConfigOption()                     */
+/*                      ClearCachedConfigOption()                       */
 /************************************************************************/
 
 void RawDataset::ClearCachedConfigOption(void)

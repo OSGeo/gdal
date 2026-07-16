@@ -23,7 +23,7 @@
     "%s : unsupported operation on a read-only datasource."
 
 /************************************************************************/
-/*                         OGRMSSQLAppendEscaped( )                     */
+/*                       OGRMSSQLAppendEscaped( )                       */
 /************************************************************************/
 
 void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
@@ -65,7 +65,7 @@ void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
 }
 
 /************************************************************************/
-/*                          OGRMSSQLSpatialTableLayer()                 */
+/*                     OGRMSSQLSpatialTableLayer()                      */
 /************************************************************************/
 
 OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer(
@@ -77,7 +77,7 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer(
 }
 
 /************************************************************************/
-/*                          ~OGRMSSQLSpatialTableLayer()                */
+/*                     ~OGRMSSQLSpatialTableLayer()                     */
 /************************************************************************/
 
 OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
@@ -103,7 +103,7 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 }
 
 /************************************************************************/
-/*                               GetName()                              */
+/*                              GetName()                               */
 /************************************************************************/
 
 const char *OGRMSSQLSpatialTableLayer::GetName() const
@@ -113,7 +113,7 @@ const char *OGRMSSQLSpatialTableLayer::GetName() const
 }
 
 /************************************************************************/
-/*                             GetLayerDefn()                           */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 const OGRFeatureDefn *OGRMSSQLSpatialTableLayer::GetLayerDefn() const
 {
@@ -333,7 +333,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize(const char *pszSchema,
 }
 
 /************************************************************************/
-/*                         FetchSRSId()                                 */
+/*                             FetchSRSId()                             */
 /************************************************************************/
 
 int OGRMSSQLSpatialTableLayer::FetchSRSId()
@@ -454,7 +454,7 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 }
 
 /************************************************************************/
-/*                     GetBracketEscapedIdentifier()                    */
+/*                    GetBracketEscapedIdentifier()                     */
 /************************************************************************/
 
 static std::string GetBracketEscapedIdentifier(const std::string_view &osStr)
@@ -1326,7 +1326,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature(GIntBig nFID)
@@ -1384,7 +1384,7 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           Failed()                                   */
+/*                               Failed()                               */
 /************************************************************************/
 
 int OGRMSSQLSpatialTableLayer::Failed(int nRetCode)
@@ -1412,7 +1412,7 @@ int OGRMSSQLSpatialTableLayer::Failed(int nRetCode)
 }
 
 /************************************************************************/
-/*                           Failed2()                                  */
+/*                              Failed2()                               */
 /************************************************************************/
 
 #ifdef MSSQL_BCP_SUPPORTED
@@ -1441,7 +1441,7 @@ int OGRMSSQLSpatialTableLayer::Failed2(int nRetCode)
 }
 
 /************************************************************************/
-/*                            InitBCP()                                 */
+/*                              InitBCP()                               */
 /************************************************************************/
 
 int OGRMSSQLSpatialTableLayer::InitBCP(const char *pszDSN)
@@ -1494,7 +1494,7 @@ int OGRMSSQLSpatialTableLayer::InitBCP(const char *pszDSN)
 }
 
 /************************************************************************/
-/*                            CloseBCP()                                */
+/*                              CloseBCP()                              */
 /************************************************************************/
 
 void OGRMSSQLSpatialTableLayer::CloseBCP()
@@ -1535,7 +1535,7 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
 }
 
 /************************************************************************/
-/*                            CreateFeatureBCP()                        */
+/*                          CreateFeatureBCP()                          */
 /************************************************************************/
 
 OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
@@ -2271,7 +2271,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
 #endif /* MSSQL_BCP_SUPPORTED */
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature(OGRFeature *poFeature)

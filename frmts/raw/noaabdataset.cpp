@@ -71,7 +71,7 @@ class NOAA_B_Dataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                           GetHeaderValues()                          */
+/*                          GetHeaderValues()                           */
 /************************************************************************/
 
 static void GetHeaderValues(const GDALOpenInfo *poOpenInfo, double &dfSWLat,

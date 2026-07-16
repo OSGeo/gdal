@@ -141,7 +141,7 @@ double CPLAtofM(const char *nptr)
 }
 
 /************************************************************************/
-/*                      CPLReplacePointByLocalePoint()                  */
+/*                    CPLReplacePointByLocalePoint()                    */
 /************************************************************************/
 
 /* Return a newly allocated variable if substitution was done, or NULL
@@ -195,7 +195,7 @@ static char *CPLReplacePointByLocalePoint(const char *pszNumber, char point)
 }
 
 /************************************************************************/
-/*                          CPLStrtodDelim()                            */
+/*                           CPLStrtodDelim()                           */
 /************************************************************************/
 
 /**
@@ -391,7 +391,7 @@ double CPLStrtod(const char *nptr, char **endptr)
 }
 
 /************************************************************************/
-/*                            CPLStrtodM()                              */
+/*                             CPLStrtodM()                             */
 /************************************************************************/
 
 /**
@@ -429,7 +429,7 @@ double CPLStrtodM(const char *nptr, char **endptr)
 }
 
 /************************************************************************/
-/*                          CPLStrtofDelim()                            */
+/*                           CPLStrtofDelim()                           */
 /************************************************************************/
 
 /**

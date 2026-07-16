@@ -43,7 +43,7 @@
 extern void OGRsnPrintDouble(char *pszStrBuf, size_t size, double dfValue);
 
 /************************************************************************/
-/*                         OSRGetEllipsoidInfo()                        */
+/*                        OSRGetEllipsoidInfo()                         */
 /************************************************************************/
 
 /**

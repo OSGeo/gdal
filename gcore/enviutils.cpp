@@ -20,7 +20,7 @@
 #include "rawdataset.h"
 
 /************************************************************************/
-/*                       GDALReadENVIHeader()                           */
+/*                         GDALReadENVIHeader()                         */
 /************************************************************************/
 
 CPLStringList GDALReadENVIHeader(VSILFILE *fpHdr)
@@ -151,7 +151,7 @@ CPLStringList GDALENVISplitList(const char *pszCleanInput)
 }
 
 /************************************************************************/
-/*                       GDALApplyENVIHeaders()                         */
+/*                        GDALApplyENVIHeaders()                        */
 /************************************************************************/
 
 void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,

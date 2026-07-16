@@ -377,13 +377,13 @@ class MRFDataset final : public GDALPamDataset
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     // Stub for delete, GDAL should only overwrite the XML
     static CPLErr Delete(const char *)
@@ -470,11 +470,11 @@ class MRFDataset final : public GDALPamDataset
     CPLXMLNode *ReadConfig() const;
 
     // Apply create options to the current dataset
-    void ProcessCreateOptions(char **papszOptions);
+    void ProcessCreateOptions(CSLConstList papszOptions);
 
     // Called once before the parsing of the XML, should just capture the
     // options in dataset variables
-    void ProcessOpenOptions(char **papszOptions);
+    void ProcessOpenOptions(CSLConstList papszOptions);
 
     // Writes the XML tree as MRF.  It does not check the content
     int WriteConfig(CPLXMLNode *);

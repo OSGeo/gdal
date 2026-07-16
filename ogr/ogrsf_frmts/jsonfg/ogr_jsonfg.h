@@ -28,7 +28,7 @@
 #include <utility>
 
 /************************************************************************/
-/*                         OGRJSONFGMemLayer                            */
+/*                          OGRJSONFGMemLayer                           */
 /************************************************************************/
 
 /** Layer with all features ingested into memory. */
@@ -65,7 +65,7 @@ class OGRJSONFGMemLayer final : public OGRMemLayer
 };
 
 /************************************************************************/
-/*                    OGRJSONFGStreamedLayer                            */
+/*                        OGRJSONFGStreamedLayer                        */
 /************************************************************************/
 
 class OGRJSONFGStreamingParser;
@@ -337,7 +337,7 @@ class OGRJSONFGDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          OGRJSONFGReader                             */
+/*                           OGRJSONFGReader                            */
 /************************************************************************/
 
 class OGRJSONFGReader
@@ -556,7 +556,7 @@ class OGRJSONFGReader
 };
 
 /************************************************************************/
-/*                      OGRJSONFGStreamingParser                        */
+/*                       OGRJSONFGStreamingParser                       */
 /************************************************************************/
 
 /** FeatureCollection streaming parser. */

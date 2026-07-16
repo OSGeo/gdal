@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterZonalStatsAlgorithm                      */
+/*                    GDALRasterZonalStatsAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterZonalStatsAlgorithm /* non final */
@@ -64,7 +64,7 @@ class GDALRasterZonalStatsAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterZonalStatsAlgorithmStandalone              */
+/*               GDALRasterZonalStatsAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterZonalStatsAlgorithmStandalone final

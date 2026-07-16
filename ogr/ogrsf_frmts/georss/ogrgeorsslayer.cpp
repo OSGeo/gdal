@@ -94,7 +94,7 @@ static const char *const apszAllowedATOMFieldNames[] = {"category_term",
      STARTS_WITH(pszName, "geourl:"))
 
 /************************************************************************/
-/*                            OGRGeoRSSLayer()                          */
+/*                           OGRGeoRSSLayer()                           */
 /************************************************************************/
 
 OGRGeoRSSLayer::OGRGeoRSSLayer(const char *pszFilename,
@@ -157,7 +157,7 @@ OGRGeoRSSLayer::OGRGeoRSSLayer(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            ~OGRGeoRSSLayer()                            */
+/*                          ~OGRGeoRSSLayer()                           */
 /************************************************************************/
 
 OGRGeoRSSLayer::~OGRGeoRSSLayer()
@@ -312,7 +312,7 @@ void OGRGeoRSSLayer::AddStrToSubElementValue(const char *pszStr)
 }
 
 /************************************************************************/
-/*              OGRGeoRSS_GetOGRCompatibleTagName()                     */
+/*                 OGRGeoRSS_GetOGRCompatibleTagName()                  */
 /************************************************************************/
 
 /** Replace ':' from XML NS element name by '_' more OGR friendly */
@@ -328,7 +328,7 @@ static char *OGRGeoRSS_GetOGRCompatibleTagName(const char *pszName)
 }
 
 /************************************************************************/
-/*               OGRGeoRSSLayerATOMTagHasSubElement()                   */
+/*                 OGRGeoRSSLayerATOMTagHasSubElement()                 */
 /************************************************************************/
 
 static bool OGRGeoRSSLayerATOMTagHasSubElement(const char *pszName)
@@ -343,7 +343,7 @@ static bool OGRGeoRSSLayerATOMTagHasSubElement(const char *pszName)
 }
 
 /************************************************************************/
-/*                        startElementCbk()                            */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
@@ -582,7 +582,7 @@ void OGRGeoRSSLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 }
 
 /************************************************************************/
-/*            OGRGeoRSSLayerTrimLeadingAndTrailingSpaces()              */
+/*             OGRGeoRSSLayerTrimLeadingAndTrailingSpaces()             */
 /************************************************************************/
 
 static void OGRGeoRSSLayerTrimLeadingAndTrailingSpaces(char *pszStr)
@@ -899,7 +899,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
 }
 
 /************************************************************************/
-/*                          dataHandlerCbk()                            */
+/*                           dataHandlerCbk()                           */
 /************************************************************************/
 
 void OGRGeoRSSLayer::dataHandlerCbk(const char *data, int nLen)
@@ -987,7 +987,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*              OGRGeoRSSLayerIsStandardFieldInternal()                 */
+/*               OGRGeoRSSLayerIsStandardFieldInternal()                */
 /************************************************************************/
 
 static bool OGRGeoRSSLayerIsStandardFieldInternal(const char *pszName,
@@ -1032,7 +1032,7 @@ static bool OGRGeoRSSLayerIsStandardFieldInternal(const char *pszName,
 }
 
 /************************************************************************/
-/*               OGRGeoRSSLayer::IsStandardField()                      */
+/*                  OGRGeoRSSLayer::IsStandardField()                   */
 /************************************************************************/
 
 bool OGRGeoRSSLayer::IsStandardField(const char *pszName)
@@ -1050,7 +1050,7 @@ bool OGRGeoRSSLayer::IsStandardField(const char *pszName)
 }
 
 /************************************************************************/
-/*                 OGRGeoRSSLayerSplitComposedField()                   */
+/*                  OGRGeoRSSLayerSplitComposedField()                  */
 /************************************************************************/
 
 static void OGRGeoRSSLayerSplitComposedField(const char *pszName,
@@ -1098,7 +1098,7 @@ static void OGRGeoRSSLayerSplitComposedField(const char *pszName,
 }
 
 /************************************************************************/
-/*                 OGRGeoRSSLayerWriteSimpleElement()                   */
+/*                  OGRGeoRSSLayerWriteSimpleElement()                  */
 /************************************************************************/
 
 static void OGRGeoRSSLayerWriteSimpleElement(VSILFILE *fp,
@@ -1154,7 +1154,7 @@ static void OGRGeoRSSLayerWriteSimpleElement(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGeoRSSLayer::ICreateFeature(OGRFeature *poFeatureIn)
@@ -1730,7 +1730,7 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data,
 }
 
 /************************************************************************/
-/*                       LoadSchema()                         */
+/*                             LoadSchema()                             */
 /************************************************************************/
 
 /** This function parses the whole file to detect the fields */
@@ -1834,7 +1834,7 @@ void OGRGeoRSSLayer::LoadSchema()
 }
 
 /************************************************************************/
-/*                  startElementLoadSchemaCbk()                         */
+/*                     startElementLoadSchemaCbk()                      */
 /************************************************************************/
 
 void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName,
@@ -2122,7 +2122,7 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName,
 }
 
 /************************************************************************/
-/*                   endElementLoadSchemaCbk()                          */
+/*                      endElementLoadSchemaCbk()                       */
 /************************************************************************/
 
 void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
@@ -2186,7 +2186,7 @@ void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
 }
 
 /************************************************************************/
-/*                   dataHandlerLoadSchemaCbk()                         */
+/*                      dataHandlerLoadSchemaCbk()                      */
 /************************************************************************/
 
 void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)

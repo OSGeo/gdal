@@ -60,7 +60,7 @@ constexpr int mon_lengths[2][MONSPERYEAR] = {
 constexpr int year_lengths[2] = {DAYSPERNYEAR, DAYSPERLYEAR};
 
 /************************************************************************/
-/*                   CPLUnixTimeToYMDHMS()                              */
+/*                        CPLUnixTimeToYMDHMS()                         */
 /************************************************************************/
 
 /** Converts a time value since the Epoch (aka "unix" time) to a broken-down
@@ -146,7 +146,7 @@ struct tm *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
 }
 
 /************************************************************************/
-/*                      CPLYMDHMSToUnixTime()                           */
+/*                        CPLYMDHMSToUnixTime()                         */
 /************************************************************************/
 
 /** Converts a broken-down UTC time into time since the Epoch (aka "unix" time).
@@ -193,7 +193,7 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
 }
 
 /************************************************************************/
-/*                      OGRParseRFC822DateTime()                        */
+/*                       OGRParseRFC822DateTime()                       */
 /************************************************************************/
 
 static const char *const aszWeekDayStr[] = {"Mon", "Tue", "Wed", "Thu",

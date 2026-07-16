@@ -18,7 +18,7 @@
 #include "gdal_adbc.h"
 
 /************************************************************************/
-/*                             IsDuckDB()                               */
+/*                              IsDuckDB()                              */
 /************************************************************************/
 
 bool OGRADBCDriverIsDuckDB(const GDALOpenInfo *poOpenInfo)
@@ -54,7 +54,7 @@ bool OGRADBCDriverIsParquet(const GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                    OGRADBCDriverIdentify()                           */
+/*                       OGRADBCDriverIdentify()                        */
 /************************************************************************/
 
 int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -101,7 +101,7 @@ int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRADBCDriverSetCommonMetadata()                    */
+/*                   OGRADBCDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void OGRADBCDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -166,7 +166,7 @@ void OGRADBCDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRADBCPlugin()                     */
+/*                    DeclareDeferredOGRADBCPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

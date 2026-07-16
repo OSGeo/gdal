@@ -135,7 +135,7 @@ constexpr int EXT_SHAPE_ELLIPSE_MINOR = 0x1000;
 constexpr int EXT_SHAPE_ELLIPSE_COMPLETE = 0x2000;
 
 /************************************************************************/
-/*                  OGRCreateFromMultiPatchPart()                       */
+/*                    OGRCreateFromMultiPatchPart()                     */
 /************************************************************************/
 
 static void OGRCreateFromMultiPatchPart(OGRGeometryCollection *poGC,
@@ -1339,7 +1339,7 @@ id,WKT
 }
 
 /************************************************************************/
-/*                         OGRCreateMultiPatch()                        */
+/*                        OGRCreateMultiPatch()                         */
 /************************************************************************/
 
 OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
@@ -1519,7 +1519,7 @@ OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
 }
 
 /************************************************************************/
-/*                   OGRWriteMultiPatchToShapeBin()                     */
+/*                    OGRWriteMultiPatchToShapeBin()                    */
 /************************************************************************/
 
 OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
@@ -1639,7 +1639,7 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
 }
 
 /************************************************************************/
-/*                           GetAngleOnEllipse()                        */
+/*                         GetAngleOnEllipse()                          */
 /************************************************************************/
 
 // Return the angle in deg [0, 360] of dfArcX,dfArcY regarding the

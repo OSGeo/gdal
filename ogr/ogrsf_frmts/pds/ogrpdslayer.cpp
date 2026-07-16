@@ -22,7 +22,7 @@ namespace OGRPDS
 {
 
 /************************************************************************/
-/*                           OGRPDSLayer()                              */
+/*                            OGRPDSLayer()                             */
 /************************************************************************/
 
 OGRPDSLayer::OGRPDSLayer(const std::string &osTableIDIn,
@@ -96,7 +96,7 @@ OGRPDSLayer::OGRPDSLayer(const std::string &osTableIDIn,
 }
 
 /************************************************************************/
-/*                             ~OGRPDSLayer()                           */
+/*                            ~OGRPDSLayer()                            */
 /************************************************************************/
 
 OGRPDSLayer::~OGRPDSLayer()
@@ -790,7 +790,7 @@ OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                         SetNextByIndex()                             */
+/*                           SetNextByIndex()                           */
 /************************************************************************/
 
 OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)

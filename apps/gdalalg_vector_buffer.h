@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorBufferAlgorithm                         */
+/*                      GDALVectorBufferAlgorithm                       */
 /************************************************************************/
 
 class GDALVectorBufferAlgorithm /* non final */
@@ -52,7 +52,7 @@ class GDALVectorBufferAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                    GDALVectorBufferAlgorithmStandalone               */
+/*                 GDALVectorBufferAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALVectorBufferAlgorithmStandalone final

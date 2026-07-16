@@ -18,7 +18,7 @@
 #include "ogrdwgdrivercore.h"
 
 /************************************************************************/
-/*                         OGRDWGDriverIdentify()                       */
+/*                        OGRDWGDriverIdentify()                        */
 /************************************************************************/
 
 int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -28,7 +28,7 @@ int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRDWGDriverSetCommonMetadata()                   */
+/*                   OGRDWGDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -51,7 +51,7 @@ void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRDWGPlugin()                      */
+/*                    DeclareDeferredOGRDWGPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

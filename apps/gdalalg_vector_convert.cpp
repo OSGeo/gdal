@@ -15,7 +15,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*          GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm()    */
+/*       GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm()       */
 /************************************************************************/
 
 GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
@@ -26,7 +26,7 @@ GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
 }
 
 /************************************************************************/
-/*                  GDALVectorConvertAlgorithm::RunImpl()               */
+/*                GDALVectorConvertAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALVectorConvertAlgorithm::RunStep(GDALPipelineStepRunContext &)

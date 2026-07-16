@@ -34,7 +34,7 @@
 #include "ogrgeojsonreader.h"
 
 /************************************************************************/
-/*                       STATIC MEMBERS DEFINITION                      */
+/*                      STATIC MEMBERS DEFINITION                       */
 /************************************************************************/
 
 const char *const OGRGeoJSONLayer::DefaultName = "OGRGeoJSON";
@@ -58,7 +58,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                          ~OGRGeoJSONLayer                            */
+/*                           ~OGRGeoJSONLayer                           */
 /************************************************************************/
 
 OGRGeoJSONLayer::~OGRGeoJSONLayer()
@@ -68,7 +68,7 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
 }
 
 /************************************************************************/
-/*                      TerminateAppendSession()                        */
+/*                       TerminateAppendSession()                       */
 /************************************************************************/
 
 void OGRGeoJSONLayer::TerminateAppendSession()
@@ -90,7 +90,7 @@ void OGRGeoJSONLayer::TerminateAppendSession()
 }
 
 /************************************************************************/
-/*                           GetFIDColumn                               */
+/*                             GetFIDColumn                             */
 /************************************************************************/
 
 const char *OGRGeoJSONLayer::GetFIDColumn() const
@@ -99,7 +99,7 @@ const char *OGRGeoJSONLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                           SetFIDColumn                               */
+/*                             SetFIDColumn                             */
 /************************************************************************/
 
 void OGRGeoJSONLayer::SetFIDColumn(const char *pszFIDColumn)
@@ -185,7 +185,7 @@ GIntBig OGRGeoJSONLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRGeoJSONLayer::GetFeature(GIntBig nFID)
@@ -229,7 +229,7 @@ bool OGRGeoJSONLayer::IngestAll()
 }
 
 /************************************************************************/
-/*                     SetOrUpdateFeaturePreparation()                  */
+/*                   SetOrUpdateFeaturePreparation()                    */
 /************************************************************************/
 
 bool OGRGeoJSONLayer::SetOrUpdateFeaturePreparation()
@@ -247,7 +247,7 @@ bool OGRGeoJSONLayer::SetOrUpdateFeaturePreparation()
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::ISetFeature(OGRFeature *poFeature)
@@ -258,7 +258,7 @@ OGRErr OGRGeoJSONLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                         IUpdateFeature()                             */
+/*                           IUpdateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::IUpdateFeature(OGRFeature *poFeature,
@@ -276,7 +276,7 @@ OGRErr OGRGeoJSONLayer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                         ICreateFeature()                             */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
@@ -395,7 +395,7 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::DeleteFeature(GIntBig nFID)
@@ -406,7 +406,7 @@ OGRErr OGRGeoJSONLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
@@ -417,7 +417,7 @@ OGRErr OGRGeoJSONLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 }
 
 /************************************************************************/
-/*                          DeleteField()                               */
+/*                            DeleteField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::DeleteField(int iField)
@@ -428,7 +428,7 @@ OGRErr OGRGeoJSONLayer::DeleteField(int iField)
 }
 
 /************************************************************************/
-/*                          ReorderFields()                             */
+/*                           ReorderFields()                            */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::ReorderFields(int *panMap)
@@ -439,7 +439,7 @@ OGRErr OGRGeoJSONLayer::ReorderFields(int *panMap)
 }
 
 /************************************************************************/
-/*                         AlterFieldDefn()                             */
+/*                           AlterFieldDefn()                           */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -451,7 +451,7 @@ OGRErr OGRGeoJSONLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 }
 
 /************************************************************************/
-/*                         CreateGeomField()                            */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
@@ -525,7 +525,7 @@ int OGRGeoJSONLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           SyncToDisk()                               */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::SyncToDisk()
@@ -537,7 +537,7 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 }
 
 /************************************************************************/
-/*                           AddFeature                                 */
+/*                              AddFeature                              */
 /************************************************************************/
 
 void OGRGeoJSONLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
@@ -593,7 +593,7 @@ void OGRGeoJSONLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                           DetectGeometryType                         */
+/*                          DetectGeometryType                          */
 /************************************************************************/
 
 void OGRGeoJSONLayer::DetectGeometryType()

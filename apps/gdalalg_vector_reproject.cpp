@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm()    */
+/*     GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm()     */
 /************************************************************************/
 
 GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
@@ -42,7 +42,7 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*            GDALVectorReprojectAlgorithm::RunStep()                   */
+/*               GDALVectorReprojectAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &)

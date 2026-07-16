@@ -27,7 +27,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                       S100BaseDataset()                              */
+/*                          S100BaseDataset()                           */
 /************************************************************************/
 
 S100BaseDataset::S100BaseDataset(const std::string &osFilename)
@@ -36,7 +36,7 @@ S100BaseDataset::S100BaseDataset(const std::string &osFilename)
 }
 
 /************************************************************************/
-/*                              Init()                                  */
+/*                                Init()                                */
 /************************************************************************/
 
 bool S100BaseDataset::Init()
@@ -83,7 +83,7 @@ CPLErr S100BaseDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *S100BaseDataset::GetSpatialRef() const
@@ -94,7 +94,7 @@ const OGRSpatialReference *S100BaseDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                         GetFileList()                                */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **S100BaseDataset::GetFileList()
@@ -615,7 +615,7 @@ bool S100ReadSRS(const GDALGroup *poRootGroup, OGRSpatialReference &oSRS)
 }
 
 /************************************************************************/
-/*               S100GetNumPointsLongitudinalLatitudinal()              */
+/*              S100GetNumPointsLongitudinalLatitudinal()               */
 /************************************************************************/
 
 bool S100GetNumPointsLongitudinalLatitudinal(const GDALGroup *poGroup,
@@ -742,7 +742,7 @@ bool S100GetGeoTransform(const GDALGroup *poGroup, GDALGeoTransform &gt,
 }
 
 /************************************************************************/
-/*                        S100GetDimensions()                           */
+/*                         S100GetDimensions()                          */
 /************************************************************************/
 
 bool S100GetDimensions(
@@ -799,7 +799,7 @@ bool S100GetDimensions(
 }
 
 /************************************************************************/
-/*                     SetMetadataForDataDynamicity()                   */
+/*                    SetMetadataForDataDynamicity()                    */
 /************************************************************************/
 
 void S100BaseDataset::SetMetadataForDataDynamicity(const GDALAttribute *poAttr)
@@ -857,7 +857,7 @@ void S100BaseDataset::SetMetadataForDataDynamicity(const GDALAttribute *poAttr)
 }
 
 /************************************************************************/
-/*                     SetMetadataForCommonPointRule()                  */
+/*                   SetMetadataForCommonPointRule()                    */
 /************************************************************************/
 
 void S100BaseDataset::SetMetadataForCommonPointRule(const GDALAttribute *poAttr)
@@ -885,7 +885,7 @@ void S100BaseDataset::SetMetadataForCommonPointRule(const GDALAttribute *poAttr)
 }
 
 /************************************************************************/
-/*                    SetMetadataForInterpolationType()                 */
+/*                  SetMetadataForInterpolationType()                   */
 /************************************************************************/
 
 void S100BaseDataset::SetMetadataForInterpolationType(
@@ -929,7 +929,7 @@ void S100BaseDataset::SetMetadataForInterpolationType(
 }
 
 /************************************************************************/
-/*                         gasVerticalDatums                            */
+/*                          gasVerticalDatums                           */
 /************************************************************************/
 
 // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.2.0_Final_Clean.pdf
@@ -1150,7 +1150,7 @@ void S100ReadVerticalDatum(GDALMajorObject *poMO, const GDALGroup *poGroup)
 }
 
 /************************************************************************/
-/*                         S100ReadMetadata()                           */
+/*                          S100ReadMetadata()                          */
 /************************************************************************/
 
 std::string S100ReadMetadata(GDALDataset *poDS, const std::string &osFilename,
@@ -1240,7 +1240,7 @@ S100BaseWriter::S100BaseWriter(const char *pszDestFilename,
 }
 
 /************************************************************************/
-/*                   S100BaseWriter::~S100BaseWriter()                  */
+/*                  S100BaseWriter::~S100BaseWriter()                   */
 /************************************************************************/
 
 S100BaseWriter::~S100BaseWriter()
@@ -1251,7 +1251,7 @@ S100BaseWriter::~S100BaseWriter()
 }
 
 /************************************************************************/
-/*                       S100BaseWriter::BaseClose()                    */
+/*                     S100BaseWriter::BaseClose()                      */
 /************************************************************************/
 
 bool S100BaseWriter::BaseClose()
@@ -1265,7 +1265,7 @@ bool S100BaseWriter::BaseClose()
 }
 
 /************************************************************************/
-/*                      S100BaseWriter::BaseChecks()                    */
+/*                     S100BaseWriter::BaseChecks()                     */
 /************************************************************************/
 
 bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
@@ -1382,7 +1382,7 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
 }
 
 /************************************************************************/
-/*                S100BaseWriter::OpenFileUpdateMode()                  */
+/*                 S100BaseWriter::OpenFileUpdateMode()                 */
 /************************************************************************/
 
 bool S100BaseWriter::OpenFileUpdateMode()
@@ -1402,7 +1402,7 @@ bool S100BaseWriter::OpenFileUpdateMode()
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::CreateFile()                      */
+/*                     S100BaseWriter::CreateFile()                     */
 /************************************************************************/
 
 bool S100BaseWriter::CreateFile()
@@ -1425,7 +1425,7 @@ bool S100BaseWriter::CreateFile()
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteUInt8Value()                 */
+/*                  S100BaseWriter::WriteUInt8Value()                   */
 /************************************************************************/
 
 bool S100BaseWriter::WriteUInt8Value(hid_t hGroup, const char *pszName,
@@ -1436,7 +1436,7 @@ bool S100BaseWriter::WriteUInt8Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteUInt16Value()                */
+/*                  S100BaseWriter::WriteUInt16Value()                  */
 /************************************************************************/
 
 bool S100BaseWriter::WriteUInt16Value(hid_t hGroup, const char *pszName,
@@ -1447,7 +1447,7 @@ bool S100BaseWriter::WriteUInt16Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteUInt32Value()                */
+/*                  S100BaseWriter::WriteUInt32Value()                  */
 /************************************************************************/
 
 bool S100BaseWriter::WriteUInt32Value(hid_t hGroup, const char *pszName,
@@ -1458,7 +1458,7 @@ bool S100BaseWriter::WriteUInt32Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteInt32Value()                 */
+/*                  S100BaseWriter::WriteInt32Value()                   */
 /************************************************************************/
 
 bool S100BaseWriter::WriteInt32Value(hid_t hGroup, const char *pszName,
@@ -1469,7 +1469,7 @@ bool S100BaseWriter::WriteInt32Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteFloat32Value()               */
+/*                 S100BaseWriter::WriteFloat32Value()                  */
 /************************************************************************/
 
 bool S100BaseWriter::WriteFloat32Value(hid_t hGroup, const char *pszName,
@@ -1480,7 +1480,7 @@ bool S100BaseWriter::WriteFloat32Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteFloat64Value()               */
+/*                 S100BaseWriter::WriteFloat64Value()                  */
 /************************************************************************/
 
 bool S100BaseWriter::WriteFloat64Value(hid_t hGroup, const char *pszName,
@@ -1491,7 +1491,7 @@ bool S100BaseWriter::WriteFloat64Value(hid_t hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                 S100BaseWriter::WriteVarLengthStringValue()          */
+/*             S100BaseWriter::WriteVarLengthStringValue()              */
 /************************************************************************/
 
 bool S100BaseWriter::WriteVarLengthStringValue(hid_t hGroup,
@@ -1503,7 +1503,7 @@ bool S100BaseWriter::WriteVarLengthStringValue(hid_t hGroup,
 }
 
 /************************************************************************/
-/*                 S100BaseWriter::WriteFixedLengthStringValue()        */
+/*            S100BaseWriter::WriteFixedLengthStringValue()             */
 /************************************************************************/
 
 bool S100BaseWriter::WriteFixedLengthStringValue(hid_t hGroup,
@@ -1516,7 +1516,7 @@ bool S100BaseWriter::WriteFixedLengthStringValue(hid_t hGroup,
 }
 
 /************************************************************************/
-/*                 S100BaseWriter::WriteProductSpecification()          */
+/*             S100BaseWriter::WriteProductSpecification()              */
 /************************************************************************/
 
 bool S100BaseWriter::WriteProductSpecification(
@@ -1527,7 +1527,7 @@ bool S100BaseWriter::WriteProductSpecification(
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteIssueDate()                  */
+/*                   S100BaseWriter::WriteIssueDate()                   */
 /************************************************************************/
 
 bool S100BaseWriter::WriteIssueDate()
@@ -1562,7 +1562,7 @@ bool S100BaseWriter::WriteIssueDate()
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteIssueTime()                  */
+/*                   S100BaseWriter::WriteIssueTime()                   */
 /************************************************************************/
 
 bool S100BaseWriter::WriteIssueTime(bool bAutogenerateFromCurrent)
@@ -1590,7 +1590,7 @@ bool S100BaseWriter::WriteIssueTime(bool bAutogenerateFromCurrent)
 }
 
 /************************************************************************/
-/*                S100BaseWriter::WriteTopLevelBoundingBox()            */
+/*              S100BaseWriter::WriteTopLevelBoundingBox()              */
 /************************************************************************/
 
 bool S100BaseWriter::WriteTopLevelBoundingBox()
@@ -1611,7 +1611,7 @@ bool S100BaseWriter::WriteTopLevelBoundingBox()
 }
 
 /************************************************************************/
-/*                  S100BaseWriter::WriteHorizontalCRS()                */
+/*                 S100BaseWriter::WriteHorizontalCRS()                 */
 /************************************************************************/
 
 bool S100BaseWriter::WriteHorizontalCRS()
@@ -1895,7 +1895,7 @@ bool S100BaseWriter::WriteHorizontalCRS()
 }
 
 /************************************************************************/
-/*              S100BaseWriter::WriteVerticalCoordinateBase()           */
+/*            S100BaseWriter::WriteVerticalCoordinateBase()             */
 /************************************************************************/
 
 bool S100BaseWriter::WriteVerticalCoordinateBase(int nCode)
@@ -1924,7 +1924,7 @@ bool S100BaseWriter::WriteVerticalCoordinateBase(int nCode)
 }
 
 /************************************************************************/
-/*              S100BaseWriter::WriteVerticalDatumReference()           */
+/*            S100BaseWriter::WriteVerticalDatumReference()             */
 /************************************************************************/
 
 bool S100BaseWriter::WriteVerticalDatumReference(hid_t hGroup, int nCode)
@@ -1979,7 +1979,7 @@ bool S100BaseWriter::CreateGroupF()
 }
 
 /************************************************************************/
-/*                   S100BaseWriter::CreateFeatureGroup()               */
+/*                 S100BaseWriter::CreateFeatureGroup()                 */
 /************************************************************************/
 
 bool S100BaseWriter::CreateFeatureGroup(const char *name)
@@ -2017,7 +2017,7 @@ bool S100BaseWriter::WriteDataCodingFormat(hid_t hGroup, int nCode)
 }
 
 /************************************************************************/
-/*               S100BaseWriter::WriteCommonPointRule()                 */
+/*                S100BaseWriter::WriteCommonPointRule()                */
 /************************************************************************/
 
 bool S100BaseWriter::WriteCommonPointRule(hid_t hGroup, int nCode)
@@ -2042,7 +2042,7 @@ bool S100BaseWriter::WriteCommonPointRule(hid_t hGroup, int nCode)
 }
 
 /************************************************************************/
-/*               S100BaseWriter::WriteDataOffsetCode()                  */
+/*                S100BaseWriter::WriteDataOffsetCode()                 */
 /************************************************************************/
 
 bool S100BaseWriter::WriteDataOffsetCode(hid_t hGroup, int nCode)
@@ -2072,7 +2072,7 @@ bool S100BaseWriter::WriteDataOffsetCode(hid_t hGroup, int nCode)
 }
 
 /************************************************************************/
-/*                    S100BaseWriter::WriteDimension()                  */
+/*                   S100BaseWriter::WriteDimension()                   */
 /************************************************************************/
 
 bool S100BaseWriter::WriteDimension(hid_t hGroup, int nCode)
@@ -2131,7 +2131,7 @@ bool S100BaseWriter::WriteInterpolationType(hid_t hGroup, int nCode)
 }
 
 /************************************************************************/
-/*                  S100BaseWriter::WriteNumInstances()                 */
+/*                 S100BaseWriter::WriteNumInstances()                  */
 /************************************************************************/
 
 bool S100BaseWriter::WriteNumInstances(hid_t hGroup, hid_t hType,
@@ -2142,7 +2142,7 @@ bool S100BaseWriter::WriteNumInstances(hid_t hGroup, hid_t hType,
 }
 
 /************************************************************************/
-/*           S100BaseWriter::WriteSequencingRuleScanDirection()         */
+/*          S100BaseWriter::WriteSequencingRuleScanDirection()          */
 /************************************************************************/
 
 bool S100BaseWriter::WriteSequencingRuleScanDirection(hid_t hGroup,
@@ -2180,7 +2180,7 @@ bool S100BaseWriter::WriteSequencingRuleType(hid_t hGroup, int nCode)
 }
 
 /************************************************************************/
-/*             S100BaseWriter::WriteVerticalUncertainty()               */
+/*              S100BaseWriter::WriteVerticalUncertainty()              */
 /************************************************************************/
 
 bool S100BaseWriter::WriteVerticalUncertainty(hid_t hGroup, float fValue)
@@ -2189,7 +2189,7 @@ bool S100BaseWriter::WriteVerticalUncertainty(hid_t hGroup, float fValue)
 }
 
 /************************************************************************/
-/*     S100BaseWriter::WriteOneDimensionalVarLengthStringArray()        */
+/*      S100BaseWriter::WriteOneDimensionalVarLengthStringArray()       */
 /************************************************************************/
 
 bool S100BaseWriter::WriteOneDimensionalVarLengthStringArray(
@@ -2230,7 +2230,7 @@ bool S100BaseWriter::WriteAxisNames(hid_t hGroup)
 }
 
 /************************************************************************/
-/*            S100BaseWriter::CreateFeatureInstanceGroup()              */
+/*             S100BaseWriter::CreateFeatureInstanceGroup()             */
 /************************************************************************/
 
 bool S100BaseWriter::CreateFeatureInstanceGroup(const char *name)
@@ -2241,7 +2241,7 @@ bool S100BaseWriter::CreateFeatureInstanceGroup(const char *name)
 }
 
 /************************************************************************/
-/*            S100BaseWriter::WriteFIGGridRelatedParameters()           */
+/*           S100BaseWriter::WriteFIGGridRelatedParameters()            */
 /************************************************************************/
 
 bool S100BaseWriter::WriteFIGGridRelatedParameters(hid_t hGroup)
@@ -2273,7 +2273,7 @@ bool S100BaseWriter::WriteFIGGridRelatedParameters(hid_t hGroup)
 }
 
 /************************************************************************/
-/*                   S100BaseWriter::WriteNumGRP()                      */
+/*                    S100BaseWriter::WriteNumGRP()                     */
 /************************************************************************/
 
 bool S100BaseWriter::WriteNumGRP(hid_t hGroup, hid_t hType, int numGRP)
@@ -2283,7 +2283,7 @@ bool S100BaseWriter::WriteNumGRP(hid_t hGroup, hid_t hType, int numGRP)
 }
 
 /************************************************************************/
-/*                S100BaseWriter::CreateValuesGroup()                   */
+/*                 S100BaseWriter::CreateValuesGroup()                  */
 /************************************************************************/
 
 bool S100BaseWriter::CreateValuesGroup(const char *name)
@@ -2294,7 +2294,7 @@ bool S100BaseWriter::CreateValuesGroup(const char *name)
 }
 
 /************************************************************************/
-/*               S100BaseWriter::WriteGroupFDataset()                   */
+/*                 S100BaseWriter::WriteGroupFDataset()                 */
 /************************************************************************/
 
 bool S100BaseWriter::WriteGroupFDataset(

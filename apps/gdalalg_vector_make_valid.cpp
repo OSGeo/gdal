@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*                   GDALVectorMakeValidAlgorithm()                     */
+/*                    GDALVectorMakeValidAlgorithm()                    */
 /************************************************************************/
 
 GDALVectorMakeValidAlgorithm::GDALVectorMakeValidAlgorithm(bool standaloneStep)
@@ -49,7 +49,7 @@ namespace
 {
 
 /************************************************************************/
-/*                    GDALVectorMakeValidAlgorithmLayer                 */
+/*                  GDALVectorMakeValidAlgorithmLayer                   */
 /************************************************************************/
 
 class GDALVectorMakeValidAlgorithmLayer final
@@ -152,7 +152,7 @@ GDALVectorMakeValidAlgorithm::CreateAlgLayer(
 }
 
 /************************************************************************/
-/*                  GDALVectorMakeValidAlgorithm::RunStep()             */
+/*               GDALVectorMakeValidAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorMakeValidAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

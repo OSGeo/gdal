@@ -54,7 +54,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             git make ninja-build cmake unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
-            patchelf \
             rsync
 
 ARG JAVA_VERSION=17

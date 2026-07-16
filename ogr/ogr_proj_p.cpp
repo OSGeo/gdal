@@ -369,7 +369,7 @@ void OSRProjTLSCache::CachePJForWKT(const std::string &wkt, PJ *pj)
 }
 
 /************************************************************************/
-/*                         OSRCleanupTLSContext()                       */
+/*                        OSRCleanupTLSContext()                        */
 /************************************************************************/
 
 void OSRCleanupTLSContext()
@@ -380,7 +380,7 @@ void OSRCleanupTLSContext()
 /*! @endcond */
 
 /************************************************************************/
-/*                        OSRSetPROJSearchPaths()                       */
+/*                       OSRSetPROJSearchPaths()                        */
 /************************************************************************/
 
 /** \brief Set the search path(s) for PROJ resource files.
@@ -400,7 +400,7 @@ void OSRSetPROJSearchPaths(const char *const *papszPaths)
 }
 
 /************************************************************************/
-/*                        OSRGetPROJSearchPaths()                       */
+/*                       OSRGetPROJSearchPaths()                        */
 /************************************************************************/
 
 /** \brief Get the search path(s) for PROJ resource files.
@@ -466,7 +466,7 @@ char **OSRGetPROJAuxDbPaths(void)
 }
 
 /************************************************************************/
-/*                       OSRSetPROJEnableNetwork()                      */
+/*                      OSRSetPROJEnableNetwork()                       */
 /************************************************************************/
 
 /** \brief Enable or disable PROJ networking capabilities.
@@ -495,7 +495,7 @@ void OSRSetPROJEnableNetwork(int enabled)
 }
 
 /************************************************************************/
-/*                        OSRGetPROJEnableNetwork()                     */
+/*                      OSRGetPROJEnableNetwork()                       */
 /************************************************************************/
 
 /** \brief Get whether PROJ networking capabilities are enabled.

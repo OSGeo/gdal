@@ -16,7 +16,7 @@
 #include "ograpispy.h"
 
 /************************************************************************/
-/*                            OGRDataSource()                           */
+/*                           OGRDataSource()                            */
 /************************************************************************/
 
 OGRDataSource::OGRDataSource() = default;
@@ -562,7 +562,7 @@ OGRSFDriverH OGR_DS_GetDriver(OGRDataSourceH hDS)
 }
 
 /************************************************************************/
-/*                         OGR_DS_GetStyleTable()                       */
+/*                        OGR_DS_GetStyleTable()                        */
 /************************************************************************/
 
 OGRStyleTableH OGR_DS_GetStyleTable(OGRDataSourceH hDS)
@@ -575,7 +575,7 @@ OGRStyleTableH OGR_DS_GetStyleTable(OGRDataSourceH hDS)
 }
 
 /************************************************************************/
-/*                         OGR_DS_SetStyleTableDirectly()               */
+/*                    OGR_DS_SetStyleTableDirectly()                    */
 /************************************************************************/
 
 void OGR_DS_SetStyleTableDirectly(OGRDataSourceH hDS,
@@ -589,7 +589,7 @@ void OGR_DS_SetStyleTableDirectly(OGRDataSourceH hDS,
 }
 
 /************************************************************************/
-/*                         OGR_DS_SetStyleTable()                       */
+/*                        OGR_DS_SetStyleTable()                        */
 /************************************************************************/
 
 void OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)

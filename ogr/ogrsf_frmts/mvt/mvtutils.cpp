@@ -14,7 +14,7 @@
 #include "ogr_api.h"
 
 /************************************************************************/
-/*                        OGRMVTInitFields()                            */
+/*                          OGRMVTInitFields()                          */
 /************************************************************************/
 
 void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
@@ -113,7 +113,7 @@ void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
 }
 
 /************************************************************************/
-/*                     OGRMVTFindGeomTypeFromTileStat()                 */
+/*                   OGRMVTFindGeomTypeFromTileStat()                   */
 /************************************************************************/
 
 OGRwkbGeometryType
@@ -157,7 +157,7 @@ OGRMVTFindGeomTypeFromTileStat(const CPLJSONArray &oTileStatLayers,
 }
 
 /************************************************************************/
-/*                     OGRMVTFindAttributesFromTileStat()               */
+/*                  OGRMVTFindAttributesFromTileStat()                  */
 /************************************************************************/
 
 CPLJSONArray
@@ -188,7 +188,7 @@ OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
 }
 
 /************************************************************************/
-/*                     OGRMVTCreateFeatureFrom()                        */
+/*                      OGRMVTCreateFeatureFrom()                       */
 /************************************************************************/
 
 OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,

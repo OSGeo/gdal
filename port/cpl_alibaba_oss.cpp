@@ -48,7 +48,7 @@ static std::string GetSignature(const std::string &osStringToSign,
 }
 
 /************************************************************************/
-/*                         CPLGetOSSHeaders()                           */
+/*                          CPLGetOSSHeaders()                          */
 /************************************************************************/
 
 // See:
@@ -131,7 +131,7 @@ VSIOSSHandleHelper::~VSIOSSHandleHelper()
 }
 
 /************************************************************************/
-/*                           BuildURL()                                 */
+/*                              BuildURL()                              */
 /************************************************************************/
 
 std::string VSIOSSHandleHelper::BuildURL(const std::string &osEndpoint,
@@ -156,7 +156,7 @@ std::string VSIOSSHandleHelper::BuildURL(const std::string &osEndpoint,
 }
 
 /************************************************************************/
-/*                           RebuildURL()                               */
+/*                             RebuildURL()                             */
 /************************************************************************/
 
 void VSIOSSHandleHelper::RebuildURL()
@@ -167,7 +167,7 @@ void VSIOSSHandleHelper::RebuildURL()
 }
 
 /************************************************************************/
-/*                        GetConfiguration()                            */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 bool VSIOSSHandleHelper::GetConfiguration(const std::string &osPathForOption,
@@ -202,7 +202,7 @@ bool VSIOSSHandleHelper::GetConfiguration(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                          BuildFromURI()                              */
+/*                            BuildFromURI()                            */
 /************************************************************************/
 
 VSIOSSHandleHelper *VSIOSSHandleHelper::BuildFromURI(const char *pszURI,
@@ -270,7 +270,7 @@ struct curl_slist *VSIOSSHandleHelper::GetCurlHeaders(
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
@@ -377,7 +377,7 @@ void VSIOSSHandleHelper::SetEndpoint(const std::string &osStr)
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 std::string VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
@@ -436,7 +436,7 @@ std::string VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                         UpdateMapFromHandle()                        */
+/*                        UpdateMapFromHandle()                         */
 /************************************************************************/
 
 std::mutex VSIOSSUpdateParams::gsMutex{};
@@ -454,7 +454,7 @@ void VSIOSSUpdateParams::UpdateMapFromHandle(
 }
 
 /************************************************************************/
-/*                         UpdateHandleFromMap()                        */
+/*                        UpdateHandleFromMap()                         */
 /************************************************************************/
 
 void VSIOSSUpdateParams::UpdateHandleFromMap(
@@ -471,7 +471,7 @@ void VSIOSSUpdateParams::UpdateHandleFromMap(
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIOSSUpdateParams::ClearCache()

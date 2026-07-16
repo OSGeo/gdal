@@ -17,7 +17,7 @@
 #include "ogr_srs_api.h"
 
 /************************************************************************/
-/*                          OGREDIGEOLayer()                            */
+/*                           OGREDIGEOLayer()                           */
 /************************************************************************/
 
 OGREDIGEOLayer::OGREDIGEOLayer(OGREDIGEODataSource *poDSIn, const char *pszName,
@@ -79,7 +79,7 @@ OGRFeature *OGREDIGEOLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGREDIGEOLayer::GetFeature(GIntBig nFID)
@@ -146,7 +146,7 @@ int OGREDIGEOLayer::GetAttributeIndex(const CPLString &osRID)
 }
 
 /************************************************************************/
-/*                           AddFieldDefn()                             */
+/*                            AddFieldDefn()                            */
 /************************************************************************/
 
 void OGREDIGEOLayer::AddFieldDefn(const CPLString &osName, OGRFieldType eType,

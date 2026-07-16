@@ -20,7 +20,7 @@
 #endif
 
 /************************************************************************/
-/*                      GDALVectorSetFieldTypeAlgorithm()               */
+/*                  GDALVectorSetFieldTypeAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
@@ -48,7 +48,7 @@ GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
 }
 
 /************************************************************************/
-/*                     Get_OGR_SCHEMA_OpenOption_Layer()                */
+/*                  Get_OGR_SCHEMA_OpenOption_Layer()                   */
 /************************************************************************/
 
 CPLJSONObject
@@ -81,7 +81,7 @@ GDALVectorSetFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
 }
 
 /************************************************************************/
-/*                            GlobalValidation()                        */
+/*                          GlobalValidation()                          */
 /************************************************************************/
 
 bool GDALVectorSetFieldTypeAlgorithm::GlobalValidation() const
@@ -109,7 +109,7 @@ bool GDALVectorSetFieldTypeAlgorithm::GlobalValidation() const
 }
 
 /************************************************************************/
-/*                     GDALVectorSetFieldTypeAlgorithmLayer             */
+/*                 GDALVectorSetFieldTypeAlgorithmLayer                 */
 /************************************************************************/
 
 namespace

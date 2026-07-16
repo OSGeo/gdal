@@ -29,7 +29,7 @@
 OGRMultiPolygon::OGRMultiPolygon(const OGRMultiPolygon &) = default;
 
 /************************************************************************/
-/*                  operator=( const OGRMultiPolygon&)                    */
+/*                  operator=( const OGRMultiPolygon&)                  */
 /************************************************************************/
 
 /**
@@ -92,7 +92,7 @@ const char *OGRMultiPolygon::getGeometryName() const
 }
 
 /************************************************************************/
-/*                          isCompatibleSubType()                       */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
 OGRBoolean
@@ -151,7 +151,7 @@ std::string OGRMultiPolygon::exportToWkt(const OGRWktOptions &opts,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
@@ -160,7 +160,7 @@ OGRBoolean OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
 }
 
 /************************************************************************/
-/*                          CastToMultiSurface()                        */
+/*                         CastToMultiSurface()                         */
 /************************************************************************/
 
 /**

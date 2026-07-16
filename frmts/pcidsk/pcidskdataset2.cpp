@@ -548,7 +548,7 @@ CPLErr PCIDSK2Band::IReadBlock(int iBlockX, int iBlockY, void *pData)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr PCIDSK2Band::IWriteBlock(int iBlockX, int iBlockY, void *pData)
@@ -688,7 +688,7 @@ CPLErr PCIDSK2Band::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PCIDSK2Band::GetMetadataDomainList()
@@ -789,7 +789,7 @@ CSLConstList PCIDSK2Band::GetMetadata(const char *pszDomain)
 /************************************************************************/
 
 /************************************************************************/
-/*                           PCIDSK2Dataset()                            */
+/*                           PCIDSK2Dataset()                           */
 /************************************************************************/
 
 PCIDSK2Dataset::PCIDSK2Dataset()
@@ -798,7 +798,7 @@ PCIDSK2Dataset::PCIDSK2Dataset()
 }
 
 /************************************************************************/
-/*                            ~PCIDSK2Dataset()                          */
+/*                          ~PCIDSK2Dataset()                           */
 /************************************************************************/
 
 // FIXME? is an exception can really be thrown in the destructor, then it is
@@ -1124,7 +1124,7 @@ CPLErr PCIDSK2Dataset::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PCIDSK2Dataset::GetMetadataDomainList()
@@ -1388,7 +1388,7 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
@@ -1660,7 +1660,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews(
 }
 
 /************************************************************************/
-/*                         PCIDSKTypeToGDAL()                           */
+/*                          PCIDSKTypeToGDAL()                          */
 /************************************************************************/
 
 GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
@@ -1957,7 +1957,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
 
 GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszParamList)
+                                    GDALDataType eType,
+                                    CSLConstList papszParamList)
 
 {
     /* -------------------------------------------------------------------- */
@@ -2094,7 +2095,7 @@ const OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,

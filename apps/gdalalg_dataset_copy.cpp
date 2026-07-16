@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALDatasetCopyRenameCommonAlgorithm()               */
+/*                GDALDatasetCopyRenameCommonAlgorithm()                */
 /************************************************************************/
 
 GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
@@ -65,7 +65,7 @@ GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALDatasetCopyRenameCommonAlgorithm::RunImpl()         */
+/*           GDALDatasetCopyRenameCommonAlgorithm::RunImpl()            */
 /************************************************************************/
 
 bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
@@ -120,7 +120,7 @@ bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*      GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()            */
+/*         GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()         */
 /************************************************************************/
 
 GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()

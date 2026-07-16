@@ -1731,7 +1731,7 @@ static char **CSLAddIfMissing(char **papszList, const char *pszName,
 // CreateCopy implemented based on Create
 GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /*bStrict*/,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -2103,20 +2103,19 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
 // Apply open options to the current dataset
 // Called before the configuration is read
-void MRFDataset::ProcessOpenOptions(char **papszOptions)
+void MRFDataset::ProcessOpenOptions(CSLConstList papszOptions)
 {
-    CPLStringList opt(papszOptions, FALSE);
-    no_errors = opt.FetchBoolean("NOERRORS", FALSE);
-    const char *val = opt.FetchNameValue("ZSLICE");
+    no_errors = CSLFetchBoolean(papszOptions, "NOERRORS", FALSE);
+    const char *val = CSLFetchNameValue(papszOptions, "ZSLICE");
     if (val)
         zslice = atoi(val);
 }
 
 // Apply create options to the current dataset, only valid during creation
-void MRFDataset::ProcessCreateOptions(char **papszOptions)
+void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
 {
     assert(!bCrystalized);
-    CPLStringList opt(papszOptions, FALSE);
+    const CPLStringList opt(papszOptions);
     ILImage &img(full);
 
     const char *val = opt.FetchNameValue("COMPRESS");
@@ -2196,7 +2195,7 @@ void MRFDataset::ProcessCreateOptions(char **papszOptions)
 
 GDALDataset *MRFDataset::Create(const char *pszName, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (nBandsIn == 0)
     {

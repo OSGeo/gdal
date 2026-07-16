@@ -58,7 +58,7 @@ class SRTMHGTDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -130,7 +130,7 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
@@ -182,7 +182,7 @@ double SRTMHGTRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             GetUnitType()                            */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *SRTMHGTRasterBand::GetUnitType()
@@ -213,7 +213,7 @@ GDALColorInterp SRTMHGTRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                            SRTMHGTDataset()                              */
+/*                           SRTMHGTDataset()                           */
 /************************************************************************/
 
 SRTMHGTDataset::SRTMHGTDataset()
@@ -240,7 +240,7 @@ SRTMHGTDataset::SRTMHGTDataset()
 }
 
 /************************************************************************/
-/*                           ~SRTMHGTDataset()                            */
+/*                          ~SRTMHGTDataset()                           */
 /************************************************************************/
 
 SRTMHGTDataset::~SRTMHGTDataset()
@@ -262,7 +262,7 @@ CPLErr SRTMHGTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SRTMHGTDataset::GetSpatialRef() const
@@ -509,12 +509,12 @@ GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int bStrict,
-                                        char ** /* papszOptions*/,
+                                        CSLConstList /* papszOptions*/,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
@@ -691,7 +691,7 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_SRTMHGT()                       */
+/*                        GDALRegister_SRTMHGT()                        */
 /************************************************************************/
 void GDALRegister_SRTMHGT()
 {

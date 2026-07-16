@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()        */
+/*         GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()         */
 /************************************************************************/
 
 GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
@@ -51,7 +51,7 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
 }
 
 /************************************************************************/
-/*          GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()        */
+/*         GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()         */
 /************************************************************************/
 
 GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm(
@@ -62,7 +62,7 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALRasterIndexAlgorithm::AddCommonOptions()            */
+/*             GDALRasterIndexAlgorithm::AddCommonOptions()             */
 /************************************************************************/
 
 void GDALRasterIndexAlgorithm::AddCommonOptions()
@@ -179,7 +179,7 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
 }
 
 /************************************************************************/
-/*                   GDALRasterIndexAlgorithm::RunImpl()                */
+/*                 GDALRasterIndexAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

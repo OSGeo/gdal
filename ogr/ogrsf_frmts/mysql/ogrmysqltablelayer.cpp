@@ -412,7 +412,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRMySQLTableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
@@ -741,7 +741,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                       ICreateFeature()                                */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)

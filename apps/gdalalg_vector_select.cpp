@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm()       */
+/*        GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm()        */
 /************************************************************************/
 
 GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
@@ -48,7 +48,7 @@ namespace
 {
 
 /************************************************************************/
-/*                   GDALVectorSelectAlgorithmLayer                     */
+/*                    GDALVectorSelectAlgorithmLayer                    */
 /************************************************************************/
 
 class GDALVectorSelectAlgorithmLayer final
@@ -283,7 +283,7 @@ class GDALVectorSelectAlgorithmLayer final
 }  // namespace
 
 /************************************************************************/
-/*               GDALVectorSelectAlgorithm::RunStep()                   */
+/*                 GDALVectorSelectAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)

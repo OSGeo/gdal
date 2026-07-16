@@ -66,7 +66,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 }
 
 /************************************************************************/
-/*                           GDALPolygonizeT()                          */
+/*                          GDALPolygonizeT()                           */
 /************************************************************************/
 
 template <class DataType, class EqualityTest>
@@ -436,9 +436,9 @@ bool GDALFloatAlmostEquals(float A, float B, unsigned maxUlps)
     return GDALFloatAlmostEquals<float, uint32_t>(A, B, maxUlps);
 }
 
-/******************************************************************************/
-/*                         GDALDoubleAlmostEquals()                           */
-/******************************************************************************/
+/************************************************************************/
+/*                       GDALDoubleAlmostEquals()                       */
+/************************************************************************/
 
 bool GDALDoubleAlmostEquals(double A, double B, unsigned maxUlps)
 {
@@ -529,7 +529,7 @@ CPLErr CPL_STDCALL GDALPolygonize(GDALRasterBandH hSrcBand,
 }
 
 /************************************************************************/
-/*                           GDALFPolygonize()                           */
+/*                          GDALFPolygonize()                           */
 /************************************************************************/
 
 /**

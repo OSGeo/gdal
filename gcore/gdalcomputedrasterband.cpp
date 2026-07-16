@@ -17,7 +17,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                        GDALComputedDataset                           */
+/*                         GDALComputedDataset                          */
 /************************************************************************/
 
 class GDALComputedDataset final : public GDALDataset
@@ -361,13 +361,13 @@ GDALComputedDataset::GDALComputedDataset(
 }
 
 /************************************************************************/
-/*                       ~GDALComputedDataset()                         */
+/*                        ~GDALComputedDataset()                        */
 /************************************************************************/
 
 GDALComputedDataset::~GDALComputedDataset() = default;
 
 /************************************************************************/
-/*                       HaveAllBandsSameNoDataValue()                  */
+/*                    HaveAllBandsSameNoDataValue()                     */
 /************************************************************************/
 
 static bool HaveAllBandsSameNoDataValue(GDALRasterBand **apoBands,
@@ -464,7 +464,7 @@ void GDALComputedDataset::AddSources(GDALComputedRasterBand *poBand)
 }
 
 /************************************************************************/
-/*                       OperationToFunctionName()                      */
+/*                      OperationToFunctionName()                       */
 /************************************************************************/
 
 /* static */ const char *GDALComputedDataset::OperationToFunctionName(
@@ -767,7 +767,7 @@ GDALComputedRasterBand::~GDALComputedRasterBand()
 }
 
 /************************************************************************/
-/*                  GDALComputedRasterBand::GetNoDataValue()            */
+/*               GDALComputedRasterBand::GetNoDataValue()               */
 /************************************************************************/
 
 double GDALComputedRasterBand::GetNoDataValue(int *pbHasNoData)
@@ -778,7 +778,7 @@ double GDALComputedRasterBand::GetNoDataValue(int *pbHasNoData)
 }
 
 /************************************************************************/
-/*                    GDALComputedRasterBandRelease()                   */
+/*                   GDALComputedRasterBandRelease()                    */
 /************************************************************************/
 
 /** Release a GDALComputedRasterBandH
@@ -791,7 +791,7 @@ void GDALComputedRasterBandRelease(GDALComputedRasterBandH hBand)
 }
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALComputedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -803,7 +803,7 @@ CPLErr GDALComputedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALComputedRasterBand::IRasterIO(

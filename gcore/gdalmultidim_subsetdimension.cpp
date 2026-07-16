@@ -27,7 +27,7 @@ static std::string GetParentName(const std::string &osPath)
 }
 
 /************************************************************************/
-/*                   GDALSubsetGroupSharedResources                     */
+/*                    GDALSubsetGroupSharedResources                    */
 /************************************************************************/
 
 struct GDALSubsetGroupSharedResources
@@ -41,7 +41,7 @@ struct GDALSubsetGroupSharedResources
 };
 
 /************************************************************************/
-/*                          CreateContext()                             */
+/*                           CreateContext()                            */
 /************************************************************************/
 
 static std::string
@@ -290,7 +290,7 @@ GDALSubsetGroup::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             GetDimensions()                          */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -308,7 +308,7 @@ GDALSubsetGroup::GetDimensions(CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -425,7 +425,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                   SubsetDimensionFromSelection()                     */
+/*                    SubsetDimensionFromSelection()                    */
 /************************************************************************/
 
 /** Return a virtual group whose one dimension has been subset according to a

@@ -20,7 +20,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                      Sentinel3_SRAL_MWR_Layer                        */
+/*                       Sentinel3_SRAL_MWR_Layer                       */
 /************************************************************************/
 
 class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
@@ -208,7 +208,7 @@ Sentinel3_SRAL_MWR_Layer::~Sentinel3_SRAL_MWR_Layer()
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList Sentinel3_SRAL_MWR_Layer::GetMetadata(const char *pszDomain)
@@ -219,7 +219,7 @@ CSLConstList Sentinel3_SRAL_MWR_Layer::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *Sentinel3_SRAL_MWR_Layer::GetMetadataItem(const char *pszKey,
@@ -231,7 +231,7 @@ const char *Sentinel3_SRAL_MWR_Layer::GetMetadataItem(const char *pszKey,
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void Sentinel3_SRAL_MWR_Layer::ResetReading()
@@ -264,7 +264,7 @@ int Sentinel3_SRAL_MWR_Layer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        TranslateFeature()                            */
+/*                          TranslateFeature()                          */
 /************************************************************************/
 
 OGRFeature *Sentinel3_SRAL_MWR_Layer::TranslateFeature(size_t nIndex)
@@ -371,7 +371,7 @@ OGRFeature *Sentinel3_SRAL_MWR_Layer::TranslateFeature(size_t nIndex)
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *Sentinel3_SRAL_MWR_Layer::GetNextRawFeature()
@@ -384,7 +384,7 @@ OGRFeature *Sentinel3_SRAL_MWR_Layer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *Sentinel3_SRAL_MWR_Layer::GetFeature(GIntBig nFID)
@@ -416,7 +416,7 @@ OGRFeature *Sentinel3_SRAL_MWR_Layer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                       ProcessSentinel3_SRAL_MWR()                    */
+/*                     ProcessSentinel3_SRAL_MWR()                      */
 /************************************************************************/
 
 void netCDFDataset::ProcessSentinel3_SRAL_MWR()

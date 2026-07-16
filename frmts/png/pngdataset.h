@@ -133,7 +133,7 @@ class PNGDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -177,7 +177,8 @@ class PNGDataset final : public GDALPamDataset
 
     virtual CPLErr SetGeoTransform(double *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType, char **papszParamList);
+                               int nBands, GDALDataType,
+                               CSLConstList papszParamList);
 
   protected:
     CPLErr write_png_header();

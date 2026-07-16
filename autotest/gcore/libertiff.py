@@ -1000,3 +1000,9 @@ def test_libertiff_non_direct_decompression_non_matching_band_list(
     ds = libertiff_open(filename)
     assert ds.ReadRaster(band_list=[1]) == b"\xff\xff"
     assert ds.ReadRaster(band_list=[2, 1]) == b"\x11\x11\xff\xff"
+
+
+def test_libertiff_read_non_standard_tiled_blockysize_one():
+
+    ds = gdal.Open("data/gtiff/non_standard_tiled_blockysize_one.tif")
+    assert ds.ReadRaster() == b"\x01\x01\x01"

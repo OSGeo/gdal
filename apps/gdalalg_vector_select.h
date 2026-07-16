@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorSelectAlgorithm                         */
+/*                      GDALVectorSelectAlgorithm                       */
 /************************************************************************/
 
 class GDALVectorSelectAlgorithm /* non final */

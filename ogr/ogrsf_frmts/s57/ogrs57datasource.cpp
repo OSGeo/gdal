@@ -22,7 +22,7 @@
 /*                          OGRS57DataSource()                          */
 /************************************************************************/
 
-OGRS57DataSource::OGRS57DataSource(char **papszOpenOptionsIn)
+OGRS57DataSource::OGRS57DataSource(CSLConstList papszOpenOptionsIn)
     : nLayers(0), papoLayers(nullptr), poSpatialRef(new OGRSpatialReference()),
       papszOptions(nullptr), nModules(0), papoModules(nullptr),
       poWriter(nullptr), poClassContentExplorer(nullptr), bExtentsSet(false)
@@ -43,7 +43,7 @@ OGRS57DataSource::OGRS57DataSource(char **papszOpenOptionsIn)
         if (papszOptions && *papszOptions)
         {
             CPLDebug("S57", "The following S57 options are being set:");
-            char **papszCurOption = papszOptions;
+            CSLConstList papszCurOption = papszOptions;
             while (*papszCurOption)
                 CPLDebug("S57", "    %s", *papszCurOption++);
         }
@@ -52,7 +52,7 @@ OGRS57DataSource::OGRS57DataSource(char **papszOpenOptionsIn)
     /* -------------------------------------------------------------------- */
     /*      And from open options.                                          */
     /* -------------------------------------------------------------------- */
-    for (char **papszIter = papszOpenOptionsIn; papszIter && *papszIter;
+    for (CSLConstList papszIter = papszOpenOptionsIn; papszIter && *papszIter;
          ++papszIter)
     {
         char *pszKey = nullptr;
@@ -431,7 +431,8 @@ OGRErr OGRS57DataSource::GetDSExtent(OGREnvelope *psExtent, int bForce)
 /*      Create a new S57 file, and represent it as a datasource.        */
 /************************************************************************/
 
-int OGRS57DataSource::Create(const char *pszFilename, char **papszOptionsIn)
+int OGRS57DataSource::Create(const char *pszFilename,
+                             CSLConstList papszOptionsIn)
 {
     /* -------------------------------------------------------------------- */
     /*      Instantiate the class registrar if possible.                    */

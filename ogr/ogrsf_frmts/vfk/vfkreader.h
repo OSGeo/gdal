@@ -49,7 +49,7 @@ enum RecordType
 };
 
 /************************************************************************/
-/*                              VFKProperty                             */
+/*                             VFKProperty                              */
 /************************************************************************/
 class VFKProperty final
 {
@@ -97,7 +97,7 @@ class VFKProperty final
 };
 
 /************************************************************************/
-/*                              IVFKFeature                              */
+/*                             IVFKFeature                              */
 /************************************************************************/
 class IVFKFeature /* non final */
 {
@@ -186,7 +186,7 @@ class VFKFeature final : public IVFKFeature
 };
 
 /************************************************************************/
-/*                              VFKFeatureSQLite                        */
+/*                           VFKFeatureSQLite                           */
 /************************************************************************/
 class VFKFeatureSQLite final : public IVFKFeature
 {
@@ -213,7 +213,7 @@ class VFKFeatureSQLite final : public IVFKFeature
 };
 
 /************************************************************************/
-/*                              VFKPropertyDefn                         */
+/*                           VFKPropertyDefn                            */
 /************************************************************************/
 class VFKPropertyDefn final
 {
@@ -260,7 +260,7 @@ class VFKPropertyDefn final
 };
 
 /************************************************************************/
-/*                              IVFKDataBlock                           */
+/*                            IVFKDataBlock                             */
 /************************************************************************/
 class IVFKDataBlock /* non final */
 {
@@ -355,7 +355,7 @@ class IVFKDataBlock /* non final */
 };
 
 /************************************************************************/
-/*                              VFKDataBlock                            */
+/*                             VFKDataBlock                             */
 /************************************************************************/
 class VFKDataBlock final : public IVFKDataBlock
 {
@@ -389,7 +389,7 @@ class VFKDataBlock final : public IVFKDataBlock
 };
 
 /************************************************************************/
-/*                              VFKDataBlockSQLite                      */
+/*                          VFKDataBlockSQLite                          */
 /************************************************************************/
 class VFKDataBlockSQLite final : public IVFKDataBlock
 {

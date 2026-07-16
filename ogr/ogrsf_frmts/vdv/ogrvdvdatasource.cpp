@@ -36,7 +36,7 @@ typedef enum
 } IDFLayerType;
 
 /************************************************************************/
-/*                          OGRVDVParseAtrFrm()                         */
+/*                         OGRVDVParseAtrFrm()                          */
 /************************************************************************/
 
 static void OGRVDVParseAtrFrm(OGRLayer *poLayer, OGRFeatureDefn *poFeatureDefn,
@@ -127,7 +127,7 @@ static void OGRVDVParseAtrFrm(OGRLayer *poLayer, OGRFeatureDefn *poFeatureDefn,
 }
 
 /************************************************************************/
-/*                           OGRIDFDataSource()                         */
+/*                          OGRIDFDataSource()                          */
 /************************************************************************/
 
 OGRIDFDataSource::OGRIDFDataSource(const char *pszFilename, VSILFILE *fpLIn)
@@ -136,7 +136,7 @@ OGRIDFDataSource::OGRIDFDataSource(const char *pszFilename, VSILFILE *fpLIn)
 }
 
 /************************************************************************/
-/*                          ~OGRIDFDataSource()                         */
+/*                         ~OGRIDFDataSource()                          */
 /************************************************************************/
 
 OGRIDFDataSource::~OGRIDFDataSource()
@@ -158,7 +158,7 @@ OGRIDFDataSource::~OGRIDFDataSource()
 }
 
 /************************************************************************/
-/*                                Parse()                               */
+/*                               Parse()                                */
 /************************************************************************/
 
 std::pair<GDALDataset *, bool> OGRIDFDataSource::Parse() const
@@ -630,7 +630,7 @@ const OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                              TestCapability()                        */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRIDFDataSource::TestCapability(const char *pszCap) const
@@ -646,7 +646,7 @@ int OGRIDFDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           OGRVDVDataSource()                         */
+/*                          OGRVDVDataSource()                          */
 /************************************************************************/
 
 OGRVDVDataSource::OGRVDVDataSource(const char *pszFilename, VSILFILE *fpL,
@@ -660,7 +660,7 @@ OGRVDVDataSource::OGRVDVDataSource(const char *pszFilename, VSILFILE *fpL,
 }
 
 /************************************************************************/
-/*                          ~OGRVDVDataSource()                         */
+/*                         ~OGRVDVDataSource()                          */
 /************************************************************************/
 
 OGRVDVDataSource::~OGRVDVDataSource()
@@ -708,7 +708,7 @@ const OGRLayer *OGRVDVDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                         DetectLayers()                               */
+/*                            DetectLayers()                            */
 /************************************************************************/
 
 void OGRVDVDataSource::DetectLayers() const
@@ -863,7 +863,7 @@ void OGRVDVDataSource::DetectLayers() const
 }
 
 /************************************************************************/
-/*                           OGRVDVLayer()                              */
+/*                            OGRVDVLayer()                             */
 /************************************************************************/
 
 OGRVDVLayer::OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName,
@@ -963,7 +963,7 @@ OGRVDVLayer::OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName,
 }
 
 /************************************************************************/
-/*                          ~OGRVDVLayer()                              */
+/*                            ~OGRVDVLayer()                            */
 /************************************************************************/
 
 OGRVDVLayer::~OGRVDVLayer()
@@ -974,7 +974,7 @@ OGRVDVLayer::~OGRVDVLayer()
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRVDVLayer::ResetReading()
@@ -986,7 +986,7 @@ void OGRVDVLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         OGRVDVUnescapeString()                       */
+/*                        OGRVDVUnescapeString()                        */
 /************************************************************************/
 
 static CPLString OGRVDVUnescapeString(const char *pszValue)
@@ -1008,7 +1008,7 @@ static CPLString OGRVDVUnescapeString(const char *pszValue)
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRVDVLayer::GetNextFeature()
@@ -1126,7 +1126,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRVDVLayer::TestCapability(const char *pszCap) const
@@ -1294,7 +1294,7 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         OGRVDVWriterLayer                            */
+/*                          OGRVDVWriterLayer                           */
 /************************************************************************/
 
 OGRVDVWriterLayer::OGRVDVWriterLayer(OGRVDVDataSource *poDS,
@@ -1314,7 +1314,7 @@ OGRVDVWriterLayer::OGRVDVWriterLayer(OGRVDVDataSource *poDS,
 }
 
 /************************************************************************/
-/*                        ~OGRVDVWriterLayer                            */
+/*                          ~OGRVDVWriterLayer                          */
 /************************************************************************/
 
 OGRVDVWriterLayer::~OGRVDVWriterLayer()
@@ -1330,7 +1330,7 @@ OGRVDVWriterLayer::~OGRVDVWriterLayer()
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRVDVWriterLayer::ResetReading()
@@ -1338,7 +1338,7 @@ void OGRVDVWriterLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRVDVWriterLayer::GetNextFeature()
@@ -1366,7 +1366,7 @@ static CPLString OGRVDVEscapeString(const char *pszValue)
 }
 
 /************************************************************************/
-/*                          WriteSchemaIfNeeded()                       */
+/*                        WriteSchemaIfNeeded()                         */
 /************************************************************************/
 
 bool OGRVDVWriterLayer::WriteSchemaIfNeeded()
@@ -1438,7 +1438,7 @@ bool OGRVDVWriterLayer::WriteSchemaIfNeeded()
 }
 
 /************************************************************************/
-/*                         ICreateFeature()                             */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature *poFeature)
@@ -1530,7 +1530,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRVDVWriterLayer::GetFeatureCount(int)
@@ -1539,7 +1539,7 @@ GIntBig OGRVDVWriterLayer::GetFeatureCount(int)
 }
 
 /************************************************************************/
-/*                          CreateField()                               */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
@@ -1600,7 +1600,7 @@ OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRVDVWriterLayer::TestCapability(const char *pszCap) const
@@ -1724,7 +1724,7 @@ static bool OGRVDVWriteHeader(VSILFILE *fpL, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                      OGRVDVLoadVDV452Tables()                        */
+/*                       OGRVDVLoadVDV452Tables()                       */
 /************************************************************************/
 
 static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
@@ -1797,7 +1797,7 @@ static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -2046,13 +2046,13 @@ int OGRVDVDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                                 Create()                             */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *OGRVDVDataSource::Create(const char *pszName, int /*nXSize*/,
                                       int /*nYSize*/, int /*nBands*/,
                                       GDALDataType /*eType*/,
-                                      char **papszOptions)
+                                      CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -2096,7 +2096,7 @@ GDALDataset *OGRVDVDataSource::Create(const char *pszName, int /*nXSize*/,
 }
 
 /************************************************************************/
-/*                         RegisterOGRVDV()                             */
+/*                           RegisterOGRVDV()                           */
 /************************************************************************/
 
 void RegisterOGRVDV()

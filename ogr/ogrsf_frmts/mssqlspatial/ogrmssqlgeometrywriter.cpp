@@ -89,7 +89,7 @@ SegmentType (1 byte)
 */
 
 /************************************************************************/
-/*                         Geometry writer macros                       */
+/*                        Geometry writer macros                        */
 /************************************************************************/
 
 #define WriteInt32(nPos, value)                                                \
@@ -117,7 +117,7 @@ SegmentType (1 byte)
     (WriteDouble(nPointPos + 24 * nNumPoints + 8 * (iPoint), value))
 
 /************************************************************************/
-/*                   OGRMSSQLGeometryWriter()                           */
+/*                       OGRMSSQLGeometryWriter()                       */
 /************************************************************************/
 
 OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry,
@@ -188,7 +188,7 @@ OGRMSSQLGeometryWriter::OGRMSSQLGeometryWriter(OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                         WritePoint()                                 */
+/*                             WritePoint()                             */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WritePoint(OGRPoint *poGeom)
@@ -233,7 +233,7 @@ void OGRMSSQLGeometryWriter::WritePoint(double x, double y, double z, double m)
 }
 
 /************************************************************************/
-/*                         WriteSimpleCurve()                           */
+/*                          WriteSimpleCurve()                          */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WriteSimpleCurve(OGRSimpleCurve *poGeom,
@@ -331,7 +331,7 @@ void OGRMSSQLGeometryWriter::WriteCompoundCurve(OGRCompoundCurve *poGeom)
 }
 
 /************************************************************************/
-/*                         WriteCurve()                                 */
+/*                             WriteCurve()                             */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WriteCurve(OGRCurve *poGeom, bool bReversePoints)
@@ -364,7 +364,7 @@ void OGRMSSQLGeometryWriter::WriteCurve(OGRCurve *poGeom, bool bReversePoints)
 }
 
 /************************************************************************/
-/*                         WritePolygon()                               */
+/*                            WritePolygon()                            */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WritePolygon(OGRPolygon *poGeom)
@@ -422,7 +422,7 @@ void OGRMSSQLGeometryWriter::WriteCurvePolygon(OGRCurvePolygon *poGeom)
 }
 
 /************************************************************************/
-/*                         WriteGeometryCollection()                    */
+/*                      WriteGeometryCollection()                       */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WriteGeometryCollection(
@@ -433,7 +433,7 @@ void OGRMSSQLGeometryWriter::WriteGeometryCollection(
 }
 
 /************************************************************************/
-/*                         WriteGeometry()                              */
+/*                           WriteGeometry()                            */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry *poGeom, int iParent)
@@ -537,7 +537,7 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry *poGeom, int iParent)
 }
 
 /************************************************************************/
-/*                         TrackGeometry()                              */
+/*                           TrackGeometry()                            */
 /************************************************************************/
 
 void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry *poGeom)
@@ -652,7 +652,7 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                         WriteSqlGeometry()                           */
+/*                          WriteSqlGeometry()                          */
 /************************************************************************/
 
 OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char *pszBuffer,

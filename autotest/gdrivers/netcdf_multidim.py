@@ -4087,6 +4087,7 @@ def test_netcdf_multidim_as_classic_dataset_overview(tmp_path):
         ar = rg.OpenMDArray("Band1")
         classic_ds = ar.AsClassicDataset(1, 0)
         assert classic_ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert classic_ds.GetRasterBand(1).GetOverview(0) is not None
 
     test()
     test2()

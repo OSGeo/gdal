@@ -21,7 +21,7 @@
 using namespace std;
 
 /************************************************************************/
-/*                         OGRILI2DataSource()                         */
+/*                         OGRILI2DataSource()                          */
 /************************************************************************/
 
 OGRILI2DataSource::OGRILI2DataSource()
@@ -31,7 +31,7 @@ OGRILI2DataSource::OGRILI2DataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRILI2DataSource()                         */
+/*                         ~OGRILI2DataSource()                         */
 /************************************************************************/
 
 OGRILI2DataSource::~OGRILI2DataSource()

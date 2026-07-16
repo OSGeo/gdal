@@ -95,7 +95,7 @@ GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
 GDALVectorPipelineStepAlgorithm::~GDALVectorPipelineStepAlgorithm() = default;
 
 /************************************************************************/
-/*        GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()    */
+/*      GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()      */
 /************************************************************************/
 
 GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
@@ -120,7 +120,7 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
 }
 
 /************************************************************************/
-/*       GDALVectorPipelineAlgorithm::RegisterAlgorithms()              */
+/*          GDALVectorPipelineAlgorithm::RegisterAlgorithms()           */
 /************************************************************************/
 
 /* static */
@@ -304,11 +304,11 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
 }
 
 /************************************************************************/
-/*                  GDALVectorPipelineOutputLayer                       */
+/*                    GDALVectorPipelineOutputLayer                     */
 /************************************************************************/
 
 /************************************************************************/
-/*                  GDALVectorPipelineOutputLayer()                     */
+/*                   GDALVectorPipelineOutputLayer()                    */
 /************************************************************************/
 
 GDALVectorPipelineOutputLayer::GDALVectorPipelineOutputLayer(OGRLayer &srcLayer)
@@ -317,13 +317,13 @@ GDALVectorPipelineOutputLayer::GDALVectorPipelineOutputLayer(OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*                 ~GDALVectorPipelineOutputLayer()                     */
+/*                   ~GDALVectorPipelineOutputLayer()                   */
 /************************************************************************/
 
 GDALVectorPipelineOutputLayer::~GDALVectorPipelineOutputLayer() = default;
 
 /************************************************************************/
-/*             GDALVectorPipelineOutputLayer::ResetReading()            */
+/*            GDALVectorPipelineOutputLayer::ResetReading()             */
 /************************************************************************/
 
 void GDALVectorPipelineOutputLayer::ResetReading()
@@ -334,7 +334,7 @@ void GDALVectorPipelineOutputLayer::ResetReading()
 }
 
 /************************************************************************/
-/*           GDALVectorPipelineOutputLayer::GetNextRawFeature()         */
+/*          GDALVectorPipelineOutputLayer::GetNextRawFeature()          */
 /************************************************************************/
 
 OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
@@ -368,7 +368,7 @@ OGRFeature *GDALVectorPipelineOutputLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                         GDALVectorOutputDataset                      */
+/*                       GDALVectorOutputDataset                        */
 /************************************************************************/
 
 int GDALVectorOutputDataset::TestCapability(const char *) const
@@ -377,11 +377,11 @@ int GDALVectorOutputDataset::TestCapability(const char *) const
 }
 
 /************************************************************************/
-/*                 GDALVectorPipelineOutputDataset                      */
+/*                   GDALVectorPipelineOutputDataset                    */
 /************************************************************************/
 
 /************************************************************************/
-/*                 GDALVectorPipelineOutputDataset()                    */
+/*                  GDALVectorPipelineOutputDataset()                   */
 /************************************************************************/
 
 GDALVectorPipelineOutputDataset::GDALVectorPipelineOutputDataset(
@@ -393,7 +393,7 @@ GDALVectorPipelineOutputDataset::GDALVectorPipelineOutputDataset(
 }
 
 /************************************************************************/
-/*            GDALVectorPipelineOutputDataset::AddLayer()               */
+/*             GDALVectorPipelineOutputDataset::AddLayer()              */
 /************************************************************************/
 
 void GDALVectorPipelineOutputDataset::AddLayer(
@@ -408,7 +408,7 @@ void GDALVectorPipelineOutputDataset::AddLayer(
 }
 
 /************************************************************************/
-/*          GDALVectorPipelineOutputDataset::GetLayerCount()            */
+/*           GDALVectorPipelineOutputDataset::GetLayerCount()           */
 /************************************************************************/
 
 int GDALVectorPipelineOutputDataset::GetLayerCount() const
@@ -426,7 +426,7 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*           GDALVectorPipelineOutputDataset::TestCapability()          */
+/*          GDALVectorPipelineOutputDataset::TestCapability()           */
 /************************************************************************/
 
 int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap) const
@@ -440,7 +440,7 @@ int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*             GDALVectorPipelineOutputDataset::ResetReading()          */
+/*           GDALVectorPipelineOutputDataset::ResetReading()            */
 /************************************************************************/
 
 void GDALVectorPipelineOutputDataset::ResetReading()
@@ -451,7 +451,7 @@ void GDALVectorPipelineOutputDataset::ResetReading()
 }
 
 /************************************************************************/
-/*            GDALVectorPipelineOutputDataset::GetNextFeature()         */
+/*          GDALVectorPipelineOutputDataset::GetNextFeature()           */
 /************************************************************************/
 
 OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
@@ -497,7 +497,7 @@ OGRFeature *GDALVectorPipelineOutputDataset::GetNextFeature(
 }
 
 /************************************************************************/
-/*            GDALVectorPipelinePassthroughLayer::GetLayerDefn()        */
+/*          GDALVectorPipelinePassthroughLayer::GetLayerDefn()          */
 /************************************************************************/
 
 const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
@@ -506,7 +506,7 @@ const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                 GDALVectorNonStreamingAlgorithmDataset()             */
+/*               GDALVectorNonStreamingAlgorithmDataset()               */
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmDataset::GDALVectorNonStreamingAlgorithmDataset()
@@ -514,14 +514,14 @@ GDALVectorNonStreamingAlgorithmDataset::GDALVectorNonStreamingAlgorithmDataset()
 }
 
 /************************************************************************/
-/*                ~GDALVectorNonStreamingAlgorithmDataset()             */
+/*              ~GDALVectorNonStreamingAlgorithmDataset()               */
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmDataset::
     ~GDALVectorNonStreamingAlgorithmDataset() = default;
 
 /************************************************************************/
-/*    GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer()       */
+/*     GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer()      */
 /************************************************************************/
 
 bool GDALVectorNonStreamingAlgorithmDataset::AddProcessedLayer(
@@ -561,7 +561,7 @@ int GDALVectorNonStreamingAlgorithmDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*       GDALVectorNonStreamingAlgorithmDataset::GetLayer()             */
+/*          GDALVectorNonStreamingAlgorithmDataset::GetLayer()          */
 /************************************************************************/
 
 OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
@@ -574,7 +574,7 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*    GDALVectorNonStreamingAlgorithmDataset::TestCapability()          */
+/*       GDALVectorNonStreamingAlgorithmDataset::TestCapability()       */
 /************************************************************************/
 
 int GDALVectorNonStreamingAlgorithmDataset::TestCapability(const char *) const
@@ -629,7 +629,7 @@ void GDALVectorAlgorithmLayerProgressHelper::AddProcessedLayer(
 }
 
 /************************************************************************/
-/*     GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer()    */
+/*    GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer()     */
 /************************************************************************/
 
 void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
@@ -639,7 +639,7 @@ void GDALVectorAlgorithmLayerProgressHelper::AddPassThroughLayer(
 }
 
 /************************************************************************/
-/*                  GDALVectorNonStreamingAlgorithmLayer()              */
+/*                GDALVectorNonStreamingAlgorithmLayer()                */
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmLayer::GDALVectorNonStreamingAlgorithmLayer(
@@ -649,14 +649,14 @@ GDALVectorNonStreamingAlgorithmLayer::GDALVectorNonStreamingAlgorithmLayer(
 }
 
 /************************************************************************/
-/*                 ~GDALVectorNonStreamingAlgorithmLayer()              */
+/*               ~GDALVectorNonStreamingAlgorithmLayer()                */
 /************************************************************************/
 
 GDALVectorNonStreamingAlgorithmLayer::~GDALVectorNonStreamingAlgorithmLayer() =
     default;
 
 /************************************************************************/
-/*        GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()     */
+/*      GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()       */
 /************************************************************************/
 
 OGRFeature *GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()
@@ -665,7 +665,7 @@ OGRFeature *GDALVectorNonStreamingAlgorithmLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*     GDALVectorAlgorithmLayerProgressHelper::iterator::operator*()    */
+/*    GDALVectorAlgorithmLayerProgressHelper::iterator::operator*()     */
 /************************************************************************/
 
 GDALVectorAlgorithmLayerProgressHelper::iterator::value_type

@@ -46,7 +46,7 @@ class GDALVectorEditAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorEditAlgorithmStandalone                  */
+/*                  GDALVectorEditAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorEditAlgorithmStandalone final : public GDALVectorEditAlgorithm

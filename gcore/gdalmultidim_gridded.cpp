@@ -24,7 +24,7 @@
 #include <new>
 
 /************************************************************************/
-/*                         GDALMDArrayGridded                           */
+/*                          GDALMDArrayGridded                          */
 /************************************************************************/
 
 class GDALMDArrayGridded final : public GDALPamMDArray
@@ -157,7 +157,7 @@ class GDALMDArrayGridded final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
@@ -363,7 +363,7 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                            GetGridded()                              */
+/*                             GetGridded()                             */
 /************************************************************************/
 
 /** Return a gridded array from scattered point data, that is from an array

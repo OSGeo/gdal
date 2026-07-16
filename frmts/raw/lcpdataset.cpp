@@ -61,7 +61,7 @@ class LCPDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -72,7 +72,7 @@ class LCPDataset final : public RawDataset
 };
 
 /************************************************************************/
-/*                            LCPDataset()                              */
+/*                             LCPDataset()                             */
 /************************************************************************/
 
 LCPDataset::LCPDataset() : fpImage(nullptr)
@@ -91,7 +91,7 @@ LCPDataset::~LCPDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr LCPDataset::Close(GDALProgressFunc, void *)
@@ -871,12 +871,12 @@ CPLErr LCPDataset::ClassifyBandData(GDALRasterBand *poBand, GInt32 &nNumClasses,
 }
 
 /************************************************************************/
-/*                          CreateCopy()                                */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -1631,7 +1631,7 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_LCP()                           */
+/*                          GDALRegister_LCP()                          */
 /************************************************************************/
 
 void GDALRegister_LCP()

@@ -156,7 +156,7 @@ bool HDF5EOSParser::Parse(hid_t hRoot)
 }
 
 /************************************************************************/
-/*                     GetGTCPProjectionCode()                          */
+/*                       GetGTCPProjectionCode()                        */
 /************************************************************************/
 
 static int GetGTCPProjectionCode(const std::string &osProjection)
@@ -187,7 +187,7 @@ static int GetGTCPProjectionCode(const std::string &osProjection)
 }
 
 /************************************************************************/
-/*                        ParseGridStructure()                          */
+/*                         ParseGridStructure()                         */
 /************************************************************************/
 
 void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
@@ -334,7 +334,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
 }
 
 /************************************************************************/
-/*                        GetGridMetadata()                             */
+/*                          GetGridMetadata()                           */
 /************************************************************************/
 
 bool HDF5EOSParser::GetGridMetadata(const std::string &osGridName,
@@ -348,7 +348,7 @@ bool HDF5EOSParser::GetGridMetadata(const std::string &osGridName,
 }
 
 /************************************************************************/
-/*                     GetGridDataFieldMetadata()                       */
+/*                      GetGridDataFieldMetadata()                      */
 /************************************************************************/
 
 bool HDF5EOSParser::GetGridDataFieldMetadata(
@@ -688,7 +688,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 }
 
 /************************************************************************/
-/*                        GetSwathMetadata()                            */
+/*                          GetSwathMetadata()                          */
 /************************************************************************/
 
 bool HDF5EOSParser::GetSwathMetadata(const std::string &osSwathName,
@@ -702,7 +702,7 @@ bool HDF5EOSParser::GetSwathMetadata(const std::string &osSwathName,
 }
 
 /************************************************************************/
-/*                        GetSwathFieldMetadata()                       */
+/*                       GetSwathFieldMetadata()                        */
 /************************************************************************/
 
 bool HDF5EOSParser::GetSwathFieldMetadata(
@@ -718,7 +718,7 @@ bool HDF5EOSParser::GetSwathFieldMetadata(
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
@@ -770,7 +770,7 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                              GetSRS()                                */
+/*                               GetSRS()                               */
 /************************************************************************/
 
 std::unique_ptr<OGRSpatialReference> HDF5EOSParser::GridMetadata::GetSRS() const

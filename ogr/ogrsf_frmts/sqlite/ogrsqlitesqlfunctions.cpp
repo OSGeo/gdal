@@ -34,7 +34,7 @@
 #include "ogrsqlitesqlfunctionscommon.cpp"
 
 /************************************************************************/
-/*                        OGR2SQLITE_ogr_version()                      */
+/*                       OGR2SQLITE_ogr_version()                       */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_version(sqlite3_context *pContext, int argc,
@@ -55,7 +55,7 @@ static void OGR2SQLITE_ogr_version(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                          OGR2SQLITE_Transform()                      */
+/*                        OGR2SQLITE_Transform()                        */
 /************************************************************************/
 
 static void OGR2SQLITE_Transform(sqlite3_context *pContext, int argc,
@@ -206,7 +206,7 @@ static void OGR2SQLITE_ogr_inflate(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                     OGR2SQLITE_ogr_geocode_set_result()              */
+/*                 OGR2SQLITE_ogr_geocode_set_result()                  */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context *pContext,
@@ -328,7 +328,7 @@ static void OGR2SQLITE_ogr_geocode(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                    OGR2SQLITE_GetValAsDouble()                       */
+/*                     OGR2SQLITE_GetValAsDouble()                      */
 /************************************************************************/
 
 static double OGR2SQLITE_GetValAsDouble(sqlite3_value *val, int *pbGotVal)
@@ -353,7 +353,7 @@ static double OGR2SQLITE_GetValAsDouble(sqlite3_value *val, int *pbGotVal)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_GetGeom()                            */
+/*                         OGR2SQLITE_GetGeom()                         */
 /************************************************************************/
 
 static std::unique_ptr<OGRGeometry>
@@ -550,7 +550,7 @@ static void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context *pContext,
 
 #ifdef notdef
 /************************************************************************/
-/*                  OGR2SQLITE_ogr_GetConfigOption()                    */
+/*                   OGR2SQLITE_ogr_GetConfigOption()                   */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context *pContext, int argc,
@@ -572,7 +572,7 @@ static void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                  OGR2SQLITE_ogr_SetConfigOption()                    */
+/*                   OGR2SQLITE_ogr_SetConfigOption()                   */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_SetConfigOption(sqlite3_context *pContext, int argc,
@@ -602,7 +602,7 @@ static void OGR2SQLITE_ogr_SetConfigOption(sqlite3_context *pContext, int argc,
 #endif  // notdef
 
 /************************************************************************/
-/*                OGR2SQLITE_SetGeom_AndDestroy()                       */
+/*                   OGR2SQLITE_SetGeom_AndDestroy()                    */
 /************************************************************************/
 
 static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context *pContext,
@@ -669,7 +669,7 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                     OGR2SQLITE_ST_GeodesicLength()                   */
+/*                    OGR2SQLITE_ST_GeodesicLength()                    */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_GeodesicLength(sqlite3_context *pContext, int argc,
@@ -717,7 +717,7 @@ static void OGR2SQLITE_ST_GeodesicLength(sqlite3_context *pContext, int argc,
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
 /************************************************************************/
-/*                     OGR2SQLITE_ST_AsText()                           */
+/*                        OGR2SQLITE_ST_AsText()                        */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_AsText(sqlite3_context *pContext, int argc,
@@ -737,7 +737,7 @@ static void OGR2SQLITE_ST_AsText(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                    OGR2SQLITE_ST_AsBinary()                          */
+/*                       OGR2SQLITE_ST_AsBinary()                       */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_AsBinary(sqlite3_context *pContext, int argc,
@@ -773,7 +773,7 @@ static void OGR2SQLITE_ST_AsBinary(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                   OGR2SQLITE_ST_GeomFromText()                       */
+/*                     OGR2SQLITE_ST_GeomFromText()                     */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_GeomFromText(sqlite3_context *pContext, int argc,
@@ -802,7 +802,7 @@ static void OGR2SQLITE_ST_GeomFromText(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                   OGR2SQLITE_ST_GeomFromWKB()                        */
+/*                     OGR2SQLITE_ST_GeomFromWKB()                      */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_GeomFromWKB(sqlite3_context *pContext, int argc,
@@ -833,7 +833,7 @@ static void OGR2SQLITE_ST_GeomFromWKB(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                         CheckSTFunctions()                           */
+/*                          CheckSTFunctions()                          */
 /************************************************************************/
 
 static bool CheckSTFunctions(sqlite3_context *pContext, int argc,
@@ -853,7 +853,7 @@ static bool CheckSTFunctions(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                 OGR2SQLITE_ST_int_geomgeom_op()                      */
+/*                   OGR2SQLITE_ST_int_geomgeom_op()                    */
 /************************************************************************/
 
 #define OGR2SQLITE_ST_int_geomgeom_op(op)                                      \
@@ -884,7 +884,7 @@ OGR2SQLITE_ST_int_geomgeom_op(Overlaps)
 // clang-format on
 
 /************************************************************************/
-/*                   OGR2SQLITE_ST_int_geom_op()                        */
+/*                     OGR2SQLITE_ST_int_geom_op()                      */
 /************************************************************************/
 
 #define OGR2SQLITE_ST_int_geom_op(op)                                          \
@@ -905,7 +905,7 @@ OGR2SQLITE_ST_int_geom_op(IsValid)
 // clang-format on
 
 /************************************************************************/
-/*                  OGR2SQLITE_ST_geom_geomgeom_op()                    */
+/*                   OGR2SQLITE_ST_geom_geomgeom_op()                   */
 /************************************************************************/
 
 #define OGR2SQLITE_ST_geom_geomgeom_op(op)                                     \
@@ -953,7 +953,7 @@ OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_ST_Area()                            */
+/*                         OGR2SQLITE_ST_Area()                         */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
@@ -972,7 +972,7 @@ static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_ST_Length()                          */
+/*                        OGR2SQLITE_ST_Length()                        */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Length(sqlite3_context *pContext, int argc,
@@ -991,7 +991,7 @@ static void OGR2SQLITE_ST_Length(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                     OGR2SQLITE_ST_Buffer()                           */
+/*                        OGR2SQLITE_ST_Buffer()                        */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Buffer(sqlite3_context *pContext, int argc,
@@ -1008,7 +1008,7 @@ static void OGR2SQLITE_ST_Buffer(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                    OGR2SQLITE_ST_MakePoint()                         */
+/*                      OGR2SQLITE_ST_MakePoint()                       */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_MakePoint(sqlite3_context *pContext, int argc,
@@ -1048,7 +1048,7 @@ static void OGR2SQLITE_ST_MakePoint(sqlite3_context *pContext, int argc,
 #endif  // #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
 /************************************************************************/
-/*                    OGR2SQLITE_ST_MakeValid()                         */
+/*                      OGR2SQLITE_ST_MakeValid()                       */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_MakeValid(sqlite3_context *pContext, int argc,

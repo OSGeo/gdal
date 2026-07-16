@@ -359,7 +359,8 @@ def get_schema_multidim_dataset_creationoptionslist_xml():
       <xs:sequence>
         <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="optional"/>
+      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute type="xs:string" name="alias" use="optional"/>
       <xs:attribute type="xs:string" name="type" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>

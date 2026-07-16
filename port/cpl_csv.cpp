@@ -55,7 +55,7 @@ static void CSVDeaccessInternal(CSVTable **ppsCSVTableList, bool bCanUseTLS,
                                 const char *pszFilename);
 
 /************************************************************************/
-/*                            CSVFreeTLS()                              */
+/*                             CSVFreeTLS()                             */
 /************************************************************************/
 static void CSVFreeTLS(void *pData)
 {
@@ -507,7 +507,7 @@ static void CSVIngest(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                        CSVDetectSeperator()                          */
+/*                         CSVDetectSeperator()                         */
 /************************************************************************/
 
 /** Detect which field separator is used.
@@ -783,7 +783,7 @@ char **CSVReadParseLine2L(VSILFILE *fp, char chDelimiter)
 }
 
 /************************************************************************/
-/*                      ReadLineLargeFile()                             */
+/*                         ReadLineLargeFile()                          */
 /************************************************************************/
 
 static const char *ReadLineLargeFile(void *fp, size_t nMaxLineSize)

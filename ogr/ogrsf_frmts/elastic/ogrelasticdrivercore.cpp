@@ -18,7 +18,7 @@
 #include "ogrelasticdrivercore.h"
 
 /************************************************************************/
-/*                  OGRElasticsearchDriverIdentify()                    */
+/*                   OGRElasticsearchDriverIdentify()                   */
 /************************************************************************/
 
 int OGRElasticsearchDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -28,7 +28,7 @@ int OGRElasticsearchDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRElasticsearchDriverSetCommonMetadata()             */
+/*              OGRElasticsearchDriverSetCommonMetadata()               */
 /************************************************************************/
 
 void OGRElasticsearchDriverSetCommonMetadata(GDALDriver *poDriver)

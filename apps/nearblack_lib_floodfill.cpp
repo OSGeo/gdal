@@ -19,7 +19,7 @@
 #include <queue>
 
 /************************************************************************/
-/*                    GDALNearblackFloodFillAlg                         */
+/*                      GDALNearblackFloodFillAlg                       */
 /************************************************************************/
 
 // Implements the "final, combined-scan-and-fill span filler was then published
@@ -145,7 +145,7 @@ bool GDALNearblackFloodFillAlg::MustSet(int iX, int iY)
 }
 
 /************************************************************************/
-/*             GDALNearblackFloodFillAlg::LoadLine()                    */
+/*                GDALNearblackFloodFillAlg::LoadLine()                 */
 /************************************************************************/
 
 // Load the new line iY, and saves if needed buffer of the previous loaded
@@ -298,7 +298,7 @@ bool GDALNearblackFloodFillAlg::LoadLine(int iY)
 }
 
 /************************************************************************/
-/*              GDALNearblackFloodFillAlg::Set()                        */
+/*                   GDALNearblackFloodFillAlg::Set()                   */
 /************************************************************************/
 
 // Mark the pixel as transparent
@@ -322,7 +322,7 @@ void GDALNearblackFloodFillAlg::Set(int iX, int iY)
 }
 
 /************************************************************************/
-/*              GDALNearblackFloodFillAlg::Fill()                       */
+/*                  GDALNearblackFloodFillAlg::Fill()                   */
 /************************************************************************/
 
 /* Implements the "final, combined-scan-and-fill span filler was then published
@@ -435,7 +435,7 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
 }
 
 /************************************************************************/
-/*              GDALNearblackFloodFillAlg::Process()                    */
+/*                 GDALNearblackFloodFillAlg::Process()                 */
 /************************************************************************/
 
 // Entry point.
@@ -571,7 +571,7 @@ bool GDALNearblackFloodFillAlg::Process()
 }
 
 /************************************************************************/
-/*                    GDALNearblackFloodFill()                          */
+/*                       GDALNearblackFloodFill()                       */
 /************************************************************************/
 
 // Entry point.

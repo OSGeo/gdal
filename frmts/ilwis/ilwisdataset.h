@@ -94,7 +94,7 @@ class ValueRange
 };
 
 /************************************************************************/
-/*                     ILWISInfo                                        */
+/*                              ILWISInfo                               */
 /************************************************************************/
 
 struct ILWISInfo
@@ -141,7 +141,7 @@ class ILWISRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         ILWISDataset                                 */
+/*                             ILWISDataset                             */
 /************************************************************************/
 class ILWISDataset final : public GDALPamDataset
 {
@@ -166,13 +166,12 @@ class ILWISDataset final : public GDALPamDataset
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               int nBands, GDALDataType eType, CSLConstList);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;

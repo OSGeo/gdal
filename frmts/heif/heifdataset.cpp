@@ -18,7 +18,7 @@
 #include <cinttypes>
 
 /************************************************************************/
-/*                       GDALHEIFRasterBand                             */
+/*                          GDALHEIFRasterBand                          */
 /************************************************************************/
 
 class GDALHEIFRasterBand final : public GDALPamRasterBand
@@ -50,7 +50,7 @@ class GDALHEIFRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         GDALHEIFDataset()                            */
+/*                          GDALHEIFDataset()                           */
 /************************************************************************/
 
 GDALHEIFDataset::GDALHEIFDataset() : m_hCtxt(heif_context_alloc())
@@ -66,7 +66,7 @@ GDALHEIFDataset::GDALHEIFDataset() : m_hCtxt(heif_context_alloc())
 }
 
 /************************************************************************/
-/*                         ~GDALHEIFDataset()                           */
+/*                          ~GDALHEIFDataset()                          */
 /************************************************************************/
 
 GDALHEIFDataset::~GDALHEIFDataset()
@@ -75,7 +75,7 @@ GDALHEIFDataset::~GDALHEIFDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GDALHEIFDataset::Close(GDALProgressFunc, void *)
@@ -112,7 +112,7 @@ CPLErr GDALHEIFDataset::Close(GDALProgressFunc, void *)
 #ifdef HAS_CUSTOM_FILE_READER
 
 /************************************************************************/
-/*                          GetPositionCbk()                            */
+/*                           GetPositionCbk()                           */
 /************************************************************************/
 
 int64_t GDALHEIFDataset::GetPositionCbk(void *userdata)
@@ -122,7 +122,7 @@ int64_t GDALHEIFDataset::GetPositionCbk(void *userdata)
 }
 
 /************************************************************************/
-/*                             ReadCbk()                                */
+/*                              ReadCbk()                               */
 /************************************************************************/
 
 int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
@@ -152,7 +152,7 @@ int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
 }
 
 /************************************************************************/
-/*                             SeekCbk()                                */
+/*                              SeekCbk()                               */
 /************************************************************************/
 
 int GDALHEIFDataset::SeekCbk(int64_t position, void *userdata)
@@ -176,7 +176,7 @@ GDALHEIFDataset::WaitForFileSizeCbk(int64_t target_size, void *userdata)
 }
 
 /************************************************************************/
-/*                         RequestRangeCbk()                            */
+/*                          RequestRangeCbk()                           */
 /************************************************************************/
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
@@ -231,7 +231,7 @@ GDALHEIFDataset::RequestRangeCbk(uint64_t start_pos, uint64_t end_pos,
 #endif  // HAS_CUSTOM_FILE_READER
 
 /************************************************************************/
-/*                              Init()                                  */
+/*                                Init()                                */
 /************************************************************************/
 
 bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
@@ -388,7 +388,7 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         ReadMetadata()                               */
+/*                            ReadMetadata()                            */
 /************************************************************************/
 
 void GDALHEIFDataset::ReadMetadata()
@@ -603,7 +603,7 @@ void GDALHEIFDataset::processProperties()
 }
 
 /************************************************************************/
-/*                      ReadUserDescription()                           */
+/*                        ReadUserDescription()                         */
 /************************************************************************/
 void GDALHEIFDataset::ReadUserDescription()
 {
@@ -641,7 +641,7 @@ void GDALHEIFDataset::ReadUserDescription()
 #endif
 
 /************************************************************************/
-/*                         OpenThumbnails()                             */
+/*                           OpenThumbnails()                           */
 /************************************************************************/
 
 void GDALHEIFDataset::OpenThumbnails()
@@ -701,7 +701,7 @@ void GDALHEIFDataset::OpenThumbnails()
 }
 
 /************************************************************************/
-/*                     HEIFDriverIdentify()                             */
+/*                         HEIFDriverIdentify()                         */
 /************************************************************************/
 
 static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -757,7 +757,7 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            OpenHEIF()                                */
+/*                              OpenHEIF()                              */
 /************************************************************************/
 
 GDALDataset *GDALHEIFDataset::OpenHEIF(GDALOpenInfo *poOpenInfo)
@@ -783,7 +783,7 @@ GDALDataset *GDALHEIFDataset::OpenHEIF(GDALOpenInfo *poOpenInfo)
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
 
 /************************************************************************/
-/*                     HEIFIdentifyOnlyAVIF()                           */
+/*                        HEIFIdentifyOnlyAVIF()                        */
 /************************************************************************/
 
 static int HEIFIdentifyOnlyAVIF(GDALOpenInfo *poOpenInfo)
@@ -819,7 +819,7 @@ GDALDataset *GDALHEIFDataset::OpenAVIF(GDALOpenInfo *poOpenInfo)
 #endif
 
 /************************************************************************/
-/*                          GDALHEIFRasterBand()                        */
+/*                         GDALHEIFRasterBand()                         */
 /************************************************************************/
 
 GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
@@ -852,7 +852,7 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 #ifdef LIBHEIF_SUPPORTS_TILES
 CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -1004,7 +1004,7 @@ CPLErr GDALHEIFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *GDALHEIFDataset::GetSpatialRef() const
 {
@@ -1028,7 +1028,7 @@ const OGRSpatialReference *GDALHEIFDataset::GetGCPSpatialRef() const
 #endif
 
 /************************************************************************/
-/*                       GDALRegister_HEIF()                            */
+/*                         GDALRegister_HEIF()                          */
 /************************************************************************/
 
 void GDALRegister_HEIF()

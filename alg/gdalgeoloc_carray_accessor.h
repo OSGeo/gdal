@@ -13,7 +13,7 @@
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
-/*                        GDALGeoLocCArrayAccessors                     */
+/*                      GDALGeoLocCArrayAccessors                       */
 /************************************************************************/
 
 class GDALGeoLocCArrayAccessors
@@ -99,7 +99,7 @@ class GDALGeoLocCArrayAccessors
 };
 
 /************************************************************************/
-/*                         AllocateBackMap()                            */
+/*                          AllocateBackMap()                           */
 /************************************************************************/
 
 bool GDALGeoLocCArrayAccessors::AllocateBackMap()
@@ -144,7 +144,7 @@ bool GDALGeoLocCArrayAccessors::AllocateBackMap()
 }
 
 /************************************************************************/
-/*                         FreeWghtsBackMap()                           */
+/*                          FreeWghtsBackMap()                          */
 /************************************************************************/
 
 void GDALGeoLocCArrayAccessors::FreeWghtsBackMap()
@@ -156,7 +156,7 @@ void GDALGeoLocCArrayAccessors::FreeWghtsBackMap()
 }
 
 /************************************************************************/
-/*                        GetBackmapDataset()                           */
+/*                         GetBackmapDataset()                          */
 /************************************************************************/
 
 GDALDataset *GDALGeoLocCArrayAccessors::GetBackmapDataset()
@@ -177,7 +177,7 @@ GDALDataset *GDALGeoLocCArrayAccessors::GetBackmapDataset()
 }
 
 /************************************************************************/
-/*                             Load()                                   */
+/*                                Load()                                */
 /************************************************************************/
 
 bool GDALGeoLocCArrayAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
@@ -189,7 +189,7 @@ bool GDALGeoLocCArrayAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
 }
 
 /************************************************************************/
-/*                          LoadGeoloc()                                */
+/*                             LoadGeoloc()                             */
 /************************************************************************/
 
 bool GDALGeoLocCArrayAccessors::LoadGeoloc(bool bIsRegularGrid)

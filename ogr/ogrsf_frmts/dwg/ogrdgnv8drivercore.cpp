@@ -18,7 +18,7 @@
 #include "ogrdgnv8drivercore.h"
 
 /************************************************************************/
-/*                         OGRDGNV8DriverIdentify()                     */
+/*                       OGRDGNV8DriverIdentify()                       */
 /************************************************************************/
 
 int OGRDGNV8DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -130,7 +130,7 @@ void OGRDGNV8DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                  DeclareDeferredOGRDGNV8Plugin()                     */
+/*                   DeclareDeferredOGRDGNV8Plugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

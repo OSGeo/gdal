@@ -80,7 +80,7 @@ static bool bHaveWarned5 = false;
 static bool bHaveWarned6 = false;
 
 /************************************************************************/
-/*                 CPLClearRecodeStubWarningFlags()                     */
+/*                   CPLClearRecodeStubWarningFlags()                   */
 /************************************************************************/
 
 void CPLClearRecodeStubWarningFlags()
@@ -485,7 +485,7 @@ wchar_t *CPLRecodeToWCharStub(const char *pszSource, const char *pszSrcEncoding,
 }
 
 /************************************************************************/
-/*                                 CPLIsUTF8()                          */
+/*                             CPLIsUTF8()                              */
 /************************************************************************/
 
 /**
@@ -1116,7 +1116,7 @@ static unsigned utf8froma(char *dst, unsigned dstlen, const char *src,
 #ifdef _WIN32
 
 /************************************************************************/
-/*                            CPLWin32Recode()                          */
+/*                           CPLWin32Recode()                           */
 /************************************************************************/
 
 /* Convert an CODEPAGE (i.e. normal c-string) byte stream

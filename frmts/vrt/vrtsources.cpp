@@ -54,7 +54,7 @@ VRTSource::~VRTSource()
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 void VRTSource::GetFileList(char *** /* ppapszFileList */, int * /* pnSize */,
@@ -169,7 +169,7 @@ const char *VRTSimpleSource::GetTypeStatic()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTSimpleSource::GetType() const
@@ -178,7 +178,7 @@ const char *VRTSimpleSource::GetType() const
 }
 
 /************************************************************************/
-/*                           FlushCache()                               */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr VRTSimpleSource::FlushCache(bool bAtClosing)
@@ -196,7 +196,7 @@ CPLErr VRTSimpleSource::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                    UnsetPreservedRelativeFilenames()                 */
+/*                  UnsetPreservedRelativeFilenames()                   */
 /************************************************************************/
 
 void VRTSimpleSource::UnsetPreservedRelativeFilenames()
@@ -240,7 +240,7 @@ void VRTSimpleSource::SetSrcBand(GDALRasterBand *poNewSrcBand)
 }
 
 /************************************************************************/
-/*                      SetSourceDatasetName()                          */
+/*                        SetSourceDatasetName()                        */
 /************************************************************************/
 
 void VRTSimpleSource::SetSourceDatasetName(const char *pszFilename,
@@ -253,7 +253,7 @@ void VRTSimpleSource::SetSourceDatasetName(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          SetSrcMaskBand()                            */
+/*                           SetSrcMaskBand()                           */
 /************************************************************************/
 
 // poSrcBand is not the mask band, but the band from which the mask band is
@@ -350,7 +350,7 @@ static bool IsSlowSource(const char *pszSrcName)
 }
 
 /************************************************************************/
-/*                         AddSourceFilenameNode()                      */
+/*                       AddSourceFilenameNode()                        */
 /************************************************************************/
 
 void VRTSimpleSource::AddSourceFilenameNode(const char *pszVRTPath,
@@ -708,7 +708,7 @@ CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                        ParseSrcRectAndDstRect()                      */
+/*                       ParseSrcRectAndDstRect()                       */
 /************************************************************************/
 
 CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
@@ -783,7 +783,7 @@ CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 void VRTSimpleSource::GetFileList(char ***ppapszFileList, int *pnSize,
@@ -827,7 +827,7 @@ void VRTSimpleSource::GetFileList(char ***ppapszFileList, int *pnSize,
 }
 
 /************************************************************************/
-/*                           OpenSource()                               */
+/*                             OpenSource()                             */
 /************************************************************************/
 
 void VRTSimpleSource::OpenSource() const
@@ -907,7 +907,7 @@ void VRTSimpleSource::OpenSource() const
 }
 
 /************************************************************************/
-/*                         GetRasterBand()                              */
+/*                           GetRasterBand()                            */
 /************************************************************************/
 
 GDALRasterBand *VRTSimpleSource::GetRasterBand() const
@@ -1339,7 +1339,7 @@ int VRTSimpleSource::GetSrcDstWindow(
 }
 
 /************************************************************************/
-/*                          NeedMaxValAdjustment()                      */
+/*                        NeedMaxValAdjustment()                        */
 /************************************************************************/
 
 int VRTSimpleSource::NeedMaxValAdjustment() const
@@ -1820,7 +1820,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
 }
 
 /************************************************************************/
-/*                          SetResampling()                             */
+/*                           SetResampling()                            */
 /************************************************************************/
 
 void VRTSimpleSource::SetResampling(const char *pszResampling)
@@ -1853,7 +1853,7 @@ const char *VRTAveragedSource::GetTypeStatic()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTAveragedSource::GetType() const
@@ -2152,7 +2152,7 @@ CPLErr VRTAveragedSource::GetHistogram(
 /************************************************************************/
 
 /************************************************************************/
-/*                     VRTNoDataFromMaskSource()                        */
+/*                      VRTNoDataFromMaskSource()                       */
 /************************************************************************/
 
 VRTNoDataFromMaskSource::VRTNoDataFromMaskSource()
@@ -2209,7 +2209,7 @@ const char *VRTNoDataFromMaskSource::GetTypeStatic()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTNoDataFromMaskSource::GetType() const
@@ -2662,7 +2662,7 @@ const char *VRTComplexSource::GetTypeStatic()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTComplexSource::GetType() const
@@ -2689,7 +2689,7 @@ void VRTComplexSource::SetNoDataValue(double dfNewNoDataValue)
 }
 
 /************************************************************************/
-/*                      GetAdjustedNoDataValue()                        */
+/*                       GetAdjustedNoDataValue()                       */
 /************************************************************************/
 
 double VRTComplexSource::GetAdjustedNoDataValue() const
@@ -2948,7 +2948,19 @@ CPLErr VRTComplexSource::XMLInit(const CPLXMLNode *psSrc,
 }
 
 /************************************************************************/
-/*                              LookupValue()                           */
+/*                               SetLUT()                               */
+/************************************************************************/
+
+void VRTComplexSource::SetLUT(const std::vector<double> &adfLUTInputs,
+                              const std::vector<double> &adfLUTOutputs)
+{
+    m_adfLUTInputs = adfLUTInputs;
+    m_adfLUTOutputs = adfLUTOutputs;
+    m_nProcessingFlags |= PROCESSING_FLAG_LUT;
+}
+
+/************************************************************************/
+/*                            LookupValue()                             */
 /************************************************************************/
 
 double VRTComplexSource::LookupValue(double dfInput)
@@ -2989,7 +3001,7 @@ double VRTComplexSource::LookupValue(double dfInput)
 }
 
 /************************************************************************/
-/*                         SetLinearScaling()                           */
+/*                          SetLinearScaling()                          */
 /************************************************************************/
 
 void VRTComplexSource::SetLinearScaling(double dfOffset, double dfScale)
@@ -3001,7 +3013,7 @@ void VRTComplexSource::SetLinearScaling(double dfOffset, double dfScale)
 }
 
 /************************************************************************/
-/*                         SetPowerScaling()                           */
+/*                          SetPowerScaling()                           */
 /************************************************************************/
 
 void VRTComplexSource::SetPowerScaling(double dfExponentIn, double dfSrcMinIn,
@@ -3020,7 +3032,7 @@ void VRTComplexSource::SetPowerScaling(double dfExponentIn, double dfSrcMinIn,
 }
 
 /************************************************************************/
-/*                    SetColorTableComponent()                          */
+/*                       SetColorTableComponent()                       */
 /************************************************************************/
 
 void VRTComplexSource::SetColorTableComponent(int nComponent)
@@ -3205,7 +3217,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
 }
 
 /************************************************************************/
-/*                              hasZeroByte()                           */
+/*                            hasZeroByte()                             */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -3216,7 +3228,7 @@ static inline bool hasZeroByte(uint32_t v)
 }
 
 /************************************************************************/
-/*                                CopyWord()                            */
+/*                              CopyWord()                              */
 /************************************************************************/
 
 template <class SrcType>
@@ -3778,7 +3790,7 @@ template CPLErr VRTComplexSource::RasterIOInternal<float>(
     GDALDataType eWrkDataType, WorkingState &oWorkingState);
 
 /************************************************************************/
-/*                        AreValuesUnchanged()                          */
+/*                         AreValuesUnchanged()                         */
 /************************************************************************/
 
 bool VRTComplexSource::AreValuesUnchanged() const
@@ -3864,7 +3876,7 @@ VRTFuncSource::~VRTFuncSource()
 }
 
 /************************************************************************/
-/*                            GetType()                                 */
+/*                              GetType()                               */
 /************************************************************************/
 
 const char *VRTFuncSource::GetType() const

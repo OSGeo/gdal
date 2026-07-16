@@ -336,7 +336,7 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
 /************************************************************************/
 
 /************************************************************************/
-/*                            ~VSIMemHandle()                           */
+/*                           ~VSIMemHandle()                            */
 /************************************************************************/
 
 VSIMemHandle::~VSIMemHandle()
@@ -469,7 +469,7 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nBytesToRead)
 }
 
 /************************************************************************/
-/*                              PRead()                                 */
+/*                               PRead()                                */
 /************************************************************************/
 
 size_t VSIMemHandle::PRead(void *pBuffer, size_t nSize,
@@ -530,7 +530,7 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nBytesToWrite)
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSIMemHandle::ClearErr()
@@ -542,7 +542,7 @@ void VSIMemHandle::ClearErr()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSIMemHandle::Error()
@@ -564,7 +564,7 @@ int VSIMemHandle::Eof()
 }
 
 /************************************************************************/
-/*                             Truncate()                               */
+/*                              Truncate()                              */
 /************************************************************************/
 
 int VSIMemHandle::Truncate(vsi_l_offset nNewSize)
@@ -783,7 +783,7 @@ int VSIMemFilesystemHandler::Unlink(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           Unlink_unlocked()                          */
+/*                          Unlink_unlocked()                           */
 /************************************************************************/
 
 int VSIMemFilesystemHandler::Unlink_unlocked(const char *pszFilename)
@@ -860,7 +860,7 @@ int VSIMemFilesystemHandler::Rmdir(const char *pszPathname)
 }
 
 /************************************************************************/
-/*                          RmdirRecursive()                            */
+/*                           RmdirRecursive()                           */
 /************************************************************************/
 
 int VSIMemFilesystemHandler::RmdirRecursive(const char *pszDirname)
@@ -1085,7 +1085,7 @@ CPLString VSIMemFilesystemHandler::NormalizePath(const std::string &in)
 }
 
 /************************************************************************/
-/*                        GetDiskFreeSpace()                            */
+/*                          GetDiskFreeSpace()                          */
 /************************************************************************/
 
 GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
@@ -1099,7 +1099,7 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
 //! @endcond
 
 /************************************************************************/
-/*                       VSIInstallMemFileHandler()                     */
+/*                      VSIInstallMemFileHandler()                      */
 /************************************************************************/
 
 /**

@@ -195,7 +195,7 @@ class HDF5ImageDataset final : public HDF5Dataset
 /************************************************************************/
 
 /************************************************************************/
-/*                           HDF5ImageDataset()                         */
+/*                          HDF5ImageDataset()                          */
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset()
     : dims(nullptr), maxdims(nullptr), poH5Objects(nullptr), ndims(0),
@@ -208,7 +208,7 @@ HDF5ImageDataset::HDF5ImageDataset()
 }
 
 /************************************************************************/
-/*                            ~HDF5ImageDataset()                       */
+/*                         ~HDF5ImageDataset()                          */
 /************************************************************************/
 HDF5ImageDataset::~HDF5ImageDataset()
 {
@@ -270,7 +270,7 @@ HDF5ImageRasterBand::~HDF5ImageRasterBand()
 }
 
 /************************************************************************/
-/*                           HDF5ImageRasterBand()                      */
+/*                        HDF5ImageRasterBand()                         */
 /************************************************************************/
 HDF5ImageRasterBand::HDF5ImageRasterBand(HDF5ImageDataset *poDSIn, int nBandIn,
                                          GDALDataType eType)
@@ -334,7 +334,7 @@ double HDF5ImageRasterBand::GetOffset(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             GetScale()                               */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double HDF5ImageRasterBand::GetScale(int *pbSuccess)
@@ -1388,7 +1388,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                   HDF5ImageDatasetDriverUnload()                     */
+/*                    HDF5ImageDatasetDriverUnload()                    */
 /************************************************************************/
 
 static void HDF5ImageDatasetDriverUnload(GDALDriver *)
@@ -1397,7 +1397,7 @@ static void HDF5ImageDatasetDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF5Image()                      */
+/*                       GDALRegister_HDF5Image()                       */
 /************************************************************************/
 void GDALRegister_HDF5Image()
 
@@ -1692,7 +1692,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *HDF5ImageDataset::GetMetadataItem(const char *pszName,
@@ -1715,7 +1715,7 @@ const char *HDF5ImageDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *HDF5ImageDataset::GetSpatialRef() const
@@ -1739,7 +1739,7 @@ int HDF5ImageDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                        GetGCPSpatialRef()                            */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
 const OGRSpatialReference *HDF5ImageDataset::GetGCPSpatialRef() const
@@ -1752,7 +1752,7 @@ const OGRSpatialReference *HDF5ImageDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *HDF5ImageDataset::GetGCPs()
@@ -1764,7 +1764,7 @@ const GDAL_GCP *HDF5ImageDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr HDF5ImageDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -1779,7 +1779,7 @@ CPLErr HDF5ImageDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                       IdentifyProductType()                          */
+/*                        IdentifyProductType()                         */
 /************************************************************************/
 
 /**
@@ -1980,7 +1980,7 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
 }
 
 /************************************************************************/
-/*                          CaptureCSKGCPs()                            */
+/*                           CaptureCSKGCPs()                           */
 /************************************************************************/
 
 /**

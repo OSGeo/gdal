@@ -156,7 +156,7 @@ static bool OGRSQLiteLoadSpatialiteSymbols()
 #endif
 
 /************************************************************************/
-/*                          InitSpatialite()                            */
+/*                           InitSpatialite()                           */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::InitSpatialite()
@@ -181,7 +181,7 @@ bool OGRSQLiteBaseDataSource::InitSpatialite()
 }
 
 /************************************************************************/
-/*                         FinishSpatialite()                           */
+/*                          FinishSpatialite()                          */
 /************************************************************************/
 
 void OGRSQLiteBaseDataSource::FinishSpatialite()
@@ -200,7 +200,7 @@ void OGRSQLiteBaseDataSource::FinishSpatialite()
 }
 
 /************************************************************************/
-/*                          IsSpatialiteLoaded()                        */
+/*                         IsSpatialiteLoaded()                         */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::IsSpatialiteLoaded()
@@ -227,7 +227,7 @@ bool OGRSQLiteBaseDataSource::IsSpatialiteLoaded()
 #endif
 
 /************************************************************************/
-/*                          OGRSQLiteDriverUnload()                     */
+/*                       OGRSQLiteDriverUnload()                        */
 /************************************************************************/
 
 void OGRSQLiteDriverUnload(GDALDriver *)
@@ -246,7 +246,7 @@ void OGRSQLiteDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                      DealWithOgrSchemaOpenOption()                   */
+/*                    DealWithOgrSchemaOpenOption()                     */
 /************************************************************************/
 bool OGRSQLiteBaseDataSource::DealWithOgrSchemaOpenOption(
     CSLConstList papszOpenOptionsIn)
@@ -404,7 +404,7 @@ bool OGRSQLiteDataSource::AddRelationship(
 }
 
 /************************************************************************/
-/*                       ValidateRelationship()                         */
+/*                        ValidateRelationship()                        */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::ValidateRelationship(
@@ -517,7 +517,7 @@ bool OGRSQLiteDataSource::ValidateRelationship(
 }
 
 /************************************************************************/
-/*                       OGRSQLiteBaseDataSource()                      */
+/*                      OGRSQLiteBaseDataSource()                       */
 /************************************************************************/
 
 OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() = default;
@@ -563,7 +563,7 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 }
 
 /************************************************************************/
-/*                               CloseDB()                              */
+/*                              CloseDB()                               */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::CloseDB()
@@ -694,7 +694,7 @@ OGRErr OGRSQLiteBaseDataSource::PragmaCheck(const char *pszPragma,
 }
 
 /************************************************************************/
-/*                     LoadRelationships()                              */
+/*                         LoadRelationships()                          */
 /************************************************************************/
 
 void OGRSQLiteBaseDataSource::LoadRelationships() const
@@ -706,7 +706,7 @@ void OGRSQLiteBaseDataSource::LoadRelationships() const
 }
 
 /************************************************************************/
-/*                LoadRelationshipsFromForeignKeys()                    */
+/*                  LoadRelationshipsFromForeignKeys()                  */
 /************************************************************************/
 
 void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys(
@@ -851,7 +851,7 @@ std::vector<std::string> OGRSQLiteBaseDataSource::GetRelationshipNames(
 }
 
 /************************************************************************/
-/*                        GetRelationship()                             */
+/*                          GetRelationship()                           */
 /************************************************************************/
 
 const GDALRelationship *
@@ -870,9 +870,9 @@ OGRSQLiteBaseDataSource::GetRelationship(const std::string &name) const
     return it->second.get();
 }
 
-/***********************************************************************/
-/*                         prepareSql()                                */
-/***********************************************************************/
+/************************************************************************/
+/*                             prepareSql()                             */
+/************************************************************************/
 
 int OGRSQLiteBaseDataSource::prepareSql(sqlite3 *db, const char *zSql,
                                         int nByte, sqlite3_stmt **ppStmt,
@@ -905,7 +905,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRSQLiteDataSource::Close(GDALProgressFunc, void *)
@@ -1004,7 +1004,7 @@ void OGRSQLiteDataSource::FinishRasterLite2()
 #endif  // HAVE_RASTERLITE2
 
 /************************************************************************/
-/*                              SaveStatistics()                        */
+/*                           SaveStatistics()                           */
 /************************************************************************/
 
 void OGRSQLiteDataSource::SaveStatistics()
@@ -1084,7 +1084,7 @@ void OGRSQLiteDataSource::SaveStatistics()
 }
 
 /************************************************************************/
-/*                              SetSynchronous()                        */
+/*                           SetSynchronous()                           */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::SetSynchronous()
@@ -1113,7 +1113,7 @@ bool OGRSQLiteBaseDataSource::SetSynchronous()
 }
 
 /************************************************************************/
-/*                              LoadExtensions()                        */
+/*                           LoadExtensions()                           */
 /************************************************************************/
 
 void OGRSQLiteBaseDataSource::LoadExtensions()
@@ -1198,7 +1198,7 @@ void OGRSQLiteBaseDataSource::LoadExtensions()
 }
 
 /************************************************************************/
-/*                              SetCacheSize()                          */
+/*                            SetCacheSize()                            */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::SetCacheSize()
@@ -1227,7 +1227,7 @@ bool OGRSQLiteBaseDataSource::SetCacheSize()
 }
 
 /************************************************************************/
-/*               OGRSQLiteBaseDataSourceNotifyFileOpened()              */
+/*              OGRSQLiteBaseDataSourceNotifyFileOpened()               */
 /************************************************************************/
 
 static void OGRSQLiteBaseDataSourceNotifyFileOpened(void *pfnUserData,
@@ -1317,7 +1317,7 @@ const struct sqlite3_mem_methods sDebugMemAlloc = {
 #endif  // USE_SQLITE_DEBUG_MEMALLOC
 
 /************************************************************************/
-/*                            OpenOrCreateDB()                          */
+/*                           OpenOrCreateDB()                           */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
@@ -1689,7 +1689,7 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 }
 
 /************************************************************************/
-/*                            OpenOrCreateDB()                          */
+/*                           OpenOrCreateDB()                           */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
@@ -1738,7 +1738,7 @@ bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
 }
 
 /************************************************************************/
-/*                       PostInitSpatialite()                           */
+/*                         PostInitSpatialite()                         */
 /************************************************************************/
 
 void OGRSQLiteDataSource::PostInitSpatialite()
@@ -1780,7 +1780,7 @@ bool OGRSQLiteBaseDataSource::SpatialiteRequiresTrustedSchemaOn()
 }
 
 /************************************************************************/
-/*                    AreSpatialiteTriggersSafe()                       */
+/*                     AreSpatialiteTriggersSafe()                      */
 /************************************************************************/
 
 bool OGRSQLiteBaseDataSource::AreSpatialiteTriggersSafe()
@@ -1796,7 +1796,7 @@ bool OGRSQLiteBaseDataSource::AreSpatialiteTriggersSafe()
 }
 
 /************************************************************************/
-/*                          GetInternalHandle()                         */
+/*                         GetInternalHandle()                          */
 /************************************************************************/
 
 /* Used by MBTILES driver */
@@ -1811,7 +1811,8 @@ void *OGRSQLiteBaseDataSource::GetInternalHandle(const char *pszKey)
 /*                               Create()                               */
 /************************************************************************/
 
-bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
+bool OGRSQLiteDataSource::Create(const char *pszNameIn,
+                                 CSLConstList papszOptions)
 {
     CPLString osCommand;
 
@@ -1957,7 +1958,7 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
 }
 
 /************************************************************************/
-/*                           InitWithEPSG()                             */
+/*                            InitWithEPSG()                            */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::InitWithEPSG()
@@ -2169,7 +2170,7 @@ bool OGRSQLiteDataSource::InitWithEPSG()
 }
 
 /************************************************************************/
-/*                        ReloadLayers()                                */
+/*                            ReloadLayers()                            */
 /************************************************************************/
 
 void OGRSQLiteDataSource::ReloadLayers()
@@ -2886,7 +2887,7 @@ bool OGRSQLiteDataSource::OpenTable(const char *pszTableName, bool bIsTable,
 }
 
 /************************************************************************/
-/*                             OpenView()                               */
+/*                              OpenView()                              */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::OpenView(const char *pszViewName,
@@ -3027,7 +3028,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                    IsLayerPrivate()                                  */
+/*                           IsLayerPrivate()                           */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::IsLayerPrivate(int iLayer) const
@@ -3086,7 +3087,7 @@ bool OGRSQLiteDataSource::IsLayerPrivate(int iLayer) const
 }
 
 /************************************************************************/
-/*                    GetLayerByNameNotVisible()                        */
+/*                      GetLayerByNameNotVisible()                      */
 /************************************************************************/
 
 OGRLayer *
@@ -3129,7 +3130,7 @@ OGRSQLiteDataSource::GetLayerByNameNotVisible(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                   GetLayerWithGetSpatialWhereByName()                */
+/*                 GetLayerWithGetSpatialWhereByName()                  */
 /************************************************************************/
 
 std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>
@@ -3141,7 +3142,7 @@ OGRSQLiteDataSource::GetLayerWithGetSpatialWhereByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                              FlushCache()                            */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr OGRSQLiteDataSource::FlushCache(bool bAtClosing)
@@ -3437,7 +3438,7 @@ void OGRSQLiteDataSource::ReleaseResultSet(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -4190,7 +4191,7 @@ OGRErr OGRSQLiteBaseDataSource::RollbackToSavepoint(const std::string &osName)
 }
 
 /************************************************************************/
-/*                          ProcessTransactionSQL()                     */
+/*                       ProcessTransactionSQL()                        */
 /************************************************************************/
 bool OGRSQLiteBaseDataSource::ProcessTransactionSQL(
     const std::string &osSQLCommand)
@@ -4270,7 +4271,7 @@ bool OGRSQLiteBaseDataSource::ProcessTransactionSQL(
 }
 
 /************************************************************************/
-/*                          DoTransactionCommand()                      */
+/*                        DoTransactionCommand()                        */
 /************************************************************************/
 
 OGRErr OGRSQLiteBaseDataSource::DoTransactionCommand(const char *pszCommand)
@@ -4284,7 +4285,7 @@ OGRErr OGRSQLiteBaseDataSource::DoTransactionCommand(const char *pszCommand)
 }
 
 /************************************************************************/
-/*                          GetSRTEXTColName()                        */
+/*                          GetSRTEXTColName()                          */
 /************************************************************************/
 
 const char *OGRSQLiteDataSource::GetSRTEXTColName()
@@ -5002,7 +5003,7 @@ void OGRSQLiteDataSource::SetName(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                       GetEnvelopeFromSQL()                           */
+/*                         GetEnvelopeFromSQL()                         */
 /************************************************************************/
 
 const OGREnvelope *
@@ -5025,9 +5026,9 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString &osSQL,
     oMapSQLEnvelope[osSQL] = oEnvelope;
 }
 
-/***********************************************************************/
-/*                       SetQueryLoggerFunc()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetQueryLoggerFunc()                         */
+/************************************************************************/
 
 bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
     GDALQueryLoggerFunc pfnQueryLoggerFuncIn, void *poQueryLoggerArgIn)
@@ -5075,7 +5076,7 @@ bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
 }
 
 /************************************************************************/
-/*                         AbortSQL()                                   */
+/*                              AbortSQL()                              */
 /************************************************************************/
 
 OGRErr OGRSQLiteBaseDataSource::AbortSQL()

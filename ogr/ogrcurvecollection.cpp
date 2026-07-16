@@ -29,7 +29,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*             OGRCurveCollection( const OGRCurveCollection& )          */
+/*           OGRCurveCollection( const OGRCurveCollection& )            */
 /************************************************************************/
 
 /**
@@ -55,7 +55,7 @@ OGRCurveCollection::OGRCurveCollection(const OGRCurveCollection &other)
 }
 
 /************************************************************************/
-/*             OGRCurveCollection( OGRCurveCollection&& )               */
+/*              OGRCurveCollection( OGRCurveCollection&& )              */
 /************************************************************************/
 
 /**
@@ -72,7 +72,7 @@ OGRCurveCollection::OGRCurveCollection(OGRCurveCollection &&other)
 }
 
 /************************************************************************/
-/*                         ~OGRCurveCollection()                        */
+/*                        ~OGRCurveCollection()                         */
 /************************************************************************/
 
 OGRCurveCollection::~OGRCurveCollection()
@@ -82,7 +82,7 @@ OGRCurveCollection::~OGRCurveCollection()
 }
 
 /************************************************************************/
-/*                 operator=( const OGRCurveCollection& )               */
+/*                operator=( const OGRCurveCollection& )                */
 /************************************************************************/
 
 /**
@@ -115,7 +115,7 @@ OGRCurveCollection::operator=(const OGRCurveCollection &other)
 }
 
 /************************************************************************/
-/*                    operator=( OGRCurveCollection&& )                 */
+/*                  operator=( OGRCurveCollection&& )                   */
 /************************************************************************/
 
 /**
@@ -192,7 +192,7 @@ OGRErr OGRCurveCollection::addCurveDirectly(OGRGeometry *poGeom,
 }
 
 /************************************************************************/
-/*                        importPreambleFromWkb()                      */
+/*                       importPreambleFromWkb()                        */
 /************************************************************************/
 
 OGRErr OGRCurveCollection::importPreambleFromWkb(
@@ -224,7 +224,7 @@ OGRErr OGRCurveCollection::importPreambleFromWkb(
 }
 
 /************************************************************************/
-/*                       importBodyFromWkb()                            */
+/*                         importBodyFromWkb()                          */
 /************************************************************************/
 
 OGRErr OGRCurveCollection::importBodyFromWkb(
@@ -511,7 +511,7 @@ void OGRCurveCollection::getEnvelope(OGREnvelope3D *psEnvelope) const
 }
 
 /************************************************************************/
-/*                               IsEmpty()                              */
+/*                              IsEmpty()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurveCollection::IsEmpty() const
@@ -525,7 +525,7 @@ OGRBoolean OGRCurveCollection::IsEmpty() const
 }
 
 /************************************************************************/
-/*                               Equals()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurveCollection::Equals(const OGRCurveCollection *poOCC) const
@@ -598,7 +598,7 @@ void OGRCurveCollection::assignSpatialReference(OGRGeometry *poGeom,
 }
 
 /************************************************************************/
-/*                          getNumCurves()                              */
+/*                            getNumCurves()                            */
 /************************************************************************/
 
 int OGRCurveCollection::getNumCurves() const
@@ -607,7 +607,7 @@ int OGRCurveCollection::getNumCurves() const
 }
 
 /************************************************************************/
-/*                           getCurve()                                 */
+/*                              getCurve()                              */
 /************************************************************************/
 
 OGRCurve *OGRCurveCollection::getCurve(int i)
@@ -618,7 +618,7 @@ OGRCurve *OGRCurveCollection::getCurve(int i)
 }
 
 /************************************************************************/
-/*                           getCurve()                                 */
+/*                              getCurve()                              */
 /************************************************************************/
 
 const OGRCurve *OGRCurveCollection::getCurve(int i) const
@@ -629,7 +629,7 @@ const OGRCurve *OGRCurveCollection::getCurve(int i) const
 }
 
 /************************************************************************/
-/*                           stealCurve()                               */
+/*                             stealCurve()                             */
 /************************************************************************/
 
 OGRCurve *OGRCurveCollection::stealCurve(int i)
@@ -691,7 +691,7 @@ void OGRCurveCollection::flattenTo2D(OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                              segmentize()                            */
+/*                             segmentize()                             */
 /************************************************************************/
 
 bool OGRCurveCollection::segmentize(double dfMaxLength)
@@ -717,7 +717,7 @@ void OGRCurveCollection::swapXY()
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
@@ -731,7 +731,7 @@ OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
 }
 
 /************************************************************************/
-/*                           removeCurve()                              */
+/*                            removeCurve()                             */
 /************************************************************************/
 
 /**

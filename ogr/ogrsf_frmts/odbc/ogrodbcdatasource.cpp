@@ -492,7 +492,7 @@ const OGRLayer *OGRODBCDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                              GetLayerByName()                        */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRODBCDataSource::GetLayerByName(const char *pszLayerName)
@@ -515,7 +515,7 @@ OGRLayer *OGRODBCDataSource::GetLayerByName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                    IsPrivateLayerName()                              */
+/*                         IsPrivateLayerName()                         */
 /************************************************************************/
 
 bool OGRODBCDataSource::IsPrivateLayerName(const CPLString &osName)
@@ -527,7 +527,7 @@ bool OGRODBCDataSource::IsPrivateLayerName(const CPLString &osName)
 }
 
 /************************************************************************/
-/*                    IsLayerPrivate()                                  */
+/*                           IsLayerPrivate()                           */
 /************************************************************************/
 
 bool OGRODBCDataSource::IsLayerPrivate(int iLayer) const

@@ -47,7 +47,7 @@ enum eProductType
 using namespace gdal::TSX;
 
 /************************************************************************/
-/* Helper Functions                                                     */
+/*                           Helper Functions                           */
 /************************************************************************/
 
 /* GetFilePath: return a relative path to a file within an XML node.
@@ -160,7 +160,7 @@ TSXRasterBand::TSXRasterBand(TSXDataset *poDSIn, GDALDataType eDataTypeIn,
 }
 
 /************************************************************************/
-/*                            TSXRasterBand()                           */
+/*                           TSXRasterBand()                            */
 /************************************************************************/
 
 TSXRasterBand::~TSXRasterBand()
@@ -798,7 +798,7 @@ const OGRSpatialReference *TSXDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *TSXDataset::GetGCPs()
@@ -807,7 +807,7 @@ const GDAL_GCP *TSXDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *TSXDataset::GetSpatialRef() const
@@ -817,7 +817,7 @@ const OGRSpatialReference *TSXDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGeotransform()                      */
+/*                          GetGeotransform()                           */
 /************************************************************************/
 CPLErr TSXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
@@ -830,7 +830,7 @@ CPLErr TSXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GDALRegister_TSX()                           */
+/*                          GDALRegister_TSX()                          */
 /************************************************************************/
 
 void GDALRegister_TSX()

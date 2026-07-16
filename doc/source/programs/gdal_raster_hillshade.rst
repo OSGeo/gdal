@@ -186,6 +186,6 @@ Examples
 
         $ gdal pipeline read n43.tif ! \
                         color-map --color-map color_file.txt ! \
-                        color-merge --grayscale \
+                        blend --operator=hsv-value --overlay \
                             [ read n43.tif ! hillshade -z 30 ] ! \
                         write out.tif --overwrite

@@ -241,7 +241,7 @@ static int GetScaleFromString(const char *pszScale)
 }
 
 /************************************************************************/
-/*                            GetFromBase34()                           */
+/*                           GetFromBase34()                            */
 /************************************************************************/
 
 static GIntBig GetFromBase34(const char *pszVal, int nMaxSize)
@@ -394,7 +394,7 @@ static void GetExtent(const char *pszFrameName, int nScale, int nZone,
 }
 
 /************************************************************************/
-/*                          ECRGTOCSource                               */
+/*                            ECRGTOCSource                             */
 /************************************************************************/
 
 class ECRGTOCSource final : public VRTSimpleSource
@@ -424,7 +424,7 @@ class ECRGTOCSource final : public VRTSimpleSource
 };
 
 /************************************************************************/
-/*                       ValidateOpenedBand()                           */
+/*                         ValidateOpenedBand()                         */
 /************************************************************************/
 
 #define WARN_CHECK_DS(x)                                                       \
@@ -503,7 +503,7 @@ static std::string BuildFullName(const char *pszTOCFilename,
 }
 
 /************************************************************************/
-/*                              Build()                                 */
+/*                               Build()                                */
 /************************************************************************/
 
 /* Builds a ECRGTOCSubDataset from the set of files of the toc entry */
@@ -620,7 +620,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
@@ -1050,7 +1050,7 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_ECRGTOC()                       */
+/*                        GDALRegister_ECRGTOC()                        */
 /************************************************************************/
 
 void GDALRegister_ECRGTOC()

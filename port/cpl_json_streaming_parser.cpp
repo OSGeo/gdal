@@ -41,7 +41,7 @@ CPLJSonStreamingParser::~CPLJSonStreamingParser()
 }
 
 /************************************************************************/
-/*                           SetMaxDepth()                              */
+/*                            SetMaxDepth()                             */
 /************************************************************************/
 
 void CPLJSonStreamingParser::SetMaxDepth(size_t nVal)
@@ -50,7 +50,7 @@ void CPLJSonStreamingParser::SetMaxDepth(size_t nVal)
 }
 
 /************************************************************************/
-/*                         SetMaxStringSize()                           */
+/*                          SetMaxStringSize()                          */
 /************************************************************************/
 
 void CPLJSonStreamingParser::SetMaxStringSize(size_t nVal)
@@ -59,7 +59,7 @@ void CPLJSonStreamingParser::SetMaxStringSize(size_t nVal)
 }
 
 /************************************************************************/
-/*                                Reset()                               */
+/*                               Reset()                                */
 /************************************************************************/
 
 void CPLJSonStreamingParser::Reset()
@@ -80,7 +80,7 @@ void CPLJSonStreamingParser::Reset()
 }
 
 /************************************************************************/
-/*                              AdvanceChar()                           */
+/*                            AdvanceChar()                             */
 /************************************************************************/
 
 void CPLJSonStreamingParser::AdvanceChar(const char *&pStr, size_t &nLength)
@@ -103,7 +103,7 @@ void CPLJSonStreamingParser::AdvanceChar(const char *&pStr, size_t &nLength)
 }
 
 /************************************************************************/
-/*                               SkipSpace()                            */
+/*                             SkipSpace()                              */
 /************************************************************************/
 
 void CPLJSonStreamingParser::SkipSpace(const char *&pStr, size_t &nLength)
@@ -115,7 +115,7 @@ void CPLJSonStreamingParser::SkipSpace(const char *&pStr, size_t &nLength)
 }
 
 /************************************************************************/
-/*                             EmitException()                          */
+/*                           EmitException()                            */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::EmitException(const char *pszMessage)
@@ -129,7 +129,7 @@ bool CPLJSonStreamingParser::EmitException(const char *pszMessage)
 }
 
 /************************************************************************/
-/*                             StopParsing()                            */
+/*                            StopParsing()                             */
 /************************************************************************/
 
 void CPLJSonStreamingParser::StopParsing()
@@ -138,7 +138,7 @@ void CPLJSonStreamingParser::StopParsing()
 }
 
 /************************************************************************/
-/*                          EmitUnexpectedChar()                        */
+/*                         EmitUnexpectedChar()                         */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
@@ -158,7 +158,7 @@ bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
 }
 
 /************************************************************************/
-/*                            IsValidNewToken()                         */
+/*                          IsValidNewToken()                           */
 /************************************************************************/
 
 static bool IsValidNewToken(char ch)
@@ -169,7 +169,7 @@ static bool IsValidNewToken(char ch)
 }
 
 /************************************************************************/
-/*                             StartNewToken()                          */
+/*                           StartNewToken()                            */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::StartNewToken(const char *&pStr, size_t &nLength)
@@ -228,7 +228,7 @@ bool CPLJSonStreamingParser::StartNewToken(const char *&pStr, size_t &nLength)
 }
 
 /************************************************************************/
-/*                       CheckAndEmitTrueFalseOrNull()                  */
+/*                    CheckAndEmitTrueFalseOrNull()                     */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
@@ -274,7 +274,7 @@ bool CPLJSonStreamingParser::CheckAndEmitTrueFalseOrNull(char ch)
 }
 
 /************************************************************************/
-/*                           CheckStackEmpty()                          */
+/*                          CheckStackEmpty()                           */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::CheckStackEmpty()
@@ -291,7 +291,7 @@ bool CPLJSonStreamingParser::CheckStackEmpty()
 }
 
 /************************************************************************/
-/*                           IsHighSurrogate()                          */
+/*                          IsHighSurrogate()                           */
 /************************************************************************/
 
 static bool IsHighSurrogate(unsigned uc)
@@ -309,7 +309,7 @@ static bool IsLowSurrogate(unsigned uc)
 }
 
 /************************************************************************/
-/*                         GetSurrogatePair()                           */
+/*                          GetSurrogatePair()                          */
 /************************************************************************/
 
 static unsigned GetSurrogatePair(unsigned hi, unsigned lo)
@@ -318,7 +318,7 @@ static unsigned GetSurrogatePair(unsigned hi, unsigned lo)
 }
 
 /************************************************************************/
-/*                            IsHexDigit()                              */
+/*                             IsHexDigit()                             */
 /************************************************************************/
 
 static bool IsHexDigit(char ch)
@@ -328,7 +328,7 @@ static bool IsHexDigit(char ch)
 }
 
 /************************************************************************/
-/*                           HexToDecimal()                             */
+/*                            HexToDecimal()                            */
 /************************************************************************/
 
 static unsigned HexToDecimal(char ch)
@@ -342,7 +342,7 @@ static unsigned HexToDecimal(char ch)
 }
 
 /************************************************************************/
-/*                            getUCSChar()                              */
+/*                             getUCSChar()                             */
 /************************************************************************/
 
 static unsigned getUCSChar(const std::string &unicode4HexChar)
@@ -420,7 +420,7 @@ void CPLJSonStreamingParser::DecodeUnicode()
 }
 
 /************************************************************************/
-/*                              Parse()                                 */
+/*                               Parse()                                */
 /************************************************************************/
 
 bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
@@ -943,7 +943,7 @@ bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
 }
 
 /************************************************************************/
-/*                       GetSerializedString()                          */
+/*                        GetSerializedString()                         */
 /************************************************************************/
 
 std::string CPLJSonStreamingParser::GetSerializedString(std::string_view s)

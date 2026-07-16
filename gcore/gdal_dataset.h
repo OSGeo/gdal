@@ -367,7 +367,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         double *pdfPixel, double *pdfLine,
         CSLConstList papszTransformerOptions = nullptr) const;
 
-    virtual CPLErr AddBand(GDALDataType eType, char **papszOptions = nullptr);
+    virtual CPLErr AddBand(GDALDataType eType,
+                           CSLConstList papszOptions = nullptr);
 
     virtual void *GetInternalHandle(const char *pszHandleName);
     virtual GDALDriver *GetDriver(void);
@@ -389,7 +390,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize, GDALDataType eDT,
                               int nBandCount, int *panBandList,
-                              char **papszOptions);
+                              CSLConstList papszOptions);
 
     virtual CPLErr CreateMaskBand(int nFlagsIn);
 
@@ -397,7 +398,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     BeginAsyncReader(int nXOff, int nYOff, int nXSize, int nYSize, void *pBuf,
                      int nBufXSize, int nBufYSize, GDALDataType eBufType,
                      int nBandCount, int *panBandMap, int nPixelSpace,
-                     int nLineSpace, int nBandSpace, char **papszOptions);
+                     int nLineSpace, int nBandSpace, CSLConstList papszOptions);
     virtual void EndAsyncReader(GDALAsyncReader *poARIO);
 
     //! @cond Doxygen_Suppress
@@ -856,7 +857,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                           CSLConstList papszOptions = nullptr);
 
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
-                                char **papszOptions = nullptr);
+                                CSLConstList papszOptions = nullptr);
 
     virtual OGRStyleTable *GetStyleTable();
     virtual void SetStyleTableDirectly(OGRStyleTable *poStyleTable);

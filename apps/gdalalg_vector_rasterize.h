@@ -81,7 +81,7 @@ class GDALVectorRasterizeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*               GDALVectorRasterizeAlgorithmStandalone                 */
+/*                GDALVectorRasterizeAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorRasterizeAlgorithmStandalone final

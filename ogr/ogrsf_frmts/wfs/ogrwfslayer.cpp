@@ -38,7 +38,7 @@ OGRWFSLayer::OGRWFSLayer(OGRWFSDataSource *poDSIn, OGRSpatialReference *poSRSIn,
 }
 
 /************************************************************************/
-/*                             Clone()                                  */
+/*                               Clone()                                */
 /************************************************************************/
 
 OGRWFSLayer *OGRWFSLayer::Clone()
@@ -96,7 +96,7 @@ OGRWFSLayer::~OGRWFSLayer()
 }
 
 /************************************************************************/
-/*                          SetActiveSRS()                              */
+/*                            SetActiveSRS()                            */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::SetActiveSRS(int /*iGeomField*/,
@@ -151,7 +151,7 @@ OGRErr OGRWFSLayer::SetActiveSRS(int /*iGeomField*/,
 }
 
 /************************************************************************/
-/*                    GetDescribeFeatureTypeURL()                       */
+/*                     GetDescribeFeatureTypeURL()                      */
 /************************************************************************/
 
 CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(CPL_UNUSED int bWithNS)
@@ -188,7 +188,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(CPL_UNUSED int bWithNS)
 }
 
 /************************************************************************/
-/*                      DescribeFeatureType()                           */
+/*                        DescribeFeatureType()                         */
 /************************************************************************/
 
 OGRFeatureDefn *OGRWFSLayer::DescribeFeatureType()
@@ -360,7 +360,7 @@ OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass *poClass)
 }
 
 /************************************************************************/
-/*                       MakeGetFeatureURL()                            */
+/*                         MakeGetFeatureURL()                          */
 /************************************************************************/
 
 CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures,
@@ -647,7 +647,7 @@ static const char *OGRWFSFetchContentDispositionFilename(char **papszHeaders)
 }
 
 /************************************************************************/
-/*                  MustRetryIfNonCompliantServer()                     */
+/*                   MustRetryIfNonCompliantServer()                    */
 /************************************************************************/
 
 bool OGRWFSLayer::MustRetryIfNonCompliantServer(const char *pszServerAnswer)
@@ -696,7 +696,7 @@ bool OGRWFSLayer::MustRetryIfNonCompliantServer(const char *pszServerAnswer)
 }
 
 /************************************************************************/
-/*                         FetchGetFeature()                            */
+/*                          FetchGetFeature()                           */
 /************************************************************************/
 
 GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
@@ -1143,7 +1143,7 @@ const OGRFeatureDefn *OGRWFSLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                          BuildLayerDefn()                            */
+/*                           BuildLayerDefn()                           */
 /************************************************************************/
 
 void OGRWFSLayer::BuildLayerDefn()
@@ -1160,7 +1160,7 @@ void OGRWFSLayer::BuildLayerDefn()
 }
 
 /************************************************************************/
-/*                          BuildLayerDefn()                            */
+/*                           BuildLayerDefn()                           */
 /************************************************************************/
 
 OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
@@ -1259,7 +1259,7 @@ void OGRWFSLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         SetIgnoredFields()                           */
+/*                          SetIgnoredFields()                          */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::SetIgnoredFields(CSLConstList papszFields)
@@ -1450,7 +1450,7 @@ OGRErr OGRWFSLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                        SetAttributeFilter()                          */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::SetAttributeFilter(const char *pszFilter)
@@ -1732,7 +1732,7 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 }
 
 /************************************************************************/
-/*              CanRunGetFeatureCountAndGetExtentTogether()             */
+/*             CanRunGetFeatureCountAndGetExtentTogether()              */
 /************************************************************************/
 
 int OGRWFSLayer::CanRunGetFeatureCountAndGetExtentTogether()
@@ -1748,7 +1748,7 @@ int OGRWFSLayer::CanRunGetFeatureCountAndGetExtentTogether()
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRWFSLayer::GetFeatureCount(int bForce)
@@ -1801,7 +1801,7 @@ GIntBig OGRWFSLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                              SetExtents()                            */
+/*                             SetExtents()                             */
 /************************************************************************/
 
 void OGRWFSLayer::SetExtents(double dfMinXIn, double dfMinYIn, double dfMaxXIn,
@@ -1814,7 +1814,7 @@ void OGRWFSLayer::SetExtents(double dfMinXIn, double dfMinYIn, double dfMaxXIn,
 }
 
 /************************************************************************/
-/*                            SetWGS84Extents()                         */
+/*                          SetWGS84Extents()                           */
 /************************************************************************/
 
 void OGRWFSLayer::SetWGS84Extents(double dfMinXIn, double dfMinYIn,
@@ -1881,7 +1881,7 @@ OGRErr OGRWFSLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                          GetShortName()                              */
+/*                            GetShortName()                            */
 /************************************************************************/
 
 const char *OGRWFSLayer::GetShortName()
@@ -1895,7 +1895,7 @@ const char *OGRWFSLayer::GetShortName()
 }
 
 /************************************************************************/
-/*                          GetPostHeader()                             */
+/*                           GetPostHeader()                            */
 /************************************************************************/
 
 CPLString OGRWFSLayer::GetPostHeader()
@@ -1929,7 +1929,7 @@ CPLString OGRWFSLayer::GetPostHeader()
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                             */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::ICreateFeature(OGRFeature *poFeature)
@@ -2203,7 +2203,7 @@ OGRErr OGRWFSLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::ISetFeature(OGRFeature *poFeature)
@@ -2406,7 +2406,7 @@ OGRErr OGRWFSLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                               GetFeature()                           */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRWFSLayer::GetFeature(GIntBig nFID)
@@ -2433,7 +2433,7 @@ OGRFeature *OGRWFSLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                         DeleteFromFilter()                           */
+/*                          DeleteFromFilter()                          */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::DeleteFromFilter(const std::string &osOGCFilter)
@@ -2554,7 +2554,7 @@ OGRErr OGRWFSLayer::DeleteFromFilter(const std::string &osOGCFilter)
 }
 
 /************************************************************************/
-/*                            DeleteFeature()                           */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::DeleteFeature(GIntBig nFID)
@@ -2615,7 +2615,7 @@ OGRErr OGRWFSLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                         StartTransaction()                           */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::StartTransaction()
@@ -2649,7 +2649,7 @@ OGRErr OGRWFSLayer::StartTransaction()
 }
 
 /************************************************************************/
-/*                        CommitTransaction()                           */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::CommitTransaction()
@@ -2828,7 +2828,7 @@ OGRErr OGRWFSLayer::CommitTransaction()
 }
 
 /************************************************************************/
-/*                      RollbackTransaction()                           */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 OGRErr OGRWFSLayer::RollbackTransaction()
@@ -2861,7 +2861,7 @@ OGRErr OGRWFSLayer::RollbackTransaction()
 }
 
 /************************************************************************/
-/*                    SetRequiredOutputFormat()                         */
+/*                      SetRequiredOutputFormat()                       */
 /************************************************************************/
 
 void OGRWFSLayer::SetRequiredOutputFormat(const char *pszRequiredOutputFormatIn)
@@ -2878,7 +2878,7 @@ void OGRWFSLayer::SetRequiredOutputFormat(const char *pszRequiredOutputFormatIn)
 }
 
 /************************************************************************/
-/*                            SetOrderBy()                              */
+/*                             SetOrderBy()                             */
 /************************************************************************/
 
 void OGRWFSLayer::SetOrderBy(const std::vector<OGRWFSSortDesc> &aoSortColumnsIn)

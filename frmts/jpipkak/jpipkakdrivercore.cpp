@@ -43,7 +43,7 @@ void JPIPKAKDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredJPIPKAKPlugin()                     */
+/*                    DeclareDeferredJPIPKAKPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -157,7 +157,7 @@ class TerragenDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -329,7 +329,7 @@ double TerragenRasterBand::GetOffset(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
@@ -853,7 +853,7 @@ CPLErr TerragenDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *TerragenDataset::GetSpatialRef() const
@@ -885,11 +885,12 @@ CPLErr TerragenDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                                Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 GDALDataset *TerragenDataset::Create(const char *pszFilename, int nXSize,
                                      int nYSize, int nBandsIn,
-                                     GDALDataType eType, char **papszOptions)
+                                     GDALDataType eType,
+                                     CSLConstList papszOptions)
 {
     TerragenDataset *poDS = new TerragenDataset();
 
@@ -1025,7 +1026,7 @@ GDALDataset *TerragenDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_Terragen()                       */
+/*                       GDALRegister_Terragen()                        */
 /************************************************************************/
 
 void GDALRegister_Terragen()

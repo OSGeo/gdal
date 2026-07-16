@@ -77,7 +77,8 @@ OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
 // #ifdef HAVE_MVT_WRITE_SUPPORT
 GDALDataset *OGRMVTWriterDatasetCreate(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
-                                       GDALDataType eDT, char **papszOptions);
+                                       GDALDataType eDT,
+                                       CSLConstList papszOptions);
 // #endif
 
 #endif  // MVTUTILS_H

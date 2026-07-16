@@ -203,7 +203,7 @@ static void ogr2tessellate_rec(bool bTessellate,
 }
 
 /************************************************************************/
-/*                 OGRLIBKMLSanitizeUTF8String()                        */
+/*                    OGRLIBKMLSanitizeUTF8String()                     */
 /************************************************************************/
 
 static char *OGRLIBKMLSanitizeUTF8String(const char *pszString)
@@ -1066,7 +1066,7 @@ static bool kml2tessellate_rec(GeometryPtr poKmlGeometry, int *pnTessellate)
 }
 
 /************************************************************************/
-/*                     ogrkmlSetAltitudeMode()                          */
+/*                       ogrkmlSetAltitudeMode()                        */
 /************************************************************************/
 
 static void ogrkmlSetAltitudeMode(OGRFeature *poOgrFeat, int iField,
@@ -1105,7 +1105,7 @@ static void ogrkmlSetAltitudeMode(OGRFeature *poOgrFeat, int iField,
 }
 
 /************************************************************************/
-/*                            TrimSpaces()                              */
+/*                             TrimSpaces()                             */
 /************************************************************************/
 
 static const char *TrimSpaces(CPLString &oText)
@@ -1129,7 +1129,7 @@ static const char *TrimSpaces(CPLString &oText)
 }
 
 /************************************************************************/
-/*                            kmldatetime2ogr()                         */
+/*                          kmldatetime2ogr()                           */
 /************************************************************************/
 
 static void kmldatetime2ogr(OGRFeature *poOgrFeat, const char *pszOGRField,
@@ -1826,7 +1826,7 @@ void get_fieldconfig(struct fieldconfig *oFC)
 }
 
 /************************************************************************/
-/*                 kmlAltitudeModeFromString()                          */
+/*                     kmlAltitudeModeFromString()                      */
 /************************************************************************/
 
 int kmlAltitudeModeFromString(const char *pszAltitudeMode, int &isGX)

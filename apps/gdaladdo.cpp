@@ -49,7 +49,7 @@ static void CPL_STDCALL GDALAddoErrorHandler(CPLErr eErr, CPLErrorNum errNum,
 }
 
 /************************************************************************/
-/*                              PartialRefresh()                        */
+/*                           PartialRefresh()                           */
 /************************************************************************/
 
 static bool PartialRefresh(GDALDataset *poDS,
@@ -194,7 +194,7 @@ static bool GetOvrIndices(GDALDataset *poDS, int nLevelCount,
 }
 
 /************************************************************************/
-/*                   PartialRefreshFromSourceTimestamp()                */
+/*                 PartialRefreshFromSourceTimestamp()                  */
 /************************************************************************/
 
 static bool PartialRefreshFromSourceTimestamp(

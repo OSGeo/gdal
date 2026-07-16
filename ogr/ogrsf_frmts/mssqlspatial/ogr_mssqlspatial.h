@@ -87,14 +87,14 @@ class OGRMSSQLSpatialDataSource;
 #define SMT_FIRSTARC 3
 
 /************************************************************************/
-/*                         OGRMSSQLAppendEscaped( )                     */
+/*                       OGRMSSQLAppendEscaped( )                       */
 /************************************************************************/
 
 void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
                            const char *pszStrValue);
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryParser                     */
+/*                        OGRMSSQLGeometryParser                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryValidator
@@ -145,7 +145,7 @@ class OGRMSSQLGeometryValidator
 };
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryParser                     */
+/*                        OGRMSSQLGeometryParser                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryParser
@@ -202,7 +202,7 @@ class OGRMSSQLGeometryParser
 };
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryWriter                     */
+/*                        OGRMSSQLGeometryWriter                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryWriter
@@ -266,7 +266,7 @@ class OGRMSSQLGeometryWriter
 };
 
 /************************************************************************/
-/*                             OGRMSSQLSpatialLayer                     */
+/*                         OGRMSSQLSpatialLayer                         */
 /************************************************************************/
 
 class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
@@ -353,7 +353,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRMSSQLSpatialTableLayer                      */
+/*                      OGRMSSQLSpatialTableLayer                       */
 /************************************************************************/
 
 typedef union
@@ -550,7 +550,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCDataSource                          */
+/*                          OGRODBCDataSource                           */
 /************************************************************************/
 
 class OGRMSSQLSpatialDataSource final : public GDALDataset

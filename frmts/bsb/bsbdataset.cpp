@@ -169,7 +169,7 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                           BSBDataset()                               */
+/*                             BSBDataset()                             */
 /************************************************************************/
 
 BSBDataset::BSBDataset()
@@ -212,7 +212,7 @@ CPLErr BSBDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *BSBDataset::GetSpatialRef() const
@@ -633,7 +633,7 @@ void BSBDataset::ScanForGCPsNos(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                            ScanForGCPsBSB()                          */
+/*                           ScanForGCPsBSB()                           */
 /************************************************************************/
 
 void BSBDataset::ScanForGCPsBSB()
@@ -691,7 +691,7 @@ void BSBDataset::ScanForGCPsBSB()
 }
 
 /************************************************************************/
-/*                            ScanForCutline()                          */
+/*                           ScanForCutline()                           */
 /************************************************************************/
 
 void BSBDataset::ScanForCutline()
@@ -1192,7 +1192,7 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 #endif
 
 /************************************************************************/
-/*                        GDALRegister_BSB()                            */
+/*                          GDALRegister_BSB()                          */
 /************************************************************************/
 
 void GDALRegister_BSB()

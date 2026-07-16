@@ -34,7 +34,7 @@ static void GDALExit(int nCode)
 }
 
 /************************************************************************/
-/*                     GDALCreateOptions                               */
+/*                          GDALCreateOptions                           */
 /************************************************************************/
 
 struct GDALCreateOptions
@@ -63,7 +63,7 @@ struct GDALCreateOptions
 };
 
 /************************************************************************/
-/*                   GDALCreateAppOptionsGetParser()                   */
+/*                   GDALCreateAppOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>

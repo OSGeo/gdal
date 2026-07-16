@@ -496,7 +496,7 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
 }
 
 /************************************************************************/
-/*                            SetTieStrategy()                          */
+/*                           SetTieStrategy()                           */
 /************************************************************************/
 
 static void SetTieStrategy(GDALWarpOptions *psOptions, CPLErr *peErr)
@@ -918,7 +918,7 @@ void GDALWarpOperation::DestroyDestinationBuffer(void *pDstBuffer)
 }
 
 /************************************************************************/
-/*                         GDALCreateWarpOperation()                    */
+/*                      GDALCreateWarpOperation()                       */
 /************************************************************************/
 
 /**
@@ -938,7 +938,7 @@ GDALWarpOperationH GDALCreateWarpOperation(const GDALWarpOptions *psNewOptions)
 }
 
 /************************************************************************/
-/*                         GDALDestroyWarpOperation()                   */
+/*                      GDALDestroyWarpOperation()                      */
 /************************************************************************/
 
 /**
@@ -1104,7 +1104,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                         GDALChunkAndWarpImage()                      */
+/*                       GDALChunkAndWarpImage()                        */
 /************************************************************************/
 
 /**
@@ -1354,7 +1354,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                         GDALChunkAndWarpMulti()                      */
+/*                       GDALChunkAndWarpMulti()                        */
 /************************************************************************/
 
 /**
@@ -1384,7 +1384,7 @@ void GDALWarpOperation::WipeChunkList()
 }
 
 /************************************************************************/
-/*                       GetWorkingMemoryForWindow()                    */
+/*                     GetWorkingMemoryForWindow()                      */
 /************************************************************************/
 
 /** Returns the amount of working memory, in bytes, required to process
@@ -1450,7 +1450,7 @@ double GDALWarpOperation::GetWorkingMemoryForWindow(int nSrcXSize,
 }
 
 /************************************************************************/
-/*                       CollectChunkListInternal()                     */
+/*                      CollectChunkListInternal()                      */
 /************************************************************************/
 
 CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
@@ -1836,7 +1836,7 @@ CPLErr GDALWarpOperation::WarpRegion(
 }
 
 /************************************************************************/
-/*                             GDALWarpRegion()                         */
+/*                           GDALWarpRegion()                           */
 /************************************************************************/
 
 /**
@@ -1856,7 +1856,7 @@ CPLErr GDALWarpRegion(GDALWarpOperationH hOperation, int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                            WarpRegionToBuffer()                      */
+/*                         WarpRegionToBuffer()                         */
 /************************************************************************/
 
 /**
@@ -2010,24 +2010,31 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
-    GInt64 nAlloc64 =
-        nWordSize *
-        (static_cast<GInt64>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
-        psOptions->nBandCount;
-#if SIZEOF_VOIDP == 4
-    if (nAlloc64 != static_cast<GInt64>(static_cast<size_t>(nAlloc64)))
+    // Check for overflows in computation of nAlloc
+    if (nSrcYSize > 0 &&
+        ((static_cast<size_t>(nSrcXSize) >
+          (std::numeric_limits<size_t>::max() - WARP_EXTRA_ELTS) / nSrcYSize) ||
+         (static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS >
+          std::numeric_limits<size_t>::max() /
+              (nWordSize * psOptions->nBandCount))))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Integer overflow : nSrcXSize=%d, nSrcYSize=%d", nSrcXSize,
-                 nSrcYSize);
+                 "WarpRegionToBuffer(): Integer overflow : nWordSize(=%d) * "
+                 "(nSrcXSize(=%d) * nSrcYSize(=%d) + WARP_EXTRA_ELTS(=%d)) * "
+                 "nBandCount(=%d)",
+                 nWordSize, nSrcXSize, nSrcYSize, WARP_EXTRA_ELTS,
+                 psOptions->nBandCount);
         return CE_Failure;
     }
-#endif
+
+    const size_t nAlloc =
+        nWordSize *
+        (static_cast<size_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
+        psOptions->nBandCount;
 
     oWK.papabySrcImage = static_cast<GByte **>(
         CPLCalloc(sizeof(GByte *), psOptions->nBandCount));
-    oWK.papabySrcImage[0] =
-        static_cast<GByte *>(VSI_MALLOC_VERBOSE(static_cast<size_t>(nAlloc64)));
+    oWK.papabySrcImage[0] = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nAlloc));
 
     CPLErr eErr =
         nSrcXSize != 0 && nSrcYSize != 0 && oWK.papabySrcImage[0] == nullptr
@@ -2467,7 +2474,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 }
 
 /************************************************************************/
-/*                            GDALWarpRegionToBuffer()                  */
+/*                       GDALWarpRegionToBuffer()                       */
 /************************************************************************/
 
 /**
@@ -2741,7 +2748,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
 }
 
 /************************************************************************/
-/*                    ComputeSourceWindowTransformPoints()              */
+/*                 ComputeSourceWindowTransformPoints()                 */
 /************************************************************************/
 
 bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
@@ -2760,7 +2767,8 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     {
         if (bAll)
         {
-            if (nDstYSize > knIntMax / (nDstXSize + 1) - 1)
+            if (nDstXSize > knIntMax - 1 ||
+                nDstYSize > knIntMax / (nDstXSize + 1) - 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
                 return false;
@@ -2783,7 +2791,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     {
         if (bAll)
         {
-            if (nDstXSize > (knIntMax - 2 * nDstYSize) / 2)
+            if (nDstXSize > knIntMax / 2 - nDstYSize)
             {
                 // Extremely unlikely !
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
@@ -2814,7 +2822,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
         return false;
     }
     double *padfY = padfX + nSampleMax;
-    double *padfZ = padfX + nSampleMax * 2;
+    double *padfZ = padfX + static_cast<size_t>(nSampleMax) * 2;
 
     /* -------------------------------------------------------------------- */
     /*      Setup sample points on a grid pattern throughout the area.      */

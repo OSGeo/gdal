@@ -236,7 +236,7 @@ class OGRODSDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, VSILFILE *fpContentIn,
              VSILFILE *fpSettingsIn, int bUpdatableIn);
-    int Create(const char *pszName, char **papszOptions);
+    int Create(const char *pszName, CSLConstList papszOptions);
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

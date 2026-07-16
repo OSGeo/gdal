@@ -418,7 +418,7 @@ int GDALColorTable::CreateColorRamp(int nStartIndex,
 }
 
 /************************************************************************/
-/*                         GDALCreateColorRamp()                        */
+/*                        GDALCreateColorRamp()                         */
 /************************************************************************/
 
 /**
@@ -438,7 +438,7 @@ void CPL_STDCALL GDALCreateColorRamp(GDALColorTableH hTable, int nStartIndex,
 }
 
 /************************************************************************/
-/*                           IsSame()                                   */
+/*                               IsSame()                               */
 /************************************************************************/
 
 /**
@@ -457,7 +457,7 @@ int GDALColorTable::IsSame(const GDALColorTable *poOtherCT) const
 }
 
 /************************************************************************/
-/*                          IsIdentity()                                */
+/*                             IsIdentity()                             */
 /************************************************************************/
 
 /**
@@ -481,7 +481,7 @@ bool GDALColorTable::IsIdentity() const
 }
 
 /************************************************************************/
-/*                          FindRasterRenderer()                        */
+/*                         FindRasterRenderer()                         */
 /************************************************************************/
 
 static bool FindRasterRenderer(const CPLXMLNode *const psNode,
@@ -670,7 +670,7 @@ GDALColorTable::LoadFromFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                    GDALGetAbsoluteValFromPct()                       */
+/*                     GDALGetAbsoluteValFromPct()                      */
 /************************************************************************/
 
 /* dfPct : percentage between 0 and 1 */
@@ -692,7 +692,7 @@ static double GDALGetAbsoluteValFromPct(GDALRasterBand *poBand, double dfPct)
 }
 
 /************************************************************************/
-/*                     GDALFindNamedColor()                             */
+/*                         GDALFindNamedColor()                         */
 /************************************************************************/
 
 static bool GDALFindNamedColor(const char *pszColorName, int *pnR, int *pnG,
@@ -733,7 +733,7 @@ static bool GDALFindNamedColor(const char *pszColorName, int *pnR, int *pnG,
 }
 
 /************************************************************************/
-/*                          GDALLoadTextColorMap()                      */
+/*                        GDALLoadTextColorMap()                        */
 /************************************************************************/
 
 /**

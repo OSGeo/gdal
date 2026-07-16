@@ -2899,6 +2899,9 @@ bool CPL_DLL GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
                                         const uint64_t *panBlockCoordinates,
                                         GDALMDArrayRawBlockInfo *psBlockInfo);
 
+int CPL_DLL GDALMDArrayGetOverviewCount(GDALMDArrayH hArray);
+GDALMDArrayH CPL_DLL GDALMDArrayGetOverview(GDALMDArrayH hArray, int nIdx);
+
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);

@@ -51,7 +51,7 @@ constexpr int RMF_JPEG_BAND_COUNT = 3;
 constexpr int RMF_DEM_BAND_COUNT = 1;
 
 /************************************************************************/
-/*                            RMFHeader                                 */
+/*                              RMFHeader                               */
 /************************************************************************/
 
 typedef struct
@@ -115,7 +115,7 @@ typedef struct
 } RMFHeader;
 
 /************************************************************************/
-/*                            RMFExtHeader                              */
+/*                             RMFExtHeader                             */
 /************************************************************************/
 
 typedef struct
@@ -127,7 +127,7 @@ typedef struct
 } RMFExtHeader;
 
 /************************************************************************/
-/*                              RSWFrame                                */
+/*                               RSWFrame                               */
 /************************************************************************/
 
 typedef struct
@@ -144,7 +144,7 @@ typedef struct
 } RSWFrameCoord;
 
 /************************************************************************/
-/*                            RMFCompressionJob                         */
+/*                          RMFCompressionJob                           */
 /************************************************************************/
 
 struct RMFCompressionJob
@@ -168,7 +168,7 @@ struct RMFCompressionJob
 };
 
 /************************************************************************/
-/*                            RMFCompressData                           */
+/*                           RMFCompressData                            */
 /************************************************************************/
 
 struct RMFCompressData
@@ -188,7 +188,7 @@ struct RMFCompressData
 };
 
 /************************************************************************/
-/*                            RMFTileData                               */
+/*                             RMFTileData                              */
 /************************************************************************/
 
 struct RMFTileData
@@ -299,9 +299,9 @@ class RMFDataset final : public GDALDataset
     static RMFDataset *Open(GDALOpenInfo *, RMFDataset *poParentDS,
                             vsi_l_offset nNextHeaderOffset);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
-                               char **);
+                               CSLConstList);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
-                               char **, RMFDataset *poParentDS,
+                               CSLConstList, RMFDataset *poParentDS,
                                double dfOvFactor);
     CPLErr FlushCache(bool bAtClosing) override;
 
@@ -335,7 +335,7 @@ class RMFDataset final : public GDALDataset
     static GByte GetCompressionType(const char *pszCompressName);
     int SetupCompression(GDALDataType eType, const char *pszFilename);
     static void WriteTileJobFunc(void *pData);
-    CPLErr InitCompressorData(char **papszParamList);
+    CPLErr InitCompressorData(CSLConstList papszParamList);
     CPLErr WriteTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,
                      size_t nBytes, GUInt32 nRawXSize, GUInt32 nRawYSize);
     CPLErr WriteRawTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,

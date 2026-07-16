@@ -74,8 +74,8 @@ class GDALECWCompressor final : public CNCSFile
 
     bool WriteCancel() override;
 
-    CPLErr Initialize(const char *pszFilename, char **papszOptions, int nXSize,
-                      int nYSize, int nBands,
+    CPLErr Initialize(const char *pszFilename, CSLConstList papszOptions,
+                      int nXSize, int nYSize, int nBands,
                       const char *const *papszBandDescriptions,
                       int bRGBColorSpace, GDALDataType eType,
                       const OGRSpatialReference *poSRS,
@@ -338,7 +338,7 @@ CPLErr GDALECWCompressor::WriteJP2Box(GDALJP2Box *poBox)
 }
 
 /************************************************************************/
-/*                         WriteXMLBoxes()                              */
+/*                           WriteXMLBoxes()                            */
 /************************************************************************/
 
 void GDALECWCompressor::WriteXMLBoxes()
@@ -379,7 +379,7 @@ CPLErr GDALECWCompressor::ourWriteLineBIL(UINT16 nBands, void **ppOutputLine,
 /************************************************************************/
 
 CPLErr GDALECWCompressor::Initialize(
-    const char *pszFilename, char **papszOptions, int nXSize, int nYSize,
+    const char *pszFilename, CSLConstList papszOptions, int nXSize, int nYSize,
     int nBands, const char *const *papszBandDescriptions, int bRGBColorSpace,
     GDALDataType eType, const OGRSpatialReference *poSRS,
     const GDALGeoTransform &gt, int nGCPCount, const GDAL_GCP *pasGCPList,
@@ -1084,7 +1084,7 @@ static int ECWIsInputRGBColorSpace(GDALDataset *poSrcDS)
 /************************************************************************/
 
 static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int bStrict, char **papszOptions,
+                                  int bStrict, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData, int bIsJPEG2000)
 
@@ -1290,7 +1290,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
-                              int bStrict, char **papszOptions,
+                              int bStrict, CSLConstList papszOptions,
                               GDALProgressFunc pfnProgress, void *pProgressData)
 
 {
@@ -1384,7 +1384,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
 
 GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData)
 
@@ -1536,7 +1536,7 @@ class ECWWriteDataset final : public GDALDataset
 
   public:
     ECWWriteDataset(const char *, int, int, int, GDALDataType,
-                    char **papszOptions, int);
+                    CSLConstList papszOptions, int);
     ~ECWWriteDataset() override;
 
     CPLErr FlushCache(bool bAtClosing) override;
@@ -1610,7 +1610,7 @@ class ECWWriteRasterBand final : public GDALRasterBand
 
 ECWWriteDataset::ECWWriteDataset(const char *pszFilenameIn, int nXSize,
                                  int nYSize, int nBandCount, GDALDataType eType,
-                                 char **papszOptionsIn, int bIsJPEG2000In)
+                                 CSLConstList papszOptionsIn, int bIsJPEG2000In)
 
 {
     bCrystalized = FALSE;
@@ -1678,7 +1678,7 @@ CPLErr ECWWriteDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ECWWriteDataset::GetSpatialRef() const
@@ -2033,7 +2033,7 @@ CPLErr ECWWriteRasterBand::IWriteBlock(CPL_UNUSED int nBlockX, int nBlockY,
 
 GDALDataset *ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions)
+                               CSLConstList papszOptions)
 
 {
     if (nBands == 0)
@@ -2052,7 +2052,8 @@ GDALDataset *ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize,
 /************************************************************************/
 
 GDALDataset *ECWCreateECW(const char *pszFilename, int nXSize, int nYSize,
-                          int nBands, GDALDataType eType, char **papszOptions)
+                          int nBands, GDALDataType eType,
+                          CSLConstList papszOptions)
 
 {
     if (nBands == 0)

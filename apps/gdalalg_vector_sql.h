@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorSQLAlgorithm                          */
+/*                        GDALVectorSQLAlgorithm                        */
 /************************************************************************/
 
 class GDALVectorSQLAlgorithm /* non final */
@@ -42,7 +42,7 @@ class GDALVectorSQLAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                     GDALVectorSQLAlgorithmStandalone                 */
+/*                   GDALVectorSQLAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorSQLAlgorithmStandalone final : public GDALVectorSQLAlgorithm

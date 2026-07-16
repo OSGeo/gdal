@@ -668,7 +668,7 @@ struct SHPDiskTreeInfo
 };
 
 /************************************************************************/
-/*                         SHPOpenDiskTree()                            */
+/*                          SHPOpenDiskTree()                           */
 /************************************************************************/
 
 SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
@@ -697,8 +697,8 @@ SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
     return hDiskTree;
 }
 
-/***********************************************************************/
-/*                         SHPCloseDiskTree()                           */
+/************************************************************************/
+/*                          SHPCloseDiskTree()                          */
 /************************************************************************/
 
 void SHPCloseDiskTree(SHPTreeDiskHandle hDiskTree)
@@ -903,8 +903,8 @@ int SHPAPI_CALL1(*) SHPSearchDiskTree(FILE *fp, double *padfBoundsMin,
                                pnShapeCount);
 }
 
-/***********************************************************************/
-/*                       SHPSearchDiskTreeEx()                         */
+/************************************************************************/
+/*                        SHPSearchDiskTreeEx()                         */
 /************************************************************************/
 
 int SHPAPI_CALL1(*)

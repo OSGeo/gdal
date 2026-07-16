@@ -14,3 +14,9 @@ gdal_alg.h
 
 .. doxygenfile:: gdal_alg.h
    :project: api
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    numGCPs

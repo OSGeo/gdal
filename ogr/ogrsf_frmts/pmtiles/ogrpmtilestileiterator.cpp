@@ -16,7 +16,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                 find_tile_idx_lesser_or_equal()                      */
+/*                   find_tile_idx_lesser_or_equal()                    */
 /************************************************************************/
 
 static int
@@ -49,7 +49,7 @@ find_tile_idx_lesser_or_equal(const std::vector<pmtiles::entryv3> &entries,
 }
 
 /************************************************************************/
-/*                      LoadRootDirectory()                             */
+/*                         LoadRootDirectory()                          */
 /************************************************************************/
 
 bool OGRPMTilesTileIterator::LoadRootDirectory()
@@ -167,7 +167,7 @@ bool OGRPMTilesTileIterator::LoadRootDirectory()
 }
 
 /************************************************************************/
-/*                        SkipRunLength()                               */
+/*                           SkipRunLength()                            */
 /************************************************************************/
 
 void OGRPMTilesTileIterator::SkipRunLength()
@@ -190,7 +190,7 @@ void OGRPMTilesTileIterator::SkipRunLength()
 }
 
 /************************************************************************/
-/*                          GetNextTile()                               */
+/*                            GetNextTile()                             */
 /************************************************************************/
 
 pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
@@ -465,7 +465,7 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
 }
 
 /************************************************************************/
-/*                           DumpTiles()                                */
+/*                             DumpTiles()                              */
 /************************************************************************/
 
 #ifdef DEBUG_PMTILES

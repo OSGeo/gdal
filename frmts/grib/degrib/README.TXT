@@ -70,7 +70,7 @@ The following tables can be found:
   - unit_conv: Unit conversion rule, whose values can be one of:
       + UC_NONE: No conversion allowed
       + UC_K2F: Kelvin degrees are converted to Fahrenheit (if English unit system)
-                or Celcius (metric system)
+                or Celsius (metric system)
       + UC_M2Feet: Meters are converted to Feet if English unit system
       + UC_M2Inch: Meters are converted to Inch if English unit system
       + UC_MS2Knots: m/s are converted to Knots if English unit system

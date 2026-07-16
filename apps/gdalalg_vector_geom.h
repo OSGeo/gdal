@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorGeomAbstractAlgorithm                   */
+/*                   GDALVectorGeomAbstractAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGeomAbstractAlgorithm /* non final */
@@ -47,7 +47,7 @@ class GDALVectorGeomAbstractAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALVectorGeomOneToOneAlgorithmLayer                */
+/*                 GDALVectorGeomOneToOneAlgorithmLayer                 */
 /************************************************************************/
 
 template <class T>
@@ -140,7 +140,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                     GDALGeosNonStreamingAlgorithmLayer               */
+/*                  GDALGeosNonStreamingAlgorithmLayer                  */
 /************************************************************************/
 
 /** A GDALGeosNonStreamingAlgorithmLayer manages the work of reading features

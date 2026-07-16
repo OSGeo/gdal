@@ -17,7 +17,7 @@
 OGRCartoGeomFieldDefn::~OGRCartoGeomFieldDefn() = default;
 
 /************************************************************************/
-/*                         OGRCARTOLayer()                            */
+/*                           OGRCARTOLayer()                            */
 /************************************************************************/
 
 OGRCARTOLayer::OGRCARTOLayer(OGRCARTODataSource *poDSIn)
@@ -28,7 +28,7 @@ OGRCARTOLayer::OGRCARTOLayer(OGRCARTODataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                         ~OGRCARTOLayer()                           */
+/*                           ~OGRCARTOLayer()                           */
 /************************************************************************/
 
 OGRCARTOLayer::~OGRCARTOLayer()
@@ -59,7 +59,7 @@ void OGRCARTOLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRCARTOLayer::GetLayerDefn() const
@@ -68,7 +68,7 @@ const OGRFeatureDefn *OGRCARTOLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                           BuildFeature()                             */
+/*                            BuildFeature()                            */
 /************************************************************************/
 
 OGRFeature *OGRCARTOLayer::BuildFeature(json_object *poRowObj)
@@ -152,7 +152,7 @@ OGRFeature *OGRCARTOLayer::BuildFeature(json_object *poRowObj)
 }
 
 /************************************************************************/
-/*                        FetchNewFeatures()                            */
+/*                          FetchNewFeatures()                          */
 /************************************************************************/
 
 json_object *OGRCARTOLayer::FetchNewFeatures()
@@ -170,7 +170,7 @@ json_object *OGRCARTOLayer::FetchNewFeatures()
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRCARTOLayer::GetNextRawFeature()
@@ -273,7 +273,7 @@ int OGRCARTOLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          EstablishLayerDefn()                        */
+/*                         EstablishLayerDefn()                         */
 /************************************************************************/
 
 void OGRCARTOLayer::EstablishLayerDefn(const char *pszLayerName,

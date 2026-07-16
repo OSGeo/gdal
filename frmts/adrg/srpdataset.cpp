@@ -125,7 +125,7 @@ SRPRasterBand::SRPRasterBand(SRPDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double SRPRasterBand::GetNoDataValue(int *pbSuccess)
@@ -323,7 +323,7 @@ CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                          SRPDataset()                               */
+/*                             SRPDataset()                             */
 /************************************************************************/
 
 SRPDataset::SRPDataset()
@@ -335,7 +335,7 @@ SRPDataset::SRPDataset()
 }
 
 /************************************************************************/
-/*                          ~SRPDataset()                              */
+/*                            ~SRPDataset()                             */
 /************************************************************************/
 
 SRPDataset::~SRPDataset()
@@ -369,7 +369,7 @@ CPLString SRPDataset::ResetTo01(const char *str)
 }
 
 /************************************************************************/
-/*                        GetSpatialRef()                               */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SRPDataset::GetSpatialRef() const
@@ -378,7 +378,7 @@ const OGRSpatialReference *SRPDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -913,7 +913,7 @@ CSLConstList SRPDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                      FindRecordInGENForIMG()                         */
+/*                       FindRecordInGENForIMG()                        */
 /************************************************************************/
 
 DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
@@ -987,7 +987,7 @@ DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
 }
 
 /************************************************************************/
-/*                           OpenDataset()                              */
+/*                            OpenDataset()                             */
 /************************************************************************/
 
 SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
@@ -1054,7 +1054,7 @@ SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                          GetGENListFromTHF()                         */
+/*                         GetGENListFromTHF()                          */
 /************************************************************************/
 
 char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
@@ -1209,7 +1209,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          AddMetadatafromFromTHF()                         */
+/*                       AddMetadatafromFromTHF()                       */
 /************************************************************************/
 
 void SRPDataset::AddMetadatafromFromTHF(const char *pszFileName)
@@ -1330,7 +1330,7 @@ void SRPDataset::AddMetadatafromFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          GetIMGListFromGEN()                         */
+/*                         GetIMGListFromGEN()                          */
 /************************************************************************/
 
 char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
@@ -1675,7 +1675,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_SRP()                          */
+/*                          GDALRegister_SRP()                          */
 /************************************************************************/
 
 void GDALRegister_SRP()

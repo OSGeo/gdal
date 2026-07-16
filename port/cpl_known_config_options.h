@@ -17,6 +17,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_CONTAINER_AUTHORIZATION_TOKEN", // from cpl_aws.cpp
    "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", // from cpl_aws.cpp
    "AWS_CONTAINER_CREDENTIALS_FULL_URI", // from cpl_aws.cpp
+   "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", // from cpl_aws.cpp
    "AWS_DEFAULT_PROFILE", // from cpl_aws.cpp
    "AWS_DEFAULT_REGION", // from cpl_aws.cpp
    "AWS_HTTPS", // from cpl_aws.cpp

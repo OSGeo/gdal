@@ -18,7 +18,7 @@
 #include <cinttypes>
 
 /************************************************************************/
-/*                       ZarrTIFFDecompressor()                         */
+/*                        ZarrTIFFDecompressor()                        */
 /************************************************************************/
 
 static bool ZarrTIFFDecompressor(const void *input_data, size_t input_size,
@@ -89,7 +89,7 @@ static bool ZarrTIFFDecompressor(const void *input_data, size_t input_size,
 }
 
 /************************************************************************/
-/*                     ZarrGetTIFFDecompressor()                        */
+/*                      ZarrGetTIFFDecompressor()                       */
 /************************************************************************/
 
 const CPLCompressor *ZarrGetTIFFDecompressor()

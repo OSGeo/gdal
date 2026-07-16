@@ -72,7 +72,7 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 }
 
 /************************************************************************/
-/*                               Finalize()                             */
+/*                              Finalize()                              */
 /************************************************************************/
 
 void OGRSQLiteLayer::Finalize()
@@ -155,7 +155,7 @@ static bool OGRGetDateTimeFieldType(const char *pszValue,
 }
 
 /************************************************************************/
-/*                          OGRIsBinaryGeomCol()                        */
+/*                         OGRIsBinaryGeomCol()                         */
 /************************************************************************/
 
 static int OGRIsBinaryGeomCol(sqlite3_stmt *hStmt, int iCol,
@@ -1069,7 +1069,7 @@ OGRFeature *OGRSQLiteLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                     createFromSpatialiteInternal()                   */
+/*                    createFromSpatialiteInternal()                    */
 /************************************************************************/
 
 /* See http://www.gaia-gis.it/spatialite/spatialite-manual-2.3.0.html#t3.3 */
@@ -2585,7 +2585,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
 }
 
 /************************************************************************/
-/*                     GetSpatialiteGeometryHeader()                    */
+/*                    GetSpatialiteGeometryHeader()                     */
 /************************************************************************/
 typedef struct
 {
@@ -2819,7 +2819,7 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry(const GByte *pabyData,
 }
 
 /************************************************************************/
-/*                CanBeCompressedSpatialiteGeometry()                   */
+/*                 CanBeCompressedSpatialiteGeometry()                  */
 /************************************************************************/
 
 int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(
@@ -2877,7 +2877,7 @@ int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(
 }
 
 /************************************************************************/
-/*                        collectSimpleGeometries()                     */
+/*                      collectSimpleGeometries()                       */
 /************************************************************************/
 
 static void
@@ -2899,7 +2899,7 @@ collectSimpleGeometries(const OGRGeometryCollection *poGeomCollection,
 }
 
 /************************************************************************/
-/*                  ComputeSpatiaLiteGeometrySize()                     */
+/*                   ComputeSpatiaLiteGeometrySize()                    */
 /************************************************************************/
 
 int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
@@ -2990,7 +2990,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                    GetSpatialiteGeometryCode()                       */
+/*                     GetSpatialiteGeometryCode()                      */
 /************************************************************************/
 
 int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
@@ -3168,7 +3168,7 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                    ExportSpatiaLiteGeometryInternal()                */
+/*                  ExportSpatiaLiteGeometryInternal()                  */
 /************************************************************************/
 
 int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
@@ -3570,7 +3570,7 @@ void OGRSQLiteLayer::ClearStatement()
 }
 
 /************************************************************************/
-/*                     FormatSpatialFilterFromRTree()                   */
+/*                    FormatSpatialFilterFromRTree()                    */
 /************************************************************************/
 
 CPLString OGRSQLiteLayer::FormatSpatialFilterFromRTree(
@@ -3630,7 +3630,7 @@ OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry *poFilterGeom,
 }
 
 /************************************************************************/
-/*                 OGRSQLiteGetSpatialiteGeometryHeader()               */
+/*                OGRSQLiteGetSpatialiteGeometryHeader()                */
 /************************************************************************/
 
 OGRErr OGRSQLiteGetSpatialiteGeometryHeader(const GByte *pabyData, int nBytes,
@@ -3646,7 +3646,7 @@ OGRErr OGRSQLiteGetSpatialiteGeometryHeader(const GByte *pabyData, int nBytes,
 }
 
 /************************************************************************/
-/*                   OGRSQLiteImportSpatiaLiteGeometry()                */
+/*                 OGRSQLiteImportSpatiaLiteGeometry()                  */
 /************************************************************************/
 
 OGRErr OGRSQLiteImportSpatiaLiteGeometry(const GByte *pabyData, int nBytes,
@@ -3657,7 +3657,7 @@ OGRErr OGRSQLiteImportSpatiaLiteGeometry(const GByte *pabyData, int nBytes,
 }
 
 /************************************************************************/
-/*                   OGRSQLiteExportSpatiaLiteGeometry()                */
+/*                 OGRSQLiteExportSpatiaLiteGeometry()                  */
 /************************************************************************/
 
 OGRErr OGRSQLiteExportSpatiaLiteGeometry(const OGRGeometry *poGeometry,

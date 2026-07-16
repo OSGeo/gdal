@@ -44,7 +44,7 @@
 constexpr const char *X_MS_VERSION = "2019-12-12";
 
 /************************************************************************/
-/*                      RemoveTrailingSlash()                           */
+/*                        RemoveTrailingSlash()                         */
 /************************************************************************/
 
 static std::string RemoveTrailingSlash(const std::string &osStr)
@@ -56,7 +56,7 @@ static std::string RemoveTrailingSlash(const std::string &osStr)
 }
 
 /************************************************************************/
-/*                     CPLAzureGetSignature()                           */
+/*                        CPLAzureGetSignature()                        */
 /************************************************************************/
 
 static std::string CPLAzureGetSignature(const std::string &osStringToSign,
@@ -87,7 +87,7 @@ static std::string CPLAzureGetSignature(const std::string &osStringToSign,
 }
 
 /************************************************************************/
-/*                          GetAzureBlobHeaders()                       */
+/*                        GetAzureBlobHeaders()                         */
 /************************************************************************/
 
 static struct curl_slist *GetAzureBlobHeaders(
@@ -190,7 +190,7 @@ static struct curl_slist *GetAzureBlobHeaders(
 }
 
 /************************************************************************/
-/*                     VSIAzureBlobHandleHelper()                       */
+/*                      VSIAzureBlobHandleHelper()                      */
 /************************************************************************/
 VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
     const std::string &osPathForOption, const std::string &osEndpoint,
@@ -217,7 +217,7 @@ VSIAzureBlobHandleHelper::~VSIAzureBlobHandleHelper()
 }
 
 /************************************************************************/
-/*                       AzureCSGetParameter()                          */
+/*                        AzureCSGetParameter()                         */
 /************************************************************************/
 
 static std::string AzureCSGetParameter(const std::string &osStr,
@@ -342,7 +342,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                 GetConfigurationFromWorkloadIdentity()               */
+/*                GetConfigurationFromWorkloadIdentity()                */
 /************************************************************************/
 
 // Last timestamp AZURE_FEDERATED_TOKEN_FILE was read
@@ -478,7 +478,7 @@ static bool GetConfigurationFromWorkloadIdentity(std::string &osAccessToken)
 }
 
 /************************************************************************/
-/*                GetConfigurationFromManagedIdentities()               */
+/*               GetConfigurationFromManagedIdentities()                */
 /************************************************************************/
 
 static bool
@@ -691,7 +691,7 @@ static bool GetConfigurationFromCLIConfigFile(
 }
 
 /************************************************************************/
-/*                              GetSAS()                                */
+/*                               GetSAS()                               */
 /************************************************************************/
 
 /* static */
@@ -715,7 +715,7 @@ bool VSIAzureBlobHandleHelper::IsNoSignRequest(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                        GetConfiguration()                            */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 bool VSIAzureBlobHandleHelper::GetConfiguration(
@@ -825,7 +825,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
 }
 
 /************************************************************************/
-/*                          BuildFromURI()                              */
+/*                            BuildFromURI()                            */
 /************************************************************************/
 
 VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
@@ -889,7 +889,7 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
 }
 
 /************************************************************************/
-/*                            BuildURL()                                */
+/*                              BuildURL()                              */
 /************************************************************************/
 
 std::string VSIAzureBlobHandleHelper::BuildURL(const std::string &osEndpoint,
@@ -908,7 +908,7 @@ std::string VSIAzureBlobHandleHelper::BuildURL(const std::string &osEndpoint,
 }
 
 /************************************************************************/
-/*                           RebuildURL()                               */
+/*                             RebuildURL()                             */
 /************************************************************************/
 
 void VSIAzureBlobHandleHelper::RebuildURL()
@@ -920,7 +920,7 @@ void VSIAzureBlobHandleHelper::RebuildURL()
 }
 
 /************************************************************************/
-/*                        GetSASQueryString()                           */
+/*                         GetSASQueryString()                          */
 /************************************************************************/
 
 std::string VSIAzureBlobHandleHelper::GetSASQueryString() const
@@ -983,7 +983,7 @@ VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIAzureBlobHandleHelper::CanRestartOnError(const char *pszErrorMsg,
@@ -1110,7 +1110,7 @@ bool VSIAzureBlobHandleHelper::CanRestartOnError(const char *pszErrorMsg,
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 std::string VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)

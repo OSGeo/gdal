@@ -28,7 +28,7 @@
 #include "../arrow_common/ograrrowdataset.hpp"
 
 /************************************************************************/
-/*                        OGRFeatherLayer()                             */
+/*                          OGRFeatherLayer()                           */
 /************************************************************************/
 
 OGRFeatherLayer::OGRFeatherLayer(
@@ -46,7 +46,7 @@ OGRFeatherLayer::OGRFeatherLayer(
 }
 
 /************************************************************************/
-/*                        OGRFeatherLayer()                             */
+/*                          OGRFeatherLayer()                           */
 /************************************************************************/
 
 OGRFeatherLayer::OGRFeatherLayer(
@@ -68,7 +68,7 @@ OGRFeatherLayer::OGRFeatherLayer(
 }
 
 /************************************************************************/
-/*                           GetDataset()                               */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRFeatherLayer::GetDataset()
@@ -427,7 +427,7 @@ OGRwkbGeometryType OGRFeatherLayer::ComputeGeometryColumnType(int iGeomCol,
 }
 
 /************************************************************************/
-/*                          BuildDomain()                               */
+/*                            BuildDomain()                             */
 /************************************************************************/
 
 std::unique_ptr<OGRFieldDomain>
@@ -465,7 +465,7 @@ OGRFeatherLayer::BuildDomain(const std::string &osDomainName,
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRFeatherLayer::ResetReading()
@@ -541,7 +541,7 @@ bool OGRFeatherLayer::ReadNextBatchFile()
 }
 
 /************************************************************************/
-/*                         ReadNextBatchStream()                        */
+/*                        ReadNextBatchStream()                         */
 /************************************************************************/
 
 bool OGRFeatherLayer::ReadNextBatchStream()
@@ -649,7 +649,7 @@ void OGRFeatherLayer::TryToCacheFirstTwoBatches()
 }
 
 /************************************************************************/
-/*                          CanPostFilterArrowArray()                   */
+/*                      CanPostFilterArrowArray()                       */
 /************************************************************************/
 
 bool OGRFeatherLayer::CanPostFilterArrowArray(
@@ -661,7 +661,7 @@ bool OGRFeatherLayer::CanPostFilterArrowArray(
 }
 
 /************************************************************************/
-/*                     InvalidateCachedBatches()                        */
+/*                      InvalidateCachedBatches()                       */
 /************************************************************************/
 
 void OGRFeatherLayer::InvalidateCachedBatches()
@@ -674,7 +674,7 @@ void OGRFeatherLayer::InvalidateCachedBatches()
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
@@ -725,7 +725,7 @@ GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                       CanRunNonForcedGetExtent()                     */
+/*                      CanRunNonForcedGetExtent()                      */
 /************************************************************************/
 
 bool OGRFeatherLayer::CanRunNonForcedGetExtent()
@@ -744,7 +744,7 @@ bool OGRFeatherLayer::CanRunNonForcedGetExtent()
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRFeatherLayer::TestCapability(const char *pszCap) const
@@ -764,7 +764,7 @@ int OGRFeatherLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRFeatherLayer::GetMetadataItem(const char *pszName,
@@ -833,7 +833,7 @@ const char *OGRFeatherLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRFeatherLayer::GetMetadata(const char *pszDomain)

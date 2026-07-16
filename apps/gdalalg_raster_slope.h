@@ -45,7 +45,7 @@ class GDALRasterSlopeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterSlopeAlgorithmStandalone                   */
+/*                  GDALRasterSlopeAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterSlopeAlgorithmStandalone final : public GDALRasterSlopeAlgorithm

@@ -464,7 +464,7 @@ VRTWarpedDataset::~VRTWarpedDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int VRTWarpedDataset::CloseDependentDatasets()
@@ -534,7 +534,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                         SetSrcOverviewLevel()                        */
+/*                        SetSrcOverviewLevel()                         */
 /************************************************************************/
 
 CPLErr VRTWarpedDataset::SetMetadataItem(const char *pszName,
@@ -685,7 +685,7 @@ class GDALWarpCoordRescaler final : public OGRCoordinateTransformation
 GDALWarpCoordRescaler::~GDALWarpCoordRescaler() = default;
 
 /************************************************************************/
-/*                        RescaleDstGeoTransform()                      */
+/*                       RescaleDstGeoTransform()                       */
 /************************************************************************/
 
 static void RescaleDstGeoTransform(double adfDstGeoTransform[6],
@@ -726,7 +726,7 @@ int VRTWarpedDataset::GetSrcOverviewLevel(int iOvr,
 }
 
 /************************************************************************/
-/*                            GetOverviewSize()                         */
+/*                          GetOverviewSize()                           */
 /************************************************************************/
 
 bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
@@ -755,7 +755,7 @@ bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
 }
 
 /************************************************************************/
-/*                        CreateImplicitOverview()                      */
+/*                       CreateImplicitOverview()                       */
 /************************************************************************/
 
 VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
@@ -857,7 +857,7 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int VRTWarpedDataset::GetOverviewCount() const
@@ -977,7 +977,7 @@ static int VRTWarpedOverviewTransform(void *pTransformArg, int bDstToSrc,
 
 #if 0   // TODO: Why?
 /************************************************************************/
-/*                VRTSerializeWarpedOverviewTransformer()               */
+/*               VRTSerializeWarpedOverviewTransformer()                */
 /************************************************************************/
 
 static CPLXMLNode *
@@ -1024,7 +1024,7 @@ static void VRTWarpedOverviewTransformerOwnsSubtransformer( void *pTransformArg,
 }
 
 /************************************************************************/
-/*            VRTDeserializeWarpedOverviewTransformer()                 */
+/*              VRTDeserializeWarpedOverviewTransformer()               */
 /************************************************************************/
 
 void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
@@ -1067,7 +1067,7 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
 #endif  // TODO: Why disabled?
 
 /************************************************************************/
-/*                   VRTCreateWarpedOverviewTransformer()               */
+/*                 VRTCreateWarpedOverviewTransformer()                 */
 /************************************************************************/
 
 static void *VRTCreateWarpedOverviewTransformer(
@@ -1097,7 +1097,7 @@ static void *VRTCreateWarpedOverviewTransformer(
 }
 
 /************************************************************************/
-/*               VRTDestroyWarpedOverviewTransformer()                  */
+/*                VRTDestroyWarpedOverviewTransformer()                 */
 /************************************************************************/
 
 static void VRTDestroyWarpedOverviewTransformer(void *pTransformArg)
@@ -1788,12 +1788,10 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
     if (m_poWarper == nullptr)
         return CE_Failure;
 
-    int nReqXSize = m_nBlockXSize;
-    if (iBlockX * m_nBlockXSize + nReqXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - iBlockX * m_nBlockXSize;
-    int nReqYSize = m_nBlockYSize;
-    if (iBlockY * m_nBlockYSize + nReqYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - iBlockY * m_nBlockYSize;
+    const int nReqXOff = iBlockX * m_nBlockXSize;
+    const int nReqYOff = iBlockY * m_nBlockYSize;
+    const int nReqXSize = std::min(m_nBlockXSize, nRasterXSize - nReqXOff);
+    const int nReqYSize = std::min(m_nBlockYSize, nRasterYSize - nReqYOff);
 
     GByte *pabyDstBuffer = static_cast<GByte *>(
         m_poWarper->CreateDestinationBuffer(nReqXSize, nReqYSize));
@@ -1808,9 +1806,9 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
     /* -------------------------------------------------------------------- */
 
     const GDALWarpOptions *psWO = m_poWarper->GetOptions();
-    const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
-        iBlockX * m_nBlockXSize, iBlockY * m_nBlockYSize, nReqXSize, nReqYSize,
-        pabyDstBuffer, psWO->eWorkingDataType);
+    const CPLErr eErr =
+        m_poWarper->WarpRegionToBuffer(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                                       pabyDstBuffer, psWO->eWorkingDataType);
 
     if (eErr != CE_None)
     {
@@ -1879,7 +1877,7 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 // Specialized implementation of IRasterIO() that will be faster than
@@ -2169,7 +2167,8 @@ CPLErr VRTWarpedDataset::IRasterIO(
 /*                              AddBand()                               */
 /************************************************************************/
 
-CPLErr VRTWarpedDataset::AddBand(GDALDataType eType, char ** /* papszOptions */)
+CPLErr VRTWarpedDataset::AddBand(GDALDataType eType,
+                                 CSLConstList /* papszOptions */)
 
 {
     if (eType == GDT_Unknown || eType == GDT_TypeCount)
@@ -2293,7 +2292,7 @@ CPLErr VRTWarpedRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool VRTWarpedRasterBand::EmitErrorMessageIfWriteNotSupported(
@@ -2313,7 +2312,7 @@ bool VRTWarpedRasterBand::EmitErrorMessageIfWriteNotSupported(
 }
 
 /************************************************************************/
-/*                       GetBestOverviewLevel()                         */
+/*                        GetBestOverviewLevel()                        */
 /************************************************************************/
 
 int VRTWarpedRasterBand::GetBestOverviewLevel(
@@ -2473,7 +2472,7 @@ int VRTWarpedRasterBand::GetBestOverviewLevel(
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr VRTWarpedRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,

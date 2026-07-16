@@ -36,7 +36,7 @@ struct OGRODAServicesWrapper
 static OGRODAServicesWrapper *poServicesWrapper = nullptr;
 
 /************************************************************************/
-/*                        OGRTEIGHAErrorHandler()                       */
+/*                       OGRTEIGHAErrorHandler()                        */
 /************************************************************************/
 
 static void OGRTEIGHAErrorHandler(OdResult oResult)
@@ -117,7 +117,7 @@ bool OGRTEIGHAInitialize()
 }
 
 /************************************************************************/
-/*                        OGRDWGGetServices()                           */
+/*                         OGRDWGGetServices()                          */
 /************************************************************************/
 
 OGRDWGServices *OGRDWGGetServices()

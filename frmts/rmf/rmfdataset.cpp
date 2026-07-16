@@ -536,7 +536,7 @@ CPLErr RMFRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double RMFRasterBand::GetNoDataValue(int *pbSuccess)
@@ -723,7 +723,7 @@ GDALColorInterp RMFRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                           RMFDataset()                               */
+/*                             RMFDataset()                             */
 /************************************************************************/
 
 RMFDataset::RMFDataset() : pszUnitType(CPLStrdup(RMF_UnitsEmpty))
@@ -799,7 +799,7 @@ CPLErr RMFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *RMFDataset::GetSpatialRef() const
@@ -825,7 +825,7 @@ CPLErr RMFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           WriteHeader()                              */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr RMFDataset::WriteHeader()
@@ -2035,7 +2035,7 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 /************************************************************************/
 GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszParamList)
+                                CSLConstList papszParamList)
 {
     return Create(pszFilename, nXSize, nYSize, nBandsIn, eType, papszParamList,
                   nullptr, 1.0);
@@ -2043,8 +2043,8 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
 GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszParamList, RMFDataset *poParentDS,
-                                double dfOvFactor)
+                                CSLConstList papszParamList,
+                                RMFDataset *poParentDS, double dfOvFactor)
 
 {
     if (nBandsIn != 1 && nBandsIn != 3)
@@ -2779,7 +2779,7 @@ GByte RMFDataset::GetCompressionType(const char *pszCompressName)
 }
 
 /************************************************************************/
-/*                        SetupCompression()                            */
+/*                          SetupCompression()                          */
 /************************************************************************/
 
 int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
@@ -2889,7 +2889,7 @@ void RMFDataset::WriteTileJobFunc(void *pData)
     }
 }
 
-CPLErr RMFDataset::InitCompressorData(char **papszParamList)
+CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
 {
     const char *pszNumThreads =
         CSLFetchNameValue(papszParamList, "NUM_THREADS");
@@ -3278,7 +3278,7 @@ void RMFDataset::SetupNBits()
 }
 
 /************************************************************************/
-/*                        GDALRegister_RMF()                            */
+/*                          GDALRegister_RMF()                          */
 /************************************************************************/
 
 void GDALRegister_RMF()
@@ -3337,7 +3337,7 @@ void GDALRegister_RMF()
 }
 
 /************************************************************************/
-/*                            RMFCompressData                           */
+/*                           RMFCompressData                            */
 /************************************************************************/
 
 RMFCompressData::RMFCompressData() : pabyBuffers(nullptr)

@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm()        */
+/*          GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm()          */
 /************************************************************************/
 
 GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,

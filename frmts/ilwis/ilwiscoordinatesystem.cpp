@@ -293,7 +293,7 @@ static int fetchParams(const std::string &csyFileName, double *padfPrjParams)
 }
 
 /************************************************************************/
-/*                          mapTMParams                                  */
+/*                             mapTMParams                              */
 /************************************************************************/
 /**
  * fetch the parameters from ILWIS projection definition for
@@ -334,7 +334,7 @@ static int mapTMParams(const std::string &sProj, double dfZone,
 }
 
 /************************************************************************/
-/*                          scaleFromLATTS()                             */
+/*                           scaleFromLATTS()                           */
 /************************************************************************/
 /**
  * Compute the scale factor from Latitude_Of_True_Scale parameter.
@@ -368,7 +368,7 @@ static void scaleFromLATTS(const std::string &sEllips, double phits,
 }
 
 /************************************************************************/
-/*                          ReadProjection()                           */
+/*                           ReadProjection()                           */
 /************************************************************************/
 
 /**

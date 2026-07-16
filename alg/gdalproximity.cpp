@@ -432,7 +432,7 @@ end:
 }
 
 /************************************************************************/
-/*                         SquareDistance()                             */
+/*                           SquareDistance()                           */
 /************************************************************************/
 
 static double SquareDistance(double dfX1, double dfX2, double dfY1, double dfY2)

@@ -14,7 +14,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                            OGRDXFFeature()                           */
+/*                           OGRDXFFeature()                            */
 /************************************************************************/
 
 OGRDXFFeature::OGRDXFFeature(const OGRFeatureDefn *poFeatureDefn)

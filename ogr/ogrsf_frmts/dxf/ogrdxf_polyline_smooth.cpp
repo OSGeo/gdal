@@ -17,7 +17,7 @@
 #include "ogrdxf_polyline_smooth.h"
 
 /************************************************************************/
-/*                Local helper functions                                */
+/*                        Local helper functions                        */
 /************************************************************************/
 
 static double GetRadius(double bulge, double length)
@@ -44,7 +44,7 @@ static double GetOGRangle(double angle)
 }
 
 /************************************************************************/
-/*                DXFSmoothPolyline::Tessellate()                        */
+/*                   DXFSmoothPolyline::Tessellate()                    */
 /************************************************************************/
 
 OGRGeometry *DXFSmoothPolyline::Tessellate(bool bAsPolygon) const
@@ -124,7 +124,7 @@ OGRGeometry *DXFSmoothPolyline::Tessellate(bool bAsPolygon) const
 }
 
 /************************************************************************/
-/*                DXFSmoothPolyline::EmitArc()                        */
+/*                     DXFSmoothPolyline::EmitArc()                     */
 /************************************************************************/
 
 void DXFSmoothPolyline::EmitArc(const DXFSmoothPolylineVertex &start,
@@ -246,7 +246,7 @@ void DXFSmoothPolyline::EmitArc(const DXFSmoothPolylineVertex &start,
 }
 
 /************************************************************************/
-/*                   DXFSmoothPolyline::EmitLine()                      */
+/*                    DXFSmoothPolyline::EmitLine()                     */
 /************************************************************************/
 
 void DXFSmoothPolyline::EmitLine(const DXFSmoothPolylineVertex &start,
@@ -265,7 +265,7 @@ void DXFSmoothPolyline::EmitLine(const DXFSmoothPolylineVertex &start,
 }
 
 /************************************************************************/
-/*                DXFSmoothPolyline::Close()                            */
+/*                      DXFSmoothPolyline::Close()                      */
 /************************************************************************/
 
 void DXFSmoothPolyline::Close()

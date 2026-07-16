@@ -366,7 +366,7 @@ OGRLayer *OGRPGeoDataSource::GetLayerByName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                    IsPrivateLayerName()                              */
+/*                         IsPrivateLayerName()                         */
 /************************************************************************/
 
 bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
@@ -388,7 +388,7 @@ bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
 }
 
 /************************************************************************/
-/*                    IsLayerPrivate()                                  */
+/*                           IsLayerPrivate()                           */
 /************************************************************************/
 
 bool OGRPGeoDataSource::IsLayerPrivate(int iLayer) const
@@ -434,7 +434,7 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRPGeoSingleFeatureLayer()                    */
+/*                     OGRPGeoSingleFeatureLayer()                      */
 /************************************************************************/
 
 OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(const char *pszLayerName,
@@ -449,7 +449,7 @@ OGRPGeoSingleFeatureLayer::OGRPGeoSingleFeatureLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                      ~OGRPGeoSingleFeatureLayer()                    */
+/*                     ~OGRPGeoSingleFeatureLayer()                     */
 /************************************************************************/
 
 OGRPGeoSingleFeatureLayer::~OGRPGeoSingleFeatureLayer()
@@ -581,7 +581,7 @@ std::vector<std::string> OGRPGeoDataSource::GetRelationshipNames(
 }
 
 /************************************************************************/
-/*                        GetRelationship()                             */
+/*                          GetRelationship()                           */
 /************************************************************************/
 
 const GDALRelationship *

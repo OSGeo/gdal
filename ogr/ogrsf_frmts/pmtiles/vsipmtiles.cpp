@@ -26,7 +26,7 @@ constexpr const char *PMTILES_HEADER_JSON = "pmtiles_header.json";
 constexpr const char *METADATA_JSON = "metadata.json";
 
 /************************************************************************/
-/*                   VSIPMTilesFilesystemHandler                        */
+/*                     VSIPMTilesFilesystemHandler                      */
 /************************************************************************/
 
 class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
@@ -43,7 +43,7 @@ class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                   VSIPMTilesGetTileExtension()                       */
+/*                     VSIPMTilesGetTileExtension()                     */
 /************************************************************************/
 
 static const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
@@ -68,7 +68,7 @@ static const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
 }
 
 /************************************************************************/
-/*                  VSIPMTilesGetPMTilesHeaderJson()                    */
+/*                   VSIPMTilesGetPMTilesHeaderJson()                   */
 /************************************************************************/
 
 static std::string VSIPMTilesGetPMTilesHeaderJson(OGRPMTilesDataset *poDS)
@@ -204,7 +204,7 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -265,7 +265,7 @@ VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                               Stat()                                 */
+/*                                Stat()                                */
 /************************************************************************/
 
 int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
@@ -326,7 +326,7 @@ int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            ReadDirEx()                               */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSIPMTilesFilesystemHandler::ReadDirEx(const char *pszFilename,

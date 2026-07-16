@@ -147,6 +147,31 @@ def test_gdalwarp_lib_6(testgdalwarp_gcp_tif):
 
 
 ###############################################################################
+# Test warping from GCPs with SRC_METHOD=GCP_POLYNOMIAL and MAX_GCP_ORDER=-1
+
+
+def test_gdalwarp_lib_6_bis(testgdalwarp_gcp_tif):
+
+    ds1 = gdal.Open(testgdalwarp_gcp_tif)
+    dstDS = gdal.Warp(
+        "",
+        ds1,
+        format="MEM",
+        transformerOptions=["SRC_METHOD=GCP_POLYNOMIAL", "MAX_GCP_ORDER=-1"],
+    )
+
+    assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
+        dstDS.GetGeoTransform(),
+        1e-9,
+    )
+
+    dstDS = None
+
+
+###############################################################################
 # Test -tr
 
 

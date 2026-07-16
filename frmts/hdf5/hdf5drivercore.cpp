@@ -20,7 +20,7 @@
 #include <cctype>
 
 /************************************************************************/
-/*                          HDF5DatasetIdentify()                       */
+/*                        HDF5DatasetIdentify()                         */
 /************************************************************************/
 
 int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -136,7 +136,7 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     HDF5ImageDatasetIdentify()                       */
+/*                      HDF5ImageDatasetIdentify()                      */
 /************************************************************************/
 
 int HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -239,7 +239,7 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                         IdentifySxx()                                */
+/*                            IdentifySxx()                             */
 /************************************************************************/
 
 static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
@@ -352,7 +352,7 @@ int S111DatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        BAGDatasetIdentify()                          */
+/*                         BAGDatasetIdentify()                         */
 /************************************************************************/
 
 int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -382,7 +382,7 @@ int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                   HDF5DriverSetCommonMetadata()                      */
+/*                    HDF5DriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void HDF5DriverSetCommonMetadata(GDALDriver *poDriver)
@@ -404,7 +404,7 @@ void HDF5DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                 HDF5ImageDriverSetCommonMetadata()                   */
+/*                  HDF5ImageDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -791,7 +791,7 @@ void S111DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredHDF5Plugin()                       */
+/*                     DeclareDeferredHDF5Plugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

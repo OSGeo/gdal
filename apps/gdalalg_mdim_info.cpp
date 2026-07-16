@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()          */
+/*            GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()            */
 /************************************************************************/
 
 GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()

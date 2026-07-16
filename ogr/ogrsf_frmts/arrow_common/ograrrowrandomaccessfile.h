@@ -29,7 +29,7 @@
 #endif
 
 /************************************************************************/
-/*                        OGRArrowRandomAccessFile                      */
+/*                       OGRArrowRandomAccessFile                       */
 /************************************************************************/
 
 class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile

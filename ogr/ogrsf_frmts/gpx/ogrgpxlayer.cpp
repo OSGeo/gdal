@@ -378,7 +378,7 @@ void OGRGPXLayer::ResetReading()
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                        startElementCbk()                             */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 /** Replace ':' from XML NS element name by '_' more OGR friendly */
@@ -924,7 +924,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
 }
 
 /************************************************************************/
-/*                          dataHandlerCbk()                            */
+/*                           dataHandlerCbk()                           */
 /************************************************************************/
 
 void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
@@ -1049,7 +1049,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                  OGRGPX_GetXMLCompatibleTagName()                    */
+/*                   OGRGPX_GetXMLCompatibleTagName()                   */
 /************************************************************************/
 
 static char *OGRGPX_GetXMLCompatibleTagName(const char *pszExtensionsNS,
@@ -1073,7 +1073,7 @@ static char *OGRGPX_GetXMLCompatibleTagName(const char *pszExtensionsNS,
 }
 
 /************************************************************************/
-/*                     OGRGPX_GetUTF8String()                           */
+/*                        OGRGPX_GetUTF8String()                        */
 /************************************************************************/
 
 static char *OGRGPX_GetUTF8String(const char *pszString)
@@ -1112,7 +1112,7 @@ static char *OGRGPX_GetUTF8String(const char *pszString)
 }
 
 /************************************************************************/
-/*                   OGRGPX_WriteXMLExtension()                          */
+/*                      OGRGPX_WriteXMLExtension()                      */
 /************************************************************************/
 
 bool OGRGPXLayer::OGRGPX_WriteXMLExtension(const char *pszTagName,
@@ -1149,7 +1149,7 @@ bool OGRGPXLayer::OGRGPX_WriteXMLExtension(const char *pszTagName,
 }
 
 /************************************************************************/
-/*                      WriteFeatureAttributes()                        */
+/*                       WriteFeatureAttributes()                       */
 /************************************************************************/
 
 static void AddIdent(VSILFILE *fp, int nIdentLevel)
@@ -1295,7 +1295,7 @@ void OGRGPXLayer::WriteFeatureAttributes(const OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                CheckAndFixCoordinatesValidity()                      */
+/*                   CheckAndFixCoordinatesValidity()                   */
 /************************************************************************/
 
 OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity(double *pdfLatitude,
@@ -1337,7 +1337,7 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity(double *pdfLatitude,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
@@ -1824,7 +1824,7 @@ int OGRGPXLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                       LoadExtensionsSchema()                         */
+/*                        LoadExtensionsSchema()                        */
 /************************************************************************/
 
 #ifdef HAVE_EXPAT
@@ -1907,7 +1907,7 @@ void OGRGPXLayer::LoadExtensionsSchema()
 }
 
 /************************************************************************/
-/*                  startElementLoadSchemaCbk()                         */
+/*                     startElementLoadSchemaCbk()                      */
 /************************************************************************/
 
 void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
@@ -2014,7 +2014,7 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
 }
 
 /************************************************************************/
-/*                   endElementLoadSchemaCbk()                           */
+/*                      endElementLoadSchemaCbk()                       */
 /************************************************************************/
 
 static bool OGRGPXIsInt(const char *pszStr)
@@ -2114,7 +2114,7 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
 }
 
 /************************************************************************/
-/*                   dataHandlerLoadSchemaCbk()                         */
+/*                      dataHandlerLoadSchemaCbk()                      */
 /************************************************************************/
 
 void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)

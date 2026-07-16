@@ -143,7 +143,7 @@ class GDALThreadLocalDatasetCache
 };
 
 /************************************************************************/
-/*                      GDALThreadSafeDataset                           */
+/*                        GDALThreadSafeDataset                         */
 /************************************************************************/
 
 /** Global variable used to determine if the singleton of GlobalCache
@@ -231,7 +231,7 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
 
     GDALAsyncReader *BeginAsyncReader(int, int, int, int, void *, int, int,
                                       GDALDataType, int, int *, int, int, int,
-                                      char **) override
+                                      CSLConstList) override
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALThreadSafeDataset::BeginAsyncReader() not supported");
@@ -319,7 +319,7 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
 };
 
 /************************************************************************/
-/*                     GDALThreadSafeRasterBand                         */
+/*                       GDALThreadSafeRasterBand                       */
 /************************************************************************/
 
 /** Thread-safe GDALRasterBand class.
@@ -377,7 +377,7 @@ class GDALThreadSafeRasterBand final : public GDALProxyRasterBand
     /* End of methods that forward on the prototype band */
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag, int *, GIntBig *,
-                                     char **) override
+                                     CSLConstList) override
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALThreadSafeRasterBand::GetVirtualMemAuto() not supported");
@@ -423,7 +423,7 @@ class GDALThreadSafeRasterBand final : public GDALProxyRasterBand
 };
 
 /************************************************************************/
-/*                  Global variables initialization.                    */
+/*                   Global variables initialization.                   */
 /************************************************************************/
 
 /** Instantiation of the TLS cache of datasets */
@@ -456,7 +456,7 @@ GDALThreadLocalDatasetCache::GDALThreadLocalDatasetCache()
 }
 
 /************************************************************************/
-/*                   ~GDALThreadLocalDatasetCache()                     */
+/*                    ~GDALThreadLocalDatasetCache()                    */
 /************************************************************************/
 
 /** Destructor of GDALThreadLocalDatasetCache. This is called implicitly when a
@@ -509,7 +509,7 @@ GDALThreadLocalDatasetCache::~GDALThreadLocalDatasetCache()
 }
 
 /************************************************************************/
-/*                 GDALThreadLocalDatasetCacheIsInDestruction()         */
+/*             GDALThreadLocalDatasetCacheIsInDestruction()             */
 /************************************************************************/
 
 bool GDALThreadLocalDatasetCacheIsInDestruction()
@@ -518,7 +518,7 @@ bool GDALThreadLocalDatasetCacheIsInDestruction()
 }
 
 /************************************************************************/
-/*                     GDALThreadSafeDataset()                          */
+/*                       GDALThreadSafeDataset()                        */
 /************************************************************************/
 
 /** Constructor of GDALThreadSafeDataset.
@@ -560,7 +560,7 @@ GDALThreadSafeDataset::GDALThreadSafeDataset(
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Utility method used by GDALGetThreadSafeDataset() to construct a
@@ -596,7 +596,7 @@ GDALThreadSafeDataset::Create(std::unique_ptr<GDALDataset> poPrototypeDS,
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Utility method used by GDALGetThreadSafeDataset() to construct a
@@ -631,7 +631,7 @@ GDALThreadSafeDataset::Create(GDALDataset *poPrototypeDS, int nScopeFlags)
 }
 
 /************************************************************************/
-/*                    ~GDALThreadSafeDataset()                          */
+/*                       ~GDALThreadSafeDataset()                       */
 /************************************************************************/
 
 GDALThreadSafeDataset::~GDALThreadSafeDataset()
@@ -640,7 +640,7 @@ GDALThreadSafeDataset::~GDALThreadSafeDataset()
 }
 
 /************************************************************************/
-/*                           Close()                                    */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GDALThreadSafeDataset::Close(GDALProgressFunc, void *)
@@ -687,7 +687,7 @@ CPLErr GDALThreadSafeDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 /** Implements GDALDataset::CloseDependentDatasets()
@@ -720,7 +720,7 @@ int GDALThreadSafeDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                       RefUnderlyingDataset()                         */
+/*                        RefUnderlyingDataset()                        */
 /************************************************************************/
 
 /** Implements GDALProxyDataset::RefUnderlyingDataset.
@@ -826,7 +826,7 @@ GDALDataset *GDALThreadSafeDataset::RefUnderlyingDataset() const
 }
 
 /************************************************************************/
-/*                      UnrefUnderlyingDataset()                        */
+/*                       UnrefUnderlyingDataset()                       */
 /************************************************************************/
 
 /** Implements GDALProxyDataset::UnrefUnderlyingDataset.
@@ -848,7 +848,7 @@ void GDALThreadSafeDataset::UnrefUnderlyingDataset(
 }
 
 /************************************************************************/
-/*                      UnrefUnderlyingDataset()                        */
+/*                       UnrefUnderlyingDataset()                       */
 /************************************************************************/
 
 /** Takes care of removing the strong reference to a thread-local dataset
@@ -1018,7 +1018,7 @@ GDALThreadSafeRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 }
 
 /************************************************************************/
-/*                      UnrefUnderlyingRasterBand()                     */
+/*                     UnrefUnderlyingRasterBand()                      */
 /************************************************************************/
 
 /** Implements GDALProxyRasterBand::UnrefUnderlyingRasterBand.
@@ -1048,7 +1048,7 @@ void GDALThreadSafeRasterBand::UnrefUnderlyingRasterBand(
 }
 
 /************************************************************************/
-/*                           GetMaskBand()                              */
+/*                            GetMaskBand()                             */
 /************************************************************************/
 
 /** Implements GDALRasterBand::GetMaskBand
@@ -1059,7 +1059,7 @@ GDALRasterBand *GDALThreadSafeRasterBand::GetMaskBand()
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 /** Implements GDALRasterBand::GetOverviewCount
@@ -1070,7 +1070,7 @@ int GDALThreadSafeRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                           GetOverview()                              */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 /** Implements GDALRasterBand::GetOverview
@@ -1097,7 +1097,7 @@ GDALThreadSafeRasterBand::GetRasterSampleOverview(GUIntBig nDesiredSamples)
 }
 
 /************************************************************************/
-/*                             GetDefaultRAT()                          */
+/*                           GetDefaultRAT()                            */
 /************************************************************************/
 
 /** Implements GDALRasterBand::GetDefaultRAT
@@ -1130,7 +1130,7 @@ GDALRasterAttributeTable *GDALThreadSafeRasterBand::GetDefaultRAT()
 #endif  // DOXYGEN_SKIP
 
 /************************************************************************/
-/*                    GDALDataset::IsThreadSafe()                       */
+/*                     GDALDataset::IsThreadSafe()                      */
 /************************************************************************/
 
 /** Return whether this dataset, and its related objects (typically raster
@@ -1152,7 +1152,7 @@ bool GDALDataset::IsThreadSafe(int nScopeFlags) const
 }
 
 /************************************************************************/
-/*                     GDALDatasetIsThreadSafe()                        */
+/*                      GDALDatasetIsThreadSafe()                       */
 /************************************************************************/
 
 /** Return whether this dataset, and its related objects (typically raster
@@ -1183,7 +1183,7 @@ bool GDALDatasetIsThreadSafe(GDALDatasetH hDS, int nScopeFlags,
 }
 
 /************************************************************************/
-/*                       GDALGetThreadSafeDataset()                     */
+/*                      GDALGetThreadSafeDataset()                      */
 /************************************************************************/
 
 /** Return a thread-safe dataset.
@@ -1215,7 +1215,7 @@ GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags)
 }
 
 /************************************************************************/
-/*                       GDALGetThreadSafeDataset()                     */
+/*                      GDALGetThreadSafeDataset()                      */
 /************************************************************************/
 
 /** Return a thread-safe dataset.
@@ -1263,7 +1263,7 @@ GDALDataset *GDALGetThreadSafeDataset(GDALDataset *poDS, int nScopeFlags)
 }
 
 /************************************************************************/
-/*                       GDALGetThreadSafeDataset()                     */
+/*                      GDALGetThreadSafeDataset()                      */
 /************************************************************************/
 
 /** Return a thread-safe dataset.

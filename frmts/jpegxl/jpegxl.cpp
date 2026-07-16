@@ -42,7 +42,7 @@ struct VSILFileReleaser
 constexpr float MIN_DISTANCE = 0.01f;
 
 /************************************************************************/
-/*                        JPEGXLDataset                                 */
+/*                            JPEGXLDataset                             */
 /************************************************************************/
 
 class JPEGXLDataset final : public GDALJP2AbstractDataset
@@ -104,13 +104,13 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
 
 /************************************************************************/
-/*                      JPEGXLRasterBand                                */
+/*                           JPEGXLRasterBand                           */
 /************************************************************************/
 
 class JPEGXLRasterBand final : public GDALPamRasterBand
@@ -129,7 +129,7 @@ class JPEGXLRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         ~JPEGXLDataset()                             */
+/*                           ~JPEGXLDataset()                           */
 /************************************************************************/
 
 JPEGXLDataset::~JPEGXLDataset()
@@ -138,7 +138,7 @@ JPEGXLDataset::~JPEGXLDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr JPEGXLDataset::Close(GDALProgressFunc, void *)
@@ -159,7 +159,7 @@ CPLErr JPEGXLDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                         JPEGXLRasterBand()                           */
+/*                          JPEGXLRasterBand()                          */
 /************************************************************************/
 
 JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
@@ -221,7 +221,7 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         Identify()                                   */
+/*                              Identify()                              */
 /************************************************************************/
 
 int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -271,7 +271,7 @@ int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Open()                                   */
+/*                                Open()                                */
 /************************************************************************/
 
 bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -933,7 +933,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GetDecodedImage()                             */
+/*                          GetDecodedImage()                           */
 /************************************************************************/
 
 const std::vector<GByte> &JPEGXLDataset::GetDecodedImage()
@@ -994,7 +994,7 @@ const std::vector<GByte> &JPEGXLDataset::GetDecodedImage()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **JPEGXLDataset::GetMetadataDomainList()
@@ -1048,7 +1048,7 @@ CPLStringList JPEGXLDataset::GetCompressionFormats(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       ReadCompressedData()                           */
+/*                         ReadCompressedData()                         */
 /************************************************************************/
 
 CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
@@ -1368,7 +1368,7 @@ const char *JPEGXLDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                        GetDecodedImage()                             */
+/*                          GetDecodedImage()                           */
 /************************************************************************/
 
 void JPEGXLDataset::GetDecodedImage(void *pabyOutputData,
@@ -1691,7 +1691,7 @@ CPLErr JPEGXLRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                          OpenStaticPAM()                             */
+/*                           OpenStaticPAM()                            */
 /************************************************************************/
 
 GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
@@ -1707,7 +1707,7 @@ GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          OpenStatic()                                */
+/*                             OpenStatic()                             */
 /************************************************************************/
 
 GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
@@ -1739,12 +1739,12 @@ GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int /*bStrict*/,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 

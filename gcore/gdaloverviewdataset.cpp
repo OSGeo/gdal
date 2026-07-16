@@ -129,7 +129,7 @@ static GDALRasterBand *GetOverviewEx(GDALRasterBand *poBand, int nLevel)
 }
 
 /************************************************************************/
-/*                       GDALCreateOverviewDataset()                    */
+/*                     GDALCreateOverviewDataset()                      */
 /************************************************************************/
 
 // Takes a reference on poMainDS in case of success.
@@ -232,7 +232,7 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset *poMainDSIn,
 }
 
 /************************************************************************/
-/*                       ~GDALOverviewDataset()                         */
+/*                        ~GDALOverviewDataset()                        */
 /************************************************************************/
 
 GDALOverviewDataset::~GDALOverviewDataset()
@@ -254,7 +254,7 @@ GDALOverviewDataset::~GDALOverviewDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int GDALOverviewDataset::CloseDependentDatasets()
@@ -405,7 +405,7 @@ const OGRSpatialReference *GDALOverviewDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *GDALOverviewDataset::GetGCPs()
@@ -431,7 +431,7 @@ const GDAL_GCP *GDALOverviewDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                             Rescale()                                */
+/*                              Rescale()                               */
 /************************************************************************/
 
 /* static */
@@ -576,7 +576,7 @@ GDALOverviewBand::~GDALOverviewBand()
 }
 
 /************************************************************************/
-/*                              FlushCache()                            */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr GDALOverviewBand::FlushCache(bool bAtClosing)
@@ -587,7 +587,7 @@ CPLErr GDALOverviewBand::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                        RefUnderlyingRasterBand()                     */
+/*                      RefUnderlyingRasterBand()                       */
 /************************************************************************/
 
 GDALRasterBand *
@@ -597,7 +597,7 @@ GDALOverviewBand::RefUnderlyingRasterBand(bool /*bForceOpen */) const
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int GDALOverviewBand::GetOverviewCount()
@@ -615,7 +615,7 @@ int GDALOverviewBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                           GetOverview()                              */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
@@ -632,7 +632,7 @@ GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
 }
 
 /************************************************************************/
-/*                           GetMaskFlags()                             */
+/*                            GetMaskFlags()                            */
 /************************************************************************/
 
 int GDALOverviewBand::GetMaskFlags()
@@ -645,7 +645,7 @@ int GDALOverviewBand::GetMaskFlags()
 }
 
 /************************************************************************/
-/*                           GetMaskBand()                              */
+/*                            GetMaskBand()                             */
 /************************************************************************/
 
 GDALRasterBand *GDALOverviewBand::GetMaskBand()
@@ -658,7 +658,7 @@ GDALRasterBand *GDALOverviewBand::GetMaskBand()
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALOverviewBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,

@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterCreateAlgorithm                        */
+/*                      GDALRasterCreateAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterCreateAlgorithm : public GDALRasterPipelineStepAlgorithm
@@ -57,7 +57,7 @@ class GDALRasterCreateAlgorithm : public GDALRasterPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                  GDALRasterCreateAlgorithmStandalone                 */
+/*                 GDALRasterCreateAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterCreateAlgorithmStandalone final

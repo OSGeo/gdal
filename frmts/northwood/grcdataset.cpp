@@ -79,7 +79,7 @@ class NWT_GRCRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           NWT_GRCRasterBand()                        */
+/*                         NWT_GRCRasterBand()                          */
 /************************************************************************/
 
 NWT_GRCRasterBand::NWT_GRCRasterBand(NWT_GRCDataset *poDSIn, int nBandIn)
@@ -238,7 +238,7 @@ NWT_GRCDataset::NWT_GRCDataset()
 }
 
 /************************************************************************/
-/*                            ~NWT_GRCDataset()                         */
+/*                          ~NWT_GRCDataset()                           */
 /************************************************************************/
 NWT_GRCDataset::~NWT_GRCDataset()
 {
@@ -273,7 +273,7 @@ CPLErr NWT_GRCDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *NWT_GRCDataset::GetSpatialRef() const
 {

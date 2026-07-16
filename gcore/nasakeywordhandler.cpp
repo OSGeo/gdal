@@ -681,7 +681,7 @@ const char *NASAKeywordHandler::GetKeyword(const char *pszPath,
 }
 
 /************************************************************************/
-/*                             GetKeywordList()                         */
+/*                           GetKeywordList()                           */
 /************************************************************************/
 
 char **NASAKeywordHandler::GetKeywordList()
@@ -690,7 +690,7 @@ char **NASAKeywordHandler::GetKeywordList()
 }
 
 /************************************************************************/
-/*                               StealJSon()                            */
+/*                             StealJSon()                              */
 /************************************************************************/
 
 CPLJSONObject NASAKeywordHandler::GetJsonObject() const

@@ -41,7 +41,7 @@
 // #include "symbol_renames.h"
 
 /************************************************************************/
-/*                          OGRESRIJSONReader()                         */
+/*                         OGRESRIJSONReader()                          */
 /************************************************************************/
 
 OGRESRIJSONReader::OGRESRIJSONReader() : poGJObject_(nullptr), poLayer_(nullptr)
@@ -64,7 +64,7 @@ OGRESRIJSONReader::~OGRESRIJSONReader()
 }
 
 /************************************************************************/
-/*                           Parse()                                    */
+/*                               Parse()                                */
 /************************************************************************/
 
 OGRErr OGRESRIJSONReader::Parse(const char *pszText)
@@ -82,7 +82,7 @@ OGRErr OGRESRIJSONReader::Parse(const char *pszText)
 }
 
 /************************************************************************/
-/*                           ReadLayers()                               */
+/*                             ReadLayers()                             */
 /************************************************************************/
 
 void OGRESRIJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS,
@@ -387,7 +387,7 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
 }
 
 /************************************************************************/
-/*                           AddFeature                                 */
+/*                              AddFeature                              */
 /************************************************************************/
 
 bool OGRESRIJSONReader::AddFeature(std::unique_ptr<OGRFeature> poFeature)
@@ -401,7 +401,7 @@ bool OGRESRIJSONReader::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                           EsriDateToOGRDate()                        */
+/*                         EsriDateToOGRDate()                          */
 /************************************************************************/
 
 static void EsriDateToOGRDate(int64_t nVal, OGRField *psField)
@@ -424,7 +424,7 @@ static void EsriDateToOGRDate(int64_t nVal, OGRField *psField)
 }
 
 /************************************************************************/
-/*                           ReadFeature()                              */
+/*                            ReadFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRESRIJSONReader::ReadFeature(json_object *poObj)
@@ -531,7 +531,7 @@ OGRFeature *OGRESRIJSONReader::ReadFeature(json_object *poObj)
 }
 
 /************************************************************************/
-/*                           ReadFeatureCollection()                    */
+/*                       ReadFeatureCollection()                        */
 /************************************************************************/
 
 OGRGeoJSONLayer *OGRESRIJSONReader::ReadFeatureCollection(json_object *poObj)

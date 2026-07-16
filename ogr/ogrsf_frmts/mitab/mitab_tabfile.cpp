@@ -179,7 +179,7 @@ TABFile::~TABFile()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig TABFile::GetFeatureCount(int bForce)
@@ -2912,7 +2912,7 @@ OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 }
 
 /************************************************************************/
-/*                            SyncToDisk()                             */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr TABFile::SyncToDisk()

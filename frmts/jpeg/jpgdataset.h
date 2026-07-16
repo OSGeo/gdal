@@ -96,7 +96,7 @@ class JPGDatasetCommon;
 JPGDatasetCommon *JPEGDataset12Open(JPGDatasetOpenArgs *psArgs);
 GDALDataset *JPEGDataset12CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData);
 #endif
@@ -109,11 +109,12 @@ typedef void (*my_jpeg_write_m_byte)(void *cinfo, int val);
 
 CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
                      GDALProgressFunc pfnProgress, void *pProgressData);
-void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
-                void *cinfo, my_jpeg_write_m_header p_jpeg_write_m_header,
+void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS,
+                CSLConstList papszOptions, void *cinfo,
+                my_jpeg_write_m_header p_jpeg_write_m_header,
                 my_jpeg_write_m_byte p_jpeg_write_m_byte,
                 GDALDataset *(pCreateCopy)(const char *, GDALDataset *, int,
-                                           char **,
+                                           CSLConstList,
                                            GDALProgressFunc pfnProgress,
                                            void *pProgressData));
 void JPGAddICCProfile(void *pInfo, const char *pszICCProfile,
@@ -353,12 +354,12 @@ class JPGDataset final : public JPGDatasetCommon
     static JPGDatasetCommon *Open(JPGDatasetOpenArgs *psArgs);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static GDALDataset *
     CreateCopyStage2(const char *pszFilename, GDALDataset *poSrcDS,
-                     char **papszOptions, GDALProgressFunc pfnProgress,
+                     CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                      void *pProgressData, VSIVirtualHandleUniquePtr fpImage,
                      GDALDataType eDT, int nQuality, bool bAppendMask,
                      GDALJPEGUserData &sUserData,

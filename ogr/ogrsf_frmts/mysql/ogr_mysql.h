@@ -58,7 +58,7 @@
 class OGRMySQLDataSource;
 
 /************************************************************************/
-/*                      OGRMySQLGeomFieldDefn                           */
+/*                        OGRMySQLGeomFieldDefn                         */
 /************************************************************************/
 
 class OGRMySQLGeomFieldDefn final : public OGRGeomFieldDefn

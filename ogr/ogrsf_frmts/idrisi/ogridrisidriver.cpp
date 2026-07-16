@@ -44,7 +44,7 @@ static GDALDataset *OGRIdrisiOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        RegisterOGRIdrisi()                           */
+/*                         RegisterOGRIdrisi()                          */
 /************************************************************************/
 
 void RegisterOGRIdrisi()

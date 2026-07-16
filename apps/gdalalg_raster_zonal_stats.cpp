@@ -84,7 +84,7 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
 }
 
 /************************************************************************/
-/*                 GDALRasterZonalStatsAlgorithm::RunStep()             */
+/*               GDALRasterZonalStatsAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALRasterZonalStatsAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

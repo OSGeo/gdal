@@ -24,7 +24,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                       OGRESRIJSONDriverIdentify()                    */
+/*                     OGRESRIJSONDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRESRIJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -45,7 +45,7 @@ static int OGRESRIJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRESRIJSONDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -57,7 +57,7 @@ static GDALDataset *OGRESRIJSONDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          RegisterOGRESRIJSON()                       */
+/*                        RegisterOGRESRIJSON()                         */
 /************************************************************************/
 
 void RegisterOGRESRIJSON()

@@ -22,7 +22,7 @@
 #include "ogrparquetdrivercore.h"
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 template <size_t N> constexpr int constexpr_length(const char (&)[N])
@@ -72,7 +72,7 @@ int OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRParquetDriverSetCommonMetadata()                   */
+/*                 OGRParquetDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)

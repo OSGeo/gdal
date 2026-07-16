@@ -28,7 +28,7 @@ OGRParquetDataset::OGRParquetDataset()
 }
 
 /************************************************************************/
-/*                        ~OGRParquetDataset()                          */
+/*                         ~OGRParquetDataset()                         */
 /************************************************************************/
 
 OGRParquetDataset::~OGRParquetDataset()
@@ -37,7 +37,7 @@ OGRParquetDataset::~OGRParquetDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRParquetDataset::Close(GDALProgressFunc, void *)
@@ -62,9 +62,9 @@ CPLErr OGRParquetDataset::Close(GDALProgressFunc, void *)
     return eErr;
 }
 
-/***********************************************************************/
-/*                          CreateReaderLayer()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         CreateReaderLayer()                          */
+/************************************************************************/
 
 std::unique_ptr<OGRParquetLayer>
 OGRParquetDataset::CreateReaderLayer(const std::string &osFilename,
@@ -188,9 +188,9 @@ OGRParquetDataset::CreateReaderLayer(const std::string &osFilename,
     }
 }
 
-/***********************************************************************/
-/*                            ExecuteSQL()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
 
 OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
@@ -448,9 +448,9 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
     return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
-/***********************************************************************/
-/*                           ReleaseResultSet()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
 
 void OGRParquetDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 {

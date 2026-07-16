@@ -20,7 +20,7 @@
 #include "ogr_adbc_internal.h"
 
 /************************************************************************/
-/*                 OGRArrowArrayToOGRFeatureAdapterLayer                */
+/*                OGRArrowArrayToOGRFeatureAdapterLayer                 */
 /************************************************************************/
 
 class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
@@ -85,7 +85,7 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                            OGRADBCLayer                              */
+/*                             OGRADBCLayer                             */
 /************************************************************************/
 
 class OGRADBCDataset;
@@ -191,7 +191,7 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
 };
 
 /************************************************************************/
-/*                      OGRADBCBigQueryLayer                            */
+/*                         OGRADBCBigQueryLayer                         */
 /************************************************************************/
 
 class OGRADBCBigQueryLayer final : public OGRADBCLayer
@@ -285,7 +285,7 @@ class OGRADBCDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                            OGRADBCError                              */
+/*                             OGRADBCError                             */
 /************************************************************************/
 
 struct OGRADBCError

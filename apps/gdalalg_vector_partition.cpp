@@ -30,12 +30,13 @@ constexpr int DIRECTORY_CREATION_MODE = 0755;
 constexpr const char *NULL_MARKER = "__HIVE_DEFAULT_PARTITION__";
 
 constexpr const char *DEFAULT_PATTERN_HIVE = "part_%010d";
+constexpr const char *DEFAULT_PATTERN_FLAT_NO_FIELD = "{LAYER_NAME}_%010d";
 constexpr const char *DEFAULT_PATTERN_FLAT = "{LAYER_NAME}_{FIELD_VALUE}_%010d";
 
 constexpr char DIGIT_ZERO = '0';
 
 /************************************************************************/
-/*                        GetConstructorOptions()                       */
+/*                       GetConstructorOptions()                        */
 /************************************************************************/
 
 /* static */
@@ -50,7 +51,7 @@ GDALVectorPartitionAlgorithm::GetConstructorOptions(bool standaloneStep)
 }
 
 /************************************************************************/
-/*      GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm()    */
+/*     GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm()     */
 /************************************************************************/
 
 GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
@@ -84,8 +85,8 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
 
     AddArg("field", 0,
-           _("Attribute or geometry field(s) on which to partition"), &m_fields)
-        .SetRequired();
+           _("Attribute or geometry field(s) on which to partition"),
+           &m_fields);
     AddArg("scheme", 0, _("Partitioning scheme"), &m_scheme)
         .SetChoices(SCHEME_HIVE, SCHEME_FLAT)
         .SetDefault(m_scheme);
@@ -205,10 +206,24 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
         .SetMinValueIncluded(1)
         .SetDefault(m_transactionSize)
         .SetHidden();
+
+    AddValidationAction(
+        [this]()
+        {
+            if (m_fields.empty() && m_featureLimit == 0 && m_maxFileSize == 0)
+            {
+                ReportError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "When 'fields' argument is not specified, "
+                    "'feature-limit' and/or 'max-file-size' must be specified");
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
-/*                              PercentEncode()                         */
+/*                           PercentEncode()                            */
 /************************************************************************/
 
 static void PercentEncode(std::string &out, const std::string_view &s)
@@ -235,7 +250,7 @@ static std::string PercentEncode(const std::string_view &s)
 }
 
 /************************************************************************/
-/*                       GetEstimatedFeatureSize()                      */
+/*                      GetEstimatedFeatureSize()                       */
 /************************************************************************/
 
 static size_t GetEstimatedFeatureSize(
@@ -336,7 +351,7 @@ static size_t GetEstimatedFeatureSize(
 }
 
 /************************************************************************/
-/*                      GetCurrentOutputLayer()                         */
+/*                       GetCurrentOutputLayer()                        */
 /************************************************************************/
 
 constexpr int MIN_FILE_SIZE = 65536;
@@ -384,7 +399,8 @@ static bool GetCurrentOutputLayer(
         !osPatternIn.empty() ? osPatternIn
         : osScheme == GDALVectorPartitionAlgorithm::SCHEME_HIVE
             ? DEFAULT_PATTERN_HIVE
-            : DEFAULT_PATTERN_FLAT;
+        : osKey.empty() ? DEFAULT_PATTERN_FLAT_NO_FIELD
+                        : DEFAULT_PATTERN_FLAT;
 
     bool bLimitReached = false;
     bool bOpenOrCreateNewFile = true;
@@ -746,7 +762,7 @@ static bool GetCurrentOutputLayer(
 }
 
 /************************************************************************/
-/*                GDALVectorPartitionAlgorithm::RunStep()               */
+/*               GDALVectorPartitionAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -1372,7 +1388,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                GDALVectorPartitionAlgorithm::RunImpl()               */
+/*               GDALVectorPartitionAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALVectorPartitionAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

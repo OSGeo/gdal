@@ -41,7 +41,7 @@ GDALRasterMosaicAlgorithm::GDALRasterMosaicAlgorithm(bool bStandalone)
 }
 
 /************************************************************************/
-/*                   GDALRasterMosaicAlgorithm::RunStep()               */
+/*                 GDALRasterMosaicAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

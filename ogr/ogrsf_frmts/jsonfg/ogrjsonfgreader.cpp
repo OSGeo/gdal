@@ -23,7 +23,7 @@
 #include <json.h>  // JSON-C
 
 /************************************************************************/
-/*                  OGRJSONFGReader::~OGRJSONFGReader()                 */
+/*                 OGRJSONFGReader::~OGRJSONFGReader()                  */
 /************************************************************************/
 
 OGRJSONFGReader::~OGRJSONFGReader()
@@ -33,7 +33,7 @@ OGRJSONFGReader::~OGRJSONFGReader()
 }
 
 /************************************************************************/
-/*                  OGRJSONFGReader::Load()                             */
+/*                       OGRJSONFGReader::Load()                        */
 /************************************************************************/
 
 bool OGRJSONFGReader::Load(OGRJSONFGDataset *poDS, const char *pszText,
@@ -106,7 +106,7 @@ bool OGRJSONFGReader::Load(OGRJSONFGDataset *poDS, const char *pszText,
 }
 
 /************************************************************************/
-/*                    OGRJSONFGReadCoordRefSys()                        */
+/*                      OGRJSONFGReadCoordRefSys()                      */
 /************************************************************************/
 
 static std::unique_ptr<OGRSpatialReference>
@@ -292,7 +292,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
 }
 
 /************************************************************************/
-/*              OGRJSONFGReader::AnalyzeWithStreamingParser()           */
+/*            OGRJSONFGReader::AnalyzeWithStreamingParser()             */
 /************************************************************************/
 
 bool OGRJSONFGReader::AnalyzeWithStreamingParser(
@@ -398,7 +398,7 @@ bool OGRJSONFGReader::GenerateLayerDefns()
 }
 
 /************************************************************************/
-/*             OGRJSONFGReader::FinalizeGenerateLayerDefns()            */
+/*            OGRJSONFGReader::FinalizeGenerateLayerDefns()             */
 /************************************************************************/
 
 bool OGRJSONFGReader::FinalizeGenerateLayerDefns(bool bStreamedLayer)
@@ -487,7 +487,7 @@ bool OGRJSONFGReader::FinalizeGenerateLayerDefns(bool bStreamedLayer)
 }
 
 /************************************************************************/
-/*                OGRJSONFGReader::FinalizeBuildContext()               */
+/*               OGRJSONFGReader::FinalizeBuildContext()                */
 /************************************************************************/
 
 void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
@@ -752,7 +752,7 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
 }
 
 /************************************************************************/
-/*            OGRJSONFGReader::GetLayerNameForFeature()                 */
+/*              OGRJSONFGReader::GetLayerNameForFeature()               */
 /************************************************************************/
 
 const char *OGRJSONFGReader::GetLayerNameForFeature(json_object *poObj) const
@@ -768,7 +768,7 @@ const char *OGRJSONFGReader::GetLayerNameForFeature(json_object *poObj) const
 }
 
 /************************************************************************/
-/*                     OGRJSONFGGetOGRGeometryType()                    */
+/*                    OGRJSONFGGetOGRGeometryType()                     */
 /************************************************************************/
 
 static OGRwkbGeometryType OGRJSONFGGetOGRGeometryType(json_object *poObj,
@@ -828,7 +828,7 @@ static OGRwkbGeometryType OGRJSONFGGetOGRGeometryType(json_object *poObj,
 }
 
 /************************************************************************/
-/*                   OGRJSONFGCreateNonGeoJSONGeometry()                */
+/*                 OGRJSONFGCreateNonGeoJSONGeometry()                  */
 /************************************************************************/
 
 static std::unique_ptr<OGRGeometry>
@@ -1061,7 +1061,7 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bHasM, bool bWarn)
 }
 
 /************************************************************************/
-/*            OGRJSONFGReader::GenerateLayerDefnFromFeature()           */
+/*           OGRJSONFGReader::GenerateLayerDefnFromFeature()            */
 /************************************************************************/
 
 bool OGRJSONFGReader::GenerateLayerDefnFromFeature(json_object *poObj)
@@ -1290,7 +1290,7 @@ bool OGRJSONFGReader::GenerateLayerDefnFromFeature(json_object *poObj)
 }
 
 /************************************************************************/
-/*                  OGRJSONFGReader::ReadFeature()                      */
+/*                    OGRJSONFGReader::ReadFeature()                    */
 /************************************************************************/
 
 std::unique_ptr<OGRFeature>

@@ -77,7 +77,7 @@
 #include "gtadrivercore.h"
 
 /************************************************************************/
-/* Helper functions                                                     */
+/*                           Helper functions                           */
 /************************************************************************/
 
 static void ScanDoubles(const char *pszString, double *padfDoubles, int nCount)
@@ -421,7 +421,7 @@ GTARasterBand::~GTARasterBand()
 }
 
 /************************************************************************/
-/*                             GetCategoryNames()                       */
+/*                          GetCategoryNames()                          */
 /************************************************************************/
 
 char **GTARasterBand::GetCategoryNames()
@@ -454,7 +454,7 @@ char **GTARasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
-/*                             SetCategoryName()                        */
+/*                          SetCategoryName()                           */
 /************************************************************************/
 
 CPLErr GTARasterBand::SetCategoryNames(char **)
@@ -510,7 +510,7 @@ double GTARasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             GetNoDataValue()                         */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double GTARasterBand::GetNoDataValue(int *pbSuccess)
@@ -532,7 +532,7 @@ double GTARasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             SetNoDataValue()                         */
+/*                           SetNoDataValue()                           */
 /************************************************************************/
 
 CPLErr GTARasterBand::SetNoDataValue(double)
@@ -578,7 +578,7 @@ CPLErr GTARasterBand::SetOffset(double)
 }
 
 /************************************************************************/
-/*                             GetScale()                               */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double GTARasterBand::GetScale(int *pbSuccess)
@@ -600,7 +600,7 @@ double GTARasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             SetScale()                               */
+/*                              SetScale()                              */
 /************************************************************************/
 
 CPLErr GTARasterBand::SetScale(double)
@@ -612,7 +612,7 @@ CPLErr GTARasterBand::SetScale(double)
 }
 
 /************************************************************************/
-/*                             GetUnitType()                            */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *GTARasterBand::GetUnitType()
@@ -625,7 +625,7 @@ const char *GTARasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                             SetUnitType()                            */
+/*                            SetUnitType()                             */
 /************************************************************************/
 
 CPLErr GTARasterBand::SetUnitType(const char *)
@@ -637,7 +637,7 @@ CPLErr GTARasterBand::SetUnitType(const char *)
 }
 
 /************************************************************************/
-/*                             GetColorInterpretation()                 */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp GTARasterBand::GetColorInterpretation()
@@ -683,7 +683,7 @@ GDALColorInterp GTARasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                             SetColorInterpretation()                 */
+/*                       SetColorInterpretation()                       */
 /************************************************************************/
 
 CPLErr GTARasterBand::SetColorInterpretation(GDALColorInterp)
@@ -731,7 +731,7 @@ CPLErr GTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr GTARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
@@ -778,7 +778,7 @@ CPLErr GTARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /************************************************************************/
 
 /************************************************************************/
-/*                            GTADataset()                              */
+/*                             GTADataset()                             */
 /************************************************************************/
 
 GTADataset::GTADataset()
@@ -954,7 +954,7 @@ const OGRSpatialReference *GTADataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr GTADataset::SetSpatialRef(const OGRSpatialReference *)
@@ -966,7 +966,7 @@ CPLErr GTADataset::SetSpatialRef(const OGRSpatialReference *)
 }
 
 /************************************************************************/
-/*                          GetGCPCount()                               */
+/*                            GetGCPCount()                             */
 /************************************************************************/
 
 int GTADataset::GetGCPCount()
@@ -986,7 +986,7 @@ const OGRSpatialReference *GTADataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                          GetGCPs()                                   */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *GTADataset::GetGCPs()
@@ -996,7 +996,7 @@ const GDAL_GCP *GTADataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          SetGCPs()                                   */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr GTADataset::SetGCPs(int, const GDAL_GCP *, const OGRSpatialReference *)
@@ -1282,7 +1282,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int bStrict, char **papszOptions,
+                                  int bStrict, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 

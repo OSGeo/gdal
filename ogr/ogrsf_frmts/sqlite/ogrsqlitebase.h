@@ -29,7 +29,7 @@
 #include <vector>
 
 /************************************************************************/
-/*      Format used to store geometry data in the database.             */
+/*         Format used to store geometry data in the database.          */
 /************************************************************************/
 
 enum OGRSQLiteGeomFormat
@@ -67,7 +67,7 @@ class OGRSQLiteGeomFieldDefn final : public OGRGeomFieldDefn
 };
 
 /************************************************************************/
-/*                        OGRSQLiteFeatureDefn                          */
+/*                         OGRSQLiteFeatureDefn                         */
 /************************************************************************/
 
 class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
@@ -94,7 +94,7 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
 };
 
 /************************************************************************/
-/*                       IOGRSQLiteGetSpatialWhere                      */
+/*                      IOGRSQLiteGetSpatialWhere                       */
 /************************************************************************/
 
 class IOGRSQLiteGetSpatialWhere /* non final */
@@ -270,7 +270,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                         IOGRSQLiteSelectLayer                        */
+/*                        IOGRSQLiteSelectLayer                         */
 /************************************************************************/
 
 class IOGRSQLiteSelectLayer /* non final */
@@ -298,7 +298,7 @@ class IOGRSQLiteSelectLayer /* non final */
 };
 
 /************************************************************************/
-/*                   OGRSQLiteSelectLayerCommonBehaviour                */
+/*                 OGRSQLiteSelectLayerCommonBehaviour                  */
 /************************************************************************/
 
 class OGRSQLiteSelectLayerCommonBehaviour final
@@ -336,7 +336,7 @@ class OGRSQLiteSelectLayerCommonBehaviour final
 };
 
 /************************************************************************/
-/*                   OGRSQLiteSingleFeatureLayer                        */
+/*                     OGRSQLiteSingleFeatureLayer                      */
 /************************************************************************/
 
 class OGRSQLiteSingleFeatureLayer final : public OGRLayer
@@ -361,7 +361,7 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/* Functions                                                            */
+/*                              Functions                               */
 /************************************************************************/
 
 OGRErr OGRSQLiteGetSpatialiteGeometryHeader(const GByte *pabyData, int nBytes,

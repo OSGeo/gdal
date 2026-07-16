@@ -26,7 +26,7 @@ namespace OpenFileGDB
 {
 
 /************************************************************************/
-/*                          RemoveIndices()                             */
+/*                           RemoveIndices()                            */
 /************************************************************************/
 
 void FileGDBTable::RemoveIndices()
@@ -70,7 +70,7 @@ void FileGDBTable::RemoveIndices()
 }
 
 /************************************************************************/
-/*                          RefreshIndices()                            */
+/*                           RefreshIndices()                           */
 /************************************************************************/
 
 void FileGDBTable::RefreshIndices()
@@ -113,7 +113,7 @@ void FileGDBTable::RefreshIndices()
 }
 
 /************************************************************************/
-/*                          CreateIndex()                               */
+/*                            CreateIndex()                             */
 /************************************************************************/
 
 bool FileGDBTable::CreateIndex(const std::string &osIndexName,
@@ -421,7 +421,7 @@ void FileGDBTable::ComputeOptimalSpatialIndexGridResolution()
 }
 
 /************************************************************************/
-/*                     SortByAscendingValuesAndOID()                    */
+/*                    SortByAscendingValuesAndOID()                     */
 /************************************************************************/
 
 // recent libc++ std::sort() involve unsigned integer overflow in some
@@ -438,7 +438,7 @@ SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
 }
 
 /************************************************************************/
-/*                           WriteIndex()                               */
+/*                             WriteIndex()                             */
 /************************************************************************/
 
 template <class ValueOIDPair>
@@ -807,7 +807,7 @@ static bool WriteIndex(
 }
 
 /************************************************************************/
-/*                        CreateSpatialIndex()                          */
+/*                         CreateSpatialIndex()                         */
 /************************************************************************/
 
 bool FileGDBTable::CreateSpatialIndex()
@@ -1316,7 +1316,7 @@ bool FileGDBTable::CreateSpatialIndex()
 }
 
 /************************************************************************/
-/*                      CreateAttributeIndex()                          */
+/*                        CreateAttributeIndex()                        */
 /************************************************************************/
 
 bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)

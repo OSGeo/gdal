@@ -218,7 +218,7 @@ class JPIPKAKDataset final : public GDALPamDataset
                      int bufXSize, int bufYSize, GDALDataType bufType,
                      int nBandCount, int *bandMap, int nPixelSpace,
                      int nLineSpace, int nBandSpace,
-                     char **papszOptions) override;
+                     CSLConstList papszOptions) override;
 
     void EndAsyncReader(GDALAsyncReader *) override;
 

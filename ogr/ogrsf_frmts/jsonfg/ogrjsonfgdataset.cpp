@@ -31,7 +31,7 @@ constexpr const char *CONFORMANCE_MEASURES =
     "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures";
 
 /************************************************************************/
-/*                  OGRJSONFGDataset::~OGRJSONFGDataset()               */
+/*                OGRJSONFGDataset::~OGRJSONFGDataset()                 */
 /************************************************************************/
 
 OGRJSONFGDataset::~OGRJSONFGDataset()
@@ -41,7 +41,7 @@ OGRJSONFGDataset::~OGRJSONFGDataset()
 }
 
 /************************************************************************/
-/*                        OGRJSONFGDataset::Close()                    */
+/*                      OGRJSONFGDataset::Close()                       */
 /************************************************************************/
 
 CPLErr OGRJSONFGDataset::Close(GDALProgressFunc, void *)
@@ -232,7 +232,7 @@ OGRErr OGRJSONFGDataset::SyncToDiskInternal()
 }
 
 /************************************************************************/
-/*                         BeforeCreateFeature()                        */
+/*                        BeforeCreateFeature()                         */
 /************************************************************************/
 
 void OGRJSONFGDataset::BeforeCreateFeature()
@@ -251,7 +251,7 @@ void OGRJSONFGDataset::BeforeCreateFeature()
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
@@ -424,7 +424,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                  OGRJSONFGDataset::GetLayer()                        */
+/*                     OGRJSONFGDataset::GetLayer()                     */
 /************************************************************************/
 
 const OGRLayer *OGRJSONFGDataset::GetLayer(int i) const
@@ -435,7 +435,7 @@ const OGRLayer *OGRJSONFGDataset::GetLayer(int i) const
 }
 
 /************************************************************************/
-/*                  OGRJSONFGDataset::AddLayer()                        */
+/*                     OGRJSONFGDataset::AddLayer()                     */
 /************************************************************************/
 
 OGRJSONFGMemLayer *
@@ -446,7 +446,7 @@ OGRJSONFGDataset::AddLayer(std::unique_ptr<OGRJSONFGMemLayer> &&poLayer)
 }
 
 /************************************************************************/
-/*                  OGRJSONFGDataset::AddLayer()                        */
+/*                     OGRJSONFGDataset::AddLayer()                     */
 /************************************************************************/
 
 OGRJSONFGStreamedLayer *
@@ -457,7 +457,7 @@ OGRJSONFGDataset::AddLayer(std::unique_ptr<OGRJSONFGStreamedLayer> &&poLayer)
 }
 
 /************************************************************************/
-/*                           ReadFromFile()                             */
+/*                            ReadFromFile()                            */
 /************************************************************************/
 
 bool OGRJSONFGDataset::ReadFromFile(GDALOpenInfo *poOpenInfo,
@@ -499,7 +499,7 @@ bool OGRJSONFGDataset::ReadFromFile(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                           ReadFromService()                          */
+/*                          ReadFromService()                           */
 /************************************************************************/
 
 bool OGRJSONFGDataset::ReadFromService(GDALOpenInfo *poOpenInfo,
@@ -595,7 +595,7 @@ bool OGRJSONFGDataset::ReadFromService(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
@@ -662,7 +662,7 @@ bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                        EmitStartFeaturesIfNeeded()                   */
+/*                     EmitStartFeaturesIfNeeded()                      */
 /************************************************************************/
 
 bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
@@ -677,7 +677,7 @@ bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1038,7 +1038,7 @@ int OGRJSONFGDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                      OGRJSONFGMustSwapXY()                           */
+/*                        OGRJSONFGMustSwapXY()                         */
 /************************************************************************/
 
 bool OGRJSONFGMustSwapXY(const OGRSpatialReference *poSRS)

@@ -373,7 +373,7 @@ int VSISparseFileHandle::Error()
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSISparseFileHandle::ClearErr()
@@ -555,7 +555,7 @@ int VSISparseFileFilesystemHandler::Rmdir(const char * /* pszPathname */)
 }
 
 /************************************************************************/
-/*                              ReadDirEx()                             */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSISparseFileFilesystemHandler::ReadDirEx(const char * /* pszPath */,
@@ -566,7 +566,7 @@ char **VSISparseFileFilesystemHandler::ReadDirEx(const char * /* pszPath */,
 }
 
 /************************************************************************/
-/*                 VSIInstallSparseFileFilesystemHandler()              */
+/*               VSIInstallSparseFileFilesystemHandler()                */
 /************************************************************************/
 
 /*!

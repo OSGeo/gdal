@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorSimplifyAlgorithm                       */
+/*                     GDALVectorSimplifyAlgorithm                      */
 /************************************************************************/
 
 class GDALVectorSimplifyAlgorithm /* non final */
@@ -48,7 +48,7 @@ class GDALVectorSimplifyAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALVectorSimplifyAlgorithmStandalone               */
+/*                GDALVectorSimplifyAlgorithmStandalone                 */
 /************************************************************************/
 
 class GDALVectorSimplifyAlgorithmStandalone final

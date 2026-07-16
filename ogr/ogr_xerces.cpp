@@ -33,7 +33,7 @@ class OGRXercesStandardMemoryManager;
 class OGRXercesInstrumentedMemoryManager;
 
 /************************************************************************/
-/*                        CPLGettimeofday()                             */
+/*                          CPLGettimeofday()                           */
 /************************************************************************/
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -120,7 +120,7 @@ void OGRXercesStandardMemoryManager::deallocate(void *p)
 }
 
 /************************************************************************/
-/*               OGRXercesInstrumentedMemoryManager                     */
+/*                  OGRXercesInstrumentedMemoryManager                  */
 /************************************************************************/
 
 class OGRXercesInstrumentedMemoryManager final : public MemoryManager
@@ -269,7 +269,7 @@ void OGRXercesInstrumentedMemoryManager::deallocate(void *p)
 }
 
 /************************************************************************/
-/*                  OGRStartXercesLimitsForThisThread()                 */
+/*                 OGRStartXercesLimitsForThisThread()                  */
 /************************************************************************/
 
 void OGRStartXercesLimitsForThisThread(size_t nMaxMemAlloc,
@@ -308,7 +308,7 @@ void OGRStopXercesLimitsForThisThread()
 }
 
 /************************************************************************/
-/*                      OGRXercesBinInputStream                         */
+/*                       OGRXercesBinInputStream                        */
 /************************************************************************/
 
 class OGRXercesBinInputStream final : public BinInputStream
@@ -334,7 +334,7 @@ class OGRXercesBinInputStream final : public BinInputStream
 };
 
 /************************************************************************/
-/*                      OGRXercesNetAccessor                            */
+/*                         OGRXercesNetAccessor                         */
 /************************************************************************/
 
 class OGRXercesNetAccessor final : public XMLNetAccessor
@@ -476,7 +476,7 @@ namespace OGR
 {
 
 /************************************************************************/
-/*                            transcode()                               */
+/*                             transcode()                              */
 /************************************************************************/
 
 CPLString transcode(const XMLCh *panXMLString, int nLimitingChars)
@@ -540,7 +540,7 @@ CPLString &transcode(const XMLCh *panXMLString, CPLString &osRet,
 }  // namespace OGR
 
 /************************************************************************/
-/*                       OGRXercesInputSource                           */
+/*                         OGRXercesInputSource                         */
 /************************************************************************/
 
 class OGRXercesInputSource : public InputSource
@@ -571,7 +571,7 @@ OGRXercesBinInputStream::OGRXercesBinInputStream(VSILFILE *fpIn, bool bOwnFPIn)
 }
 
 /************************************************************************/
-/*                     ~OGRXercesBinInputStream()                       */
+/*                      ~OGRXercesBinInputStream()                      */
 /************************************************************************/
 
 OGRXercesBinInputStream::~OGRXercesBinInputStream()
@@ -581,7 +581,7 @@ OGRXercesBinInputStream::~OGRXercesBinInputStream()
 }
 
 /************************************************************************/
-/*                              curPos()                                */
+/*                               curPos()                               */
 /************************************************************************/
 
 XMLFilePos OGRXercesBinInputStream::curPos() const
@@ -590,7 +590,7 @@ XMLFilePos OGRXercesBinInputStream::curPos() const
 }
 
 /************************************************************************/
-/*                            readBytes()                               */
+/*                             readBytes()                              */
 /************************************************************************/
 
 XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte *const toFill,
@@ -600,7 +600,7 @@ XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte *const toFill,
 }
 
 /************************************************************************/
-/*                       OGRXercesInputSource()                         */
+/*                        OGRXercesInputSource()                        */
 /************************************************************************/
 
 OGRXercesInputSource::OGRXercesInputSource(VSILFILE *fp,
@@ -611,7 +611,7 @@ OGRXercesInputSource::OGRXercesInputSource(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                      ~OGRXercesInputSource()                         */
+/*                       ~OGRXercesInputSource()                        */
 /************************************************************************/
 
 OGRXercesInputSource::~OGRXercesInputSource() = default;
@@ -626,7 +626,7 @@ InputSource *OGRCreateXercesInputSource(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                     OGRDestroyXercesInputSource()                    */
+/*                    OGRDestroyXercesInputSource()                     */
 /************************************************************************/
 
 void OGRDestroyXercesInputSource(InputSource *is)

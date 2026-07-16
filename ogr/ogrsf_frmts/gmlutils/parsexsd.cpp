@@ -46,7 +46,7 @@ static const char *StripNS(const char *pszFullValue)
 }
 
 /************************************************************************/
-/*                   GetSimpleTypeProperties()                          */
+/*                      GetSimpleTypeProperties()                       */
 /************************************************************************/
 
 static bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
@@ -151,7 +151,7 @@ static bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
 }
 
 /************************************************************************/
-/*                      LookForSimpleType()                             */
+/*                         LookForSimpleType()                          */
 /************************************************************************/
 
 static bool LookForSimpleType(CPLXMLNode *psSchemaNode,
@@ -176,7 +176,7 @@ static bool LookForSimpleType(CPLXMLNode *psSchemaNode,
 }
 
 /************************************************************************/
-/*                      GetSingleChildElement()                         */
+/*                       GetSingleChildElement()                        */
 /************************************************************************/
 
 /* Returns the child element whose name is pszExpectedValue only if */
@@ -209,7 +209,7 @@ static CPLXMLNode *GetSingleChildElement(CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                      CheckMinMaxOccursCardinality()                  */
+/*                    CheckMinMaxOccursCardinality()                    */
 /************************************************************************/
 
 static int CheckMinMaxOccursCardinality(CPLXMLNode *psNode)
@@ -243,7 +243,7 @@ static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
 }
 
 /************************************************************************/
-/*                      ParseFeatureType()                              */
+/*                          ParseFeatureType()                          */
 /************************************************************************/
 
 typedef struct
@@ -866,7 +866,7 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 }
 
 /************************************************************************/
-/*                         ExcludeBaseGMLSchemas()                      */
+/*                       ExcludeBaseGMLSchemas()                        */
 /************************************************************************/
 
 static bool ExcludeBaseGMLSchemas(const std::string &osFilename)
@@ -885,7 +885,7 @@ static bool ExcludeBaseGMLSchemas(const std::string &osFilename)
 }
 
 /************************************************************************/
-/*                         GMLParseXMLFile()                            */
+/*                          GMLParseXMLFile()                           */
 /************************************************************************/
 
 static CPLXMLNode *GMLParseXMLFile(const char *pszFilename)
@@ -913,7 +913,7 @@ static CPLXMLNode *GMLParseXMLFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       CPLGetFirstChildNode()                         */
+/*                        CPLGetFirstChildNode()                        */
 /************************************************************************/
 
 static CPLXMLNode *CPLGetFirstChildNode(CPLXMLNode *psNode)
@@ -931,7 +931,7 @@ static CPLXMLNode *CPLGetFirstChildNode(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                          CPLGetLastNode()                            */
+/*                           CPLGetLastNode()                           */
 /************************************************************************/
 
 static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
@@ -943,7 +943,7 @@ static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                       CPLXMLSchemaResolveInclude()                   */
+/*                     CPLXMLSchemaResolveInclude()                     */
 /************************************************************************/
 
 static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
@@ -1034,7 +1034,7 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
 }
 
 /************************************************************************/
-/*                       GetUniqueConstraints()                         */
+/*                        GetUniqueConstraints()                        */
 /************************************************************************/
 
 static std::set<std::pair<std::string, std::string>>
@@ -1071,7 +1071,7 @@ GetUniqueConstraints(const CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                          GMLParseXSD()                               */
+/*                            GMLParseXSD()                             */
 /************************************************************************/
 
 bool GMLParseXSD(const char *pszFile, bool bUseSchemaImports,

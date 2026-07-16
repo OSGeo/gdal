@@ -40,7 +40,7 @@ CPLMutex *hHDF4Mutex = nullptr;
 /************************************************************************/
 
 /************************************************************************/
-/*                           HDF4Dataset()                              */
+/*                            HDF4Dataset()                             */
 /************************************************************************/
 
 HDF4Dataset::HDF4Dataset()
@@ -70,7 +70,7 @@ HDF4Dataset::~HDF4Dataset()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **HDF4Dataset::GetMetadataDomainList()
@@ -171,7 +171,7 @@ char *SPrintArray(GDALDataType eDataType, const void *paDataArray, int nValues,
 }
 
 /************************************************************************/
-/*              Translate HDF4 data type into GDAL data type            */
+/*             Translate HDF4 data type into GDAL data type             */
 /************************************************************************/
 GDALDataType HDF4Dataset::GetDataType(int32 iNumType)
 {
@@ -205,7 +205,7 @@ GDALDataType HDF4Dataset::GetDataType(int32 iNumType)
 }
 
 /************************************************************************/
-/*              Return the human readable name of data type             */
+/*             Return the human readable name of data type              */
 /************************************************************************/
 
 const char *HDF4Dataset::GetDataTypeName(int32 iNumType)
@@ -247,7 +247,7 @@ const char *HDF4Dataset::GetDataTypeName(int32 iNumType)
 }
 
 /************************************************************************/
-/*  Return the size of data type in bytes                               */
+/*                Return the size of data type in bytes                 */
 /************************************************************************/
 
 int HDF4Dataset::GetDataTypeSize(int32 iNumType)
@@ -280,7 +280,7 @@ int HDF4Dataset::GetDataTypeSize(int32 iNumType)
 }
 
 /************************************************************************/
-/*  Convert value stored in the input buffer to double value.           */
+/*      Convert value stored in the input buffer to double value.       */
 /************************************************************************/
 
 double HDF4Dataset::AnyTypeToDouble(int32 iNumType, void *pData)
@@ -317,7 +317,7 @@ double HDF4Dataset::AnyTypeToDouble(int32 iNumType, void *pData)
 }
 
 /************************************************************************/
-/*         Tokenize HDF-EOS attributes.                                 */
+/*                     Tokenize HDF-EOS attributes.                     */
 /************************************************************************/
 
 char **HDF4Dataset::HDF4EOSTokenizeAttrs(const char *pszString)
@@ -559,7 +559,7 @@ char **HDF4Dataset::TranslateHDF4EOSAttributes(int32 iHandle, int32 iAttribute,
 }
 
 /************************************************************************/
-/*         Translate HDF4 attributes in GDAL metadata items             */
+/*           Translate HDF4 attributes in GDAL metadata items           */
 /************************************************************************/
 
 char **HDF4Dataset::TranslateHDF4Attributes(int32 iHandle, int32 iAttribute,
@@ -601,7 +601,7 @@ char **HDF4Dataset::TranslateHDF4Attributes(int32 iHandle, int32 iAttribute,
 }
 
 /************************************************************************/
-/*                       ReadGlobalAttributes()                         */
+/*                        ReadGlobalAttributes()                        */
 /************************************************************************/
 
 CPLErr HDF4Dataset::ReadGlobalAttributes(int32 iHandler)
@@ -665,7 +665,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes(int32 iHandler)
 }
 
 /************************************************************************/
-/*                            QuoteIfNeeded()                           */
+/*                           QuoteIfNeeded()                            */
 /************************************************************************/
 
 static CPLString QuoteIfNeeded(const CPLString &osStr)
@@ -1283,7 +1283,7 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           HDF4UnloadDriver()                         */
+/*                          HDF4UnloadDriver()                          */
 /************************************************************************/
 
 static void HDF4UnloadDriver(GDALDriver * /* poDriver */)
@@ -1294,7 +1294,7 @@ static void HDF4UnloadDriver(GDALDriver * /* poDriver */)
 }
 
 /************************************************************************/
-/*                        GDALRegister_HDF4()                           */
+/*                         GDALRegister_HDF4()                          */
 /************************************************************************/
 
 void GDALRegister_HDF4()

@@ -197,7 +197,7 @@ GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
 }
 
 /************************************************************************/
-/*                                 Init()                               */
+/*                                Init()                                */
 /************************************************************************/
 
 void GDALOpenInfo::Init(const char *const *papszSiblingFilesIn,
@@ -422,7 +422,7 @@ GDALOpenInfo::~GDALOpenInfo()
 }
 
 /************************************************************************/
-/*                         GetSiblingFiles()                            */
+/*                          GetSiblingFiles()                           */
 /************************************************************************/
 
 /** Return sibling files.
@@ -480,7 +480,7 @@ char **GDALOpenInfo::StealSiblingFiles()
 }
 
 /************************************************************************/
-/*                        AreSiblingFilesLoaded()                       */
+/*                       AreSiblingFilesLoaded()                        */
 /************************************************************************/
 
 /** Return whether sibling files have been loaded.
@@ -492,7 +492,7 @@ bool GDALOpenInfo::AreSiblingFilesLoaded() const
 }
 
 /************************************************************************/
-/*                           TryToIngest()                              */
+/*                            TryToIngest()                             */
 /************************************************************************/
 
 /** Ingest bytes from the file.

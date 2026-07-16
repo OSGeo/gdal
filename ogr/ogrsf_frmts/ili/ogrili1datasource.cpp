@@ -20,7 +20,7 @@
 #include <string>
 
 /************************************************************************/
-/*                         OGRILI1DataSource()                         */
+/*                         OGRILI1DataSource()                          */
 /************************************************************************/
 
 OGRILI1DataSource::OGRILI1DataSource()
@@ -30,7 +30,7 @@ OGRILI1DataSource::OGRILI1DataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRILI1DataSource()                         */
+/*                         ~OGRILI1DataSource()                         */
 /************************************************************************/
 
 OGRILI1DataSource::~OGRILI1DataSource()
@@ -179,7 +179,7 @@ const OGRLayer *OGRILI1DataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                              GetLayerByName()                              */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRILI1Layer *OGRILI1DataSource::GetLayerByName(const char *pszLayerName)

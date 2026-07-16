@@ -83,7 +83,7 @@ class GTXDataset final : public RawDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -107,7 +107,7 @@ class GTXRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                            GTXRasterBand()                           */
+/*                           GTXRasterBand()                            */
 /************************************************************************/
 
 GTXRasterBand::GTXRasterBand(GDALDataset *poDSIn, int nBandIn,
@@ -162,7 +162,7 @@ GTXDataset::~GTXDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GTXDataset::Close(GDALProgressFunc, void *)
@@ -373,7 +373,7 @@ CPLErr GTXDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 GDALDataset *GTXDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int /* nBands */, GDALDataType eType,
-                                char ** /* papszOptions */)
+                                CSLConstList /* papszOptions */)
 {
     if (eType != GDT_Float32)
     {

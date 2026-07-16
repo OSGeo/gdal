@@ -47,7 +47,7 @@ class HKVRasterBand final : public RawRasterBand
 HKVRasterBand::~HKVRasterBand() = default;
 
 /************************************************************************/
-/*                      HKV Spheroids                                   */
+/*                            HKV Spheroids                             */
 /************************************************************************/
 
 class HKVSpheroidList final : public SpheroidList
@@ -291,7 +291,7 @@ HKVRasterBand::HKVRasterBand(HKVDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
 /************************************************************************/
 
 /************************************************************************/
-/*                            HKVDataset()                             */
+/*                             HKVDataset()                             */
 /************************************************************************/
 
 HKVDataset::HKVDataset()
@@ -305,7 +305,7 @@ HKVDataset::HKVDataset()
 }
 
 /************************************************************************/
-/*                            ~HKVDataset()                            */
+/*                            ~HKVDataset()                             */
 /************************************************************************/
 
 HKVDataset::~HKVDataset()
@@ -315,7 +315,7 @@ HKVDataset::~HKVDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr HKVDataset::Close(GDALProgressFunc, void *)
@@ -954,7 +954,7 @@ GDALDataset *HKVDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_HKV()                           */
+/*                          GDALRegister_HKV()                          */
 /************************************************************************/
 
 void GDALRegister_HKV()

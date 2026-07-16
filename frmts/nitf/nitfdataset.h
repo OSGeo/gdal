@@ -140,7 +140,7 @@ class NITFDataset final : public GDALPamDataset
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
                       int nBandCount, int *panBandList,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
@@ -175,13 +175,13 @@ class NITFDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *NITFCreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int bStrict,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData);
     static GDALDataset *NITFDatasetCreate(const char *pszFilename, int nXSize,
                                           int nYSize, int nBands,
                                           GDALDataType eType,
-                                          char **papszOptions);
+                                          CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -304,7 +304,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     /*virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                         int nBuckets, GUIntBig * panHistogram,

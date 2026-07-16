@@ -134,7 +134,7 @@ class OGRCSWDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                           OGRCSWLayer()                              */
+/*                            OGRCSWLayer()                             */
 /************************************************************************/
 
 OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource *poDSIn)
@@ -234,7 +234,7 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                          ~OGRCSWLayer()                              */
+/*                            ~OGRCSWLayer()                            */
 /************************************************************************/
 
 OGRCSWLayer::~OGRCSWLayer()
@@ -245,7 +245,7 @@ OGRCSWLayer::~OGRCSWLayer()
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRCSWLayer::ResetReading()
@@ -259,7 +259,7 @@ void OGRCSWLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRCSWLayer::GetNextFeature()
@@ -397,7 +397,7 @@ OGRFeature *OGRCSWLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRCSWLayer::GetFeatureCount(int bForce)
@@ -409,7 +409,7 @@ GIntBig OGRCSWLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                        GetFeatureCountWithHits()                     */
+/*                      GetFeatureCountWithHits()                       */
 /************************************************************************/
 
 GIntBig OGRCSWLayer::GetFeatureCountWithHits()
@@ -462,7 +462,7 @@ GIntBig OGRCSWLayer::GetFeatureCountWithHits()
 }
 
 /************************************************************************/
-/*                         FetchGetRecords()                            */
+/*                          FetchGetRecords()                           */
 /************************************************************************/
 
 GDALDataset *OGRCSWLayer::FetchGetRecords()
@@ -702,7 +702,7 @@ OGRErr OGRCSWLayer::ISetSpatialFilter(int iGeomField, const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                         OGRCSWAddRightPrefixes()                     */
+/*                       OGRCSWAddRightPrefixes()                       */
 /************************************************************************/
 
 static void OGRCSWAddRightPrefixes(swq_expr_node *poNode)
@@ -773,7 +773,7 @@ static void OGRCSWAddRightPrefixes(swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                        SetAttributeFilter()                          */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRCSWLayer::SetAttributeFilter(const char *pszFilter)
@@ -836,7 +836,7 @@ OGRErr OGRCSWLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                                BuildQuery()                          */
+/*                             BuildQuery()                             */
 /************************************************************************/
 
 void OGRCSWLayer::BuildQuery()
@@ -905,7 +905,7 @@ OGRCSWDataSource::~OGRCSWDataSource()
 }
 
 /************************************************************************/
-/*                          SendGetCapabilities()                       */
+/*                        SendGetCapabilities()                         */
 /************************************************************************/
 
 CPLHTTPResult *OGRCSWDataSource::SendGetCapabilities()
@@ -1027,7 +1027,7 @@ const OGRLayer *OGRCSWDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                            HTTPFetch()                               */
+/*                             HTTPFetch()                              */
 /************************************************************************/
 
 CPLHTTPResult *OGRCSWDataSource::HTTPFetch(const char *pszURL,
@@ -1068,7 +1068,7 @@ CPLHTTPResult *OGRCSWDataSource::HTTPFetch(const char *pszURL,
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRCSWDriverIdentify(GDALOpenInfo *poOpenInfo)

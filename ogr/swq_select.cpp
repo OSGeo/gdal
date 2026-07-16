@@ -135,7 +135,7 @@ CPLErr swq_select::preparse(const char *select_statement,
 }
 
 /************************************************************************/
-/*                          postpreparse()                              */
+/*                            postpreparse()                            */
 /************************************************************************/
 
 void swq_select::postpreparse()
@@ -163,7 +163,7 @@ void swq_select::postpreparse()
 }
 
 /************************************************************************/
-/*                               Unparse()                              */
+/*                              Unparse()                               */
 /************************************************************************/
 
 char *swq_select::Unparse()
@@ -732,7 +732,7 @@ void swq_select::PushJoin(int iSecondaryTable, swq_expr_node *poExpr)
 }
 
 /************************************************************************/
-/*                             PushUnionAll()                           */
+/*                            PushUnionAll()                            */
 /************************************************************************/
 
 void swq_select::PushUnionAll(swq_select *poOtherSelectIn)
@@ -742,7 +742,7 @@ void swq_select::PushUnionAll(swq_select *poOtherSelectIn)
 }
 
 /************************************************************************/
-/*                             SetLimit()                               */
+/*                              SetLimit()                              */
 /************************************************************************/
 
 void swq_select::SetLimit(GIntBig nLimit)
@@ -752,7 +752,7 @@ void swq_select::SetLimit(GIntBig nLimit)
 }
 
 /************************************************************************/
-/*                            SetOffset()                               */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 void swq_select::SetOffset(GIntBig nOffset)
@@ -910,7 +910,7 @@ CPLErr swq_select::expand_wildcard(swq_field_list *field_list,
 }
 
 /************************************************************************/
-/*                       CheckCompatibleJoinExpr()                      */
+/*                      CheckCompatibleJoinExpr()                       */
 /************************************************************************/
 
 static bool CheckCompatibleJoinExpr(swq_expr_node *poExpr, int secondary_table,

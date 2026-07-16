@@ -34,7 +34,7 @@ void CPLFinalizeTLS();
 static bool bGDALDestroyAlreadyCalled = FALSE;
 
 /************************************************************************/
-/*                           GDALDestroy()                              */
+/*                            GDALDestroy()                             */
 /************************************************************************/
 
 /** Finalize GDAL/OGR library.

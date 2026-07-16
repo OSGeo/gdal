@@ -76,7 +76,7 @@ struct GOA2ManagerCache
 };
 
 /************************************************************************/
-/*                    CPLIsMachineForSureGCEInstance()                  */
+/*                   CPLIsMachineForSureGCEInstance()                   */
 /************************************************************************/
 
 /** Returns whether the current machine is surely a Google Compute Engine
@@ -261,7 +261,7 @@ VSIGSHandleHelper::VSIGSHandleHelper(const std::string &osEndpoint,
 }
 
 /************************************************************************/
-/*                        ~VSIGSHandleHelper()                          */
+/*                         ~VSIGSHandleHelper()                         */
 /************************************************************************/
 
 VSIGSHandleHelper::~VSIGSHandleHelper()
@@ -269,7 +269,7 @@ VSIGSHandleHelper::~VSIGSHandleHelper()
 }
 
 /************************************************************************/
-/*                GetConfigurationFromAWSConfigFiles()                  */
+/*                 GetConfigurationFromAWSConfigFiles()                 */
 /************************************************************************/
 
 bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
@@ -355,7 +355,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 }
 
 /************************************************************************/
-/*                        GetConfiguration()                            */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
@@ -738,7 +738,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                          BuildFromURI()                              */
+/*                            BuildFromURI()                            */
 /************************************************************************/
 
 VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
@@ -779,7 +779,7 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
 }
 
 /************************************************************************/
-/*                           RebuildURL()                               */
+/*                             RebuildURL()                             */
 /************************************************************************/
 
 void VSIGSHandleHelper::RebuildURL()
@@ -792,7 +792,7 @@ void VSIGSHandleHelper::RebuildURL()
 }
 
 /************************************************************************/
-/*                           UsesHMACKey()                              */
+/*                            UsesHMACKey()                             */
 /************************************************************************/
 
 bool VSIGSHandleHelper::UsesHMACKey() const
@@ -850,7 +850,7 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          ClearCache()                                */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIGSHandleHelper::ClearCache()
@@ -860,7 +860,7 @@ void VSIGSHandleHelper::ClearCache()
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)

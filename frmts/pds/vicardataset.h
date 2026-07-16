@@ -83,7 +83,7 @@ class VICARDataset final : public RawDataset
     static VICARDataset *CreateInternal(const char *pszFilename, int nXSize,
                                         int nYSize, int nBands,
                                         GDALDataType eType,
-                                        char **papszOptions);
+                                        CSLConstList papszOptions);
 
     void ReadProjectionFromMapGroup();
     void BuildLabelPropertyMap(CPLJSONObject &oLabel);
@@ -126,10 +126,10 @@ class VICARDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 

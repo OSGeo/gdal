@@ -44,7 +44,7 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
     bool ParseItemTypes(json_object *poObj, CPLString &osNext);
     void EstablishLayerList();
     GDALDataset *OpenRasterScene(GDALOpenInfo *poOpenInfo, CPLString osScene,
-                                 char **papszOptions);
+                                 CSLConstList papszOptions);
     CPLString InsertAPIKeyInURL(CPLString osURL);
 
   public:

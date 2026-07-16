@@ -53,7 +53,7 @@ class DDSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -119,7 +119,7 @@ class DDSRasterBandAllDecoded final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           ~DDSDataset()                              */
+/*                            ~DDSDataset()                             */
 /************************************************************************/
 
 DDSDataset::~DDSDataset()
@@ -347,7 +347,7 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        ~DDSDatasetAllDecoded()                       */
+/*                       ~DDSDatasetAllDecoded()                        */
 /************************************************************************/
 
 DDSDatasetAllDecoded::~DDSDatasetAllDecoded()
@@ -356,7 +356,7 @@ DDSDatasetAllDecoded::~DDSDatasetAllDecoded()
 }
 
 /************************************************************************/
-/*                        DDSRasterBandAllDecoded()                     */
+/*                      DDSRasterBandAllDecoded()                       */
 /************************************************************************/
 
 DDSRasterBandAllDecoded::DDSRasterBandAllDecoded(DDSDatasetAllDecoded *poDSIn,
@@ -450,7 +450,7 @@ GDALDataset *DDSDatasetAllDecoded::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 

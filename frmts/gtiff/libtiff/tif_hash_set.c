@@ -76,7 +76,7 @@ static const int anPrimes[] = {
     100663319, 201326611, 402653189, 805306457, 1610612741};
 
 /************************************************************************/
-/*                    TIFFHashSetHashPointer()                          */
+/*                       TIFFHashSetHashPointer()                       */
 /************************************************************************/
 
 /**
@@ -93,7 +93,7 @@ static unsigned long TIFFHashSetHashPointer(const void *elt)
 }
 
 /************************************************************************/
-/*                   TIFFHashSetEqualPointer()                          */
+/*                      TIFFHashSetEqualPointer()                       */
 /************************************************************************/
 
 /**
@@ -111,7 +111,7 @@ static bool TIFFHashSetEqualPointer(const void *elt1, const void *elt2)
 }
 
 /************************************************************************/
-/*                          TIFFHashSetNew()                             */
+/*                           TIFFHashSetNew()                           */
 /************************************************************************/
 
 /**
@@ -164,7 +164,7 @@ TIFFHashSet *TIFFHashSetNew(TIFFHashSetHashFunc fnHashFunc,
 }
 
 /************************************************************************/
-/*                          TIFFHashSetSize()                            */
+/*                          TIFFHashSetSize()                           */
 /************************************************************************/
 
 /**
@@ -184,7 +184,7 @@ int TIFFHashSetSize(const TIFFHashSet *set)
 }
 
 /************************************************************************/
-/*                       TIFFHashSetGetNewListElt()                      */
+/*                      TIFFHashSetGetNewListElt()                      */
 /************************************************************************/
 
 static TIFFList *TIFFHashSetGetNewListElt(TIFFHashSet *set)
@@ -202,7 +202,7 @@ static TIFFList *TIFFHashSetGetNewListElt(TIFFHashSet *set)
 }
 
 /************************************************************************/
-/*                       TIFFHashSetReturnListElt()                      */
+/*                      TIFFHashSetReturnListElt()                      */
 /************************************************************************/
 
 static void TIFFHashSetReturnListElt(TIFFHashSet *set, TIFFList *psList)
@@ -220,7 +220,7 @@ static void TIFFHashSetReturnListElt(TIFFHashSet *set, TIFFList *psList)
 }
 
 /************************************************************************/
-/*                   TIFFHashSetClearInternal()                          */
+/*                      TIFFHashSetClearInternal()                      */
 /************************************************************************/
 
 static void TIFFHashSetClearInternal(TIFFHashSet *set, bool bFinalize)
@@ -246,7 +246,7 @@ static void TIFFHashSetClearInternal(TIFFHashSet *set, bool bFinalize)
 }
 
 /************************************************************************/
-/*                         TIFFListDestroy()                            */
+/*                          TIFFListDestroy()                           */
 /************************************************************************/
 
 /**
@@ -270,7 +270,7 @@ static void TIFFListDestroy(TIFFList *psList)
 }
 
 /************************************************************************/
-/*                        TIFFHashSetDestroy()                          */
+/*                         TIFFHashSetDestroy()                         */
 /************************************************************************/
 
 /**
@@ -295,7 +295,7 @@ void TIFFHashSetDestroy(TIFFHashSet *set)
 
 #ifdef notused
 /************************************************************************/
-/*                        TIFFHashSetClear()                             */
+/*                          TIFFHashSetClear()                          */
 /************************************************************************/
 
 /**
@@ -319,7 +319,7 @@ void TIFFHashSetClear(TIFFHashSet *set)
 }
 
 /************************************************************************/
-/*                       TIFFHashSetForeach()                           */
+/*                         TIFFHashSetForeach()                         */
 /************************************************************************/
 
 /**
@@ -360,7 +360,7 @@ void TIFFHashSetForeach(TIFFHashSet *set, TIFFHashSetIterEltFunc fnIterFunc,
 #endif
 
 /************************************************************************/
-/*                        TIFFHashSetRehash()                           */
+/*                         TIFFHashSetRehash()                          */
 /************************************************************************/
 
 static bool TIFFHashSetRehash(TIFFHashSet *set)
@@ -403,7 +403,7 @@ static bool TIFFHashSetRehash(TIFFHashSet *set)
 }
 
 /************************************************************************/
-/*                        TIFFHashSetFindPtr()                          */
+/*                         TIFFHashSetFindPtr()                         */
 /************************************************************************/
 
 static void **TIFFHashSetFindPtr(TIFFHashSet *set, const void *elt)
@@ -486,7 +486,7 @@ bool TIFFHashSetInsert(TIFFHashSet *set, void *elt)
 }
 
 /************************************************************************/
-/*                        TIFFHashSetLookup()                           */
+/*                         TIFFHashSetLookup()                          */
 /************************************************************************/
 
 /**
@@ -581,7 +581,7 @@ bool TIFFHashSetRemove(TIFFHashSet *set, const void *elt)
 
 #ifdef notused
 /************************************************************************/
-/*                     TIFFHashSetRemoveDeferRehash()                   */
+/*                    TIFFHashSetRemoveDeferRehash()                    */
 /************************************************************************/
 
 /**

@@ -57,7 +57,7 @@ class HF2Dataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -99,7 +99,7 @@ HF2RasterBand::HF2RasterBand(HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                          ~HF2RasterBand()                            */
+/*                           ~HF2RasterBand()                           */
 /************************************************************************/
 
 HF2RasterBand::~HF2RasterBand()
@@ -253,7 +253,7 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                            ~HF2Dataset()                            */
+/*                            ~HF2Dataset()                             */
 /************************************************************************/
 
 HF2Dataset::HF2Dataset()
@@ -264,7 +264,7 @@ HF2Dataset::HF2Dataset()
 }
 
 /************************************************************************/
-/*                            ~HF2Dataset()                            */
+/*                            ~HF2Dataset()                             */
 /************************************************************************/
 
 HF2Dataset::~HF2Dataset()
@@ -357,7 +357,7 @@ int HF2Dataset::LoadBlockMap()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *HF2Dataset::GetSpatialRef() const
@@ -369,7 +369,7 @@ const OGRSpatialReference *HF2Dataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int HF2Dataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -717,7 +717,7 @@ static void WriteDouble(VSILFILE *fp, double val)
 
 GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -1174,7 +1174,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_HF2()                           */
+/*                          GDALRegister_HF2()                          */
 /************************************************************************/
 
 void GDALRegister_HF2()

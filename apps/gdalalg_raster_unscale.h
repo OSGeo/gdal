@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterUnscaleAlgorithm                        */
+/*                      GDALRasterUnscaleAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterUnscaleAlgorithm /* non final */

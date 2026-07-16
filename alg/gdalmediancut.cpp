@@ -112,12 +112,15 @@ static Colorbox *largest_box(Colorbox *usedboxes);
  * be clipped to 8bit during reading, so non-eight bit bands are generally
  * inappropriate.
  *
+ * Since GDAL 3.13, source nodata values or mask band will be taken into account
+ * to determine which pixels are valid.
+ *
  * @param hRed Red input band.
  * @param hGreen Green input band.
  * @param hBlue Blue input band.
  * @param pfnIncludePixel function used to test which pixels should be included
- * in the analysis.  At this time this argument is ignored and all pixels are
- * utilized.  This should normally be NULL.
+ * in the analysis.  At this time this argument is ignored.
+ * This should normally be NULL.
  * @param nColors the desired number of colors to be returned (2-256).
  * @param hColorTable the colors will be returned in this color table object.
  * @param pfnProgress callback for reporting algorithm progress matching the
@@ -325,6 +328,30 @@ int GDALComputeMedianCutPCTInternal(
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
 
+    int nSrcNoData = -1;
+    GDALRasterBandH hMaskBand = nullptr;
+    int bSrcHasNoDataR = FALSE;
+    const double dfSrcNoDataR = GDALGetRasterNoDataValue(hRed, &bSrcHasNoDataR);
+    int bSrcHasNoDataG = FALSE;
+    const double dfSrcNoDataG =
+        GDALGetRasterNoDataValue(hGreen, &bSrcHasNoDataG);
+    int bSrcHasNoDataB = FALSE;
+    const double dfSrcNoDataB =
+        GDALGetRasterNoDataValue(hBlue, &bSrcHasNoDataB);
+    if (bSrcHasNoDataR && bSrcHasNoDataG && bSrcHasNoDataB &&
+        dfSrcNoDataR == dfSrcNoDataG && dfSrcNoDataR == dfSrcNoDataB &&
+        dfSrcNoDataR >= 0 && dfSrcNoDataR <= 255 &&
+        std::round(dfSrcNoDataR) == dfSrcNoDataR)
+    {
+        nSrcNoData = static_cast<int>(dfSrcNoDataR);
+    }
+    else
+    {
+        const int nMaskFlags = GDALGetMaskFlags(hRed);
+        if ((nMaskFlags & GMF_PER_DATASET))
+            hMaskBand = GDALGetMaskBand(hRed);
+    }
+
     /* ==================================================================== */
     /*      STEP 1: create empty boxes.                                     */
     /* ==================================================================== */
@@ -426,9 +453,12 @@ int GDALComputeMedianCutPCTInternal(
     GByte *pabyRedLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
     GByte *pabyGreenLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
     GByte *pabyBlueLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
+    std::unique_ptr<GByte, VSIFreeReleaser> pabyMask;
+    if (hMaskBand)
+        pabyMask.reset(static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize)));
 
     if (pabyRedLine == nullptr || pabyGreenLine == nullptr ||
-        pabyBlueLine == nullptr)
+        pabyBlueLine == nullptr || (hMaskBand && !pabyMask))
     {
         err = CE_Failure;
         goto end_and_cleanup;
@@ -452,11 +482,22 @@ int GDALComputeMedianCutPCTInternal(
         if (err == CE_None)
             err = GDALRasterIO(hBlue, GF_Read, 0, iLine, nXSize, 1,
                                pabyBlueLine, nXSize, 1, GDT_UInt8, 0, 0);
+        if (err == CE_None && hMaskBand)
+            err = GDALRasterIO(hMaskBand, GF_Read, 0, iLine, nXSize, 1,
+                               pabyMask.get(), nXSize, 1, GDT_UInt8, 0, 0);
         if (err != CE_None)
             goto end_and_cleanup;
 
         for (int iPixel = 0; iPixel < nXSize; iPixel++)
         {
+            if ((pabyRedLine[iPixel] == nSrcNoData &&
+                 pabyGreenLine[iPixel] == nSrcNoData &&
+                 pabyBlueLine[iPixel] == nSrcNoData) ||
+                (pabyMask && (pabyMask.get())[iPixel] == 0))
+            {
+                continue;
+            }
+
             const int nRed = pabyRedLine[iPixel] >> nColorShift;
             const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
             const int nBlue = pabyBlueLine[iPixel] >> nColorShift;

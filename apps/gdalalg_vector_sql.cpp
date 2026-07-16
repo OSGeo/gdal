@@ -62,7 +62,7 @@ GDALVectorSQLAlgorithm::GDALVectorSQLAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorSQLAlgorithmDataset                      */
+/*                    GDALVectorSQLAlgorithmDataset                     */
 /************************************************************************/
 
 namespace
@@ -236,7 +236,7 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
 }  // namespace
 
 /************************************************************************/
-/*                 GDALVectorSQLAlgorithm::RunStep()                    */
+/*                  GDALVectorSQLAlgorithm::RunStep()                   */
 /************************************************************************/
 
 bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)

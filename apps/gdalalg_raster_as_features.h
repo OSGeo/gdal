@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterAsFeaturesAlgorithm                      */
+/*                    GDALRasterAsFeaturesAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterAsFeaturesAlgorithm /* non final */
@@ -56,7 +56,7 @@ class GDALRasterAsFeaturesAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterAsFeaturesAlgorithmStandalone              */
+/*               GDALRasterAsFeaturesAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterAsFeaturesAlgorithmStandalone final

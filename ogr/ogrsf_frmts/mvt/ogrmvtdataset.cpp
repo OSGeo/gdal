@@ -96,7 +96,7 @@ static void InitWebMercatorTilingScheme(OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*                           GetCmdId()                                 */
+/*                              GetCmdId()                              */
 /************************************************************************/
 
 /* For a drawing instruction combining a command id and a command count,
@@ -107,7 +107,7 @@ static unsigned GetCmdId(unsigned int nCmdCountCombined)
 }
 
 /************************************************************************/
-/*                           GetCmdCount()                              */
+/*                            GetCmdCount()                             */
 /************************************************************************/
 
 /* For a drawing instruction combining a command id and a command count,
@@ -118,7 +118,7 @@ static unsigned GetCmdCount(unsigned int nCmdCountCombined)
 }
 
 /************************************************************************/
-/*                          OGRMVTLayerBase                             */
+/*                           OGRMVTLayerBase                            */
 /************************************************************************/
 
 class OGRMVTLayerBase CPL_NON_FINAL
@@ -208,7 +208,7 @@ class OGRMVTLayer final : public OGRMVTLayerBase
 };
 
 /************************************************************************/
-/*                        OGRMVTDirectoryLayer                          */
+/*                         OGRMVTDirectoryLayer                         */
 /************************************************************************/
 
 class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
@@ -268,7 +268,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
 };
 
 /************************************************************************/
-/*                           OGRMVTDataset                              */
+/*                            OGRMVTDataset                             */
 /************************************************************************/
 
 class OGRMVTDataset final : public GDALDataset
@@ -349,7 +349,7 @@ class OGRMVTDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                        ~OGRMVTLayerBase()                            */
+/*                          ~OGRMVTLayerBase()                          */
 /************************************************************************/
 
 OGRMVTLayerBase::~OGRMVTLayerBase()
@@ -358,7 +358,7 @@ OGRMVTLayerBase::~OGRMVTLayerBase()
 }
 
 /************************************************************************/
-/*                           InitFields()                               */
+/*                             InitFields()                             */
 /************************************************************************/
 
 void OGRMVTLayerBase::InitFields(const CPLJSONObject &oFields,
@@ -381,7 +381,7 @@ int OGRMVTLayerBase::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           OGRMVTLayer()                              */
+/*                            OGRMVTLayer()                             */
 /************************************************************************/
 
 OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
@@ -424,7 +424,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                          ~OGRMVTLayer()                              */
+/*                            ~OGRMVTLayer()                            */
 /************************************************************************/
 
 OGRMVTLayer::~OGRMVTLayer()
@@ -439,7 +439,7 @@ OGRMVTLayer::~OGRMVTLayer()
 }
 
 /************************************************************************/
-/*                               Init()                                 */
+/*                                Init()                                */
 /************************************************************************/
 
 void OGRMVTLayer::Init(const CPLJSONObject &oFields,
@@ -614,7 +614,7 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields,
 }
 
 /************************************************************************/
-/*                          MergeFieldDefn()                            */
+/*                           MergeFieldDefn()                           */
 /************************************************************************/
 
 static void MergeFieldDefn(OGRFieldDefn *poFieldDefn, OGRFieldType eSrcType,
@@ -651,7 +651,7 @@ static void MergeFieldDefn(OGRFieldDefn *poFieldDefn, OGRFieldType eSrcType,
 }
 
 /************************************************************************/
-/*                         QuickScanFeature()                           */
+/*                          QuickScanFeature()                          */
 /************************************************************************/
 
 bool OGRMVTLayer::QuickScanFeature(const GByte *pabyData,
@@ -832,7 +832,7 @@ bool OGRMVTLayer::QuickScanFeature(const GByte *pabyData,
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRMVTLayer::GetFeatureCount(int bForce)
@@ -846,7 +846,7 @@ GIntBig OGRMVTLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRMVTLayer::ResetReading()
@@ -856,7 +856,7 @@ void OGRMVTLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              GetXY()                                 */
+/*                               GetXY()                                */
 /************************************************************************/
 
 void OGRMVTLayer::GetXY(int nX, int nY, double &dfX, double &dfY)
@@ -874,7 +874,7 @@ void OGRMVTLayer::GetXY(int nX, int nY, double &dfX, double &dfY)
 }
 
 /************************************************************************/
-/*                     AddWithOverflowAccepted()                        */
+/*                      AddWithOverflowAccepted()                       */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -1453,7 +1453,7 @@ GDALDataset *OGRMVTLayer::GetDataset()
 }
 
 /************************************************************************/
-/*                         StripDummyEntries()                           */
+/*                         StripDummyEntries()                          */
 /************************************************************************/
 
 static CPLStringList StripDummyEntries(const CPLStringList &aosInput)
@@ -1471,7 +1471,7 @@ static CPLStringList StripDummyEntries(const CPLStringList &aosInput)
 }
 
 /************************************************************************/
-/*                       OGRMVTDirectoryLayer()                         */
+/*                        OGRMVTDirectoryLayer()                        */
 /************************************************************************/
 
 OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
@@ -1568,7 +1568,7 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
 }
 
 /************************************************************************/
-/*                      ~OGRMVTDirectoryLayer()                         */
+/*                       ~OGRMVTDirectoryLayer()                        */
 /************************************************************************/
 
 OGRMVTDirectoryLayer::~OGRMVTDirectoryLayer()
@@ -1577,7 +1577,7 @@ OGRMVTDirectoryLayer::~OGRMVTDirectoryLayer()
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRMVTDirectoryLayer::ResetReading()
@@ -1590,7 +1590,7 @@ void OGRMVTDirectoryLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                            IsBetween()                               */
+/*                             IsBetween()                              */
 /************************************************************************/
 
 static bool IsBetween(int nVal, int nMin, int nMax)
@@ -1599,7 +1599,7 @@ static bool IsBetween(int nVal, int nMin, int nMax)
 }
 
 /************************************************************************/
-/*                          ReadNewSubDir()                             */
+/*                           ReadNewSubDir()                            */
 /************************************************************************/
 
 void OGRMVTDirectoryLayer::ReadNewSubDir()
@@ -1656,7 +1656,7 @@ void OGRMVTDirectoryLayer::ReadNewSubDir()
 }
 
 /************************************************************************/
-/*                            OpenTile()                                */
+/*                              OpenTile()                              */
 /************************************************************************/
 
 void OGRMVTDirectoryLayer::OpenTile()
@@ -1691,7 +1691,7 @@ void OGRMVTDirectoryLayer::OpenTile()
 }
 
 /************************************************************************/
-/*                         OpenTileIfNeeded()                           */
+/*                          OpenTileIfNeeded()                          */
 /************************************************************************/
 
 void OGRMVTDirectoryLayer::OpenTileIfNeeded()
@@ -1739,7 +1739,7 @@ void OGRMVTDirectoryLayer::OpenTileIfNeeded()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRMVTDirectoryLayer::GetFeatureCount(int bForce)
@@ -1845,7 +1845,7 @@ int OGRMVTDirectoryLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRMVTDirectoryLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1907,7 +1907,7 @@ OGRFeature *OGRMVTDirectoryLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
@@ -1997,7 +1997,7 @@ const OGRLayer *OGRMVTDataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRMVTDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -2486,7 +2486,7 @@ static void LongLatToSphericalMercator(double *x, double *y)
 }
 
 /************************************************************************/
-/*                          LoadMetadata()                              */
+/*                            LoadMetadata()                            */
 /************************************************************************/
 
 static bool LoadMetadata(const CPLString &osMetadataFile,
@@ -2584,7 +2584,7 @@ static bool LoadMetadata(const CPLString &osMetadataFile,
 }
 
 /************************************************************************/
-/*                       ConvertFromWGS84()                             */
+/*                          ConvertFromWGS84()                          */
 /************************************************************************/
 
 static void ConvertFromWGS84(OGRSpatialReference *poTargetSRS, double &dfX0,
@@ -2615,7 +2615,7 @@ static void ConvertFromWGS84(OGRSpatialReference *poTargetSRS, double &dfX0,
 }
 
 /************************************************************************/
-/*                         OpenDirectory()                              */
+/*                           OpenDirectory()                            */
 /************************************************************************/
 
 GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
@@ -3356,7 +3356,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo, bool bRecurseAllowed)
 #ifdef HAVE_MVT_WRITE_SUPPORT
 
 /************************************************************************/
-/*                           OGRMVTWriterDataset                        */
+/*                         OGRMVTWriterDataset                          */
 /************************************************************************/
 
 class OGRMVTWriterLayer;
@@ -3527,7 +3527,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     OGRSpatialReference *GetSRS()
     {
@@ -3536,7 +3536,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                           OGRMVTWriterLayer                          */
+/*                          OGRMVTWriterLayer                           */
 /************************************************************************/
 
 class OGRMVTWriterLayer final : public OGRLayer
@@ -3581,7 +3581,7 @@ class OGRMVTWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          OGRMVTWriterLayer()                         */
+/*                         OGRMVTWriterLayer()                          */
 /************************************************************************/
 
 OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset *poDS,
@@ -3610,7 +3610,7 @@ OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset *poDS,
 }
 
 /************************************************************************/
-/*                          ~OGRMVTWriterLayer()                        */
+/*                         ~OGRMVTWriterLayer()                         */
 /************************************************************************/
 
 OGRMVTWriterLayer::~OGRMVTWriterLayer()
@@ -3620,7 +3620,7 @@ OGRMVTWriterLayer::~OGRMVTWriterLayer()
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMVTWriterLayer::TestCapability(const char *pszCap) const
@@ -3642,7 +3642,7 @@ OGRErr OGRMVTWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                          */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRMVTWriterLayer::ICreateFeature(OGRFeature *poFeature)
@@ -3659,7 +3659,7 @@ OGRErr OGRMVTWriterLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          OGRMVTWriterDataset()                       */
+/*                        OGRMVTWriterDataset()                         */
 /************************************************************************/
 
 OGRMVTWriterDataset::OGRMVTWriterDataset()
@@ -3672,7 +3672,7 @@ OGRMVTWriterDataset::OGRMVTWriterDataset()
 }
 
 /************************************************************************/
-/*                         ~OGRMVTWriterDataset()                       */
+/*                        ~OGRMVTWriterDataset()                        */
 /************************************************************************/
 
 OGRMVTWriterDataset::~OGRMVTWriterDataset()
@@ -3690,7 +3690,7 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRMVTWriterDataset::Close(GDALProgressFunc, void *)
@@ -3728,7 +3728,7 @@ CPLErr OGRMVTWriterDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        ConvertToTileCoords()                     */
+/*                        ConvertToTileCoords()                         */
 /************************************************************************/
 
 void OGRMVTWriterDataset::ConvertToTileCoords(double dfX, double dfY, int &nX,
@@ -3751,7 +3751,7 @@ void OGRMVTWriterDataset::ConvertToTileCoords(double dfX, double dfY, int &nX,
 }
 
 /************************************************************************/
-/*                       GetCmdCountCombined()                          */
+/*                        GetCmdCountCombined()                         */
 /************************************************************************/
 
 static unsigned GetCmdCountCombined(unsigned int nCmdId, unsigned int nCmdCount)
@@ -3908,7 +3908,7 @@ bool OGRMVTWriterDataset::EncodeLineString(
 
 #ifdef notdef
 /************************************************************************/
-/*                     EncodeRepairedOuterRing()                        */
+/*                      EncodeRepairedOuterRing()                       */
 /************************************************************************/
 
 bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
@@ -4012,7 +4012,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
 #endif
 
 /************************************************************************/
-/*                          EncodePolygon()                             */
+/*                           EncodePolygon()                            */
 /************************************************************************/
 
 bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
@@ -4079,7 +4079,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 }
 
 /************************************************************************/
-/*                          PreGenerateForTile()                        */
+/*                         PreGenerateForTile()                         */
 /************************************************************************/
 
 OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
@@ -4486,7 +4486,7 @@ class MVTWriterTask
 };
 
 /************************************************************************/
-/*                          WriterTaskFunc()                            */
+/*                           WriterTaskFunc()                           */
 /************************************************************************/
 
 void OGRMVTWriterDataset::WriterTaskFunc(void *pParam)
@@ -4544,7 +4544,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(
 }
 
 /************************************************************************/
-/*                        UpdateLayerProperties()                       */
+/*                       UpdateLayerProperties()                        */
 /************************************************************************/
 
 void OGRMVTWriterDataset::UpdateLayerProperties(
@@ -4638,7 +4638,7 @@ void OGRMVTWriterDataset::UpdateLayerProperties(
 }
 
 /************************************************************************/
-/*                           GZIPCompress()                             */
+/*                            GZIPCompress()                            */
 /************************************************************************/
 
 static void GZIPCompress(std::string &oTileBuffer)
@@ -4665,7 +4665,7 @@ static void GZIPCompress(std::string &oTileBuffer)
 }
 
 /************************************************************************/
-/*                     GetReducedPrecisionGeometry()                    */
+/*                    GetReducedPrecisionGeometry()                     */
 /************************************************************************/
 
 static std::vector<GUInt32>
@@ -4918,7 +4918,7 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
 }
 
 /************************************************************************/
-/*                          EncodeFeature()                             */
+/*                           EncodeFeature()                            */
 /************************************************************************/
 
 void OGRMVTWriterDataset::EncodeFeature(
@@ -5051,7 +5051,7 @@ void OGRMVTWriterDataset::EncodeFeature(
 }
 
 /************************************************************************/
-/*                            EncodeTile()                              */
+/*                             EncodeTile()                             */
 /************************************************************************/
 
 std::string OGRMVTWriterDataset::EncodeTile(
@@ -5293,7 +5293,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
 }
 
 /************************************************************************/
-/*                    RecodeTileLowerResolution()                       */
+/*                     RecodeTileLowerResolution()                      */
 /************************************************************************/
 
 std::string OGRMVTWriterDataset::RecodeTileLowerResolution(
@@ -5517,7 +5517,7 @@ static void SphericalMercatorToLongLat(double *x, double *y)
 }
 
 /************************************************************************/
-/*                          WriteMetadataItem()                         */
+/*                         WriteMetadataItem()                          */
 /************************************************************************/
 
 template <class T>
@@ -5545,7 +5545,7 @@ static bool WriteMetadataItemT(const char *pszKey, T value,
 }
 
 /************************************************************************/
-/*                          WriteMetadataItem()                         */
+/*                         WriteMetadataItem()                          */
 /************************************************************************/
 
 static bool WriteMetadataItem(const char *pszKey, const char *pszValue,
@@ -5555,7 +5555,7 @@ static bool WriteMetadataItem(const char *pszKey, const char *pszValue,
 }
 
 /************************************************************************/
-/*                          WriteMetadataItem()                         */
+/*                         WriteMetadataItem()                          */
 /************************************************************************/
 
 static bool WriteMetadataItem(const char *pszKey, int nValue,
@@ -5565,7 +5565,7 @@ static bool WriteMetadataItem(const char *pszKey, int nValue,
 }
 
 /************************************************************************/
-/*                          WriteMetadataItem()                         */
+/*                         WriteMetadataItem()                          */
 /************************************************************************/
 
 static bool WriteMetadataItem(const char *pszKey, double dfValue,
@@ -6016,7 +6016,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMVTWriterDataset::TestCapability(const char *pszCap) const
@@ -6051,7 +6051,7 @@ static bool ValidateMinMaxZoom(int nMinZoom, int nMaxZoom)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -6125,12 +6125,13 @@ OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                                Create()                              */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
                                          int nYSize, int nBandsIn,
-                                         GDALDataType eDT, char **papszOptions)
+                                         GDALDataType eDT,
+                                         CSLConstList papszOptions)
 {
     if (nXSize != 0 || nYSize != 0 || nBandsIn != 0 || eDT != GDT_Unknown)
     {
@@ -6422,7 +6423,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *OGRMVTWriterDatasetCreate(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
-                                       GDALDataType eDT, char **papszOptions)
+                                       GDALDataType eDT,
+                                       CSLConstList papszOptions)
 {
     return OGRMVTWriterDataset::Create(pszFilename, nXSize, nYSize, nBandsIn,
                                        eDT, papszOptions);

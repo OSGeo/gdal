@@ -66,7 +66,7 @@ GMLFeatureClass::~GMLFeatureClass()
 }
 
 /************************************************************************/
-/*                         StealProperties()                            */
+/*                          StealProperties()                           */
 /************************************************************************/
 
 void GMLFeatureClass::StealProperties()
@@ -79,7 +79,7 @@ void GMLFeatureClass::StealProperties()
 }
 
 /************************************************************************/
-/*                       StealGeometryProperties()                      */
+/*                      StealGeometryProperties()                       */
 /************************************************************************/
 
 void GMLFeatureClass::StealGeometryProperties()
@@ -90,7 +90,7 @@ void GMLFeatureClass::StealGeometryProperties()
 }
 
 /************************************************************************/
-/*                            SetName()                                 */
+/*                              SetName()                               */
 /************************************************************************/
 
 void GMLFeatureClass::SetName(const char *pszNewName)
@@ -127,7 +127,7 @@ int GMLFeatureClass::GetPropertyIndex(const char *pszName) const
 }
 
 /************************************************************************/
-/*                        GetPropertyIndexBySrcElement()                */
+/*                    GetPropertyIndexBySrcElement()                    */
 /************************************************************************/
 
 int GMLFeatureClass::GetPropertyIndexBySrcElement(const char *pszElement,
@@ -194,7 +194,7 @@ int GMLFeatureClass::AddProperty(GMLPropertyDefn *poDefn, int iPos)
 }
 
 /************************************************************************/
-/*                         GetGeometryProperty(int)                      */
+/*                       GetGeometryProperty(int)                       */
 /************************************************************************/
 
 GMLGeometryPropertyDefn *GMLFeatureClass::GetGeometryProperty(int iIndex) const
@@ -206,7 +206,7 @@ GMLGeometryPropertyDefn *GMLFeatureClass::GetGeometryProperty(int iIndex) const
 }
 
 /************************************************************************/
-/*                   GetGeometryPropertyIndexBySrcElement()             */
+/*                GetGeometryPropertyIndexBySrcElement()                */
 /************************************************************************/
 
 int GMLFeatureClass::GetGeometryPropertyIndexBySrcElement(
@@ -221,7 +221,7 @@ int GMLFeatureClass::GetGeometryPropertyIndexBySrcElement(
 }
 
 /************************************************************************/
-/*                         AddGeometryProperty()                        */
+/*                        AddGeometryProperty()                         */
 /************************************************************************/
 
 int GMLFeatureClass::AddGeometryProperty(GMLGeometryPropertyDefn *poDefn)
@@ -246,7 +246,7 @@ int GMLFeatureClass::AddGeometryProperty(GMLGeometryPropertyDefn *poDefn)
 }
 
 /************************************************************************/
-/*                       ClearGeometryProperties()                      */
+/*                      ClearGeometryProperties()                       */
 /************************************************************************/
 
 void GMLFeatureClass::ClearGeometryProperties()
@@ -259,7 +259,7 @@ void GMLFeatureClass::ClearGeometryProperties()
 }
 
 /************************************************************************/
-/*                         HasFeatureProperties()                       */
+/*                        HasFeatureProperties()                        */
 /************************************************************************/
 
 bool GMLFeatureClass::HasFeatureProperties()
@@ -312,7 +312,7 @@ size_t GMLFeatureClass::GetElementNameLen() const
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig GMLFeatureClass::GetFeatureCount()
@@ -389,7 +389,7 @@ bool GMLFeatureClass::GetExtents(double *pdfXMin, double *pdfXMax,
 }
 
 /************************************************************************/
-/*                            SetSRSName()                              */
+/*                             SetSRSName()                             */
 /************************************************************************/
 
 void GMLFeatureClass::SetSRSName(const char *pszSRSName)
@@ -401,7 +401,7 @@ void GMLFeatureClass::SetSRSName(const char *pszSRSName)
 }
 
 /************************************************************************/
-/*                           MergeSRSName()                             */
+/*                            MergeSRSName()                            */
 /************************************************************************/
 
 void GMLFeatureClass::MergeSRSName(const char *pszSRSName)
@@ -1079,7 +1079,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
 }
 
 /************************************************************************/
-/*                       GML_GetOGRFieldType()                          */
+/*                        GML_GetOGRFieldType()                         */
 /************************************************************************/
 
 OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
@@ -1136,7 +1136,7 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
 }
 
 /************************************************************************/
-/*                       GML_FromOGRFieldType()                          */
+/*                        GML_FromOGRFieldType()                        */
 /************************************************************************/
 
 GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType,

@@ -17,7 +17,7 @@
 #include <sstream>
 
 /************************************************************************/
-/*                        CPLGettimeofday()                             */
+/*                          CPLGettimeofday()                           */
 /************************************************************************/
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -47,9 +47,9 @@ static int CPLGettimeofday(struct CPLTimeVal *tp, void * /* timezonep*/)
 #define CPLGettimeofday(t, u) gettimeofday(t, u)
 #endif
 
-/***********************************************************************/
-/*                      OFGDBGenerateUUID()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                         OFGDBGenerateUUID()                          */
+/************************************************************************/
 
 // Probably not the best UUID generator ever. One issue is that mt19937
 // uses only a 32-bit seed.

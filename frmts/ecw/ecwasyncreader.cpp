@@ -25,7 +25,7 @@
 GDALAsyncReader *ECWDataset::BeginAsyncReader(
     int nXOff, int nYOff, int nXSize, int nYSize, void *pBuf, int nBufXSize,
     int nBufYSize, GDALDataType eBufType, int nBandCount, int *panBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions)
+    int nPixelSpace, int nLineSpace, int nBandSpace, CSLConstList papszOptions)
 
 {
     int i;

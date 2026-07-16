@@ -171,7 +171,7 @@ typedef enum
 //! @endcond
 
 /************************************************************************/
-/*                          VSISetCryptKey()                            */
+/*                           VSISetCryptKey()                           */
 /************************************************************************/
 
 /** Installs the encryption/decryption key.
@@ -210,7 +210,7 @@ void VSISetCryptKey(const GByte *pabyKey, int nKeySize)
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                             GetAlg()                                 */
+/*                               GetAlg()                               */
 /************************************************************************/
 
 #undef CASE_ALG
@@ -251,7 +251,7 @@ static VSICryptAlg GetAlg(const char *pszName)
 }
 
 /************************************************************************/
-/*                          GetEncBlockCipher()                         */
+/*                         GetEncBlockCipher()                          */
 /************************************************************************/
 
 #undef CASE_ALG
@@ -299,7 +299,7 @@ static CryptoPP::BlockCipher *GetEncBlockCipher(VSICryptAlg eAlg)
 }
 
 /************************************************************************/
-/*                          GetDecBlockCipher()                         */
+/*                         GetDecBlockCipher()                          */
 /************************************************************************/
 
 #undef CASE_ALG
@@ -347,7 +347,7 @@ static CryptoPP::BlockCipher *GetDecBlockCipher(VSICryptAlg eAlg)
 }
 
 /************************************************************************/
-/*                             GetMode()                                */
+/*                              GetMode()                               */
 /************************************************************************/
 
 static VSICryptMode GetMode(const char *pszName)
@@ -408,7 +408,7 @@ static bool VSICryptReadError()
 }
 
 /************************************************************************/
-/*                       VSICryptGenerateSectorIV()                     */
+/*                      VSICryptGenerateSectorIV()                      */
 /************************************************************************/
 
 // TODO(rouault): This function really needs a comment saying what it does.
@@ -427,7 +427,7 @@ static std::string VSICryptGenerateSectorIV(const std::string &osIV,
 }
 
 /************************************************************************/
-/*                          CryptKeyCheck()                             */
+/*                           CryptKeyCheck()                            */
 /************************************************************************/
 
 std::string
@@ -471,7 +471,7 @@ VSICryptFileHeader::CryptKeyCheck(CryptoPP::BlockCipher *poEncCipher)
 }
 
 /************************************************************************/
-/*                          ReadFromFile()                              */
+/*                            ReadFromFile()                            */
 /************************************************************************/
 
 int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
@@ -644,7 +644,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
 }
 
 /************************************************************************/
-/*                          WriteToFile()                               */
+/*                            WriteToFile()                             */
 /************************************************************************/
 
 int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
@@ -781,7 +781,7 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                          VSICryptFileHandle()                        */
+/*                         VSICryptFileHandle()                         */
 /************************************************************************/
 
 VSICryptFileHandle::VSICryptFileHandle(const CPLString &osBaseFilenameIn,
@@ -794,7 +794,7 @@ VSICryptFileHandle::VSICryptFileHandle(const CPLString &osBaseFilenameIn,
 }
 
 /************************************************************************/
-/*                         ~VSICryptFileHandle()                        */
+/*                        ~VSICryptFileHandle()                         */
 /************************************************************************/
 
 VSICryptFileHandle::~VSICryptFileHandle()
@@ -807,7 +807,7 @@ VSICryptFileHandle::~VSICryptFileHandle()
 }
 
 /************************************************************************/
-/*                               Init()                                 */
+/*                                Init()                                */
 /************************************************************************/
 
 int VSICryptFileHandle::Init(const CPLString &osKey, bool bWriteHeader)
@@ -888,7 +888,7 @@ int VSICryptFileHandle::Init(const CPLString &osKey, bool bWriteHeader)
 }
 
 /************************************************************************/
-/*                          EncryptBlock()                              */
+/*                            EncryptBlock()                            */
 /************************************************************************/
 
 void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
@@ -942,7 +942,7 @@ void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
 }
 
 /************************************************************************/
-/*                          DecryptBlock()                              */
+/*                            DecryptBlock()                            */
 /************************************************************************/
 
 bool VSICryptFileHandle::DecryptBlock(GByte *pabyData, vsi_l_offset nOffset)
@@ -1046,7 +1046,7 @@ int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 }
 
 /************************************************************************/
-/*                                  Tell()                              */
+/*                                Tell()                                */
 /************************************************************************/
 
 vsi_l_offset VSICryptFileHandle::Tell()
@@ -1146,7 +1146,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t const nBytes)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nBytes)
@@ -1305,7 +1305,7 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nBytes)
 }
 
 /************************************************************************/
-/*                             Truncate()                               */
+/*                              Truncate()                              */
 /************************************************************************/
 
 // Returns 0 on success.  Returns -1 on error.
@@ -1342,7 +1342,7 @@ int VSICryptFileHandle::Eof()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSICryptFileHandle::Error()
@@ -1354,7 +1354,7 @@ int VSICryptFileHandle::Error()
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSICryptFileHandle::ClearErr()
@@ -1368,7 +1368,7 @@ void VSICryptFileHandle::ClearErr()
 }
 
 /************************************************************************/
-/*                                 Flush()                              */
+/*                               Flush()                                */
 /************************************************************************/
 
 int VSICryptFileHandle::Flush()
@@ -1435,7 +1435,7 @@ int VSICryptFileHandle::Flush()
 }
 
 /************************************************************************/
-/*                                  Close()                             */
+/*                               Close()                                */
 /************************************************************************/
 
 int VSICryptFileHandle::Close()
@@ -1456,7 +1456,7 @@ int VSICryptFileHandle::Close()
 }
 
 /************************************************************************/
-/*                   VSICryptFilesystemHandler                          */
+/*                      VSICryptFilesystemHandler                       */
 /************************************************************************/
 
 class VSICryptFilesystemHandler final : public VSIFilesystemHandler
@@ -1477,7 +1477,7 @@ class VSICryptFilesystemHandler final : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                   VSICryptFilesystemHandler()                        */
+/*                     VSICryptFilesystemHandler()                      */
 /************************************************************************/
 
 VSICryptFilesystemHandler::VSICryptFilesystemHandler()
@@ -1485,7 +1485,7 @@ VSICryptFilesystemHandler::VSICryptFilesystemHandler()
 }
 
 /************************************************************************/
-/*                    ~VSICryptFilesystemHandler()                      */
+/*                     ~VSICryptFilesystemHandler()                     */
 /************************************************************************/
 
 VSICryptFilesystemHandler::~VSICryptFilesystemHandler()
@@ -1493,7 +1493,7 @@ VSICryptFilesystemHandler::~VSICryptFilesystemHandler()
 }
 
 /************************************************************************/
-/*                             GetFilename()                            */
+/*                            GetFilename()                             */
 /************************************************************************/
 
 static CPLString GetFilename(const char *pszFilename)
@@ -1512,7 +1512,7 @@ static CPLString GetFilename(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                             GetArgument()                            */
+/*                            GetArgument()                             */
 /************************************************************************/
 
 static CPLString GetArgument(const char *pszFilename, const char *pszParamName,
@@ -1850,7 +1850,7 @@ int VSICryptFilesystemHandler::Rename(const char *oldpath, const char *newpath,
 }
 
 /************************************************************************/
-/*                               ReadDirEx()                            */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSICryptFilesystemHandler::ReadDirEx(const char *pszDirname,
@@ -1896,7 +1896,7 @@ static GDALDataset *VSICryptOpen(GDALOpenInfo *poOpenInfo)
 //! @endcond
 
 /************************************************************************/
-/*                   VSIInstallCryptFileHandler()                       */
+/*                     VSIInstallCryptFileHandler()                     */
 /************************************************************************/
 
 /**

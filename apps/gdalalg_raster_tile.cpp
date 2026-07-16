@@ -90,7 +90,7 @@ struct BandMetadata
 }  // namespace
 
 /************************************************************************/
-/*                       GetThresholdMinTilesPerJob()                   */
+/*                     GetThresholdMinTilesPerJob()                     */
 /************************************************************************/
 
 static int GetThresholdMinThreadsForSpawn()
@@ -105,7 +105,7 @@ static int GetThresholdMinThreadsForSpawn()
 }
 
 /************************************************************************/
-/*                        GetThresholdMinTilesPerJob()                  */
+/*                     GetThresholdMinTilesPerJob()                     */
 /************************************************************************/
 
 static int GetThresholdMinTilesPerJob()
@@ -120,7 +120,7 @@ static int GetThresholdMinTilesPerJob()
 }
 
 /************************************************************************/
-/*           GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()         */
+/*          GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()          */
 /************************************************************************/
 
 GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
@@ -408,7 +408,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                          GetTileIndices()                            */
+/*                           GetTileIndices()                           */
 /************************************************************************/
 
 static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
@@ -482,7 +482,7 @@ static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
 }
 
 /************************************************************************/
-/*                           GetFileY()                                 */
+/*                              GetFileY()                              */
 /************************************************************************/
 
 static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
@@ -492,7 +492,7 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 }
 
 /************************************************************************/
-/*                          GenerateTile()                              */
+/*                            GenerateTile()                            */
 /************************************************************************/
 
 // Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
@@ -1459,7 +1459,7 @@ static bool GenerateTile(
 }
 
 /************************************************************************/
-/*                    GenerateOverviewTile()                            */
+/*                        GenerateOverviewTile()                        */
 /************************************************************************/
 
 static bool
@@ -1775,7 +1775,7 @@ namespace
 {
 
 /************************************************************************/
-/*                     FakeMaxZoomRasterBand                            */
+/*                        FakeMaxZoomRasterBand                         */
 /************************************************************************/
 
 class FakeMaxZoomRasterBand : public GDALRasterBand
@@ -1850,7 +1850,7 @@ class FakeMaxZoomRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                       FakeMaxZoomDataset                             */
+/*                          FakeMaxZoomDataset                          */
 /************************************************************************/
 
 // This class is used to create a fake output dataset for GDALWarpOperation.
@@ -1911,7 +1911,7 @@ class FakeMaxZoomDataset : public GDALDataset
 };
 
 /************************************************************************/
-/*                          MosaicRasterBand                            */
+/*                           MosaicRasterBand                           */
 /************************************************************************/
 
 class MosaicRasterBand : public GDALRasterBand
@@ -1973,7 +1973,7 @@ class MosaicRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                         MosaicDataset                                */
+/*                            MosaicDataset                             */
 /************************************************************************/
 
 // This class is to expose the tiles of a given level as a mosaic that
@@ -2076,7 +2076,7 @@ class MosaicDataset : public GDALDataset
 };
 
 /************************************************************************/
-/*                   MosaicRasterBand::IReadBlock()                     */
+/*                    MosaicRasterBand::IReadBlock()                    */
 /************************************************************************/
 
 CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
@@ -2149,7 +2149,7 @@ static void ApplySubstitutions(CPLString &s,
 }
 
 /************************************************************************/
-/*                           GenerateLeaflet()                          */
+/*                          GenerateLeaflet()                           */
 /************************************************************************/
 
 static void GenerateLeaflet(const std::string &osDirectory,
@@ -2625,7 +2625,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
 }
 
 /************************************************************************/
-/*                           GenerateOpenLayers()                       */
+/*                         GenerateOpenLayers()                         */
 /************************************************************************/
 
 static void GenerateOpenLayers(
@@ -2956,7 +2956,7 @@ static void GenerateOpenLayers(
 }
 
 /************************************************************************/
-/*                           GetTileBoundingBox()                       */
+/*                         GetTileBoundingBox()                         */
 /************************************************************************/
 
 static void GetTileBoundingBox(int nTileX, int nTileY, int nTileZ,
@@ -2998,7 +2998,7 @@ static void GetTileBoundingBox(int nTileX, int nTileY, int nTileZ,
 }
 
 /************************************************************************/
-/*                           GenerateKML()                              */
+/*                            GenerateKML()                             */
 /************************************************************************/
 
 namespace
@@ -3222,7 +3222,7 @@ namespace
 {
 
 /************************************************************************/
-/*                            ResourceManager                           */
+/*                           ResourceManager                            */
 /************************************************************************/
 
 // Generic cache managing resources
@@ -3273,7 +3273,7 @@ template <class Resource> class ResourceManager /* non final */
 };
 
 /************************************************************************/
-/*                         PerThreadMaxZoomResources                    */
+/*                      PerThreadMaxZoomResources                       */
 /************************************************************************/
 
 // Per-thread resources for generation of tiles at full resolution
@@ -3297,7 +3297,7 @@ struct PerThreadMaxZoomResources
 };
 
 /************************************************************************/
-/*                      PerThreadMaxZoomResourceManager                 */
+/*                   PerThreadMaxZoomResourceManager                    */
 /************************************************************************/
 
 // Manage a cache of PerThreadMaxZoomResources instances
@@ -3371,7 +3371,7 @@ class PerThreadMaxZoomResourceManager final
 };
 
 /************************************************************************/
-/*                       PerThreadLowerZoomResources                    */
+/*                     PerThreadLowerZoomResources                      */
 /************************************************************************/
 
 // Per-thread resources for generation of tiles at zoom level < max
@@ -3381,7 +3381,7 @@ struct PerThreadLowerZoomResources
 };
 
 /************************************************************************/
-/*                   PerThreadLowerZoomResourceManager                  */
+/*                  PerThreadLowerZoomResourceManager                   */
 /************************************************************************/
 
 // Manage a cache of PerThreadLowerZoomResources instances
@@ -3409,7 +3409,7 @@ class PerThreadLowerZoomResourceManager final
 }  // namespace
 
 /************************************************************************/
-/*            GDALRasterTileAlgorithm::ValidateOutputFormat()           */
+/*           GDALRasterTileAlgorithm::ValidateOutputFormat()            */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
@@ -3600,7 +3600,7 @@ bool GDALRasterTileAlgorithm::IsCompatibleOfSpawn(const char *&pszErrorMsg)
 }
 
 /************************************************************************/
-/*                      GetProgressForChildProcesses()                  */
+/*                    GetProgressForChildProcesses()                    */
 /************************************************************************/
 
 static void GetProgressForChildProcesses(
@@ -3730,7 +3730,7 @@ static void GetProgressForChildProcesses(
 }
 
 /************************************************************************/
-/*                       WaitForSpawnedProcesses()                      */
+/*                      WaitForSpawnedProcesses()                       */
 /************************************************************************/
 
 void GDALRasterTileAlgorithm::WaitForSpawnedProcesses(
@@ -3822,7 +3822,7 @@ int GDALRasterTileAlgorithm::GetMaxChildCount(int nMaxJobCount) const
 }
 
 /************************************************************************/
-/*                           SendConfigOptions()                        */
+/*                         SendConfigOptions()                          */
 /************************************************************************/
 
 static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
@@ -3857,7 +3857,7 @@ static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
 }
 
 /************************************************************************/
-/*                        GenerateTilesForkMethod()                     */
+/*                      GenerateTilesForkMethod()                       */
 /************************************************************************/
 
 #ifdef FORK_ALLOWED
@@ -3903,7 +3903,7 @@ static int GenerateTilesForkMethod(CPL_FILE_HANDLE in, CPL_FILE_HANDLE out)
 #endif  // FORK_ALLOWED
 
 /************************************************************************/
-/*          GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod()     */
+/*       GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod()        */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
@@ -4143,7 +4143,7 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 }
 
 /************************************************************************/
-/*      GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod()     */
+/*     GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod()      */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
@@ -4401,7 +4401,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                          SpawnedErrorHandler()                       */
+/*                        SpawnedErrorHandler()                         */
 /************************************************************************/
 
 static void CPL_STDCALL SpawnedErrorHandler(CPLErr eErr, CPLErrorNum eNum,

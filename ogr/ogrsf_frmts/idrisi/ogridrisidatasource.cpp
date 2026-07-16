@@ -22,7 +22,7 @@
 OGRIdrisiDataSource::OGRIdrisiDataSource() = default;
 
 /************************************************************************/
-/*                       ~OGRIdrisiDataSource()                         */
+/*                        ~OGRIdrisiDataSource()                        */
 /************************************************************************/
 
 OGRIdrisiDataSource::~OGRIdrisiDataSource()

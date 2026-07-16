@@ -97,7 +97,7 @@ void MetadataSegment::Load()
 }
 
 /************************************************************************/
-/*                           FetchGroupMetadata()                       */
+/*                         FetchGroupMetadata()                         */
 /************************************************************************/
 
 void MetadataSegment::FetchGroupMetadata( const char *group, int id,
@@ -169,7 +169,7 @@ void MetadataSegment::FetchGroupMetadata( const char *group, int id,
 }
 
 /************************************************************************/
-/*                         SetGroupMetadataValue()                      */
+/*                       SetGroupMetadataValue()                        */
 /************************************************************************/
 
 void MetadataSegment::SetGroupMetadataValue( const char *group, int id,

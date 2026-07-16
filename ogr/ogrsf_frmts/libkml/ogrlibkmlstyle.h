@@ -54,7 +54,7 @@ void ParseStyles(kmldom::DocumentPtr poKmlDocument,
 void styletable2kml(OGRStyleTable *poOgrStyleTable,
                     kmldom::KmlFactory *poKmlFactory,
                     kmldom::ContainerPtr poKmlContainer,
-                    char **papszOptions = nullptr);
+                    CSLConstList papszOptions = nullptr);
 
 /******************************************************************************
  Function to add a ListStyle and select it to a container.

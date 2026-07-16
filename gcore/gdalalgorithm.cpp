@@ -102,7 +102,7 @@ bool GDALAlgorithmArgTypeIsList(GDALAlgorithmArgType type)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgTypeName()                       */
+/*                      GDALAlgorithmArgTypeName()                      */
 /************************************************************************/
 
 const char *GDALAlgorithmArgTypeName(GDALAlgorithmArgType type)
@@ -133,7 +133,7 @@ const char *GDALAlgorithmArgTypeName(GDALAlgorithmArgType type)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgDatasetTypeName()                */
+/*                  GDALAlgorithmArgDatasetTypeName()                   */
 /************************************************************************/
 
 std::string GDALAlgorithmArgDatasetTypeName(GDALArgDatasetType type)
@@ -164,7 +164,7 @@ std::string GDALAlgorithmArgDatasetTypeName(GDALArgDatasetType type)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgDecl()                           */
+/*                        GDALAlgorithmArgDecl()                        */
 /************************************************************************/
 
 // cppcheck-suppress uninitMemberVar
@@ -186,7 +186,7 @@ GDALAlgorithmArgDecl::GDALAlgorithmArgDecl(const std::string &longName,
 }
 
 /************************************************************************/
-/*               GDALAlgorithmArgDecl::SetMinCount()                    */
+/*                 GDALAlgorithmArgDecl::SetMinCount()                  */
 /************************************************************************/
 
 GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMinCount(int count)
@@ -205,7 +205,7 @@ GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMinCount(int count)
 }
 
 /************************************************************************/
-/*               GDALAlgorithmArgDecl::SetMaxCount()                    */
+/*                 GDALAlgorithmArgDecl::SetMaxCount()                  */
 /************************************************************************/
 
 GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMaxCount(int count)
@@ -224,13 +224,13 @@ GDALAlgorithmArgDecl &GDALAlgorithmArgDecl::SetMaxCount(int count)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithmArg::~GDALAlgorithmArg()                */
+/*                GDALAlgorithmArg::~GDALAlgorithmArg()                 */
 /************************************************************************/
 
 GDALAlgorithmArg::~GDALAlgorithmArg() = default;
 
 /************************************************************************/
-/*                         GDALAlgorithmArg::Set()                      */
+/*                       GDALAlgorithmArg::Set()                        */
 /************************************************************************/
 
 bool GDALAlgorithmArg::Set(bool value)
@@ -788,7 +788,7 @@ bool GDALAlgorithmArg::RunAllActions()
 }
 
 /************************************************************************/
-/*                      GDALAlgorithmArg::RunActions()                  */
+/*                    GDALAlgorithmArg::RunActions()                    */
 /************************************************************************/
 
 void GDALAlgorithmArg::RunActions()
@@ -798,7 +798,7 @@ void GDALAlgorithmArg::RunActions()
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArg::ValidateChoice()                */
+/*                  GDALAlgorithmArg::ValidateChoice()                  */
 /************************************************************************/
 
 // Returns the canonical value if matching a valid choice, or empty string
@@ -842,7 +842,7 @@ std::string GDALAlgorithmArg::ValidateChoice(const std::string &value) const
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArg::ValidateIntRange()               */
+/*                 GDALAlgorithmArg::ValidateIntRange()                 */
 /************************************************************************/
 
 bool GDALAlgorithmArg::ValidateIntRange(int val) const
@@ -892,7 +892,7 @@ bool GDALAlgorithmArg::ValidateIntRange(int val) const
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArg::ValidateRealRange()              */
+/*                GDALAlgorithmArg::ValidateRealRange()                 */
 /************************************************************************/
 
 bool GDALAlgorithmArg::ValidateRealRange(double val) const
@@ -942,7 +942,7 @@ bool GDALAlgorithmArg::ValidateRealRange(double val) const
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArg::RunValidationActions()          */
+/*               GDALAlgorithmArg::RunValidationActions()               */
 /************************************************************************/
 
 bool GDALAlgorithmArg::RunValidationActions()
@@ -1093,7 +1093,7 @@ bool GDALAlgorithmArg::RunValidationActions()
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArg::ReportError()                   */
+/*                   GDALAlgorithmArg::ReportError()                    */
 /************************************************************************/
 
 void GDALAlgorithmArg::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
@@ -1279,7 +1279,7 @@ bool GDALAlgorithmArg::Serialize(std::string &serializedArg,
 }
 
 /************************************************************************/
-/*                   ~GDALInConstructionAlgorithmArg()                  */
+/*                  ~GDALInConstructionAlgorithmArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg::~GDALInConstructionAlgorithmArg() = default;
@@ -1298,7 +1298,7 @@ GDALInConstructionAlgorithmArg::AddAlias(const std::string &alias)
 }
 
 /************************************************************************/
-/*            GDALInConstructionAlgorithmArg::AddHiddenAlias()          */
+/*           GDALInConstructionAlgorithmArg::AddHiddenAlias()           */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -1311,7 +1311,7 @@ GDALInConstructionAlgorithmArg::AddHiddenAlias(const std::string &alias)
 }
 
 /************************************************************************/
-/*           GDALInConstructionAlgorithmArg::AddShortNameAlias()        */
+/*         GDALInConstructionAlgorithmArg::AddShortNameAlias()          */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -1324,7 +1324,7 @@ GDALInConstructionAlgorithmArg::AddShortNameAlias(char shortNameAlias)
 }
 
 /************************************************************************/
-/*             GDALInConstructionAlgorithmArg::SetPositional()          */
+/*           GDALInConstructionAlgorithmArg::SetPositional()            */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetPositional()
@@ -1348,7 +1348,7 @@ GDALArgDatasetValue::GDALArgDatasetValue(GDALDataset *poDS)
 }
 
 /************************************************************************/
-/*              GDALArgDatasetValue::Set()                              */
+/*                      GDALArgDatasetValue::Set()                      */
 /************************************************************************/
 
 void GDALArgDatasetValue::Set(const std::string &name)
@@ -1361,7 +1361,7 @@ void GDALArgDatasetValue::Set(const std::string &name)
 }
 
 /************************************************************************/
-/*              GDALArgDatasetValue::Set()                              */
+/*                      GDALArgDatasetValue::Set()                      */
 /************************************************************************/
 
 void GDALArgDatasetValue::Set(std::unique_ptr<GDALDataset> poDS)
@@ -1375,7 +1375,7 @@ void GDALArgDatasetValue::Set(std::unique_ptr<GDALDataset> poDS)
 }
 
 /************************************************************************/
-/*              GDALArgDatasetValue::Set()                              */
+/*                      GDALArgDatasetValue::Set()                      */
 /************************************************************************/
 
 void GDALArgDatasetValue::Set(GDALDataset *poDS)
@@ -1391,7 +1391,7 @@ void GDALArgDatasetValue::Set(GDALDataset *poDS)
 }
 
 /************************************************************************/
-/*                   GDALArgDatasetValue::SetFrom()                     */
+/*                    GDALArgDatasetValue::SetFrom()                    */
 /************************************************************************/
 
 void GDALArgDatasetValue::SetFrom(const GDALArgDatasetValue &other)
@@ -1405,7 +1405,7 @@ void GDALArgDatasetValue::SetFrom(const GDALArgDatasetValue &other)
 }
 
 /************************************************************************/
-/*              GDALArgDatasetValue::~GDALArgDatasetValue()             */
+/*             GDALArgDatasetValue::~GDALArgDatasetValue()              */
 /************************************************************************/
 
 GDALArgDatasetValue::~GDALArgDatasetValue()
@@ -1430,7 +1430,7 @@ bool GDALArgDatasetValue::Close()
 }
 
 /************************************************************************/
-/*                      GDALArgDatasetValue::operator=()                */
+/*                   GDALArgDatasetValue::operator=()                   */
 /************************************************************************/
 
 GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
@@ -1446,7 +1446,7 @@ GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
 }
 
 /************************************************************************/
-/*                   GDALArgDatasetValue::GetDataset()                  */
+/*                  GDALArgDatasetValue::GetDataset()                   */
 /************************************************************************/
 
 GDALDataset *GDALArgDatasetValue::GetDatasetIncreaseRefCount()
@@ -1457,7 +1457,7 @@ GDALDataset *GDALArgDatasetValue::GetDatasetIncreaseRefCount()
 }
 
 /************************************************************************/
-/*               GDALArgDatasetValue(GDALArgDatasetValue &&other)       */
+/*           GDALArgDatasetValue(GDALArgDatasetValue &&other)           */
 /************************************************************************/
 
 GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
@@ -1468,7 +1468,7 @@ GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
 }
 
 /************************************************************************/
-/*              GDALInConstructionAlgorithmArg::SetIsCRSArg()           */
+/*            GDALInConstructionAlgorithmArg::SetIsCRSArg()             */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
@@ -1699,7 +1699,7 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetIsCRSArg(
 }
 
 /************************************************************************/
-/*                     GDALAlgorithm::GDALAlgorithm()                  */
+/*                    GDALAlgorithm::GDALAlgorithm()                    */
 /************************************************************************/
 
 GDALAlgorithm::GDALAlgorithm(const std::string &name,
@@ -1738,7 +1738,7 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
 }
 
 /************************************************************************/
-/*                     GDALAlgorithm::~GDALAlgorithm()                  */
+/*                   GDALAlgorithm::~GDALAlgorithm()                    */
 /************************************************************************/
 
 GDALAlgorithm::~GDALAlgorithm() = default;
@@ -1969,7 +1969,7 @@ bool GDALAlgorithm::ParseArgument(
 }
 
 /************************************************************************/
-/*               GDALAlgorithm::ParseCommandLineArguments()             */
+/*              GDALAlgorithm::ParseCommandLineArguments()              */
 /************************************************************************/
 
 bool GDALAlgorithm::ParseCommandLineArguments(
@@ -2517,7 +2517,7 @@ void GDALAlgorithm::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
 //! @endcond
 
 /************************************************************************/
-/*                   GDALAlgorithm::ProcessDatasetArg()                 */
+/*                  GDALAlgorithm::ProcessDatasetArg()                  */
 /************************************************************************/
 
 bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
@@ -2840,7 +2840,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithm::ValidateArguments()                 */
+/*                  GDALAlgorithm::ValidateArguments()                  */
 /************************************************************************/
 
 bool GDALAlgorithm::ValidateArguments()
@@ -3064,7 +3064,7 @@ GDALAlgorithm::InstantiateSubAlgorithm(const std::string &name,
 }
 
 /************************************************************************/
-/*             GDALAlgorithm::GetSuggestionForArgumentName()            */
+/*            GDALAlgorithm::GetSuggestionForArgumentName()             */
 /************************************************************************/
 
 std::string
@@ -3099,7 +3099,7 @@ GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
 }
 
 /************************************************************************/
-/*            GDALAlgorithm::IsKnownOutputRelatedBooleanArgName()       */
+/*         GDALAlgorithm::IsKnownOutputRelatedBooleanArgName()          */
 /************************************************************************/
 
 /* static */
@@ -3111,7 +3111,7 @@ bool GDALAlgorithm::IsKnownOutputRelatedBooleanArgName(std::string_view osName)
 }
 
 /************************************************************************/
-/*                      GDALAlgorithm::HasOutputString()                */
+/*                   GDALAlgorithm::HasOutputString()                   */
 /************************************************************************/
 
 bool GDALAlgorithm::HasOutputString() const
@@ -3121,7 +3121,7 @@ bool GDALAlgorithm::HasOutputString() const
 }
 
 /************************************************************************/
-/*                      GDALAlgorithm::GetArg()                         */
+/*                       GDALAlgorithm::GetArg()                        */
 /************************************************************************/
 
 GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
@@ -3195,7 +3195,7 @@ GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithm::AddAliasFor()                       */
+/*                     GDALAlgorithm::AddAliasFor()                     */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3216,7 +3216,7 @@ void GDALAlgorithm::AddAliasFor(GDALInConstructionAlgorithmArg *arg,
 //! @endcond
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddShortNameAliasFor()                */
+/*                GDALAlgorithm::AddShortNameAliasFor()                 */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3239,7 +3239,7 @@ void GDALAlgorithm::AddShortNameAliasFor(GDALInConstructionAlgorithmArg *arg,
 //! @endcond
 
 /************************************************************************/
-/*                   GDALAlgorithm::SetPositional()                     */
+/*                    GDALAlgorithm::SetPositional()                    */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3281,7 +3281,7 @@ std::vector<std::string> GDALAlgorithm::GetSubAlgorithmNames() const
 }
 
 /************************************************************************/
-/*                     GDALAlgorithm::AddArg()                          */
+/*                       GDALAlgorithm::AddArg()                        */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -3439,7 +3439,7 @@ GDALAlgorithm::AddArg(const std::string &longName, char chShortName,
 }
 
 /************************************************************************/
-/*                               MsgOrDefault()                         */
+/*                            MsgOrDefault()                            */
 /************************************************************************/
 
 inline const char *MsgOrDefault(const char *helpMessage,
@@ -3449,7 +3449,7 @@ inline const char *MsgOrDefault(const char *helpMessage,
 }
 
 /************************************************************************/
-/*          GDALAlgorithm::SetAutoCompleteFunctionForFilename()         */
+/*         GDALAlgorithm::SetAutoCompleteFunctionForFilename()          */
 /************************************************************************/
 
 /* static */
@@ -3703,7 +3703,7 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddOutputDatasetArg(
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddOverwriteArg()                     */
+/*                   GDALAlgorithm::AddOverwriteArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -3755,7 +3755,7 @@ GDALAlgorithm::AddOverwriteLayerArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddUpdateArg()                        */
+/*                    GDALAlgorithm::AddUpdateArg()                     */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -3770,7 +3770,7 @@ GDALAlgorithm::AddUpdateArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                GDALAlgorithm::AddAppendLayerArg()                    */
+/*                  GDALAlgorithm::AddAppendLayerArg()                  */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -3807,7 +3807,7 @@ GDALAlgorithm::AddAppendLayerArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddOptionsSuggestions()               */
+/*                GDALAlgorithm::AddOptionsSuggestions()                */
 /************************************************************************/
 
 /* static */
@@ -3934,7 +3934,7 @@ bool GDALAlgorithm::AddOptionsSuggestions(const char *pszXML, int datasetType,
 }
 
 /************************************************************************/
-/*              GDALAlgorithm::OpenOptionCompleteFunction()             */
+/*             GDALAlgorithm::OpenOptionCompleteFunction()              */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -4037,7 +4037,7 @@ GDALAlgorithm::OpenOptionCompleteFunction(const std::string &currentValue) const
 //! @endcond
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddOpenOptionsArg()                   */
+/*                  GDALAlgorithm::AddOpenOptionsArg()                  */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4088,7 +4088,7 @@ GDALAlgorithm::AddOutputOpenOptionsArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
-/*                            ValidateFormat()                          */
+/*                           ValidateFormat()                           */
 /************************************************************************/
 
 bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
@@ -4262,7 +4262,7 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
 }
 
 /************************************************************************/
-/*                    FormatAutoCompleteFunction()                      */
+/*                     FormatAutoCompleteFunction()                     */
 /************************************************************************/
 
 /* static */
@@ -4392,7 +4392,7 @@ GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed,
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddOutputDataTypeArg()                */
+/*                GDALAlgorithm::AddOutputDataTypeArg()                 */
 /************************************************************************/
 GDALInConstructionAlgorithmArg &
 GDALAlgorithm::AddOutputDataTypeArg(std::string *pValue,
@@ -4469,7 +4469,7 @@ GDALAlgorithm::AddOutputStringArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithm::AddStdoutArg()                    */
+/*                    GDALAlgorithm::AddStdoutArg()                     */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4484,7 +4484,7 @@ GDALAlgorithm::AddStdoutArg(bool *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddLayerNameArg()                  */
+/*                   GDALAlgorithm::AddLayerNameArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4495,7 +4495,7 @@ GDALAlgorithm::AddLayerNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddArrayNameArg()                  */
+/*                   GDALAlgorithm::AddArrayNameArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4508,7 +4508,7 @@ GDALAlgorithm::AddArrayNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddArrayNameArg()                  */
+/*                   GDALAlgorithm::AddArrayNameArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4522,7 +4522,7 @@ GDALAlgorithm::AddArrayNameArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
-/*                  GDALAlgorithm::AutoCompleteArrayName()              */
+/*                GDALAlgorithm::AutoCompleteArrayName()                */
 /************************************************************************/
 
 std::vector<std::string> GDALAlgorithm::AutoCompleteArrayName() const
@@ -4573,7 +4573,7 @@ std::vector<std::string> GDALAlgorithm::AutoCompleteArrayName() const
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddMemorySizeArg()                  */
+/*                  GDALAlgorithm::AddMemorySizeArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4620,7 +4620,7 @@ GDALAlgorithm::AddMemorySizeArg(size_t *pValue, std::string *pStrValue,
 }
 
 /************************************************************************/
-/*                  GDALAlgorithm::AddOutputLayerNameArg()              */
+/*                GDALAlgorithm::AddOutputLayerNameArg()                */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4632,7 +4632,7 @@ GDALAlgorithm::AddOutputLayerNameArg(std::string *pValue,
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddLayerNameArg()                  */
+/*                   GDALAlgorithm::AddLayerNameArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4690,7 +4690,7 @@ GDALAlgorithm::AddGeometryTypeArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*          GDALAlgorithm::SetAutoCompleteFunctionForLayerName()        */
+/*         GDALAlgorithm::SetAutoCompleteFunctionForLayerName()         */
 /************************************************************************/
 
 /* static */
@@ -4740,9 +4740,9 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
         });
 }
 
-/**************************************************************************/
-/*       GDALAlgorithm::SetAutoCompleteFunctionForFieldName()             */
-/**************************************************************************/
+/************************************************************************/
+/*         GDALAlgorithm::SetAutoCompleteFunctionForFieldName()         */
+/************************************************************************/
 
 void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
     GDALInConstructionAlgorithmArg &fieldArg,
@@ -4812,7 +4812,7 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
 }
 
 /************************************************************************/
-/*                  GDALAlgorithm::AddFieldNameArg()                    */
+/*                   GDALAlgorithm::AddFieldNameArg()                   */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -4823,7 +4823,7 @@ GDALAlgorithm::AddFieldNameArg(std::string *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*           GDALAlgorithm::AddFieldTypeSubtypeArg()                    */
+/*               GDALAlgorithm::AddFieldTypeSubtypeArg()                */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
@@ -4935,7 +4935,7 @@ GDALInConstructionAlgorithmArg &GDALAlgorithm::AddFieldTypeSubtypeArg(
 }
 
 /************************************************************************/
-/*                  GDALAlgorithm::ValidateBandArg()                    */
+/*                   GDALAlgorithm::ValidateBandArg()                   */
 /************************************************************************/
 
 bool GDALAlgorithm::ValidateBandArg() const
@@ -5002,7 +5002,7 @@ bool GDALAlgorithm::ValidateBandArg() const
 }
 
 /************************************************************************/
-/*             GDALAlgorithm::RunPreStepPipelineValidations()           */
+/*            GDALAlgorithm::RunPreStepPipelineValidations()            */
 /************************************************************************/
 
 bool GDALAlgorithm::RunPreStepPipelineValidations() const
@@ -5011,7 +5011,7 @@ bool GDALAlgorithm::RunPreStepPipelineValidations() const
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddBandArg()                       */
+/*                     GDALAlgorithm::AddBandArg()                      */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -5036,7 +5036,7 @@ GDALAlgorithm::AddBandArg(int *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::AddBandArg()                       */
+/*                     GDALAlgorithm::AddBandArg()                      */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -5065,7 +5065,7 @@ GDALAlgorithm::AddBandArg(std::vector<int> *pValue, const char *helpMessage)
 }
 
 /************************************************************************/
-/*                     ParseAndValidateKeyValue()                       */
+/*                      ParseAndValidateKeyValue()                      */
 /************************************************************************/
 
 bool GDALAlgorithm::ParseAndValidateKeyValue(GDALAlgorithmArg &arg)
@@ -5154,7 +5154,7 @@ bool GDALAlgorithm::ParseAndValidateKeyValue(GDALAlgorithmArg &arg)
 }
 
 /************************************************************************/
-/*                             IsGDALGOutput()                          */
+/*                           IsGDALGOutput()                            */
 /************************************************************************/
 
 bool GDALAlgorithm::IsGDALGOutput() const
@@ -5187,7 +5187,7 @@ bool GDALAlgorithm::IsGDALGOutput() const
 }
 
 /************************************************************************/
-/*                          ProcessGDALGOutput()                        */
+/*                         ProcessGDALGOutput()                         */
 /************************************************************************/
 
 GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
@@ -5279,7 +5279,7 @@ GDALAlgorithm::ProcessGDALGOutputRet GDALAlgorithm::ProcessGDALGOutput()
 }
 
 /************************************************************************/
-/*                 GDALAlgorithm::AddCreationOptionsArg()               */
+/*                GDALAlgorithm::AddCreationOptionsArg()                */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -5380,7 +5380,7 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
-/*                GDALAlgorithm::AddLayerCreationOptionsArg()           */
+/*             GDALAlgorithm::AddLayerCreationOptionsArg()              */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -5468,7 +5468,7 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
-/*                        GDALAlgorithm::AddBBOXArg()                   */
+/*                     GDALAlgorithm::AddBBOXArg()                      */
 /************************************************************************/
 
 /** Add bbox=xmin,ymin,xmax,ymax argument. */
@@ -5680,7 +5680,7 @@ GDALAlgorithm::AddPixelFunctionArgsArg(std::vector<std::string> *pValue,
 }
 
 /************************************************************************/
-/*                  GDALAlgorithm::AddProgressArg()                     */
+/*                   GDALAlgorithm::AddProgressArg()                    */
 /************************************************************************/
 
 void GDALAlgorithm::AddProgressArg()
@@ -5696,7 +5696,7 @@ void GDALAlgorithm::AddProgressArg()
 }
 
 /************************************************************************/
-/*                       GDALAlgorithm::Run()                           */
+/*                         GDALAlgorithm::Run()                         */
 /************************************************************************/
 
 bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -5774,7 +5774,7 @@ bool GDALAlgorithm::CheckSafeForStreamOutput()
 }
 
 /************************************************************************/
-/*                     GDALAlgorithm::Finalize()                        */
+/*                      GDALAlgorithm::Finalize()                       */
 /************************************************************************/
 
 bool GDALAlgorithm::Finalize()
@@ -5801,7 +5801,7 @@ bool GDALAlgorithm::Finalize()
 }
 
 /************************************************************************/
-/*                   GDALAlgorithm::GetArgNamesForCLI()                 */
+/*                  GDALAlgorithm::GetArgNamesForCLI()                  */
 /************************************************************************/
 
 std::pair<std::vector<std::pair<GDALAlgorithmArg *, std::string>>, size_t>
@@ -5863,7 +5863,7 @@ GDALAlgorithm::GetArgNamesForCLI() const
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::GetUsageForCLI()                   */
+/*                   GDALAlgorithm::GetUsageForCLI()                    */
 /************************************************************************/
 
 std::string
@@ -6295,7 +6295,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithm::GetUsageForCLIEnd()                 */
+/*                  GDALAlgorithm::GetUsageForCLIEnd()                  */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -6318,7 +6318,7 @@ std::string GDALAlgorithm::GetUsageForCLIEnd() const
 //! @endcond
 
 /************************************************************************/
-/*                    GDALAlgorithm::GetUsageAsJSON()                   */
+/*                   GDALAlgorithm::GetUsageAsJSON()                    */
 /************************************************************************/
 
 std::string GDALAlgorithm::GetUsageAsJSON() const
@@ -6597,7 +6597,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
 }
 
 /************************************************************************/
-/*                    GDALAlgorithm::GetAutoComplete()                  */
+/*                   GDALAlgorithm::GetAutoComplete()                   */
 /************************************************************************/
 
 std::vector<std::string>
@@ -6787,7 +6787,7 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
 }
 
 /************************************************************************/
-/*             GDALAlgorithm::ExtractLastOptionAndValue()               */
+/*              GDALAlgorithm::ExtractLastOptionAndValue()              */
 /************************************************************************/
 
 void GDALAlgorithm::ExtractLastOptionAndValue(std::vector<std::string> &args,
@@ -6850,7 +6850,7 @@ void GDALAlgorithm::ExtractLastOptionAndValue(std::vector<std::string> &args,
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                 GDALContainerAlgorithm::RunImpl()                    */
+/*                  GDALContainerAlgorithm::RunImpl()                   */
 /************************************************************************/
 
 bool GDALContainerAlgorithm::RunImpl(GDALProgressFunc, void *)
@@ -6891,7 +6891,7 @@ const char *GDALAlgorithmGetName(GDALAlgorithmH hAlg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmGetDescription()                    */
+/*                    GDALAlgorithmGetDescription()                     */
 /************************************************************************/
 
 /** Return the algorithm (short) description.
@@ -6908,7 +6908,7 @@ const char *GDALAlgorithmGetDescription(GDALAlgorithmH hAlg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmGetLongDescription()                */
+/*                  GDALAlgorithmGetLongDescription()                   */
 /************************************************************************/
 
 /** Return the algorithm (longer) description.
@@ -6925,7 +6925,7 @@ const char *GDALAlgorithmGetLongDescription(GDALAlgorithmH hAlg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmGetHelpFullURL()                    */
+/*                    GDALAlgorithmGetHelpFullURL()                     */
 /************************************************************************/
 
 /** Return the algorithm full URL.
@@ -6942,7 +6942,7 @@ const char *GDALAlgorithmGetHelpFullURL(GDALAlgorithmH hAlg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmHasSubAlgorithms()                  */
+/*                   GDALAlgorithmHasSubAlgorithms()                    */
 /************************************************************************/
 
 /** Return whether the algorithm has sub-algorithms.
@@ -6997,7 +6997,7 @@ GDALAlgorithmH GDALAlgorithmInstantiateSubAlgorithm(GDALAlgorithmH hAlg,
 }
 
 /************************************************************************/
-/*                GDALAlgorithmParseCommandLineArguments()              */
+/*               GDALAlgorithmParseCommandLineArguments()               */
 /************************************************************************/
 
 /** Parse a command line argument, which does not include the algorithm
@@ -7145,7 +7145,7 @@ GDALAlgorithmArgH GDALAlgorithmGetArg(GDALAlgorithmH hAlg,
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmGetArgNonConst()                    */
+/*                    GDALAlgorithmGetArgNonConst()                     */
 /************************************************************************/
 
 /** Return an argument from its name, possibly allowing creation of user-provided
@@ -7172,7 +7172,7 @@ GDALAlgorithmArgH GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg,
 }
 
 /************************************************************************/
-/*                       GDALAlgorithmArgRelease()                      */
+/*                      GDALAlgorithmArgRelease()                       */
 /************************************************************************/
 
 /** Release a handle to an argument.
@@ -7202,7 +7202,7 @@ const char *GDALAlgorithmArgGetName(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                       GDALAlgorithmArgGetType()                      */
+/*                      GDALAlgorithmArgGetType()                       */
 /************************************************************************/
 
 /** Get the type of an argument
@@ -7234,7 +7234,7 @@ const char *GDALAlgorithmArgGetDescription(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetShortName()                     */
+/*                    GDALAlgorithmArgGetShortName()                    */
 /************************************************************************/
 
 /** Return the short name, or empty string if there is none
@@ -7251,7 +7251,7 @@ const char *GDALAlgorithmArgGetShortName(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArgGetAliases()                      */
+/*                     GDALAlgorithmArgGetAliases()                     */
 /************************************************************************/
 
 /** Return the aliases (potentially none)
@@ -7269,7 +7269,7 @@ char **GDALAlgorithmArgGetAliases(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArgGetMetaVar()                      */
+/*                     GDALAlgorithmArgGetMetaVar()                     */
 /************************************************************************/
 
 /** Return the "meta-var" hint.
@@ -7289,7 +7289,7 @@ const char *GDALAlgorithmArgGetMetaVar(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetCategory()                      */
+/*                    GDALAlgorithmArgGetCategory()                     */
 /************************************************************************/
 
 /** Return the argument category
@@ -7308,7 +7308,7 @@ const char *GDALAlgorithmArgGetCategory(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgIsPositional()                     */
+/*                    GDALAlgorithmArgIsPositional()                    */
 /************************************************************************/
 
 /** Return if the argument is a positional one.
@@ -7323,7 +7323,7 @@ bool GDALAlgorithmArgIsPositional(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgIsRequired()                       */
+/*                     GDALAlgorithmArgIsRequired()                     */
 /************************************************************************/
 
 /** Return whether the argument is required. Defaults to false.
@@ -7338,7 +7338,7 @@ bool GDALAlgorithmArgIsRequired(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetMinCount()                      */
+/*                    GDALAlgorithmArgGetMinCount()                     */
 /************************************************************************/
 
 /** Return the minimum number of values for the argument.
@@ -7356,7 +7356,7 @@ int GDALAlgorithmArgGetMinCount(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetMaxCount()                      */
+/*                    GDALAlgorithmArgGetMaxCount()                     */
 /************************************************************************/
 
 /** Return the maximum number of values for the argument.
@@ -7374,7 +7374,7 @@ int GDALAlgorithmArgGetMaxCount(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                GDALAlgorithmArgGetPackedValuesAllowed()              */
+/*               GDALAlgorithmArgGetPackedValuesAllowed()               */
 /************************************************************************/
 
 /** Return whether, for list type of arguments, several values, space
@@ -7391,7 +7391,7 @@ bool GDALAlgorithmArgGetPackedValuesAllowed(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                GDALAlgorithmArgGetRepeatedArgAllowed()               */
+/*               GDALAlgorithmArgGetRepeatedArgAllowed()                */
 /************************************************************************/
 
 /** Return whether, for list type of arguments, the argument may be
@@ -7408,7 +7408,7 @@ bool GDALAlgorithmArgGetRepeatedArgAllowed(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArgGetChoices()                      */
+/*                     GDALAlgorithmArgGetChoices()                     */
 /************************************************************************/
 
 /** Return the allowed values (as strings) for the argument.
@@ -7450,7 +7450,7 @@ char **GDALAlgorithmArgGetMetadataItem(GDALAlgorithmArgH hArg,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgIsExplicitlySet()                  */
+/*                  GDALAlgorithmArgIsExplicitlySet()                   */
 /************************************************************************/
 
 /** Return whether the argument value has been explicitly set with Set()
@@ -7465,7 +7465,7 @@ bool GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgHasDefaultValue()                  */
+/*                  GDALAlgorithmArgHasDefaultValue()                   */
 /************************************************************************/
 
 /** Return if the argument has a declared default value.
@@ -7480,7 +7480,7 @@ bool GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithmArgGetDefaultAsBoolean()                */
+/*                GDALAlgorithmArgGetDefaultAsBoolean()                 */
 /************************************************************************/
 
 /** Return the argument default value as a integer.
@@ -7536,7 +7536,7 @@ const char *GDALAlgorithmArgGetDefaultAsString(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithmArgGetDefaultAsInteger()                */
+/*                GDALAlgorithmArgGetDefaultAsInteger()                 */
 /************************************************************************/
 
 /** Return the argument default value as a integer.
@@ -7590,7 +7590,7 @@ double GDALAlgorithmArgGetDefaultAsDouble(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                GDALAlgorithmArgGetDefaultAsStringList()              */
+/*               GDALAlgorithmArgGetDefaultAsStringList()               */
 /************************************************************************/
 
 /** Return the argument default value as a string list.
@@ -7621,7 +7621,7 @@ char **GDALAlgorithmArgGetDefaultAsStringList(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*               GDALAlgorithmArgGetDefaultAsIntegerList()              */
+/*              GDALAlgorithmArgGetDefaultAsIntegerList()               */
 /************************************************************************/
 
 /** Return the argument default value as a integer list.
@@ -7688,7 +7688,7 @@ const double *GDALAlgorithmArgGetDefaultAsDoubleList(GDALAlgorithmArgH hArg,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgIsHidden()                         */
+/*                      GDALAlgorithmArgIsHidden()                      */
 /************************************************************************/
 
 /** Return whether the argument is hidden (for GDAL internal use)
@@ -7743,7 +7743,7 @@ bool GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgIsOnlyForCLI()                     */
+/*                    GDALAlgorithmArgIsOnlyForCLI()                    */
 /************************************************************************/
 
 /** Return whether the argument must not be mentioned in the context of an
@@ -7763,7 +7763,7 @@ bool GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgIsInput()                        */
+/*                      GDALAlgorithmArgIsInput()                       */
 /************************************************************************/
 
 /** Indicate whether the value of the argument is read-only during the
@@ -7781,7 +7781,7 @@ bool GDALAlgorithmArgIsInput(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgIsOutput()                       */
+/*                      GDALAlgorithmArgIsOutput()                      */
 /************************************************************************/
 
 /** Return whether (at least part of) the value of the argument is set
@@ -7804,7 +7804,7 @@ bool GDALAlgorithmArgIsOutput(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                 GDALAlgorithmArgGetDatasetType()                     */
+/*                   GDALAlgorithmArgGetDatasetType()                   */
 /************************************************************************/
 
 /** Get which type of dataset is allowed / generated.
@@ -7823,7 +7823,7 @@ GDALArgDatasetType GDALAlgorithmArgGetDatasetType(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetDatasetInputFlags()             */
+/*                GDALAlgorithmArgGetDatasetInputFlags()                */
 /************************************************************************/
 
 /** Indicates which components among name and dataset are accepted as
@@ -7849,7 +7849,7 @@ int GDALAlgorithmArgGetDatasetInputFlags(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                  GDALAlgorithmArgGetDatasetOutputFlags()             */
+/*               GDALAlgorithmArgGetDatasetOutputFlags()                */
 /************************************************************************/
 
 /** Indicates which components among name and dataset are modified,
@@ -7874,7 +7874,7 @@ int GDALAlgorithmArgGetDatasetOutputFlags(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*               GDALAlgorithmArgGetMutualExclusionGroup()              */
+/*              GDALAlgorithmArgGetMutualExclusionGroup()               */
 /************************************************************************/
 
 /** Return the name of the mutual exclusion group to which this argument
@@ -8021,7 +8021,7 @@ double GDALAlgorithmArgGetAsDouble(GDALAlgorithmArgH hArg)
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgGetAsStringList()                  */
+/*                  GDALAlgorithmArgGetAsStringList()                   */
 /************************************************************************/
 
 /** Return the argument value as a string list.
@@ -8278,7 +8278,7 @@ bool GDALAlgorithmArgSetAsIntegerList(GDALAlgorithmArgH hArg, size_t nCount,
 }
 
 /************************************************************************/
-/*                   GDALAlgorithmArgSetAsDoubleList()                  */
+/*                  GDALAlgorithmArgSetAsDoubleList()                   */
 /************************************************************************/
 
 /** Set the value for a GAAT_REAL_LIST argument.
@@ -8300,7 +8300,7 @@ bool GDALAlgorithmArgSetAsDoubleList(GDALAlgorithmArgH hArg, size_t nCount,
 }
 
 /************************************************************************/
-/*                     GDALAlgorithmArgSetDatasets()                    */
+/*                    GDALAlgorithmArgSetDatasets()                     */
 /************************************************************************/
 
 /** Set dataset objects to a GAAT_DATASET_LIST argument, increasing their reference counter.
@@ -8325,7 +8325,7 @@ bool GDALAlgorithmArgSetDatasets(GDALAlgorithmArgH hArg, size_t nCount,
 }
 
 /************************************************************************/
-/*                    GDALAlgorithmArgSetDatasetNames()                 */
+/*                  GDALAlgorithmArgSetDatasetNames()                   */
 /************************************************************************/
 
 /** Set dataset names to a GAAT_DATASET_LIST argument.
@@ -8348,7 +8348,7 @@ bool GDALAlgorithmArgSetDatasetNames(GDALAlgorithmArgH hArg, CSLConstList names)
 }
 
 /************************************************************************/
-/*                      GDALArgDatasetValueCreate()                     */
+/*                     GDALArgDatasetValueCreate()                      */
 /************************************************************************/
 
 /** Instantiate an empty GDALArgDatasetValue
@@ -8362,7 +8362,7 @@ GDALArgDatasetValueH GDALArgDatasetValueCreate()
 }
 
 /************************************************************************/
-/*                      GDALArgDatasetValueRelease()                    */
+/*                     GDALArgDatasetValueRelease()                     */
 /************************************************************************/
 
 /** Release a handle to a GDALArgDatasetValue
@@ -8375,7 +8375,7 @@ void GDALArgDatasetValueRelease(GDALArgDatasetValueH hValue)
 }
 
 /************************************************************************/
-/*                    GDALArgDatasetValueGetName()                      */
+/*                     GDALArgDatasetValueGetName()                     */
 /************************************************************************/
 
 /** Return the name component of the GDALArgDatasetValue
@@ -8392,7 +8392,7 @@ const char *GDALArgDatasetValueGetName(GDALArgDatasetValueH hValue)
 }
 
 /************************************************************************/
-/*               GDALArgDatasetValueGetDatasetRef()                     */
+/*                  GDALArgDatasetValueGetDatasetRef()                  */
 /************************************************************************/
 
 /** Return the dataset component of the GDALArgDatasetValue.
@@ -8410,7 +8410,7 @@ GDALDatasetH GDALArgDatasetValueGetDatasetRef(GDALArgDatasetValueH hValue)
 }
 
 /************************************************************************/
-/*               GDALArgDatasetValueGetDatasetIncreaseRefCount()        */
+/*           GDALArgDatasetValueGetDatasetIncreaseRefCount()            */
 /************************************************************************/
 
 /** Return the dataset component of the GDALArgDatasetValue, and increase its
@@ -8428,7 +8428,7 @@ GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH hValue)
 }
 
 /************************************************************************/
-/*                    GDALArgDatasetValueSetName()                      */
+/*                     GDALArgDatasetValueSetName()                     */
 /************************************************************************/
 
 /** Set dataset name
@@ -8446,7 +8446,7 @@ void GDALArgDatasetValueSetName(GDALArgDatasetValueH hValue,
 }
 
 /************************************************************************/
-/*                  GDALArgDatasetValueSetDataset()                     */
+/*                   GDALArgDatasetValueSetDataset()                    */
 /************************************************************************/
 
 /** Set dataset object, increasing its reference counter.

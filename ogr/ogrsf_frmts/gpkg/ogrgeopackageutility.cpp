@@ -620,7 +620,7 @@ OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
 }
 
 /************************************************************************/
-/*                     OGRGeoPackageGetHeader()                         */
+/*                       OGRGeoPackageGetHeader()                       */
 /************************************************************************/
 
 bool OGRGeoPackageGetHeader(sqlite3_context * /*pContext*/, int /*argc*/,

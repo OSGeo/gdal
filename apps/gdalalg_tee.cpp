@@ -15,13 +15,13 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*      GDALTeeStepAlgorithmAbstract::~GDALTeeStepAlgorithmAbstract()   */
+/*    GDALTeeStepAlgorithmAbstract::~GDALTeeStepAlgorithmAbstract()     */
 /************************************************************************/
 
 GDALTeeStepAlgorithmAbstract::~GDALTeeStepAlgorithmAbstract() = default;
 
 /************************************************************************/
-/*        GDALTeeStepAlgorithmAbstract::CopyFilenameBindingsFrom()      */
+/*       GDALTeeStepAlgorithmAbstract::CopyFilenameBindingsFrom()       */
 /************************************************************************/
 
 void GDALTeeStepAlgorithmAbstract::CopyFilenameBindingsFrom(
@@ -31,7 +31,7 @@ void GDALTeeStepAlgorithmAbstract::CopyFilenameBindingsFrom(
 }
 
 /************************************************************************/
-/*              GDALTeeStepAlgorithmAbstract::BindFilename()            */
+/*             GDALTeeStepAlgorithmAbstract::BindFilename()             */
 /************************************************************************/
 
 bool GDALTeeStepAlgorithmAbstract::BindFilename(
@@ -45,7 +45,7 @@ bool GDALTeeStepAlgorithmAbstract::BindFilename(
 }
 
 /************************************************************************/
-/*             GDALTeeStepAlgorithmAbstract::HasOutputString()          */
+/*           GDALTeeStepAlgorithmAbstract::HasOutputString()            */
 /************************************************************************/
 
 bool GDALTeeStepAlgorithmAbstract::HasOutputString() const

@@ -52,7 +52,7 @@ static constexpr int TZFLAG_UNINITIALIZED = -1;
     } while (0)
 
 /************************************************************************/
-/*                      OGRArrowWriterLayer()                           */
+/*                        OGRArrowWriterLayer()                         */
 /************************************************************************/
 
 inline OGRArrowWriterLayer::OGRArrowWriterLayer(
@@ -68,7 +68,7 @@ inline OGRArrowWriterLayer::OGRArrowWriterLayer(
 }
 
 /************************************************************************/
-/*                     ~OGRArrowWriterLayer()                           */
+/*                        ~OGRArrowWriterLayer()                        */
 /************************************************************************/
 
 inline OGRArrowWriterLayer::~OGRArrowWriterLayer()
@@ -82,7 +82,7 @@ inline OGRArrowWriterLayer::~OGRArrowWriterLayer()
 }
 
 /************************************************************************/
-/*                         FinalizeWriting()                            */
+/*                          FinalizeWriting()                           */
 /************************************************************************/
 
 inline bool OGRArrowWriterLayer::FinalizeWriting()
@@ -108,7 +108,7 @@ inline bool OGRArrowWriterLayer::FinalizeWriting()
 }
 
 /************************************************************************/
-/*                      RemoveIDFromMemberOfEnsembles()                 */
+/*                   RemoveIDFromMemberOfEnsembles()                    */
 /************************************************************************/
 
 /* static */
@@ -226,7 +226,7 @@ OGRArrowWriterLayer::IdentifyCRS(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                       CreateSchemaCommon()                           */
+/*                         CreateSchemaCommon()                         */
 /************************************************************************/
 
 inline void OGRArrowWriterLayer::CreateSchemaCommon()
@@ -680,7 +680,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 }
 
 /************************************************************************/
-/*                         FinalizeSchema()                             */
+/*                           FinalizeSchema()                           */
 /************************************************************************/
 
 inline void OGRArrowWriterLayer::FinalizeSchema()
@@ -724,7 +724,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
 }
 
 /************************************************************************/
-/*                         AddFieldDomain()                             */
+/*                           AddFieldDomain()                           */
 /************************************************************************/
 
 inline bool
@@ -788,7 +788,7 @@ OGRArrowWriterLayer::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
 }
 
 /************************************************************************/
-/*                          GetFieldDomainNames()                       */
+/*                        GetFieldDomainNames()                         */
 /************************************************************************/
 
 inline std::vector<std::string> OGRArrowWriterLayer::GetFieldDomainNames() const
@@ -803,7 +803,7 @@ inline std::vector<std::string> OGRArrowWriterLayer::GetFieldDomainNames() const
 }
 
 /************************************************************************/
-/*                          GetFieldDomain()                            */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 inline const OGRFieldDomain *
@@ -816,7 +816,7 @@ OGRArrowWriterLayer::GetFieldDomain(const std::string &name) const
 }
 
 /************************************************************************/
-/*                          CreateField()                               */
+/*                            CreateField()                             */
 /************************************************************************/
 
 inline OGRErr OGRArrowWriterLayer::CreateField(const OGRFieldDefn *poField,
@@ -909,7 +909,7 @@ inline bool OGRArrowWriterLayer::CreateFieldFromArrowSchema(
 }
 
 /************************************************************************/
-/*                   GetPreciseArrowGeomEncoding()                      */
+/*                    GetPreciseArrowGeomEncoding()                     */
 /************************************************************************/
 
 inline OGRArrowGeomEncoding OGRArrowWriterLayer::GetPreciseArrowGeomEncoding(
@@ -964,7 +964,7 @@ inline OGRArrowGeomEncoding OGRArrowWriterLayer::GetPreciseArrowGeomEncoding(
 }
 
 /************************************************************************/
-/*                        GetGeomEncodingAsString()                     */
+/*                      GetGeomEncodingAsString()                       */
 /************************************************************************/
 
 inline const char *
@@ -1066,7 +1066,7 @@ MakeGeoArrowBuilder(arrow::MemoryPool *poMemoryPool, int nDim, int nDepth)
 }
 
 /************************************************************************/
-/*                      MakeGeoArrowStructBuilder()                     */
+/*                     MakeGeoArrowStructBuilder()                      */
 /************************************************************************/
 
 static std::shared_ptr<arrow::ArrayBuilder>
@@ -1359,7 +1359,7 @@ inline void OGRArrowWriterLayer::CreateArrayBuilders()
 }
 
 /************************************************************************/
-/*                          castToFloatDown()                            */
+/*                          castToFloatDown()                           */
 /************************************************************************/
 
 // Cf https://github.com/sqlite/sqlite/blob/90e4a3b7fcdf63035d6f35eb44d11ff58ff4b068/ext/rtree/rtree.c#L2993C1-L2995C3
@@ -1394,7 +1394,7 @@ static float castToFloatUp(double d)
 }
 
 /************************************************************************/
-/*                         GeoArrowLineBuilder()                        */
+/*                        GeoArrowLineBuilder()                         */
 /************************************************************************/
 
 template <class PointBuilderType>
@@ -1419,7 +1419,7 @@ static OGRErr GeoArrowLineBuilder(const OGRLineString *poLS,
 }
 
 /************************************************************************/
-/*                          BuildGeometry()                             */
+/*                           BuildGeometry()                            */
 /************************************************************************/
 
 inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
@@ -1916,7 +1916,7 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
@@ -2352,7 +2352,7 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                         FlushFeatures()                              */
+/*                           FlushFeatures()                            */
 /************************************************************************/
 
 inline bool OGRArrowWriterLayer::FlushFeatures()
@@ -2371,7 +2371,7 @@ inline bool OGRArrowWriterLayer::FlushFeatures()
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 inline GIntBig OGRArrowWriterLayer::GetFeatureCount(int bForce)
@@ -2384,7 +2384,7 @@ inline GIntBig OGRArrowWriterLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 inline int OGRArrowWriterLayer::TestCapability(const char *pszCap) const
@@ -2408,7 +2408,7 @@ inline int OGRArrowWriterLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         WriteArrays()                                */
+/*                            WriteArrays()                             */
 /************************************************************************/
 
 inline bool OGRArrowWriterLayer::WriteArrays(
@@ -2497,7 +2497,7 @@ inline bool OGRArrowWriterLayer::WriteArrays(
 }
 
 /************************************************************************/
-/*                            TestBit()                                 */
+/*                              TestBit()                               */
 /************************************************************************/
 
 static inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
@@ -2506,7 +2506,7 @@ static inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                       WriteArrowBatchInternal()                      */
+/*                      WriteArrowBatchInternal()                       */
 /************************************************************************/
 
 inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(

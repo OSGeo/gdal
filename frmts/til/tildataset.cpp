@@ -144,7 +144,7 @@ TILDataset::~TILDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int TILDataset::CloseDependentDatasets()

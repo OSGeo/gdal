@@ -516,7 +516,7 @@ bool IsKnownDataType(short dataType)
 }  // anonymous namespace
 
 /************************************************************************/
-/*                               GetPrefix()                            */
+/*                             GetPrefix()                              */
 /************************************************************************/
 
 const char *OGRHanaDataSource::GetPrefix()
@@ -533,7 +533,7 @@ OGRHanaDataSource::OGRHanaDataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRHanaDataSource()                          */
+/*                         ~OGRHanaDataSource()                         */
 /************************************************************************/
 
 OGRHanaDataSource::~OGRHanaDataSource()
@@ -550,10 +550,11 @@ OGRHanaDataSource::~OGRHanaDataSource()
 }
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
-int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
+int OGRHanaDataSource::Open(const char *newName, CSLConstList openOptions,
+                            int update)
 {
     CPLAssert(layers_.size() == 0);
 
@@ -703,7 +704,7 @@ void OGRHanaDataSource::DetermineVersions()
 }
 
 /************************************************************************/
-/*                            FindSchemaAndTableNames()                 */
+/*                      FindSchemaAndTableNames()                       */
 /************************************************************************/
 
 std::pair<CPLString, CPLString>
@@ -727,7 +728,7 @@ OGRHanaDataSource::FindSchemaAndTableNames(const char *query)
 }
 
 /************************************************************************/
-/*                            FindLayerByName()                         */
+/*                          FindLayerByName()                           */
 /************************************************************************/
 
 int OGRHanaDataSource::FindLayerByName(const char *name)
@@ -741,7 +742,7 @@ int OGRHanaDataSource::FindLayerByName(const char *name)
 }
 
 /************************************************************************/
-/*                            FindSchemaName()                          */
+/*                           FindSchemaName()                           */
 /************************************************************************/
 
 CPLString OGRHanaDataSource::FindSchemaName(const char *objectName)
@@ -777,7 +778,7 @@ CPLString OGRHanaDataSource::FindSchemaName(const char *objectName)
 }
 
 /************************************************************************/
-/*                              CreateStatement()                       */
+/*                          CreateStatement()                           */
 /************************************************************************/
 
 odbc::StatementRef OGRHanaDataSource::CreateStatement()
@@ -786,7 +787,7 @@ odbc::StatementRef OGRHanaDataSource::CreateStatement()
 }
 
 /************************************************************************/
-/*                              PrepareStatement()                      */
+/*                          PrepareStatement()                          */
 /************************************************************************/
 
 odbc::PreparedStatementRef OGRHanaDataSource::PrepareStatement(const char *sql)
@@ -809,7 +810,7 @@ odbc::PreparedStatementRef OGRHanaDataSource::PrepareStatement(const char *sql)
 }
 
 /************************************************************************/
-/*                              Commit()                                */
+/*                               Commit()                               */
 /************************************************************************/
 
 void OGRHanaDataSource::Commit()
@@ -818,7 +819,7 @@ void OGRHanaDataSource::Commit()
 }
 
 /************************************************************************/
-/*                            ExecuteSQL()                              */
+/*                             ExecuteSQL()                             */
 /************************************************************************/
 
 void OGRHanaDataSource::ExecuteSQL(const CPLString &sql)
@@ -874,7 +875,7 @@ OGRSpatialReference *OGRHanaDataSource::GetSrsById(int srid)
 }
 
 /************************************************************************/
-/*                               GetSrsId()                             */
+/*                              GetSrsId()                              */
 /************************************************************************/
 
 int OGRHanaDataSource::GetSrsId(const OGRSpatialReference *srs)
@@ -982,7 +983,7 @@ int OGRHanaDataSource::GetSrsId(const OGRSpatialReference *srs)
 }
 
 /************************************************************************/
-/*                           IsSrsRoundEarth()                          */
+/*                          IsSrsRoundEarth()                           */
 /************************************************************************/
 
 bool OGRHanaDataSource::IsSrsRoundEarth(int srid)
@@ -1001,7 +1002,7 @@ bool OGRHanaDataSource::IsSrsRoundEarth(int srid)
 }
 
 /************************************************************************/
-/*                        HasSrsPlanarEquivalent()                      */
+/*                       HasSrsPlanarEquivalent()                       */
 /************************************************************************/
 
 bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
@@ -1019,7 +1020,7 @@ bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 }
 
 /************************************************************************/
-/*                           GetQueryColumns()                          */
+/*                          GetQueryColumns()                           */
 /************************************************************************/
 
 OGRErr OGRHanaDataSource::GetQueryColumns(
@@ -1157,7 +1158,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
 }
 
 /************************************************************************/
-/*                          GetTablePrimaryKeys()                       */
+/*                        GetTablePrimaryKeys()                         */
 /************************************************************************/
 
 std::vector<CPLString>
@@ -1245,7 +1246,7 @@ void OGRHanaDataSource::InitializeLayers(const char *schemaName,
 }
 
 /************************************************************************/
-/*                          LaunderName()                               */
+/*                            LaunderName()                             */
 /************************************************************************/
 
 std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char *name)
@@ -1413,7 +1414,7 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
 }
 
 /************************************************************************/
-/*                       CreateParseArrayFunctions()                    */
+/*                     CreateParseArrayFunctions()                      */
 /************************************************************************/
 
 void OGRHanaDataSource::CreateParseArrayFunctions(const char *schemaName)
@@ -1502,7 +1503,7 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char *schemaName)
 }
 
 /************************************************************************/
-/*                       ParseArrayFunctionsExist()                     */
+/*                      ParseArrayFunctionsExist()                      */
 /************************************************************************/
 
 bool OGRHanaDataSource::ParseArrayFunctionsExist(const char *schemaName)
@@ -1520,7 +1521,7 @@ bool OGRHanaDataSource::ParseArrayFunctionsExist(const char *schemaName)
 }
 
 /************************************************************************/
-/*                               GetLayer()                             */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRHanaDataSource::GetLayer(int index) const
@@ -1540,7 +1541,7 @@ OGRLayer *OGRHanaDataSource::GetLayerByName(const char *name)
 }
 
 /************************************************************************/
-/*                              ICreateLayer()                          */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1771,7 +1772,7 @@ OGRLayer *OGRHanaDataSource::ExecuteSQL(const char *sqlCommand,
 }
 
 /************************************************************************/
-/*                           StartTransaction()                         */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRHanaDataSource::StartTransaction(CPL_UNUSED int bForce)
@@ -1788,7 +1789,7 @@ OGRErr OGRHanaDataSource::StartTransaction(CPL_UNUSED int bForce)
 }
 
 /************************************************************************/
-/*                           CommitTransaction()                        */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRHanaDataSource::CommitTransaction()
@@ -1826,7 +1827,7 @@ OGRErr OGRHanaDataSource::CommitTransaction()
 }
 
 /************************************************************************/
-/*                           RollbackTransaction()                      */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 OGRErr OGRHanaDataSource::RollbackTransaction()

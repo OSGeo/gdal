@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*                          GetGCPFilename()                            */
+/*                           GetGCPFilename()                           */
 /************************************************************************/
 
 static std::string GetGCPFilename(const std::vector<std::string> &gcps)
@@ -135,13 +135,13 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*           GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm()        */
+/*         GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm()          */
 /************************************************************************/
 
 GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm() = default;
 
 /************************************************************************/
-/*                              ParseGCPs()                             */
+/*                             ParseGCPs()                              */
 /************************************************************************/
 
 std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
@@ -226,7 +226,7 @@ std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
 }
 
 /************************************************************************/
-/*                GDALRasterEditAlgorithm::RunStep()                    */
+/*                  GDALRasterEditAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

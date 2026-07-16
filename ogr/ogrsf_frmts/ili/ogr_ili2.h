@@ -23,7 +23,7 @@
 class OGRILI2DataSource;
 
 /************************************************************************/
-/*                           OGRILI2Layer                               */
+/*                             OGRILI2Layer                             */
 /************************************************************************/
 
 class OGRILI2Layer final : public OGRLayer

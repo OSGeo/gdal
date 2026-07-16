@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorMakePointAlgorithm()                       */
+/*                    GDALVectorMakePointAlgorithm()                    */
 /************************************************************************/
 
 GDALVectorMakePointAlgorithm::GDALVectorMakePointAlgorithm(bool standaloneStep)
@@ -44,7 +44,7 @@ namespace
 {
 
 /************************************************************************/
-/*                    GDALVectorMakePointAlgorithmLayer                 */
+/*                  GDALVectorMakePointAlgorithmLayer                   */
 /************************************************************************/
 
 class GDALVectorMakePointAlgorithmLayer final
@@ -263,7 +263,7 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
-/*                 GDALVectorMakePointAlgorithm::RunStep()              */
+/*               GDALVectorMakePointAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorMakePointAlgorithm::RunStep(GDALPipelineStepRunContext &)

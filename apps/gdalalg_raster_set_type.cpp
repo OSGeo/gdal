@@ -33,7 +33,7 @@ GDALRasterSetTypeAlgorithm::GDALRasterSetTypeAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*             GDALRasterSetTypeAlgorithm::RunStep()                    */
+/*                GDALRasterSetTypeAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterSetTypeAlgorithm::RunStep(GDALPipelineStepRunContext &)

@@ -70,7 +70,7 @@ class HDF4SharedResources
 };
 
 /************************************************************************/
-/*                               HDF4Group                              */
+/*                              HDF4Group                               */
 /************************************************************************/
 
 class HDF4SDSGroup;
@@ -114,7 +114,7 @@ class HDF4Group final : public GDALGroup
 };
 
 /************************************************************************/
-/*                         HDF4AbstractAttribute                        */
+/*                        HDF4AbstractAttribute                         */
 /************************************************************************/
 
 class HDF4AbstractAttribute /* non final */ : public GDALAttribute
@@ -151,7 +151,7 @@ class HDF4AbstractAttribute /* non final */ : public GDALAttribute
 };
 
 /************************************************************************/
-/*                            HDF4SwathsHandle                          */
+/*                           HDF4SwathsHandle                           */
 /************************************************************************/
 
 struct HDF4SwathsHandle
@@ -170,7 +170,7 @@ struct HDF4SwathsHandle
 };
 
 /************************************************************************/
-/*                            HDF4SwathHandle                           */
+/*                           HDF4SwathHandle                            */
 /************************************************************************/
 
 struct HDF4SwathHandle
@@ -192,7 +192,7 @@ struct HDF4SwathHandle
 };
 
 /************************************************************************/
-/*                            HDF4SwathsGroup                           */
+/*                           HDF4SwathsGroup                            */
 /************************************************************************/
 
 class HDF4SwathsGroup final : public GDALGroup
@@ -247,7 +247,7 @@ class HDF4SwathGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                         HDF4SwathSubGroup                            */
+/*                          HDF4SwathSubGroup                           */
 /************************************************************************/
 
 class HDF4SwathSubGroup final : public GDALGroup
@@ -346,7 +346,7 @@ class HDF4SwathArray final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                            HDF4SDAttribute                             */
+/*                           HDF4SDAttribute                            */
 /************************************************************************/
 
 class HDF4SwathAttribute final : public HDF4AbstractAttribute
@@ -375,7 +375,7 @@ void HDF4SwathAttribute::ReadData(void *pDstBuffer) const
 }
 
 /************************************************************************/
-/*                             HDF4GDsHandle                             */
+/*                            HDF4GDsHandle                             */
 /************************************************************************/
 
 struct HDF4GDsHandle
@@ -441,7 +441,7 @@ class HDF4EOSGridsGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                          HDF4EOSGridGroup                            */
+/*                           HDF4EOSGridGroup                           */
 /************************************************************************/
 
 class HDF4EOSGridGroup final : public GDALGroup
@@ -510,7 +510,7 @@ class HDF4EOSGridSubGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                          HDF4EOSGridArray                            */
+/*                           HDF4EOSGridArray                           */
 /************************************************************************/
 
 class HDF4EOSGridArray final : public GDALPamMDArray
@@ -594,7 +594,7 @@ class HDF4EOSGridArray final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                      HDF4EOSGridAttribute                            */
+/*                         HDF4EOSGridAttribute                         */
 /************************************************************************/
 
 class HDF4EOSGridAttribute final : public HDF4AbstractAttribute
@@ -667,7 +667,7 @@ class HDF4SDSGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                            HDF4SDSArray                              */
+/*                             HDF4SDSArray                             */
 /************************************************************************/
 
 class HDF4SDSArray final : public GDALPamMDArray
@@ -760,7 +760,7 @@ class HDF4SDSArray final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                            HDF4GRsHandle                              */
+/*                            HDF4GRsHandle                             */
 /************************************************************************/
 
 struct HDF4GRsHandle
@@ -804,7 +804,7 @@ struct HDF4GRHandle
 };
 
 /************************************************************************/
-/*                            HDF4GRsGroup                              */
+/*                             HDF4GRsGroup                             */
 /************************************************************************/
 
 class HDF4GRsGroup final : public GDALGroup
@@ -833,7 +833,7 @@ class HDF4GRsGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                            HDF4GRArray                               */
+/*                             HDF4GRArray                              */
 /************************************************************************/
 
 class HDF4GRArray final : public GDALPamMDArray
@@ -903,7 +903,7 @@ bool HDF4GRArray::IsWritable() const
 }
 
 /************************************************************************/
-/*                            HDF4SDAttribute                           */
+/*                           HDF4SDAttribute                            */
 /************************************************************************/
 
 class HDF4SDAttribute final : public HDF4AbstractAttribute
@@ -971,7 +971,7 @@ void HDF4GRAttribute::ReadData(void *pDstBuffer) const
 }
 
 /************************************************************************/
-/*                         HDF4GRPalette                                */
+/*                            HDF4GRPalette                             */
 /************************************************************************/
 
 class HDF4GRPalette final : public GDALAttribute
@@ -1033,7 +1033,7 @@ HDF4SharedResources::~HDF4SharedResources()
 }
 
 /************************************************************************/
-/*                               HDF4Group()                            */
+/*                             HDF4Group()                              */
 /************************************************************************/
 
 HDF4Group::HDF4Group(const std::string &osParentName, const std::string &osName,
@@ -1156,7 +1156,7 @@ HDF4Group::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> HDF4Group::GetGroupNames(CSLConstList) const
@@ -1279,7 +1279,7 @@ std::shared_ptr<GDALGroup> HDF4Group::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> HDF4Group::GetMDArrayNames(CSLConstList) const
@@ -1290,7 +1290,7 @@ std::vector<std::string> HDF4Group::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> HDF4Group::OpenMDArray(const std::string &osName,
@@ -1302,7 +1302,7 @@ std::shared_ptr<GDALMDArray> HDF4Group::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -1314,7 +1314,7 @@ HDF4Group::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> HDF4SwathsGroup::GetGroupNames(CSLConstList) const
@@ -1359,7 +1359,7 @@ std::shared_ptr<GDALGroup> HDF4SwathsGroup::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> HDF4SwathSubGroup::GetMDArrayNames(CSLConstList) const
@@ -1391,7 +1391,7 @@ std::vector<std::string> HDF4SwathSubGroup::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -1424,7 +1424,7 @@ HDF4SwathSubGroup::OpenMDArray(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> HDF4SwathGroup::GetGroupNames(CSLConstList) const
@@ -1458,7 +1458,7 @@ std::shared_ptr<GDALGroup> HDF4SwathGroup::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -1533,7 +1533,7 @@ HDF4SwathGroup::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                          HDF4SwathArray()                            */
+/*                           HDF4SwathArray()                           */
 /************************************************************************/
 
 HDF4SwathArray::HDF4SwathArray(
@@ -1616,7 +1616,7 @@ HDF4SwathArray::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           ReadPixels()                               */
+/*                             ReadPixels()                             */
 /************************************************************************/
 
 union ReadFunc
@@ -1767,7 +1767,7 @@ bool HDF4SwathArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          GetRawNoDataValue()                         */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 const void *HDF4SwathArray::GetRawNoDataValue() const
@@ -1798,7 +1798,7 @@ const void *HDF4SwathArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                      HDF4AbstractAttribute()                         */
+/*                       HDF4AbstractAttribute()                        */
 /************************************************************************/
 
 HDF4AbstractAttribute::HDF4AbstractAttribute(
@@ -1865,7 +1865,7 @@ bool HDF4AbstractAttribute::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> HDF4EOSGridsGroup::GetGroupNames(CSLConstList) const
@@ -1909,7 +1909,7 @@ HDF4EOSGridsGroup::OpenGroup(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -1992,7 +1992,7 @@ HDF4EOSGridGroup::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> HDF4EOSGridGroup::GetMDArrayNames(CSLConstList) const
@@ -2008,7 +2008,7 @@ std::vector<std::string> HDF4EOSGridGroup::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2022,7 +2022,7 @@ HDF4EOSGridGroup::OpenMDArray(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> HDF4EOSGridGroup::GetGroupNames(CSLConstList) const
@@ -2089,7 +2089,7 @@ HDF4EOSGridGroup::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string>
@@ -2118,7 +2118,7 @@ HDF4EOSGridSubGroup::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2151,7 +2151,7 @@ HDF4EOSGridSubGroup::OpenMDArray(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                         HDF4EOSGridArray()                           */
+/*                          HDF4EOSGridArray()                          */
 /************************************************************************/
 
 HDF4EOSGridArray::HDF4EOSGridArray(
@@ -2234,7 +2234,7 @@ HDF4EOSGridArray::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                          GetRawNoDataValue()                         */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 const void *HDF4EOSGridArray::GetRawNoDataValue() const
@@ -2264,7 +2264,7 @@ const void *HDF4EOSGridArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                           GetOffsetOrScale()                         */
+/*                          GetOffsetOrScale()                          */
 /************************************************************************/
 
 static double GetOffsetOrScale(const GDALMDArray *poArray,
@@ -2287,7 +2287,7 @@ static double GetOffsetOrScale(const GDALMDArray *poArray,
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 static double GetOffset(const GDALMDArray *poArray, bool *pbHasOffset,
@@ -2298,7 +2298,7 @@ static double GetOffset(const GDALMDArray *poArray, bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double HDF4EOSGridArray::GetOffset(bool *pbHasOffset,
@@ -2308,7 +2308,7 @@ double HDF4EOSGridArray::GetOffset(bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                               GetScale()                             */
+/*                              GetScale()                              */
 /************************************************************************/
 
 static double GetScale(const GDALMDArray *poArray, bool *pbHasScale,
@@ -2319,7 +2319,7 @@ static double GetScale(const GDALMDArray *poArray, bool *pbHasScale,
 }
 
 /************************************************************************/
-/*                               GetScale()                             */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double HDF4EOSGridArray::GetScale(bool *pbHasScale,
@@ -2329,7 +2329,7 @@ double HDF4EOSGridArray::GetScale(bool *pbHasScale,
 }
 
 /************************************************************************/
-/*                             GetUnit()                                */
+/*                              GetUnit()                               */
 /************************************************************************/
 
 const std::string &HDF4EOSGridArray::GetUnit() const
@@ -2345,7 +2345,7 @@ const std::string &HDF4EOSGridArray::GetUnit() const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> HDF4EOSGridArray::GetSpatialRef() const
@@ -2400,7 +2400,7 @@ bool HDF4EOSGridArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> HDF4SDSGroup::GetMDArrayNames(CSLConstList) const
@@ -2453,7 +2453,7 @@ std::vector<std::string> HDF4SDSGroup::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2499,7 +2499,7 @@ HDF4SDSGroup::OpenMDArray(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -2661,7 +2661,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           HDF4SDSArray()                             */
+/*                            HDF4SDSArray()                            */
 /************************************************************************/
 
 HDF4SDSArray::HDF4SDSArray(
@@ -2711,7 +2711,7 @@ HDF4SDSArray::HDF4SDSArray(
 }
 
 /************************************************************************/
-/*                          ~HDF4SDSArray()                             */
+/*                           ~HDF4SDSArray()                            */
 /************************************************************************/
 
 HDF4SDSArray::~HDF4SDSArray()
@@ -2721,7 +2721,7 @@ HDF4SDSArray::~HDF4SDSArray()
 }
 
 /************************************************************************/
-/*                          GetRawNoDataValue()                         */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 const void *HDF4SDSArray::GetRawNoDataValue() const
@@ -2777,7 +2777,7 @@ HDF4SDSArray::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double HDF4SDSArray::GetOffset(bool *pbHasOffset,
@@ -2787,7 +2787,7 @@ double HDF4SDSArray::GetOffset(bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                               GetScale()                             */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double HDF4SDSArray::GetScale(bool *pbHasScale,
@@ -2797,7 +2797,7 @@ double HDF4SDSArray::GetScale(bool *pbHasScale,
 }
 
 /************************************************************************/
-/*                             GetUnit()                                */
+/*                              GetUnit()                               */
 /************************************************************************/
 
 const std::string &HDF4SDSArray::GetUnit() const
@@ -2813,7 +2813,7 @@ const std::string &HDF4SDSArray::GetUnit() const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> HDF4SDSArray::GetSpatialRef() const
@@ -2933,7 +2933,7 @@ HDF4GRsGroup::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2966,7 +2966,7 @@ HDF4GRsGroup::OpenMDArray(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                           HDF4GRArray()                              */
+/*                            HDF4GRArray()                             */
 /************************************************************************/
 
 HDF4GRArray::HDF4GRArray(const std::string &osParentName,
@@ -3211,7 +3211,7 @@ bool HDF4GRPalette::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                           OpenMultiDim()                             */
+/*                            OpenMultiDim()                            */
 /************************************************************************/
 
 void HDF4Dataset::OpenMultiDim(const char *pszFilename,

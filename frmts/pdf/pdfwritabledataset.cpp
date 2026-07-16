@@ -27,7 +27,7 @@ PDFWritableVectorDataset::PDFWritableVectorDataset()
 }
 
 /************************************************************************/
-/*                      ~PDFWritableVectorDataset()                     */
+/*                     ~PDFWritableVectorDataset()                      */
 /************************************************************************/
 
 PDFWritableVectorDataset::~PDFWritableVectorDataset()
@@ -47,7 +47,7 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
 GDALDataset *PDFWritableVectorDataset::Create(const char *pszName, int nXSize,
                                               int nYSize, int nBandsIn,
                                               GDALDataType eType,
-                                              char **papszOptions)
+                                              CSLConstList papszOptions)
 {
     if (nBandsIn == 0 && nXSize == 0 && nYSize == 0 && eType == GDT_Unknown)
     {
@@ -81,7 +81,7 @@ GDALDataset *PDFWritableVectorDataset::Create(const char *pszName, int nXSize,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -142,7 +142,7 @@ const OGRLayer *PDFWritableVectorDataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int PDFWritableVectorDataset::GetLayerCount() const
@@ -151,7 +151,7 @@ int PDFWritableVectorDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PDFWritableVectorDataset::Close(GDALProgressFunc, void *)
@@ -160,7 +160,7 @@ CPLErr PDFWritableVectorDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)

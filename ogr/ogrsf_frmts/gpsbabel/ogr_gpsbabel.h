@@ -54,7 +54,7 @@ class OGRGPSBabelDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                   OGRGPSBabelWriteDataSource                         */
+/*                      OGRGPSBabelWriteDataSource                      */
 /************************************************************************/
 
 class OGRGPSBabelWriteDataSource final : public GDALDataset
@@ -81,7 +81,7 @@ class OGRGPSBabelWriteDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 };
 
 #endif /* ndef OGR_GPSBABEL_H_INCLUDED */

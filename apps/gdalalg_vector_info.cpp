@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()        */
+/*          GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()          */
 /************************************************************************/
 
 GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)

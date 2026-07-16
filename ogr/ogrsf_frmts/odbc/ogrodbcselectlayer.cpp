@@ -15,7 +15,7 @@
 #include "ogr_odbc.h"
 
 /************************************************************************/
-/*                          OGRODBCSelectLayer()                         */
+/*                         OGRODBCSelectLayer()                         */
 /************************************************************************/
 
 OGRODBCSelectLayer::OGRODBCSelectLayer(OGRODBCDataSource *poDSIn,
@@ -34,7 +34,7 @@ OGRODBCSelectLayer::OGRODBCSelectLayer(OGRODBCDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRODBCSelectLayer()                          */
+/*                        ~OGRODBCSelectLayer()                         */
 /************************************************************************/
 
 OGRODBCSelectLayer::~OGRODBCSelectLayer()

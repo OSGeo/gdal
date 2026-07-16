@@ -24,7 +24,7 @@
 #include "proj.h"
 
 /************************************************************************/
-/*                    GTIFProj4AppendEllipsoid()                        */
+/*                      GTIFProj4AppendEllipsoid()                      */
 /************************************************************************/
 
 static void GTIFProj4AppendEllipsoid(GTIFDefn* psDefn, char* pszProjection)

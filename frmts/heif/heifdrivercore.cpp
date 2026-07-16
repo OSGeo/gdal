@@ -68,7 +68,7 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     HEIFDriverSetCommonMetadata()                    */
+/*                    HEIFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)

@@ -13,7 +13,7 @@
 #include "ogr_amigocloud.h"
 
 /************************************************************************/
-/*                          OGRAmigoCloudResultLayer()                     */
+/*                      OGRAmigoCloudResultLayer()                      */
 /************************************************************************/
 
 OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer(
@@ -26,7 +26,7 @@ OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer(
 }
 
 /************************************************************************/
-/*                       ~OGRAmigoCloudResultLayer()                       */
+/*                     ~OGRAmigoCloudResultLayer()                      */
 /************************************************************************/
 
 OGRAmigoCloudResultLayer::~OGRAmigoCloudResultLayer()
@@ -36,7 +36,7 @@ OGRAmigoCloudResultLayer::~OGRAmigoCloudResultLayer()
 }
 
 /************************************************************************/
-/*                          GetLayerDefnInternal()                      */
+/*                        GetLayerDefnInternal()                        */
 /************************************************************************/
 
 OGRFeatureDefn *
@@ -51,7 +51,7 @@ OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object *poObjIn)
 }
 
 /************************************************************************/
-/*                           GetNextRawFeature()                        */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRAmigoCloudResultLayer::GetNextRawFeature()

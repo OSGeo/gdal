@@ -15,7 +15,7 @@
 #include "../arrow_common/ograrrowwriterlayer.hpp"
 
 /************************************************************************/
-/*                       OGRFeatherWriterDataset()                      */
+/*                      OGRFeatherWriterDataset()                       */
 /************************************************************************/
 
 OGRFeatherWriterDataset::OGRFeatherWriterDataset(
@@ -28,7 +28,7 @@ OGRFeatherWriterDataset::OGRFeatherWriterDataset(
 }
 
 /************************************************************************/
-/*                     ~OGRFeatherWriterDataset()                       */
+/*                      ~OGRFeatherWriterDataset()                      */
 /************************************************************************/
 
 OGRFeatherWriterDataset::~OGRFeatherWriterDataset()
@@ -37,7 +37,7 @@ OGRFeatherWriterDataset::~OGRFeatherWriterDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRFeatherWriterDataset::Close(GDALProgressFunc, void *)
@@ -69,7 +69,7 @@ int OGRFeatherWriterDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
@@ -78,7 +78,7 @@ const OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRFeatherWriterDataset::TestCapability(const char *pszCap) const
@@ -91,7 +91,7 @@ int OGRFeatherWriterDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          ICreateLayer()                              */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -122,7 +122,7 @@ OGRFeatherWriterDataset::ICreateLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                          AddFieldDomain()                            */
+/*                           AddFieldDomain()                           */
 /************************************************************************/
 
 bool OGRFeatherWriterDataset::AddFieldDomain(
@@ -137,7 +137,7 @@ bool OGRFeatherWriterDataset::AddFieldDomain(
 }
 
 /************************************************************************/
-/*                          GetFieldDomainNames()                       */
+/*                        GetFieldDomainNames()                         */
 /************************************************************************/
 
 std::vector<std::string>
@@ -148,7 +148,7 @@ OGRFeatherWriterDataset::GetFieldDomainNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                          GetFieldDomain()                            */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 const OGRFieldDomain *

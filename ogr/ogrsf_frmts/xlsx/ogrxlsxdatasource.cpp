@@ -40,7 +40,7 @@ OGRXLSXLayer::OGRXLSXLayer(OGRXLSXDataSource *poDSIn, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                              Init()                                  */
+/*                                Init()                                */
 /************************************************************************/
 
 void OGRXLSXLayer::Init()
@@ -54,7 +54,7 @@ void OGRXLSXLayer::Init()
 }
 
 /************************************************************************/
-/*                             Updated()                                */
+/*                              Updated()                               */
 /************************************************************************/
 
 void OGRXLSXLayer::SetUpdated(bool bUpdatedIn)
@@ -71,7 +71,7 @@ void OGRXLSXLayer::SetUpdated(bool bUpdatedIn)
 }
 
 /************************************************************************/
-/*                           SyncToDisk()                               */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::SyncToDisk()
@@ -91,7 +91,7 @@ GIntBig OGRXLSXLayer::TranslateFIDFromMemLayer(GIntBig nFID) const
 }
 
 /************************************************************************/
-/*                        TranslateFIDToMemLayer()                      */
+/*                       TranslateFIDToMemLayer()                       */
 /************************************************************************/
 
 // Translate a FID from XLSX convention to MEM convention (0-based)
@@ -103,7 +103,7 @@ GIntBig OGRXLSXLayer::TranslateFIDToMemLayer(GIntBig nFID) const
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRXLSXLayer::GetNextFeature()
@@ -117,7 +117,7 @@ OGRFeature *OGRXLSXLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
@@ -135,7 +135,7 @@ OGRErr OGRXLSXLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRXLSXLayer::GetFeature(GIntBig nFeatureId)
@@ -150,7 +150,7 @@ OGRFeature *OGRXLSXLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::ISetFeature(OGRFeature *poFeature)
@@ -176,7 +176,7 @@ OGRErr OGRXLSXLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                       ISetFeatureUniqPtr()                           */
+/*                         ISetFeatureUniqPtr()                         */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
@@ -198,7 +198,7 @@ OGRErr OGRXLSXLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                         IUpdateFeature()                             */
+/*                           IUpdateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::IUpdateFeature(OGRFeature *poFeature,
@@ -222,7 +222,7 @@ OGRErr OGRXLSXLayer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::ICreateFeature(OGRFeature *poFeature)
@@ -282,7 +282,7 @@ OGRXLSXLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::DeleteFeature(GIntBig nFID)
@@ -314,7 +314,7 @@ int OGRXLSXLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          OGRXLSXDataSource()                         */
+/*                         OGRXLSXDataSource()                          */
 /************************************************************************/
 
 OGRXLSXDataSource::OGRXLSXDataSource(CSLConstList papszOpenOptionsIn)
@@ -333,7 +333,7 @@ OGRXLSXDataSource::OGRXLSXDataSource(CSLConstList papszOpenOptionsIn)
 }
 
 /************************************************************************/
-/*                         ~OGRXLSXDataSource()                          */
+/*                         ~OGRXLSXDataSource()                         */
 /************************************************************************/
 
 OGRXLSXDataSource::~OGRXLSXDataSource()
@@ -343,7 +343,7 @@ OGRXLSXDataSource::~OGRXLSXDataSource()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRXLSXDataSource::Close(GDALProgressFunc, void *)
@@ -403,7 +403,7 @@ const OGRLayer *OGRXLSXDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRXLSXDataSource::GetLayerCount() const
@@ -454,11 +454,11 @@ int OGRXLSXDataSource::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 int OGRXLSXDataSource::Create(const char *pszFilename,
-                              CPL_UNUSED char **papszOptions)
+                              CPL_UNUSED CSLConstList papszOptions)
 {
     bUpdated = true;
     bUpdatable = true;
@@ -481,7 +481,7 @@ static const char *GetUnprefixed(const char *pszStr)
 }
 
 /************************************************************************/
-/*                           startElementCbk()                          */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 static void XMLCALL startElementCbk(void *pUserData, const char *pszNameIn,
@@ -525,7 +525,7 @@ void OGRXLSXDataSource::startElementCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                            endElementCbk()                           */
+/*                           endElementCbk()                            */
 /************************************************************************/
 
 static void XMLCALL endElementCbk(void *pUserData, const char *pszNameIn)
@@ -570,7 +570,7 @@ void OGRXLSXDataSource::endElementCbk(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                            dataHandlerCbk()                          */
+/*                           dataHandlerCbk()                           */
 /************************************************************************/
 
 static void XMLCALL dataHandlerCbk(void *pUserData, const char *data, int nLen)
@@ -614,7 +614,7 @@ void OGRXLSXDataSource::dataHandlerCbk(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                                PushState()                           */
+/*                             PushState()                              */
 /************************************************************************/
 
 void OGRXLSXDataSource::PushState(HandlerStateEnum eVal)
@@ -630,7 +630,7 @@ void OGRXLSXDataSource::PushState(HandlerStateEnum eVal)
 }
 
 /************************************************************************/
-/*                          GetAttributeValue()                         */
+/*                         GetAttributeValue()                          */
 /************************************************************************/
 
 static const char *GetAttributeValue(const char **ppszAttr, const char *pszKey,
@@ -646,7 +646,7 @@ static const char *GetAttributeValue(const char **ppszAttr, const char *pszKey,
 }
 
 /************************************************************************/
-/*                            GetOGRFieldType()                         */
+/*                          GetOGRFieldType()                           */
 /************************************************************************/
 
 OGRFieldType OGRXLSXDataSource::GetOGRFieldType(const char *pszValue,
@@ -814,7 +814,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
 }
 
 /************************************************************************/
-/*                          startElementDefault()                       */
+/*                        startElementDefault()                         */
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementDefault(const char *pszNameIn,
@@ -857,7 +857,7 @@ void OGRXLSXDataSource::startElementCols(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                            endElementCell()                          */
+/*                           endElementCell()                           */
 /************************************************************************/
 
 void OGRXLSXDataSource::endElementCols(const char *pszNameIn)
@@ -868,7 +868,7 @@ void OGRXLSXDataSource::endElementCols(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                          startElementTable()                        */
+/*                         startElementTable()                          */
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
@@ -926,7 +926,7 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                           endElementTable()                          */
+/*                          endElementTable()                           */
 /************************************************************************/
 
 void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
@@ -979,7 +979,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                            startElementRow()                         */
+/*                          startElementRow()                           */
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
@@ -1053,7 +1053,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                            endElementRow()                           */
+/*                           endElementRow()                            */
 /************************************************************************/
 
 void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
@@ -1280,7 +1280,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                           startElementCell()                         */
+/*                          startElementCell()                          */
 /************************************************************************/
 
 void OGRXLSXDataSource::startElementCell(const char *pszNameIn,
@@ -1297,7 +1297,7 @@ void OGRXLSXDataSource::startElementCell(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                            endElementCell()                          */
+/*                           endElementCell()                           */
 /************************************************************************/
 
 void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
@@ -1324,7 +1324,7 @@ void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                           dataHandlerTextV()                         */
+/*                          dataHandlerTextV()                          */
 /************************************************************************/
 
 void OGRXLSXDataSource::dataHandlerTextV(const char *data, int nLen)
@@ -1333,7 +1333,7 @@ void OGRXLSXDataSource::dataHandlerTextV(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                              BuildLayer()                            */
+/*                             BuildLayer()                             */
 /************************************************************************/
 
 void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
@@ -1406,7 +1406,7 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
 }
 
 /************************************************************************/
-/*                          startElementSSCbk()                         */
+/*                         startElementSSCbk()                          */
 /************************************************************************/
 
 static void XMLCALL startElementSSCbk(void *pUserData, const char *pszNameIn,
@@ -1450,7 +1450,7 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                           endElementSSCbk()                          */
+/*                          endElementSSCbk()                           */
 /************************************************************************/
 
 static void XMLCALL endElementSSCbk(void *pUserData, const char *pszNameIn)
@@ -1492,7 +1492,7 @@ void OGRXLSXDataSource::endElementSSCbk(const char * /*pszNameIn*/)
 }
 
 /************************************************************************/
-/*                           dataHandlerSSCbk()                         */
+/*                          dataHandlerSSCbk()                          */
 /************************************************************************/
 
 static void XMLCALL dataHandlerSSCbk(void *pUserData, const char *data,
@@ -1533,7 +1533,7 @@ void OGRXLSXDataSource::dataHandlerSSCbk(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                          AnalyseSharedStrings()                      */
+/*                        AnalyseSharedStrings()                        */
 /************************************************************************/
 
 void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE *fpSharedStrings)
@@ -1592,7 +1592,7 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE *fpSharedStrings)
 }
 
 /************************************************************************/
-/*                        startElementWBRelsCbk()                       */
+/*                       startElementWBRelsCbk()                        */
 /************************************************************************/
 
 static void XMLCALL startElementWBRelsCbk(void *pUserData,
@@ -1626,7 +1626,7 @@ void OGRXLSXDataSource::startElementWBRelsCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                          AnalyseWorkbookRels()                       */
+/*                        AnalyseWorkbookRels()                         */
 /************************************************************************/
 
 void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
@@ -1676,7 +1676,7 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
 }
 
 /************************************************************************/
-/*                          startElementWBCbk()                         */
+/*                         startElementWBCbk()                          */
 /************************************************************************/
 
 static void XMLCALL startElementWBCbk(void *pUserData, const char *pszNameIn,
@@ -1731,7 +1731,7 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                             AnalyseWorkbook()                        */
+/*                          AnalyseWorkbook()                           */
 /************************************************************************/
 
 void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE *fpWorkbook)
@@ -1871,7 +1871,7 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                       endElementStylesCbk()                          */
+/*                        endElementStylesCbk()                         */
 /************************************************************************/
 
 static void XMLCALL endElementStylesCbk(void *pUserData, const char *pszNameIn)
@@ -1894,7 +1894,7 @@ void OGRXLSXDataSource::endElementStylesCbk(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                             AnalyseStyles()                          */
+/*                           AnalyseStyles()                            */
 /************************************************************************/
 
 void OGRXLSXDataSource::AnalyseStyles(VSILFILE *fpStyles)
@@ -1948,7 +1948,7 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE *fpStyles)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -2086,7 +2086,7 @@ OGRErr OGRXLSXDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                            WriteOverride()                           */
+/*                           WriteOverride()                            */
 /************************************************************************/
 
 static void WriteOverride(VSILFILE *fp, const char *pszPartName,
@@ -2109,7 +2109,7 @@ static const char SCHEMA_PACKAGE_RS[] =
     "http://schemas.openxmlformats.org/package/2006/relationships";
 
 /************************************************************************/
-/*                           WriteContentTypes()                        */
+/*                         WriteContentTypes()                          */
 /************************************************************************/
 
 static bool WriteContentTypes(const char *pszName, int nLayers)
@@ -2156,7 +2156,7 @@ static bool WriteContentTypes(const char *pszName, int nLayers)
 }
 
 /************************************************************************/
-/*                             WriteApp()                               */
+/*                              WriteApp()                              */
 /************************************************************************/
 
 static bool WriteApp(const char *pszName)
@@ -2202,7 +2202,7 @@ static bool WriteCore(const char *pszName)
 }
 
 /************************************************************************/
-/*                            WriteWorkbook()                           */
+/*                           WriteWorkbook()                            */
 /************************************************************************/
 
 static bool WriteWorkbook(const char *pszName, GDALDataset *poDS)
@@ -2245,7 +2245,7 @@ static bool WriteWorkbook(const char *pszName, GDALDataset *poDS)
 }
 
 /************************************************************************/
-/*                            BuildColString()                          */
+/*                           BuildColString()                           */
 /************************************************************************/
 
 static CPLString BuildColString(int nCol)
@@ -2479,7 +2479,7 @@ static bool WriteLayer(const char *pszName, OGRXLSXLayer *poLayer, int iLayer,
 }
 
 /************************************************************************/
-/*                        WriteSharedStrings()                          */
+/*                         WriteSharedStrings()                         */
 /************************************************************************/
 
 static bool WriteSharedStrings(const char *pszName,
@@ -2507,7 +2507,7 @@ static bool WriteSharedStrings(const char *pszName,
 }
 
 /************************************************************************/
-/*                           WriteStyles()                              */
+/*                            WriteStyles()                             */
 /************************************************************************/
 
 static bool WriteStyles(const char *pszName)
@@ -2574,7 +2574,7 @@ static bool WriteStyles(const char *pszName)
 }
 
 /************************************************************************/
-/*                           WriteWorkbookRels()                        */
+/*                         WriteWorkbookRels()                          */
 /************************************************************************/
 
 static bool WriteWorkbookRels(const char *pszName, int nLayers)
@@ -2607,7 +2607,7 @@ static bool WriteWorkbookRels(const char *pszName, int nLayers)
 }
 
 /************************************************************************/
-/*                             WriteDotRels()                           */
+/*                            WriteDotRels()                            */
 /************************************************************************/
 
 static bool WriteDotRels(const char *pszName)
@@ -2637,7 +2637,7 @@ static bool WriteDotRels(const char *pszName)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)

@@ -227,7 +227,7 @@ static inline const char *GetTimestampTimezone(const char *format)
 }
 
 /************************************************************************/
-/*                            TestBit()                                 */
+/*                              TestBit()                               */
 /************************************************************************/
 
 inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
@@ -236,7 +236,7 @@ inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                            SetBit()                                  */
+/*                               SetBit()                               */
 /************************************************************************/
 
 inline void SetBit(uint8_t *pabyData, size_t nIdx)
@@ -245,7 +245,7 @@ inline void SetBit(uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                           UnsetBit()                                 */
+/*                              UnsetBit()                              */
 /************************************************************************/
 
 inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
@@ -254,7 +254,7 @@ inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                          DefaultReleaseSchema()                      */
+/*                        DefaultReleaseSchema()                        */
 /************************************************************************/
 
 static void OGRLayerReleaseSchema(struct ArrowSchema *schema,
@@ -316,7 +316,7 @@ void OGRLayer::ReleaseSchema(struct ArrowSchema *schema)
 }
 
 /************************************************************************/
-/*                        AddDictToSchema()                             */
+/*                          AddDictToSchema()                           */
 /************************************************************************/
 
 static void AddDictToSchema(struct ArrowSchema *psChild,
@@ -364,7 +364,7 @@ static void AddDictToSchema(struct ArrowSchema *psChild,
 }
 
 /************************************************************************/
-/*                     DefaultGetArrowSchema()                          */
+/*                       DefaultGetArrowSchema()                        */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_schema() callback.
@@ -841,7 +841,7 @@ OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                         StaticGetArrowSchema()                       */
+/*                        StaticGetArrowSchema()                        */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_schema() callback.
@@ -867,7 +867,7 @@ int OGRLayer::StaticGetArrowSchema(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                         DefaultReleaseArray()                        */
+/*                        DefaultReleaseArray()                         */
 /************************************************************************/
 
 static void OGRLayerDefaultReleaseArray(struct ArrowArray *array)
@@ -915,7 +915,7 @@ void OGRLayer::ReleaseArray(struct ArrowArray *array)
 }
 
 /************************************************************************/
-/*                          IsValidField()                              */
+/*                            IsValidField()                            */
 /************************************************************************/
 
 static inline bool IsValidField(const OGRField *psRawField)
@@ -929,7 +929,7 @@ static inline bool IsValidField(const OGRField *psRawField)
 }
 
 /************************************************************************/
-/*                    AllocValidityBitmap()                             */
+/*                        AllocValidityBitmap()                         */
 /************************************************************************/
 
 static uint8_t *AllocValidityBitmap(size_t nSize)
@@ -945,7 +945,7 @@ static uint8_t *AllocValidityBitmap(size_t nSize)
 }
 
 /************************************************************************/
-/*                           FillArray()                                */
+/*                             FillArray()                              */
 /************************************************************************/
 
 template <class T, typename TMember>
@@ -992,7 +992,7 @@ static bool FillArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                         FillBoolArray()                              */
+/*                           FillBoolArray()                            */
 /************************************************************************/
 
 template <typename TMember>
@@ -1036,7 +1036,7 @@ static bool FillBoolArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillListArray()                               */
+/*                           FillListArray()                            */
 /************************************************************************/
 
 struct GetFromIntegerList
@@ -1263,7 +1263,7 @@ FillListArrayBool(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillStringArray()                             */
+/*                          FillStringArray()                           */
 /************************************************************************/
 
 template <class T>
@@ -1455,7 +1455,7 @@ after_loop:
 }
 
 /************************************************************************/
-/*                        FillBinaryArray()                             */
+/*                          FillBinaryArray()                           */
 /************************************************************************/
 
 template <class T>
@@ -1590,7 +1590,7 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                      FillWKBGeometryArray()                          */
+/*                        FillWKBGeometryArray()                        */
 /************************************************************************/
 
 template <class T>
@@ -1689,7 +1689,7 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillDateArray()                               */
+/*                           FillDateArray()                            */
 /************************************************************************/
 
 static bool FillDateArray(struct ArrowArray *psChild,
@@ -1741,7 +1741,7 @@ static bool FillDateArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillTimeArray()                               */
+/*                           FillTimeArray()                            */
 /************************************************************************/
 
 static bool FillTimeArray(struct ArrowArray *psChild,
@@ -1790,7 +1790,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                       FillDateTimeArray()                            */
+/*                         FillDateTimeArray()                          */
 /************************************************************************/
 
 static bool
@@ -1951,7 +1951,7 @@ static bool FillDateTimeArrayWithTimeZone(
 }
 
 /************************************************************************/
-/*                   FillDateTimeArrayAsString()                        */
+/*                     FillDateTimeArrayAsString()                      */
 /************************************************************************/
 
 static size_t
@@ -2044,7 +2044,7 @@ FillDateTimeArrayAsString(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                          GetNextArrowArray()                         */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_next() callback.
@@ -2517,7 +2517,7 @@ error:
 }
 
 /************************************************************************/
-/*                       StaticGetNextArrowArray()                      */
+/*                      StaticGetNextArrowArray()                       */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_next() callback.
@@ -2543,7 +2543,7 @@ int OGRLayer::StaticGetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                            ReleaseStream()                           */
+/*                           ReleaseStream()                            */
 /************************************************************************/
 
 /** Release a ArrowArrayStream.
@@ -2570,7 +2570,7 @@ void OGRLayer::ReleaseStream(struct ArrowArrayStream *stream)
 }
 
 /************************************************************************/
-/*                     GetLastErrorArrowArrayStream()                   */
+/*                    GetLastErrorArrowArrayStream()                    */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_last_error() callback.
@@ -2587,7 +2587,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 /** Get a Arrow C stream.
@@ -2797,7 +2797,7 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                       OGR_L_GetArrowStream()                         */
+/*                        OGR_L_GetArrowStream()                        */
 /************************************************************************/
 
 /** Get a Arrow C stream.
@@ -2946,7 +2946,7 @@ YES.</li>
  * @since GDAL 3.6
  */
 bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
-                          char **papszOptions)
+                          CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetArrowStream", false);
     VALIDATE_POINTER1(out_stream, "OGR_L_GetArrowStream", false);
@@ -2956,7 +2956,7 @@ bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                     OGRParseArrowMetadata()                          */
+/*                       OGRParseArrowMetadata()                        */
 /************************************************************************/
 
 std::map<std::string, std::string>
@@ -2989,7 +2989,7 @@ OGRParseArrowMetadata(const char *pabyMetadata)
 }
 
 /************************************************************************/
-/*                        ParseDecimalFormat()                          */
+/*                         ParseDecimalFormat()                         */
 /************************************************************************/
 
 static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
@@ -3031,7 +3031,7 @@ static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
 }
 
 /************************************************************************/
-/*                   GetErrorIfUnsupportedDecimal()                     */
+/*                    GetErrorIfUnsupportedDecimal()                    */
 /************************************************************************/
 
 static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
@@ -3053,7 +3053,7 @@ static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
 }
 
 /************************************************************************/
-/*                     IsArrowTimeStampWithOffsetField()                */
+/*                  IsArrowTimeStampWithOffsetField()                   */
 /************************************************************************/
 
 static bool IsArrowTimeStampWithOffsetField(const struct ArrowSchema *schema)
@@ -3075,7 +3075,7 @@ static bool IsArrowTimeStampWithOffsetField(const struct ArrowSchema *schema)
 }
 
 /************************************************************************/
-/*                            IsHandledSchema()                         */
+/*                          IsHandledSchema()                           */
 /************************************************************************/
 
 static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
@@ -3198,7 +3198,7 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  OGRLayer::CanPostFilterArrowArray()                 */
+/*                 OGRLayer::CanPostFilterArrowArray()                  */
 /************************************************************************/
 
 /** Whether the PostFilterArrowArray() can work on the schema to remove
@@ -3287,7 +3287,7 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
 
 #if 0
 /************************************************************************/
-/*                      CheckValidityBuffer()                           */
+/*                        CheckValidityBuffer()                         */
 /************************************************************************/
 
 static void CheckValidityBuffer(const struct ArrowArray *array)
@@ -3313,7 +3313,7 @@ static void CheckValidityBuffer(const struct ArrowArray *array)
 #endif
 
 /************************************************************************/
-/*                    CompactValidityBuffer()                           */
+/*                       CompactValidityBuffer()                        */
 /************************************************************************/
 
 static void CompactValidityBuffer(
@@ -3351,7 +3351,7 @@ static void CompactValidityBuffer(
 }
 
 /************************************************************************/
-/*                       CompactBoolArray()                             */
+/*                          CompactBoolArray()                          */
 /************************************************************************/
 
 static void CompactBoolArray(const struct ArrowSchema *schema,
@@ -3425,7 +3425,7 @@ static void CompactPrimitiveArray(
 }
 
 /************************************************************************/
-/*                    CompactStringOrBinaryArray()                      */
+/*                     CompactStringOrBinaryArray()                     */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3477,7 +3477,7 @@ static void CompactStringOrBinaryArray(
 }
 
 /************************************************************************/
-/*                    CompactFixedWidthArray()                          */
+/*                       CompactFixedWidthArray()                       */
 /************************************************************************/
 
 static void
@@ -3517,7 +3517,7 @@ CompactFixedWidthArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactStructArray()                           */
+/*                         CompactStructArray()                         */
 /************************************************************************/
 
 static bool CompactArray(const struct ArrowSchema *schema,
@@ -3575,7 +3575,7 @@ static bool CompactStructArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     InvalidateNullCountRec()                         */
+/*                       InvalidateNullCountRec()                       */
 /************************************************************************/
 
 static void InvalidateNullCountRec(const struct ArrowSchema *schema,
@@ -3588,7 +3588,7 @@ static void InvalidateNullCountRec(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactListArray()                             */
+/*                          CompactListArray()                          */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3745,7 +3745,7 @@ CompactFixedSizeListArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactMapArray()                              */
+/*                          CompactMapArray()                           */
 /************************************************************************/
 
 static bool CompactMapArray(const struct ArrowSchema *schema,
@@ -3758,7 +3758,7 @@ static bool CompactMapArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                           CompactArray()                             */
+/*                            CompactArray()                            */
 /************************************************************************/
 
 static bool CompactArray(const struct ArrowSchema *schema,
@@ -3877,7 +3877,7 @@ static bool CompactArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  FillValidityArrayFromWKBArray()                     */
+/*                   FillValidityArrayFromWKBArray()                    */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3917,7 +3917,7 @@ FillValidityArrayFromWKBArray(struct ArrowArray *array, const OGRLayer *poLayer,
 }
 
 /************************************************************************/
-/*               ArrowTimestampToOGRDateTime()                          */
+/*                    ArrowTimestampToOGRDateTime()                     */
 /************************************************************************/
 
 static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
@@ -3968,7 +3968,7 @@ static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
 }
 
 /************************************************************************/
-/*                 BuildMapFieldNameToArrowPath()                       */
+/*                    BuildMapFieldNameToArrowPath()                    */
 /************************************************************************/
 
 static void
@@ -3998,7 +3998,7 @@ BuildMapFieldNameToArrowPath(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                      FillFieldList()                                 */
+/*                           FillFieldList()                            */
 /************************************************************************/
 
 template <typename ListOffsetType, typename ArrowType,
@@ -4024,7 +4024,7 @@ inline static void FillFieldList(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                      FillFieldListFromBool()                         */
+/*                       FillFieldListFromBool()                        */
 /************************************************************************/
 
 template <typename ListOffsetType>
@@ -4048,7 +4048,7 @@ FillFieldListFromBool(const struct ArrowArray *array, int iOGRFieldIdx,
 }
 
 /************************************************************************/
-/*                    FillFieldListFromHalfFloat()                      */
+/*                     FillFieldListFromHalfFloat()                     */
 /************************************************************************/
 
 template <typename ListOffsetType>
@@ -4075,7 +4075,7 @@ inline static void FillFieldListFromHalfFloat(
 }
 
 /************************************************************************/
-/*                    FillFieldListFromString()                         */
+/*                      FillFieldListFromString()                       */
 /************************************************************************/
 
 template <typename ListOffsetType, typename StringOffsetType>
@@ -4105,7 +4105,7 @@ inline static void FillFieldListFromString(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                         FillFieldFixedSizeList()                     */
+/*                       FillFieldFixedSizeList()                       */
 /************************************************************************/
 
 template <typename ArrowType, typename OGRType = ArrowType>
@@ -4220,7 +4220,7 @@ static std::string GetString(const struct ArrowArray *array, const size_t nIdx)
 }
 
 /************************************************************************/
-/*                       GetBinaryAsBase64()                            */
+/*                         GetBinaryAsBase64()                          */
 /************************************************************************/
 
 template <class OffsetType>
@@ -4245,7 +4245,7 @@ static std::string GetBinaryAsBase64(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                   GetValueFixedWithBinaryAsBase64()                  */
+/*                  GetValueFixedWithBinaryAsBase64()                   */
 /************************************************************************/
 
 static std::string
@@ -4266,7 +4266,7 @@ static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
                                      const size_t nIdx);
 
 /************************************************************************/
-/*                               AddToArray()                           */
+/*                             AddToArray()                             */
 /************************************************************************/
 
 static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
@@ -4324,7 +4324,7 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                         GetListAsJSON()                              */
+/*                           GetListAsJSON()                            */
 /************************************************************************/
 
 template <class OffsetType>
@@ -4358,7 +4358,7 @@ static CPLJSONArray GetListAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     GetFixedSizeListAsJSON()                         */
+/*                       GetFixedSizeListAsJSON()                       */
 /************************************************************************/
 
 static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
@@ -4389,7 +4389,7 @@ static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                              AddToDict()                             */
+/*                             AddToDict()                              */
 /************************************************************************/
 
 static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
@@ -4449,7 +4449,7 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
 }
 
 /************************************************************************/
-/*                         GetMapAsJSON()                               */
+/*                            GetMapAsJSON()                            */
 /************************************************************************/
 
 static CPLJSONObject GetMapAsJSON(const struct ArrowSchema *schema,
@@ -4515,7 +4515,7 @@ static CPLJSONObject GetMapAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                        GetStructureAsJSON()                          */
+/*                         GetStructureAsJSON()                         */
 /************************************************************************/
 
 static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
@@ -4545,7 +4545,7 @@ static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                        GetObjectAsJSON()                             */
+/*                          GetObjectAsJSON()                           */
 /************************************************************************/
 
 static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
@@ -5030,7 +5030,7 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
 }
 
 /************************************************************************/
-/*                 FillValidityArrayFromAttrQuery()                     */
+/*                   FillValidityArrayFromAttrQuery()                   */
 /************************************************************************/
 
 static size_t FillValidityArrayFromAttrQuery(
@@ -5432,7 +5432,7 @@ static size_t FillValidityArrayFromAttrQuery(
 }
 
 /************************************************************************/
-/*                  OGRLayer::PostFilterArrowArray()                    */
+/*                   OGRLayer::PostFilterArrowArray()                   */
 /************************************************************************/
 
 /** Remove rows that aren't selected by the spatial or attribute filter.
@@ -5813,7 +5813,7 @@ bool OGRCloneArrowArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     OGRCloneArrowMetadata()                          */
+/*                       OGRCloneArrowMetadata()                        */
 /************************************************************************/
 
 static void *OGRCloneArrowMetadata(const void *pMetadata)
@@ -5852,7 +5852,7 @@ static void *OGRCloneArrowMetadata(const void *pMetadata)
 }
 
 /************************************************************************/
-/*                          OGRCloneArrowSchema()                       */
+/*                        OGRCloneArrowSchema()                         */
 /************************************************************************/
 
 /** Full/deep copy of a schema.
@@ -6207,7 +6207,7 @@ bool OGRLayer::IsArrowSchemaSupported(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  OGR_L_IsArrowSchemaSupported()                      */
+/*                    OGR_L_IsArrowSchemaSupported()                    */
 /************************************************************************/
 
 /** Returns whether the provided ArrowSchema is supported for writing.
@@ -6230,7 +6230,8 @@ bool OGRLayer::IsArrowSchemaSupported(const struct ArrowSchema *schema,
  */
 bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
                                   const struct ArrowSchema *schema,
-                                  char **papszOptions, char **ppszErrorMsg)
+                                  CSLConstList papszOptions,
+                                  char **ppszErrorMsg)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -6252,7 +6253,7 @@ bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
 }
 
 /************************************************************************/
-/*                     IsKnownCodedFieldDomain()                        */
+/*                      IsKnownCodedFieldDomain()                       */
 /************************************************************************/
 
 static bool IsKnownCodedFieldDomain(OGRLayer *poLayer,
@@ -6667,7 +6668,7 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  */
 bool OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
                                       const struct ArrowSchema *schema,
-                                      char **papszOptions)
+                                      CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -6677,7 +6678,7 @@ bool OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
 }
 
 /************************************************************************/
-/*                           BuildOGRFieldInfo()                        */
+/*                         BuildOGRFieldInfo()                          */
 /************************************************************************/
 
 constexpr int FID_COLUMN_SPECIAL_OGR_FIELD_IDX = -2;
@@ -7252,7 +7253,7 @@ static inline uint64_t GetUInt64Value(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                         GetWorkingBufferSize()                       */
+/*                        GetWorkingBufferSize()                        */
 /************************************************************************/
 
 static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
@@ -7331,7 +7332,7 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                              FillField()                             */
+/*                             FillField()                              */
 /************************************************************************/
 
 template <typename ArrowType, typename OGRType = ArrowType>
@@ -7431,7 +7432,7 @@ FillFieldBinary(const struct ArrowArray *array, int iOGRFieldIdx,
 }
 
 /************************************************************************/
-/*                             FillFeature()                            */
+/*                            FillFeature()                             */
 /************************************************************************/
 
 static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
@@ -7785,7 +7786,7 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                    OGRLayer::WriteArrowBatch()                       */
+/*                     OGRLayer::WriteArrowBatch()                      */
 /************************************************************************/
 
 // clang-format off
@@ -8325,7 +8326,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                      OGR_L_WriteArrowBatch()                         */
+/*                       OGR_L_WriteArrowBatch()                        */
 /************************************************************************/
 
 // clang-format off
@@ -8478,7 +8479,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 // clang-format on
 
 bool OGR_L_WriteArrowBatch(OGRLayerH hLayer, const struct ArrowSchema *schema,
-                           struct ArrowArray *array, char **papszOptions)
+                           struct ArrowArray *array, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);

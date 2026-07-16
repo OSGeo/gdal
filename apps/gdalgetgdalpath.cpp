@@ -31,7 +31,7 @@
 #include <cassert>
 
 /************************************************************************/
-/*                   GDALGetGDALPathDLIterateCbk()                      */
+/*                    GDALGetGDALPathDLIterateCbk()                     */
 /************************************************************************/
 
 #if HAVE_DL_ITERATE_PHDR && !defined(STATIC_BUILD)
@@ -50,7 +50,7 @@ static int GDALGetGDALPathDLIterateCbk(struct dl_phdr_info *info,
 #endif
 
 /************************************************************************/
-/*                         GDALGetGDALPath()                            */
+/*                          GDALGetGDALPath()                           */
 /************************************************************************/
 
 /** Return the path of the "gdal" binary, or an empty string if it cannot be

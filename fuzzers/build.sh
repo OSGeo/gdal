@@ -170,6 +170,9 @@ curl -L https://github.com/beltoforion/muparser/archive/refs/tags/v2.3.5.tar.gz 
   mv muparser-2.3.5 muparser && \
   rm v2.3.5.tar.gz
 
+rm -rf libaec
+git clone --depth 1 --branch fix_ossfuzz_478301093 https://github.com/rouault/libaec
+
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
@@ -312,6 +315,19 @@ make -j$(nproc) -s
 make install
 cd ..
 
+# build libaec.a
+cd libaec
+rm -rf build
+mkdir build
+cd build
+cmake .. -DBUILD_STATIC_LIBS=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=$SRC/install
+make -j$(nproc) -s
+make install
+rm -f /usr/lib/$ARCHITECTURE-linux-gnu/libaec.*
+rm -f /usr/lib/$ARCHITECTURE-linux-gnu/libsz.*
+rm -f $SRC/install/lib/libaec.so*
+rm -f $SRC/install/lib/libsz.so*
+cd ../..
 
 if [ "$ARCHITECTURE" = "x86_64" ]; then
   # build libnetcdf.a

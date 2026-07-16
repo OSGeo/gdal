@@ -118,12 +118,12 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 }
 
 /************************************************************************/
-/*                  CanIRasterIOBeForwardedToEachSource()               */
+/*                CanIRasterIOBeForwardedToEachSource()                 */
 /************************************************************************/
 
 bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const
+    int nBufXSize, int nBufYSize, const GDALRasterIOExtraArg *psExtraArg) const
 {
     const auto IsNonNearestInvolved = [this, psExtraArg]
     {
@@ -131,12 +131,12 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
         {
             return true;
         }
-        for (auto &poSource : m_papoSources)
+        for (const auto &poSource : m_papoSources)
         {
             if (poSource->GetType() == VRTComplexSource::GetTypeStatic())
             {
-                auto *const poComplexSource =
-                    static_cast<VRTComplexSource *>(poSource.get());
+                const auto *const poComplexSource =
+                    static_cast<const VRTComplexSource *>(poSource.get());
                 const auto &osSourceResampling =
                     poComplexSource->GetResampling();
                 if (!osSourceResampling.empty() &&
@@ -273,7 +273,7 @@ bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
 }
 
 /************************************************************************/
-/*                      CanMultiThreadRasterIO()                        */
+/*                       CanMultiThreadRasterIO()                       */
 /************************************************************************/
 
 bool VRTSourcedRasterBand::CanMultiThreadRasterIO(
@@ -382,7 +382,7 @@ bool VRTSourcedRasterBand::CanMultiThreadRasterIO(
 }
 
 /************************************************************************/
-/*                 VRTSourcedRasterBandRasterIOJob                      */
+/*                   VRTSourcedRasterBandRasterIOJob                    */
 /************************************************************************/
 
 /** Structure used to declare a threaded job to satisfy IRasterIO()
@@ -413,7 +413,7 @@ struct VRTSourcedRasterBandRasterIOJob
 };
 
 /************************************************************************/
-/*                 VRTSourcedRasterBandRasterIOJob::Func()              */
+/*               VRTSourcedRasterBandRasterIOJob::Func()                */
 /************************************************************************/
 
 void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
@@ -458,13 +458,17 @@ void VRTSourcedRasterBandRasterIOJob::Func(void *pData)
 }
 
 /************************************************************************/
-/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/*                MayMultiBlockReadingBeMultiThreaded()                 */
 /************************************************************************/
 
 bool VRTSourcedRasterBand::MayMultiBlockReadingBeMultiThreaded() const
 {
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.dfXOff = 0;
+    sExtraArg.dfYOff = 0;
+    sExtraArg.dfXSize = nRasterXSize;
+    sExtraArg.dfYSize = nRasterYSize;
     int nContributingSources = 0;
     auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
     return l_poDS &&
@@ -796,7 +800,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                         IGetDataCoverageStatus()                     */
+/*                       IGetDataCoverageStatus()                       */
 /************************************************************************/
 
 int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
@@ -981,7 +985,7 @@ CPLErr VRTSourcedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                        CPLGettimeofday()                             */
+/*                          CPLGettimeofday()                           */
 /************************************************************************/
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -1012,7 +1016,7 @@ static int CPLGettimeofday(struct CPLTimeVal *tp, void * /* timezonep*/)
 #endif
 
 /************************************************************************/
-/*                    CanUseSourcesMinMaxImplementations()              */
+/*                 CanUseSourcesMinMaxImplementations()                 */
 /************************************************************************/
 
 bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
@@ -1232,7 +1236,7 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/* IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange() */
+/*IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange() */
 /************************************************************************/
 
 /* Returns true if the VRT raster band consists of non-overlapping simple
@@ -1347,7 +1351,7 @@ bool VRTSourcedRasterBand::
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
@@ -2269,7 +2273,7 @@ CPLErr VRTSourcedRasterBand::AddSource(std::unique_ptr<VRTSource> poNewSource)
 /*! @endcond */
 
 /************************************************************************/
-/*                              VRTAddSource()                          */
+/*                            VRTAddSource()                            */
 /************************************************************************/
 
 /**
@@ -2398,7 +2402,7 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML(const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                     SkipBufferInitialization()                       */
+/*                      SkipBufferInitialization()                      */
 /************************************************************************/
 
 bool VRTSourcedRasterBand::SkipBufferInitialization()
@@ -2716,7 +2720,7 @@ CPLErr VRTSourcedRasterBand::AddComplexSource(
 /*! @endcond */
 
 /************************************************************************/
-/*                         VRTAddComplexSource()                        */
+/*                        VRTAddComplexSource()                         */
 /************************************************************************/
 
 /**
@@ -2787,7 +2791,7 @@ CPLErr CPL_STDCALL VRTAddFuncSource(VRTSourcedRasterBandH hVRTBand,
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **VRTSourcedRasterBand::GetMetadataDomainList()
@@ -3119,7 +3123,7 @@ CPLErr VRTSourcedRasterBand::SetMetadata(CSLConstList papszNewMD,
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 void VRTSourcedRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,
@@ -3134,7 +3138,7 @@ void VRTSourcedRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int VRTSourcedRasterBand::CloseDependentDatasets()
@@ -3150,7 +3154,7 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                               FlushCache()                           */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::FlushCache(bool bAtClosing)
@@ -3164,7 +3168,7 @@ CPLErr VRTSourcedRasterBand::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                           RemoveCoveredSources()                     */
+/*                        RemoveCoveredSources()                        */
 /************************************************************************/
 
 /** Remove sources that are covered by other sources.

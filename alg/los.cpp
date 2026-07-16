@@ -133,7 +133,7 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
 }
 
 /************************************************************************/
-/*                        GDALIsLineOfSightVisible()                    */
+/*                      GDALIsLineOfSightVisible()                      */
 /************************************************************************/
 
 /**

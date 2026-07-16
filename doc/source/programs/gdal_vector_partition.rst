@@ -22,7 +22,8 @@ Description
 
 :program:`gdal vector partition` dispatches features into different
 files, depending on the values the feature take on a subset of attribute or
-geometry fields specified by the user.
+geometry fields specified by the user and/or by limiting each output layer
+to a maximum number of features and/or a maximum file size.
 
 Two partitioning schemes are available:
 
@@ -62,7 +63,7 @@ Program-Specific Options
 
 .. option:: --field <FIELD-NAME>
 
-    Fields(s) on which to partition. [required]
+    Fields(s) on which to partition
 
     Only attribute fields of type String, Integer and Integer64 are allowed.
     The order into which fields are specified matter to determine the directory
@@ -72,6 +73,10 @@ Program-Specific Options
     being the generic name for the first geometry field). Partitioning on
     geometry fields is done on the geometry type. This can be useful for file
     formats where a single geometry type per layer is allowed.
+
+    Starting with GDAL 3.13, :option:`--field` is no longer required, but when
+    it is not specified, :option:`--feature-limit` and/or :option:`--max-file-size`
+    must be specified.
 
 .. option:: --max-file-size <MAX-FILE-SIZE>
 
@@ -168,3 +173,17 @@ Examples
    .. code-block:: bash
 
         $ gdal vector pipeline ! read input.gpkg ! set-geom-type --multi ! partition out_directory --scheme flat --field OGR_GEOMETRY --format "ESRI Shapefile"
+
+.. example::
+   :title: Split a file into files with at most 100,000 features.
+
+   .. code-block:: bash
+
+        $ gdal vector partition world_cities.gpkg out_directory --feature-limit 100000 --scheme flat --format Parquet
+
+.. example::
+   :title: Sort a file spatially and split it into files with at most 100,000 features.
+
+   .. code-block:: bash
+
+        $ gdal vector pipeline read world_cities.gpkg ! sort ! partition out_directory --feature-limit 100000 --scheme flat --format Parquet

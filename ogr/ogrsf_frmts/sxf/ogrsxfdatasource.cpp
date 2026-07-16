@@ -33,7 +33,7 @@ constexpr int MIN_EPSG = 1000;
 constexpr int MAX_EPSG = 32768;
 
 /************************************************************************/
-/*                         OGRSXFDataSource()                           */
+/*                          OGRSXFDataSource()                          */
 /************************************************************************/
 
 OGRSXFDataSource::OGRSXFDataSource()
@@ -43,7 +43,7 @@ OGRSXFDataSource::OGRSXFDataSource()
 }
 
 /************************************************************************/
-/*                          ~OGRSXFDataSource()                         */
+/*                         ~OGRSXFDataSource()                          */
 /************************************************************************/
 
 OGRSXFDataSource::~OGRSXFDataSource()
@@ -66,7 +66,7 @@ OGRSXFDataSource::~OGRSXFDataSource()
 }
 
 /************************************************************************/
-/*                     CloseFile()                                      */
+/*                             CloseFile()                              */
 /************************************************************************/
 void OGRSXFDataSource::CloseFile()
 {

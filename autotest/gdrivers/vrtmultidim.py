@@ -2084,3 +2084,129 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
         for y in range(10, 20):
             info = array.GetRawBlockInfo([y, 0])
             assert "out_top.nc" in info.GetFilename()
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_by_ref():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <DataType>Float32</DataType>
+            <Overviews>
+                <ArrayFullName>/ar2</ArrayFullName>
+            </Overviews>
+        </Array>
+        <Array name="ar2">
+            <DataType>Float32</DataType>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    assert ar.GetOverviewCount() == 1
+    assert ar.GetOverview(-1) is None
+    assert ar.GetOverview(1) is None
+    assert ar.GetOverview(0).GetFullName() == "/ar2"
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_by_ref_wrong():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <DataType>Float32</DataType>
+            <Overviews>
+                <ArrayFullName>/wrong</ArrayFullName>
+            </Overviews>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    with pytest.raises(
+        Exception, match="Cannot resolve overview full name '/wrong' to an actual array"
+    ):
+        ar.GetOverview(0)
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_inline():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <Dimension name="Y" size="40"/>
+            <Dimension name="X" size="20"/>
+            <DataType>Float32</DataType>
+            <Overviews>
+                <Array name="ar2">
+                    <Dimension name="Y_reduced" size="20"/>
+                    <Dimension name="X_reduced" size="10"/>
+                    <DataType>Float32</DataType>
+                </Array>
+            </Overviews>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    assert ar.GetOverviewCount() == 1
+    assert ar.GetOverview(0).GetName() == "ar2"
+
+    classic_ds = ar.AsClassicDataset(1, 0)
+    assert classic_ds.RasterYSize == 40
+    assert classic_ds.RasterXSize == 20
+    band = classic_ds.GetRasterBand(1)
+    assert band.GetOverviewCount() == 1
+    assert band.GetOverview(-1) is None
+    assert band.GetOverview(1) is None
+    assert band.GetOverview(0).YSize == 20
+    assert band.GetOverview(0).XSize == 10
+
+    ar_from_classic_ds = classic_ds.AsMDArray()
+    assert ar_from_classic_ds.GetOverviewCount() == 1
+    assert ar_from_classic_ds.GetOverview(-1) is None
+    assert ar_from_classic_ds.GetOverview(1) is None
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[0].GetSize() == 1
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[1].GetSize() == 20
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[2].GetSize() == 10
+
+    ar_from_band = band.AsMDArray()
+    assert ar_from_band.GetOverviewCount() == 1
+    assert ar_from_band.GetOverview(-1) is None
+    assert ar_from_band.GetOverview(1) is None
+    assert ar_from_band.GetOverview(0).GetDimensions()[0].GetSize() == 20
+    assert ar_from_band.GetOverview(0).GetDimensions()[1].GetSize() == 10
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_inline_wrong():
+
+    with pytest.raises(Exception, match="Missing name attribute on Array"):
+        gdal.OpenEx(
+            """<VRTDataset>
+        <Group name="/">
+            <Array name="ar">
+                <DataType>Float32</DataType>
+                <Overviews>
+                    <Array/>
+                </Overviews>
+            </Array>
+        </Group>
+    </VRTDataset>""",
+            gdal.OF_MULTIDIM_RASTER,
+        )

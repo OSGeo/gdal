@@ -63,7 +63,7 @@ std::shared_ptr<GDALAttribute> TileDBAttributeHolder::CreateAttributeImpl(
 }
 
 /************************************************************************/
-/*                TileDBAttributeHolder::CreateAttribute()              */
+/*               TileDBAttributeHolder::CreateAttribute()               */
 /************************************************************************/
 
 /* static */ std::shared_ptr<GDALAttribute>
@@ -102,7 +102,7 @@ TileDBAttributeHolder::CreateAttribute(
 }
 
 /************************************************************************/
-/*                TileDBAttributeHolder::GetAttributeImpl()             */
+/*              TileDBAttributeHolder::GetAttributeImpl()               */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -141,7 +141,7 @@ TileDBAttributeHolder::GetAttributeImpl(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                       IsSpecialAttribute()                           */
+/*                         IsSpecialAttribute()                         */
 /************************************************************************/
 
 static bool IsSpecialAttribute(const std::string &osName)
@@ -153,7 +153,7 @@ static bool IsSpecialAttribute(const std::string &osName)
 }
 
 /************************************************************************/
-/*                TileDBAttributeHolder::GetAttributesImpl()            */
+/*              TileDBAttributeHolder::GetAttributesImpl()              */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -237,7 +237,7 @@ bool TileDBAttributeHolder::DeleteAttributeImpl(const std::string &osName,
 }
 
 /************************************************************************/
-/*                TileDBAttributeHolder::GetMetadata()                  */
+/*                 TileDBAttributeHolder::GetMetadata()                 */
 /************************************************************************/
 
 bool TileDBAttributeHolder::GetMetadata(const std::string &key,
@@ -261,7 +261,7 @@ bool TileDBAttributeHolder::GetMetadata(const std::string &key,
 }
 
 /************************************************************************/
-/*                TileDBAttributeHolder::PutMetadata()                  */
+/*                 TileDBAttributeHolder::PutMetadata()                 */
 /************************************************************************/
 
 bool TileDBAttributeHolder::PutMetadata(const std::string &key,

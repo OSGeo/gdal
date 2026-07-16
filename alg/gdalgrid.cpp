@@ -40,7 +40,7 @@
 constexpr double TO_RADIANS = M_PI / 180.0;
 
 /************************************************************************/
-/*                        GDALGridGetPointBounds()                      */
+/*                       GDALGridGetPointBounds()                       */
 /************************************************************************/
 
 static void GDALGridGetPointBounds(const void *hFeature, CPLRectObj *pBounds)
@@ -57,7 +57,7 @@ static void GDALGridGetPointBounds(const void *hFeature, CPLRectObj *pBounds)
 }
 
 /************************************************************************/
-/*                   GDALGridInverseDistanceToAPower()                  */
+/*                  GDALGridInverseDistanceToAPower()                   */
 /************************************************************************/
 
 /**
@@ -188,7 +188,7 @@ CPLErr GDALGridInverseDistanceToAPower(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                   GDALGridInverseDistanceToAPowerNearestNeighbor()   */
+/*           GDALGridInverseDistanceToAPowerNearestNeighbor()           */
 /************************************************************************/
 
 /**
@@ -340,7 +340,7 @@ CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
 }
 
 /************************************************************************/
-/*        GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant()   */
+/*     GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant()      */
 /************************************************************************/
 
 /**
@@ -585,7 +585,7 @@ CPLErr GDALGridInverseDistanceToAPowerNoSearch(
 }
 
 /************************************************************************/
-/*                        GDALGridMovingAverage()                       */
+/*                       GDALGridMovingAverage()                        */
 /************************************************************************/
 
 /**
@@ -726,7 +726,7 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                 GDALGridMovingAveragePerQuadrant()                   */
+/*                  GDALGridMovingAveragePerQuadrant()                  */
 /************************************************************************/
 
 /**
@@ -850,7 +850,7 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
 }
 
 /************************************************************************/
-/*                        GDALGridNearestNeighbor()                     */
+/*                      GDALGridNearestNeighbor()                       */
 /************************************************************************/
 
 /**
@@ -995,7 +995,7 @@ CPLErr GDALGridNearestNeighbor(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                      GDALGridDataMetricMinimum()                     */
+/*                     GDALGridDataMetricMinimum()                      */
 /************************************************************************/
 
 /**
@@ -1272,7 +1272,7 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
 }
 
 /************************************************************************/
-/*               GDALGridDataMetricMinimumPerQuadrant()                 */
+/*                GDALGridDataMetricMinimumPerQuadrant()                */
 /************************************************************************/
 
 /**
@@ -1289,7 +1289,7 @@ static CPLErr GDALGridDataMetricMinimumPerQuadrant(
 }
 
 /************************************************************************/
-/*                      GDALGridDataMetricMaximum()                     */
+/*                     GDALGridDataMetricMaximum()                      */
 /************************************************************************/
 
 /**
@@ -1428,7 +1428,7 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*               GDALGridDataMetricMaximumPerQuadrant()                 */
+/*                GDALGridDataMetricMaximumPerQuadrant()                */
 /************************************************************************/
 
 /**
@@ -1445,7 +1445,7 @@ static CPLErr GDALGridDataMetricMaximumPerQuadrant(
 }
 
 /************************************************************************/
-/*                       GDALGridDataMetricRange()                      */
+/*                      GDALGridDataMetricRange()                       */
 /************************************************************************/
 
 /**
@@ -1589,7 +1589,7 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                  GDALGridDataMetricRangePerQuadrant()                */
+/*                 GDALGridDataMetricRangePerQuadrant()                 */
 /************************************************************************/
 
 /**
@@ -1719,7 +1719,7 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
 }
 
 /************************************************************************/
-/*                       GDALGridDataMetricCount()                      */
+/*                      GDALGridDataMetricCount()                       */
 /************************************************************************/
 
 /**
@@ -1851,7 +1851,7 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                  GDALGridDataMetricCountPerQuadrant()                */
+/*                 GDALGridDataMetricCountPerQuadrant()                 */
 /************************************************************************/
 
 /**
@@ -2115,7 +2115,7 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
 }
 
 /************************************************************************/
-/*           GDALGridDataMetricAverageDistancePerQuadrant()             */
+/*            GDALGridDataMetricAverageDistancePerQuadrant()            */
 /************************************************************************/
 
 /**
@@ -2240,7 +2240,7 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
 }
 
 /************************************************************************/
-/*                 GDALGridDataMetricAverageDistancePts()               */
+/*                GDALGridDataMetricAverageDistancePts()                */
 /************************************************************************/
 
 /**
@@ -2426,7 +2426,7 @@ CPLErr GDALGridDataMetricAverageDistancePts(
 }
 
 /************************************************************************/
-/*                        GDALGridLinear()                              */
+/*                           GDALGridLinear()                           */
 /************************************************************************/
 
 /**
@@ -2569,7 +2569,7 @@ struct _GDALGridJob
 };
 
 /************************************************************************/
-/*                   GDALGridProgressMultiThread()                      */
+/*                    GDALGridProgressMultiThread()                     */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -2585,7 +2585,7 @@ static int GDALGridProgressMultiThread(GDALGridJob *psJob)
 }
 
 /************************************************************************/
-/*                      GDALGridProgressMonoThread()                    */
+/*                     GDALGridProgressMonoThread()                     */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -2685,7 +2685,7 @@ static void GDALGridJobProcess(void *user_data)
 }
 
 /************************************************************************/
-/*                        GDALGridContextCreate()                       */
+/*                       GDALGridContextCreate()                        */
 /************************************************************************/
 
 struct GDALGridContext
@@ -3294,7 +3294,7 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
 }
 
 /************************************************************************/
-/*                      GDALGridContextCreateQuadTree()                 */
+/*                   GDALGridContextCreateQuadTree()                    */
 /************************************************************************/
 
 void GDALGridContextCreateQuadTree(GDALGridContext *psContext)
@@ -3378,7 +3378,7 @@ void GDALGridContextFree(GDALGridContext *psContext)
 }
 
 /************************************************************************/
-/*                        GDALGridContextProcess()                      */
+/*                       GDALGridContextProcess()                       */
 /************************************************************************/
 
 /**
@@ -3588,7 +3588,7 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
 }
 
 /************************************************************************/
-/*                            GDALGridCreate()                          */
+/*                           GDALGridCreate()                           */
 /************************************************************************/
 
 /**
@@ -3664,7 +3664,7 @@ CPLErr GDALGridCreate(GDALGridAlgorithm eAlgorithm, const void *poOptions,
 }
 
 /************************************************************************/
-/*                   GDALGridParseAlgorithmAndOptions()                 */
+/*                  GDALGridParseAlgorithmAndOptions()                  */
 /************************************************************************/
 
 /** Translates mnemonic gridding algorithm names into GDALGridAlgorithm code,

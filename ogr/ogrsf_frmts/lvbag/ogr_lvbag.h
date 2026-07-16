@@ -39,7 +39,7 @@ using LayerVector = std::vector<std::pair<LayerType, OGRLayerUniquePtr>>;
 }  // namespace OGRLVBAG
 
 /************************************************************************/
-/*                           OGRLVBAGLayer                              */
+/*                            OGRLVBAGLayer                             */
 /************************************************************************/
 constexpr int PARSER_BUF_SIZE = 8192;
 

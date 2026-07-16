@@ -75,7 +75,7 @@ void CPCIDSKSegment::SetMetadataValue( const std::string &key, const std::string
 }
 
 /************************************************************************/
-/*                           GetMetadataKeys()                           */
+/*                          GetMetadataKeys()                           */
 /************************************************************************/
 std::vector<std::string> CPCIDSKSegment::GetMetadataKeys() const
 {
@@ -245,7 +245,7 @@ bool CPCIDSKSegment::IsAtEOF()
 }
 
 /************************************************************************/
-/*                               CanExtend()                            */
+/*                             CanExtend()                              */
 /************************************************************************/
 bool CPCIDSKSegment::CanExtend(uint64 size) const
 {

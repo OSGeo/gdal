@@ -41,7 +41,7 @@
 #include "nitflib.h"
 
 /************************************************************************/
-/*                        RPFTOCTrim()                                    */
+/*                             RPFTOCTrim()                             */
 /************************************************************************/
 
 static void RPFTOCTrim(char *str)
@@ -68,7 +68,7 @@ static void RPFTOCTrim(char *str)
 }
 
 /************************************************************************/
-/*                        RPFTOCRead()                                 */
+/*                             RPFTOCRead()                             */
 /************************************************************************/
 
 RPFToc *RPFTOCRead(const char *pszFilename, NITFFile *psFile)
@@ -772,7 +772,7 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                        RPFTOCFree()                                 */
+/*                             RPFTOCFree()                             */
 /************************************************************************/
 
 void RPFTOCFree(RPFToc *toc)

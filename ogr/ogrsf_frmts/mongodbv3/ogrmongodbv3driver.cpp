@@ -244,7 +244,7 @@ OGRMongoDBv3Layer::~OGRMongoDBv3Layer()
 }
 
 /************************************************************************/
-/*                            WriteOGRMetadata()                        */
+/*                          WriteOGRMetadata()                          */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::WriteOGRMetadata()
@@ -382,7 +382,7 @@ const OGRFeatureDefn *OGRMongoDBv3Layer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                    OGRMongoDBv3GetFieldTypeFromBSON()                */
+/*                  OGRMongoDBv3GetFieldTypeFromBSON()                  */
 /************************************************************************/
 
 static OGRFieldType
@@ -445,7 +445,7 @@ OGRMongoDBv3GetFieldTypeFromBSON(const bsoncxx::document::element &elt,
 }
 
 /************************************************************************/
-/*                           get_string()                               */
+/*                             get_string()                             */
 /************************************************************************/
 
 static std::string get_string(const bsoncxx::document::element &elt)
@@ -477,7 +477,7 @@ static std::string get_string(const bsoncxx::array::element &elt)
 }
 
 /************************************************************************/
-/*                         AddOrUpdateField()                           */
+/*                          AddOrUpdateField()                          */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::AddOrUpdateField(
@@ -839,7 +839,7 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(
 }
 
 /************************************************************************/
-/*                         EstablishFeatureDefn()                       */
+/*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::EstablishFeatureDefn()
@@ -921,7 +921,7 @@ const char *OGRMongoDBv3Layer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                            BuildQuery()                              */
+/*                             BuildQuery()                             */
 /************************************************************************/
 
 bsoncxx::document::value OGRMongoDBv3Layer::BuildQuery()
@@ -941,7 +941,7 @@ bsoncxx::document::value OGRMongoDBv3Layer::BuildQuery()
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRMongoDBv3Layer::GetFeatureCount(int bForce)
@@ -1038,7 +1038,7 @@ static CPLString Stringify(const bsoncxx::types::value &val)
 }
 
 /************************************************************************/
-/*                   OGRMongoDBV3ReaderSetField()                       */
+/*                     OGRMongoDBV3ReaderSetField()                     */
 /************************************************************************/
 
 static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
@@ -1278,7 +1278,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                            Translate()                               */
+/*                             Translate()                              */
 /************************************************************************/
 
 std::unique_ptr<OGRFeature>
@@ -1427,7 +1427,7 @@ OGRFeature *OGRMongoDBv3Layer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             DeleteFeature()                          */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRMongoDBv3Layer::DeleteFeature(GIntBig nFID)
@@ -1513,7 +1513,7 @@ OGRErr OGRMongoDBv3Layer::CreateField(const OGRFieldDefn *poFieldIn, int)
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRMongoDBv3Layer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
@@ -1706,7 +1706,7 @@ void OGRMongoDBv3Layer::SerializeField(bsoncxx::builder::basic::document &b,
 }
 
 /************************************************************************/
-/*                        SerializeGeometry()                           */
+/*                         SerializeGeometry()                          */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::SerializeGeometry(bsoncxx::builder::basic::document &b,
@@ -1737,7 +1737,7 @@ void OGRMongoDBv3Layer::SerializeGeometry(bsoncxx::builder::basic::document &b,
 }
 
 /************************************************************************/
-/*                       SerializeRecursive()                           */
+/*                         SerializeRecursive()                         */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::SerializeRecursive(
@@ -1774,7 +1774,7 @@ void OGRMongoDBv3Layer::SerializeRecursive(
 }
 
 /************************************************************************/
-/*                           InsertInMap()                              */
+/*                            InsertInMap()                             */
 /************************************************************************/
 
 void OGRMongoDBv3Layer::InsertInMap(
@@ -1814,7 +1814,7 @@ void OGRMongoDBv3Layer::InsertInMap(
 }
 
 /************************************************************************/
-/*                               IsInList()                             */
+/*                              IsInList()                              */
 /************************************************************************/
 
 static bool IsInList(int nVal, int nCount, const int *panList)
@@ -1828,7 +1828,7 @@ static bool IsInList(int nVal, int nCount, const int *panList)
 }
 
 /************************************************************************/
-/*                       BuildBSONObjFromFeature()                      */
+/*                      BuildBSONObjFromFeature()                       */
 /************************************************************************/
 
 bsoncxx::document::value OGRMongoDBv3Layer::BuildBSONObjFromFeature(
@@ -2146,7 +2146,7 @@ OGRErr OGRMongoDBv3Layer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRMongoDBv3Layer::TestCapability(const char *pszCap) const
@@ -2187,7 +2187,7 @@ int OGRMongoDBv3Layer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          SetAttributeFilter()                        */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRMongoDBv3Layer::SetAttributeFilter(const char *pszFilter)
@@ -2213,7 +2213,7 @@ OGRErr OGRMongoDBv3Layer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRMongoDBv3Layer::ISetSpatialFilter(int iGeomField,
@@ -2295,7 +2295,7 @@ const OGRLayer *OGRMongoDBv3Dataset::GetLayer(int nIndex) const
 }
 
 /************************************************************************/
-/*                         GetLayerByName()                             */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRMongoDBv3Dataset::GetLayerByName(const char *pszLayerName)
@@ -2360,7 +2360,7 @@ OGRLayer *OGRMongoDBv3Dataset::GetLayerByName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                           CreateLayers()                             */
+/*                            CreateLayers()                            */
 /************************************************************************/
 
 void OGRMongoDBv3Dataset::CreateLayers(mongocxx::database &db)
@@ -2378,7 +2378,7 @@ void OGRMongoDBv3Dataset::CreateLayers(mongocxx::database &db)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool OGRMongoDBv3Dataset::Open(GDALOpenInfo *poOpenInfo)
@@ -2856,7 +2856,7 @@ void OGRMongoDBv3Dataset::ReleaseResultSet(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                     OGRMongoDBv3DriverOpen()                         */
+/*                       OGRMongoDBv3DriverOpen()                       */
 /************************************************************************/
 
 static GDALDataset *OGRMongoDBv3DriverOpen(GDALOpenInfo *poOpenInfo)
@@ -2917,7 +2917,7 @@ static GDALDataset *OGRMongoDBv3DriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        OGRMongoDBv3DriverUnload()                    */
+/*                      OGRMongoDBv3DriverUnload()                      */
 /************************************************************************/
 
 static void OGRMongoDBv3DriverUnload(GDALDriver *)
@@ -2931,7 +2931,7 @@ static void OGRMongoDBv3DriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                       RegisterOGRMongoDBv3()                         */
+/*                        RegisterOGRMongoDBv3()                        */
 /************************************************************************/
 
 void RegisterOGRMongoDBv3()

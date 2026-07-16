@@ -13,7 +13,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                       OGRAIVectorIdentify()                          */
+/*                        OGRAIVectorIdentify()                         */
 /************************************************************************/
 
 static int OGRAIVectorIdentify(GDALOpenInfo *poOpenInfo)
@@ -23,7 +23,7 @@ static int OGRAIVectorIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         OGRAIVectorOpen()                            */
+/*                          OGRAIVectorOpen()                           */
 /************************************************************************/
 
 static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
@@ -119,7 +119,7 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       RegisterOGRAIVector()                          */
+/*                        RegisterOGRAIVector()                         */
 /************************************************************************/
 
 void RegisterOGRAIVector()

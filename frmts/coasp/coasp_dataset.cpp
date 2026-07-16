@@ -328,7 +328,7 @@ CPLErr COASPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
  ********************************************************************/
 
 /************************************************************************/
-/*                          ~COASPDataset()                             */
+/*                           ~COASPDataset()                            */
 /************************************************************************/
 
 COASPDataset::~COASPDataset()

@@ -16,7 +16,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                       GetConcatenatedNames()                         */
+/*                        GetConcatenatedNames()                        */
 /************************************************************************/
 
 static std::string
@@ -137,7 +137,7 @@ class GDALMDArrayMeshGrid final : public GDALMDArray
 };
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALMDArrayMeshGrid::IRead(const GUInt64 *arrayStartIdx,
@@ -245,7 +245,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetMeshGrid()                        */
+/*                       GDALMDArrayGetMeshGrid()                       */
 /************************************************************************/
 
 /** Return a list of multidimensional arrays from a list of one-dimensional

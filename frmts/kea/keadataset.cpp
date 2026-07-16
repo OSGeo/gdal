@@ -18,7 +18,7 @@
 #include "cpl_vsi_virtual.h"
 
 /************************************************************************/
-/*                     KEADatasetDriverUnload()                        */
+/*                       KEADatasetDriverUnload()                       */
 /************************************************************************/
 
 void KEADatasetDriverUnload(GDALDriver *)
@@ -183,7 +183,7 @@ GDALDataset *KEADataset::Open(GDALOpenInfo *poOpenInfo)
 // static function
 H5::H5File *KEADataset::CreateLL(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszParamList)
+                                 CSLConstList papszParamList)
 {
     GDALDriverH hDriver = GDALGetDriverByName("KEA");
     if ((hDriver == nullptr) ||
@@ -294,7 +294,7 @@ H5::H5File *KEADataset::CreateLL(const char *pszFilename, int nXSize,
 // static function- pointer set in driver
 GDALDataset *KEADataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszParamList)
+                                CSLConstList papszParamList)
 {
     H5::H5File *keaImgH5File =
         CreateLL(pszFilename, nXSize, nYSize, nBandsIn, eType, papszParamList);
@@ -334,7 +334,7 @@ GDALDataset *KEADataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
 GDALDataset *KEADataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *pSrcDs, CPL_UNUSED int bStrict,
-                                    char **papszParamList,
+                                    CSLConstList papszParamList,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -770,7 +770,7 @@ CPLErr KEADataset::SetMetadata(CSLConstList papszMetadata,
     return CE_None;
 }
 
-CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
+CPLErr KEADataset::AddBand(GDALDataType eType, CSLConstList papszOptions)
 {
     // process any creation options in papszOptions
     unsigned int nimageBlockSize = kealib::KEA_IMAGE_CHUNK_SIZE;

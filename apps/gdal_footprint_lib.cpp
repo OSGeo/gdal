@@ -42,7 +42,7 @@
 constexpr const char *DEFAULT_LAYER_NAME = "footprint";
 
 /************************************************************************/
-/*                          GDALFootprintOptions                        */
+/*                         GDALFootprintOptions                         */
 /************************************************************************/
 
 struct GDALFootprintOptions
@@ -272,7 +272,7 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                       GDALFootprintMaskBand                          */
+/*                        GDALFootprintMaskBand                         */
 /************************************************************************/
 
 class GDALFootprintMaskBand final : public GDALRasterBand
@@ -379,7 +379,7 @@ CPLErr GDALFootprintMaskBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                   GDALFootprintCombinedMaskBand                      */
+/*                    GDALFootprintCombinedMaskBand                     */
 /************************************************************************/
 
 class GDALFootprintCombinedMaskBand final : public GDALRasterBand
@@ -748,7 +748,7 @@ GeoTransformCoordinateTransformation::GetSourceCS() const
 }
 
 /************************************************************************/
-/*                             CountPoints()                            */
+/*                            CountPoints()                             */
 /************************************************************************/
 
 static size_t CountPoints(const OGRGeometry *poGeom)
@@ -819,7 +819,7 @@ static double GetMinDistanceBetweenTwoPoints(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                       GDALFootprintProcess()                         */
+/*                        GDALFootprintProcess()                        */
 /************************************************************************/
 
 static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
@@ -1250,7 +1250,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
 }
 
 /************************************************************************/
-/*                  GDALFootprintAppGetParserUsage()                    */
+/*                   GDALFootprintAppGetParserUsage()                   */
 /************************************************************************/
 
 std::string GDALFootprintAppGetParserUsage()
@@ -1272,7 +1272,7 @@ std::string GDALFootprintAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALFootprint()                          */
+/*                           GDALFootprint()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -1381,7 +1381,7 @@ GDALDatasetH GDALFootprint(const char *pszDest, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                           GDALFootprintOptionsNew()                  */
+/*                      GDALFootprintOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -1495,7 +1495,7 @@ GDALFootprintOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                       GDALFootprintOptionsFree()                     */
+/*                      GDALFootprintOptionsFree()                      */
 /************************************************************************/
 
 /**

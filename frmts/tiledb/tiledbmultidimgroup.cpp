@@ -15,7 +15,7 @@
 #include "memmultidim.h"
 
 /************************************************************************/
-/*                   TileDBGroup::~TileDBGroup()                        */
+/*                     TileDBGroup::~TileDBGroup()                      */
 /************************************************************************/
 
 TileDBGroup::~TileDBGroup()
@@ -41,7 +41,7 @@ TileDBGroup::~TileDBGroup()
 }
 
 /************************************************************************/
-/*                   TileDBGroup::GetGroupNames()                       */
+/*                     TileDBGroup::GetGroupNames()                     */
 /************************************************************************/
 
 std::vector<std::string>
@@ -66,7 +66,7 @@ TileDBGroup::GetGroupNames(CSLConstList /*papszOptions*/) const
 }
 
 /************************************************************************/
-/*                   TileDBGroup::OpenFromDisk()                        */
+/*                     TileDBGroup::OpenFromDisk()                      */
 /************************************************************************/
 
 /* static */
@@ -94,7 +94,7 @@ std::shared_ptr<TileDBGroup> TileDBGroup::OpenFromDisk(
 }
 
 /************************************************************************/
-/*                   TileDBGroup::CreateOnDisk()                        */
+/*                     TileDBGroup::CreateOnDisk()                      */
 /************************************************************************/
 
 /* static */
@@ -123,7 +123,7 @@ std::shared_ptr<TileDBGroup> TileDBGroup::CreateOnDisk(
 }
 
 /************************************************************************/
-/*                   TileDBGroup::EnsureOpenAs()                        */
+/*                     TileDBGroup::EnsureOpenAs()                      */
 /************************************************************************/
 
 bool TileDBGroup::EnsureOpenAs(tiledb_query_type_t mode) const
@@ -147,7 +147,7 @@ bool TileDBGroup::EnsureOpenAs(tiledb_query_type_t mode) const
 }
 
 /************************************************************************/
-/*                 TileDBGroup::HasObjectOfSameName()                   */
+/*                  TileDBGroup::HasObjectOfSameName()                  */
 /************************************************************************/
 
 bool TileDBGroup::HasObjectOfSameName(const std::string &osName) const
@@ -193,7 +193,7 @@ bool TileDBGroup::HasObjectOfSameName(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                   TileDBGroup::OpenGroup()                           */
+/*                       TileDBGroup::OpenGroup()                       */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup>
@@ -244,7 +244,7 @@ TileDBGroup::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   TileDBGroup::CreateGroup()                         */
+/*                      TileDBGroup::CreateGroup()                      */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> TileDBGroup::CreateGroup(const std::string &osName,
@@ -278,7 +278,7 @@ std::shared_ptr<GDALGroup> TileDBGroup::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   TileDBGroup::AddMember()                           */
+/*                       TileDBGroup::AddMember()                       */
 /************************************************************************/
 
 bool TileDBGroup::AddMember(const std::string &osPath,
@@ -342,7 +342,7 @@ std::shared_ptr<GDALDimension> TileDBGroup::CreateDimension(
 }
 
 /************************************************************************/
-/*                   TileDBGroup::GetMDArrayNames()                     */
+/*                    TileDBGroup::GetMDArrayNames()                    */
 /************************************************************************/
 
 std::vector<std::string>
@@ -395,7 +395,7 @@ TileDBGroup::GetMDArrayNames(CSLConstList /*papszOptions */) const
 }
 
 /************************************************************************/
-/*                   TileDBGroup::OpenMDArray()                         */
+/*                      TileDBGroup::OpenMDArray()                      */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -478,7 +478,7 @@ TileDBGroup::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   TileDBGroup::CreateMDArray()                       */
+/*                     TileDBGroup::CreateMDArray()                     */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> TileDBGroup::CreateMDArray(
@@ -521,7 +521,7 @@ std::shared_ptr<GDALMDArray> TileDBGroup::CreateMDArray(
 }
 
 /************************************************************************/
-/*                  TileDBGroup::CreateAttribute()                      */
+/*                    TileDBGroup::CreateAttribute()                    */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> TileDBGroup::CreateAttribute(
@@ -532,7 +532,7 @@ std::shared_ptr<GDALAttribute> TileDBGroup::CreateAttribute(
 }
 
 /************************************************************************/
-/*                   TileDBGroup::GetAttribute()                        */
+/*                     TileDBGroup::GetAttribute()                      */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -542,7 +542,7 @@ TileDBGroup::GetAttribute(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                   TileDBGroup::GetAttributes()                       */
+/*                     TileDBGroup::GetAttributes()                     */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -552,7 +552,7 @@ TileDBGroup::GetAttributes(CSLConstList /* papszOptions */) const
 }
 
 /************************************************************************/
-/*                   TileDBGroup::DeleteAttribute()                     */
+/*                    TileDBGroup::DeleteAttribute()                    */
 /************************************************************************/
 
 bool TileDBGroup::DeleteAttribute(const std::string &osName,

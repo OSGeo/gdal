@@ -46,7 +46,7 @@ constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
 constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
 
 /************************************************************************/
-/*                        MakeGMLCoordinate()                           */
+/*                         MakeGMLCoordinate()                          */
 /************************************************************************/
 
 static void MakeGMLCoordinate(char *pszTarget, double x, double y, double z,
@@ -467,7 +467,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree(OGRGeometryH hGeometry)
 }
 
 /************************************************************************/
-/*                     AppendGML3CoordinateList()                       */
+/*                      AppendGML3CoordinateList()                      */
 /************************************************************************/
 
 static void AppendGML3CoordinateList(const OGRSimpleCurve *poLine,
@@ -522,7 +522,7 @@ static void AppendGML3CoordinateList(const OGRSimpleCurve *poLine,
 }
 
 /************************************************************************/
-/*                      OGR2GML3GeometryAppend()                        */
+/*                       OGR2GML3GeometryAppend()                       */
 /************************************************************************/
 
 static bool OGR2GML3GeometryAppend(
@@ -1264,7 +1264,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *
  */
 
-char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
+char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, CSLConstList papszOptions)
 
 {
     if (hGeometry == nullptr)

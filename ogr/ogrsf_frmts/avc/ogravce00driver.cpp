@@ -13,7 +13,7 @@
 #include "ogr_avc.h"
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRAVCE00DriverIdentify(GDALOpenInfo *poOpenInfo)

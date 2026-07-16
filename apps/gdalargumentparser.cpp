@@ -100,7 +100,7 @@ void GDALArgumentParser::display_error_and_usage(const std::exception &err)
 }
 
 /************************************************************************/
-/*                                usage()                               */
+/*                               usage()                                */
 /************************************************************************/
 
 std::string GDALArgumentParser::usage() const
@@ -116,7 +116,7 @@ std::string GDALArgumentParser::usage() const
 }
 
 /************************************************************************/
-/*                          add_extra_usage_hint()                      */
+/*                        add_extra_usage_hint()                        */
 /************************************************************************/
 
 void GDALArgumentParser::add_extra_usage_hint(
@@ -144,7 +144,7 @@ Argument &GDALArgumentParser::add_quiet_argument(bool *pVar)
 }
 
 /************************************************************************/
-/*                      add_input_format_argument()                     */
+/*                     add_input_format_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
@@ -170,7 +170,7 @@ Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
 }
 
 /************************************************************************/
-/*                      add_output_format_argument()                    */
+/*                     add_output_format_argument()                     */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_output_format_argument(std::string &var)
@@ -184,7 +184,7 @@ Argument &GDALArgumentParser::add_output_format_argument(std::string &var)
 }
 
 /************************************************************************/
-/*                     add_creation_options_argument()                  */
+/*                   add_creation_options_argument()                    */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
@@ -197,7 +197,7 @@ Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                   add_metadata_item_options_argument()               */
+/*                 add_metadata_item_options_argument()                 */
 /************************************************************************/
 
 Argument &
@@ -211,7 +211,7 @@ GDALArgumentParser::add_metadata_item_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                       add_open_options_argument()                    */
+/*                     add_open_options_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_open_options_argument(CPLStringList &var)
@@ -220,7 +220,7 @@ Argument &GDALArgumentParser::add_open_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                       add_open_options_argument()                    */
+/*                     add_open_options_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
@@ -239,7 +239,7 @@ Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
 }
 
 /************************************************************************/
-/*                       add_output_type_argument()                     */
+/*                      add_output_type_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_output_type_argument(GDALDataType &eDT)
@@ -280,7 +280,7 @@ GDALArgumentParser::add_dataset_creation_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                     parse_args_without_binary_name()                 */
+/*                   parse_args_without_binary_name()                   */
 /************************************************************************/
 
 void GDALArgumentParser::parse_args_without_binary_name(CSLConstList papszArgs)
@@ -456,7 +456,7 @@ bool GDALArgumentParser::is_used_globally(const std::string &name)
 }
 
 /************************************************************************/
-/*                           parse_args()                               */
+/*                             parse_args()                             */
 /************************************************************************/
 
 void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)

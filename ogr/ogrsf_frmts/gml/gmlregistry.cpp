@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                           Parse()                                    */
+/*                               Parse()                                */
 /************************************************************************/
 
 bool GMLRegistry::Parse()
@@ -85,7 +85,7 @@ bool GMLRegistry::Parse()
 }
 
 /************************************************************************/
-/*                           Parse()                                    */
+/*                               Parse()                                */
 /************************************************************************/
 
 bool GMLRegistryNamespace::Parse(const char *pszRegistryFilename,
@@ -121,7 +121,7 @@ bool GMLRegistryNamespace::Parse(const char *pszRegistryFilename,
 }
 
 /************************************************************************/
-/*                           Parse()                                    */
+/*                               Parse()                                */
 /************************************************************************/
 
 bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,

@@ -101,7 +101,7 @@ class ADRGRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           ADRGRasterBand()                            */
+/*                           ADRGRasterBand()                           */
 /************************************************************************/
 
 ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
@@ -117,7 +117,7 @@ ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double ADRGRasterBand::GetNoDataValue(int *pbSuccess)
@@ -197,7 +197,7 @@ CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                          ADRGDataset()                               */
+/*                            ADRGDataset()                             */
 /************************************************************************/
 
 ADRGDataset::ADRGDataset()
@@ -208,7 +208,7 @@ ADRGDataset::ADRGDataset()
 }
 
 /************************************************************************/
-/*                          ~ADRGDataset()                              */
+/*                            ~ADRGDataset()                            */
 /************************************************************************/
 
 ADRGDataset::~ADRGDataset()
@@ -283,7 +283,7 @@ void ADRGDataset::AddSubDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **ADRGDataset::GetMetadataDomainList()
@@ -306,7 +306,7 @@ CSLConstList ADRGDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetSpatialRef()                               */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ADRGDataset::GetSpatialRef() const
@@ -315,7 +315,7 @@ const OGRSpatialReference *ADRGDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -329,7 +329,7 @@ CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                     GetLongitudeFromString()                         */
+/*                       GetLongitudeFromString()                       */
 /************************************************************************/
 
 double ADRGDataset::GetLongitudeFromString(const char *str)
@@ -348,7 +348,7 @@ double ADRGDataset::GetLongitudeFromString(const char *str)
 }
 
 /************************************************************************/
-/*                      GetLatitudeFromString()                         */
+/*                       GetLatitudeFromString()                        */
 /************************************************************************/
 
 double ADRGDataset::GetLatitudeFromString(const char *str)
@@ -367,7 +367,7 @@ double ADRGDataset::GetLatitudeFromString(const char *str)
 }
 
 /************************************************************************/
-/*                      FindRecordInGENForIMG()                         */
+/*                       FindRecordInGENForIMG()                        */
 /************************************************************************/
 
 DDFRecord *ADRGDataset::FindRecordInGENForIMG(DDFModule &module,
@@ -438,7 +438,7 @@ DDFRecord *ADRGDataset::FindRecordInGENForIMG(DDFModule &module,
 }
 
 /************************************************************************/
-/*                           OpenDataset()                              */
+/*                            OpenDataset()                             */
 /************************************************************************/
 
 ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
@@ -830,7 +830,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                          GetGENListFromTHF()                         */
+/*                         GetGENListFromTHF()                          */
 /************************************************************************/
 
 char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
@@ -945,7 +945,7 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          GetIMGListFromGEN()                         */
+/*                         GetIMGListFromGEN()                          */
 /************************************************************************/
 
 char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,

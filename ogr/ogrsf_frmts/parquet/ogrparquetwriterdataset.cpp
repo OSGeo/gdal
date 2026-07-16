@@ -15,7 +15,7 @@
 #include "../arrow_common/ograrrowwriterlayer.hpp"
 
 /************************************************************************/
-/*                       OGRParquetWriterDataset()                      */
+/*                      OGRParquetWriterDataset()                       */
 /************************************************************************/
 
 OGRParquetWriterDataset::OGRParquetWriterDataset(
@@ -26,7 +26,7 @@ OGRParquetWriterDataset::OGRParquetWriterDataset(
 }
 
 /************************************************************************/
-/*                     ~OGRParquetWriterDataset()                       */
+/*                      ~OGRParquetWriterDataset()                      */
 /************************************************************************/
 
 OGRParquetWriterDataset::~OGRParquetWriterDataset()
@@ -35,7 +35,7 @@ OGRParquetWriterDataset::~OGRParquetWriterDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRParquetWriterDataset::Close(GDALProgressFunc, void *)
@@ -67,7 +67,7 @@ int OGRParquetWriterDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
@@ -76,7 +76,7 @@ const OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetWriterDataset::TestCapability(const char *pszCap) const
@@ -89,7 +89,7 @@ int OGRParquetWriterDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          ICreateLayer()                              */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -115,7 +115,7 @@ OGRParquetWriterDataset::ICreateLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                          AddFieldDomain()                            */
+/*                           AddFieldDomain()                           */
 /************************************************************************/
 
 bool OGRParquetWriterDataset::AddFieldDomain(
@@ -130,7 +130,7 @@ bool OGRParquetWriterDataset::AddFieldDomain(
 }
 
 /************************************************************************/
-/*                          GetFieldDomainNames()                       */
+/*                        GetFieldDomainNames()                         */
 /************************************************************************/
 
 std::vector<std::string>
@@ -141,7 +141,7 @@ OGRParquetWriterDataset::GetFieldDomainNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                          GetFieldDomain()                            */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 const OGRFieldDomain *

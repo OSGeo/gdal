@@ -20,7 +20,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                      OGRGPSBabelDataSource()                         */
+/*                       OGRGPSBabelDataSource()                        */
 /************************************************************************/
 
 OGRGPSBabelDataSource::OGRGPSBabelDataSource()
@@ -28,7 +28,7 @@ OGRGPSBabelDataSource::OGRGPSBabelDataSource()
 }
 
 /************************************************************************/
-/*                     ~OGRGPSBabelDataSource()                         */
+/*                       ~OGRGPSBabelDataSource()                       */
 /************************************************************************/
 
 OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
@@ -44,7 +44,7 @@ OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
 }
 
 /************************************************************************/
-/*                     CloseDependentDatasets()                         */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int OGRGPSBabelDataSource::CloseDependentDatasets()
@@ -58,7 +58,7 @@ int OGRGPSBabelDataSource::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                             GetArgv()                                */
+/*                              GetArgv()                               */
 /************************************************************************/
 
 static char **GetArgv(int bExplicitFeatures, int bWaypoints, int bRoutes,
@@ -88,7 +88,7 @@ static char **GetArgv(int bExplicitFeatures, int bWaypoints, int bRoutes,
 }
 
 /************************************************************************/
-/*                         IsSpecialFile()                              */
+/*                           IsSpecialFile()                            */
 /************************************************************************/
 
 bool OGRGPSBabelDataSource::IsSpecialFile(const char *pszFilename)
@@ -99,7 +99,7 @@ bool OGRGPSBabelDataSource::IsSpecialFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       IsValidDriverName()                            */
+/*                         IsValidDriverName()                          */
 /************************************************************************/
 
 bool OGRGPSBabelDataSource::IsValidDriverName(const char *pszGPSBabelDriverName)

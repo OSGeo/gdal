@@ -52,7 +52,7 @@ class GDALFakePDFDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          GDALPDFWriter                               */
+/*                            GDALPDFWriter                             */
 /************************************************************************/
 
 class GDALXRefEntry
@@ -276,7 +276,7 @@ class GDALPDFBaseWriter
     GDALPDFObjectNum WriteJavascript(const char *pszJavascript, bool bDeflate);
 
   public:
-    GDALPDFObjectNum SetInfo(GDALDataset *poSrcDS, char **papszOptions);
+    GDALPDFObjectNum SetInfo(GDALDataset *poSrcDS, CSLConstList papszOptions);
     GDALPDFObjectNum SetInfo(const char *pszAUTHOR, const char *pszPRODUCER,
                              const char *pszCREATOR,
                              const char *pszCREATION_DATE,
@@ -379,7 +379,7 @@ class GDALPDFWriter final : public GDALPDFBaseWriter
                 const char *pszExclusiveLayers);
 };
 
-GDALDataset *GDALPDFCreateCopy(const char *, GDALDataset *, int, char **,
+GDALDataset *GDALPDFCreateCopy(const char *, GDALDataset *, int, CSLConstList,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData);
 
