@@ -210,7 +210,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -a_srs <srs_def>
 
     Assign an output SRS, but without reprojecting (use :option:`-t_srs`
-    to reproject)
+    to reproject). Use ``-a_srs None`` to make the SRS unknown.
 
     .. include:: options/srs_def.rst
 
