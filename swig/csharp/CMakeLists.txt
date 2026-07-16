@@ -65,7 +65,7 @@ endif ()
 if (CSHARP_BUILD_SAMPLES)
   message(STATUS "Requested Application .NET target framework: " ${CSHARP_APPLICATION_VERSION} )
   if ( NOT ( _CSHARP_LIBRARY_TFM_NUMBER STREQUAL _CSHARP_APPLICATION_TFM_NUMBER ) )
-    
+
     set(_FOUND_COMPATIBLE_RUNTIME FALSE)
 
     foreach(RT IN LISTS DOTNET_RUNTIMES)
@@ -80,7 +80,7 @@ if (CSHARP_BUILD_SAMPLES)
     else ()
       message(STATUS ".NET Framework " ${CSHARP_APPLICATION_VERSION} " cannot be built with the available SDKs. C# Bindings will not be built" )
       RETURN ()
-    endif (_FOUND_COMPATIBLE_RUNTIME)  
+    endif (_FOUND_COMPATIBLE_RUNTIME)
   endif ()
 else(CSHARP_BUILD_SAMPLES)
   message(STATUS "C# sample applications will not be built")
@@ -183,7 +183,7 @@ function (gdal_csharp_wrap)
       ${SWIG_EXECUTABLE} -namespace ${_CSHARP_NAMESPACE} -outdir ${_CSHARP_WORKING_DIRECTORY} -DSWIG2_CSHARP
       -DSWIG_CSHARP_NO_STRING_HELPER -DSWIG_CSHARP_NO_STRING_WITH_LENGTH_HELPER -dllimport ${_CSHARP_WRAPPER}
       -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/csharp
-      -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}      
+      -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
             ${_CSHARP_SWIG_INTERFACE})
@@ -315,7 +315,7 @@ gdal_csharp_dll(
   TARGET ogr_csharp.dll
   TARGET_SUBDIR ogr
   WRAP_DLL ogr_wrap
-  DEPENDS osr_csharp 
+  DEPENDS osr_csharp
           gdalconst_csharp
   SYSTEM_DEPENDS
           OSGeo.OSR
@@ -532,7 +532,7 @@ if (CSHARP_BUILD_SAMPLES)
     gdal_build_csharp_sample(
       OUTPUT OGRGEOS.exe
       SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRGEOS.cs
-      DEPENDS 
+      DEPENDS
         ogr_csharp
       SYSTEM_DEPENDS
         OSGeo.OGR)
@@ -749,7 +749,7 @@ if (CSHARP_RUN_TESTS)
       COMMAND ${CMAKE_CURRENT_BINARY_DIR}/OgrInfo/OgrInfo Data/intersectionresult.shp)
     set_property(TEST csharp_ogrlayeralgresult PROPERTY ENVIRONMENT "${TEST_ENV}")
     set_property(TEST csharp_ogrlayeralgresult PROPERTY DEPENDS csharp_ogrlayeralg)
-    add_test( 
+    add_test(
       NAME csharp_gdalwarp
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_CURRENT_BINARY_DIR}/GDALCsharpWarp/GDALCsharpWarp Data/testwarp.tif "-of GTiff -t_srs EPSG:32645 -overwrite" "Data/byte.tif")
