@@ -1524,18 +1524,17 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
         auto poFirstBand = cpl::down_cast<ZarrRasterBand *>(papoBands[0]);
         if (poFirstBand->m_dfNoData.has_value())
         {
-            bool bSameNoDataValue = true;
-            for (int i = 1; bSameNoDataValue && i < nBands; ++i)
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
             {
                 auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
-                bSameNoDataValue =
-                    poBand->m_dfNoData.has_value() &&
-                    ((std::isnan(poFirstBand->m_dfNoData.value()) &&
-                      std::isnan(poBand->m_dfNoData.value())) ||
-                     (poFirstBand->m_dfNoData.value() ==
-                      poBand->m_dfNoData.value()));
+                bSameValue = poBand->m_dfNoData.has_value() &&
+                             ((std::isnan(poFirstBand->m_dfNoData.value()) &&
+                               std::isnan(poBand->m_dfNoData.value())) ||
+                              (poFirstBand->m_dfNoData.value() ==
+                               poBand->m_dfNoData.value()));
             }
-            if (!bSameNoDataValue)
+            if (!bSameValue)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Not all bands have the same nodata value. It will be "
@@ -1551,15 +1550,15 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
         }
         else if (poFirstBand->m_nNoDataInt64.has_value())
         {
-            bool bSameNoDataValue = true;
-            for (int i = 1; bSameNoDataValue && i < nBands; ++i)
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
             {
                 auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
-                bSameNoDataValue = poBand->m_nNoDataInt64.has_value() &&
-                                   poFirstBand->m_nNoDataInt64.value() ==
-                                       poBand->m_nNoDataInt64.value();
+                bSameValue = poBand->m_nNoDataInt64.has_value() &&
+                             poFirstBand->m_nNoDataInt64.value() ==
+                                 poBand->m_nNoDataInt64.value();
             }
-            if (!bSameNoDataValue)
+            if (!bSameValue)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Not all bands have the same nodata value. It will be "
@@ -1575,15 +1574,15 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
         }
         else if (poFirstBand->m_nNoDataUInt64.has_value())
         {
-            bool bSameNoDataValue = true;
-            for (int i = 1; bSameNoDataValue && i < nBands; ++i)
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
             {
                 auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
-                bSameNoDataValue = poBand->m_nNoDataUInt64.has_value() &&
-                                   poFirstBand->m_nNoDataUInt64.value() ==
-                                       poBand->m_nNoDataUInt64.value();
+                bSameValue = poBand->m_nNoDataUInt64.has_value() &&
+                             poFirstBand->m_nNoDataUInt64.value() ==
+                                 poBand->m_nNoDataUInt64.value();
             }
-            if (!bSameNoDataValue)
+            if (!bSameValue)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Not all bands have the same nodata value. It will be "
@@ -1595,6 +1594,54 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
             {
                 m_poSingleArray->SetNoDataValue(
                     poFirstBand->m_nNoDataUInt64.value());
+            }
+        }
+
+        if (poFirstBand->m_dfOffset.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue = poBand->m_dfOffset.has_value() &&
+                             poFirstBand->m_dfOffset.value() ==
+                                 poBand->m_dfOffset.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same offset value. It will be "
+                         "ignored as the array can only have a single offset "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetOffset(poFirstBand->m_dfOffset.value());
+            }
+        }
+
+        if (poFirstBand->m_dfScale.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue =
+                    poBand->m_dfScale.has_value() &&
+                    poFirstBand->m_dfScale.value() == poBand->m_dfScale.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same scale value. It will be "
+                         "ignored as the array can only have a single scale "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetScale(poFirstBand->m_dfScale.value());
             }
         }
 
@@ -1985,6 +2032,12 @@ CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
 
 double ZarrRasterBand::GetOffset(int *pbSuccess)
 {
+    if (m_dfOffset.has_value())
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return m_dfOffset.value();
+    }
     bool bHasValue = false;
     double dfRet = m_poArray->GetOffset(&bHasValue);
     if (pbSuccess)
@@ -1998,7 +2051,13 @@ double ZarrRasterBand::GetOffset(int *pbSuccess)
 
 CPLErr ZarrRasterBand::SetOffset(double dfNewOffset)
 {
-    return m_poArray->SetOffset(dfNewOffset) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetOffset(dfNewOffset) ? CE_None : CE_Failure;
+    }
+    m_dfOffset = dfNewOffset;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -2007,6 +2066,12 @@ CPLErr ZarrRasterBand::SetOffset(double dfNewOffset)
 
 double ZarrRasterBand::GetScale(int *pbSuccess)
 {
+    if (m_dfScale.has_value())
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return m_dfScale.value();
+    }
     bool bHasValue = false;
     double dfRet = m_poArray->GetScale(&bHasValue);
     if (pbSuccess)
@@ -2020,7 +2085,13 @@ double ZarrRasterBand::GetScale(int *pbSuccess)
 
 CPLErr ZarrRasterBand::SetScale(double dfNewScale)
 {
-    return m_poArray->SetScale(dfNewScale) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetScale(dfNewScale) ? CE_None : CE_Failure;
+    }
+    m_dfScale = dfNewScale;
+    return CE_None;
 }
 
 /************************************************************************/
