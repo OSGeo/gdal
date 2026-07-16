@@ -38,6 +38,8 @@ class GDALVectorReprojectAlgorithm /* non final */
     std::string m_activeLayer{};
     std::string m_srcCrs{};
     std::string m_dstCrs{};
+    GDALArgDatasetValue m_likeDataset{};
+    std::string m_likeLayer{};
 };
 
 /************************************************************************/

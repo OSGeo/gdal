@@ -43,6 +43,20 @@ Program-Specific Options
 
     .. include:: gdal_options/srs_def_gdal_raster_reproject.rst
 
+.. option:: --like <DATASET>
+
+    .. versionadded:: 3.14
+
+    Set the output spatial reference to be the same as the provided raster or vector
+    dataset. If the dataset has layers with different spatial reference systems, a layer
+    can be specified using :option:`--like-layer`.
+
+.. option:: --like-layer <LAYER-NAME>
+
+    .. versionadded:: 3.14
+
+    Specify the name of the layer from which a spatial reference system should be read.
+
 .. option:: --output-crs, -d <OUTPUT-CRS>
 
     Set output spatial reference.
