@@ -447,8 +447,6 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
   if (!ppByte)
     return false;
 
-  unsigned int* arr = (unsigned int*)(*ppByte);
-  unsigned int* dstPtr = arr;
   int size = (int)m_codeTable.size();
   int bitPos = 0;
 
@@ -459,30 +457,15 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
     if (len > 0)
     {
       unsigned int val = m_codeTable[k].second;
-      if (32 - bitPos >= len)
-      {
-        if (bitPos == 0)
-          *dstPtr = 0;
 
-        *dstPtr |= val << (32 - bitPos - len);
-        bitPos += len;
-        if (bitPos == 32)
-        {
-          bitPos = 0;
-          dstPtr++;
-        }
-      }
-      else
-      {
-        bitPos += len - 32;
-        *dstPtr++ |= val >> bitPos;    // bitPos > 0
-        *dstPtr = val << (32 - bitPos);
-      }
+      if (!Huffman::PushValue(ppByte, bitPos, val, len))
+        return false;
     }
   }
 
-  size_t numUInts = dstPtr - arr + (bitPos > 0 ? 1 : 0);
+  size_t numUInts = (bitPos > 0 ? 1 : 0);
   *ppByte += numUInts * sizeof(unsigned int);
+
   return true;
 }
 
@@ -495,9 +478,10 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nBytesRemainingInOut,
 
   size_t nBytesRemaining = nBytesRemainingInOut;
 
-  const unsigned int* arr = (const unsigned int*)(*ppByte);
-  const unsigned int* srcPtr = arr;
-  const size_t sizeUInt = sizeof(*srcPtr);
+  const Byte* ptr0 = *ppByte;
+  const Byte* ptr = ptr0;
+
+  const size_t s4 = sizeof(unsigned int);
 
   int size = (int)m_codeTable.size();
   int bitPos = 0;
@@ -508,10 +492,12 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nBytesRemainingInOut,
     int len = m_codeTable[k].first;
     if (len > 0)
     {
-      if (nBytesRemaining < sizeUInt || len > 32)
+      if (nBytesRemaining < s4 || len > 32)
         return false;
 
-      m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
+      unsigned int temp(0);
+      memcpy(&temp, ptr, s4);
+      m_codeTable[k].second = (temp << bitPos) >> (32 - len);
 
       if (32 - bitPos >= len)
       {
@@ -519,26 +505,26 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nBytesRemainingInOut,
         if (bitPos == 32)
         {
           bitPos = 0;
-          srcPtr++;
-          nBytesRemaining -= sizeUInt;
+          ptr += s4;
+          nBytesRemaining -= s4;
         }
       }
       else
       {
         bitPos += len - 32;
-        srcPtr++;
-        nBytesRemaining -= sizeUInt;
+        ptr += s4;
+        nBytesRemaining -= s4;
 
-        if (nBytesRemaining < sizeUInt)
+        if (nBytesRemaining < s4)
           return false;
 
-        m_codeTable[k].second |= (*srcPtr) >> (32 - bitPos);    // bitPos > 0
+        memcpy(&temp, ptr, s4);
+        m_codeTable[k].second |= temp >> (32 - bitPos);    // bitPos > 0
       }
     }
   }
 
-  size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0);
-  size_t len = numUInts * sizeUInt;
+  size_t len = (ptr - ptr0) + (bitPos > 0 ? s4 : 0);
 
   if (nBytesRemainingInOut < len)
     return false;
@@ -546,7 +532,8 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nBytesRemainingInOut,
   *ppByte += len;
   nBytesRemainingInOut -= len;
 
-  if (nBytesRemaining != nBytesRemainingInOut && nBytesRemaining != nBytesRemainingInOut + sizeUInt)    // the real check
+  if (nBytesRemaining != nBytesRemainingInOut
+    && nBytesRemaining != nBytesRemainingInOut + s4)    // the real check
     return false;
 
   return true;
