@@ -6379,6 +6379,7 @@ def test_zarr_read_kerchunk_parquet_GetRawBlockInfo():
 # inner chunks, and whose inner chunk index is protected by CRC32C.
 
 
+@pytest.mark.require_driver("netCDF")
 @gdaltest.enable_exceptions()
 def test_zarr_read_simple_sharding(tmp_path):
 
