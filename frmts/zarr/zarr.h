@@ -25,6 +25,7 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <optional>
 #include <set>
 
 #define ZARR_DEBUG_KEY "ZARR"
@@ -132,6 +133,9 @@ class ZarrRasterBand final : public GDALRasterBand
 
     std::shared_ptr<GDALMDArray> m_poArray;
     GDALColorInterp m_eColorInterp = GCI_Undefined;
+    std::optional<double> m_dfNoData{};
+    std::optional<uint64_t> m_nNoDataUInt64{};
+    std::optional<int64_t> m_nNoDataInt64{};
 
   protected:
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
