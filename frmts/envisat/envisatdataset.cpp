@@ -292,13 +292,21 @@ void EnvisatDataset::ScanForGCPs_ASAR()
     if (nDatasetIndex == -1)
         return;
 
-    int nNumDSR, nDSRSize;
+    int nNumDSR, nDSRSize, nDSSize;
     if (EnvisatFile_GetDatasetInfo(hEnvisatFile, nDatasetIndex, nullptr,
-                                   nullptr, nullptr, nullptr, nullptr, &nNumDSR,
-                                   &nDSRSize) != SUCCESS)
+                                   nullptr, nullptr, nullptr, &nDSSize,
+                                   &nNumDSR, &nDSRSize) != SUCCESS)
         return;
 
     if (nNumDSR == 0 || nDSRSize != 521)
+        return;
+
+    // nNumDSR is taken verbatim from the dataset descriptor. Reject a record
+    // count that cannot fit the declared dataset size before using it to size
+    // the GCP array: (nNumDSR + 1) * 11 is otherwise evaluated as int and
+    // overflows for a large nNumDSR, under-allocating the array while the loop
+    // below still writes 11 GCPs per record (heap buffer overflow).
+    if (nNumDSR < 0 || nNumDSR > nDSSize / nDSRSize)
         return;
 
     /* -------------------------------------------------------------------- */
@@ -310,7 +318,8 @@ void EnvisatDataset::ScanForGCPs_ASAR()
     GUInt32 unValue;
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), (nNumDSR + 1) * 11);
+    pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP),
+                                       (static_cast<size_t>(nNumDSR) + 1) * 11);
 
     for (int iRecord = 0; iRecord < nNumDSR; iRecord++)
     {
