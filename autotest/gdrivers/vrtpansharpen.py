@@ -2413,3 +2413,46 @@ def test_vrtpansharpen_slightly_different_extent(tmp_vsimem):
         for i in range(vrt_ds.RasterCount)
     ]
     assert mm == [(20.0, 20.0), (40.0, 40.0)]
+
+
+def test_vrtpansharpen_small_slice_at_edge(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "pan.tif",
+        64202,
+        38082,
+        1,
+        gdal.GDT_UInt8,
+        options=["SPARSE_OK=YES"],
+    )
+    ds.SetGeoTransform([-0.5, 0.5, 0, -0.5, 0, 0.5])
+    ds.GetRasterBand(1).WriteRaster(
+        0, 38000, 64202, 82, struct.pack("B", 30) * (64202 * 82)
+    )
+    ds = None
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "ms.tif", 16050, 9520, 1, gdal.GDT_UInt8, options=["SPARSE_OK=YES"]
+    )
+    ds.SetGeoTransform([0, 2, 0, 0, 0, 2])
+    ds.GetRasterBand(1).WriteRaster(
+        0, 9500, 16050, 20, struct.pack("B", 10) * (16050 * 20)
+    )
+    ds = None
+
+    vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <SpatialExtentAdjustment>Intersection</SpatialExtentAdjustment>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+
+    assert vrt_ds.ReadRaster(64043, 38080, 159, 2) == b"\x1e" * (159 * 2)
