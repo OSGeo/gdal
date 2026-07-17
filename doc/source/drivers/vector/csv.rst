@@ -267,7 +267,7 @@ Writing to /dev/stdout or /vsistdout/ is also supported.
 
 Reading from /vsistdin/ is supported using the ``CSV:/vsistdin/`` connection
 string and provided that none of the open options whose name starts with ``AUTODETECT_``
-is used. The layer name in this case is just "layer", as can be confirmed via ``ogrinfo``.
+is used. The layer name in this case is "layer".
 
 Open options
 ------------
