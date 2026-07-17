@@ -1711,11 +1711,20 @@ std::shared_ptr<GDALGroup> ZarrDataset::GetRootGroup() const
 
 const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
 {
-    if (nBands >= 1)
+    if (m_poSingleArray)
+    {
+        return m_poSingleArray->GetSpatialRef().get();
+    }
+    else if (nBands >= 1)
+    {
         return cpl::down_cast<ZarrRasterBand *>(papoBands[0])
             ->m_poArray->GetSpatialRef()
             .get();
-    return nullptr;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 /************************************************************************/
@@ -1724,10 +1733,17 @@ const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
 
 CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
-    for (int i = 0; i < nBands; ++i)
+    if (m_poSingleArray)
     {
-        cpl::down_cast<ZarrRasterBand *>(papoBands[i])
-            ->m_poArray->SetSpatialRef(poSRS);
+        m_poSingleArray->SetSpatialRef(poSRS);
+    }
+    else
+    {
+        for (int i = 0; i < nBands; ++i)
+        {
+            cpl::down_cast<ZarrRasterBand *>(papoBands[i])
+                ->m_poArray->SetSpatialRef(poSRS);
+        }
     }
     return CE_None;
 }

@@ -9614,3 +9614,29 @@ def test_zarr_setoffset_multiband_different(tmp_vsimem):
     ds.GetRasterBand(1).SetOffset(1)
     with pytest.raises(Exception, match="Not all bands have the same offset value"):
         ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setspatialref_multiband(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
+    ds.Close()
+
+    assert set(gdal.ReadDirRecursive(tmp_vsimem)) == set(
+        [
+            "test.zarr/",
+            "test.zarr/test/",
+            "test.zarr/test/zarr.json",
+            "test.zarr/zarr.json",
+        ]
+    )
+
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
