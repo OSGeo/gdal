@@ -1487,7 +1487,13 @@ int TIFFReadBufferSetup(TIFF *tif, void *bp, tmsize_t size)
 {
     static const char module[] = "TIFFReadBufferSetup";
 
-    assert((tif->tif_flags & TIFF_NOREADRAW) == 0);
+    if (tif->tif_flags & TIFF_NOREADRAW)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Compression scheme does not support access to raw "
+                      "uncompressed data");
+        return (0);
+    }
     tif->tif_flags &= ~TIFF_BUFFERMMAP;
 
     if (tif->tif_rawdata)

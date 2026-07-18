@@ -1467,7 +1467,11 @@ static int OJPEGWriteHeaderInfo(TIFF *tif)
         sp->libjpeg_jpeg_decompress_struct.jpeg_color_space = JCS_UNKNOWN;
         sp->libjpeg_jpeg_decompress_struct.out_color_space = JCS_UNKNOWN;
         sp->libjpeg_jpeg_query_style = 1;
-        sp->bytes_per_line = sp->samples_per_pixel_per_plane * sp->strile_width;
+        sp->bytes_per_line =
+            _TIFFMultiply32(tif, sp->samples_per_pixel_per_plane,
+                            sp->strile_width, "OJPEGWriteHeaderInfo");
+        if (sp->bytes_per_line == 0)
+            return (0);
         sp->lines_per_strile = sp->strile_length;
     }
     if (jpeg_start_decompress_encap(sp,

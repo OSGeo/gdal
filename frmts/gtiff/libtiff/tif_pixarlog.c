@@ -874,11 +874,13 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             return 0;
     }
 
+    /* stride (≤ td_samplesperpixel, max 65535) × imagewidth: fits tmsize_t */
     llen = (tmsize_t)sp->stride * td->td_imagewidth;
 
     /* Fix: ABGR with stride=3 expands 3 samples to 4 output bytes per pixel */
     if (sp->user_datafmt == PIXARLOGDATAFMT_8BITABGR && sp->stride == 3)
     {
+        /* imagewidth × 4: fits tmsize_t (imagewidth is uint32) */
         tmsize_t required = (tmsize_t)td->td_imagewidth * 4;
         tmsize_t max_rows;
         tmsize_t max_nsamples;
@@ -1400,9 +1402,12 @@ static int PixarLogEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
             return 0;
     }
 
+    /* stride (≤ td_samplesperpixel, max 65535) × imagewidth: fits tmsize_t */
     llen = (tmsize_t)sp->stride * td->td_imagewidth;
     /* Check against the number of elements (of size uint16_t) of sp->tbuf */
-    if (n > ((tmsize_t)td->td_rowsperstrip * llen))
+    tmsize_t max_n =
+        _TIFFMultiplySSize(tif, (tmsize_t)td->td_rowsperstrip, llen, module);
+    if (max_n == 0 || n > max_n)
     {
         TIFFErrorExtR(tif, module, "Too many input bytes provided");
         return 0;

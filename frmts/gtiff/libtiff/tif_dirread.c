@@ -8451,6 +8451,13 @@ static uint64_t _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32_t strile,
     if (pbErr)
         *pbErr = 0;
 
+    if (strile >= td->td_nstrips)
+    {
+        if (pbErr)
+            *pbErr = 1;
+        return 0;
+    }
+
     /* Avoid the "dirent->tdir_count <= 4" code path for one of
      * StripOffsets/StripByteCounts, and the other code path for the other one,
      * which will lead to inconsistencies and potential out-of-bounds reads.
@@ -8493,7 +8500,7 @@ static uint64_t _TIFFGetStrileOffsetOrByteCountValue(TIFF *tif, uint32_t strile,
             }
         }
     }
-    if (*parray == NULL || strile >= td->td_nstrips)
+    if (*parray == NULL)
     {
         if (pbErr)
             *pbErr = 1;
