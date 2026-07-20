@@ -25,6 +25,7 @@ Contributors:  Thomas Maurer
 #define HUFFMAN_H
 
 #include <vector>
+#include <cassert>
 #include <cstring>
 #include <utility>
 #include "Defines.h"
@@ -243,6 +244,7 @@ inline bool Huffman::PushValue(Byte** ppByte, int& bitPos, unsigned int value, i
   else
   {
     bitPos += len - 32;
+    assert(bitPos >= 0); // to make Coverity Scan happy
     unsigned int temp(0);
     memcpy(&temp, *ppByte, s4);
     temp |= value >> bitPos;
