@@ -1,3 +1,146 @@
+# GDAL/OGR 3.13.2 Release Notes
+
+GDAL 3.13.2 is a bugfix release.
+
+## Build
+
+* CMake: do not attempt find_package(Python) if BUILD_PYTHON_BINDINGS=OFF
+  (#14770)
+* Build of JP2Grok driver requires libjp2grok >= 20.3.5
+* CMake 4.4 compatibility: Remove cmake/modules/CheckCCompilerFlag.cmake,
+  CheckCXXCompilerFlag.cmake, CheckLinkerFlag.cmake
+* Fix build against Poppler 26.08dev
+
+## GDAL 3.13.2
+
+### Port
+
+* Azure/ADLS GetOptions() XML: document missing
+  AZURE_STORAGE_ACCESS_TOKEN and AZURE_STORAGE_SAS_TOKEN (qgis#66274)
+* /vsicurl?: restrict filenames allowed in the 'header_file' key-value pair
+* /vsicurl/: do not mess up file sizes when reading directory listing with nginx
+  'autoindex_exact_size off' setting (3.12.0 regression) (#14707)
+* IVSIS3LikeFSHandler::Sync(): use more robust locking to avoid potential
+  multithreading issues
+* VSISync(): fix missed empty files when sync'ing from/to cloud with
+  multithreaded enabled
+
+### Algorithms
+
+* pansharpen: fix RasterIO window error when extracting small slice at edge of
+  raster
+
+### Core
+
+* multidim: GDALSlicedMDArray::IAdviseRead(): fix wrong parent bounds
+  computation in case of step != 1
+* GDALDataset::BlockBasedRasterIO(): avoid int overflow on huge rasters
+  (ossfuzz#528678026)
+* ComputeRasterMinMax: Check that integers exactly match NoData value
+* GetHistogram: Check that integers exactly match NoData value
+
+### Utilities
+
+* Fix 'gdal raster pipeline read byte.tif ! materialize --format COG ! tile'
+  (#14730)
+* gdal pipeline: avoid error/creating file named '[ ... ]' when an inner read
+  pipeline is a VRT (#14732)
+* gdal raster stack/mosaic: fix to allow inner pipelines to be allowed as input
+  datasets (#14794)
+* gdal raster reproject: avoid old CLI arguments in warning messages (#14859)
+* gdal: fix 'gdal some_symlink_that_is_not_a_file'
+* gdal: make sure 'gdal read something' results in proper error message instead
+  of progress bar
+
+### Raster drivers
+
+COG driver:
+ * use SetBand() instead of direct manipulation of papoBands[] (#14711)
+ * COGCreate(): always create the temp file as BigTIFF (#14841)
+
+DIMAP2 driver:
+ * report CLOUD_COVERAGE and SNOW_COVERAGE metadata items (#14706)
+
+Envisat driver:
+ * fix heap overflow in ScanForGCPs_ASAR from unchecked NUM_DSR
+
+FAST driver:
+ * cap band count at MAX_FILES when parsing BANDS PRESENT (#14913)
+
+GTiff driver:
+ * Internal libtiff: resync with 4.7.2rc3
+
+Internal liblerc:
+ * import security related fixes from upstream
+
+JP2Grok driver:
+ * handle output to Float32 or Float64 buffer
+ * CopyTileData was using tile origin as region offset
+ * sync-decompress fallback when AdviseRead missing
+ * handle 16 bit buffers in common ReadBlock routine
+ * improve book-keeping so codec can be re-initialized when necessary
+ * upgrade to true single threaded support
+
+MRF driver:
+ * security fixes for caching mode (#14739). Replaces the
+   MRF_BYPASSCACHING environment with MRF_ENABLE_CACHING
+
+netCDF driver:
+ * properly read variables with rotated pole SRS, when rlon/rlat coordinates
+   are used (#14825)
+ * Fix bottomUp check when both attribGT and CF conventions are used
+
+NITF driver:
+ * accept IC=C4 when PRODUCT_TYPE=CADRG (#14709)
+ * fix heap-buffer-overflow read parsing user TRE in image subheader
+
+## OGR 3.13.2
+
+### Core
+
+* OGR_G_SetPoint: restore ability to grow a geometry with a
+  index >= npts
+
+### Utilities
+
+* ogrlineref: make it robust to non-linestring input, and accept
+  single-part multilinestring
+* ogr2ogr:Do not return 0 on errors in the VRT (#14826)
+* gdal CLI: fix pipelines of the type 'read osm_source.osm/pbf ! some operation
+  ! filter ! write' (#14789)
+* gdal vector limit: make it apply filters, and other test_ogrsf compliance
+  fixes
+* gdal vector clip: make it to work with curve layer geometry types (#14802)
+
+### Vector drivers
+
+FlatGeoBuf driver:
+ * CreateLayer(): make temporary file much more random to avoid
+   accidentally overwriting an existing file (#14750)
+
+MiraMonVector driver:
+ * fix memory leak (oss-fuzz#518557981)
+
+PMTiles driver:
+ * avoid error on /vsis3/us-west-2.opendata.source.coop/protomaps/openstreetmap/v4.pmtiles
+
+SQLite driver:
+ * use sqlite3_result_blob64 in ogr_inflate/ogr_deflate to avoid size_t
+   truncation
+
+SXF driver:
+ * fix out-of-bounds write from signed attribute length byte (#14916)
+
+WFS driver:
+ * silence a non-fatal error (relates to #14802)
+
+## Python bindings
+
+* when using setuptools >= 77, indicate python 3.9 as minimum version, since
+  setuptools 77 doesn't support 3.8 (#14852)
+* add compatibility with SWIG 4.5.0dev that removes comptibility layer for
+  PyInt_xxx
+
 # GDAL/OGR 3.13.1 Release Notes
 
 GDAL 3.13.1 is a bugfix release.
