@@ -1352,6 +1352,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 #ifdef DEBUG_TIMING
                 struct timeval tv;
 #endif
+                const double dfXOff = sExtraArg.dfXOff - nXOffExtract;
+                const double dfXSize =
+                    std::min(sExtraArg.dfXSize, nXSizeExtract - dfXOff);
+                const int nXOffTask = static_cast<int>(dfXOff);
+                const int nXSizeTask =
+                    std::clamp(static_cast<int>(0.4999 + dfXSize), 1,
+                               nXSizeExtract - nXOffTask);
+
                 for (int i = 0; i < nTasks; i++)
                 {
                     const size_t iStartLine =
@@ -1360,41 +1368,20 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         (static_cast<size_t>(i + 1) * nYSize) / nTasks;
                     pasJobs[i].poMEMDS = poMEMDS;
                     pasJobs[i].eResampleAlg = eResampleAlg;
-                    pasJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
+                    pasJobs[i].dfXOff = dfXOff;
                     pasJobs[i].dfYOff = m_panToMSGT[3] +
                                         (nYOff + iStartLine) * m_panToMSGT[5] -
                                         nYOffExtract;
-                    pasJobs[i].dfXSize = sExtraArg.dfXSize;
+                    pasJobs[i].dfXSize = dfXSize;
                     pasJobs[i].dfYSize =
-                        (iNextStartLine - iStartLine) * m_panToMSGT[5];
-                    if (pasJobs[i].dfXOff + pasJobs[i].dfXSize > nXSizeExtract)
-                    {
-                        pasJobs[i].dfXSize = nYSizeExtract - pasJobs[i].dfXOff;
-                    }
-                    if (pasJobs[i].dfYOff + pasJobs[i].dfYSize >
-                        aMSBands[0]->GetYSize())
-                    {
-                        pasJobs[i].dfYSize =
-                            aMSBands[0]->GetYSize() - pasJobs[i].dfYOff;
-                    }
-                    pasJobs[i].nXOff = static_cast<int>(pasJobs[i].dfXOff);
+                        std::min((iNextStartLine - iStartLine) * m_panToMSGT[5],
+                                 aMSBands[0]->GetYSize() - pasJobs[i].dfYOff);
+                    pasJobs[i].nXOff = nXOffTask;
                     pasJobs[i].nYOff = static_cast<int>(pasJobs[i].dfYOff);
-                    pasJobs[i].nXSize =
-                        static_cast<int>(0.4999 + pasJobs[i].dfXSize);
-                    pasJobs[i].nYSize =
-                        static_cast<int>(0.4999 + pasJobs[i].dfYSize);
-                    if (pasJobs[i].nXOff + pasJobs[i].nXSize > nXSizeExtract)
-                    {
-                        pasJobs[i].nXSize = nXSizeExtract - pasJobs[i].nXOff;
-                    }
-                    if (pasJobs[i].nYOff + pasJobs[i].nYSize > nYSizeExtract)
-                    {
-                        pasJobs[i].nYSize = nYSizeExtract - pasJobs[i].nYOff;
-                    }
-                    if (pasJobs[i].nXSize == 0)
-                        pasJobs[i].nXSize = 1;
-                    if (pasJobs[i].nYSize == 0)
-                        pasJobs[i].nYSize = 1;
+                    pasJobs[i].nXSize = nXSizeTask;
+                    pasJobs[i].nYSize = std::clamp(
+                        static_cast<int>(0.4999 + pasJobs[i].dfYSize), 1,
+                        nYSizeExtract - pasJobs[i].nYOff);
                     pasJobs[i].pBuffer = pUpsampledSpectralBuffer +
                                          static_cast<size_t>(iStartLine) *
                                              nXSize * nDataTypeSize;
@@ -1411,6 +1398,18 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].eErr = CE_Failure;
 
                     ahJobData[i] = &(pasJobs[i]);
+
+                    if (pasJobs[i].nYOff + pasJobs[i].nYSize == nYSizeExtract)
+                    {
+                        pasJobs[i].dfYSize = std::min(
+                            (nYSize - iStartLine) * m_panToMSGT[5],
+                            aMSBands[0]->GetYSize() - pasJobs[i].dfYOff);
+                        pasJobs[i].nBufYSize =
+                            nYSize - static_cast<int>(iStartLine);
+                        nTasks = i + 1;
+                        ahJobData.resize(nTasks);
+                        break;
+                    }
                 }
 #ifdef DEBUG_TIMING
                 gettimeofday(&tv, nullptr);
