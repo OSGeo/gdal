@@ -37,7 +37,6 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
     bool m_bUseAuthenticationHeader;
     GOA2Manager m_oManager;
     std::string m_osUserProject{};
-    std::string m_osGeneration{};
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,
@@ -59,8 +58,7 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
                       const std::string &osSecretAccessKey,
                       const std::string &osAccessKeyId, bool bUseHeaderFile,
                       const GOA2Manager &oManager,
-                      const std::string &osUserProject,
-                      const std::string &osGeneration);
+                      const std::string &osUserProject);
     ~VSIGSHandleHelper() override;
 
     static VSIGSHandleHelper *

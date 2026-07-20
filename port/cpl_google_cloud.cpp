@@ -243,26 +243,21 @@ static struct curl_slist *GetGSHeaders(const std::string &osPathForOption,
 /************************************************************************/
 /*                         VSIGSHandleHelper()                          */
 /************************************************************************/
-VSIGSHandleHelper::VSIGSHandleHelper(
-    const std::string &osEndpoint, const std::string &osBucketObjectKey,
-    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
-    bool bUseAuthenticationHeader, const GOA2Manager &oManager,
-    const std::string &osUserProject, const std::string &osGeneration)
+VSIGSHandleHelper::VSIGSHandleHelper(const std::string &osEndpoint,
+                                     const std::string &osBucketObjectKey,
+                                     const std::string &osSecretAccessKey,
+                                     const std::string &osAccessKeyId,
+                                     bool bUseAuthenticationHeader,
+                                     const GOA2Manager &oManager,
+                                     const std::string &osUserProject)
     : m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
       m_osEndpoint(osEndpoint), m_osBucketObjectKey(osBucketObjectKey),
       m_osSecretAccessKey(osSecretAccessKey), m_osAccessKeyId(osAccessKeyId),
       m_bUseAuthenticationHeader(bUseAuthenticationHeader),
-      m_oManager(oManager), m_osUserProject(osUserProject),
-      m_osGeneration(osGeneration)
+      m_oManager(oManager), m_osUserProject(osUserProject)
 {
     if (m_osBucketObjectKey.find('/') == std::string::npos)
         m_osURL += "/";
-    if (!m_osGeneration.empty())
-    {
-        m_osURL += (m_osURL.find('?') == std::string::npos) ? '?' : '&';
-        m_osURL += "generation=";
-        m_osURL += m_osGeneration;
-    }
 }
 
 /************************************************************************/
@@ -793,9 +788,12 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
         return nullptr;
     }
 
-    return new VSIGSHandleHelper(osEndpoint, osBucketObject, osSecretAccessKey,
-                                 osAccessKeyId, bUseAuthenticationHeader,
-                                 oManager, osUserProject, osGeneration);
+    auto poHandleHelper = new VSIGSHandleHelper(
+        osEndpoint, osBucketObject, osSecretAccessKey, osAccessKeyId,
+        bUseAuthenticationHeader, oManager, osUserProject);
+    if (!osGeneration.empty())
+        poHandleHelper->AddQueryParameter("generation", osGeneration);
+    return poHandleHelper;
 }
 
 /************************************************************************/
@@ -809,12 +807,6 @@ void VSIGSHandleHelper::RebuildURL()
         m_osBucketObjectKey.find('/') == std::string::npos)
         m_osURL += "/";
     m_osURL += GetQueryString(false);
-    if (!m_osGeneration.empty())
-    {
-        m_osURL += (m_osURL.find('?') == std::string::npos) ? '?' : '&';
-        m_osURL += "generation=";
-        m_osURL += m_osGeneration;
-    }
 }
 
 /************************************************************************/
@@ -868,18 +860,6 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
         const auto osQueryString(GetQueryString(false));
         if (osQueryString == "?uploads" || osQueryString == "?acl")
             osCanonicalResource += osQueryString;
-    }
-    // Include the object generation in the string-to-sign so the HMAC
-    // signature covers the versioned request.
-    // TODO: this branch (HMAC/GS_SECRET_ACCESS_KEY auth) has not been verified
-    // against a real signed request; the OAuth2 bearer-token path (the common
-    // case, handled above via the Authorization header) does not rely on it.
-    if (!m_osGeneration.empty())
-    {
-        osCanonicalResource +=
-            (osCanonicalResource.find('?') == std::string::npos) ? '?' : '&';
-        osCanonicalResource += "generation=";
-        osCanonicalResource += m_osGeneration;
     }
 
     // If accessing a Google Cloud account from a GC VM, check that
