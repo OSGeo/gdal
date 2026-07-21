@@ -9339,3 +9339,304 @@ def test_zarr_default_format_is_zarr_v3(tmp_vsimem):
 
     with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "rb") as f:
         assert json.loads(f.read())["zarr_format"] == 3
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_multiband_ok(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+    ds.GetRasterBand(2).SetNoDataValue(255)
+    ds.Close()
+
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+    assert ds.GetRasterBand(2).GetNoDataValue() == 255
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_multiband_ok_nan(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Float32
+    )
+    ds.GetRasterBand(1).SetNoDataValue(float("nan"))
+    ds.GetRasterBand(2).SetNoDataValue(float("nan"))
+    ds.Close()
+
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+    assert math.isnan(ds.GetRasterBand(2).GetNoDataValue())
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_multiband_only_one_set(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_multiband_different_non_nan(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetNoDataValue(255)
+    ds.GetRasterBand(2).SetNoDataValue(0)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_multiband_different_nan(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Float32
+    )
+    ds.GetRasterBand(1).SetNoDataValue(float("nan"))
+    ds.GetRasterBand(2).SetNoDataValue(255)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_int64_multiband_ok(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Int64
+    )
+    ds.GetRasterBand(1).SetNoDataValueAsInt64((1 << 63) - 1)
+    assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == (1 << 63) - 1
+    ds.GetRasterBand(2).SetNoDataValueAsInt64((1 << 63) - 1)
+    ds.Close()
+
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetRasterBand(1).GetNoDataValueAsInt64() == (1 << 63) - 1
+    assert ds.GetRasterBand(2).GetNoDataValueAsInt64() == (1 << 63) - 1
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_int64_multiband_only_one_set(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Int64
+    )
+    ds.GetRasterBand(1).SetNoDataValueAsInt64(255)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_int64_multiband_different(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Int64
+    )
+    ds.GetRasterBand(1).SetNoDataValueAsInt64(255)
+    ds.GetRasterBand(1).SetNoDataValueAsInt64(0)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_uint64_multiband_ok(tmp_path):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_path / "test.zarr", 1, 1, 2, gdal.GDT_UInt64
+    )
+    nv = (1 << 63) - 1
+    ds.GetRasterBand(1).SetNoDataValueAsUInt64(nv)
+    assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == nv
+    ds.GetRasterBand(2).SetNoDataValueAsUInt64(nv)
+    ds.Close()
+
+    ds = gdal.Open(tmp_path / "test.zarr")
+    assert ds.GetRasterBand(1).GetNoDataValueAsUInt64() == nv
+    assert ds.GetRasterBand(2).GetNoDataValueAsUInt64() == nv
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_uint64_multiband_only_one_set(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_UInt64
+    )
+    ds.GetRasterBand(1).SetNoDataValueAsUInt64(255)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setnodatavalue_uint64_multiband_different(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_UInt64
+    )
+    ds.GetRasterBand(1).SetNoDataValueAsUInt64(255)
+    ds.GetRasterBand(1).SetNoDataValueAsUInt64(0)
+    with pytest.raises(Exception, match="Not all bands have the same nodata value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setscale_multiband_ok(tmp_path):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_path / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetScale(0.5)
+    assert ds.GetRasterBand(1).GetScale() == 0.5
+    ds.GetRasterBand(2).SetScale(0.5)
+    ds.Close()
+
+    ds = gdal.Open(tmp_path / "test.zarr")
+    assert ds.GetRasterBand(1).GetScale() == 0.5
+    assert ds.GetRasterBand(2).GetScale() == 0.5
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setscale_multiband_only_one_set(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetScale(0.5)
+    with pytest.raises(Exception, match="Not all bands have the same scale value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setscale_multiband_different(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetScale(0.5)
+    ds.GetRasterBand(1).SetScale(1)
+    with pytest.raises(Exception, match="Not all bands have the same scale value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setoffset_multiband_ok(tmp_path):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_path / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetOffset(0.5)
+    assert ds.GetRasterBand(1).GetOffset() == 0.5
+    ds.GetRasterBand(2).SetOffset(0.5)
+    ds.Close()
+
+    ds = gdal.Open(tmp_path / "test.zarr")
+    assert ds.GetRasterBand(1).GetOffset() == 0.5
+    assert ds.GetRasterBand(2).GetOffset() == 0.5
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setoffset_multiband_only_one_set(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetOffset(0.5)
+    with pytest.raises(Exception, match="Not all bands have the same offset value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setoffset_multiband_different(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetOffset(0.5)
+    ds.GetRasterBand(1).SetOffset(1)
+    with pytest.raises(Exception, match="Not all bands have the same offset value"):
+        ds.Close()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_setspatialref_multiband(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_vsimem / "test.zarr", 1, 1, 2, gdal.GDT_Byte
+    )
+    ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
+    ds.Close()
+
+    assert set(gdal.ReadDirRecursive(tmp_vsimem)) == set(
+        [
+            "test.zarr/",
+            "test.zarr/test/",
+            "test.zarr/test/zarr.json",
+            "test.zarr/zarr.json",
+        ]
+    )
+
+    ds = gdal.Open(tmp_vsimem / "test.zarr")
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"

@@ -181,11 +181,13 @@ class CPL_DLL CPLJSONObject
     double GetDouble(const std::string &osName, double dfDefault = 0.0) const;
     int GetInteger(const std::string &osName, int nDefault = 0) const;
     GInt64 GetLong(const std::string &osName, GInt64 nDefault = 0) const;
+    uint64_t GetUInt64(const std::string &osName, uint64_t nDefault = 0) const;
     bool GetBool(const std::string &osName, bool bDefault = false) const;
     std::string ToString(const std::string &osDefault = "") const;
     double ToDouble(double dfDefault = 0.0) const;
     int ToInteger(int nDefault = 0) const;
     GInt64 ToLong(GInt64 nDefault = 0) const;
+    uint64_t ToUInt64(uint64_t nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
     CPLJSONArray ToArray() const;
     std::string Format(PrettyFormat eFormat) const;

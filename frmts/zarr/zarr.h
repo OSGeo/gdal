@@ -25,6 +25,7 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <optional>
 #include <set>
 
 #define ZARR_DEBUG_KEY "ZARR"
@@ -132,6 +133,11 @@ class ZarrRasterBand final : public GDALRasterBand
 
     std::shared_ptr<GDALMDArray> m_poArray;
     GDALColorInterp m_eColorInterp = GCI_Undefined;
+    std::optional<double> m_dfNoData{};
+    std::optional<uint64_t> m_nNoDataUInt64{};
+    std::optional<int64_t> m_nNoDataInt64{};
+    std::optional<double> m_dfOffset{};
+    std::optional<double> m_dfScale{};
 
   protected:
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
@@ -1138,9 +1144,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     double GetScale(bool *pbHasScale,
                     GDALDataType *peStorageType) const override;
 
-    bool SetOffset(double dfOffset, GDALDataType eStorageType) override;
+    bool SetOffset(double dfOffset,
+                   GDALDataType eStorageType = GDT_Unknown) override;
 
-    bool SetScale(double dfScale, GDALDataType eStorageType) override;
+    bool SetScale(double dfScale,
+                  GDALDataType eStorageType = GDT_Unknown) override;
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;

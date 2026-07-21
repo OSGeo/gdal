@@ -2526,15 +2526,11 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
                           oType.GetNumericDataType(), 0, 1);
         }
-        else if (oType.GetNumericDataType() == GDT_UInt64 &&
-                 /* we can't really deal with nodata value between */
-                 /* int64::max and uint64::max due to json-c limitations */
-                 dfNoDataValue >= 0)
+        else if (oType.GetNumericDataType() == GDT_UInt64)
         {
-            const int64_t nNoDataValue =
-                static_cast<int64_t>(oFillValue.ToLong());
+            const uint64_t nNoDataValue = oFillValue.ToUInt64();
             abyNoData.resize(oType.GetSize());
-            GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+            GDALCopyWords(&nNoDataValue, GDT_UInt64, 0, &abyNoData[0],
                           oType.GetNumericDataType(), 0, 1);
         }
         else
