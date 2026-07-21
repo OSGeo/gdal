@@ -857,9 +857,19 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
         osCanonicalResource += "/";
     else
     {
-        const auto osQueryString(GetQueryString(false));
-        if (osQueryString == "?uploads" || osQueryString == "?acl")
-            osCanonicalResource += osQueryString;
+        // Per the XML API V2 signing process, only subresources participate
+        // in the canonicalized resource; plain query parameters (such as
+        // generation) do not, even when present alongside a subresource.
+        for (const char *pszSubResource : {"acl", "uploads"})
+        {
+            if (m_oMapQueryParameters.find(pszSubResource) !=
+                m_oMapQueryParameters.end())
+            {
+                osCanonicalResource += '?';
+                osCanonicalResource += pszSubResource;
+                break;
+            }
+        }
     }
 
     // If accessing a Google Cloud account from a GC VM, check that
@@ -1023,6 +1033,16 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
     std::string osCanonicalizedResource(
         "/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
 
+    // A generation pin is a plain query parameter, not a signed subresource:
+    // it is not part of the string-to-sign, but must be preserved in the
+    // returned URL so the pinned version is fetched.
+    std::string osGeneration;
+    {
+        const auto oIter = m_oMapQueryParameters.find("generation");
+        if (oIter != m_oMapQueryParameters.end())
+            osGeneration = oIter->second;
+    }
+
     std::string osStringToSign;
     osStringToSign += osVerb + "\n";
     osStringToSign += "\n";  // Content_MD5
@@ -1047,6 +1067,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_osAccessKeyId);
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);
@@ -1065,6 +1087,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_oManager.GetClientEmail());
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);
