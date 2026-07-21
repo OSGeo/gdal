@@ -79,6 +79,10 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
            &m_nodata);
     AddArg("init", 0, _("Pre-initialize output bands with specified value"),
            &m_initValues);
+    AddArg("like", 0,
+           _("Dataset to use as a template for bounds, CRS and resolution"),
+           &m_likeDataset, GDAL_OF_RASTER | GDAL_OF_VECTOR)
+        .SetMetaVar("DATASET");
     AddArg("crs", 0, _("Override the projection for the output file"), &m_srs)
         .AddHiddenAlias("srs")
         .SetIsCRSArg(/*noneAllowed=*/false);
@@ -133,6 +137,20 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
                 return true;
             });
     }
+
+    AddValidationAction(
+        [this]()
+        {
+            if (m_likeDataset.GetDatasetRef() &&
+                (!m_targetExtent.empty() || !m_srs.empty()))
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "--like is mutually exclusive with --extent and --crs");
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
@@ -265,17 +283,75 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
-    if (!m_srs.empty())
+    if (auto *poLikeDS = m_likeDataset.GetDatasetRef())
     {
-        if (m_update)
+        OGREnvelope sExtent;
+        if (poLikeDS->GetExtent(&sExtent) != CE_None)
         {
-            ReportError(
-                CE_Failure, CPLE_AppDefined,
-                "Cannot specify --crs when updating an existing raster.");
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Cannot get extent of '%s'",
+                        poLikeDS->GetDescription());
             return false;
         }
-        aosOptions.AddString("-a_srs");
-        aosOptions.AddString(m_srs.c_str());
+        aosOptions.AddString("-te");
+        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MinX));
+        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MinY));
+        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MaxX));
+        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MaxY));
+
+        const auto poSRS = poLikeDS->GetSpatialRef();
+        if (poSRS)
+        {
+            const char *const options[] = {"FORMAT=WKT2_2019", nullptr};
+            const std::string osCRS = poSRS->exportToWkt(options);
+            aosOptions.AddString("-a_srs");
+            aosOptions.AddString(osCRS.c_str());
+        }
+
+        if (m_targetResolution.empty() && m_targetSize.empty())
+        {
+            GDALGeoTransform gt;
+            if (poLikeDS->GetGeoTransform(gt) == CE_None)
+            {
+                if (gt.xrot != 0 || gt.yrot != 0)
+                {
+                    ReportError(CE_Failure, CPLE_NotSupported,
+                                "Geotransform matrix of '%s' has non-zero "
+                                "rotation terms",
+                                poLikeDS->GetDescription());
+                    return false;
+                }
+                aosOptions.AddString("-ts");
+                aosOptions.AddString(
+                    CPLSPrintf("%d", poLikeDS->GetRasterXSize()));
+                aosOptions.AddString(
+                    CPLSPrintf("%d", poLikeDS->GetRasterYSize()));
+            }
+        }
+    }
+    else
+    {
+        if (m_targetExtent.size())
+        {
+            aosOptions.AddString("-te");
+            for (double targetExtent : m_targetExtent)
+            {
+                aosOptions.AddString(CPLSPrintf("%.17g", targetExtent));
+            }
+        }
+
+        if (!m_srs.empty())
+        {
+            if (m_update)
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot specify --crs when updating an existing raster.");
+                return false;
+            }
+            aosOptions.AddString("-a_srs");
+            aosOptions.AddString(m_srs.c_str());
+        }
     }
 
     if (m_transformerOption.size())
@@ -284,15 +360,6 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         {
             aosOptions.AddString("-to");
             aosOptions.AddString(to.c_str());
-        }
-    }
-
-    if (m_targetExtent.size())
-    {
-        aosOptions.AddString("-te");
-        for (double targetExtent : m_targetExtent)
-        {
-            aosOptions.AddString(CPLSPrintf("%.17g", targetExtent));
         }
     }
 
@@ -331,7 +398,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString(CPLSPrintf("%d", targetSize));
         }
     }
-    else if (m_outputDataset.GetDatasetRef() == nullptr)
+    else if (!m_likeDataset.GetDatasetRef() && !m_outputDataset.GetDatasetRef())
     {
         ReportError(
             CE_Failure, CPLE_AppDefined,

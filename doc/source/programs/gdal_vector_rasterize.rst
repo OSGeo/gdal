@@ -98,6 +98,14 @@ Program-Specific Options
 
     Burn value. May be repeated.
 
+.. option:: --like <DATASET>
+
+    .. versionadded:: 3.14
+
+    Vector or raster dataset to use as a template for bounds, CRS, and when it
+    is a raster dataset, for dimension/resolution.
+    Mutually exclusive with :option:`--crs` and :option:`--extent`.
+
 .. option:: --crs <CRS>
 
     Override the projection for the output file. If not specified, the projection of the input vector file will be used if available. When using this option, no reprojection of features from the CRS of the input vector to the specified CRS of the output raster, so use only this option to correct an invalid source CRS. The ``<CRS>`` may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
