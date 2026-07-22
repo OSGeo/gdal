@@ -2189,9 +2189,11 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         nPixelOffset = nDataSize;
         if (nBands > 1)
         {
-            if (nLineOffset > std::numeric_limits<int>::max() / nLines64)
+            if (static_cast<vsi_l_offset>(nLineOffset) >
+                std::numeric_limits<vsi_l_offset>::max() / nLines64)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Int64 overflow occurred.");
                 return nullptr;
             }
             nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines64;
