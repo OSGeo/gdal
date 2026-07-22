@@ -44,6 +44,16 @@ Program-Specific Options
     and Y is latitude or northing.
     Note that filtering does not clip geometries to the bounding box.
 
+.. option:: --bbox-crs <CRS>
+
+    .. versionadded:: 3.14
+
+    CRS in which the <xmin>,<ymin>,<xmax>,<ymax> values of :option:`--bbox`
+    are expressed. If not specified, it is assumed to be the CRS of each input
+    layer. Note that in the general case, the reprojected bounding box will
+    generally cover a larger area than the one specified in the bounding box CRS,
+    since a rectangle does not generally reproject to a rectangle.
+
 .. option:: --update-extent
 
     Update layer extent to take into account the filter(s). Otherwise the layer
