@@ -678,6 +678,20 @@ int EGifGCBToSavedExtension(const GraphicsControlBlock *GCB,
 		ExtensionBlock *ep =
 		    &GifFile->SavedImages[ImageIndex].ExtensionBlocks[i];
 		if (ep->Function == GRAPHICS_EXT_FUNC_CODE) {
+			/* A Graphics Control Block is always 4 bytes.  If
+			 * the existing block came from a malformed GIF and
+			 * is shorter, resize it so EGifGCBToExtension does
+			 * not write past the end of ep->Bytes. */
+			if (ep->ByteCount != 4) {
+				GifByteType *new_bytes =
+				    (GifByteType *)realloc(ep->Bytes, 4);
+				if (new_bytes == NULL) {
+					return GIF_ERROR;
+				}
+				ep->Bytes = new_bytes;
+				ep->ByteCount = 4;
+			}
+
 			EGifGCBToExtension(GCB, ep->Bytes);
 			return GIF_OK;
 		}
