@@ -913,16 +913,21 @@ The following configuration options are specific to the /vsigs/ handler:
      https://cloud.google.com/storage/docs/xml-api/reference-headers#xgooguserproject)
      to charge for requests against Requester Pays buckets.
 
-- .. config:: GS_GENERATION
+.. versionadded:: 3.14
 
-     Generation number of the object version to read, for buckets with
-     `Object Versioning <https://cloud.google.com/storage/docs/object-versioning>`__
-     enabled. When set, requests carry a ``generation=<n>`` query parameter so a
-     specific (possibly non-current) version of the object is read instead of
-     the live one. This is a per-object setting, so it is typically set as a
-     path-specific option (see :cpp:func:`VSISetPathSpecificOption`) rather than
-     globally. The value must be a positive integer. Leave unset (the default)
-     to read the live object.
+A specific (possibly non-current) object version can be read, for buckets with
+`Object Versioning <https://cloud.google.com/storage/docs/object-versioning>`__
+enabled, by using a query-string syntax for the file name::
+
+    /vsigs/?path=my_bucket/my_object&generation=123456789
+
+The ``path`` key gives the bucket and object, and the ``generation`` key gives
+the generation number (a positive integer) of the version to read. The values
+are URL-decoded, so any reserved characters (such as ``&`` or ``%``) within the
+bucket/object name must be percent-encoded. When ``generation`` is set, requests
+carry a ``generation=<n>`` query parameter so a specific version of the object is
+read instead of the live one. Without this syntax, the live object is read. This
+uses the same query-string file-name convention as the /vsicurl/ file system.
 
 
 

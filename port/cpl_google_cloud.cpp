@@ -745,12 +745,59 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const char *pszURI, const char * /*pszFSPrefix*/,
     const char *pszURIForPathSpecificOption, CSLConstList papszOptions)
 {
-    std::string osPathForOption("/vsigs/");
-    osPathForOption +=
-        pszURIForPathSpecificOption ? pszURIForPathSpecificOption : pszURI;
+    std::string osBucketObject;
+    std::string osGeneration;
 
-    // pszURI == bucket/object
-    const std::string osBucketObject(pszURI);
+    // Optional GCS object generation (version) to read. When set, requests for
+    // this path carry a "generation=<n>" query parameter and the path as "path=<>",
+    // so a specific (possibly non-current) object version is read instead of the
+    // live one. See https://cloud.google.com/storage/docs/object-versioning
+    if (pszURI[0] == '?')
+    {
+        char **papszTokens = CSLTokenizeString2(pszURI + 1, "&", 0);
+        for (int i = 0; papszTokens[i] != nullptr; i++)
+        {
+            char *pszUnescaped =
+                CPLUnescapeString(papszTokens[i], nullptr, CPLES_URL);
+            CPLFree(papszTokens[i]);
+            papszTokens[i] = pszUnescaped;
+        }
+        for (int i = 0; papszTokens[i] != nullptr; i++)
+        {
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
+            if (pszKey && pszValue)
+            {
+                if (EQUAL(pszKey, "path"))
+                    osBucketObject = pszValue;
+                else if (EQUAL(pszKey, "generation"))
+                    osGeneration = pszValue;
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Unsupported option '%s' in /vsigs/ query string",
+                             pszKey);
+                }
+            }
+            CPLFree(pszKey);
+        }
+        CSLDestroy(papszTokens);
+        if (osBucketObject.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing 'path' key in /vsigs/ query string");
+            return nullptr;
+        }
+    }
+    else
+    {
+        osBucketObject = pszURI;
+    }
+
+    std::string osPathForOption("/vsigs/");
+    osPathForOption += pszURIForPathSpecificOption ? pszURIForPathSpecificOption
+                                                   : osBucketObject;
+
     std::string osEndpoint(VSIGetPathSpecificOption(osPathForOption.c_str(),
                                                     "CPL_GS_ENDPOINT", ""));
     if (osEndpoint.empty())
@@ -773,17 +820,11 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const std::string osUserProject = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_USER_PROJECT", "");
 
-    // Optional GCS object generation (version) to read. When set, requests for
-    // this path carry a "generation=<n>" query parameter, so a specific
-    // (possibly non-current) object version is read instead of the live one.
-    // See https://cloud.google.com/storage/docs/object-versioning
-    const std::string osGeneration =
-        VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_GENERATION", "");
     if (!osGeneration.empty() &&
         osGeneration.find_first_not_of("0123456789") != std::string::npos)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid GS_GENERATION value '%s': must be a positive integer",
+                 "Invalid generation value '%s': must be a positive integer",
                  osGeneration.c_str());
         return nullptr;
     }

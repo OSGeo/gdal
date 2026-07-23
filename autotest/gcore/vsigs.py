@@ -49,7 +49,6 @@ def gs_test_config():
         "GS_OAUTH2_CLIENT_ID": "",
         "GOOGLE_APPLICATION_CREDENTIALS": "",
         "GS_USER_PROJECT": "",
-        "GS_GENERATION": "",
     }
 
     with gdaltest.config_options(options, thread_local=False):
@@ -237,10 +236,12 @@ def test_vsigs_read_specific_generation(webserver_port):
     )
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(
-            {"GS_NO_SIGN_REQUEST": "YES", "GS_GENERATION": "123456789"},
+            {"GS_NO_SIGN_REQUEST": "YES"},
             thread_local=False,
         ):
-            f = open_for_read("/vsigs/gs_fake_bucket_generation/resource")
+            f = open_for_read(
+                "/vsigs/?generation=123456789&path=gs_fake_bucket_generation/resource"
+            )
             assert f is not None
             data = gdal.VSIFReadL(1, 1, f)
             gdal.VSIFCloseL(f)
@@ -252,13 +253,48 @@ def test_vsigs_non_numeric_generation_rejected(gs_test_config):
     gdal.VSICurlClearCache()
 
     with gdaltest.config_options(
-        {"GS_NO_SIGN_REQUEST": "YES", "GS_GENERATION": "not-a-number"},
+        {"GS_NO_SIGN_REQUEST": "YES"},
         thread_local=False,
     ):
         with gdal.quiet_errors():
-            f = open_for_read("/vsigs/gs_fake_bucket_generation/resource")
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=not-a-number"
+            )
         assert f is None
-        assert gdal.GetLastErrorMsg().find("GS_GENERATION") >= 0
+        assert gdal.GetLastErrorMsg().find("generation") >= 0
+
+
+def test_vsigs_unknown_key_warns(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+                "&unknown_key=unknown_key_value"
+            )
+        assert f is not None, "Unknown key should not impede file read"
+        assert gdal.GetLastErrorMsg().find("Unsupported") >= 0
+
+
+def test_vsigs_missing_path_param_raises_error(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsigs/" "?generation=123456789")
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("Missing") >= 0
 
 
 def test_vsigs_read_specific_generation_hmac_signature(gs_test_config, webserver_port):
@@ -298,11 +334,13 @@ def test_vsigs_read_specific_generation_hmac_signature(gs_test_config, webserver
                 "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
                 "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
                 "CPL_GS_TIMESTAMP": "my_timestamp",
-                "GS_GENERATION": "123456789",
             },
             thread_local=False,
         ):
-            f = open_for_read("/vsigs/gs_fake_bucket_generation/resource")
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+            )
             assert f is not None
             data = gdal.VSIFReadL(1, 1, f)
             gdal.VSIFCloseL(f)
@@ -324,11 +362,10 @@ def test_vsigs_specific_generation_signed_url(gs_test_config, webserver_port):
             "/vsigs/gs_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
         )
 
-    with gdaltest.config_options(
-        dict(options, GS_GENERATION="123456789"), thread_local=False
-    ):
+    with gdaltest.config_options(options, thread_local=False):
         pinned_url = gdal.GetSignedURL(
-            "/vsigs/gs_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
+            "/vsigs/?path=gs_fake_bucket/resource&generation=123456789",
+            ["START_DATE=20180212T123456Z"],
         )
 
     # The generation rides along as an unsigned query parameter: same
