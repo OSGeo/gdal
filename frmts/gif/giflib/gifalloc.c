@@ -349,6 +349,14 @@ SavedImage *GifMakeSavedImage(GifFileType *GifFile,
 			 * aliasing problems.
 			 */
 
+			/* Null out aliased pointers before any allocations
+			 * so that FreeLastSavedImage won't free CopyFrom's
+			 * data if an allocation fails partway through. */
+			sp->ImageDesc.ColorMap = NULL;
+			sp->RasterBits = NULL;
+			sp->ExtensionBlocks = NULL;
+			sp->ExtensionBlockCount = 0;
+
 			/* first, the local color map */
 			if (CopyFrom->ImageDesc.ColorMap != NULL) {
 				sp->ImageDesc.ColorMap = GifMakeMapObject(
@@ -377,18 +385,37 @@ SavedImage *GifMakeSavedImage(GifFileType *GifFile,
 
 			/* finally, the extension blocks */
 			if (CopyFrom->ExtensionBlocks != NULL) {
+				int k;
 				sp->ExtensionBlocks =
-				    (ExtensionBlock *)reallocarray(
-				        NULL, CopyFrom->ExtensionBlockCount,
+				    (ExtensionBlock *)calloc(
+				        CopyFrom->ExtensionBlockCount,
 				        sizeof(ExtensionBlock));
 				if (sp->ExtensionBlocks == NULL) {
 					FreeLastSavedImage(GifFile);
 					return (SavedImage *)(NULL);
 				}
-				memcpy(sp->ExtensionBlocks,
-				       CopyFrom->ExtensionBlocks,
-				       sizeof(ExtensionBlock) *
-				           CopyFrom->ExtensionBlockCount);
+				for (k = 0; k < CopyFrom->ExtensionBlockCount;
+				     k++) {
+					ExtensionBlock *dst =
+					    &sp->ExtensionBlocks[k];
+					ExtensionBlock *src =
+					    &CopyFrom->ExtensionBlocks[k];
+					dst->Function = src->Function;
+					dst->ByteCount = src->ByteCount;
+					if (src->ByteCount > 0) {
+						dst->Bytes =
+						    (GifByteType *)malloc(
+						        src->ByteCount);
+						if (dst->Bytes == NULL) {
+							FreeLastSavedImage(
+							    GifFile);
+							return (SavedImage *)(NULL);
+						}
+						memcpy(dst->Bytes, src->Bytes,
+						       src->ByteCount);
+					}
+				}
+				sp->ExtensionBlockCount = CopyFrom->ExtensionBlockCount;
 			}
 		} else {
 			memset((char *)sp, '\0', sizeof(SavedImage));
