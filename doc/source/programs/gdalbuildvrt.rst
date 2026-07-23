@@ -19,7 +19,7 @@ Synopsis
                  [--quiet]
                  [[-strict]|[-non_strict]]
                  [-tile_index <field_name>]
-                 [-resolution user|average|common|highest|lowest|same]
+                 [-resolution user|average|common|highest|lowest|same|common]
                  [-tr <xres> <yres>] [-input_file_list <filename>]
                  [[-separate]|[-pixel-function <function>]]
                  [-pixel-function-arg <NAME>=<VALUE>]...
@@ -90,7 +90,7 @@ changed in later versions.
     Use the specified value as the tile index field, instead of the default
     value which is 'location'.
 
-.. option:: -resolution {highest|lowest|average|user|same}
+.. option:: -resolution {highest|lowest|average|user|same|common}
 
     In case the resolution of all input files is not the same, the :option:`-resolution` flag
     enables the user to control the way the output resolution is computed.
