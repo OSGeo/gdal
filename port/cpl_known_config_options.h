@@ -523,7 +523,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GRIB_USE_DEFAULT_SPHEROID", // from gribdataset.cpp
    "GRIB_WRITE_BITMAP_TEST", // from gribcreatecopy.cpp
    "GS_ACCESS_KEY_ID", // from cpl_google_cloud.cpp
-   "GS_GENERATION", // from cpl_google_cloud.cpp
    "GS_NO_SIGN_REQUEST", // from cpl_google_cloud.cpp
    "GS_OAUTH2_CLIENT_EMAIL", // from cpl_google_cloud.cpp
    "GS_OAUTH2_CLIENT_ID", // from cpl_google_cloud.cpp
