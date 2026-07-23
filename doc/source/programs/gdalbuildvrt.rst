@@ -19,7 +19,7 @@ Synopsis
                  [--quiet]
                  [[-strict]|[-non_strict]]
                  [-tile_index <field_name>]
-                 [-resolution user|average|common|highest|lowest|same|common]
+                 [-resolution user|average|common|highest|lowest|same]
                  [-tr <xres> <yres>] [-input_file_list <filename>]
                  [[-separate]|[-pixel-function <function>]]
                  [-pixel-function-arg <NAME>=<VALUE>]...
