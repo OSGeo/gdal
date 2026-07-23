@@ -125,7 +125,7 @@ Program-Specific Options
 
     .. versionadded:: 3.12
 
-.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
+.. option:: --resolution {<xres,yres>|same|highest|lowest|average|common}
 
     In case the resolution of all input files is not the same, the :option:`--resolution` flag
     enables the user to control the way the output resolution is computed.
