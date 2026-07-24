@@ -64,6 +64,7 @@ Analyse
 analysing
 Analysing
 analytics
+analyzed
 Andrey
 AndreyK
 anMapNewAxisToOldAxis
@@ -91,6 +92,7 @@ argv
 ari
 Arrayname
 arrayStartIdx
+artifacts
 ASC
 ascii
 aspatial
@@ -194,6 +196,7 @@ bCopy
 bDelete
 bDstToSrc
 bedrijven
+behavior
 behaviours
 Belge
 benchmarking
@@ -324,6 +327,8 @@ CCache
 ceil
 celldepth
 cellDepth
+center
+centered
 centerline
 Centos
 CentOS
@@ -370,6 +375,7 @@ ClassificationCode
 Clayers
 CleanTimeout
 clearerr
+cli
 CLI
 clib
 clipdst
@@ -413,8 +419,11 @@ Codewords
 Coeff
 Coefs
 colname
+color
+coloring
 colorinterp
 ColorInterpretation
+colorized
 colormap
 colormapped
 colorspace
@@ -510,6 +519,8 @@ CurvePolygon
 curvepolygons
 CurveToLine
 CustNo
+customize
+customized
 customly
 cutline
 cutlineDSName
@@ -743,6 +754,8 @@ earthengine
 eas
 easting
 Easting
+eastings
+Eastings
 eBufDataType
 eBufType
 Eckert
@@ -1163,6 +1176,7 @@ giga
 Gilad
 Gillingham
 GInt
+Girvin
 GIS
 gisinternals
 github
@@ -1293,6 +1307,7 @@ hielev
 hifuel
 hiheight
 hillshade
+hillshaded
 hillshading
 hinorth
 hislope
@@ -1710,6 +1725,7 @@ lwf
 lyr
 macOS
 MacOS
+MacOSX
 magellan
 magnetics
 Mahamood
@@ -1740,6 +1756,9 @@ Maptech
 maptools
 Marek
 marshaller
+materialize
+materialized
+materializing
 Mateusz
 MateuszL
 MateuzL
@@ -1800,6 +1819,7 @@ Minidriver
 minidrivers
 Minidrivers
 Minières
+Miniforge
 minilanguage
 minimalistic
 minimising
@@ -1831,6 +1851,7 @@ modeKnown
 modelisation
 modelled
 modelling
+Modernization
 modis
 MOLA
 Mollweide
@@ -1862,6 +1883,7 @@ msmitherdc
 mssql
 mssqlspatial
 MSVC
+msys
 MSys
 mtime
 mtimeKnown
@@ -1989,6 +2011,7 @@ NearblackOptions
 neatline
 Neatline
 neatlines
+neighbors
 neighbour
 neighbourhood
 neighbouring
@@ -2067,10 +2090,13 @@ noNativeData
 nOpenFlags
 nOptions
 norbit
+normalized
 normanb
 NormanB
 northing
 Northing
+northings
+Northings
 northup
 Northwood
 notnull
@@ -2235,11 +2261,13 @@ opj
 optfile
 optfiles
 optimise
+optimized
 Optionality
 orderByFields
 or'ed
 Organisation
 organisationName
+organization
 ORing
 ortho
 Ortho
@@ -2373,6 +2401,7 @@ parseable
 Parseable
 parsers
 Parsers
+partitioning
 pasGCPList
 pasMimePart
 Pasotti
@@ -2496,6 +2525,7 @@ pnXSize
 pnYSize
 poCRS
 podaac
+Podman
 podofo
 PoDoFo
 poDS
@@ -2731,6 +2761,7 @@ Pythonic
 pythonX
 pZ
 qGIS
+qgis
 qix
 qlr
 qml
@@ -2777,6 +2808,7 @@ rbz
 rc
 rdb
 rdblib
+RDBMS
 rdc
 rdensty
 ReadAsArray
@@ -2828,6 +2860,7 @@ relaxedFieldNameMatch
 relink
 RemoveM
 renderer
+replayable
 repo
 reportings
 reportSrcColumn
@@ -3293,6 +3326,7 @@ tim
 timePosition
 timesheet
 timezones
+Timișoara
 TinZ
 tippecanoe
 tm
