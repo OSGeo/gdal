@@ -123,8 +123,7 @@ at https://eodata.dataspace.copernicus.eu,
 which requires creating an account and getting credentials as indicated in
 https://documentation.dataspace.copernicus.eu/APIs/S3.html
 
-Documentation of GDAL S3 related configuration options at:
-https://gdal.org/en/stable/user/virtual_file_systems.html#vsis3-aws-s3-files
+See documentation of :ref:`GDAL S3 related configuration options <vsis3>`.
 
 Let's list the bucket content
 
@@ -219,7 +218,7 @@ and them simply access a DEM 1 degree x 1 degree tile with:
 Hypsometric rendering
 ---------------------
 
-With `gdal raster color-map <https://gdal.org/en/stable/programs/gdal_raster_color_map.html>`__.
+With :ref:`gdal raster color-map <gdal_raster_color_map>`.
 
 and following color ramp placed in :file:`test.cpt` (Source: "elevation1" from https://hub.qgis.org/styles/28/ ported from XML)
 
@@ -247,7 +246,7 @@ Result:
 Shaded map
 ----------
 
-With `gdal raster hillshade <https://gdal.org/en/stable/programs/gdal_raster_hillshade.html>`__.
+With :ref:`gdal raster hillshade <gdal_raster_hillshade>`.
 
 ::
 
@@ -276,7 +275,7 @@ Result:
 Combining hypsometric rendering and hillshade
 ---------------------------------------------
 
-With `gdal raster blend <https://gdal.org/en/stable/programs/gdal_raster_blend.html>`__.
+With :ref:`gdal raster blend <gdal_raster_blend>`.
 
 ::
 
@@ -311,8 +310,7 @@ Result:
 Doing it in one step: nested pipeline !
 ---------------------------------------
 
-Using `gdal raster pipeline <https://gdal.org/en/stable/programs/gdal_raster_pipeline.html>`__,
-and write is a :file:`.gdalg.json` file
+Using :ref:`gdal raster pipeline <gdal_raster_pipeline>`, and write is a :file:`.gdalg.json` file
 
 ::
 
@@ -355,7 +353,7 @@ Modify the above pipeline:
   
       Specify the hypsometric rendering with a nested input pipeline as the value
       of the ``--input`` argument of ``blend`` and use the special
-      placeholder `_PIPE_ <https://gdal.org/en/stable/programs/gdal_pipeline.html#placeholder-dataset-name>`__
+      placeholder :ref:`_PIPE_ <gdal_pipeline_pipe>`
 
 |
 
@@ -365,7 +363,7 @@ Modify the above pipeline:
 
   .. hint::
   
-      1. Use the `tee <https://gdal.org/en/stable/programs/gdal_pipeline.html#output-nested-pipeline>`__ pipeline operator
+      1. Use the :ref:`tee <gdal_output_nested_pipeline>` pipeline operator
 
       2. You may also use it inside a nested input pipeline
 

@@ -7,8 +7,7 @@ Tiling, merging
 Raster mosaic
 -------------
 
-Let's create a virtual mosaic in `VRT <https://gdal.org/en/stable/drivers/raster/vrt.html>`__
-format using `gdal raster mosaic <https://gdal.org/en/stable/programs/gdal_raster_mosaic.html>`__
+Let's create a virtual mosaic in :ref:`VRT <raster.vrt>` format using :ref:`gdal raster mosaic <gdal_raster_mosaic>`
 
 ::
 
@@ -34,7 +33,7 @@ Let's open :file:`s2.vrt` in QGIS
 Raster tiling
 -------------
 
-Using `gdal raster tile <https://gdal.org/en/stable/programs/gdal_raster_tile.html>`__
+Using :ref:`gdal raster tile <gdal_raster_tile>`
 
 ::
 
@@ -74,7 +73,7 @@ and check the result (if Firefox is not installed, manually open the file in the
 Doing everything at the same time using a pipeline
 --------------------------------------------------
 
-Using `gdal raster pipeline <https://gdal.org/en/stable/programs/gdal_raster_pipeline.html>`__
+Using :ref:`gdal raster pipeline <gdal_raster_pipeline>`
 
 ::
 
@@ -123,7 +122,7 @@ Modify above pipeline to materialize the scaled dataset as a GeoTIFF before tili
 
    .. hint::
 
-        Use `gdal raster materialize <https://gdal.org/en/stable/programs/gdal_raster_materialize.html>`__
+        Use :ref:`gdal raster materialize <gdal_raster_materialize>`
 
 
 ==> :ref:`solution_materialize`.
@@ -132,7 +131,7 @@ Modify above pipeline to materialize the scaled dataset as a GeoTIFF before tili
 Vector partitioning
 --------------------
 
-Using `gdal vector partition <https://gdal.org/en/stable/programs/gdal_vector_partition.html>`__
+Using :ref:`gdal vector partition <gdal_vector_partition>`
 
 First let's create a GeoPackage file from the original OSM data with a slightly
 customized import configuration with the OSM tag ``amenity`` being exposed as
@@ -314,7 +313,7 @@ And let's create a partition around the values of that field:
 Vector concatenation
 --------------------
 
-Using `gdal vector concat <https://gdal.org/en/stable/programs/gdal_vector_concat.html>`__
+Using :ref:`gdal vector concat <gdal_vector_concat>`
 
 ::
 

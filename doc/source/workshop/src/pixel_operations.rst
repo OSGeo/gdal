@@ -7,7 +7,7 @@ Pixel operations
 Pixel-wise computations
 -----------------------
 
-Using `gdal raster calc <https://gdal.org/en/stable/programs/gdal_raster_calc.html>`__
+Using :ref:`gdal raster calc <gdal_raster_calc>`
 
 It performs pixel-wise calculations on one or more input GDAL datasets. This example uses the ``s2_TER_10m.xml``
 dataset created in the :ref:`symlinks` section of the tutorial.
@@ -52,7 +52,7 @@ Exercise
    and do not create any materialized (i.e. actual image) file in the process.
 
 3. Create a .gdalg.json file with a simple pipeline computing the NDVI for one file,
-   and replay that pipeline using `substitutions <https://gdal.org/en/stable/programs/gdal_pipeline.html#substitutions>`__
+   and replay that pipeline using :ref:`substitutions <gdal_pipeline_substitutions>`
    to apply it to another Sentinel 2 tile
 
 
@@ -62,7 +62,7 @@ Exercise
 Focal statistics
 ----------------
 
-Using `gdal raster neighbors <https://gdal.org/en/stable/programs/gdal_raster_neighbors.html>`__
+Using :ref:`gdal raster neighbors <gdal_raster_neighbors>`
 
 Compute the value of each pixel from its neighbors (focal statistics).
 
@@ -87,7 +87,7 @@ Result:
 Zonal statistics
 ----------------
 
-Using `gdal raster zonal-stats <https://gdal.org/en/stable/programs/gdal_raster_zonal_stats.html.html>`__
+Using :ref:`gdal raster zonal-stats <gdal_raster_zonal_stats>`
 
 We are going to compute the average elevation in provinces around Timișoara.
 
@@ -174,7 +174,7 @@ Bonus point for a pipeline avoiding the creation of the materialized :file:`admi
 
 .. collapse:: (hint)
 
-  .. hint:: Look at documented examples of `gdal raster zonal-stats <https://gdal.org/en/stable/programs/gdal_raster_zonal_stats.html.html>`__
+  .. hint:: Look at documented examples of :ref:`gdal raster zonal-stats <gdal_raster_zonal_stats>`
 
   ==> :ref:`solution_zonal_stats`
  

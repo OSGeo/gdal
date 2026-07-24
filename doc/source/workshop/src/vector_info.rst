@@ -7,8 +7,7 @@ Getting information from vector datasets
 Utility
 -------
 
-`gdal vector info <https://gdal.org/en/stable/programs/gdal_vector_info.html>`__
-
+:ref:`gdal vector info <gdal_vector_info>`
 
 Getting vector layer names
 --------------------------
@@ -196,7 +195,7 @@ Applying an attribute filter, and limiting the output
 -----------------------------------------------------
 
 You can apply an attribute filter by specifying a SQL WHERE filtering clause
-with the ``--where`` option. By default, this uses the `OGR SQL dialect <https://gdal.org/en/stable/user/ogr_sql_dialect.html>`__
+with the ``--where`` option. By default, this uses the :ref:`OGR SQL dialect <ogr_sql_dialect>`
 which is a subset of the full SQL-92 standard.
 
 ::
@@ -265,7 +264,7 @@ JSON output / open options
 
 A number of GDAL raster and vector drivers have "open options", which control
 how the driver behaves. They are documented in each driver's documentation page.
-For OSM, at https://gdal.org/en/stable/drivers/vector/osm.html#open-options
+For OSM, at :ref:`OSM Open options <vector.osm.open_options>`.
 
 The ``other_tags`` field is exposed using the `PostgreSQL HSTORE <https://www.postgresql.org/docs/current/hstore.html>`__
 key/value data type which predates the introduction of JSON. But we may query

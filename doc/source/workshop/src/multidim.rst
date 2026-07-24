@@ -7,7 +7,7 @@ GDAL multidimensional tools
 Downloading and extracting information using GDAL multidimensional API
 ----------------------------------------------------------------------
 
-Using `gdal mdim convert <https://gdal.org/en/stable/programs/gdal_mdim_convert.html>`__
+Using :ref:`gdal mdim convert <gdal_mdim_convert>`
 
 Extracting NOAA Global Forecast System (GFS) data available from https://registry.opendata.aws/noaa-gfs-bdp-pds/
 
@@ -28,7 +28,7 @@ Extracting NOAA Global Forecast System (GFS) data available from https://registr
 Inspecting
 ----------
 
-Using `gdal mdim info <https://gdal.org/en/stable/programs/gdal_mdim_info.html>`__
+Using :ref:`gdal mdim info <gdal_mdim_info>`
 
 Let's have a look:
 
@@ -83,7 +83,7 @@ Let's have a look:
 
 We are going to modify the "time" (single) value of :file:`20260519_06_tmp2m.nc`
 so it is relative to "hours since 2026-05-19 00:00:00" by first creating a
-`multidimensional VRT <https://gdal.org/en/stable/drivers/raster/vrt_multidimensional.html>`__
+:ref:`multidimensional VRT <vrt_multidimensional>`
 
 ::
 
@@ -127,7 +127,7 @@ Now we can convert it back to netCDF:
 Mosaicing / creating a 3D cube
 ------------------------------
 
-Using `gdal mdim mosaic <https://gdal.org/en/stable/programs/gdal_mdim_mosaic.html>`__
+Using :ref:`gdal mdim mosaic <gdal_mdim_mosaic>`
 
 ::
 

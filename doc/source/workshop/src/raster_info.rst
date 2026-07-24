@@ -11,8 +11,8 @@ in the :ref:`install` section.
 Utilities demonstrated
 ----------------------
 
-- `gdal dataset identify <https://gdal.org/en/stable/programs/gdal_dataset_identify.html>`__
-- `gdal raster info <https://gdal.org/en/stable/programs/gdal_raster_info.html>`__
+- :ref:`gdal dataset identify <gdal_dataset_identify>`
+- :ref:`gdal raster info <gdal_raster_info>`
 
 
 Scanning a folder for GDAL datasets
@@ -26,8 +26,7 @@ First, make sure you are in the directory containing the workshop datasets (the 
     # Windows
     $ cd /c/gdal/gdal_cli_workshop_data-master
 
-Now let's use `gdal dataset identify <https://gdal.org/en/stable/programs/gdal_dataset_identify.html>`__
-in recursive mode in the current directory:
+Now let's use :ref:`gdal dataset identify <gdal_dataset_identify>` in recursive mode in the current directory:
 
 ::
 
@@ -71,7 +70,7 @@ Let's get information on one of the Sentinel 2 datasets
 
 Driver short name and long name. It is generally a good idea to consult the
 driver documentation page to learn about the peculiarities of each format. Here
-we are using `Sentinel-2 <https://gdal.org/en/stable/drivers/raster/sentinel2.html>`__.
+we are using :ref:`Sentinel-2 <raster.sentinel2>`.
 
 ::
 
@@ -226,7 +225,7 @@ Size of a pixel in CRS units (here meters), with  X value first, Y value second:
 
 Image Structure Metadata is format dependent and gives information on the
 compression method, internal organization with the ``INTERLEAVING`` keyword
-(pixel versus band interleaving. cf https://gdal.org/en/stable/user/raster_data_model.html#multiband-pixel-organization-interleave-metadata-item), etc.
+(pixel versus band interleaving. cf :ref:`raster_data_model_interleave_mode`), etc.
 
 ::
 
@@ -282,7 +281,7 @@ Overviews correspond to image pyramids, i.e. reduced resolution versions of the
 full resolution raster. They are generally automatically used by GDAL for processing
 occurring at a reduced resolution.
 
-The `Imagery metadata domain <https://gdal.org/en/stable/user/raster_data_model.html#imagery-domain-remote-sensing>`__
+The :ref:`Imagery metadata domain <raster_data_model_imagery_domain>`
 contains a few metadata items whose meaning is normalized across drivers, whereas
 the main (default) domain is driver specific and may contain anything.
 
@@ -846,7 +845,7 @@ Extract the CRS code using ``jq``.
 Invoking Algorithms from Python
 -------------------------------
 
-See `How to use gdal CLI algorithms from Python <https://gdal.org/en/stable/programs/gdal_cli_from_python.html>`__.
+See :ref:`How to use gdal CLI algorithms from Python <gdal_cli_from_python>`.
 
 Start Python:
 
@@ -910,7 +909,7 @@ And run:
   )
       Return information on a raster dataset.
 
-      Consult https://gdal.org/programs/gdal_raster_info.html for more details.
+      Consult :ref:`gdal raster info <gdal_raster_info` for more details.
 
       Parameters
       ----------
@@ -987,7 +986,7 @@ To exit Python and return to the shell, type:
 Getting pixel value
 -------------------
 
-Use `gdal raster pixel-info <https://gdal.org/en/stable/programs/gdal_raster_pixel_info.html>`__
+Use :ref:`gdal raster pixel-info <gdal_raster_pixel_info>`
 
 ::
 

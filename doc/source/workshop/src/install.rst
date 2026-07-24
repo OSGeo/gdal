@@ -598,4 +598,4 @@ Using GDAL development builds (for advanced / risk-tolerant users)
 
 Users that want to test the latest state of the main GDAL development branch
 (called "master") can use the ``gdal-master`` Conda channel to get such builds,
-as explained in https://gdal.org/en/stable/download.html#gdal-master-conda-builds
+as explained in :ref:`gdal-master-conda-builds`.

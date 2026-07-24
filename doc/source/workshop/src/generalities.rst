@@ -111,21 +111,21 @@ Smaller scope programs
 
 * ``gdal_translate`` ==>
 
-  - `gdal raster convert <https://gdal.org/en/stable/programs/gdal_raster_convert.html>`__
-  - `gdal raster clip <https://gdal.org/en/stable/programs/gdal_raster_clip.html>`__
-  - `gdal raster edit <https://gdal.org/en/stable/programs/gdal_raster_edit.html>`__
+  - :ref:`gdal raster convert <gdal_raster_convert>`
+  - :ref:`gdal raster clip <gdal_raster_clip>`
+  - :ref:`gdal raster edit <gdal_raster_edit>`
 
 * ``gdalwarp`` ==>
 
-  - `gdal raster reproject <https://gdal.org/en/stable/programs/gdal_raster_reproject.html>`__
-  - `gdal raster update <https://gdal.org/en/stable/programs/gdal_raster_update.html>`__
+  - :ref:`gdal raster reproject <gdal_raster_reproject>`
+  - :ref:`gdal raster update <gdal_raster_update>`
 
 * ``ogr2ogr`` ==>
 
-  - `gdal vector convert <https://gdal.org/en/stable/programs/gdal_vector_convert.html>`__
-  - `gdal vector clip <https://gdal.org/en/stable/programs/gdal_vector_clip.html>`__
-  - `gdal vector edit <https://gdal.org/en/stable/programs/gdal_vector_edit.html>`__
-  - `gdal vector reproject <https://gdal.org/en/stable/programs/gdal_vector_reproject.html>`__
+  - :ref:`gdal vector convert <gdal_vector_convert>`
+  - :ref:`gdal vector clip <gdal_vector_clip>`
+  - :ref:`gdal vector edit <gdal_vector_edit>`
+  - :ref:`gdal vector reproject <gdal_vector_reproject>`
 
 
 Program syntax
@@ -219,7 +219,7 @@ I need help !!!
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated] [not available in pipelines]
       --oo, --open-option <KEY>=<VALUE>                    Open options [may be repeated] [not available in pipelines]
 
-    For more details, consult https://gdal.org/programs/gdal_raster_convert.html
+    For more details, consult :ref:`gdal_raster_convert <gdal_raster_convert>`.
 
     WARNING: the gdal command is provisionally provided as an alternative interface to GDAL and OGR command line utilities.
     The project reserves the right to modify, rename, reorganize, and change the behavior of the utility

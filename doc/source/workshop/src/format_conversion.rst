@@ -8,8 +8,7 @@ Raster
 ++++++
 
 Let's try converting a Sentinel 2 dataset to Cloud-optimized GeoTIFF
-(`COG <https://gdal.org/en/stable/drivers/raster/cog.html>`__) using
-`gdal raster convert <https://gdal.org/en/stable/programs/gdal_raster_convert.html>`__
+(:ref:`COG <raster.cog>`) using :ref:`gdal raster convert <gdal_raster_convert>`
 
 ::
 
@@ -59,7 +58,7 @@ Exercise
 
        .. hint::
 
-           Use `gdal raster scale <https://gdal.org/en/stable/programs/gdal_raster_scale.html>`__
+           Use :ref:`gdal raster scale <gdal_raster_scale>`
 
 3. Improve the visual result by reducing the effect of extreme pixel values (outliers) using statistical clamping.
 
@@ -67,7 +66,7 @@ Exercise
 
        .. hint::
 
-           Use `gdal raster select <https://gdal.org/en/stable/programs/gdal_raster_select.html>`__
+           Use :ref:`gdal raster select <gdal_raster_select>`.
 
            You can improve the visual result by clamping the input range to
            2 standard deviations of the mean.
@@ -79,7 +78,7 @@ Vector
 ++++++
 
 Convert the :file:`timisoara.osm.pbf` to GeoPackage, with the ``other_tags`` field as JSON
-using `gdal vector convert <https://gdal.org/en/stable/programs/gdal_vector_convert.html>`__
+using :ref:`gdal vector convert <gdal_vector_convert>`.
 
 ::
 
@@ -153,7 +152,7 @@ Exercise
 
        .. hint::
 
-            Use `gdal vector explode-collections <https://gdal.org/en/stable/programs/gdal_vector_explode_collections.html>`__
+            Use :ref:`gdal vector explode-collections <gdal_vector_explode_collections>`.
 
 3. Create a layer for each geometry type in the ``other_collections`` layer.
 
@@ -161,7 +160,7 @@ Exercise
 
        .. hint::
 
-           Use `gdal vector filter <https://gdal.org/en/stable/programs/gdal_vector_filter.html>`__
+           Use :ref:`gdal vector filter <gdal_vector_filter>`
            and Spatialite `ST_GeometryType <https://www.gaia-gis.it/gaia-sins/spatialite-sql-5.1.0.html#p4>`__ function
 
 

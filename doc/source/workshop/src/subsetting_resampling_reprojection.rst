@@ -7,7 +7,7 @@ Subsetting, resampling, reprojection
 Raster resampling/resizing
 --------------------------
 
-Use `gdal raster resize <https://gdal.org/en/stable/programs/gdal_raster_resize.html>`__
+Use :ref:`gdal raster resize <gdal_raster_resize>`
 
 ::
 
@@ -30,7 +30,7 @@ or
         --resampling cubic
 
 
-Let's compare them with `gdal raster compare <https://gdal.org/en/stable/programs/gdal_raster_compare.html>`__
+Let's compare them with :ref:`gdal raster compare <gdal_raster_compare>`
 
 ::
 
@@ -84,8 +84,8 @@ Alternatively:
 Clipping
 --------
 
-Use `gdal raster clip <https://gdal.org/en/stable/programs/gdal_raster_clip.html>`__
-and `gdal vector clip <https://gdal.org/en/stable/programs/gdal_vector_clip.html>`__
+Use :ref:`gdal raster clip <gdal_raster_clip>`
+and :ref:`gdal vector clip <gdal_vector_clip>`
 
 ::
 
@@ -133,8 +133,8 @@ with a circle centered on Timișoara center (45.7558° N, 21.2322° E) with a ra
 Reprojection
 ------------
 
-Use `gdal raster reproject <https://gdal.org/en/stable/programs/gdal_raster_reproject.html>`__
-and `gdal vector reproject <https://gdal.org/en/stable/programs/gdal_vector_reproject.html>`__
+Use :ref:`gdal raster reproject <gdal_raster_reproject>`
+and :ref:`gdal vector reproject <gdal_vector_reproject>`
 
 ::
 
@@ -211,7 +211,7 @@ and `gdal vector reproject <https://gdal.org/en/stable/programs/gdal_vector_repr
 Or use `CRS explorer at spatialreference.org <https://spatialreference.org/explorer.html?latlng=45.740693,21.211853&ignoreWorld=false&allowDeprecated=false&authorities=EPSG&activeTypes=PROJECTED_CRS>`__
 
 and let's write as a replayable :file:`.gdalg.json` file:
-https://gdal.org/en/stable/drivers/raster/gdalg.html
+See :ref:`raster.gdalg`.
 
 ::
 
@@ -380,7 +380,7 @@ artifacts appear.
     :alt: Artifacts
 
 
-Let's clean them with `gdal raster clean-collar <https://gdal.org/en/stable/programs/gdal_raster_clean-collar.html>`__
+Let's clean them with :ref:`gdal raster clean-collar <gdal_raster_clean_collar>`
 
 ::
 
@@ -401,7 +401,7 @@ And make sure it includes overviews.
 
         1. Use the ``--input-nodata`` and ``--add-alpha`` options
 
-        2. Use `gdal raster overview add <https://gdal.org/en/stable/programs/gdal_raster_overview_add.html>`__
+        2. Use :ref:`gdal raster overview add <gdal_raster_overview_add>`
            or use a format whose generation with GDAL automatically includes overviews.
 
 ==> :ref:`solution_reproject`.
