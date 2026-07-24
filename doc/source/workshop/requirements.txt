@@ -1,0 +1,5 @@
+sphinx < 9  # sphinx-toolbox not yet ready. See https://github.com/sphinx-toolbox/sphinx-toolbox/issues/201
+sphinx-rtd-theme
+sphinxcontrib-spelling
+sphinx-toolbox
+sphinxcontrib-svg2pdfconverter[CairoSVG]

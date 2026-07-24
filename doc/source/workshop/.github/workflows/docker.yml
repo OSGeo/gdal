@@ -1,0 +1,86 @@
+name: Perform Release
+
+on:
+  push:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  docker_builds:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ["arm64", "amd64"]
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    permissions:
+      attestations: write
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b2189fbf2a6592b51fee7cdd93ee2bfaeba733db # v5.1.0
+        with:
+          daemon-config: |
+            {
+              "debug": false,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract container metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: |
+            ghcr.io/rouault/gdal-cli-workshop
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+      - name: Build
+        shell: bash -l {0}
+        id: build
+        env:
+          BUILDKIT_PROGRESS: plain
+        run: |
+          docker buildx build --platform linux/${{ matrix.platform }} -t ghcr.io/rouault/gdal-cli-workshop:latest-${{ matrix.platform }}  docker/
+          docker push ghcr.io/rouault/gdal-cli-workshop:latest-${{ matrix.platform }}
+
+  create-docker-manifest:
+    permissions:
+      packages: write
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: [docker_builds]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create and push multi-platform manifest
+        run: |
+          docker buildx imagetools create \
+          -t ghcr.io/rouault/gdal-cli-workshop \
+          ghcr.io/rouault/gdal-cli-workshop:latest-amd64 \
+          ghcr.io/rouault/gdal-cli-workshop:latest-arm64
