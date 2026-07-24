@@ -218,6 +218,164 @@ def test_vsigs_no_sign_request_fake_server(webserver_port):
             assert len(data) == 1
 
 
+def test_vsigs_read_specific_generation(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    # The generation must be forwarded as a real "generation=<n>" query
+    # parameter, not folded into the object key, for GCS to return the pinned
+    # version instead of the live object.
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/resource?generation=123456789",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {"GS_NO_SIGN_REQUEST": "YES"},
+            thread_local=False,
+        ):
+            f = open_for_read(
+                "/vsigs/?generation=123456789&path=gs_fake_bucket_generation/resource"
+            )
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+def test_vsigs_non_numeric_generation_rejected(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=not-a-number"
+            )
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("generation") >= 0
+
+
+def test_vsigs_unknown_key_warns(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+                "&unknown_key=unknown_key_value"
+            )
+        assert f is not None, "Unknown key should not impede file read"
+        assert gdal.GetLastErrorMsg().find("Unsupported") >= 0
+
+
+def test_vsigs_missing_path_param_raises_error(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsigs/" "?generation=123456789")
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("Missing") >= 0
+
+
+def test_vsigs_read_specific_generation_hmac_signature(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    # Per the XML API V2 signing process, the generation is a plain query
+    # parameter, not a subresource: it is forwarded on the request URL but
+    # does not participate in the GOOG1 string-to-sign. The expected
+    # signature is computed independently here to pin that down.
+    import base64
+    import hashlib
+    import hmac
+
+    string_to_sign = "GET\n\n\nmy_timestamp\n/gs_fake_bucket_generation/resource"
+    signature = base64.b64encode(
+        hmac.new(
+            b"GS_SECRET_ACCESS_KEY", string_to_sign.encode("utf-8"), hashlib.sha1
+        ).digest()
+    ).decode("ascii")
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/resource?generation=123456789",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={
+            "Range": "bytes=0-16383",
+            "Authorization": "GOOG1 GS_ACCESS_KEY_ID:" + signature,
+        },
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+                "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
+                "CPL_GS_TIMESTAMP": "my_timestamp",
+            },
+            thread_local=False,
+        ):
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+            )
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+def test_vsigs_specific_generation_signed_url(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    options = {
+        "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+        "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
+        "CPL_GS_TIMESTAMP": "my_timestamp",
+    }
+
+    with gdaltest.config_options(options, thread_local=False):
+        unpinned_url = gdal.GetSignedURL(
+            "/vsigs/gs_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
+        )
+
+    with gdaltest.config_options(options, thread_local=False):
+        pinned_url = gdal.GetSignedURL(
+            "/vsigs/?path=gs_fake_bucket/resource&generation=123456789",
+            ["START_DATE=20180212T123456Z"],
+        )
+
+    # The generation rides along as an unsigned query parameter: same
+    # signature, with generation=<n> added to the URL.
+    assert unpinned_url is not None
+    assert pinned_url is not None
+    assert "generation=123456789" in pinned_url
+    assert pinned_url.replace("&generation=123456789", "") == unpinned_url
+
+
 ###############################################################################
 # Test with a fake Google Cloud Storage server
 

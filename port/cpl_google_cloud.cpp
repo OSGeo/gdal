@@ -745,12 +745,59 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const char *pszURI, const char * /*pszFSPrefix*/,
     const char *pszURIForPathSpecificOption, CSLConstList papszOptions)
 {
-    std::string osPathForOption("/vsigs/");
-    osPathForOption +=
-        pszURIForPathSpecificOption ? pszURIForPathSpecificOption : pszURI;
+    std::string osBucketObject;
+    std::string osGeneration;
 
-    // pszURI == bucket/object
-    const std::string osBucketObject(pszURI);
+    // Optional GCS object generation (version) to read. When set, requests for
+    // this path carry a "generation=<n>" query parameter and the path as "path=<>",
+    // so a specific (possibly non-current) object version is read instead of the
+    // live one. See https://cloud.google.com/storage/docs/object-versioning
+    if (pszURI[0] == '?')
+    {
+        char **papszTokens = CSLTokenizeString2(pszURI + 1, "&", 0);
+        for (int i = 0; papszTokens[i] != nullptr; i++)
+        {
+            char *pszUnescaped =
+                CPLUnescapeString(papszTokens[i], nullptr, CPLES_URL);
+            CPLFree(papszTokens[i]);
+            papszTokens[i] = pszUnescaped;
+        }
+        for (int i = 0; papszTokens[i] != nullptr; i++)
+        {
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
+            if (pszKey && pszValue)
+            {
+                if (EQUAL(pszKey, "path"))
+                    osBucketObject = pszValue;
+                else if (EQUAL(pszKey, "generation"))
+                    osGeneration = pszValue;
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Unsupported option '%s' in /vsigs/ query string",
+                             pszKey);
+                }
+            }
+            CPLFree(pszKey);
+        }
+        CSLDestroy(papszTokens);
+        if (osBucketObject.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing 'path' key in /vsigs/ query string");
+            return nullptr;
+        }
+    }
+    else
+    {
+        osBucketObject = pszURI;
+    }
+
+    std::string osPathForOption("/vsigs/");
+    osPathForOption += pszURIForPathSpecificOption ? pszURIForPathSpecificOption
+                                                   : osBucketObject;
+
     std::string osEndpoint(VSIGetPathSpecificOption(osPathForOption.c_str(),
                                                     "CPL_GS_ENDPOINT", ""));
     if (osEndpoint.empty())
@@ -773,9 +820,21 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const std::string osUserProject = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_USER_PROJECT", "");
 
-    return new VSIGSHandleHelper(osEndpoint, osBucketObject, osSecretAccessKey,
-                                 osAccessKeyId, bUseAuthenticationHeader,
-                                 oManager, osUserProject);
+    if (!osGeneration.empty() &&
+        osGeneration.find_first_not_of("0123456789") != std::string::npos)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid generation value '%s': must be a positive integer",
+                 osGeneration.c_str());
+        return nullptr;
+    }
+
+    auto poHandleHelper = new VSIGSHandleHelper(
+        osEndpoint, osBucketObject, osSecretAccessKey, osAccessKeyId,
+        bUseAuthenticationHeader, oManager, osUserProject);
+    if (!osGeneration.empty())
+        poHandleHelper->AddQueryParameter("generation", osGeneration);
+    return poHandleHelper;
 }
 
 /************************************************************************/
@@ -839,9 +898,19 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
         osCanonicalResource += "/";
     else
     {
-        const auto osQueryString(GetQueryString(false));
-        if (osQueryString == "?uploads" || osQueryString == "?acl")
-            osCanonicalResource += osQueryString;
+        // Per the XML API V2 signing process, only subresources participate
+        // in the canonicalized resource; plain query parameters (such as
+        // generation) do not, even when present alongside a subresource.
+        for (const char *pszSubResource : {"acl", "uploads"})
+        {
+            if (m_oMapQueryParameters.find(pszSubResource) !=
+                m_oMapQueryParameters.end())
+            {
+                osCanonicalResource += '?';
+                osCanonicalResource += pszSubResource;
+                break;
+            }
+        }
     }
 
     // If accessing a Google Cloud account from a GC VM, check that
@@ -1005,6 +1074,16 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
     std::string osCanonicalizedResource(
         "/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
 
+    // A generation pin is a plain query parameter, not a signed subresource:
+    // it is not part of the string-to-sign, but must be preserved in the
+    // returned URL so the pinned version is fetched.
+    std::string osGeneration;
+    {
+        const auto oIter = m_oMapQueryParameters.find("generation");
+        if (oIter != m_oMapQueryParameters.end())
+            osGeneration = oIter->second;
+    }
+
     std::string osStringToSign;
     osStringToSign += osVerb + "\n";
     osStringToSign += "\n";  // Content_MD5
@@ -1029,6 +1108,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_osAccessKeyId);
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);
@@ -1047,6 +1128,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_oManager.GetClientEmail());
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);
