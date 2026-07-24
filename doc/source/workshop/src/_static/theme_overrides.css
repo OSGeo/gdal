@@ -1,6 +1,0 @@
-/* override theme.css layout */
-.wy-nav-content
-{
-        max-width: unset;
-        /* use 100% width */
-}
