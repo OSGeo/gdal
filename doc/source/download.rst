@@ -225,6 +225,7 @@ To install the Arrow and Parquet drivers as plugins:
 
     conda install -c conda-forge libgdal-arrow-parquet
 
+.. _gdal-master-conda-builds:
 
 GDAL master Conda builds
 ~~~~~~~~~~~~~~~~~~~~~~~~

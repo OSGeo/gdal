@@ -260,6 +260,8 @@ These fields are directly derived from the document prospective GeoTIFF RPC docu
 
 The line and pixel offset expressed with LINE_OFF and SAMP_OFF are with respect to the center of the pixel.
 
+.. _raster_data_model_imagery_domain:
+
 IMAGERY Domain (remote sensing)
 +++++++++++++++++++++++++++++++
 
