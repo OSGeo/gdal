@@ -34,7 +34,7 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
 {
     auto &layerArg = AddActiveLayerArg(&m_activeLayer);
     AddBBOXArg(&m_bbox);
-    AddArg("bbox-crs", 0, _("CRS of filter bounding box"), &m_bboxCrs)
+    AddArg("bbox-crs", 0, _("CRS of bounding box filter"), &m_bboxCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("bbox_srs");
     AddArg("where", 0,
