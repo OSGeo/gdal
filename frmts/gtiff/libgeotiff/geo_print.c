@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "geotiff.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
@@ -307,9 +308,19 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
     const int tag = GTIFTagCode(tagname);
     if (tag < 0) return StringError(tagname);
 
+    if (nrows <= 0 || ncols <= 0 || (size_t)nrows > INT_MAX / ncols / sizeof(double))
+    {
+        return StringError(tagname);
+    }
+
     const int count = nrows*ncols;
 
     double *data = (double *) _GTIFcalloc(count * sizeof(double));
+    if (!data)
+    {
+        fprintf(stderr,"Out of memory error allocating memory for tag %s\n",tagname);
+        return -1;
+    }
     double *dptr = data;
 
     for (int i=0;i<nrows;i++)
@@ -346,6 +357,11 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     int count;
     const int num = sscanf(message,"%99[^( ] (%19[^,],%d):\n",name,type,&count);
     if (num!=3) return StringError(message);
+
+    if (count <= 0)
+    {
+        return StringError(message);
+    }
 
     char *vptr = message;
     FINDCHAR(vptr,':');
@@ -424,8 +440,20 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
 
       case TYPE_DOUBLE:
       {
-        double data[100];
+        if ((size_t)count > INT_MAX / sizeof(double))
+        {
+            fprintf(stderr,"Too large count for key %s\n",name);
+            return -1;
+        }
+        double *data = (double *) _GTIFcalloc(count * sizeof(double));
+        if (!data)
+        {
+            fprintf(stderr,"Out of memory error allocating memory for key %s\n",name);
+            return -1;
+        }
+
         outcount = count;
+
         for (dptr = data; count > 0; count-= vals_now)
         {
             vals_now = count > 3? 3: count;
@@ -446,6 +474,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
             GTIFKeySet(gt,key,ktype,outcount,data[0]);
         else
             GTIFKeySet(gt,key,ktype,outcount,data);
+        _GTIFFree(data);
         break;
       }
 
@@ -459,7 +488,17 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
         }
         else  /* multi-valued short - no such thing yet */
         {
-            short data[100];
+            if ((size_t)count > INT_MAX / sizeof(short))
+            {
+                fprintf(stderr,"Too large count for key %s\n",name);
+                return -1;
+            }
+            short *data = (short *) _GTIFcalloc(count * sizeof(short));
+            if (!data)
+            {
+                fprintf(stderr,"Out of memory error allocating memory for key %s\n",name);
+                return -1;
+            }
             outcount = count;
             for (sptr = data; count > 0; count-= vals_now)
             {
@@ -481,6 +520,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
                 }
             }
             GTIFKeySet(gt,key,ktype,outcount,sptr);
+            _GTIFFree(data);
         }
         break;
 
