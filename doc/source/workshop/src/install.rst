@@ -498,7 +498,7 @@ Click on Finish:
 Create a launcher script
 ++++++++++++++++++++++++
 
-Download the script at https://raw.githubusercontent.com/rouault/gdal_cli_workshop/refs/heads/master/gdal.bat
+Download the script at https://raw.githubusercontent.com/OSGeo/gdal/master/refs/heads/master/doc/source/workshop/gdal.bat
 and save it as :file:`c:\\gdal\\gdal.bat`. This script will launch a Bash shell
 with all the necessary environment to run GDAL, including the command line completion.
 

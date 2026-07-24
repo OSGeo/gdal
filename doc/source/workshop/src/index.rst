@@ -3,10 +3,6 @@
 GDAL new command line interface: introduction and advanced topics
 ###############################################################################
 
-.. only:: html
-
-   PDF version available `here <gdal-cli-workshop.pdf>`_.
-
 .. toctree::
 
    intro
