@@ -240,6 +240,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                 CSLFetchNameValueDef(GetOpenOptions(), "USE_ZMETADATA",
                                      "YES"))))
         {
+            m_oRootAttributes.Deinit();
             if (m_eConsolidatedMetadataKind == ConsolidatedMetadataKind::NONE)
             {
                 CPLDebug("JSON", "Using consolidated_metadata");

@@ -421,7 +421,7 @@ void ZarrV3Group::GenerateMultiscalesMetadata(const char *pszResampling)
         LoadAttributes();
 
     CPLJSONArray oZarrConventions;
-    auto poExistingConv = m_oAttrGroup.GetAttribute("zarr_conventions");
+    auto poExistingConv = GetAttribute("zarr_conventions");
     if (poExistingConv)
     {
         const char *pszExisting = poExistingConv->ReadAsString();
@@ -437,7 +437,7 @@ void ZarrV3Group::GenerateMultiscalesMetadata(const char *pszResampling)
                 }
             }
         }
-        m_oAttrGroup.DeleteAttribute("zarr_conventions");
+        DeleteAttribute("zarr_conventions");
     }
 
     {
@@ -453,20 +453,19 @@ void ZarrV3Group::GenerateMultiscalesMetadata(const char *pszResampling)
         oZarrConventions.Add(oConv);
     }
 
-    if (m_oAttrGroup.GetAttribute("multiscales"))
-        m_oAttrGroup.DeleteAttribute("multiscales");
+    if (GetAttribute("multiscales"))
+        DeleteAttribute("multiscales");
 
     const auto oJsonDT = GDALExtendedDataType::CreateString(0, GEDTST_JSON);
     {
-        auto poAttr =
-            m_oAttrGroup.CreateAttribute("zarr_conventions", {}, oJsonDT);
+        auto poAttr = CreateAttribute("zarr_conventions", {}, oJsonDT);
         if (poAttr)
             poAttr->Write(
                 oZarrConventions.Format(CPLJSONObject::PrettyFormat::Plain)
                     .c_str());
     }
     {
-        auto poAttr = m_oAttrGroup.CreateAttribute("multiscales", {}, oJsonDT);
+        auto poAttr = CreateAttribute("multiscales", {}, oJsonDT);
         if (poAttr)
             poAttr->Write(
                 oMultiscales.Format(CPLJSONObject::PrettyFormat::Plain)
@@ -486,6 +485,8 @@ bool ZarrV3Group::Close()
                      (m_bUpdatable && !m_bFileHasBeenWritten &&
                       m_poSharedResource->IsConsolidatedMetadataEnabled())))
     {
+        LoadAttributes();
+
         CPLJSONDocument oDoc;
         auto oRoot = oDoc.GetRoot();
         oRoot.Add("zarr_format", 3);
@@ -541,7 +542,6 @@ ZarrV3Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
         CPLFormFilenameSafe(poBelongingGroup->m_osDirectoryName.c_str(),
                             poSubGroup->GetName().c_str(), nullptr));
     poSubGroup->m_bDirectoryExplored = true;
-    poSubGroup->m_bAttributesLoaded = true;
     poSubGroup->m_bReadFromConsolidatedMetadata = true;
     poSubGroup->m_bFileHasBeenWritten = true;
     poSubGroup->SetUpdatable(m_bUpdatable);
@@ -568,7 +568,7 @@ void ZarrV3Group::InitFromConsolidatedMetadata(
         return;
     }
     m_bDirectoryExplored = true;
-    m_bAttributesLoaded = true;
+    m_bAttributesLoaded = oRootAttributes.IsValid();
     m_bReadFromConsolidatedMetadata = true;
 
     if (oRootAttributes.IsValid())
@@ -593,6 +593,7 @@ void ZarrV3Group::InitFromConsolidatedMetadata(
         if (osNodeType == "group")
         {
             auto poGroup = GetOrCreateSubGroup("/" + osName);
+            poGroup->m_bAttributesLoaded = oRootAttributes.IsValid();
             auto oAttributes = child["attributes"];
             if (oAttributes.IsValid())
             {
