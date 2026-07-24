@@ -416,7 +416,8 @@ int DGifGetImageHeader(GifFileType *GifFile) {
 	}
 
 	Private->PixelCount =
-	    (long)GifFile->Image.Width * (long)GifFile->Image.Height;
+	    (unsigned long)GifFile->Image.Width *
+	    (unsigned long)GifFile->Image.Height;
 
 	/* Reset decompress algorithm parameters. */
 	return DGifSetupDecompress(GifFile);
@@ -824,7 +825,7 @@ static int DGifSetupDecompress(GifFileType *GifFile) {
 	BitsPerPixel = CodeSize;
 
 	/* this can only happen on a severely malformed GIF */
-	if (BitsPerPixel > 8) {
+	if (BitsPerPixel < 2 || BitsPerPixel > 8) {
 		GifFile->Error =
 		    D_GIF_ERR_READ_FAILED; /* somewhat bogus error code */
 		return GIF_ERROR;          /* Failed to read Code size. */
