@@ -9,11 +9,13 @@
  *
  *****************************************************************************/
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "geotiff.h"    /* public GTIFF interface */
 #include "geo_simpletags.h"
 
 #include "geo_tiffp.h"  /* Private TIFF interface */
-#include "geo_keyp.h"   /* Private GTIFF interface */
 
 static int ST_TypeSize( int st_type );
 
