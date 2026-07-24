@@ -31,7 +31,7 @@ Assuming you have Docker or Podman already installed.
 
 ::
 
-    $ docker pull ghcr.io/rouault/gdal-cli-workshop
+    $ docker pull ghcr.io/gdal/gdal-cli-workshop
 
 Allow X client from inside Docker to connect to the X server with:
 
@@ -49,7 +49,7 @@ Now run the image with:
     $ docker run -it --name gdal-cli-workshop \
             -v /tmp/.X11-unix:/tmp/.X11-unix \
             -v $HOME/gdal-cli-workshop:/data/gdal_cli_workshop_data-master/host \
-            ghcr.io/rouault/gdal-cli-workshop
+            ghcr.io/gdal/gdal-cli-workshop
 
 Inside the container:
 

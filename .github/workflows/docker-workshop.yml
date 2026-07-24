@@ -47,7 +47,7 @@ jobs:
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
-            ghcr.io/rouault/gdal-cli-workshop
+            ghcr.io/osgeo/gdal-cli-workshop
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -61,8 +61,8 @@ jobs:
         env:
           BUILDKIT_PROGRESS: plain
         run: |
-          docker buildx build --platform linux/${{ matrix.platform }} -t ghcr.io/rouault/gdal-cli-workshop:latest-${{ matrix.platform }}  docker/
-          docker push ghcr.io/rouault/gdal-cli-workshop:latest-${{ matrix.platform }}
+          docker buildx build --platform linux/${{ matrix.platform }} -t ghcr.io/osgeo/gdal-cli-workshop:latest-${{ matrix.platform }}  docker/workshop/
+          docker push ghcr.io/osgeo/gdal-cli-workshop:latest-${{ matrix.platform }}
 
   create-docker-manifest:
     permissions:
@@ -81,6 +81,6 @@ jobs:
       - name: Create and push multi-platform manifest
         run: |
           docker buildx imagetools create \
-          -t ghcr.io/rouault/gdal-cli-workshop \
-          ghcr.io/rouault/gdal-cli-workshop:latest-amd64 \
-          ghcr.io/rouault/gdal-cli-workshop:latest-arm64
+          -t ghcr.io/osgeo/gdal-cli-workshop \
+          ghcr.io/osgeo/gdal-cli-workshop:latest-amd64 \
+          ghcr.io/osgeo/gdal-cli-workshop:latest-arm64
