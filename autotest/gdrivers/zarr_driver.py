@@ -9640,3 +9640,36 @@ def test_zarr_setspatialref_multiband(tmp_vsimem):
 
     ds = gdal.Open(tmp_vsimem / "test.zarr")
     assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("after_reopen", [False, True])
+@pytest.mark.parametrize("get_ovr_after_build", [False, True])
+@gdaltest.enable_exceptions()
+def test_zarr_build_overviews_multiband(tmp_path, after_reopen, get_ovr_after_build):
+
+    ds = gdal.GetDriverByName("Zarr").Create(
+        tmp_path / "test.zarr", 4, 6, 2, gdal.GDT_Byte
+    )
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.GetRasterBand(2).SetNoDataValue(0)
+    if after_reopen:
+        ds.Close()
+        ds = gdal.Open(tmp_path / "test.zarr", gdal.OF_UPDATE)
+    ds.BuildOverviews("NEAR", [2])
+    if get_ovr_after_build:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(-1) is None
+        assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
+        assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
+        assert ds.GetRasterBand(2).GetOverviewCount() == 1
+    ds.Close()
+
+    ds = gdal.Open(tmp_path / "test.zarr")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
+    assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
+    assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
+    assert ds.GetRasterBand(2).GetOverviewCount() == 1
