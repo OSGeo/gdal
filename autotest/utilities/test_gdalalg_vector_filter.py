@@ -53,6 +53,61 @@ def test_gdalalg_vector_filter_bbox(tmp_vsimem):
         assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
+def test_gdalalg_vector_filter_bbox_crs(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    assert filter_alg.ParseRunAndFinalize(
+        [
+            "--bbox=162.738732464523,87.281159125562,162.738864994681,87.281170122593",
+            "--bbox-crs=EPSG:4326",
+            "../ogr/data/poly.shp",
+            out_filename,
+        ]
+    )
+
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
+
+
+@pytest.mark.require_proj(9, 0)
+def test_gdalalg_vector_filter_bbox_crs_error(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    with pytest.raises(
+        Exception,
+        match="Source and target ellipsoid do not belong to the same celestial body",
+    ):
+        filter_alg.ParseRunAndFinalize(
+            [
+                "--bbox=162.738732464523,87.281159125562,162.738864994681,87.281170122593",
+                "--bbox-crs=IAU_2015:19900",
+                "../ogr/data/poly.shp",
+                out_filename,
+            ]
+        )
+
+
+def test_gdalalg_vector_filter_bbox_crs_error_2(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.shp")
+
+    filter_alg = get_filter_alg()
+    with pytest.raises(Exception, match="Bounding box reprojection failed"):
+        filter_alg.ParseRunAndFinalize(
+            [
+                "--bbox=100,100,101,101",
+                "--bbox-crs",
+                "EPSG:4326",
+                "../ogr/data/poly.shp",
+                out_filename,
+            ]
+        )
+
+
 def test_gdalalg_vector_filter_where_discard_all(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.shp")

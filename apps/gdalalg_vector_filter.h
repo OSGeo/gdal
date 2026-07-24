@@ -45,6 +45,7 @@ class GDALVectorFilterAlgorithm /* non final */
 
     std::string m_activeLayer{};
     std::vector<double> m_bbox{};
+    std::string m_bboxCrs{};
     std::string m_where{};
     bool m_updateExtent = false;
 };
