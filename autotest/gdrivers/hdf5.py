@@ -1404,6 +1404,22 @@ def test_gdal_subdataset_get_filename(filename, path_component):
 
 @pytest.mark.parametrize(
     "filename",
+    ("/vsimem/DATA:TEST.h5", "/vsimem/DATA:TEST:DOUBLE.h5", '/vsimem/DATA:"TEST".h5'),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(
+        filename, open("data/hdf5/hdfeos_sample_swath.h5", "rb").read()
+    )
+    info = gdal.GetSubdatasetInfo(f'HDF5:"{filename}":/navigation_data/latitude')
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "filename",
     (
         'HDF5:"OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
         r'HDF5:"C:\OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
