@@ -534,6 +534,26 @@ def test_gdal_subdataset_get_filename(filename, path_component):
 @pytest.mark.parametrize(
     "filename",
     (
+        "/vsimem/DATA:TEST.hdf",
+        "/vsimem/DATA:TEST:DOUBLE.hdf",
+        '/vsimem/DATA:"TEST".hdf',
+    ),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(filename, open("data/General_RImages.hdf", "rb").read())
+    info = gdal.GetSubdatasetInfo(
+        f'HDF4_EOS:EOS_SWATH:"{filename}":/navigation_data/latitude'
+    )
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
         'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
         r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
         "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",

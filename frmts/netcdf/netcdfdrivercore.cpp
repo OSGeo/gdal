@@ -251,12 +251,45 @@ void NCDFDriverSubdatasetInfo::parseFileName()
         return;
     }
 
+    auto unescapeDoubleQuotes = [](std::string &str)
+    {
+        size_t pos = 0;
+        while ((pos = str.find("\\\"", pos)) != std::string::npos)
+        {
+            str.replace(pos, 2, "\"");
+            pos += 1;
+        }
+    };
+
     int subdatasetIndex{2};
 
     std::string part1{aosParts[1]};
-    if (!part1.empty() && part1[0] == '"')
+    const bool pathIsDoubleQuoted{!part1.empty() && part1[0] == '"'};
+
+    if (pathIsDoubleQuoted)
     {
-        part1 = part1.substr(1);
+        // The path component is everything up to the next double quote.
+        if (part1.back() != '"')
+        {
+            // If the path component is double quoted and there is no closing quote, then the path component
+            // is everything up to the next part that ends with an unescaped double quote.
+            // This is to handle cases where the path component contains colons.
+            for (int i = 2; i < iPartsCount; ++i)
+            {
+                const int partLen = strlen(aosParts[i]);
+                if (partLen > 0 && aosParts[i][partLen - 1] == '"' &&
+                    !(partLen > 1 && aosParts[i][partLen - 2] == '\\'))
+                {
+                    part1.append(":");
+                    part1.append(std::string(aosParts[i]));
+                    subdatasetIndex = i + 1;
+                    break;
+                }
+                part1.append(":");
+                part1.append(std::string(aosParts[i]));
+            }
+        }
+        unescapeDoubleQuotes(part1);
     }
 
     const bool hasDriveLetter{
@@ -271,7 +304,8 @@ void NCDFDriverSubdatasetInfo::parseFileName()
                            part1 == "/vsicurl_streaming/https" ||
                            part1 == "http" || part1 == "https"};
 
-    m_pathComponent = aosParts[1];
+    m_pathComponent = part1;
+
     if (hasDriveLetter || hasProtocol)
     {
         m_pathComponent.append(":");
@@ -314,8 +348,8 @@ void NCDFDriverSubdatasetInfo::parseFileName()
     {
         m_subdatasetComponent = m_subdatasetComponent.substr(1);
     }
-    if (!m_subdatasetComponent.empty() &&
-        m_subdatasetComponent.rfind('"') == m_subdatasetComponent.length() - 1)
+
+    if (!m_subdatasetComponent.empty() && m_subdatasetComponent.back() == '"')
     {
         m_subdatasetComponent.pop_back();
     }

@@ -6479,6 +6479,23 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 
 @pytest.mark.parametrize(
     "filename",
+    ("/vsimem/DATA:TEST.nc", "/vsimem/DATA:TEST:DOUBLE.nc", '/vsimem/DATA:"TEST".nc'),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(
+        filename,
+        open("data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc", "rb").read(),
+    )
+    info = gdal.GetSubdatasetInfo(f'NETCDF:"{filename}":/navigation_data/latitude')
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "filename",
     (
         "NETCDF:",
         'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
