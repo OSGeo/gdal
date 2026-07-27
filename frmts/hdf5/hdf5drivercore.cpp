@@ -209,7 +209,7 @@ void HDF5DriverSubdatasetInfo::parseFileName()
                 // This is to handle cases where the path component contains colons.
                 for (int i = 2; i < iPartsCount; ++i)
                 {
-                    const int partLen = strlen(aosParts[i]);
+                    const size_t partLen = strlen(aosParts[i]);
                     if (partLen > 0 && aosParts[i][partLen - 1] == '"' &&
                         !(partLen > 1 && aosParts[i][partLen - 2] == '\\'))
                     {
