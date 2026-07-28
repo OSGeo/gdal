@@ -98,13 +98,13 @@ SegmentType (1 byte)
 
 #define ReadDouble(nPos) (*(reinterpret_cast<const double *>(pszData + (nPos))))
 
-#define ParentOffset(iShape) (ReadInt32(nShapePos + (iShape)*9))
-#define FigureOffset(iShape) (ReadInt32(nShapePos + (iShape)*9 + 4))
-#define ShapeType(iShape) (ReadByte(nShapePos + (iShape)*9 + 8))
+#define ParentOffset(iShape) (ReadInt32(nShapePos + (iShape) * 9))
+#define FigureOffset(iShape) (ReadInt32(nShapePos + (iShape) * 9 + 4))
+#define ShapeType(iShape) (ReadByte(nShapePos + (iShape) * 9 + 8))
 #define SegmentType(iSegment) (ReadByte(nSegmentPos + (iSegment)))
 
-#define FigureAttribute(iFigure) (ReadByte(nFigurePos + (iFigure)*5))
-#define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure)*5 + 1))
+#define FigureAttribute(iFigure) (ReadByte(nFigurePos + (iFigure) * 5))
+#define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure) * 5 + 1))
 #define NextPointOffset(iFigure)                                               \
     (iFigure + 1 < nNumFigures ? PointOffset((iFigure) + 1) : nNumPoints)
 

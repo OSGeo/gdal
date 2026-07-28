@@ -12,6 +12,17 @@
 
 #include "ods_formula.h"
 
+class MyCellEvaluator : public IODSCellEvaluator
+{
+  public:
+    explicit MyCellEvaluator() = default;
+
+    int EvaluateRange(int, int, int, int, std::vector<ods_formula_node> &)
+    {
+        return false;
+    }
+};
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -25,7 +36,8 @@ int main(int argc, char *argv[])
     {
         printf("Raw expression dump :\n");
         expr_out->Dump(stderr, 0);
-        if (expr_out->Evaluate(nullptr))
+        MyCellEvaluator cellEvaluator;
+        if (expr_out->Evaluate(&cellEvaluator))
         {
             printf("After evaluation :\n");
             expr_out->Dump(stderr, 0);

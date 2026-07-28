@@ -282,10 +282,10 @@ def test_ogr_nas_force_opening(tmp_vsimem):
             f.write(fsrc.read(len(prolog)) + b" " * (1000 * 1000) + fsrc.read())  # '<'
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(filename, allowed_drivers=["NAS"])
+        ds = gdal.Open(filename, allowed_drivers=["NAS"])
     assert ds.GetDriver().GetDescription() == "NAS"
 
 

@@ -20,10 +20,17 @@
 #include "gdalalg_vector_check_coverage.h"
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
+#include "gdalalg_vector_combine.h"
 #include "gdalalg_vector_concat.h"
+#include "gdalalg_vector_concave_hull.h"
 #include "gdalalg_vector_convert.h"
+#include "gdalalg_vector_convex_hull.h"
+#include "gdalalg_vector_create.h"
+#include "gdalalg_vector_dissolve.h"
 #include "gdalalg_vector_edit.h"
+#include "gdalalg_vector_explode.h"
 #include "gdalalg_vector_explode_collections.h"
+#include "gdalalg_vector_export_schema.h"
 #include "gdalalg_vector_grid.h"
 #include "gdalalg_vector_index.h"
 #include "gdalalg_vector_layer_algebra.h"
@@ -33,6 +40,7 @@
 #include "gdalalg_vector_rasterize.h"
 #include "gdalalg_vector_filter.h"
 #include "gdalalg_vector_partition.h"
+#include "gdalalg_vector_rename_layer.h"
 #include "gdalalg_vector_reproject.h"
 #include "gdalalg_vector_segmentize.h"
 #include "gdalalg_vector_select.h"
@@ -70,19 +78,27 @@ GDALVectorAlgorithm::GDALVectorAlgorithm()
     RegisterSubAlgorithm<GDALVectorCheckGeometryAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCombineAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorConcaveHullAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorConvexHullAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCreateAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorDissolveAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorExportSchemaAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorExplodeAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorExplodeCollectionsAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorGridAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorRasterizeAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
     RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorIndexAlgorithm>();
-    RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithm>();
+    RegisterSubAlgorithm<GDALVectorLayerAlgebraAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorMakePointAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorMakeValidAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorPartitionAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorRenameLayerAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorSegmentizeAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorSelectAlgorithmStandalone>();

@@ -40,13 +40,11 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
                                       ConstructorOptions()
                                           .SetStandaloneStep(standaloneStep)
                                           .SetInputDatasetMaxCount(1)
-                                          .SetAddDefaultArguments(false)
-                                          .SetInputDatasetAlias("dataset"))
+                                          .SetAddDefaultArguments(false))
 {
-    AddProgressArg();
-
     if (standaloneStep)
     {
+        AddProgressArg();
         AddRasterInputArgs(/* openForMixedRasterVector = */ false,
                            /* hiddenForCLI = */ false);
     }
@@ -159,8 +157,8 @@ bool GDALRasterUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &stepCtxt)
                          : nullptr);
             if (bBothNoCRS || poCT)
             {
-                const double dfTLX = gt[0];
-                const double dfTLY = gt[3];
+                const double dfTLX = gt.xorig;
+                const double dfTLY = gt.yorig;
 
                 double dfTRX = 0;
                 double dfTRY = 0;

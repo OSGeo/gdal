@@ -41,9 +41,9 @@ def test_gdalalg_vector_edit_crs():
 
     out_ds = alg["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
-    assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert out_lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     out_f = out_lyr.GetNextFeature()
-    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "4326"
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "4326"
     assert out_f["foo"] == "bar"
     ogrtest.check_feature_geometry(out_f, "POINT (1 2)")
 
@@ -199,3 +199,62 @@ def test_gdalalg_vector_edit_unset_fid():
         assert lyr.GetFIDColumn() == ""
         f = lyr.GetNextFeature()
         assert f.GetFID() == 0
+
+
+@pytest.mark.require_driver("GPKG")
+def test_error_message_leak():
+    """Test issue GH #13662"""
+
+    alg = get_edit_alg()
+    in_filename = "../gdrivers/data/gpkg/byte.gpkg"
+    out_filename = in_filename
+    with pytest.raises(
+        Exception,
+        match="--output-layer name must be specified combined with a single source layer name and it must be different from an existing layer.",
+    ):
+        alg.ParseRunAndFinalize(
+            [
+                in_filename,
+                "--crs=EPSG:4326",
+                "--overwrite-layer",
+                out_filename,
+            ],
+        )
+
+
+def test_gdalalg_vector_edit_pipeline_output_layer():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! edit --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+
+def test_gdalalg_vector_edit_pipeline_output_layer_multiple_input_layers():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("a")
+    src_ds.CreateLayer("b")
+
+    with pytest.raises(
+        Exception,
+        match="Argument 'output-layer' cannot be used when the input dataset has multiple layers, unless argument 'active-layer' is specified",
+    ):
+        gdal.alg.vector.pipeline(
+            input=src_ds, pipeline="read ! edit --output-layer foo"
+        )
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds, pipeline="read ! edit --active-layer a --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+        lyr = ds.GetLayer(1)
+        assert lyr.GetDescription() == "b"
+        assert lyr.GetLayerDefn().GetName() == "b"

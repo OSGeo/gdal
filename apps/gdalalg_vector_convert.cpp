@@ -21,7 +21,9 @@
 GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
     bool /* standaloneStep */)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /*standaloneStep = */ true)
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(true)
+                                          .SetNoCreateEmptyLayersArgument(true))
 {
 }
 

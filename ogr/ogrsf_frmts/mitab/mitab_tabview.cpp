@@ -1235,8 +1235,8 @@ void TABRelation::ResetAllMembers()
     /*-----------------------------------------------------------------
      * Note: we have to check the reference count before deleting m_poDefn
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = nullptr;
 }
 
@@ -1503,7 +1503,8 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
         return nullptr;
     }
 
-    TABFeature *poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
+    auto poCurFeature =
+        std::unique_ptr<TABFeature>(poMainFeature->CloneTABFeature(m_poDefn));
 
     /*-----------------------------------------------------------------
      * Keep track of FID and copy the geometry
@@ -1531,6 +1532,9 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
             BuildFieldKey(poMainFeature, m_nMainFieldNo,
                           m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
                           m_nRelFieldIndexNo);
+        if (!pKey)
+            return nullptr;
+
         int nRelFeatureId =
             m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
 
@@ -1565,7 +1569,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
         }
     }
 
-    return poCurFeature;
+    return poCurFeature.release();
 }
 
 /**********************************************************************
@@ -1915,8 +1919,8 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         GByte *pKey = BuildFieldKey(
             poFeature, 0, m_poRelTable->GetNativeFieldType(0), nUniqueIndexNo);
 
-        if ((nRecordNo = m_poRelINDFileRef->FindFirst(nUniqueIndexNo, pKey)) ==
-            -1)
+        if (!pKey || (nRecordNo = m_poRelINDFileRef->FindFirst(nUniqueIndexNo,
+                                                               pKey)) == -1)
             return -1;
 
         if (nRecordNo == 0)
@@ -1983,9 +1987,8 @@ int TABRelation::SetFeatureDefn(
      * Keep a reference to the OGRFeatureDefn... we'll have to take the
      * reference count into account when we are done with it.
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
-
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = poFeatureDefn;
     m_poDefn->Reference();
 

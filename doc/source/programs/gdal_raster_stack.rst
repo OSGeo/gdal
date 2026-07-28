@@ -1,5 +1,7 @@
 .. _gdal_raster_stack:
 
+.. program:: gdal_raster_stack
+
 ================================================================================
 ``gdal raster stack``
 ================================================================================
@@ -62,10 +64,22 @@ Program-Specific Options
     Set georeferenced extents of output file. The values must be expressed in georeferenced units.
     If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
     Pixels within the extent of the output but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
-    or an alpha mask band is added with :option:`--add-alpha`.
+    pixels with a value of zero unless a NODATA value is specified using :option:`--output-nodata`.
 
-.. option:: --dst-nodata <value>[,<value>]...
+.. option:: --hide-nodata
+
+    Even if any band contains nodata value, giving this option makes the output band
+    not report the NoData. Useful when you want to control the background color of
+    the dataset.
+
+.. option:: --input-nodata <value>[,<value>]...
+
+    Set nodata values for input bands (different values can be supplied for each band).
+    If the option is not specified, the intrinsic nodata settings on the source datasets
+    will be used (if they exist). The value set by this option is written in the NODATA element
+    of each ``ComplexSource`` element.
+
+.. option:: --output-nodata <value>[,<value>]...
 
     Set nodata values at the output band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
@@ -74,22 +88,7 @@ Program-Specific Options
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
-.. option:: --hide-nodata
-
-    Even if any band contains nodata value, giving this option makes the output band
-    not report the NoData. Useful when you want to control the background color of
-    the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
-    dataset which doesn't report nodata value but is transparent in areas with no
-    data.
-
-.. option:: --src-nodata <value>[,<value>]...
-
-    Set nodata values for input bands (different values can be supplied for each band).
-    If the option is not specified, the intrinsic nodata settings on the source datasets
-    will be used (if they exist). The value set by this option is written in the NODATA element
-    of each ``ComplexSource`` element.
-
-.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
+.. option:: --resolution {<xres,yres>|same|highest|lowest|average|common}
 
     In case the resolution of all input files is not the same, the :option:`--resolution` flag
     enables the user to control the way the output resolution is computed.
@@ -131,6 +130,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

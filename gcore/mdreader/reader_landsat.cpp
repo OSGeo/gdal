@@ -129,7 +129,7 @@ void GDALMDReaderLandsat::LoadMetadata()
         m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
 
@@ -142,12 +142,12 @@ void GDALMDReaderLandsat::LoadMetadata()
         if (fCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
             m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
                                 CPLSPrintf("%d", int(fCC)));
         }
     }
@@ -186,7 +186,7 @@ void GDALMDReaderLandsat::LoadMetadata()
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
+                                           GDALMD_ACQUISITIONDATETIME, buffer);
     }
 }

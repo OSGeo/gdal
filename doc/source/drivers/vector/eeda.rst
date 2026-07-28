@@ -187,30 +187,33 @@ to those queries from the server.
 Examples
 ~~~~~~~~
 
-Listing all images available:
+.. example:: 
+   :title: Listing all images available
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "EEDA:" -oo COLLECTION=projects/earthengine-public/assets/COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 
-   ogrinfo -ro -al "EEDA:" -oo COLLECTION=projects/earthengine-public/assets/COPERNICUS/S2 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+   or
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
 
-or
+.. example::
+   :title: Listing all images under a point of (lat,lon)=(40,-100)
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+   
+.. example::
+   :title: Listing all images available matching criteria
 
-   ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
-
-Listing all images under a point of (lat,lon)=(40,-100) :
-
-::
-
-   ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -spat -100 40 -100 40 --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
-
-Listing all images available matching criteria :
-
-::
-
-   ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "startTime >= '2015/03/26 00:00:00' AND endTime <= '2015/06/30 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE < 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
-
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "EEDA:projects/earthengine-public/assets/COPERNICUS/S2" -where "startTime >= '2015/03/26 00:00:00' AND endTime <= '2015/06/30 00:00:00' AND CLOUDY_PIXEL_PERCENTAGE < 10" --config EEDA_CLIENT_EMAIL "my@email" --config EEDA_PRIVATE_KEY_FILE my.pem
+   
 See Also:
 ---------
 

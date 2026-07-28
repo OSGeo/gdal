@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_SELECT_INCLUDED
 #define GDALALG_VECTOR_SELECT_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -37,6 +37,7 @@ class GDALVectorSelectAlgorithm /* non final */
 
     std::string m_activeLayer{};
     std::vector<std::string> m_fields{};
+    bool m_defaultGeom = false;
     bool m_ignoreMissingFields = false;
     bool m_exclude = false;
 };

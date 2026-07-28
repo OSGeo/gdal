@@ -654,6 +654,23 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return static_cast<GIntBig>(GetMaximumPartCount()) *
                GetMaximumPartSizeInMiB() * 1024 * 1024;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)))
+        {
+            for (const char *pszPrefix : {"az://", "azure://"})
+            {
+                if (cpl::starts_with(osPath, pszPrefix))
+                {
+                    return GetFSPrefix() + osPath.substr(strlen(pszPrefix));
+                }
+            }
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/
@@ -2413,22 +2430,7 @@ char **VSIAzureFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 
 const char *VSIAzureFSHandler::GetOptions()
 {
-    static std::string osOptions(
-        std::string("<Options>") +
-        "  <Option name='AZURE_STORAGE_CONNECTION_STRING' type='string' "
-        "description='Connection string that contains account name and "
-        "secret key'/>"
-        "  <Option name='AZURE_STORAGE_ACCOUNT' type='string' "
-        "description='Storage account. To use with AZURE_STORAGE_ACCESS_KEY'/>"
-        "  <Option name='AZURE_STORAGE_ACCESS_KEY' type='string' "
-        "description='Secret key'/>"
-        "  <Option name='AZURE_NO_SIGN_REQUEST' type='boolean' "
-        "description='Whether to disable signing of requests' default='NO'/>"
-        "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
-        "description='Size in MB for chunks of files that are uploaded' "
-        "default='4' min='1' max='4'/>" +
-        VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");
-    return osOptions.c_str();
+    return VSIAzureBlobHandleHelper::GetOptions();
 }
 
 /************************************************************************/

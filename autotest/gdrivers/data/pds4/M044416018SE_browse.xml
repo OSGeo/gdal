@@ -1,0 +1,142 @@
+<!-- slightly altered version of https://pds.shadowcam.im-ldi.com/observation/2024/001/M044416018S/M044416018SE_browse.xml.
+     adjusted for dummy PNG
+ -->
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1L00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1L00_1300.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+
+<Product_Browse
+  xmlns="http://pds.nasa.gov/pds4/pds/v1"
+  xmlns:pds="http://pds.nasa.gov/pds4/pds/v1"
+  xmlns:proc="http://pds.nasa.gov/pds4/proc/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1L00.xsd http://pds.nasa.gov/pds4/proc/v1 https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1L00_1300.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:kplo-shadowcam:browse-raw:m044416018se_browse</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>KPLO ShadowCam Raw Browse Product</title>
+    <information_model_version>1.21.0.0</information_model_version>
+    <product_class>Product_Browse</product_class>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2024-02-15T19:08:07.073572Z</modification_date>
+        <version_id>1.0</version_id>
+        <description>
+          Initial Release
+        </description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Context_Area>
+    <Discipline_Area>
+      <proc:Processing_Information>
+        <Local_Internal_Reference>
+          <comment>ShadowCam Raw Downscaled Browse PNG</comment>
+          <local_identifier_reference>BROWSE_FILE</local_identifier_reference>
+          <local_reference_type>processing_information_to_data_object</local_reference_type>
+        </Local_Internal_Reference>
+        <proc:Input_Product_List>
+          <proc:Input_Product>
+            <Internal_Reference>
+              <lid_reference>urn:nasa:pds:kplo-shadowcam:data-raw:m044416018se</lid_reference>
+              <reference_type>data_to_input_product</reference_type>
+              <comment>Reference pointer to the raw source product.</comment>
+            </Internal_Reference>
+          </proc:Input_Product>
+        </proc:Input_Product_List>
+        <proc:Process>
+          <proc:name>shadowcam_edr_p20</proc:name>
+          <proc:description>
+            Pipeline process to generate histogram, PNG, and Cloud Optimized
+            GeoTIFF browse products for a raw ShadowCam image
+          </proc:description>
+          <proc:Software>
+            <proc:name>ShadowCam Stats</proc:name>
+            <proc:software_availability>Unreleased</proc:software_availability>
+            <proc:description>
+              Internal tool to extract raw data from an instrument telemetry
+              file and generate a raw ISIS cube, histogram, and raw pnm versions
+              used for browse products.
+            </proc:description>
+          </proc:Software>
+          <proc:Software>
+            <proc:name>Netpbm</proc:name>
+              <proc:software_version_id>
+                Using libpbm from Netpbm Version: Netpbm 10.0
+              </proc:software_version_id>
+            <proc:software_availability>Open source</proc:software_availability>
+            <proc:description>
+              Use pnmscale to scale the browse image and pipe the data to
+              pnmtopng to save as a png
+            </proc:description>
+            <proc:Software_Program>
+              <proc:name>pnmscale</proc:name>
+              <proc:Software_Program_Parameters>
+                <proc:Parameter>
+                  <proc:name>Parameter 1</proc:name>
+                  <proc:value>-xysize</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 2</proc:name>
+                  <proc:value>1000</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 3</proc:name>
+                  <proc:value>1000</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 4</proc:name>
+                  <proc:value>observation_stretched.pnm</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 5</proc:name>
+                  <proc:value>|</proc:value>
+                </proc:Parameter>
+              </proc:Software_Program_Parameters>
+            </proc:Software_Program>
+            <proc:Software_Program>
+              <proc:name>pnmtopng</proc:name>
+              <proc:Software_Program_Parameters>
+                <proc:Parameter>
+                  <proc:name>Parameter 1</proc:name>
+                  <proc:value>></proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Output file</proc:name>
+                  <proc:parameter_type>Output</proc:parameter_type>
+                  <proc:value>M044416018SE_browse.png</proc:value>
+                  <Local_Internal_Reference>
+                    <comment>ShadowCam Raw Downscaled Browse PNG</comment>
+                    <local_identifier_reference>BROWSE_FILE</local_identifier_reference>
+                    <local_reference_type>parameter_to_data_object</local_reference_type>
+                  </Local_Internal_Reference>
+                </proc:Parameter>
+              </proc:Software_Program_Parameters>
+            </proc:Software_Program>
+          </proc:Software>
+        </proc:Process>
+      </proc:Processing_Information>
+    </Discipline_Area>
+  </Context_Area>
+  <Reference_List>
+    <Internal_Reference>
+      <lid_reference>urn:nasa:pds:kplo-shadowcam:data-raw:m044416018se</lid_reference>
+      <reference_type>browse_to_data</reference_type>
+      <comment>This is a reference to the data file corresponding to this figure.</comment>
+    </Internal_Reference>
+  </Reference_List>
+  <File_Area_Browse>
+    <File>
+      <file_name>M044416018SE_browse.png</file_name>
+      <local_identifier>BROWSE_FILE</local_identifier>
+      <creation_date_time>2025-01-31T11:30:37.089685Z</creation_date_time>
+      <file_size unit="byte">74</file_size>
+      <md5_checksum>eac360f4bc40da91e3017bae7d6e699d</md5_checksum>
+      <comment>ShadowCam Raw Downscaled Browse PNG</comment>
+    </File>
+    <Encoded_Image>
+      <offset unit="byte">0</offset>
+      <encoding_standard_id>PNG</encoding_standard_id>
+    </Encoded_Image>
+  </File_Area_Browse>
+</Product_Browse>

@@ -328,10 +328,10 @@ class OGROpenFileGDBGeomFieldDefn final : public OGRGeomFieldDefn
     const OGRSpatialReference *GetSpatialRef() const override
     {
         if (poSRS)
-            return poSRS;
+            return poSRS.get();
         if (m_poLayer != nullptr)
             (void)m_poLayer->BuildLayerDefinition();
-        return poSRS;
+        return poSRS.get();
     }
 };
 
@@ -442,7 +442,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
     };
     Compression m_eRasterCompression = Compression::NONE;
 
-    lru11::Cache<std::string, std::shared_ptr<OGRSpatialReference>>
+    lru11::Cache<std::string, OGRSpatialReferenceRefCountedPtr>
         m_oCacheWKTToSRS{};
 
     std::string m_osRootGUID{};
@@ -652,8 +652,8 @@ class OGROpenFileGDBDataSource final : public GDALDataset
         return m_osTransactionBackupDirname;
     }
 
-    OGRSpatialReference *BuildSRS(const CPLXMLNode *psInfo);
-    OGRSpatialReference *BuildSRS(const char *pszWKT);
+    OGRSpatialReferenceRefCountedPtr BuildSRS(const CPLXMLNode *psInfo);
+    OGRSpatialReferenceRefCountedPtr BuildSRS(const char *pszWKT);
 };
 
 /************************************************************************/

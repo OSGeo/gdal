@@ -541,7 +541,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     }
 
     CPLDebug("GDALSieveFilter",
-             "Small Polygons: %d, Isolated: %d, Unmergable: %d", nSieveTargets,
+             "Small Polygons: %d, Isolated: %d, Unmergeable: %d", nSieveTargets,
              nIsolatedSmall, nFailedMerges);
 
     /* ==================================================================== */

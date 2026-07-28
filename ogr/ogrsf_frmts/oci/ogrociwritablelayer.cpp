@@ -16,6 +16,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /*                        OGROCIWritableLayer()                         */
 /************************************************************************/
@@ -25,7 +27,7 @@ OGROCIWritableLayer::OGROCIWritableLayer(OGROCIDataSource *poDSIn)
 
 {
     nDimension =
-        MAX(2, MIN(3, atoi(CPLGetConfigOption("OCI_DEFAULT_DIM", "3"))));
+        std::clamp(atoi(CPLGetConfigOption("OCI_DEFAULT_DIM", "3")), 2, 3);
     nSRID = -1;
 
     nOrdinalCount = 0;

@@ -386,6 +386,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     // Load the driver
     if (m_bIsDuckDBDriver)
     {
+        pszADBCDriverName =
+            CPLGetConfigOption("OGR_ADBC_LIBDUCKDB", pszADBCDriverName);
         if (OGRADBCLoadDriver(pszADBCDriverName, "duckdb_adbc_init", &m_driver,
                               error) != ADBC_STATUS_OK)
         {

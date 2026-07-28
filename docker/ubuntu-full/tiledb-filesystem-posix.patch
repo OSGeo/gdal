@@ -1,0 +1,10 @@
+--- tiledb/sm/filesystem/posix.cc
++++ tiledb/sm/filesystem/posix.cc
+@@ -47,6 +47,7 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+
++#include <algorithm>
+ #include <fstream>
+ #include <future>
+ #include <iostream>

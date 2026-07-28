@@ -1280,7 +1280,7 @@ void L1BDataset::FetchMetadataNOAA15()
             VSIFPrintfL(fpCSV, "%d,%d,%d,%d,%d,%d,%d,%d,%d,", nScanlineNumber,
                         nBlockYOff, (int)timeCode.GetYear(),
                         (int)timeCode.GetDay(), (int)timeCode.GetMillisecond(),
-                        i16, (n16 >> 15) & 1, (n16 >> 14) & 1, (n16)&3));
+                        i16, (n16 >> 15) & 1, (n16 >> 14) & 1, (n16) & 3));
 
         n32 = GetUInt32(pabyRecordHeader + 24);
         CPL_IGNORE_RET_VAL(VSIFPrintfL(
@@ -2519,7 +2519,7 @@ static double LagrangeInterpol(const double x[], const double y[], double x0,
 #define END_INTERP_ORDER 5 /* Ensure this is an odd number, 5 is suitable.*/
 
 /* Convert number of known point to its index in full array */
-#define IDX(N) ((N)*knownStep + knownFirst)
+#define IDX(N) ((N) * knownStep + knownFirst)
 
 static void L1BInterpol(
     double vals[], int numKnown, /* Number of known points (typically 51) */
@@ -2848,7 +2848,7 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                                  (nAddBitStart / 8) + 1] &
                                 ((1 << (((nAddBitStart % 8) + 3 - 8))) - 1))
                                << (3 - ((((nAddBitStart % 8) + 3 - 8))));
-            * /
+            */
 #endif
             if (nFractional > 4)
             {
@@ -3525,34 +3525,35 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
 
         char *pszWKT = nullptr;
         poDS->m_oGCPSRS.exportToWkt(&pszWKT);
-        poOutDS->SetMetadataItem("SRS", pszWKT,
-                                 "GEOLOCATION"); /* unused by gdalgeoloc.cpp */
+        poOutDS->SetMetadataItem(
+            "SRS", pszWKT, GDAL_MDD_GEOLOCATION); /* unused by gdalgeoloc.cpp */
         CPLFree(pszWKT);
 
         if (bInterpol)
             osTMP.Printf("L1BGCPS_INTERPOL:\"%s\"", osFilename.c_str());
         else
             osTMP.Printf("L1BGCPS:\"%s\"", osFilename.c_str());
-        poOutDS->SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-        poOutDS->SetMetadataItem("X_BAND", "1", "GEOLOCATION");
-        poOutDS->SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-        poOutDS->SetMetadataItem("Y_BAND", "2", "GEOLOCATION");
+        poOutDS->SetMetadataItem("X_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("Y_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("Y_BAND", "2", GDAL_MDD_GEOLOCATION);
 
         if (bInterpol)
         {
-            poOutDS->SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-            poOutDS->SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+            poOutDS->SetMetadataItem("PIXEL_STEP", "1", GDAL_MDD_GEOLOCATION);
         }
         else
         {
             osTMP.Printf("%d", poDS->iGCPStart);
-            poOutDS->SetMetadataItem("PIXEL_OFFSET", osTMP, "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_OFFSET", osTMP,
+                                     GDAL_MDD_GEOLOCATION);
             osTMP.Printf("%d", poDS->iGCPStep);
-            poOutDS->SetMetadataItem("PIXEL_STEP", osTMP, "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_STEP", osTMP, GDAL_MDD_GEOLOCATION);
         }
 
-        poOutDS->SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-        poOutDS->SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+        poOutDS->SetMetadataItem("LINE_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("LINE_STEP", "1", GDAL_MDD_GEOLOCATION);
     }
 
     if (poOutDS != poDS)
@@ -3566,7 +3567,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLSPrintf("L1B_SOLAR_ZENITH_ANGLES:\"%s\"", osFilename.c_str()));
         papszSubdatasets = CSLSetNameValue(
             papszSubdatasets, "SUBDATASET_1_DESC", "Solar zenith angles");
-        poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->SetMetadata(papszSubdatasets, GDAL_MDD_SUBDATASETS);
         CSLDestroy(papszSubdatasets);
     }
     else
@@ -3590,7 +3591,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
                                 "Clouds from AVHRR (CLAVR)");
         }
 
-        poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->SetMetadata(papszSubdatasets, GDAL_MDD_SUBDATASETS);
         CSLDestroy(papszSubdatasets);
     }
 

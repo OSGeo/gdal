@@ -223,7 +223,7 @@ def test_ogr_pgeo_list_all_tables():
     assert pgeo_ds.GetLayerCount() == 4, "did not get expected layer count"
 
     # Test LIST_ALL_TABLES=YES open option
-    pgeo_ds_all_table = gdal.OpenEx(
+    pgeo_ds_all_table = gdal.Open(
         "data/pgeo/sample.mdb", gdal.OF_VECTOR, open_options=["LIST_ALL_TABLES=YES"]
     )
 
@@ -722,7 +722,7 @@ def test_ogr_pgeo_z_m_handling():
 
 
 def test_ogr_pgeo_read_domains():
-    ds = gdal.OpenEx("data/pgeo/domains.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/domains.mdb", gdal.OF_VECTOR)
     assert set(ds.GetFieldDomainNames()) == {
         "range_domain_merge_weighted_average",
         "my coded domain",
@@ -776,7 +776,7 @@ def test_ogr_pgeo_read_domains():
 
 
 def test_ogr_pgeo_read_definition():
-    ds = gdal.OpenEx("data/pgeo/metadata.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/metadata.mdb", gdal.OF_VECTOR)
 
     sql_lyr = ds.ExecuteSQL("GetLayerDefinition not a table")
     assert sql_lyr is None
@@ -797,7 +797,7 @@ def test_ogr_pgeo_read_definition():
 
 
 def test_ogr_pgeo_read_metadata():
-    ds = gdal.OpenEx("data/pgeo/metadata.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/metadata.mdb", gdal.OF_VECTOR)
 
     sql_lyr = ds.ExecuteSQL("GetLayerMetadata not a table")
     assert sql_lyr is None
@@ -821,7 +821,7 @@ def test_ogr_pgeo_read_metadata():
     sys.platform == "win32", reason="See https://github.com/OSGeo/gdal/issues/2894"
 )
 def test_ogr_pgeo_layer_name_encoding():
-    ds = gdal.OpenEx("data/pgeo/encoding.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/encoding.mdb", gdal.OF_VECTOR)
 
     assert ds.GetLayerCount() == 2, "did not get expected layer count"
 
@@ -838,7 +838,7 @@ def test_ogr_pgeo_layer_name_encoding():
     sys.platform == "win32", reason="See https://github.com/OSGeo/gdal/issues/2894"
 )
 def test_ogr_pgeo_feature_encoding():
-    ds = gdal.OpenEx("data/pgeo/encoding.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/encoding.mdb", gdal.OF_VECTOR)
 
     lyr = ds.GetLayerByName("táble")
     assert lyr is not None
@@ -864,11 +864,11 @@ def test_ogr_pgeo_ogrsf_encoding(ogrsf_path):
 
 def test_ogr_openfilegdb_read_relationships():
     # no relationships
-    ds = gdal.OpenEx("data/pgeo/domains.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/domains.mdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/pgeo/relationships.mdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/pgeo/relationships.mdb", gdal.OF_VECTOR)
     assert set(ds.GetRelationshipNames()) == {
         "composite_one_to_many",
         "composite_one_to_one",

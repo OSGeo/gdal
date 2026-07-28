@@ -91,6 +91,7 @@ set(GDAL_SHA1SUM "$ENV{GDAL_SHA1SUM}")
 set(GDAL_RELEASE_DATE "$ENV{GDAL_RELEASE_DATE}")
 
 add_custom_target(generate_gdal_version_h
+                  BYPRODUCTS "${PROJECT_BINARY_DIR}/gcore/gdal_version_full/gdal_version.h"
                   COMMAND ${CMAKE_COMMAND}
                     "-DSOURCE_DIR=${GDAL_ROOT_SOURCE_DIR}"
                     "-DBINARY_DIR=${PROJECT_BINARY_DIR}"

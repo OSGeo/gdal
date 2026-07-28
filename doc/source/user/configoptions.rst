@@ -167,6 +167,8 @@ Example:
 Global configuration options
 ----------------------------
 
+.. _configoptions_logging:
+
 Logging
 ^^^^^^^
 
@@ -210,7 +212,10 @@ Logging
 
 -  .. config:: CPL_ACCUM_ERROR_MSG
 
+-  .. config:: GDAL_NAME_AND_SHAME
+      :choices: ON, OFF
 
+      See :ref:`cloud_phone_home` for details.
 
 Performance and caching
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -343,7 +348,7 @@ Driver management
 ^^^^^^^^^^^^^^^^^
 
 -  .. config:: GDAL_SKIP
-      :choices: space-separated list
+      :choices: comma-separated list
 
       Used by :cpp:func:`GDALDriverManager::AutoSkipDrivers`
 
@@ -351,7 +356,7 @@ Driver management
       be useful when a driver tries to open a dataset that it should not
       recognize, or when several drivers are built-in that can open the same
       datasets (for example JP2MrSID, JP2ECW, JPEG2000 and JP2KAK for JPEG2000
-      datasets). The value of this option must be a space delimited list of the
+      datasets). The value of this option must be a comma delimited list of the
       short name of the GDAL drivers to unregister.
 
       This option must be set before calling :cpp:func:`GDALAllRegister`, or an
@@ -610,7 +615,7 @@ Vector related options
       By default, when a geometry coordinate precision is set on a geometry field
       definition and a driver honors the GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION
       capability, geometries passed to :cpp:func:`OGRLayer::CreateFeature` and
-      :cpp:func:`OGRLayer::SetFeature` are assumed to be compatible of the
+      :cpp:func:`OGRLayer::SetFeature` are assumed to be compatible with the
       coordinate precision. That is they are assumed to be valid once their
       coordinates are rounded to it. If it might not be the case, set this
       configuration option to YES before calling CreateFeature() or SetFeature()
@@ -641,6 +646,24 @@ Networking options
       Size of global least-recently-used (LRU) cache shared among all downloaded
       content. Value is assumed to represent bytes unless memory units are
       specified (since GDAL 3.11).
+
+-  .. config:: CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED
+      :choices: ONLY_IN_TEMP, YES, NO
+      :default: ONLY_IN_TEMP (since GDAL 3.13.2)
+      :since: 3.13.2
+
+      Sets the policy for accepted filenames passed in the ``header_file`` key-value
+      pair of ``/vsicurl?`` filenames.
+
+      Starting with GDAL 3.13.2, for security reasons, the filename is restricted
+      by default to be located under ``/vsimem/``, ``/tmp`` or the value of the
+      ``TEMP`` or ``TMP`` environment variable.
+      All locations can be allowed by setting the configuration option to ``YES``.
+      Or all locations can be disabled by setting the configuration option to to ``NO``.
+
+      GDAL can also be built with the ``CPL_VSIL_CURL_HEADER_FILE_KVP_DISABLED``
+      compilation definitions (passed in ``CXXFLAGS``) to entirely disable
+      ``header_file`` key-value.
 
 -  .. config:: CPL_VSIL_CURL_USE_HEAD
       :choices: YES, NO

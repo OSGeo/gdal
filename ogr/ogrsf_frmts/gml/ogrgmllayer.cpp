@@ -27,7 +27,7 @@
 
 OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
                          OGRGMLDataSource *poDSIn)
-    : poFeatureDefn(new OGRFeatureDefn(
+    : poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(
           pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
       bWriter(bWriterIn), poDS(poDSIn),
       poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
@@ -41,7 +41,6 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
           CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")))
 {
     SetDescription(poFeatureDefn->GetName());
-    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
 }
 
@@ -53,9 +52,6 @@ OGRGMLLayer::~OGRGMLLayer()
 
 {
     CPLFree(m_pszFIDPrefix);
-
-    if (poFeatureDefn)
-        poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -73,11 +69,14 @@ void OGRGMLLayer::ResetReading()
     {
         // Does the last stored feature belong to our layer ? If so, no
         // need to reset the reader.
-        if (m_iNextGMLId == 0 && poDS->PeekStoredGMLFeature() != nullptr &&
-            poDS->PeekStoredGMLFeature()->GetClass() == poFClass)
-            return;
+        if (m_iNextGMLId == 0)
+        {
+            const auto poStoredGMLFeature = poDS->GetStoredGMLFeature();
+            if (poStoredGMLFeature &&
+                poStoredGMLFeature->GetClass() == poFClass)
+                return;
+        }
 
-        delete poDS->PeekStoredGMLFeature();
         poDS->SetStoredGMLFeature(nullptr);
     }
 
@@ -137,14 +136,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
     /* ==================================================================== */
     while (true)
     {
-        GMLFeature *poGMLFeature = poDS->PeekStoredGMLFeature();
-        if (poGMLFeature != nullptr)
+        auto poGMLFeature = poDS->BorrowStoredGMLFeature();
+        if (poGMLFeature == nullptr)
         {
-            poDS->SetStoredGMLFeature(nullptr);
-        }
-        else
-        {
-            poGMLFeature = poDS->GetReader()->NextFeature();
+            poGMLFeature.reset(poDS->GetReader()->NextFeature());
             if (poGMLFeature == nullptr)
                 return nullptr;
 
@@ -165,13 +160,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             if (poDS->GetReadMode() == INTERLEAVED_LAYERS ||
                 (poDS->GetReadMode() == SEQUENTIAL_LAYERS && m_iNextGMLId != 0))
             {
-                CPLAssert(poDS->PeekStoredGMLFeature() == nullptr);
-                poDS->SetStoredGMLFeature(poGMLFeature);
+                poDS->SetStoredGMLFeature(std::move(poGMLFeature));
                 return nullptr;
             }
             else
             {
-                delete poGMLFeature;
                 continue;
             }
         }
@@ -291,7 +284,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /* --------------------------------------------------------------------
          */
 
-        OGRGeometry **papoGeometries = nullptr;
+        std::vector<std::unique_ptr<OGRGeometry>> apoGeometries;
+        std::unique_ptr<OGRGeometry> poSingleGeom;
+
         const CPLXMLNode *const *papsGeometry = poGMLFeature->GetGeometryList();
 
         const CPLXMLNode *apsGeometries[2] = {nullptr, nullptr};
@@ -303,12 +298,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             papsGeometry = apsGeometries;
         }
 
-        OGRGeometry *poGeom = nullptr;
-
         if (poFeatureDefn->GetGeomFieldCount() > 1)
         {
-            papoGeometries = static_cast<OGRGeometry **>(CPLCalloc(
-                poFeatureDefn->GetGeomFieldCount(), sizeof(OGRGeometry *)));
+            apoGeometries.resize(poFeatureDefn->GetGeomFieldCount());
             const char *pszSRSName = poDS->GetGlobalSRSName();
             for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
@@ -316,38 +308,27 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 if (psGeom != nullptr)
                 {
                     const CPLXMLNode *myGeometryList[2] = {psGeom, nullptr};
-                    poGeom = GML_BuildOGRGeometryFromList(
-                        myGeometryList, true,
-                        poDS->GetInvertAxisOrderIfLatLong(), pszSRSName,
-                        poDS->GetConsiderEPSGAsURN(),
-                        poDS->GetSwapCoordinates(),
-                        poDS->GetSecondaryGeometryOption(), m_srsCache.get(),
-                        bFaceHoleNegative);
+                    std::unique_ptr<OGRGeometry> poGeom(
+                        GML_BuildOGRGeometryFromList(
+                            myGeometryList, true,
+                            poDS->GetInvertAxisOrderIfLatLong(), pszSRSName,
+                            poDS->GetConsiderEPSGAsURN(),
+                            poDS->GetSwapCoordinates(),
+                            poDS->GetSecondaryGeometryOption(),
+                            m_srsCache.get(), bFaceHoleNegative));
 
                     // Do geometry type changes if needed to match layer
                     // geometry type.
                     if (poGeom != nullptr)
                     {
-                        auto poGeomUniquePtr =
-                            std::unique_ptr<OGRGeometry>(poGeom);
-                        poGeom = nullptr;
-                        papoGeometries[i] =
-                            OGRGeometryFactory::forceTo(
-                                std::move(poGeomUniquePtr),
-                                poFeatureDefn->GetGeomFieldDefn(i)->GetType())
-                                .release();
+                        apoGeometries[i] = OGRGeometryFactory::forceTo(
+                            std::move(poGeom),
+                            poFeatureDefn->GetGeomFieldDefn(i)->GetType());
                     }
                     else
                     {
                         // We assume the createFromGML() function would have
                         // already reported the error.
-                        for (int j = 0; j < poFeatureDefn->GetGeomFieldCount();
-                             j++)
-                        {
-                            delete papoGeometries[j];
-                        }
-                        CPLFree(papoGeometries);
-                        delete poGMLFeature;
                         return nullptr;
                     }
                 }
@@ -355,15 +336,9 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
             if (m_poFilterGeom != nullptr && m_iGeomFieldFilter >= 0 &&
                 m_iGeomFieldFilter < poFeatureDefn->GetGeomFieldCount() &&
-                papoGeometries[m_iGeomFieldFilter] &&
-                !FilterGeometry(papoGeometries[m_iGeomFieldFilter]))
+                apoGeometries[m_iGeomFieldFilter] &&
+                !FilterGeometry(apoGeometries[m_iGeomFieldFilter].get()))
             {
-                for (int j = 0; j < poFeatureDefn->GetGeomFieldCount(); j++)
-                {
-                    delete papoGeometries[j];
-                }
-                CPLFree(papoGeometries);
-                delete poGMLFeature;
                 continue;
             }
         }
@@ -375,21 +350,21 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         else if (papsGeometry[0] != nullptr)
         {
             const char *pszSRSName = poDS->GetGlobalSRSName();
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            poGeom = GML_BuildOGRGeometryFromList(
-                papsGeometry, true, poDS->GetInvertAxisOrderIfLatLong(),
-                pszSRSName, poDS->GetConsiderEPSGAsURN(),
-                poDS->GetSwapCoordinates(), poDS->GetSecondaryGeometryOption(),
-                m_srsCache.get(), bFaceHoleNegative);
-            CPLPopErrorHandler();
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poSingleGeom.reset(GML_BuildOGRGeometryFromList(
+                    papsGeometry, true, poDS->GetInvertAxisOrderIfLatLong(),
+                    pszSRSName, poDS->GetConsiderEPSGAsURN(),
+                    poDS->GetSwapCoordinates(),
+                    poDS->GetSecondaryGeometryOption(), m_srsCache.get(),
+                    bFaceHoleNegative));
+            }
 
             // Do geometry type changes if needed to match layer geometry type.
-            if (poGeom != nullptr)
+            if (poSingleGeom)
             {
-                poGeom =
-                    OGRGeometryFactory::forceTo(
-                        std::unique_ptr<OGRGeometry>(poGeom), GetGeomType())
-                        .release();
+                poSingleGeom = OGRGeometryFactory::forceTo(
+                    std::move(poSingleGeom), GetGeomType());
             }
             else
             {
@@ -407,16 +382,14 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                         : ". You may set the GML_SKIP_CORRUPTED_FEATURES "
                           "configuration option to YES to skip to the next "
                           "feature");
-                delete poGMLFeature;
                 if (bSkipCorruptedFeatures)
                     continue;
                 return nullptr;
             }
 
-            if (m_poFilterGeom != nullptr && !FilterGeometry(poGeom))
+            if (m_poFilterGeom != nullptr &&
+                !FilterGeometry(poSingleGeom.get()))
             {
-                delete poGMLFeature;
-                delete poGeom;
                 continue;
             }
         }
@@ -427,7 +400,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /* --------------------------------------------------------------------
          */
         int iDstField = 0;
-        OGRFeature *poOGRFeature = new OGRFeature(poFeatureDefn);
+        auto poOGRFeature = std::make_unique<OGRFeature>(poFeatureDefn.get());
 
         poOGRFeature->SetFID(nFID);
         if (poDS->ExposeId())
@@ -564,29 +537,24 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
-        delete poGMLFeature;
-        poGMLFeature = nullptr;
-
         // Assign the geometry before the attribute filter because
         // the attribute filter may use a special field like OGR_GEOMETRY.
-        if (papoGeometries != nullptr)
+        if (!apoGeometries.empty())
         {
             for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
-                poOGRFeature->SetGeomFieldDirectly(i, papoGeometries[i]);
+                poOGRFeature->SetGeomField(i, std::move(apoGeometries[i]));
             }
-            CPLFree(papoGeometries);
-            papoGeometries = nullptr;
         }
         else
         {
-            poOGRFeature->SetGeometryDirectly(poGeom);
+            poOGRFeature->SetGeometry(std::move(poSingleGeom));
         }
 
         // Assign SRS.
         for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
         {
-            poGeom = poOGRFeature->GetGeomFieldRef(i);
+            OGRGeometry *poGeom = poOGRFeature->GetGeomFieldRef(i);
             if (poGeom != nullptr)
             {
                 const OGRSpatialReference *poSRS =
@@ -601,14 +569,14 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /*      Test against the attribute query. */
         /* --------------------------------------------------------------------
          */
-        if (m_poAttrQuery != nullptr && !m_poAttrQuery->Evaluate(poOGRFeature))
+        if (m_poAttrQuery != nullptr &&
+            !m_poAttrQuery->Evaluate(poOGRFeature.get()))
         {
-            delete poOGRFeature;
             continue;
         }
 
         // Got the desired feature.
-        return poOGRFeature;
+        return poOGRFeature.release();
     }
 }
 
@@ -1242,10 +1210,9 @@ OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
     poDS->DeclareNewWriteSRS(poSRSOri);
     if (poSRSOri)
     {
-        auto poSRS = poSRSOri->Clone();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        oCleanCopy.SetSpatialRef(poSRS);
-        poSRS->Release();
+        auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSOri);
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oCleanCopy.SetSpatialRef(poSRSClone.get());
     }
     char *pszName = CPLStrdup(poField->GetNameRef());
     CPLCleanXMLElementName(pszName);

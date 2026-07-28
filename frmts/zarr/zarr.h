@@ -25,11 +25,17 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <optional>
 #include <set>
 
 #define ZARR_DEBUG_KEY "ZARR"
 
 #define CRS_ATTRIBUTE_NAME "_CRS"
+
+// UUID identifying the multiscales zarr convention
+// (https://github.com/zarr-conventions/multiscales)
+constexpr const char *ZARR_MULTISCALES_UUID =
+    "d35379db-88df-4056-af3a-620245f8e347";
 
 const CPLCompressor *ZarrGetShuffleCompressor();
 const CPLCompressor *ZarrGetShuffleDecompressor();
@@ -53,6 +59,7 @@ template <class T> inline T MultiplyElements(const std::vector<T> &vector)
 /*                             ZarrDataset                              */
 /************************************************************************/
 
+class ZarrArray;
 class ZarrGroupBase;
 
 class ZarrDataset final : public GDALDataset
@@ -66,7 +73,7 @@ class ZarrDataset final : public GDALDataset
     bool m_bSpatialProjConvention = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
-    std::shared_ptr<GDALMDArray> m_poSingleArray{};
+    std::shared_ptr<ZarrArray> m_poSingleArray{};
 
     static GDALDataset *OpenMultidim(const char *pszFilename, bool bUpdateMode,
                                      CSLConstList papszOpenOptions);
@@ -106,6 +113,14 @@ class ZarrDataset final : public GDALDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
+
+  protected:
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -118,6 +133,11 @@ class ZarrRasterBand final : public GDALRasterBand
 
     std::shared_ptr<GDALMDArray> m_poArray;
     GDALColorInterp m_eColorInterp = GCI_Undefined;
+    std::optional<double> m_dfNoData{};
+    std::optional<uint64_t> m_nNoDataUInt64{};
+    std::optional<int64_t> m_nNoDataInt64{};
+    std::optional<double> m_dfOffset{};
+    std::optional<double> m_dfScale{};
 
   protected:
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
@@ -276,6 +296,7 @@ class ZarrSharedResource
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
     std::set<std::string> m_oSetArrayInLoading{};
     std::map<std::string, std::shared_ptr<GDALMDArray>> m_oCacheIndexingVar{};
+    std::string m_osKerchunkParquetPath{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
@@ -341,6 +362,11 @@ class ZarrSharedResource
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
 
     std::shared_ptr<ZarrGroupBase> GetRootGroup();
+
+    const std::string &GetKerchunkParquetPath() const
+    {
+        return m_osKerchunkParquetPath;
+    }
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
@@ -444,6 +470,8 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     ~ZarrGroupBase() override;
 
     virtual bool Close();
+
+    bool Flush();
 
     std::shared_ptr<GDALAttribute>
     GetAttribute(const std::string &osName) const override
@@ -667,6 +695,8 @@ class ZarrV3Group final : public ZarrGroupBase
     std::shared_ptr<ZarrArray> LoadArray(const std::string &osArrayName,
                                          const std::string &osZarrayFilename,
                                          const CPLJSONObject &oRoot) const;
+
+    void GenerateMultiscalesMetadata(const char *pszResampling = nullptr);
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
@@ -953,12 +983,19 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     mutable std::mutex m_oMutex{};
     CPLStringList m_aosCreationOptions{};
 
+    // Value of CRS_ATTRIBUTE_NAME attribute before removing it from m_oAttrGroup
+    CPLJSONObject m_oCRSAttribute{};
+
     struct CachedBlock
     {
         ZarrByteVectorQuickResize abyDecoded{};
     };
 
     mutable std::map<std::vector<uint64_t>, CachedBlock> m_oChunkCache{};
+
+    //! Region covered by the last IAdviseRead (for subset check in IRead)
+    mutable std::vector<GUInt64> m_anCachedAdviseReadStart{};
+    mutable std::vector<size_t> m_anCachedAdviseReadCount{};
 
     static uint64_t
     ComputeBlockCount(const std::string &osName,
@@ -1107,12 +1144,16 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     double GetScale(bool *pbHasScale,
                     GDALDataType *peStorageType) const override;
 
-    bool SetOffset(double dfOffset, GDALDataType eStorageType) override;
+    bool SetOffset(double dfOffset,
+                   GDALDataType eStorageType = GDT_Unknown) override;
 
-    bool SetScale(double dfScale, GDALDataType eStorageType) override;
+    bool SetScale(double dfScale,
+                  GDALDataType eStorageType = GDT_Unknown) override;
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const override;
 
     bool Resize(const std::vector<GUInt64> &anNewDimSizes,
                 CSLConstList) override;
@@ -1224,6 +1265,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     void SetCreationOptions(CSLConstList papszOptions)
     {
         m_aosCreationOptions = papszOptions;
+    }
+
+    void InvalidateGeoreferencing()
+    {
+        m_bSRSModified = true;
     }
 
     static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
@@ -1343,6 +1389,22 @@ class ZarrV3Array final : public ZarrArray
     mutable bool m_bOverviewsLoaded = false;
     mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
+    /** Shard write cache: accumulates dirty inner chunks per shard, encodes
+     * each shard exactly once on FlushShardCache() (called from Flush()).
+     * Without this cache, FlushDirtyBlockSharded() would re-read, decode,
+     * overlay, re-encode, and write the entire shard for every inner chunk,
+     * resulting in O(N) encode cycles per shard where N = inner chunks/shard.
+     */
+    struct ShardWriteEntry
+    {
+        ZarrByteVectorQuickResize abyShardBuffer{};
+        std::vector<bool> abDirtyInnerChunks{};
+    };
+
+    // Note: cache is unbounded - one entry per shard written. For very large
+    // rasters, consider adding LRU eviction in a follow-up.
+    mutable std::map<std::string, ShardWriteEntry> m_oShardWriteCache{};
+
     ZarrV3Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::shared_ptr<ZarrGroupBase> &poParent,
                 const std::string &osName,
@@ -1366,12 +1428,30 @@ class ZarrV3Array final : public ZarrArray
                        ZarrByteVectorQuickResize &abyDecodedBlockData,
                        bool &bMissingBlockOut) const;
 
+    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
+               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+               const GDALExtendedDataType &bufferDataType,
+               void *pDstBuffer) const override;
+
+    void PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
+                              const size_t *count) const;
+
     bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
+    bool WriteChunksThreadSafe(const GUInt64 *arrayStartIdx,
+                               const size_t *count, const GInt64 *arrayStep,
+                               const GPtrDiff_t *bufferStride,
+                               const GDALExtendedDataType &bufferDataType,
+                               const void *pSrcBuffer, const int iThread,
+                               const int nThreads,
+                               std::string &osErrorMsg) const;
+
     void LoadOverviews() const;
+
+    void ReconstructCreationOptionsFromCodecs();
 
   public:
     ~ZarrV3Array() override;
@@ -1397,13 +1477,26 @@ class ZarrV3Array final : public ZarrArray
     bool Flush() override;
 
     static std::unique_ptr<ZarrV3CodecSequence>
-    SetupCodecs(const CPLJSONArray &oCodecs,
+    SetupCodecs(const std::string &osArrayName, const CPLJSONArray &oCodecs,
                 const std::vector<GUInt64> &anOuterBlockSize,
                 std::vector<GUInt64> &anInnerBlockSize, DtypeElt &zarrDataType,
                 const std::vector<GByte> &abyNoData);
     int GetOverviewCount() const override;
 
     std::shared_ptr<GDALMDArray> GetOverview(int idx) const override;
+
+    CPLErr BuildOverviews(const char *pszResampling, int nOverviews,
+                          const int *panOverviewList,
+                          GDALProgressFunc pfnProgress, void *pProgressData,
+                          CSLConstList papszOptions) override;
+
+    static void
+    ExtractSubArrayFromLargerOne(const ZarrByteVectorQuickResize &abySrc,
+                                 const std::vector<size_t> &anSrcBlockSize,
+                                 const std::vector<size_t> &anInnerBlockSize,
+                                 const std::vector<size_t> &anInnerBlockIndices,
+                                 ZarrByteVectorQuickResize &abyChunk,
+                                 const size_t nDTSize);
 
   protected:
     std::string GetDataDirectory() const override;
@@ -1414,6 +1507,10 @@ class ZarrV3Array final : public ZarrArray
     bool AllocateWorkingBuffers() const override;
 
     bool FlushDirtyBlock() const override;
+    bool FlushDirtyBlockSharded() const;
+    bool FlushSingleShard(const std::string &osFilename,
+                          ShardWriteEntry &entry) const;
+    bool FlushShardCache() const;
 
     std::string BuildChunkFilename(const uint64_t *blockIndices) const override;
 
@@ -1425,5 +1522,9 @@ class ZarrV3Array final : public ZarrArray
 
     CPLStringList GetRawBlockInfoInfo() const override;
 };
+
+void ZarrClearCoordinateCache();
+void ZarrClearShardIndexCache();
+void ZarrEraseShardIndexFromCache(const std::string &osFilename);
 
 #endif  // ZARR_H

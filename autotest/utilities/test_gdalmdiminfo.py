@@ -37,7 +37,7 @@ def gdalmdiminfo_path():
 )
 def test_gdalmdiminfo_1(gdalmdiminfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(gdalmdiminfo_path + " data/mdim.vrt")
+    ret, err = gdaltest.runexternal_out_and_err(gdalmdiminfo_path + " data/mdim.vrt")
     assert err is None or err == "", "got error/warning"
     assert '"type": "group"' in ret
 
@@ -52,7 +52,7 @@ def test_gdalmdiminfo_1(gdalmdiminfo_path):
 )
 def test_gdalmdiminfo_if_option(gdalmdiminfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         gdalmdiminfo_path + " -if VRT data/mdim.vrt"
     )
     assert err is None or err == "", "got error/warning"

@@ -1,5 +1,7 @@
 .. _gdal_vector_segmentize:
 
+.. program:: gdal_vector_segmentize
+
 ================================================================================
 ``gdal vector segmentize``
 ================================================================================
@@ -78,6 +80,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

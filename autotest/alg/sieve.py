@@ -79,14 +79,14 @@ def test_sieve_2():
 
 
 ###############################################################################
-# Do a sieve resulting in unmergable polygons.
+# Do a sieve resulting in unmergeable polygons.
 
 
 @pytest.mark.require_driver("AAIGRID")
 def test_sieve_3():
 
     drv = gdal.GetDriverByName("GTiff")
-    src_ds = gdal.Open("data/unmergable.grd")
+    src_ds = gdal.Open("data/unmergeable.grd")
     src_band = src_ds.GetRasterBand(1)
 
     dst_ds = drv.Create("tmp/sieve_3.tif", 5, 7, 1, gdal.GDT_UInt8)

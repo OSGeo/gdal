@@ -9,6 +9,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "hdf5dataset.h"
 #include "hdf5eosparser.h"
 #include "s100.h"
@@ -16,9 +20,17 @@
 #include "cpl_float.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <set>
 #include <utility>
+
+#if (defined(H5_VERS_MAJOR) &&                                                 \
+     (H5_VERS_MAJOR >= 2 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR >= 14) ||     \
+      (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 12 && H5_VERS_RELEASE >= 3) ||   \
+      (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 9)))
+#define HAVE_H5Dchunk_iter
+#endif
 
 namespace GDAL
 {
@@ -271,6 +283,15 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
 
 class HDF5Array final : public GDALMDArray
 {
+  public:
+    struct BlockInfo
+    {
+        uint64_t nOffset = 0;
+        uint64_t nSize = 0;
+        uint32_t nFilterMask = 0;
+    };
+
+  private:
     std::string m_osGroupFullname;
     std::shared_ptr<HDF5SharedResources> m_poShared;
     hid_t m_hArray;
@@ -290,6 +311,11 @@ class HDF5Array final : public GDALMDArray
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
     haddr_t m_nOffset;
     mutable CPLStringList m_aosStructuralInfo{};
+
+#ifdef HAVE_H5Dchunk_iter
+    mutable bool m_bFirstBlockInfo = true;
+    mutable std::vector<BlockInfo> m_asBlockInfo{};
+#endif
 
     HDF5Array(const std::string &osParentName, const std::string &osName,
               const std::shared_ptr<HDF5SharedResources> &poShared,
@@ -670,8 +696,8 @@ HDF5Group::GetDimensions(CSLConstList) const
             poHDF5EOSParser->GetGridMetadata(GetName(), oGridMetadata))
         {
             GDALGeoTransform gt;
-            const bool bHasGT =
-                oGridMetadata.GetGeoTransform(gt) && gt[2] == 0 && gt[4] == 0;
+            const bool bHasGT = oGridMetadata.GetGeoTransform(gt) &&
+                                gt.xrot == 0 && gt.yrot == 0;
             for (auto &oDim : oGridMetadata.aoDimensions)
             {
                 auto iterInDimMap = data.oDimMap.find(oDim.osName);
@@ -699,7 +725,7 @@ HDF5Group::GetDimensions(CSLConstList) const
                                     "HDF5",
                                     "XDim FirstX: (from XDim array:%.17g,) "
                                     "from HDF5EOS metadata:%.17g",
-                                    dfFirstVal, gt[0]);
+                                    dfFirstVal, gt.xorig);
                             }
 
                             const GUInt64 anArrayStartIdx1[] = {
@@ -714,7 +740,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                                 CPLDebug("HDF5",
                                          "XDim LastX: (from XDim array:%.17g,) "
                                          "from HDF5EOS metadata:%.17g",
-                                         dfLastVal, gt[0] + oDim.nSize * gt[1]);
+                                         dfLastVal,
+                                         gt.xorig + oDim.nSize * gt.xscale);
                             }
                         }
                         else if (oDim.osName == "YDim" && bHasGT &&
@@ -735,7 +762,7 @@ HDF5Group::GetDimensions(CSLConstList) const
                                     "HDF5",
                                     "YDim FirstY: (from YDim array:%.17g,) "
                                     "from HDF5EOS metadata:%.17g",
-                                    dfFirstVal, gt[3]);
+                                    dfFirstVal, gt.yorig);
                             }
 
                             const GUInt64 anArrayStartIdx1[] = {
@@ -750,7 +777,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                                 CPLDebug("HDF5",
                                          "YDim LastY: (from YDim array:%.17g,) "
                                          "from HDF5EOS metadata:%.17g",
-                                         dfLastVal, gt[3] + oDim.nSize * gt[5]);
+                                         dfLastVal,
+                                         gt.yorig + oDim.nSize * gt.yscale);
                             }
                         }
                     }
@@ -764,8 +792,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                         GetFullName(), oDim.osName, GDAL_DIM_TYPE_HORIZONTAL_X,
                         std::string(), oDim.nSize);
                     auto poIndexingVar = GDALMDArrayRegularlySpaced::Create(
-                        GetFullName(), oDim.osName, poDim, gt[0] + gt[1] / 2,
-                        gt[1], 0);
+                        GetFullName(), oDim.osName, poDim,
+                        gt.xorig + gt.xscale / 2, gt.xscale, 0);
                     poDim->SetIndexingVariable(poIndexingVar);
                     m_poXIndexingArray = poIndexingVar;
                     m_poShared->KeepRef(poIndexingVar);
@@ -779,8 +807,8 @@ HDF5Group::GetDimensions(CSLConstList) const
                         GetFullName(), oDim.osName, GDAL_DIM_TYPE_HORIZONTAL_Y,
                         std::string(), oDim.nSize);
                     auto poIndexingVar = GDALMDArrayRegularlySpaced::Create(
-                        GetFullName(), oDim.osName, poDim, gt[3] + gt[5] / 2,
-                        gt[5], 0);
+                        GetFullName(), oDim.osName, poDim,
+                        gt.yorig + gt.yscale / 2, gt.yscale, 0);
                     poDim->SetIndexingVariable(poIndexingVar);
                     m_poYIndexingArray = poIndexingVar;
                     m_poShared->KeepRef(poIndexingVar);
@@ -1397,6 +1425,14 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
         H5Sget_simple_extent_dims(m_hDataSpace, &anDimSizes[0], nullptr);
     }
 
+    // Build a "classic" subdataset name from group and array names
+    const std::string osSubdatasetName(
+        "/" +
+        CPLString(osParentName)
+            .replaceAll("Data Fields", "Data_Fields")
+            .replaceAll("Geolocation Fields", "Geolocation_Fields") +
+        "/" + GetName());
+
     if (nDims == 1)
     {
         auto attrCLASS = GetAttribute("CLASS");
@@ -1502,17 +1538,9 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     else
     {
         // Use HDF-EOS5 metadata if available to create dimensions
-
         HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
         HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
         const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
-        // Build a "classic" subdataset name from group and array names
-        const std::string osSubdatasetName(
-            "/" +
-            CPLString(osParentName)
-                .replaceAll("Data Fields", "Data_Fields")
-                .replaceAll("Geolocation Fields", "Geolocation_Fields") +
-            "/" + GetName());
         if (poHDF5EOSParser &&
             poHDF5EOSParser->GetGridDataFieldMetadata(osSubdatasetName.c_str(),
                                                       oGridDataFieldMetadata) &&
@@ -1665,13 +1693,55 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     }
 
     std::map<std::string, std::shared_ptr<GDALDimension>> oMapFullNameToDim;
-    // cppcheck-suppress knownConditionTrueFalse
-    if (poGroup && !mapDimIndexToDimFullName.empty())
+    bool bMissingDims = true;
+    // Fill oMapFullNameToDim with dimensions from the current group
+    if (!mapDimIndexToDimFullName.empty())
     {
-        auto groupDims = poGroup->GetDimensions();
+        CPLAssert(poGroup);
+        const auto groupDims = poGroup->GetDimensions();
         for (const auto &dim : groupDims)
         {
             oMapFullNameToDim[dim->GetFullName()] = dim;
+        }
+
+        bMissingDims = false;
+        for (int i = 0; i < nDims; ++i)
+        {
+            const auto oIter =
+                mapDimIndexToDimFullName.find(static_cast<size_t>(i));
+            if (oIter != mapDimIndexToDimFullName.end())
+            {
+                const auto oIter2 = oMapFullNameToDim.find(oIter->second);
+                if (oIter2 == oMapFullNameToDim.end())
+                {
+                    bMissingDims = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    // If not enough, look for dimensions in other groups
+    if (bMissingDims)
+    {
+        auto poRootGroup = m_poShared->GetRootGroup();
+        if (poRootGroup)
+        {
+            for (int i = 0; i < nDims; ++i)
+            {
+                auto oIter =
+                    mapDimIndexToDimFullName.find(static_cast<size_t>(i));
+                if (oIter != mapDimIndexToDimFullName.end())
+                {
+                    const auto &osDimFullName = oIter->second;
+                    auto poDim =
+                        poRootGroup->OpenDimensionFromFullname(osDimFullName);
+                    if (poDim)
+                    {
+                        oMapFullNameToDim[osDimFullName] = std::move(poDim);
+                    }
+                }
+            }
         }
     }
 
@@ -1710,6 +1780,39 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             m_dims.emplace_back(std::make_shared<GDALDimension>(
                 std::string(), CPLSPrintf("dim%d", i), std::string(),
                 std::string(), anDimSizes[i]));
+        }
+    }
+
+    // Use HDF-EOS5 metadata if available to create SRS
+    HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
+    const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
+    if (poHDF5EOSParser &&
+        poHDF5EOSParser->GetGridDataFieldMetadata(osSubdatasetName.c_str(),
+                                                  oGridDataFieldMetadata))
+    {
+        auto poSRS = oGridDataFieldMetadata.poGridMetadata->GetSRS();
+        if (poSRS)
+        {
+            int iDimX = 0;
+            int iDimY = 0;
+            for (int iDim = 0; iDim < static_cast<int>(m_dims.size()); ++iDim)
+            {
+                const auto &poDim = m_dims[iDim];
+                if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                    iDimX = iDim + 1;
+                else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                    iDimY = iDim + 1;
+            }
+
+            if (iDimX > 0 && iDimY > 0)
+            {
+                m_poSRS = std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+                if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
+                    std::vector<int>{2, 1})
+                    m_poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+                else
+                    m_poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+            }
         }
     }
 }
@@ -1835,7 +1938,7 @@ static CPLStringList GetFilterInfo(hid_t hArray, unsigned nFilterMask)
         }
         H5Pclose(nListId);
         if (pszCompression)
-            aosInfo.SetNameValue("COMPRESSION", pszCompression);
+            aosInfo.SetNameValue(GDALMD_COMPRESSION, pszCompression);
         if (!osFilters.empty())
             aosInfo.SetNameValue("FILTER", osFilters.c_str());
     }
@@ -1922,12 +2025,38 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
         }
     }
 
+    [[maybe_unused]] uint64_t nAdditionalOffset = 0;
+#if !(defined(H5_VERS_MAJOR) &&                                                \
+      (H5_VERS_MAJOR >= 2 ||                                                   \
+       (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 14 && H5_VERS_RELEASE >= 4)))
+#ifdef HAVE_H5Dchunk_iter
+    if (m_asBlockInfo.empty())
+#endif
+    {
+        // Before HDF5 1.14.4, H5Dget_chunk_info() doesn't take into account the
+        // user block
+        const hid_t nListId = H5Fget_create_plist(m_poShared->GetHDF5());
+        if (nListId > 0)
+        {
+            hsize_t nUserBlockSize = 0;
+            if (H5Pget_userblock(nListId, &nUserBlockSize) >= 0)
+            {
+                nAdditionalOffset = nUserBlockSize;
+            }
+            H5Pclose(nListId);
+        }
+    }
+#endif
+
 #if (defined(H5_VERS_MAJOR) &&                                                 \
      (H5_VERS_MAJOR >= 2 || (H5_VERS_MAJOR == 1 && H5_VERS_MINOR > 10) ||      \
       (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 10 && H5_VERS_RELEASE >= 5)))
     // Compute the block index from the coordinates
     hsize_t nBlockIdx = 0;
     hsize_t nMult = 1;
+#ifdef HAVE_H5Dchunk_iter
+    std::vector<uint64_t> anBlockCount(anBlockSize.size());
+#endif
     for (size_t nDimIdx = anBlockSize.size(); nDimIdx > 0;)
     {
         --nDimIdx;
@@ -1944,11 +2073,133 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                      static_cast<unsigned>(nDimIdx));
             return false;
         }
+#ifdef HAVE_H5Dchunk_iter
+        anBlockCount[nDimIdx] = nBlockCount;
+#endif
         nBlockIdx += panBlockCoordinates[nDimIdx] * nMult;
         nMult *= nBlockCount;
     }
 
     HDF5_GLOBAL_LOCK();
+
+#ifdef HAVE_H5Dchunk_iter
+    if (nBlockIdx == 0 && m_asBlockInfo.empty() && m_bFirstBlockInfo)
+    {
+        // If asking block 0, we assume that all blocks will be iterated
+        // and thus use H5Dchunk_iter() instead of H5Dget_chunk_info() for
+        // faster execution.
+
+        m_bFirstBlockInfo = false;
+        const hsize_t nTotalBlockCount = nMult;
+        bool bTooManyBlocks = false;
+
+        if constexpr (sizeof(size_t) < sizeof(hsize_t))
+        {
+            if (nTotalBlockCount > std::numeric_limits<size_t>::max())
+            {
+                bTooManyBlocks = true;
+            }
+        }
+
+        if (!bTooManyBlocks)
+        {
+            try
+            {
+                m_asBlockInfo.resize(static_cast<size_t>(nTotalBlockCount));
+            }
+            catch (const std::exception &)
+            {
+                bTooManyBlocks = true;
+            }
+        }
+
+        if (bTooManyBlocks)
+        {
+            CPLDebugOnce("HDF5",
+                         "Too many blocks w.r.t. RAM to use H5Dchunk_iter(). "
+                         "Falling back to slower method");
+        }
+        else
+        {
+            struct FillStruct
+            {
+                std::vector<BlockInfo> *pasBlockInfo = nullptr;
+                std::vector<GUInt64> anBlockSize{};
+                std::vector<uint64_t> anBlockCount{};
+                uint64_t nAdditionalOffset = 0;
+
+                static int callback(const hsize_t *chunkCoords,
+                                    unsigned filter_mask, haddr_t addr,
+                                    hsize_t size, void *op_data)
+                {
+                    FillStruct *fillStruct = static_cast<FillStruct *>(op_data);
+                    uint64_t nIdx64 = 0;
+                    uint64_t nMult = 1;
+                    for (size_t iDim = fillStruct->anBlockCount.size();
+                         iDim > 0;
+                         /* */)
+                    {
+                        --iDim;
+                        const auto nBlockCoord =
+                            chunkCoords[iDim] / fillStruct->anBlockSize[iDim];
+                        CPLAssert(nBlockCoord < fillStruct->anBlockCount[iDim]);
+                        nIdx64 += nBlockCoord * nMult;
+                        nMult *= fillStruct->anBlockCount[iDim];
+                    }
+                    CPLAssert(nIdx64 <= fillStruct->pasBlockInfo->size());
+                    auto &sBlockInfo =
+                        (*fillStruct
+                              ->pasBlockInfo)[static_cast<size_t>(nIdx64)];
+                    sBlockInfo.nOffset =
+                        addr == HADDR_UNDEF
+                            ? 0
+                            : addr + fillStruct->nAdditionalOffset;
+                    sBlockInfo.nSize = size;
+                    sBlockInfo.nFilterMask = filter_mask;
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("HDF5",
+                             "Block %" PRIu64 ": offset = %" PRIu64
+                             ", size = %" PRIu64,
+                             nIdx64, sBlockInfo.nOffset, sBlockInfo.nSize);
+#endif
+                    return 0;
+                }
+            };
+
+            FillStruct fillStruct;
+            fillStruct.pasBlockInfo = &m_asBlockInfo;
+            fillStruct.nAdditionalOffset = nAdditionalOffset;
+            fillStruct.anBlockSize = anBlockSize;
+            fillStruct.anBlockCount = anBlockCount;
+
+            if (H5Dchunk_iter(m_hArray, H5P_DEFAULT, &FillStruct::callback,
+                              &fillStruct) < 0)
+            {
+                m_asBlockInfo.clear();
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetRawBlockInfo() failed: array %s: H5Dchunk_iter() "
+                         "failed",
+                         GetName().c_str());
+                return false;
+            }
+        }
+    }
+
+    if (!m_asBlockInfo.empty())
+    {
+        CPLAssert(nBlockIdx < m_asBlockInfo.size());
+        const size_t nIdx = static_cast<size_t>(nBlockIdx);
+        info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
+        info.nOffset = m_asBlockInfo[nIdx].nOffset;
+        info.nSize = m_asBlockInfo[nIdx].nSize;
+        info.papszInfo =
+            GetFilterInfo(m_hArray, m_asBlockInfo[nIdx].nFilterMask)
+                .StealList();
+        AddExtraInfo();
+        return true;
+    }
+#endif
+
     std::vector<hsize_t> anOffset(GetDimensionCount());
     unsigned nFilterMask = 0;
     haddr_t nChunkOffset = 0;
@@ -1964,25 +2215,8 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     }
 
     info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
-    info.nOffset = nChunkOffset == HADDR_UNDEF ? 0 : nChunkOffset;
-
-#if !(defined(H5_VERS_MAJOR) &&                                                \
-      (H5_VERS_MAJOR >= 2 ||                                                   \
-       (H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 14 && H5_VERS_RELEASE >= 4)))
-    // Before HDF5 1.14.4, H5Dget_chunk_info() doesn't take into account the
-    // user block
-    const hid_t nListId = H5Fget_create_plist(m_poShared->GetHDF5());
-    if (nListId > 0)
-    {
-        hsize_t nUserBlockSize = 0;
-        if (H5Pget_userblock(nListId, &nUserBlockSize) >= 0)
-        {
-            info.nOffset += nUserBlockSize;
-        }
-        H5Pclose(nListId);
-    }
-#endif
-
+    info.nOffset =
+        nChunkOffset == HADDR_UNDEF ? 0 : nChunkOffset + nAdditionalOffset;
     info.nSize = nChunkSize;
     info.papszInfo = GetFilterInfo(m_hArray, nFilterMask).StealList();
     AddExtraInfo();

@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_port.h"
 #include "hdf5dataset.h"
 #include "hdf5drivercore.h"
@@ -315,7 +319,8 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        poDS->GDALDataset::SetMetadata(aosSubDSList.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
+                                       GDAL_MDD_SUBDATASETS);
 
         // Setup/check for pam .aux.xml.
         poDS->SetDescription(osFilename.c_str());
@@ -397,7 +402,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
                     CPLSPrintf("S104:\"%s\":%s", osFilename.c_str(),
                                osSubGroup.c_str()),
-                    "SUBDATASETS");
+                    GDAL_MDD_SUBDATASETS);
                 std::string osSubDSDesc = "Values for group ";
                 osSubDSDesc += osSubGroup;
                 const auto poTimePoint = poSubGroup->GetAttribute("timePoint");
@@ -412,7 +417,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 poDS->GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
-                    osSubDSDesc.c_str(), "SUBDATASETS");
+                    osSubDSDesc.c_str(), GDAL_MDD_SUBDATASETS);
                 ++iSubDS;
             }
         }
@@ -687,7 +692,8 @@ bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
     if (m_poSrcDS->GetRasterCount() == 0 && aosDatasets.empty())
     {
         // Deal with S104 -> S104 translation;
-        CSLConstList papszSubdatasets = m_poSrcDS->GetMetadata("SUBDATASETS");
+        CSLConstList papszSubdatasets =
+            m_poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
         if (papszSubdatasets)
         {
             int iSubDS = 0;
@@ -1556,7 +1562,7 @@ bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
     std::vector<GByte> abyValues(
         static_cast<size_t>(nBlockYSize) * nBlockXSize *
         (sizeof(float) + sizeof(GByte) + sizeof(float)));
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinHeight = std::numeric_limits<float>::infinity();
     float fMaxHeight = -std::numeric_limits<float>::infinity();
@@ -1604,7 +1610,8 @@ bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
             if (bRet)
             {
                 size_t nOffset = 0;
-                for (int i = 0; i < nReqCountY * nReqCountX; i++)
+                for (size_t i = 0;
+                     i < static_cast<size_t>(nReqCountY) * nReqCountX; i++)
                 {
                     {
                         float fVal = afValues[i * nComponents];

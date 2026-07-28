@@ -43,7 +43,7 @@ def test_gdal_create_pdf_tif(gdal_create_path, tmp_path, burn):
 
     output_tif = str(tmp_path / "tmp.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path
         + f" -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 {burn} -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR  {output_tif}"
     )
@@ -73,7 +73,7 @@ def test_gdal_create_pdf_no_direct_write_capabilities(gdal_create_path, tmp_path
 
     output_png = str(tmp_path / "tmp.png")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path + f" {output_png} -of PNG -outsize 1 2"
     )
     assert err is None or err == "", "got error/warning"
@@ -103,8 +103,7 @@ def test_gdal_create_pdf_composition(gdal_create_path, tmp_path):
     tmp_xml = str(tmp_path / "tmp.xml")
     tmp_pdf = str(tmp_path / "tmp.pdf")
 
-    open(tmp_xml, "wt").write(
-        """<PDFComposition>
+    open(tmp_xml, "wt").write("""<PDFComposition>
     <Page>
         <DPI>72</DPI>
         <Width>20</Width>
@@ -115,10 +114,9 @@ def test_gdal_create_pdf_composition(gdal_create_path, tmp_path):
             </Raster>
         </Content>
     </Page>
-</PDFComposition>"""
-    )
+</PDFComposition>""")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path + f" {tmp_pdf} -co COMPOSITION_FILE={tmp_xml}"
     )
     assert err is None or err == "", "got error/warning"
@@ -132,7 +130,7 @@ def test_gdal_create_pdf_composition(gdal_create_path, tmp_path):
 @pytest.mark.require_driver("TGA")
 def test_gdal_create_not_write_driver(gdal_create_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path + " /vsimem/tmp.tga -of TGA -outsize 1 2"
     )
     assert "This driver has no creation capabilities" in err
@@ -143,7 +141,7 @@ def test_gdal_create_not_write_driver(gdal_create_path):
 
 def test_gdal_create_input_file_invalid(gdal_create_path, tmp_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_create_path} {tmp_path}/tmp.tif -if ../gdrivers/data/i_do_not_exist"
     )
     assert err != ""
@@ -158,7 +156,7 @@ def test_gdal_create_input_file(gdal_create_path, tmp_path):
 
     output_tif = str(tmp_path / "tmp.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path + f" {output_tif} -if ../gdrivers/data/small_world.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -183,7 +181,7 @@ def test_gdal_create_input_file_overrrides(gdal_create_path, tmp_path):
 
     output_tif = str(tmp_path / "tmp.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path
         + f" {output_tif} -if ../gdrivers/data/small_world.tif -bands 2 -outsize 1 3 -a_nodata 1"
     )
@@ -213,7 +211,7 @@ def test_gdal_create_input_file_gcps(gdal_create_path, tmp_path):
 
     output_tif = str(tmp_path / "tmp.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_create_path + f" {output_tif} -if ../gcore/data/gcps.vrt"
     )
     assert err is None or err == "", "got error/warning"

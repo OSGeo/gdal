@@ -1,5 +1,7 @@
 .. _gdal_vector_layer_algebra:
 
+.. program:: gdal_vector_layer_algebra
+
 ================================================================================
 ``gdal vector layer-algebra``
 ================================================================================
@@ -23,6 +25,8 @@ Description
 :program:`gdal vector layer-algebra` performs various vector layer algebraic operations.
 The  command takes a vector input source and a method source and generates the
 output of the operation in the specified output file.
+
+Since GDAL 3.14, :program:`gdal vector layer-algebra` can be used as a step of a pipeline.
 
 Program-Specific Options
 ------------------------
@@ -166,6 +170,11 @@ Standard Options
     .. include:: gdal_options/overwrite_layer.rst
 
     .. include:: gdal_options/update.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_mdim_mosaic.h"
+#include "gdalalg_mdim_write.h"
 
 #include "cpl_conv.h"
 #include "cpl_vsi_virtual.h"
@@ -31,25 +32,23 @@
 /*          GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()          */
 /************************************************************************/
 
-GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm(bool bStandalone)
+    : GDALMdimPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                    ConstructorOptions()
+                                        .SetStandaloneStep(bStandalone)
+                                        .SetAddDefaultArguments(false)
+                                        .SetAutoOpenInputDatasets(false)
+                                        .SetInputDatasetInputFlags(GADV_NAME)
+                                        .SetInputDatasetMaxCount(INT_MAX))
 {
-    AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_CREATE_MULTIDIMENSIONAL});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER});
-    AddInputDatasetArg(&m_inputDatasets, GDAL_OF_MULTIDIM_RASTER)
-        .SetDatasetInputFlags(GADV_NAME)
-        .SetDatasetOutputFlags(0)
-        .SetAutoOpenDataset(false)
-        .SetMinCount(1);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
+    AddMdimInputArgs(/* openForMixedMdimVector = */ false,
+                     /* hiddenForCLI = */ false, /* acceptRaster = */ true);
+    if (bStandalone)
+    {
+        AddProgressArg();
+        AddMdimOutputArgs(false);
+    }
+
     AddArrayNameArg(&m_array, _("Name of array(s) to mosaic."));
 }
 
@@ -63,40 +62,48 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
     const std::shared_ptr<GDALDimension> &poDim) const
 {
     auto poVar = poDim->GetIndexingVariable();
-    if (!poVar)
+    if (poVar)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset %s: dimension %s lacks an indexing variable",
-                    osDSName.c_str(), poDim->GetName().c_str());
-        return std::nullopt;
-    }
-    if (poVar->GetDimensionCount() != 1)
-    {
-        ReportError(
-            CE_Failure, CPLE_AppDefined,
-            "Dataset %s: indexing variable %s of dimension %s is not 1D",
-            osDSName.c_str(), poVar->GetName().c_str(),
-            poDim->GetName().c_str());
-        return std::nullopt;
-    }
-    if (poVar->GetDataType().GetClass() != GEDTC_NUMERIC)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset %s: indexing variable %s of dimension %s has a "
-                    "non-numeric data type",
-                    osDSName.c_str(), poVar->GetName().c_str(),
-                    poDim->GetName().c_str());
-        return std::nullopt;
+        if (poVar->GetDimensionCount() != 1)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Dataset %s: indexing variable %s of dimension %s is not 1D",
+                osDSName.c_str(), poVar->GetName().c_str(),
+                poDim->GetName().c_str());
+            return std::nullopt;
+        }
+        if (poVar->GetDataType().GetClass() != GEDTC_NUMERIC)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Dataset %s: indexing variable %s of dimension %s has a "
+                "non-numeric data type",
+                osDSName.c_str(), poVar->GetName().c_str(),
+                poDim->GetName().c_str());
+            return std::nullopt;
+        }
     }
     DimensionDesc desc;
     desc.osName = poDim->GetName();
     desc.osType = poDim->GetType();
     desc.osDirection = poDim->GetDirection();
-    const auto nSize = poVar->GetDimensions()[0]->GetSize();
-    desc.attributes = poVar->GetAttributes();
+    const auto nSize = poDim->GetSize();
+    if (poVar)
+    {
+        desc.attributes = poVar->GetAttributes();
+        desc.osUnit = poVar->GetUnit();
+    }
     CPLAssert(nSize > 0);
     desc.nSize = nSize;
-    if (nSize <= 2 || !poVar->IsRegularlySpaced(desc.dfStart, desc.dfIncrement))
+    desc.bHasIndexingVar = poVar != nullptr;
+    if (!poVar)
+    {
+        desc.dfStart = 0;
+        desc.dfIncrement = 1;
+    }
+    else if (nSize <= 2 ||
+             !poVar->IsRegularlySpaced(desc.dfStart, desc.dfIncrement))
     {
         constexpr uint64_t LIMIT = 100 * 1000 * 1000;
         if (nSize > LIMIT)
@@ -348,7 +355,41 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                         return false;
                     auto &descThisDataset = descThisDatasetOpt.value();
                     AddToSourceShortDimDesc(descThisDataset, poDim->GetSize());
-                    if (desc.aaValues.empty())
+                    if (descThisDataset.bHasIndexingVar &&
+                        !desc.bHasIndexingVar)
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Dimension %s of array %s of dataset %s "
+                                    "has an indexing variable, contrary "
+                                    "to other datasets",
+                                    poDim->GetName().c_str(),
+                                    poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (!descThisDataset.bHasIndexingVar &&
+                             desc.bHasIndexingVar)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Dimension %s of array %s of dataset %s "
+                            "does not have an indexing variable, contrary "
+                            "to other datasets",
+                            poDim->GetName().c_str(),
+                            poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (!desc.bHasIndexingVar &&
+                             descThisDataset.nSize != desc.nSize)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Dimension %s of array %s of dataset %s "
+                            "does not have the same size as in other datasets",
+                            poDim->GetName().c_str(),
+                            poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (desc.bHasIndexingVar && desc.aaValues.empty())
                     {
                         if (!descThisDataset.aaValues.empty())
                         {
@@ -415,7 +456,7 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                         }
                         desc.nSize = static_cast<uint64_t>(dfSize + 0.5);
                     }
-                    else
+                    else if (desc.bHasIndexingVar)
                     {
                         if (descThisDataset.aaValues.empty())
                         {
@@ -557,7 +598,7 @@ bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
     GDALProgressFunc pfnProgress, void *pProgressData,
     CPLStringList &aosInputDatasetNames) const
 {
-    for (auto &ds : m_inputDatasets)
+    for (auto &ds : m_inputDataset)
     {
         if (ds.GetName()[0] == '@')
         {
@@ -599,47 +640,48 @@ bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
 }
 
 /************************************************************************/
-/*                  GDALMdimMosaicAlgorithm::RunImpl()                  */
+/*                  GDALMdimMosaicAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                      void *pProgressData)
+bool GDALMdimMosaicAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    if (m_outputFormat.empty())
+    GDALDriver *poOutDrv = nullptr;
+    if (m_standaloneStep)
     {
-        const auto aosFormats =
-            CPLStringList(GDALGetOutputDriversForDatasetName(
-                m_outputDataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
-                /* bSingleMatch = */ true,
-                /* bWarn = */ true));
-        if (aosFormats.size() != 1)
+        if (m_format.empty())
         {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Cannot guess driver for %s",
-                        m_outputDataset.GetName().c_str());
+            const auto aosFormats =
+                CPLStringList(GDALGetOutputDriversForDatasetName(
+                    m_outputDataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
+                    /* bSingleMatch = */ true,
+                    /* bWarn = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s",
+                            m_outputDataset.GetName().c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
+        }
+        poOutDrv = GetGDALDriverManager()->GetDriverByName(m_format.c_str());
+        if (!poOutDrv)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
+                        m_format.c_str());
             return false;
         }
-        m_outputFormat = aosFormats[0];
-    }
-    auto poOutDrv =
-        GetGDALDriverManager()->GetDriverByName(m_outputFormat.c_str());
-    if (!poOutDrv)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
-                    m_outputFormat.c_str());
-        return false;
     }
 
-    const bool bIsVRT = EQUAL(m_outputFormat.c_str(), "VRT");
+    const double dfIntermediatePercentage = !m_standaloneStep ? 1.0 : 0.1;
+    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
+        GDALCreateScaledProgress(0.0, dfIntermediatePercentage,
+                                 ctxt.m_pfnProgress, ctxt.m_pProgressData),
+        GDALDestroyScaledProgress);
 
     CPLStringList aosInputDatasetNames;
-    const double dfIntermediatePercentage = bIsVRT ? 1.0 : 0.1;
-    std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)> pScaledData(
-        GDALCreateScaledProgress(0.0, dfIntermediatePercentage, pfnProgress,
-                                 pProgressData),
-        GDALDestroyScaledProgress);
     if (!GetInputDatasetNames(GDALScaledProgress, pScaledData.get(),
                               aosInputDatasetNames))
         return false;
@@ -697,66 +739,78 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 if (!dstDim)
                     return false;
 
-                auto var = poDstGroup->CreateVRTMDArray(
-                    desc.osName, {dstDim},
-                    GDALExtendedDataType::Create(GDT_Float64));
-                if (!var)
-                    return false;
-
-                for (const auto &attr : desc.attributes)
+                if (desc.bHasIndexingVar)
                 {
-                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-                    auto dstAttr = var->CreateAttribute(
-                        attr->GetName(), attr->GetDimensionsSize(),
-                        attr->GetDataType());
-                    if (dstAttr)
+                    auto var = poDstGroup->CreateVRTMDArray(
+                        desc.osName, {dstDim},
+                        GDALExtendedDataType::Create(GDT_Float64));
+                    if (!var)
+                        return false;
+
+                    for (const auto &attr : desc.attributes)
                     {
-                        auto raw(attr->ReadAsRaw());
-                        CPL_IGNORE_RET_VAL(
-                            dstAttr->Write(raw.data(), raw.size()));
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        auto dstAttr = var->CreateAttribute(
+                            attr->GetName(), attr->GetDimensionsSize(),
+                            attr->GetDataType());
+                        if (dstAttr)
+                        {
+                            auto raw(attr->ReadAsRaw());
+                            CPL_IGNORE_RET_VAL(
+                                dstAttr->Write(raw.data(), raw.size()));
+                        }
                     }
-                }
-
-                if (desc.aaValues.empty())
-                {
-                    auto poSource =
-                        std::make_unique<VRTMDArraySourceRegularlySpaced>(
-                            desc.dfStart, desc.dfIncrement);
-                    var->AddSource(std::move(poSource));
-                }
-                else
-                {
-                    const size_t nDimSize = static_cast<size_t>(nDimSize64);
-                    std::vector<GUInt64> anOffset = {0};
-                    std::vector<size_t> anCount = {nDimSize};
-                    std::vector<double> adfValues;
-                    adfValues.reserve(nDimSize);
-                    if (desc.nProgressionSign >= 0)
+                    if (!desc.osUnit.empty())
                     {
-                        for (const auto &aValues : desc.aaValues)
-                            adfValues.insert(adfValues.end(), aValues.begin(),
-                                             aValues.end());
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        var->SetUnit(desc.osUnit);
+                    }
+
+                    if (desc.aaValues.empty())
+                    {
+                        auto poSource =
+                            std::make_unique<VRTMDArraySourceRegularlySpaced>(
+                                desc.dfStart, desc.dfIncrement);
+                        var->AddSource(std::move(poSource));
                     }
                     else
                     {
-                        for (auto oIter = desc.aaValues.rbegin();
-                             oIter != desc.aaValues.rend(); ++oIter)
+                        const size_t nDimSize = static_cast<size_t>(nDimSize64);
+                        std::vector<GUInt64> anOffset = {0};
+                        std::vector<size_t> anCount = {nDimSize};
+                        std::vector<double> adfValues;
+                        adfValues.reserve(nDimSize);
+                        if (desc.nProgressionSign >= 0)
                         {
-                            adfValues.insert(adfValues.end(), oIter->rbegin(),
-                                             oIter->rend());
+                            for (const auto &aValues : desc.aaValues)
+                                adfValues.insert(adfValues.end(),
+                                                 aValues.begin(),
+                                                 aValues.end());
                         }
+                        else
+                        {
+                            for (auto oIter = desc.aaValues.rbegin();
+                                 oIter != desc.aaValues.rend(); ++oIter)
+                            {
+                                adfValues.insert(adfValues.end(),
+                                                 oIter->rbegin(),
+                                                 oIter->rend());
+                            }
+                        }
+                        std::vector<GByte> abyValues(nDimSize * sizeof(double));
+                        memcpy(abyValues.data(), adfValues.data(),
+                               nDimSize * sizeof(double));
+                        auto poSource =
+                            std::make_unique<VRTMDArraySourceInlinedValues>(
+                                var.get(),
+                                /* bIsConstantValue = */ false,
+                                std::move(anOffset), std::move(anCount),
+                                std::move(abyValues));
+                        var->AddSource(std::move(poSource));
                     }
-                    std::vector<GByte> abyValues(nDimSize * sizeof(double));
-                    memcpy(abyValues.data(), adfValues.data(),
-                           nDimSize * sizeof(double));
-                    auto poSource =
-                        std::make_unique<VRTMDArraySourceInlinedValues>(
-                            var.get(),
-                            /* bIsConstantValue = */ false, std::move(anOffset),
-                            std::move(anCount), std::move(abyValues));
-                    var->AddSource(std::move(poSource));
+                    dstDim->SetIndexingVariable(std::move(var));
                 }
-                dstDim->SetIndexingVariable(std::move(var));
+
                 oMapAlreadyCreatedDims[dstDim->GetName()] = dstDim;
                 apoDstDims.push_back(std::move(dstDim));
             }
@@ -846,17 +900,37 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    pScaledData.reset(GDALCreateScaledProgress(dfIntermediatePercentage, 1.0,
-                                               pfnProgress, pProgressData));
-    auto poOutDS = std::unique_ptr<GDALDataset>(
-        poOutDrv->CreateCopy(m_outputDataset.GetName().c_str(), poVRTDS.get(),
-                             false, CPLStringList(m_creationOptions).List(),
-                             GDALScaledProgress, pScaledData.get()));
-
-    if (poOutDS)
-        m_outputDataset.Set(std::move(poOutDS));
+    if (poOutDrv)
+    {
+        auto poOutDS = std::unique_ptr<GDALDataset>(poOutDrv->CreateCopy(
+            m_outputDataset.GetName().c_str(), poVRTDS.get(), false,
+            CPLStringList(m_creationOptions).List(), GDALScaledProgress,
+            pScaledData.get()));
+        if (poOutDS)
+            m_outputDataset.Set(std::move(poOutDS));
+    }
+    else
+    {
+        m_outputDataset.Set(std::move(poVRTDS));
+    }
 
     return m_outputDataset.GetDatasetRef() != nullptr;
 }
+
+/************************************************************************/
+/*                  GDALMdimMosaicAlgorithm::RunImpl()                  */
+/************************************************************************/
+
+bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                      void *pProgressData)
+{
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunStep(stepCtxt);
+}
+
+GDALMdimMosaicAlgorithmStandalone::~GDALMdimMosaicAlgorithmStandalone() =
+    default;
 
 //! @endcond

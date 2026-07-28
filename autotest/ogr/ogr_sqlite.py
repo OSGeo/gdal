@@ -81,7 +81,7 @@ def reopen_sqlite_db(ds, update=False, **kwargs):
     if update:
         flags |= gdal.OF_UPDATE
 
-    return gdal.OpenEx(ds_loc, flags, **kwargs)
+    return gdal.Open(ds_loc, flags, **kwargs)
 
 
 ###############################################################################
@@ -713,7 +713,7 @@ def test_ogr_sqlite_14(sqlite_test_db):
     dst_feat.SetField("INTEGER", 1)
     dst_feat.SetField("FLOAT", 1.2)
     dst_feat.SetField("STRING", "myString'a")
-    dst_feat.SetField("BLOB", b"\x00\x01\xFF")
+    dst_feat.SetField("BLOB", b"\x00\x01\xff")
 
     sl_lyr.CreateFeature(dst_feat)
 
@@ -1203,14 +1203,14 @@ def test_ogr_sqlite_24(tmp_path):
 
 
 def get_sqlite_version():
-    ds = ogr.Open(":memory:")
-    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
-    feat = sql_lyr.GetNextFeature()
-    sqlite_version = feat.GetFieldAsString(0)
-    print("SQLite version : %s" % sqlite_version)
-    feat = None
-    ds.ReleaseResultSet(sql_lyr)
-    return sqlite_version
+    with gdaltest.disable_exceptions():
+        ds = ogr.Open(":memory:")
+    if ds is None:
+        return (0, 0, 0)
+    with ds.ExecuteSQL("SELECT sqlite_version()") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        version = f.GetField(0)
+    return tuple([int(x) for x in version.split(".")[0:3]])
 
 
 ###############################################################################
@@ -2777,7 +2777,7 @@ def test_ogr_spatialite_point_sql_check_srs(sqlite_test_db):
     lyr.CreateFeature(feat)
     with sqlite_test_db.ExecuteSQL("SELECT * FROM point") as sql_lyr:
         assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
-        assert sql_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert sql_lyr.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
 ###############################################################################
@@ -3107,14 +3107,6 @@ def test_ogr_sqlite_42(sqlite_test_db):
 
 def test_ogr_sqlite_43():
 
-    # Only available since sqlite 3.8.0
-    version = get_sqlite_version().split(".")
-    if not (
-        len(version) >= 3
-        and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30800
-    ):
-        pytest.skip()
-
     ds = ogr.Open("file:foo?mode=memory&cache=shared")
     assert ds is not None
 
@@ -3172,14 +3164,6 @@ def test_ogr_sqlite_44(tmp_vsimem):
 
 
 def test_ogr_sqlite_45(tmp_path):
-
-    # Only available since sqlite 3.7.0
-    version = get_sqlite_version().split(".")
-    if not (
-        len(version) >= 3
-        and int(version[0]) * 10000 + int(version[1]) * 100 + int(version[2]) >= 30700
-    ):
-        pytest.skip()
 
     ds = ogr.GetDriverByName("SQLite").CreateDataSource(tmp_path / "ogr_sqlite_45.db")
     sql_lyr = ds.ExecuteSQL("PRAGMA journal_mode = WAL")
@@ -3366,7 +3350,7 @@ def test_ogr_sqlite_unique(tmp_vsimem):
 
 def test_ogr_sqlite_prelude_statements(require_spatialite):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/sqlite/poly_spatialite.sqlite",
         open_options=[
             "PRELUDE_STATEMENTS=ATTACH DATABASE 'data/sqlite/poly_spatialite.sqlite' AS other"
@@ -3556,7 +3540,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     ds = None
 
     # test with no relationships
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
     ds.ExecuteSQL(
@@ -3567,7 +3551,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
     assert ds.GetRelationship("xxx") is None
     rel = ds.GetRelationship("test_relation_a_test_relation_b")
@@ -3588,7 +3572,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3610,7 +3594,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3644,7 +3628,7 @@ def test_ogr_sqlite_relationships(tmp_vsimem):
         "CREATE TABLE test_relation_e(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid) ON DELETE CASCADE)"
     )
     ds = None
-    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() == [
         "test_relation_a_test_relation_b",
         "test_relation_a_test_relation_c",
@@ -3703,7 +3687,7 @@ def test_ogr_sqlite_alter_relations(tmp_vsimem):
     relationship.SetLeftTableFields(["o_pkey"])
     relationship.SetRightTableFields(["dest_pkey"])
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     # no tables yet
     assert not ds.AddRelationship(relationship)
@@ -3799,7 +3783,7 @@ def test_ogr_sqlite_alter_relations(tmp_vsimem):
     assert not ds.AddRelationship(relationship)
 
     # reopen and ensure that existing features remain unmodified in layers
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
     layer_origin = ds.GetLayerByName("origin_table")
     layer_dest = ds.GetLayerByName("dest_table")
@@ -4157,9 +4141,7 @@ def test_ogr_sqlite_median(input_values, expected_res):
             % (
                 "NULL"
                 if v is None
-                else ("'" + v + "'")
-                if isinstance(v, str)
-                else str(v)
+                else ("'" + v + "'") if isinstance(v, str) else str(v)
             )
         )
     if expected_res is None and input_values:
@@ -4238,9 +4220,7 @@ def test_ogr_sqlite_mode(input_values, expected_res):
             % (
                 "NULL"
                 if v is None
-                else ("'" + v + "'")
-                if isinstance(v, str)
-                else str(v)
+                else ("'" + v + "'") if isinstance(v, str) else str(v)
             )
         )
     if expected_res is None and input_values:
@@ -4455,7 +4435,7 @@ def test_ogr_sqlite_schema_override(
         # Check error if expected_field_types is empty
         if not expected_field_types:
             with gdaltest.disable_exceptions():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     sqlite_db,
                     gdal.OF_VECTOR | gdal.OF_READONLY,
                     open_options=open_options,
@@ -4467,7 +4447,7 @@ def test_ogr_sqlite_schema_override(
                 assert ds is None
         else:
 
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 sqlite_db,
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,
@@ -4761,3 +4741,62 @@ def test_ogr_sqlite_ST_Hilbert(tmp_vsimem, require_spatialite):
                 "SELECT ST_Hilbert(geometry, NULL) FROM test"
             ) as sql_lyr:
                 pass
+
+
+###############################################################################
+# Check that we detect multiple statements and error out
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "sql,error_expected",
+    [
+        ("SELECT 1", False),
+        ("SELECT 1 ", False),
+        ("SELECT 1\t", False),
+        ("SELECT 1\n", False),
+        ("SELECT 1\r", False),
+        ("SELECT 1 -- ok SELECT 2", False),
+        ("SELECT 1 -- ok\n-- disabled", False),
+        ("SELECT 1 /* ok SELECT 2 */ ", False),
+        ("SELECT 1 /* ok\nSELECT 2 */", False),
+        # Error cases
+        ("SELECT 1;SELECT 2", True),
+        ("SELECT 1;\nSELECT 2", True),
+        ("SELECT 1; -- \nSELECT 2", True),
+    ],
+)
+def test_ogr_sqlite_detect_multiple_statements(sql, error_expected):
+    ds = ogr.Open(":memory:")
+    if error_expected:
+        with pytest.raises(Exception, match="Multiple statements are not supported"):
+            with ds.ExecuteSQL(sql):
+                pass
+    else:
+        with ds.ExecuteSQL(sql):
+            pass
+
+
+###############################################################################
+
+
+def test_ogr_sqlite_error_msg():
+
+    ds = ogr.Open(":memory:")
+
+    version_3_38_or_later = get_sqlite_version() >= (3, 38, 0)
+    with gdal.quiet_errors():
+        ds.ExecuteSQL("SELECT (1 FROM x)")
+    if version_3_38_or_later:
+        assert (
+            gdal.GetLastErrorMsg()
+            == """In ExecuteSQL(): sqlite3_prepare_v2(): near "FROM": syntax error
+  SELECT (1 FROM x)
+            ^--- error here"""
+        )
+    else:
+        assert (
+            gdal.GetLastErrorMsg()
+            == """In ExecuteSQL(): sqlite3_prepare_v2(): near "FROM": syntax error
+  SELECT (1 FROM x)"""
+        )

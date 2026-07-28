@@ -346,7 +346,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
         {
             if (EQUAL(pszTmpPath + iLastPartStart, papszDir[iEntry]))
             {
-                /* Fount it! */
+                /* Found it! */
 #ifdef CSA_BUILD
                 // Silence false positive warning about overlapping buffers
                 memmove(pszTmpPath + iLastPartStart, papszDir[iEntry],

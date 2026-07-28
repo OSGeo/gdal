@@ -13,6 +13,7 @@
 
 import json
 import os
+import shutil
 
 import gdaltest
 import pytest
@@ -52,7 +53,7 @@ def test_gdalalg_pipeline_read_and_write_vector(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -83,13 +84,13 @@ def test_gdalalg_pipeline_read_and_write_raster(tmp_vsimem):
         )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 def test_gdalalg_pipeline_read_and_write_vector_from_object():
 
-    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    src_ds = gdal.Open("../ogr/data/poly.shp")
     with gdal.Run(
         "pipeline",
         input=src_ds,
@@ -275,21 +276,19 @@ def test_gdalalg_pipeline_help_doc(gdal_path):
     assert "ERROR: unknown pipeline step 'unknown'" in out
 
 
-def test_gdal_pipeline_raster_output_to_gdalg(tmp_path, gdal_path):
+def test_gdal_pipeline_raster_output_to_gdalg(tmp_path):
 
-    src_filename = os.path.join(os.getcwd(), "../gcore/data/byte.tif").replace(
-        "\\", "/"
-    )
+    gdal.Mkdir(tmp_path / "src with space", 0o755)
+    shutil.copy("../gcore/data/byte.tif", tmp_path / "src with space")
+    src_filename = str(tmp_path / "src with space" / "byte.tif").replace("\\", "/")
     out_filename = str(tmp_path / "out.gdalg.json")
-    gdaltest.runexternal(
-        f"{gdal_path} pipeline read {src_filename} ! write {out_filename}"
-    )
+    gdal.alg.pipeline(pipeline=f'read "{src_filename}" ! write {out_filename}')
     # Test that configuration option is not serialized
     j = json.loads(gdal.VSIFile(out_filename, "rb").read())
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": f"gdal pipeline read --input {src_filename}",
+        "command_line": f'gdal pipeline read --input "{src_filename}"',
         "type": "gdal_streamed_alg",
     }
 
@@ -300,22 +299,26 @@ def test_gdal_pipeline_raster_output_to_gdalg(tmp_path, gdal_path):
 
 def test_gdal_pipeline_vector_output_to_gdalg(tmp_path, gdal_path):
 
-    src_filename = os.path.join(os.getcwd(), "../ogr/data/poly.shp").replace("\\", "/")
+    gdal.Mkdir(tmp_path / "src with space", 0o755)
+    shutil.copy("../ogr/data/poly.shp", tmp_path / "src with space")
+    shutil.copy("../ogr/data/poly.shx", tmp_path / "src with space")
+    shutil.copy("../ogr/data/poly.dbf", tmp_path / "src with space")
+    src_filename = str(tmp_path / "src with space" / "poly.shp").replace("\\", "/")
     out_filename = str(tmp_path / "out.gdalg.json")
     gdaltest.runexternal(
-        f"{gdal_path} pipeline read {src_filename} ! write {out_filename}"
+        f'{gdal_path} pipeline read "{src_filename}" ! write {out_filename}'
     )
     # Test that configuration option is not serialized
     j = json.loads(gdal.VSIFile(out_filename, "rb").read())
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": f"gdal pipeline read --input {src_filename}",
+        "command_line": f'gdal pipeline read --input "{src_filename}"',
         "type": "gdal_streamed_alg",
     }
 
     if gdal.GetDriverByName("GDALG"):
-        ds = gdal.OpenEx(out_filename)
+        ds = gdal.Open(out_filename)
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -540,6 +543,24 @@ def test_gdalalg_pipeline_run_existing(tmp_path):
         assert ds.GetMetadataItem("FOO") == "BAR"
     gdal.Unlink(output_filename)
 
+    pipeline_short_argname_filename = tmp_path / "pipeline_short_argname.gdalg.json"
+    with gdal.VSIFile(pipeline_short_argname_filename, "wb") as f:
+        j = json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "relative_paths_relative_to_this_file": False,
+                "command_line": "gdal pipeline read -i ../gcore/data/byte.tif ! reproject -s EPSG:26711 -d EPSG:4326",
+            }
+        )
+        f.write(j.encode("UTF-8"))
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline {pipeline_short_argname_filename} --output {output_filename} --reproject.output-crs EPSG:32611 --quiet"
+    )
+    assert out == ""
+    with gdal.Open(output_filename) as ds:
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
+    gdal.Unlink(output_filename)
+
     _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} pipeline {pipeline_filename}"
     )
@@ -691,14 +712,7 @@ def test_gdalalg_pipeline_run_existing(tmp_path):
     assert "/i/do_not/exist" in err
 
 
-def test_gdalalg_pipeline_existing_completion(tmp_path):
-
-    import gdaltest
-    import test_cli_utilities
-
-    gdal_path = test_cli_utilities.get_gdal_path()
-    if gdal_path is None:
-        pytest.skip("gdal binary missing")
+def test_gdalalg_pipeline_existing_completion(gdal_path, tmp_path):
 
     pipeline_filename = tmp_path / "pipeline.gdalg.json"
 
@@ -712,9 +726,9 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     expected_out = [
         "--input-format=",
         "--open-option=",
@@ -734,14 +748,14 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         assert x in out
     assert "--input-layer=" not in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --input-format="
-    ).split(" ")
+    )
     assert "MEM" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --output=/vsimem/out.tif --creation-option="
-    ).split(" ")
+    )
     assert "COMPRESS=" in out
 
     with gdal.VSIFile(pipeline_filename, "wb") as f:
@@ -754,9 +768,9 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     expected_out = [
         "--input-format=",
         "--open-option=",
@@ -794,15 +808,15 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     assert "--edit[0].geometry-type=" in out
     assert "--edit[1].geometry-type=" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --edit[0].geometry-type="
-    ).split(" ")
+    )
     assert "GEOMETRY" in out
 
 
@@ -819,6 +833,18 @@ def test_gdalalg_pipeline_nested_nominal():
             51840,
             50950,
         ]
+
+
+def test_gdalalg_pipeline_inner_pipeline_vrt(tmp_path):
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/14732"""
+
+    shutil.copy("data/color_file.txt", tmp_path)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! blend --overlay [ read ../gcore/data/byte.tif ! color-map --color-map {tmp_path}/color_file.txt ]"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4475
 
 
 def test_gdalalg_pipeline_nested_serialize_to_gdalg(tmp_vsimem):
@@ -881,7 +907,10 @@ def test_gdalalg_pipeline_nested_errors():
     with pytest.raises(
         Exception, match="Last step in an inner pipeline must not be a write-like step"
     ):
-        gdal.Run("pipeline", pipeline="read [ write foo ]")
+        gdal.Run(
+            "pipeline",
+            pipeline="read [ read ../gcore/data/byte.tif ! write foo ] ! info",
+        )
 
     with pytest.raises(
         Exception, match="'write' is not allowed as an intermediate step"
@@ -899,6 +928,36 @@ def test_gdalalg_pipeline_nested_errors():
             "pipeline",
             pipeline='read [ read ../gcore/data/byte.tif ! reproject --dst-crs "+proj=longlat +a=1" ] ! info',
         )
+
+    with pytest.raises(
+        Exception, match="'not_existing' is a unknown sub-algorithm of 'overview'"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! overview not_existing ! info",
+        )
+
+
+def test_gdalalg_pipeline_nested_double():
+
+    with gdal.alg.pipeline(
+        pipeline="read [ read [ read ../gcore/data/byte.tif ] ]"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_pipeline_nested_completion(gdal_path):
+
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! clip --like [ read --"
+    )
+    assert set(out) == {"--input", "--input-format", "--open-option", "--input-layer"}
+
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ] --"
+    )
+    assert "--like" in out
 
 
 def test_gdalalg_pipeline_tee_nominal_raster(tmp_vsimem):
@@ -968,7 +1027,7 @@ def test_gdalalg_pipeline_tee_gdalg(tmp_vsimem):
     with gdaltest.error_raised(gdal.CE_Warning):
         gdal.Run(
             "pipeline",
-            pipeline=f"read {src_filename} ! tee [ write {out_filename} ] ! write {gdalg_filename}",
+            pipeline=f'read "{src_filename}" ! tee [ write {out_filename} ] ! write {gdalg_filename}',
         )
 
     assert gdal.VSIStatL(out_filename) is None
@@ -1049,6 +1108,34 @@ def test_gdalalg_pipeline_tee_error(tmp_vsimem):
         )
 
 
+def test_gdalalg_pipeline_invalid_last_step_inner_pipeline():
+
+    with pytest.raises(
+        Exception, match="Last step in an inner pipeline must not be a write-like step"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read [ read ../gcore/data/byte.tif ! write --format=MEM ]",
+        )
+
+
+def test_gdalalg_pipeline_invalid_last_step(gdal_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! reproject"
+    )
+
+    assert "Last step should be 'write', " in err
+    # Ensure there are no duplicated steps
+    pos = err.find("Last step should be ")
+    err = err[pos + len("Last step should be ") :]
+    err = err.replace("\r\n", "\n")
+    err = err[0 : err.find("\n")]
+    steps = err.replace(" or ", ", ")
+    steps = steps.split(", ")
+    assert len(steps) == len(set(steps))
+
+
 def test_gdalalg_pipeline_tee_output_string(tmp_vsimem):
 
     with gdal.Run(
@@ -1102,3 +1189,152 @@ def test_gdalalg_pipeline_tee_output_to_stdout(tmp_vsimem):
 
     with gdal.Open(tmp_vsimem / "test.xyz") as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_pipeline_ossfuzz_485952614():
+
+    # Used to segfault
+    with pytest.raises(Exception):
+        gdal.alg.pipeline(pipeline="read -h")
+
+
+def test_gdalalg_pipeline_help_after_as_features(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! as-features ! info --help"
+    )
+
+    assert "Return information on a vector dataset" in out
+
+
+def test_gdalalg_pipeline_help_after_rasterize(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../ogr/data/poly.shp ! rasterize ! info --help"
+    )
+
+    assert "Return information on a raster dataset" in out
+
+
+def test_gdalalg_pipeline_raster_input_clip_and_inner_pipeline_raster():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ]"
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_input_clip_and_inner_pipeline_vector():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ! polygonize ]"
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_input_clip_and_inner_pipeline_raster():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! clip --like [ read ../ogr/data/poly.shp ]"
+    ) as alg:
+        assert alg.Output().GetLayer(0).GetFeatureCount() == 10
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_input_clip_and_inner_pipeline_vector():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! clip --like [ read ../ogr/data/poly.shp ! rasterize --size 10,10 --burn 255 ]"
+    ) as alg:
+        assert alg.Output().GetLayer(0).GetFeatureCount() == 10
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_and_clip_raster(tmp_vsimem, tmp_path):
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../ogr/data/poly.shp ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif"
+    )
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_and_clip_raster_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../ogr/data/poly.shp ! clip --input [ read {poly_tif} ] --like _PIPE_ ! write {tmp_vsimem}/out.tif"
+    )
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_and_clip_vector(tmp_vsimem, tmp_path):
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! clip --input {byte_shp} --like _PIPE_ ! write {tmp_vsimem}/out.shp"
+    )
+
+    with gdal.Open(byte_shp) as src_ds, gdal.Open(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_and_clip_vector_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! clip --input [ read {byte_shp} ] --like _PIPE_ ! write {tmp_vsimem}/out.shp"
+    )
+
+    with gdal.Open(byte_shp) as src_ds, gdal.Open(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
+def test_gdalalg_pipeline_error_step_does_not_use_input_from_previous_step():
+
+    with pytest.raises(
+        Exception,
+        match=r"Step nr 1 \(reproject\) does not use input dataset from previous step",
+    ):
+        gdal.alg.pipeline(
+            pipeline="read ../gcore/data/byte.tif ! reproject --input ../gcore/data/uint16.tif"
+        )

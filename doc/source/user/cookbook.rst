@@ -1,0 +1,85 @@
+.. _cookbook:
+
+================================================================================
+GDAL Command-line Cookbook
+================================================================================
+
+.. contents::
+    :depth: 3
+
+Introduction
+------------
+
+Welcome to the GDAL Users Cookbook. This guide provides practical examples for working with raster and vector data using the GDAL command-line tools.
+It demonstrates common tasks such as raster analysis, vector geometry operations, and combining raster and vector workflows.
+
+The cookbook uses a question and answer format, linking to relevant examples elsewhere in the GDAL documentation.
+
+General How do I...
+-------------------
+
+... get the GDAL version?
+   :example:`gdal-version`
+
+... view debug output?
+   :example:`debug-output`
+
+... write GDAL output and errors to a log file?
+   :example:`debug-log-file`
+
+... log :term:`curl` output for HTTP requests?
+   :example:`debug-log-curl`
+
+Raster How do I...
+------------------
+
+... resize a raster?
+   :example:`gdal-raster-resize-cubic`.
+
+... create a Cloud Optimized GeoTIFF (COG)?
+    - :example:`gdal-raster-convert-cog`
+    - :example:`raster.cog-gdalwarp`
+
+... check if a GeoTIFF is a Cloud Optimized GeoTIFF (COG)?
+    - :example:`gdal-dataset-identify-cog`
+    - :example:`gdal-raster-info-cog`
+
+Vector How do I...
+------------------
+
+... check if ``X`` vector driver is installed?
+    :example:`gdal-vector-drivers`
+
+... buffer geometries?
+   :example:`gdal-vector-buffer-1km`
+
+... buffer geometries using an attribute?
+   :example:`gdal-pipeline-buffer-line`.
+
+... list all layers in a dataset?
+    - :example:`gdal-vector-info-list-layers`
+    - :example:`gdal-vector-info-geom-name`
+
+... filter features using an attribute query?
+   :example:`gdal-vector-filter-where`
+
+... list unique values in a field?
+   :example:`gdal-vector-sql-distinct`
+
+Raster and Vector How do I...
+-----------------------------
+
+... burn a vector dataset into a raster?
+   :example:`gdal-vector-rasterize-burn`
+
+... extract pixel values from a raster and apply them to a point dataset?
+   :example:`gdal-raster-pixel-info-extract`
+
+... know which :term:`CRS`\s are suitable for reprojecting my dataset?
+   :example:`gdal-bash-completion-crs`
+
+... clip a raster image with vector features?
+    - :example:`gdal-raster-clip-vector`
+    - :example:`gdal-raster-clip-sql`
+    - :example:`gdal-pipeline-mixed-nested`
+    - :example:`gdal-pipeline-mixed-pipe`

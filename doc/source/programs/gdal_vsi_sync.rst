@@ -1,5 +1,7 @@
 .. _gdal_vsi_sync:
 
+.. program:: gdal_vsi_sync
+
 ================================================================================
 ``gdal vsi sync``
 ================================================================================
@@ -78,6 +80,11 @@ Options
 .. option:: -j, --num-threads <value>
 
    Number of jobs to run at once
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

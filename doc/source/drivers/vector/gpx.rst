@@ -391,64 +391,65 @@ domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
--------
+Examples
+--------
 
-The ogrinfo utility can be used to dump the content of a GPX datafile :
+.. example::
+   :title: Dumping the contents of a GPX datafile
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro -al input.gpx
+      ogrinfo -ro -al input.gpx
 
-The ogr2ogr utility can be used to do GPX to GPX translation :
+.. example::
+   :title: GPX to GPX translation
 
-::
+   .. code-block:: bash
 
-   ogr2ogr -f GPX output.gpx input.gpx waypoints routes tracks
+      ogr2ogr -f GPX output.gpx input.gpx waypoints routes tracks
 
-|
-| Note : in the case of GPX to GPX translation, you need to specify the
-  layer names, in order to discard the route_points and track_points
-  layers.
+   Note: in the case of GPX to GPX translation, you need to specify the
+   layer names, in order to discard the route_points and track_points
+   layers.
 
-|
 
-Use of the *<extensions>* tag for output :
+.. example::
+   :title: Use of the *<extensions>* tag for output
 
-::
+   .. code-block:: bash
 
-   ogr2ogr -f GPX  -dsco GPX_USE_EXTENSIONS=YES output.gpx input
+      ogr2ogr -f GPX  -dsco GPX_USE_EXTENSIONS=YES output.gpx input
 
-which will give an output like the following one :
+    which will give an output like the following one :
 
-.. code-block:: XML
+   .. code-block:: XML
+   
+          <?xml version="1.0"?>
+          <gpx version="1.1" creator="GDAL 1.5dev"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:ogr="http://osgeo.org/gdal"
+          xmlns="http://www.topografix.com/GPX/1/1"
+          xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+          <wpt lat="1" lon="2">
+          <extensions>
+              <ogr:Primary_ID>PID5</ogr:Primary_ID>
+              <ogr:Secondary_ID>SID5</ogr:Secondary_ID>
+          </extensions>
+          </wpt>
+          <wpt lat="3" lon="4">
+          <extensions>
+              <ogr:Primary_ID>PID4</ogr:Primary_ID>
+              <ogr:Secondary_ID>SID4</ogr:Secondary_ID>
+          </extensions>
+          </wpt>
+          </gpx>
 
-       <?xml version="1.0"?>
-       <gpx version="1.1" creator="GDAL 1.5dev"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:ogr="http://osgeo.org/gdal"
-       xmlns="http://www.topografix.com/GPX/1/1"
-       xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
-       <wpt lat="1" lon="2">
-       <extensions>
-           <ogr:Primary_ID>PID5</ogr:Primary_ID>
-           <ogr:Secondary_ID>SID5</ogr:Secondary_ID>
-       </extensions>
-       </wpt>
-       <wpt lat="3" lon="4">
-       <extensions>
-           <ogr:Primary_ID>PID4</ogr:Primary_ID>
-           <ogr:Secondary_ID>SID4</ogr:Secondary_ID>
-       </extensions>
-       </wpt>
-       </gpx>
+.. example::
+   :title: Use of ``ogr2ogr -sql`` option to remap field names to the ones allowed by the GPX schema
 
-Use of -sql option to remap field names to the ones allowed by the GPX
-schema:
+   .. code-block:: bash
 
-::
-
-   ogr2ogr -f GPX output.gpx input.shp -sql "SELECT field1 AS name, field2 AS desc FROM input"
+      ogr2ogr -f GPX output.gpx input.shp -sql "SELECT field1 AS name, field2 AS desc FROM input"
 
 FAQ
 ---

@@ -193,7 +193,7 @@ static void DGNDumpRawElement(DGNHandle /* hDGN */, DGNElemCore *psCore,
 
 {
     int iChar = 0;
-    const size_t knLineSize = 80;
+    const size_t knLineSize = 100;
     char szLine[knLineSize] = {};
 
     fprintf(fpOut, "  Raw Data (%d bytes):\n", psCore->raw_bytes);

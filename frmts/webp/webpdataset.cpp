@@ -608,9 +608,10 @@ GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
     // Cf commit https://github.com/webmproject/libwebp/commit/86c0031eb2c24f78d4dcfc5dab752ebc9f511607#diff-859d219dccb3163cc11cd538effed461ff0145135070abfe70bd263f16408023
     // Added in webp 0.4.0
 #if WEBP_DECODER_ABI_VERSION >= 0x0202
-    poDS->GDALDataset::SetMetadataItem(
-        "COMPRESSION_REVERSIBILITY",
-        config.input.format == 2 ? "LOSSLESS" : "LOSSY", "IMAGE_STRUCTURE");
+    poDS->GDALDataset::SetMetadataItem("COMPRESSION_REVERSIBILITY",
+                                       config.input.format == 2 ? "LOSSLESS"
+                                                                : "LOSSY",
+                                       GDAL_MDD_IMAGE_STRUCTURE);
 #endif
 
     if (config.input.has_alpha ||

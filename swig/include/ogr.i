@@ -512,6 +512,9 @@ typedef void retGetPoints;
 %constant char *ODsCAddFieldDomain     = "AddFieldDomain";
 %constant char *ODsCDeleteFieldDomain  = "DeleteFieldDomain";
 %constant char *ODsCUpdateFieldDomain  = "UpdateFieldDomain";
+%constant char *ODsCAddRelationship    = "AddRelationship";
+%constant char *ODsCDeleteRelationship = "DeleteRelationship";
+%constant char *ODsCUpdateRelationship = "UpdateRelationship";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -568,7 +571,12 @@ typedef int CPLErr;
 #define ODsCRandomLayerRead    "RandomLayerRead"
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite   "RandomLayerWrite "
-
+#define ODsCAddFieldDomain     "AddFieldDomain";
+#define ODsCDeleteFieldDomain  "DeleteFieldDomain"
+#define ODsCUpdateFieldDomain  "UpdateFieldDomain"
+#define ODsCAddRelationship    "AddRelationship"
+#define ODsCDeleteRelationship "DeleteRelationship"
+#define ODsCUpdateRelationship "UpdateRelationship"
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
 
@@ -724,14 +732,14 @@ public:
         return OGR_STBL_AddStyle( (OGRStyleTableH) self, pszName, pszStyleString);
    }
 
-   int LoadStyleTable( const char *utf8_path )
+   int LoadStyleTable( const char *utf8_string )
    {
-        return OGR_STBL_LoadStyleTable( (OGRStyleTableH) self, utf8_path );
+        return OGR_STBL_LoadStyleTable( (OGRStyleTableH) self, utf8_string );
    }
 
-   int SaveStyleTable( const char *utf8_path )
+   int SaveStyleTable( const char *utf8_string )
    {
-        return OGR_STBL_SaveStyleTable( (OGRStyleTableH) self, utf8_path );
+        return OGR_STBL_SaveStyleTable( (OGRStyleTableH) self, utf8_string );
    }
 
    const char* Find( const char* pszName )
@@ -791,9 +799,9 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateDataSource;
 #endif
-  OGRDataSourceShadow *CreateDataSource( const char *utf8_path,
+  OGRDataSourceShadow *CreateDataSource( const char *utf8_string,
                                     char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_string, options);
     return ds;
   }
 #ifdef SWIGPYTHON
@@ -809,9 +817,9 @@ public:
 #endif
 %apply Pointer NONNULL {OGRDataSourceShadow *copy_ds};
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds,
-                                  const char* utf8_path,
+                                  const char* utf8_string,
                                   char **options = 0 ) {
-    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
+    OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_string, options);
     return ds;
   }
 %clear OGRDataSourceShadow *copy_ds;
@@ -826,10 +834,10 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
 #endif
-  OGRDataSourceShadow *Open( const char* utf8_path,
+  OGRDataSourceShadow *Open( const char* utf8_string,
                         int update=0 ) {
     CPLErrorReset();
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_string, update);
 #ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
@@ -849,11 +857,11 @@ public:
 #endif
 
 #ifdef SWIGJAVA
-  OGRErr DeleteDataSource( const char *utf8_path ) {
+  OGRErr DeleteDataSource( const char *utf8_string ) {
 #else
-  int DeleteDataSource( const char *utf8_path ) {
+  int DeleteDataSource( const char *utf8_string ) {
 #endif
-    return OGR_Dr_DeleteDataSource( self, utf8_path );
+    return OGR_Dr_DeleteDataSource( self, utf8_string );
   }
 
 %apply Pointer NONNULL {const char * cap};
@@ -1224,6 +1232,14 @@ static bool CreateFieldsFromArrowSchema(OGRLayerH hDstLayer,
                                         const struct ArrowSchema* schemaSrc,
                                         char** options)
 {
+    const char* pszFIDName = CSLFetchNameValueDef(
+        options, "FID", OGR_L_GetFIDColumn(hDstLayer));
+    if (!pszFIDName || !pszFIDName[0])
+        pszFIDName = "OGC_FID";
+    const char* pszGeomColName = CSLFetchNameValueDef(
+        options, "GEOMETRY_NAME", OGR_L_GetGeometryColumn(hDstLayer));
+    if (!pszGeomColName || !pszGeomColName[0])
+        pszGeomColName = "wkb_geometry";
     for (int i = 0; i < schemaSrc->n_children; ++i)
     {
         const char *metadata =
@@ -1243,8 +1259,8 @@ static bool CreateFieldsFromArrowSchema(OGRLayerH hDstLayer,
 
         const char *pszFieldName =
             schemaSrc->children[i]->name;
-        if (!EQUAL(pszFieldName, "OGC_FID") &&
-            !EQUAL(pszFieldName, "wkb_geometry") &&
+        if (!EQUAL(pszFieldName, pszFIDName) &&
+            !EQUAL(pszFieldName, pszGeomColName) &&
             !OGR_L_CreateFieldFromArrowSchema(
                 hDstLayer, schemaSrc->children[i], options))
         {
@@ -1317,7 +1333,7 @@ public:
   }
 
 #ifdef SWIGCSHARP
-  %apply ( const char *utf8_path ) { (char* filter_string) };
+  %apply ( const char *utf8_string ) { (char* filter_string) };
 #endif
   OGRErr SetAttributeFilter(char* filter_string) {
     return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
@@ -1325,6 +1341,10 @@ public:
 #ifdef SWIGCSHARP
   %clear (char* filter_string);
 #endif
+
+  const char * GetAttributeFilter() {
+    return OGR_L_GetAttributeFilter(self);
+  }
 
   void ResetReading() {
     OGR_L_ResetReading(self);
@@ -1875,7 +1895,7 @@ typedef double* retDoubleArray;
 
 #ifdef SWIGPYTHON
 /* Applies perhaps to other bindings */
-%apply ( const char *utf8_path ) { (const char* field_name) };
+%apply ( const char *utf8_string ) { (const char* field_name) };
 #endif
 
 %rename (Feature) OGRFeatureShadow;
@@ -2396,7 +2416,7 @@ public:
 #ifndef SWIGCSHARP
   %apply ( tostring argin ) { (const char* value) };
 #else
-  %apply ( const char *utf8_path ) { (const char* value) };
+  %apply ( const char *utf8_string ) { (const char* value) };
 #endif
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
@@ -2870,7 +2890,7 @@ public:
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
 #ifdef SWIGCSHARP
-  %apply ( const char *utf8_path ) { (const char* name_null_ok) };
+  %apply ( const char *utf8_string ) { (const char* name_null_ok) };
 #endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed",
                       OGRFieldType field_type=OFTString) {
@@ -2884,7 +2904,7 @@ public:
 #endif
 
 #ifdef SWIGCSHARP
-  %apply ( const char *utf8_path ) { const char * GetName };
+  %apply ( const char *utf8_string ) { const char * GetName };
 #endif
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
@@ -2904,7 +2924,7 @@ public:
   }
 
 #ifdef SWIGCSHARP
-  %apply ( const char *utf8_path ) { (const char* name) };
+  %apply ( const char *utf8_string ) { (const char* name) };
 #endif
 
   void SetName( const char* name) {
@@ -3869,6 +3889,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_ConcaveHull(self, ratio, allowHoles);
   }
 
+  %newobject ConcaveHullOfPolygons;
+  OGRGeometryShadow* ConcaveHullOfPolygons(double lengthRatio, bool isTight, bool allowHoles) {
+    return (OGRGeometryShadow*) OGR_G_ConcaveHullOfPolygons(self, lengthRatio, isTight, allowHoles);
+  }
+
   %newobject MakeValid;
   OGRGeometryShadow* MakeValid( char** options = NULL ) {
     return (OGRGeometryShadow*) OGR_G_MakeValidEx(self, options);
@@ -3957,6 +3982,10 @@ public:
 
   bool IsValid () {
     return (OGR_G_IsValid(self) > 0);
+  }
+
+  retStringAndCPLFree* GetInvalidityReason () {
+    return OGR_G_GetInvalidityReason(self);
   }
 
   bool IsSimple () {
@@ -4743,7 +4772,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %feature( "kwargs" ) Open;
 #endif
 %inline %{
-  OGRDataSourceShadow* Open( const char *utf8_path, int update =0 ) {
+  OGRDataSourceShadow* Open( const char *utf8_string, int update =0 ) {
     CPLErrorReset();
     int nOpenFlags = GDAL_OF_VECTOR;
     if( update )
@@ -4752,7 +4781,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     if( GetUseExceptions() )
       nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
 #endif
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_path, nOpenFlags, NULL,
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_string, nOpenFlags, NULL,
                                       NULL, NULL );
 #ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
@@ -4779,7 +4808,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %feature( "kwargs" ) OpenShared;
 #endif
 %inline %{
-  OGRDataSourceShadow* OpenShared( const char *utf8_path, int update =0 ) {
+  OGRDataSourceShadow* OpenShared( const char *utf8_string, int update =0 ) {
     CPLErrorReset();
     int nOpenFlags = GDAL_OF_VECTOR | GDAL_OF_SHARED;
     if( update )
@@ -4788,7 +4817,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     if( GetUseExceptions() )
       nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
 #endif
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_path, nOpenFlags, NULL,
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)GDALOpenEx( utf8_string, nOpenFlags, NULL,
                                       NULL, NULL );
 #ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )

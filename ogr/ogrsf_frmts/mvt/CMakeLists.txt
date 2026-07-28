@@ -14,7 +14,7 @@ endif ()
 
 if (GDAL_USE_SQLITE3)
   target_compile_definitions(ogr_MVT PRIVATE -DHAVE_SQLITE)
-  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite::SQLite3)
+  gdal_target_link_libraries(ogr_MVT PRIVATE SQLite3::SQLite3)
 endif ()
 
 add_executable(mvt_tile_test EXCLUDE_FROM_ALL mvt_tile_test.cpp)

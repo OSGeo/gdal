@@ -129,12 +129,14 @@ class VSIKerchunkJSONRefFileSystem final : public VSIFilesystemHandler
   public:
     VSIKerchunkJSONRefFileSystem()
     {
-        IsFileSystemInstantiated() = true;
+        bool *pbInstantiated = &IsFileSystemInstantiated();
+        *pbInstantiated = true;
     }
 
     ~VSIKerchunkJSONRefFileSystem() override
     {
-        IsFileSystemInstantiated() = false;
+        bool *pbInstantiated = &IsFileSystemInstantiated();
+        *pbInstantiated = false;
     }
 
     static bool &IsFileSystemInstantiated()

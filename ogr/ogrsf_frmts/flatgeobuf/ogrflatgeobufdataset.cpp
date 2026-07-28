@@ -129,6 +129,9 @@ void RegisterOGRFlatGeobuf()
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CAN_READ_AFTER_DELETE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
+
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "FlatGeobuf");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "fgb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
@@ -226,11 +229,11 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
     if (OGRFlatGeobufDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
-    const auto bVerifyBuffers =
+    const bool bVerifyBuffers =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true);
 
-    auto isDir = CPL_TO_BOOL(poOpenInfo->bIsDirectory);
-    auto bUpdate = poOpenInfo->eAccess == GA_Update;
+    const bool isDir = poOpenInfo->bIsDirectory;
+    const bool bUpdate = poOpenInfo->eAccess == GA_Update;
 
     if (isDir && bUpdate)
     {

@@ -33,11 +33,10 @@
 
 OGRLayer::OGRLayer()
     : m_poPrivate(new Private()), m_bFilterIsEnvelope(FALSE),
-      m_poFilterGeom(nullptr),
-      m_pPreparedFilterGeom(nullptr), m_sFilterEnvelope{},
-      m_iGeomFieldFilter(0), m_poStyleTable(nullptr), m_poAttrQuery(nullptr),
-      m_pszAttrQueryString(nullptr), m_poAttrIndex(nullptr), m_nRefCount(0),
-      m_nFeaturesRead(0)
+      m_poFilterGeom(nullptr), m_pPreparedFilterGeom(nullptr),
+      m_sFilterEnvelope{}, m_iGeomFieldFilter(0), m_poStyleTable(nullptr),
+      m_poAttrQuery(nullptr), m_pszAttrQueryString(nullptr),
+      m_poAttrIndex(nullptr), m_nRefCount(0), m_nFeaturesRead(0)
 {
 }
 
@@ -744,6 +743,8 @@ OGRErr OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
  @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
  current query.
 
+ @see GetAttrQueryString() to retrieve the currently installed query string.
+
  @return OGRERR_NONE if successfully installed, or an error code if the
  query expression is in error, or some other failure occurs.
  */
@@ -880,6 +881,29 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 #endif
 
     return OGRLayer::FromHandle(hLayer)->SetAttributeFilter(pszQuery);
+}
+
+/************************************************************************/
+/*                      OGR_L_GetAttributeFilter()                      */
+/************************************************************************/
+
+/**
+ * @brief Fetch the current attribute query string.
+ *
+ * This function is the same as the C++ method OGRLayer::GetAttrQueryString().
+ *
+ * @return the current attribute query string, or NULL if no attribute query is
+ * currently installed. The returned string is short lived and owned by the layer
+ * and should not be modified or freed by the caller.
+ *
+ * @see OGR_L_SetAttributeFilter() to set a new attribute query string.
+ * @since GDAL 3.13
+ */
+const char *OGR_L_GetAttributeFilter(OGRLayerH hLayer)
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_GetAttributeFilter", nullptr);
+
+    return OGRLayer::FromHandle(hLayer)->GetAttrQueryString();
 }
 
 /************************************************************************/
@@ -2059,7 +2083,7 @@ OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateField() not supported by this layer.\n");
+             "CreateField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2149,7 +2173,7 @@ OGRErr OGRLayer::DeleteField(int iField)
     (void)iField;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "DeleteField() not supported by this layer.\n");
+             "DeleteField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2239,7 +2263,7 @@ OGRErr OGRLayer::ReorderFields(int *panMap)
     (void)panMap;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "ReorderFields() not supported by this layer.\n");
+             "ReorderFields() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2474,7 +2498,7 @@ OGRErr OGRLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     (void)poNewFieldDefn;
     (void)nFlagsIn;
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterFieldDefn() not supported by this layer.\n");
+             "AlterFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2579,7 +2603,7 @@ OGRErr OGRLayer::AlterGeomFieldDefn(int iGeomField,
     (void)nFlagsIn;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterGeomFieldDefn() not supported by this layer.\n");
+             "AlterGeomFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2679,7 +2703,7 @@ OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateGeomField() not supported by this layer.\n");
+             "CreateGeomField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -3080,8 +3104,7 @@ const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 {
     const auto poLayerDefn = GetLayerDefn();
     if (poLayerDefn->GetGeomFieldCount() > 0)
-        return const_cast<OGRSpatialReference *>(
-            poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+        return poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef();
     else
         return nullptr;
 }
@@ -4061,9 +4084,10 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
                                  OGREnvelope &sEnvelope) const
 {
     OGRPreparedGeometry *pPreparedFilterGeom = m_pPreparedFilterGeom;
-    bool bRet = FilterWKBGeometry(
-        pabyWKB, nWKBSize, bEnvelopeAlreadySet, sEnvelope, m_poFilterGeom,
-        m_bFilterIsEnvelope, m_sFilterEnvelope, pPreparedFilterGeom);
+    bool bRet =
+        FilterWKBGeometry(pabyWKB, nWKBSize, bEnvelopeAlreadySet, sEnvelope,
+                          m_poFilterGeom, CPL_TO_BOOL(m_bFilterIsEnvelope),
+                          m_sFilterEnvelope, pPreparedFilterGeom);
     const_cast<OGRLayer *>(this)->m_pPreparedFilterGeom = pPreparedFilterGeom;
     return bRet;
 }

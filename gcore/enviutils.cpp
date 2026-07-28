@@ -277,7 +277,8 @@ void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,
                             ConvertWaveLength(CPLAtof(aosWL[i])))
                     {
                         poDS->GetRasterBand(i + 1)->SetMetadataItem(
-                            "CENTRAL_WAVELENGTH_UM", pszVal, "IMAGERY");
+                            GDALMD_CENTRAL_WAVELENGTH_UM, pszVal,
+                            GDAL_MDD_IMAGERY);
                     }
                 }
             }
@@ -287,7 +288,7 @@ void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,
                 if (const char *pszVal = ConvertWaveLength(CPLAtof(aosFWHM[i])))
                 {
                     poDS->GetRasterBand(i + 1)->SetMetadataItem(
-                        "FWHM_UM", pszVal, "IMAGERY");
+                        GDALMD_FWHM_UM, pszVal, GDAL_MDD_IMAGERY);
                 }
             }
         }

@@ -21,6 +21,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MSSQLSpatial")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -132,7 +133,7 @@ def tpoly(mssql_ds):
 
     got_srs = sql_lyr.GetSpatialRef()
     expected_srs = shp_lyr.GetSpatialRef()
-    assert got_srs.GetAuthorityCode(None) == expected_srs.GetAuthorityCode(
+    assert got_srs.GetAuthorityCode() == expected_srs.GetAuthorityCode(
         None
     ), "not matching spatial ref"
 
@@ -419,7 +420,7 @@ def test_ogr_mssqlspatial_datatypes(mssql_ds):
         f["time"] = "12:34:56"
         f["datetime"] = "2021/12/11 12:34:56"
         f["uid"] = "6F9619FF-8B86-D011-B42D-00C04FC964FF"
-        f["binary"] = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+        f["binary"] = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
         lyr.CreateFeature(f)
         lyr.CommitTransaction()
 
@@ -543,7 +544,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 
     with gdal.config_option("MSSQLSPATIAL_BCP_SIZE", "2"):
 
-        source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
+        source_ds = gdal.Open("data/poly.shp", gdal.OF_VECTOR)
 
         assert source_ds
 
@@ -572,7 +573,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
     """Test issue GH https://github.com/OSGeo/gdal/issues/1128"""
 
-    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
+    source_ds = gdal.Open("data/shp/testpoly.shp", gdal.OF_VECTOR)
 
     assert source_ds
 
@@ -626,7 +627,7 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     f["strfield"] = "some text"
     f["intfield"] = 1
     src_lyr.CreateFeature(f)
@@ -640,14 +641,14 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
-    f["binfield"] = b"\xFF\x00\x7F\xFF\x00\x7F"
+    f["binfield"] = b"\xff\x00\x7f\xff\x00\x7f"
     f["strfield"] = "some text"
     f["intfield"] = 3
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(4 5)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     # leave str undefined
     f["intfield"] = 4
     src_lyr.CreateFeature(f)

@@ -415,7 +415,7 @@ Multi driver changes:
  * XLSX / ODS: avoid harmless warning in some cases when guessing column data types
 
 AVCE00 driver:
- * avoid perforance issues on huge lines. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8284
+ * avoid performance issues on huge lines. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8284
  * fix performance issue on reading PRJ section. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=9061
 
 BNA driver:
@@ -3027,7 +3027,7 @@ SXF driver:
 VRT driver:
  * implement CloseDependentDatasets()
  * fix editing with 'direct' geometry mode which could cause attribute column to be empty (#6289)
- * fix crash with a OGRVRTWarpedLayer using a source layer that would have non geometry column (unlikely to happen currently as this would require explicit disabling it, but more likey with following commit that createe VRT non-spatial layer implicitly when the source is non-spatial, linked to #6336)
+ * fix crash with a OGRVRTWarpedLayer using a source layer that would have non geometry column (unlikely to happen currently as this would require explicit disabling it, but more likely with following commit that createe VRT non-spatial layer implicitly when the source is non-spatial, linked to #6336)
  * avoid creating an implicit wkbUnknown geometry field when the source has no geometry column and there's no XML elements related to geometry fields (#6336)
 
 XLSX driver:
@@ -3048,7 +3048,7 @@ All bindings:
 
 Java bindings:
  * Fix typemap for input parameter of type GIntBig (fixes GetFeature(long), DeleteFeature(long), etc...) (#6464)
- * Bump minimal java version to 1.5 in case SWIG generates anotations (#6433, patch by Bas Couwenberg)
+ * Bump minimal java version to 1.5 in case SWIG generates annotations (#6433, patch by Bas Couwenberg)
  * GNUmakefile: add -f in rm commands
  * GNUmakefile: add support for all hardening buildflags
 
@@ -3512,7 +3512,7 @@ NGSGEOID driver:
  * make Identify() more restrictive
 
 NITF driver:
- * deal correctly with JPEG2000 NITF datasets that have a color table inboth Image Subheader and JP2 boxes, and for drivers that don't do color table expension
+ * deal correctly with JPEG2000 NITF datasets that have a color table inboth Image Subheader and JP2 boxes, and for drivers that don't do color table expansion
  * HISTOA TRE: put definition of TRE in conformance with STDI-0002 (App L page 14) and STDI-0006 (Page 57) (#5572)
 
 OGDI driver:

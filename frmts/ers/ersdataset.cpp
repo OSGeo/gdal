@@ -528,7 +528,7 @@ CPLErr ERSDataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (m_gt == gt)
         return CE_None;
 
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Rotated and skewed geotransforms not currently supported for "
@@ -542,13 +542,13 @@ CPLErr ERSDataset::SetGeoTransform(const GDALGeoTransform &gt)
     bHDRDirty = TRUE;
 
     poHeader->Set("RasterInfo.CellInfo.Xdimension",
-                  CPLString().Printf("%.15g", fabs(m_gt[1])));
+                  CPLString().Printf("%.15g", fabs(m_gt.xscale)));
     poHeader->Set("RasterInfo.CellInfo.Ydimension",
-                  CPLString().Printf("%.15g", fabs(m_gt[5])));
+                  CPLString().Printf("%.15g", fabs(m_gt.yscale)));
     poHeader->Set("RasterInfo.RegistrationCoord.Eastings",
-                  CPLString().Printf("%.15g", m_gt[0]));
+                  CPLString().Printf("%.15g", m_gt.xorig));
     poHeader->Set("RasterInfo.RegistrationCoord.Northings",
-                  CPLString().Printf("%.15g", m_gt[3]));
+                  CPLString().Printf("%.15g", m_gt.yorig));
 
     if (CPLAtof(poHeader->Find("RasterInfo.RegistrationCellX", "0")) != 0.0 ||
         CPLAtof(poHeader->Find("RasterInfo.RegistrationCellY", "0")) != 0.0)
@@ -1007,8 +1007,9 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(poHeader->Find("DataSetType", ""), "Translated"))
     {
         nRecLevel++;
-        poDS->poDepFile = GDALDataset::FromHandle(
-            GDALOpen(osDataFilePath, poOpenInfo->eAccess));
+        poDS->poDepFile = GDALDataset::FromHandle(GDALDataset::Open(
+            osDataFilePath,
+            poOpenInfo->eAccess | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
         nRecLevel--;
 
         if (poDS->poDepFile != nullptr &&
@@ -1150,30 +1151,30 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poHeader->Find("RasterInfo.RegistrationCoord.Eastings", nullptr))
     {
         poDS->bGotTransform = TRUE;
-        poDS->m_gt[0] = CPLAtof(
+        poDS->m_gt.xorig = CPLAtof(
             poHeader->Find("RasterInfo.RegistrationCoord.Eastings", ""));
-        poDS->m_gt[1] =
+        poDS->m_gt.xscale =
             CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", "1.0"));
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = CPLAtof(
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = CPLAtof(
             poHeader->Find("RasterInfo.RegistrationCoord.Northings", ""));
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] =
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale =
             -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", "1.0"));
     }
     else if (poHeader->Find("RasterInfo.RegistrationCoord.Latitude", nullptr) &&
              poHeader->Find("RasterInfo.CellInfo.Xdimension", nullptr))
     {
         poDS->bGotTransform = TRUE;
-        poDS->m_gt[0] = ERSDMS2Dec(
+        poDS->m_gt.xorig = ERSDMS2Dec(
             poHeader->Find("RasterInfo.RegistrationCoord.Longitude", ""));
-        poDS->m_gt[1] =
+        poDS->m_gt.xscale =
             CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", ""));
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = ERSDMS2Dec(
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = ERSDMS2Dec(
             poHeader->Find("RasterInfo.RegistrationCoord.Latitude", ""));
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] =
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale =
             -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", ""));
     }
 
@@ -1199,8 +1200,10 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->bGotTransform)
     {
-        poDS->m_gt[0] -= dfCellX * poDS->m_gt[1] + dfCellY * poDS->m_gt[2];
-        poDS->m_gt[3] -= dfCellX * poDS->m_gt[4] + dfCellY * poDS->m_gt[5];
+        poDS->m_gt.xorig -=
+            dfCellX * poDS->m_gt.xscale + dfCellY * poDS->m_gt.xrot;
+        poDS->m_gt.yorig -=
+            dfCellX * poDS->m_gt.yrot + dfCellY * poDS->m_gt.yscale;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1332,15 +1335,47 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (eType != GDT_UInt8 && eType != GDT_Int8 && eType != GDT_Int16 &&
-        eType != GDT_UInt16 && eType != GDT_Int32 && eType != GDT_UInt32 &&
-        eType != GDT_Float32 && eType != GDT_Float64)
+    const char *pszCellType = "Unsigned8BitInteger";
+    switch (eType)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "The ERS driver does not supporting creating files of types %s.",
-            GDALGetDataTypeName(eType));
-        return nullptr;
+        case GDT_UInt8:
+            break;
+        case GDT_Int8:
+            pszCellType = "Signed8BitInteger";
+            break;
+        case GDT_Int16:
+            pszCellType = "Signed16BitInteger";
+            break;
+        case GDT_UInt16:
+            pszCellType = "Unsigned16BitInteger";
+            break;
+        case GDT_Int32:
+            pszCellType = "Signed32BitInteger";
+            break;
+        case GDT_UInt32:
+            pszCellType = "Unsigned32BitInteger";
+            break;
+        case GDT_Float32:
+            pszCellType = "IEEE4ByteReal";
+            break;
+        case GDT_Float64:
+            pszCellType = "IEEE8ByteReal";
+            break;
+        case GDT_UInt64:
+        case GDT_Int64:
+        case GDT_Float16:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The ERS driver does not supporting creating files of "
+                     "types %s.",
+                     GDALGetDataTypeName(eType));
+            return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1358,33 +1393,6 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     {
         osBinFile = pszFilename;
         osErsFile = osBinFile + ".ers";
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Work out some values we will write.                             */
-    /* -------------------------------------------------------------------- */
-    const char *pszCellType = "Unsigned8BitInteger";
-    CPL_IGNORE_RET_VAL(pszCellType);  // Make CSA happy
-
-    if (eType == GDT_UInt8)
-        pszCellType = "Unsigned8BitInteger";
-    else if (eType == GDT_Int8)
-        pszCellType = "Signed8BitInteger";
-    else if (eType == GDT_Int16)
-        pszCellType = "Signed16BitInteger";
-    else if (eType == GDT_UInt16)
-        pszCellType = "Unsigned16BitInteger";
-    else if (eType == GDT_Int32)
-        pszCellType = "Signed32BitInteger";
-    else if (eType == GDT_UInt32)
-        pszCellType = "Unsigned32BitInteger";
-    else if (eType == GDT_Float32)
-        pszCellType = "IEEE4ByteReal";
-    else if (eType == GDT_Float64)
-        pszCellType = "IEEE8ByteReal";
-    else
-    {
-        CPLAssert(false);
     }
 
     /* -------------------------------------------------------------------- */

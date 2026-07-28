@@ -261,6 +261,11 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
     CPLAssert(nLayers == 0);
     papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
 
+    m_bSpatialFilterIntersectionIsLocal =
+        EQUAL(CSLFetchNameValueDef(papszOpenOptions,
+                                   "SPATIAL_FILTER_INTERSECTION", "LOCAL"),
+              "LOCAL");
+
     const char *pszPreludeStatements =
         CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS");
     if (pszPreludeStatements)
@@ -2320,7 +2325,7 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 /*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
-const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
+OGRSpatialReferenceRefCountedPtr OGRPGDataSource::FetchSRS(int nId)
 
 {
     if (nId < 0 || !m_bHasSpatialRefSys)
@@ -2332,7 +2337,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     auto oIter = m_oSRSCache.find(nId);
     if (oIter != m_oSRSCache.end())
     {
-        return oIter->second.get();
+        return oIter->second;
     }
 
     EndCopy();
@@ -2341,7 +2346,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /*      Try looking up in spatial_ref_sys table.                        */
     /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS;
 
     osCommand.Printf("SELECT srtext, auth_name, auth_srid FROM spatial_ref_sys "
                      "WHERE srid = %d",
@@ -2354,7 +2359,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         const char *pszWKT = PQgetvalue(hResult, 0, 0);
         const char *pszAuthName = PQgetvalue(hResult, 0, 1);
         const char *pszAuthSRID = PQgetvalue(hResult, 0, 2);
-        poSRS.reset(new OGRSpatialReference());
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // Try to import first from EPSG code, and then from WKT
@@ -2384,7 +2389,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
     oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
-    return oIter->second.get();
+    return oIter->second;
 }
 
 /************************************************************************/
@@ -2404,7 +2409,7 @@ int OGRPGDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = nullptr;
 
-    const char *pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+    const char *pszAuthorityName = oSRS.GetAuthorityName();
 
     if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
     {
@@ -2415,16 +2420,16 @@ int OGRPGDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
          */
         oSRS.AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        pszAuthorityName = oSRS.GetAuthorityName();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char *pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            const char *pszAuthorityCode = oSRS.GetAuthorityCode();
             if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
             {
                 /* Import 'clean' SRS */
                 oSRS.importFromEPSG(atoi(pszAuthorityCode));
 
-                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+                pszAuthorityName = oSRS.GetAuthorityName();
             }
         }
     }
@@ -2437,7 +2442,7 @@ int OGRPGDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     if (pszAuthorityName != nullptr)
     {
         /* Check that the authority code is integral */
-        nAuthorityCode = atoi(oSRS.GetAuthorityCode(nullptr));
+        nAuthorityCode = atoi(oSRS.GetAuthorityCode());
         if (nAuthorityCode > 0)
         {
             osCommand.Printf("SELECT srid FROM spatial_ref_sys WHERE "
@@ -2535,7 +2540,7 @@ int OGRPGDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (pszAuthorityName != nullptr && nAuthorityCode > 0)
     {
-        nAuthorityCode = atoi(oSRS.GetAuthorityCode(nullptr));
+        nAuthorityCode = atoi(oSRS.GetAuthorityCode());
 
         osCommand.Printf("INSERT INTO spatial_ref_sys "
                          "(srid,srtext,proj4text,auth_name,auth_srid) "

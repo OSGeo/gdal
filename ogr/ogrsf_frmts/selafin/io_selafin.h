@@ -47,9 +47,9 @@ class Header
     int nElements;          //!< Total number of elements
     int nPointsPerElement;  //!< Number of points per element
     int *panConnectivity;   //!< Connectivity table of elements: first
-        //!< nPointsPerElement elements are the indices of the
-        //!< points making the first element, and so on. In
-        //!< the Selafin file, the first point has index 1.
+    //!< nPointsPerElement elements are the indices of the
+    //!< points making the first element, and so on. In
+    //!< the Selafin file, the first point has index 1.
     double *paadfCoords[2];  //!< Table of coordinates of points: x then y
     CPLQuadTree
         *poTree;  //!< Quad-tree for spatially indexing points in the array
@@ -68,9 +68,9 @@ class Header
     int nSteps;         //!< Number of steps in the Selafin file
     int nEpsg;          //!< EPSG of the file
     int anUnused[7];    //!< Array of integers for storing the eight values read
-        //!< from the header but not actually used by the driver.
-        //!< These values are merely saved to rewrite them in the
-        //!< file if it is changed.
+    //!< from the header but not actually used by the driver.
+    //!< These values are merely saved to rewrite them in the
+    //!< file if it is changed.
 
     Header();   //!< Standard constructor
     ~Header();  //!< Destructor of structure

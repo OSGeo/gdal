@@ -289,6 +289,7 @@ bool CPLIsASCII(const char *pabyData, size_t nLen)
 
  * @param chReplacementChar character which will be used when the input stream
  *                          contains a non ASCII character. Must be valid ASCII!
+ *                          or NUL
  *
  * @return a new string that must be freed with CPLFree().
  *
@@ -305,9 +306,12 @@ char *CPLForceToASCII(const char *pabyData, int nLen, char chReplacementChar)
     {
         if (*reinterpret_cast<const unsigned char *>(pszPtr) > 127)
         {
-            pszOutputString[i] = chReplacementChar;
-            ++pszPtr;
-            ++i;
+            if (chReplacementChar)
+            {
+                pszOutputString[i] = chReplacementChar;
+                ++pszPtr;
+                ++i;
+            }
         }
         else
         {
@@ -338,7 +342,7 @@ char *CPLForceToASCII(const char *pabyData, int nLen, char chReplacementChar)
  * @param chReplacementChar character which will be used when the input stream
  *                          contains a non ASCII character that cannot be
  *                          substituted with an equivalent ASCII character.
- *                          Must be valid ASCII!
+ *                          Must be valid ASCII! or NUL.
  *
  * @return a new string that must be freed with CPLFree().
  *
@@ -1058,19 +1062,22 @@ char *CPLUTF8ForceToASCII(const char *pszStr, char chReplacementChar)
             auto pszNext = reinterpret_cast<const char *>(utf8codepoint(
                 reinterpret_cast<const utf8_int8_t *>(pszPtr), &codepoint));
             char ch = chReplacementChar;
-            for (const auto &latin1char : aLatinCharacters)
+            if (pszNext != pszPtr + 1)
             {
-                if (codepoint == latin1char.nCodePoint)
+                for (const auto &latin1char : aLatinCharacters)
                 {
-                    pszOutputString[i] = latin1char.chFirst;
-                    ++i;
-                    if (latin1char.chSecond)
+                    if (codepoint == latin1char.nCodePoint)
                     {
-                        pszOutputString[i] = latin1char.chSecond;
+                        pszOutputString[i] = latin1char.chFirst;
                         ++i;
+                        if (latin1char.chSecond)
+                        {
+                            pszOutputString[i] = latin1char.chSecond;
+                            ++i;
+                        }
+                        ch = 0;
+                        break;
                     }
-                    ch = 0;
-                    break;
                 }
             }
             if (ch)

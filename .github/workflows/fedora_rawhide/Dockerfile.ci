@@ -2,14 +2,14 @@ FROM fedora:rawhide@sha256:64de49837325632232088e59c20518565a9d657095f9f3c2fa603
 
 RUN dnf upgrade -y
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
-RUN dnf install -y clang make diffutils ccache cmake \
+RUN dnf install -y clang make diffutils cargo ccache cmake git \
       libxml2-devel libxslt-devel expat-devel xerces-c-devel \
       zlib-devel xz-devel libzstd-devel blosc-devel libarchive-devel \
       giflib-devel libjpeg-devel libpng-devel \
       openjpeg2-devel cfitsio-devel libwebp-devel \
       libkml-devel json-c-devel \
       geos-devel \
-      sqlite-devel pcre-devel libspatialite-devel freexl-devel \
+      sqlite-devel pcre2-devel libspatialite-devel freexl-devel \
       libtiff-devel libgeotiff-devel \
       poppler-cpp-devel podofo-devel \
       cryptopp-devel \
@@ -21,7 +21,7 @@ RUN dnf install -y clang make diffutils ccache cmake \
       libavif-devel \
       python3-setuptools python3-pip python3-devel python3-lxml swig \
       glibc-gconv-extra \
-      python3-jsonschema python3-pytest python3-pytest-env python3-pytest-sugar \
+      python3-jsonschema python3-pytest python3-pytest-env \
       python3-pytest-benchmark python3-filelock
 
 COPY requirements.txt /tmp/

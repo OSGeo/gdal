@@ -36,6 +36,8 @@ final size of the file of storage capacity is required. Note that as the
 temporary dataset uses lossless compression, if the final COG file uses lossy
 compression, more temporary storage may be needed.
 
+Validation whether a TIFF file is a valid COG file can be done with :ref:`gdal_driver_cog_validate`.
+
 Driver capabilities
 -------------------
 
@@ -67,7 +69,7 @@ General creation options
       :choices: BAND, PIXEL, TILE
       :since: 3.11
 
-      Set the interleaving to use
+      Set the interleaving to use. See :ref:`raster_data_model_interleave_mode` for more details.
 
       * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
         all bands is used . This matches the ``contiguous`` planar configuration in
@@ -734,13 +736,35 @@ TileOffsets[i] + TileByteCounts[i].
 Examples
 --------
 
-::
+.. example::
+   :title: Create a COG with ``gdalwarp``
+   :id: raster.cog-gdalwarp
 
-    gdalwarp src1.tif src2.tif out.tif -of COG
+   .. code-block:: bash
 
-::
+        $ gdalwarp src1.tif src2.tif out.tif -of COG
 
-    gdal_translate world.tif world_webmerc_cog.tif -of COG -co TILING_SCHEME=GoogleMapsCompatible -co COMPRESS=JPEG
+.. example::
+   :title: Create a Web Mercator COG with Google Maps–Compatible Tiling and JPEG Compression
+
+   .. code-block:: bash
+
+        $ gdal_translate world.tif world_webmerc_cog.tif -of COG -co TILING_SCHEME=GoogleMapsCompatible -co COMPRESS=JPEG
+
+.. example::
+   :title: Create a blank GeoTIFF from an existing file
+
+   Use :co:`SPARSE_OK` to create an empty file with the same georeferencing and tiling as the input,
+   without physically writing zero-filled tiles to disk. In this example, an input of size ``7640 × 8133``
+   produces a ~4 KB file instead of ~242 MB.
+
+   Note sparse GeoTIFF files are not widely supported by non-GDAL software.
+
+   .. code-block:: bash
+
+      $ gdal raster create --like in.tif out.tif --of COG \
+          --co SPARSE_OK=ON \
+          --overwrite
 
 See Also
 --------

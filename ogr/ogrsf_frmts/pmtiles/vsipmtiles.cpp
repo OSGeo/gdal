@@ -46,19 +46,21 @@ class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
 /*                     VSIPMTilesGetTileExtension()                     */
 /************************************************************************/
 
-static const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
+const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
 {
     const auto &sHeader = poDS->GetHeader();
     switch (sHeader.tile_type)
     {
+        case pmtiles::TILETYPE_MVT:
+            return ".mvt";
         case pmtiles::TILETYPE_PNG:
             return ".png";
         case pmtiles::TILETYPE_JPEG:
             return ".jpg";
         case pmtiles::TILETYPE_WEBP:
             return ".webp";
-        case pmtiles::TILETYPE_MVT:
-            return ".mvt";
+        case pmtiles::TILETYPE_AVIF:
+            return ".avif";
     }
     if (sHeader.tile_compression == pmtiles::COMPRESSION_GZIP)
         return ".bin.gz";
@@ -133,9 +135,10 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
     nComponents = 0;
     std::string osPmtilesFilename;
 
-    const char *pszPmtilesExt = strstr(pszFilename, ".pmtiles");
-    if (!pszPmtilesExt)
+    const auto nPos = CPLString(pszFilename).ifind(".pmtiles");
+    if (nPos == std::string::npos)
         return nullptr;
+    const char *pszPmtilesExt = pszFilename + nPos;
 
     CPLStringList aosTokens;
     do

@@ -316,7 +316,7 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 {
     const char *textval = CPLGetXMLValue(node, pszPath, nullptr);
     if (textval)
-        return atof(textval);
+        return CPLAtof(textval);
     return def;
 }
 
@@ -679,6 +679,10 @@ void GDALRegister_MRF()
         "optimization\n"
 #if defined(BRUNSLI)
         "       JFIF - boolean, for JPEG, disable brunsli encoding\n"
+#endif
+#if defined(QB3_SUPPORT)
+        "       QB3_BAND_MAP - space separated list of band indices for "
+        "band to band decorrelation\n"
 #endif
         "'/>"
         "</CreationOptionList>\n");

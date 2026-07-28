@@ -1,5 +1,7 @@
 .. _gdal_raster_slope:
 
+.. program:: gdal_raster_slope
+
 ================================================================================
 ``gdal raster slope``
 ================================================================================
@@ -131,6 +133,10 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

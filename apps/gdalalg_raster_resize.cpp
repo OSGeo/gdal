@@ -39,6 +39,7 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
         .SetMetaVar("<xres>,<yres>")
         .SetMutualExclusionGroup("resolution-size");
 
+    // The same logic is applied in gdalalg_raster_create.cpp
     AddArg("size", 0,
            _("Target size in pixels (or percentage if using '%' suffix)"),
            &m_size)
@@ -55,28 +56,13 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
             {
                 for (const auto &s : m_size)
                 {
-                    char *endptr = nullptr;
-                    const double val = CPLStrtod(s.c_str(), &endptr);
-                    bool ok = false;
-                    if (endptr == s.c_str() + s.size())
+                    auto trimmed = cpl::trim(s);
+                    if (!trimmed.empty() && trimmed.back() == '%')
                     {
-                        if (val >= 0 && val <= INT_MAX &&
-                            static_cast<int>(val) == val)
-                        {
-                            ok = true;
-                        }
+                        trimmed = trimmed.substr(0, trimmed.size() - 1);
                     }
-                    else if (endptr && ((endptr[0] == ' ' && endptr[1] == '%' &&
-                                         endptr + 2 == s.c_str() + s.size()) ||
-                                        (endptr[0] == '%' &&
-                                         endptr + 1 == s.c_str() + s.size())))
-                    {
-                        if (val >= 0)
-                        {
-                            ok = true;
-                        }
-                    }
-                    if (!ok)
+
+                    if (cpl::strict_parse<int>(trimmed).value_or(-1) < 0)
                     {
                         ReportError(CE_Failure, CPLE_IllegalArg,
                                     "Invalid size value: %s'", s.c_str());

@@ -634,8 +634,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     OGRPoint *poGeom = nullptr;
     if (bHaveZ)
@@ -874,8 +873,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT(const bool bIsAttribOrAttdef)
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     OGRPoint *poGeom = nullptr;
     if (bHaveZ)
@@ -1056,8 +1054,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOINT()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     OGRPoint *poGeom = nullptr;
     if (bHaveZ)
@@ -1135,8 +1132,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLINE()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     /* -------------------------------------------------------------------- */
     /*      Create geometry                                                 */
@@ -1255,8 +1251,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     if (bHaveX && bHaveY)
         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
@@ -1801,8 +1796,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     /* -------------------------------------------------------------------- */
     /*      Create geometry                                                 */
@@ -1977,8 +1971,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     /* -------------------------------------------------------------------- */
     /*      Setup coordinate system                                         */
@@ -2110,8 +2103,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateARC()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     /* -------------------------------------------------------------------- */
     /*      Create geometry                                                 */
@@ -2498,8 +2490,7 @@ OGRDXFFeature *OGRDXFLayer::Translate3DFACE()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     /* -------------------------------------------------------------------- */
     /*      Create geometry                                                 */
@@ -2632,8 +2623,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         DXF_LAYER_READER_ERROR();
         return nullptr;
     }
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     // do we want Z-coordinates?
     const bool bWantZ =
@@ -2982,8 +2972,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateWIPEOUT()
         return nullptr;
     }
 
-    if (nCode == 0)
-        poDS->UnreadValue();
+    poDS->UnreadValue();
 
     if (smoothPolyline.IsEmpty())
     {

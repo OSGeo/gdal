@@ -1302,7 +1302,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
         !osActiveCRS.empty() ? osActiveCRS.c_str() : SRS_WKT_WGS84_LAT_LONG,
         OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_bIsGeographicCRS = poSRS->IsGeographic();
+    m_bIsGeographicCRS = CPL_TO_BOOL(poSRS->IsGeographic());
     m_bCRSHasGISFriendlyOrder =
         osActiveCRS.empty() || HasGISFriendlyAxisOrder(poSRS);
     m_osActiveCRS = osActiveCRS;
@@ -1406,9 +1406,13 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
                     m_bDescribedByIsXML = false;
                 }
             }
-            else if (EQUAL(osRel.c_str(), "queryables"))
+            else if (osRel == "queryables" ||  // deprecated, prior to Part-3
+                     osRel ==
+                         "http://www.opengis.net/def/rel/ogc/1.0/queryables" ||
+                     osRel == "[ogc-rel:queryables]")
             {
-                if (type == MEDIA_TYPE_JSON || m_osQueryablesURL.empty())
+                if (type == MEDIA_TYPE_JSON ||  // deprecated, prior to Part-3
+                    type == MEDIA_TYPE_JSON_SCHEMA || m_osQueryablesURL.empty())
                 {
                     m_osQueryablesURL = m_poDS->ResolveURL(osURL, osParentURL);
                 }
@@ -1451,9 +1455,7 @@ OGROAPIFLayer::GetSupportedSRSList(int /*iGeomField*/)
     {
         for (const auto &osCRS : m_oSupportedCRSList)
         {
-            auto poSRS = std::unique_ptr<OGRSpatialReference,
-                                         OGRSpatialReferenceReleaser>(
-                new OGRSpatialReference());
+            auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             if (poSRS->SetFromUserInput(
                     osCRS.c_str(),
                     OGRSpatialReference::
@@ -1493,7 +1495,7 @@ OGRErr OGROAPIFLayer::SetActiveSRS(int /*iGeomField*/,
                 OGRSpatialReference *poSRSClone = poSRS->Clone();
                 poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 poGeomFieldDefn->SetSpatialRef(poSRSClone);
-                m_bIsGeographicCRS = poSRSClone->IsGeographic();
+                m_bIsGeographicCRS = CPL_TO_BOOL(poSRSClone->IsGeographic());
                 m_bCRSHasGISFriendlyOrder = HasGISFriendlyAxisOrder(poSRSClone);
                 poSRSClone->Release();
             }
@@ -3104,12 +3106,26 @@ void OGROAPIFLayer::GetQueryableAttributes()
             if (m_poDS->DownloadJSon(m_osQueryablesURL, oDoc))
             {
                 auto oQueryables = oDoc.GetRoot().GetArray("queryables");
-                for (int i = 0; i < oQueryables.Size(); i++)
+                if (oQueryables.IsValid())  // deprecated, prior to Part-3
                 {
-                    const auto osId = oQueryables[i].GetString("id");
-                    if (!osId.empty())
+                    for (int i = 0; i < oQueryables.Size(); i++)
                     {
-                        m_aoSetQueryableAttributes.insert(osId);
+                        const auto osId = oQueryables[i].GetString("id");
+                        if (!osId.empty())
+                        {
+                            m_aoSetQueryableAttributes.insert(osId);
+                        }
+                    }
+                }
+                else
+                {
+                    auto oProperties = oDoc.GetRoot().GetObj("properties");
+                    for (const auto &property : oProperties.GetChildren())
+                    {
+                        if (property.GetString("x-ogc-role") !=
+                            "primary-geometry")
+                            m_aoSetQueryableAttributes.insert(
+                                property.GetName());
                     }
                 }
             }

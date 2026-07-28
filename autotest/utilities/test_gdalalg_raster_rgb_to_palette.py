@@ -329,3 +329,35 @@ def test_gdalalg_raster_rgb_to_palette_bit_depth_8(tmp_vsimem):
     ) as alg:
         ds = alg.Output()
         assert ds.GetRasterBand(1).Checksum() == 7593
+
+
+def test_gdalalg_raster_rgb_to_palette_rgba_single_color():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(4).Fill(255)
+
+    with gdal.Run(get_alg(), input=src_ds, output="", output_format="MEM") as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).GetColorTable().GetCount() == 2
+        assert ds.GetRasterBand(1).GetColorTable().GetColorEntry(0) == (0, 0, 0, 0)
+        assert ds.GetRasterBand(1).GetColorTable().GetColorEntry(1) == (0, 0, 0, 255)
+        assert ds.GetRasterBand(1).Checksum() == 1
+
+
+def test_gdalalg_raster_rgb_to_palette_rgba_all_transparent():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+
+    with gdal.Run(get_alg(), input=src_ds, output="", output_format="MEM") as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).GetColorTable().GetCount() == 1
+        assert ds.GetRasterBand(1).GetColorTable().GetColorEntry(0) == (0, 0, 0, 0)
+        assert ds.GetRasterBand(1).Checksum() == 0

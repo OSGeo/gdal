@@ -56,7 +56,7 @@ GeoJSONObject::Type OGRGeoJSONGetType(json_object *poObj)
 
 #define ASSOC(x)                                                               \
     {                                                                          \
-#x, GeoJSONObject::e##x                                                \
+        #x, GeoJSONObject::e##x                                                \
     }
 
     static const struct
@@ -103,7 +103,7 @@ bool OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue)
     {
         json_object *poEnabled =
             CPL_json_object_object_get(pojMeasures, "enabled");
-        bHasM = json_object_get_boolean(poEnabled);
+        bHasM = CPL_TO_BOOL(json_object_get_boolean(poEnabled));
     }
     return bHasM;
 }
@@ -112,10 +112,7 @@ bool OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue)
 /*                        asAssocGeometryTypes[]                        */
 /************************************************************************/
 
-#define ASSOC(x)                                                               \
-    {                                                                          \
-#x, wkb##x                                                             \
-    }
+#define ASSOC(x) {#x, wkb##x}
 
 static const struct
 {
@@ -1076,15 +1073,16 @@ OGRSpatialReference *OGRGeoJSONReadSpatialReference(json_object *poObj)
 
             const char *pszName = json_object_get_string(poNameURL);
 
-            if (EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84"))
-                pszName = "EPSG:4326";
-
             poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (OGRERR_NONE !=
-                poSRS->SetFromUserInput(
-                    pszName,
-                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()))
+            if (EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84"))
+            {
+                CPL_IGNORE_RET_VAL(poSRS->importFromEPSG(4326));
+            }
+            else if (OGRERR_NONE !=
+                     poSRS->SetFromUserInput(
+                         pszName, OGRSpatialReference::
+                                      SET_FROM_USER_INPUT_LIMITATIONS_get()))
             {
                 delete poSRS;
                 poSRS = nullptr;

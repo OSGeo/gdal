@@ -1,0 +1,126 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20260218 12291647+0100
+characterSet=006
+nOrganismes=2
+FileIdentifier=byte_2x3_6_categsI_13160
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=GIS Developer
+OrganisationName=CREAF
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=byte_2x3_6_categsI_13160
+codeSpace=
+DatasetTitle=byte_2x3_6_categs
+
+[OVERVIEW:ASPECTES_TECNICS]
+columns=2
+rows=3
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+resolution=0.5
+
+[EXTENT]
+MinX=516792
+MaxX=516796
+MinY=4638254
+MaxY=4638260
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20260218 12291635+0100
+CoverageContentType=001
+
+[ATTRIBUTE_DATA]
+TipusCompressio=integer
+TractamentVariable=Categoric
+NODATA=-32768
+NODATADef=Sense dades
+TipusRelacio=RELACIO_1_1_DICC
+IndexsNomsCamps=1
+NomCamp_1=G1
+
+[COLOR_TEXT]
+Simb_Vers=5
+Simb_SubVers=1
+UnificVisCons=1
+visualitzable=1
+consultable=1
+EscalaMaxima=0
+EscalaMinima=900000000
+Color_Const=1
+Color_Smb=(255,0,255)
+
+[VISU_LLEGENDA]
+LlegSimb_Vers=4
+LlegSimb_SubVers=5
+Color_VisibleALleg=1
+Color_TitolLlegenda=Al·leluia 1
+Color_CategAMostrar=N
+Color_N_ClassesLleg=0
+Color_InvertOrdPresentColorLleg=0
+Color_MostrarIndColorLleg=0
+Color_MostrarValColorLleg=1
+Color_MostrarCatColorLleg=0
+Color_MostrarNODATA=0
+Color_MostrarEntradesBuides=0
+Color_NovaColumnaLlegImpresa=0
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=IMGIMG.exe integer D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\byte_2x3_6_categs.img D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\integer_2x3_6_categs.img
+date=20260218 12291637+0100
+NomFitxer=C:\miramon\IMGIMG.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=GIS Developer
+OrganisationName=CREAF
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+TypeValues=C
+ResultValue=integer
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param2
+TypeValues=C
+ResultValue=D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\byte_2x3_6_categs.img
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT3]
+identifier=Param3
+TypeValues=C
+ResultValue=D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\integer_2x3_6_categs.img
+ResultUnits=
+
+[QUALITY:LINEAGE]
+processes=1
+
+[ATTRIBUTE_DATA:G1]
+descriptor=Al·leluia 1
+min=0
+max=5

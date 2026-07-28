@@ -1,5 +1,7 @@
 .. _gdal_vector_update:
 
+.. program:: gdal_vector_update
+
 ================================================================================
 ``gdal vector update``
 ================================================================================
@@ -77,6 +79,11 @@ Standard Options
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/output_oo.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

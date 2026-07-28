@@ -19,19 +19,45 @@
 
 #include <map>
 
-#define MD_DOMAIN_IMD "IMD"         /**< image metadata section */
-#define MD_DOMAIN_RPC "RPC"         /**< rpc metadata section */
-#define MD_DOMAIN_IMAGERY "IMAGERY" /**< imagery metadata section */
-#define MD_DOMAIN_DEFAULT ""        /**< default metadata section */
+/** Name of the metadata domain that holds information from IMD side-car files.
+ * @deprecated Use GDAL_MDD_IMD
+ */
+#define MD_DOMAIN_IMD GDAL_MDD_IMD /**< image metadata section */
 
-#define MD_NAME_ACQDATETIME                                                    \
-    "ACQUISITIONDATETIME" /**< Acquisition Date Time property name. The time   \
-                             should be in UTC */
-#define MD_NAME_SATELLITE                                                      \
-    "SATELLITEID" /**< Satellite identificator property name */
-#define MD_NAME_CLOUDCOVER                                                     \
-    "CLOUDCOVER" /**< Cloud coverage property name. The value between 0 - 100  \
-                    or 999 if n/a */
+/** Name of the metadata domain that holds Rational Polynomial Coefficients
+ * (RPC)
+ * @deprecated Use GDAL_MDD_RPC
+ */
+#define MD_DOMAIN_RPC GDAL_MDD_RPC /**< rpc metadata section */
+
+/** Name of the metadata domain that holds GDAL-standardized metadata items
+ * for satellite or aerial imagery.
+ * @deprecated Use GDAL_MDD_IMAGERY
+ */
+#define MD_DOMAIN_IMAGERY GDAL_MDD_IMAGERY /**< imagery metadata section */
+
+/** Name of the default metadata domain.
+ * @deprecated Use GDAL_MDD_DEFAULT
+ */
+#define MD_DOMAIN_DEFAULT GDAL_MDD_DEFAULT
+
+/** Metadata item for image acquisition date time in UTC, in the
+ * GDAL_MDD_IMAGERY domain.
+ * @deprecated GDALMD_ACQUISITIONDATETIME
+ */
+#define MD_NAME_ACQDATETIME GDALMD_ACQUISITIONDATETIME
+
+/** Metadata item for satellite/scanner ID, in the GDAL_MDD_IMAGERY domain.
+ * @deprecated GDALMD_SATELLITEID
+ */
+#define MD_NAME_SATELLITE GDALMD_SATELLITEID
+
+/** Metadata item for cloud cover, in the GDAL_MDD_IMAGERY domain.
+ * The value is between 0 and 100, or 999 if not available
+ * @deprecated GDALMD_CLOUDCOVER
+ */
+#define MD_NAME_CLOUDCOVER GDALMD_CLOUDCOVER
+
 #define MD_NAME_MDTYPE                                                         \
     "METADATATYPE" /**< Metadata reader type property name. The reader         \
                       processed this metadata */

@@ -1,5 +1,7 @@
 .. _gdal_vector_check_geometry:
 
+.. program:: gdal_vector_check_geometry
+
 
 ================================================================================
 ``gdal vector check-geometry``
@@ -31,6 +33,7 @@ The following checks are performed, depending on the input geometry type:
 - Other geometry types are not checked.
 
 Validity/simplicity checking is performed by the GEOS library and should be consistent with results of software such as PostGIS, QGIS, and shapely that also use that library. GEOS does not consider repeated points to be a cause of invalidity or non-simplicity.
+For more information about validity testing performed by :program:`gdal vector check-geometry`, and examples of reported errors, see :ref:`geometry_validity`.
 
 .. figure:: ../../images/programs/gdal_vector_check_geometry.svg
 
@@ -58,13 +61,14 @@ Program-Specific Options
 
    .. versionadded:: 3.12.1
 
-   Optional field(s) to copy from the input features to the output.
+   Optional field(s) to copy from the input features to the output. Since GDAL 3.13, the value ``ALL`` can be used to include all fields
+   from the source layer.
 
 .. option:: --include-valid
 
    Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
 
-.. include:: gdal_options/input_layer.rst
+.. include:: gdal_options/input_layer_no_active_layer.rst
 
 .. option:: --output-layer
 
@@ -87,6 +91,8 @@ Standard Options
 
     .. include:: gdal_options/lco.rst
 
+    .. include:: gdal_options/no_create_empty_layers.rst
+
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/of_vector.rst
@@ -102,6 +108,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

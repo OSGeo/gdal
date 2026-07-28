@@ -27,6 +27,8 @@
 GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    AddProgressArg(/* hidden = */ true);
+
     {
         auto &arg =
             AddArg("filename", 0, _("File or directory name"), &m_filename)
@@ -43,7 +45,8 @@ GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
         arg.AddValidationAction([this, &arg]()
                                 { return ValidateFormat(arg, false, false); });
         arg.SetAutoCompleteFunction(
-            [&arg](const std::string &) {
+            [&arg](const std::string &)
+            {
                 return GDALAlgorithm::FormatAutoCompleteFunction(arg, false,
                                                                  false);
             });

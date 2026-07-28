@@ -1,5 +1,7 @@
 .. _gdal_raster_sieve:
 
+.. program:: gdal_raster_sieve
+
 ================================================================================
 ``gdal raster sieve``
 ================================================================================
@@ -80,6 +82,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

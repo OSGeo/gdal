@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_INFO_INCLUDED
 #define GDALALG_RASTER_INFO_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -55,6 +55,7 @@ class GDALRasterInfoAlgorithm /* non final */
     bool m_listMDD = false;
     std::string m_mdd{};
     int m_subDS = 0;
+    std::string m_crsFormat = "AUTO";
 };
 
 /************************************************************************/

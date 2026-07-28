@@ -609,3 +609,61 @@ def test_gdal_vector_simplify_coverage(tmp_path):
         bbox_inches="tight",
         transparent=True,
     )
+
+
+@pytest.mark.parametrize(
+    "operator",
+    (
+        "src-over",
+        "hsv-value",
+        "multiply",
+        "overlay",
+        "screen",
+        "color-dodge",
+        "color-burn",
+        "hard-light",
+    ),
+)
+def test_gdal_raster_blend_1band_overlay(operator):
+
+    input_fname = DATA_DIR / "hypsometric.jpg"
+    overlay_fname = DATA_DIR / "hillshade.jpg"
+
+    output_fname = f"{IMAGE_ROOT}/programs/gdal_raster_blend/{operator}.jpg"
+
+    alg = gdal.Run(
+        "raster",
+        "blend",
+        input=input_fname,
+        overlay=overlay_fname,
+        output=output_fname,
+        operator=operator,
+        overwrite=True,
+    )
+    alg.Finalize()
+
+
+@pytest.mark.parametrize(
+    "operator",
+    (
+        "lighten",
+        "darken",
+    ),
+)
+def test_gdal_raster_blend_3band_overlay(operator):
+
+    input_fname = DATA_DIR / "hypsometric.jpg"
+    overlay_fname = DATA_DIR / "hillshade_rgb.jpg"
+
+    output_fname = f"{IMAGE_ROOT}/programs/gdal_raster_blend/{operator}_3band.jpg"
+
+    alg = gdal.Run(
+        "raster",
+        "blend",
+        input=input_fname,
+        overlay=overlay_fname,
+        output=output_fname,
+        operator=operator,
+        overwrite=True,
+    )
+    alg.Finalize()

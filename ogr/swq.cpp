@@ -42,7 +42,7 @@
 #define YYSTYPE swq_expr_node *
 
 /************************************************************************/
-/*                               swqlex()                               */
+/*                              swqerror()                              */
 /************************************************************************/
 
 void swqerror(swq_parse_context *context, const char *msg)

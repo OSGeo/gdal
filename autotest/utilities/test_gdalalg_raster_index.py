@@ -51,7 +51,7 @@ def test_gdalalg_raster_index():
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("my_layer")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetLayerDefn().GetFieldCount() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "location"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
@@ -71,7 +71,7 @@ def test_gdalalg_raster_index_source_by_ref():
     alg["output-format"] = "MEM"
     alg["output-layer"] = "my_layer"
     with pytest.raises(
-        Exception, match="Input datasets must be provided by name, not as object"
+        Exception, match="Datasets 'input' must be provided by name, not as object"
     ):
         alg.Run()
 
@@ -86,7 +86,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 1
     assert alg.Finalize()
     ds.Close()
@@ -117,7 +117,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 2
     assert alg.Finalize()
     ds.Close()
@@ -129,7 +129,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 1
     assert alg.Finalize()
     ds.Close()
@@ -141,7 +141,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 2
     assert alg.Finalize()
     ds.Close()
@@ -153,7 +153,7 @@ def test_gdalalg_raster_index_overwrite(tmp_vsimem):
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 1
     assert alg.Finalize()
     ds.Close()
@@ -222,18 +222,22 @@ def test_gdalalg_raster_index_crs():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["output-layer"] = "out"
-    alg["dst-crs"] = "EPSG:4267"
+    alg["output-crs"] = "EPSG:4267"
     alg["source-crs-field-name"] = "source_crs"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4267"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4267"
     f = lyr.GetNextFeature()
     assert f["source_crs"] == "EPSG:26711"
-    assert (
-        f.GetGeometryRef().ExportToWkt()
-        == "POLYGON ((-117.641168620797 33.9023526904272,-117.628190189534 33.9024195619211,-117.628110837847 33.8915970129623,-117.641087629972 33.8915301685907,-117.641168620797 33.9023526904272))"
-    )
+    # The polygon is an axis-aligned rectangle computed via GDALWarp(),
+    # not the 4-corner transform quadrilateral.
+    geom = f.GetGeometryRef()
+    env = geom.GetEnvelope()  # (minX, maxX, minY, maxY)
+    assert env[0] == pytest.approx(-117.641168620797, abs=1e-6)
+    assert env[1] == pytest.approx(-117.628010158598, abs=1e-6)
+    assert env[2] == pytest.approx(33.8916535473944, abs=1e-6)
+    assert env[3] == pytest.approx(33.9024195619211, abs=1e-6)
 
 
 def test_gdalalg_raster_index_error():
@@ -243,7 +247,7 @@ def test_gdalalg_raster_index_error():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["output-layer"] = "out"
-    alg["dst-crs"] = "EPSG:4267"
+    alg["output-crs"] = "EPSG:4267"
     with pytest.raises(Exception, match="Unable to open /i/do/not/exist"):
         alg.Run()
 
@@ -431,7 +435,7 @@ def test_gdalalg_raster_index_stac_geoparquet_base_url(tmp_vsimem):
 
     with ogr.Open(tmp_vsimem / "out.parquet") as ds:
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         f = lyr.GetNextFeature()
         assert f["assets.image.href"] == "http://example.com/byte.tif"
 
@@ -514,11 +518,11 @@ def test_gdalalg_raster_index_stac_geoparquet_error_not_epsg_4326(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="STAC-GeoParquet profile is only compatible with --dst-crs=EPSG:4326",
+        match="STAC-GeoParquet profile is only compatible with --output-crs=EPSG:4326",
     ):
         gdal.alg.raster.index(
             input="../gcore/data/byte.tif",
             output=tmp_vsimem / "out.parquet",
             profile="STAC-GeoParquet",
-            dst_crs="EPSG:3857",
+            output_crs="EPSG:3857",
         )

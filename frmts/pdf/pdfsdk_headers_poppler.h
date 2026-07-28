@@ -75,6 +75,7 @@
 #include <SplashOutputDev.h>
 #include <GlobalParams.h>
 #include <ErrorCodes.h>
+#include <OptionalContent.h>
 
 /* end of poppler xpdf includes */
 

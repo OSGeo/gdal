@@ -36,6 +36,8 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/co.rst
 
 .. option:: -b <band>
@@ -164,6 +166,10 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
    Number of jobs to run at once. (only supported in cumulative mode) Default: 3
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

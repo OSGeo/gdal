@@ -143,14 +143,12 @@ class RGB2PCT(GDALScript):
     def __init__(self):
         super().__init__()
         self.title = "Convert a 24bit RGB image to 8bit paletted image"
-        self.description = textwrap.dedent(
-            """\
+        self.description = textwrap.dedent("""\
             This utility will compute an optimal pseudo-color table for a given RGB image
             using a median cut algorithm on a downsampled RGB histogram.
             Then it converts the image into a pseudo-colored image using the color table.
             This conversion utilizes Floyd-Steinberg dithering (error diffusion)
-            to maximize output image visual quality."""
-        )
+            to maximize output image visual quality.""")
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser

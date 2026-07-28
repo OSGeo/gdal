@@ -18,6 +18,7 @@
 #include <string.h>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -698,10 +699,12 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
         oMapPathToFeatureDataset;
 
     // First pass to collect FeatureDatasets
+    std::set<int> oSetBrokenRos;
     for (int i = 0; i < oTable.GetTotalRecordCount(); i++)
     {
-        if (!oTable.SelectRow(i))
+        if (!oTable.SelectRow(i, /* bWarnOnlyOnDeletedRows = */ true))
         {
+            oSetBrokenRos.insert(i);
             if (oTable.HasGotError())
                 break;
             continue;
@@ -780,6 +783,9 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
     bool bRet = true;
     for (int i = 0; i < oTable.GetTotalRecordCount(); i++)
     {
+        if (cpl::contains(oSetBrokenRos, i))
+            continue;
+
         if (!oTable.SelectRow(i))
         {
             if (oTable.HasGotError())
@@ -1284,7 +1290,7 @@ bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
 
 CSLConstList OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.List();
     return GDALDataset::GetMetadata(pszDomain);
 }
@@ -2125,7 +2131,7 @@ char **OGROpenFileGDBDataSource::GetFileList()
 /*                              BuildSRS()                              */
 /************************************************************************/
 
-OGRSpatialReference *
+OGRSpatialReferenceRefCountedPtr
 OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
 {
     const char *pszWKT =
@@ -2137,7 +2143,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
     int nLatestWKID =
         atoi(CPLGetXMLValue(psInfo, "SpatialReference.LatestWKID", "0"));
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS;
     if (nWKID > 0 || nLatestWKID > 0)
     {
         const auto ImportFromCode =
@@ -2191,9 +2197,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
             return bSuccess;
         };
 
-        poSRS =
-            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
-                new OGRSpatialReference());
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (!ImportFromCode(*poSRS.get(), nLatestWKID, nWKID))
         {
@@ -2207,15 +2211,12 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
                 atoi(CPLGetXMLValue(psInfo, "SpatialReference.VCSWKID", "0"));
             if (nVCSWKID > 0 || nLatestVCSWKID > 0)
             {
-                auto poVertSRS = std::unique_ptr<OGRSpatialReference,
-                                                 OGRSpatialReferenceReleaser>(
-                    new OGRSpatialReference());
+                auto poVertSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeInstance();
                 if (ImportFromCode(*poVertSRS.get(), nLatestVCSWKID, nVCSWKID))
                 {
                     auto poCompoundSRS =
-                        std::unique_ptr<OGRSpatialReference,
-                                        OGRSpatialReferenceReleaser>(
-                            new OGRSpatialReference());
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     if (poCompoundSRS->SetCompoundCS(
                             std::string(poSRS->GetName())
                                 .append(" + ")
@@ -2240,28 +2241,28 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
         (poSRS == nullptr ||
          (strstr(pszWKT, "VERTCS") && !poSRS->IsCompound())))
     {
-        poSRS.reset(BuildSRS(pszWKT));
+        poSRS = BuildSRS(pszWKT);
     }
-    return poSRS.release();
+    return poSRS;
 }
 
 /************************************************************************/
 /*                              BuildSRS()                              */
 /************************************************************************/
 
-OGRSpatialReference *OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
+OGRSpatialReferenceRefCountedPtr
+OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
 {
-    std::shared_ptr<OGRSpatialReference> poSharedObj;
-    m_oCacheWKTToSRS.tryGet(pszWKT, poSharedObj);
-    if (poSharedObj)
-        return poSharedObj->Clone();
+    OGRSpatialReferenceRefCountedPtr poSRS;
+    m_oCacheWKTToSRS.tryGet(pszWKT, poSRS);
+    if (poSRS)
+        return poSRS;
 
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
+    poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
     {
-        delete poSRS;
-        poSRS = nullptr;
+        poSRS.reset();
     }
     if (poSRS != nullptr)
     {
@@ -2270,12 +2271,10 @@ OGRSpatialReference *OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
             auto poSRSMatch = poSRS->FindBestMatch(100);
             if (poSRSMatch)
             {
-                poSRS->Release();
-                poSRS = poSRSMatch;
+                poSRS.reset(poSRSMatch, /* add_ref = */ false);
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
-            m_oCacheWKTToSRS.insert(
-                pszWKT, std::shared_ptr<OGRSpatialReference>(poSRS->Clone()));
+            m_oCacheWKTToSRS.insert(pszWKT, poSRS);
         }
         else
         {

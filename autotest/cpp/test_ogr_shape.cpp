@@ -467,9 +467,9 @@ TEST_F(test_ogr_shape, ExecuteSQL_geometry)
 
         // Test geometry
         const char *wkt =
-            "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,"
+            "MULTIPOLYGON (((479750.688 4764702.000,479658.594 4764670.000,"
             "479640.094 4764721.000,479735.906 4764752.000,"
-            "479750.688 4764702.000))";
+            "479750.688 4764702.000)))";
 
         OGRGeometryH testGeom = nullptr;
         OGRErr err = OGR_G_CreateFromWkt((char **)&wkt, nullptr, &testGeom);

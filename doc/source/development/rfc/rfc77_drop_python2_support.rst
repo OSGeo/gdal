@@ -130,7 +130,7 @@ GDAL Release cycle and regular Python version dropping
 
 When releasing GDAL 3.1.0, Even Rouault suggested GDAL would use fixed release cycles of 6 months between major versions:
 
-http://osgeo-org.1560.x6.nabble.com/gdal-dev-Reconsidering-release-cycle-length-td5436163.html#a5436242
+https://lists.osgeo.org/pipermail/gdal-dev/2020-April/052023.html
 
 Projecting from that suggestion, GDAL 3.3.0 should be released around April-May 2021.
 

@@ -668,7 +668,7 @@ void OGRPoint::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Equals(const OGRGeometry *poOther) const
+bool OGRPoint::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -721,7 +721,7 @@ void OGRPoint::swapXY()
 /*                               Within()                               */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
+bool OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&
@@ -738,7 +738,7 @@ OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 /*                             Intersects()                             */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const
+bool OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&

@@ -89,7 +89,39 @@ ZarrSharedResource::~ZarrSharedResource()
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 {
+    // Probe zarr.json first so v3 datasets skip the v2 stat cascade.
+    const std::string osZarrJsonFilename(CPLFormFilenameSafe(
+        m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
+    VSIStatBufL sStat;
+    const bool bHasZarrJson =
+        (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0);
+
+    if (!bHasZarrJson)
     {
+        // Detect Kerchunk Parquet reference files before creating a v2
+        // group.  Kerchunk .zmetadata has a "record_size" field that
+        // regular consolidated metadata does not.
+        if (!STARTS_WITH(m_osRootDirectoryName.c_str(), "/vsikerchunk"))
+        {
+            const std::string osZmetadataFilename(CPLFormFilenameSafe(
+                m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
+            CPLJSONDocument oDoc;
+            bool bOK;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                bOK = oDoc.Load(osZmetadataFilename);
+            }
+            if (bOK && oDoc.GetRoot().GetObj("record_size").IsValid())
+            {
+                m_osKerchunkParquetPath =
+                    CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX,
+                               m_osRootDirectoryName.c_str());
+                CPLDebugOnly("ZARR", "Opening %s",
+                             m_osKerchunkParquetPath.c_str());
+                return nullptr;
+            }
+        }
+
         auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
         // Prevents potential recursion
         m_poWeakRootGroup = poRG;
@@ -98,7 +130,6 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 
         const std::string osZarrayFilename(CPLFormFilenameSafe(
             m_osRootDirectoryName.c_str(), ".zarray", nullptr));
-        VSIStatBufL sStat;
         const auto nErrorCount = CPLGetErrorCounter();
         if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
         {
@@ -184,10 +215,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
     m_poWeakRootGroup = poRG_V3;
     poRG_V3->SetUpdatable(m_bUpdatable);
 
-    const std::string osZarrJsonFilename(CPLFormFilenameSafe(
-        m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
-    VSIStatBufL sStat;
-    if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
+    if (bHasZarrJson)
     {
         CPLJSONDocument oDoc;
         if (!oDoc.Load(osZarrJsonFilename))

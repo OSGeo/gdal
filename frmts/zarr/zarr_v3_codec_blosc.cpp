@@ -48,7 +48,7 @@ ZarrV3CodecBlosc::GetConfiguration(const char *cname, int clevel,
 /************************************************************************/
 
 bool ZarrV3CodecBlosc::InitFromConfiguration(
-    const CPLJSONObject &configuration,
+    const std::string & /* osArrayName */, const CPLJSONObject &configuration,
     const ZarrArrayMetadata &oInputArrayMetadata,
     ZarrArrayMetadata &oOutputArrayMetadata, bool /* bEmitWarnings */)
 {
@@ -174,8 +174,8 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecBlosc::Clone() const
 {
     auto psClone = std::make_unique<ZarrV3CodecBlosc>();
     ZarrArrayMetadata oOutputArrayMetadata;
-    psClone->InitFromConfiguration(m_oConfiguration, m_oInputArrayMetadata,
-                                   oOutputArrayMetadata,
+    psClone->InitFromConfiguration(std::string(), m_oConfiguration,
+                                   m_oInputArrayMetadata, oOutputArrayMetadata,
                                    /* bEmitWarnings = */ false);
     return psClone;
 }

@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdalpython.h"
 #include "gdalsubdatasetinfo.h"
 #include "ogr_geopackage.h"
 
@@ -18,6 +19,8 @@
 
 #include <cctype>
 #include <mutex>
+
+using namespace GDALPy;
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
@@ -601,8 +604,10 @@ class OGRGeoPackageRepackAlgorithm final : public GDALAlgorithm
   public:
     OGRGeoPackageRepackAlgorithm()
         : GDALAlgorithm("repack", "Repack/vacuum in-place a GeoPackage dataset",
-                        "/drivers/vector/gpkg.html")
+                        "/programs/gdal_driver_gpkg_repack.html")
     {
+        AddProgressArg(/* hidden = */ true);
+
         constexpr int type = GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE;
         auto &arg =
             AddArg("dataset", 0, _("GeoPackage dataset"), &m_dataset, type)
@@ -634,6 +639,150 @@ bool OGRGeoPackageRepackAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
+/*                    OGRGeoPackageValidateAlgorithm                    */
+/************************************************************************/
+
+class OGRGeoPackageValidateAlgorithm final : public GDALAlgorithm
+{
+  public:
+    OGRGeoPackageValidateAlgorithm()
+        : GDALAlgorithm("validate",
+                        "Validate conformance of a GeoPackage dataset against "
+                        "the GeoPackage specification",
+                        "/programs/gdal_driver_gpkg_validate.html")
+    {
+        constexpr int type = GDAL_OF_RASTER | GDAL_OF_VECTOR;
+        auto &arg =
+            AddArg("dataset", 0, _("GeoPackage dataset"), &m_dataset, type)
+                .SetPositional()
+                .SetRequired();
+        SetAutoCompleteFunctionForFilename(arg, type);
+
+        AddArg("full-check", 0, _("Whether to perform full check"),
+               &m_fullCheck)
+            .SetDefault(m_fullCheck);
+
+        AddOutputStringArg(&m_output);
+        AddArg("verbose", 'v', _("Turn on verbose mode"), &m_verbose);
+        AddProgressArg();
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override;
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+    bool m_fullCheck = false;
+    bool m_verbose = false;
+    std::string m_output{};
+};
+
+/************************************************************************/
+/*                              RunImpl()                               */
+/************************************************************************/
+
+bool OGRGeoPackageValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS =
+        dynamic_cast<GDALGeoPackageDataset *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a GeoPackage",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+
+    if (!GDALPythonInitialize())
+        return false;
+
+    GIL_Holder oHolder(false);
+
+    const CPLString osModuleName(CPLSPrintf("gpkg_validate_module_%p", this));
+    PyObject *poCompiledString =
+        Py_CompileString("from osgeo_utils.samples.validate_gpkg import "
+                         "main, get_output_string\n",
+                         osModuleName, Py_file_input);
+    if (poCompiledString == nullptr || PyErr_Occurred())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Couldn't compile code:\n%s",
+                 GetPyExceptionString().c_str());
+        return false;
+    }
+    PyObject *poModule =
+        PyImport_ExecCodeModule(osModuleName, poCompiledString);
+    Py_DecRef(poCompiledString);
+
+    if (poModule == nullptr || PyErr_Occurred())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 GetPyExceptionString().c_str());
+        return false;
+    }
+
+    PyObject *poMain = PyObject_GetAttrString(poModule, "main");
+    CPLAssert(poMain);
+    PyObject *poGetOutput =
+        PyObject_GetAttrString(poModule, "get_output_string");
+    CPLAssert(poGetOutput);
+
+    Py_DecRef(poModule);
+
+    std::vector<std::string> args{"dummy", "-k", m_dataset.GetName()};
+    if (m_quiet)
+        args.push_back("-q");
+    else if (m_verbose)
+        args.push_back("-v");
+    if (m_fullCheck)
+        args.push_back("--extra");
+
+    PyObject *pyArgv = PyTuple_New(args.size());
+    for (size_t i = 0; i < args.size(); ++i)
+    {
+        PyTuple_SetItem(pyArgv, i, PyUnicode_FromString(args[i].c_str()));
+    }
+    PyObject *pyKwargs = PyDict_New();
+    PyDict_SetItemString(pyKwargs, "argv", pyArgv);
+    PyDict_SetItemString(pyKwargs, "output_in_string", PyBool_FromLong(true));
+    PyObject *pyArgs = PyTuple_New(0);
+    PyObject *pRetValue = PyObject_Call(poMain, pyArgs, pyKwargs);
+    const auto nRetValue = pRetValue ? PyLong_AsLong(pRetValue) : -1;
+    Py_DecRef(pyArgs);
+    Py_DecRef(pyKwargs);
+    Py_DecRef(pRetValue);
+
+    if (!m_quiet || nRetValue)
+    {
+        pyArgs = PyTuple_New(0);
+        pyKwargs = PyDict_New();
+        PyObject *poMsg = PyObject_Call(poGetOutput, pyArgs, pyKwargs);
+        Py_DecRef(pyArgs);
+        Py_DecRef(pyKwargs);
+        if (poMsg)
+            m_output = GetString(poMsg);
+        Py_DecRef(poMsg);
+    }
+
+    Py_DecRef(poMain);
+    Py_DecRef(poGetOutput);
+
+    if (nRetValue)
+        m_output += "\nValidation failed";
+    else if (!m_quiet)
+    {
+        if (!m_output.empty())
+            m_output += '\n';
+        m_output += "Validation succeeded";
+    }
+
+    if (nRetValue && !IsCalledFromCommandLine())
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s", m_output.c_str());
+    }
+
+    return nRetValue == 0;
+}
+
+/************************************************************************/
 /*              OGRGeoPackageDriverInstantiateAlgorithm()               */
 /************************************************************************/
 
@@ -643,6 +792,10 @@ OGRGeoPackageDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
     if (aosPath.size() == 1 && aosPath[0] == "repack")
     {
         return std::make_unique<OGRGeoPackageRepackAlgorithm>().release();
+    }
+    else if (aosPath.size() == 1 && aosPath[0] == "validate")
+    {
+        return std::make_unique<OGRGeoPackageValidateAlgorithm>().release();
     }
     else
     {
@@ -847,6 +1000,7 @@ void RegisterOGRGeoPackage()
 
     poDriver->pfnInstantiateAlgorithm = OGRGeoPackageDriverInstantiateAlgorithm;
     poDriver->DeclareAlgorithm({"repack"});
+    poDriver->DeclareAlgorithm({"validate"});
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

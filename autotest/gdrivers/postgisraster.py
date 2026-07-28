@@ -25,6 +25,7 @@ pytestmark = pytest.mark.require_driver("PostGISRaster")
 # To initialize the required PostGISRaster DB instance, run data/load_postgisraster_test_data.sh
 #
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -589,8 +590,10 @@ def test_postgisraster_test_outdb():
     # For some reason fails with
     # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
     # See https://api.travis-ci.org/v3/job/428972866/log.txt
-    if gdaltest.is_travis_branch("ubuntu_2204") or gdaltest.is_travis_branch(
-        "ubuntu_2404"
+    if (
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
+        or gdaltest.is_travis_branch("ubuntu_2604")
     ):
         pytest.skip()
 
@@ -635,8 +638,10 @@ def test_postgisraster_test_outdb_client_side_if_possible():
     # For some reason fails with
     # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
     # See https://api.travis-ci.org/v3/job/484385907/log.txt
-    if gdaltest.is_travis_branch("ubuntu_2204") or gdaltest.is_travis_branch(
-        "ubuntu_2404"
+    if (
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
+        or gdaltest.is_travis_branch("ubuntu_2604")
     ):
         pytest.skip()
 

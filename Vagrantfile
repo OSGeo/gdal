@@ -55,7 +55,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #  lxc.container_name = "gdal-vagrant"
   #  # allow android adb connection from guest
   #  #ovrd.vm.synced_folder('/dev/bus', '/dev/bus')
-  #  # allow runnng wine inside lxc
+  #  # allow running wine inside lxc
   #  ovrd.vm.synced_folder('/tmp/.X11-unix/', '/tmp/.X11-unix/')
   #end
 

@@ -42,6 +42,7 @@
 #include "ogrgeojsonwriter.h"
 #include "ogrsf_frmts.h"
 #include "ogr_schema_override.h"
+#include "ogr_p.h"
 
 // #include "symbol_renames.h"
 
@@ -381,7 +382,7 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
     bool bWriteCRSIfWGS84 = true;
     bool bFoundNameInNativeData = false;
     if (pszNativeData && pszNativeMediaType &&
-        EQUAL(pszNativeMediaType, "application/vnd.geo+json"))
+        OGRIsGeoJSONMediaType(pszNativeMediaType))
     {
         json_object *poObj = nullptr;
         if (OGRJSonParse(pszNativeData, &poObj) &&
@@ -861,7 +862,8 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     /*      Fetch the GeoJSON result.                                        */
     /* -------------------------------------------------------------------- */
-    CPLHTTPResult *pResult = GeoJSONHTTPFetchWithContentTypeHeader(pszSource);
+    CPLHTTPResult *pResult = GeoJSONHTTPFetchWithContentTypeHeader(
+        pszSource, /* bCanUsePOST = */ osJSonFlavor_ == "ESRIJSON", poOpenInfo);
     if (!pResult)
     {
         return FALSE;
@@ -1282,11 +1284,11 @@ CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
             // Otherwise do layer translation.
             if (!bAlreadyDone)
             {
-                char **papszOptions = CSLAddString(nullptr, "-f");
-                papszOptions = CSLAddString(papszOptions, "GeoJSON");
+                const char *const apszOpenOptions[] = {"-f", "GeoJSON",
+                                                       nullptr};
                 GDALVectorTranslateOptions *psOptions =
-                    GDALVectorTranslateOptionsNew(papszOptions, nullptr);
-                CSLDestroy(papszOptions);
+                    GDALVectorTranslateOptionsNew(
+                        const_cast<char **>(apszOpenOptions), nullptr);
                 GDALDatasetH hSrcDS = this;
                 CPLString osNewFilename(pszName_);
                 osNewFilename += ".tmp";

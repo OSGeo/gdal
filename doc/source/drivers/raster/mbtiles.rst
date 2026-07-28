@@ -209,6 +209,8 @@ with FlushCache()), those uncompressed tiles are definitely transferred
 to the MBTiles file with the appropriate compression. All of this is
 transparent to the user of GDAL API/utilities
 
+.. _mbtiles_tile_formats:
+
 Tile formats
 ~~~~~~~~~~~~
 
@@ -337,6 +339,14 @@ The following creation options are available:
          :default: YES
 
          Whether to write the bounds 'metadata' item.
+
+   -  .. co:: ELEVATION_TYPE
+         :choices: '', 'terrain-rgb'
+         :default: ''
+
+         Type of elevation encoding, suitable for direct generation of
+         Mapbox Terrain-RGB tilesets. See `Mapbox Terrain-RGB v1
+         <https://docs.mapbox.com/data/tilesets/reference/mapbox-terrain-rgb-v1/>`__
 
 -  Vector only:
 

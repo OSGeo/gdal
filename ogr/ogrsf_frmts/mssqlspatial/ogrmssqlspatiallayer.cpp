@@ -12,6 +12,8 @@
 
 #include "ogr_mssqlspatial.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /*                        OGRMSSQLSpatialLayer()                        */
 /************************************************************************/
@@ -228,13 +230,13 @@ void OGRMSSQLSpatialLayer::BuildFeatureDefn(const char *pszLayerName,
 
             case SQL_C_BINARY:
                 oField.SetType(OFTBinary);
-                oField.SetWidth(MAX(0, poStmtIn->GetColSize(iCol)));
+                oField.SetWidth(std::max<int>(0, poStmtIn->GetColSize(iCol)));
                 break;
 
             case SQL_C_NUMERIC:
                 oField.SetType(OFTReal);
                 oField.SetPrecision(poStmtIn->GetColPrecision(iCol));
-                oField.SetWidth(MAX(0, poStmtIn->GetColSize(iCol)));
+                oField.SetWidth(std::max<int>(0, poStmtIn->GetColSize(iCol)));
                 if (oField.GetPrecision() == 0 && oField.GetWidth() <= 9)
                     oField.SetType(OFTInteger);
                 else if (oField.GetPrecision() == 0 && oField.GetWidth() <= 18)
@@ -269,7 +271,7 @@ void OGRMSSQLSpatialLayer::BuildFeatureDefn(const char *pszLayerName,
                 break;
 
             default:
-                oField.SetWidth(MAX(0, poStmtIn->GetColSize(iCol)));
+                oField.SetWidth(std::max<int>(0, poStmtIn->GetColSize(iCol)));
                 /* leave it as OFTString */;
         }
 

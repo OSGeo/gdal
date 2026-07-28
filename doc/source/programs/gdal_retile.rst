@@ -135,3 +135,8 @@ If your number of input tiles exhausts the command line buffer, use the general
 .. option:: -resume
 
     Resume mode. Generate only missing files.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

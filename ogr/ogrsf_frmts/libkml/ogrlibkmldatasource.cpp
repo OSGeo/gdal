@@ -1516,7 +1516,7 @@ static bool CheckIsKMZ(const char *pszFilename)
 
 int OGRLIBKMLDataSource::Open(const char *pszFilename, bool bUpdateIn)
 {
-    bUpdate = CPL_TO_BOOL(bUpdateIn);
+    bUpdate = bUpdateIn;
 
     /***** dir *****/
     VSIStatBufL sStatBuf;

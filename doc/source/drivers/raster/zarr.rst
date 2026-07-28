@@ -16,7 +16,7 @@ This format is supported for read and write access, and using the traditional
 2D raster API or the multidimensional API
 
 The driver supports the Zarr V2 an V3 specifications. It also supports Kerchunk reference
-files since GDAL 3.11.
+files since GDAL 3.11. See also :ref:`raster.icechunk`.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 
@@ -84,7 +84,34 @@ Sharding support
 .. versionadded:: 3.13
 
 `Zarr v3 sharding <https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html>`__
-is supported in read-only since GDAL 3.13.
+is supported since GDAL 3.13. Write support involves setting the
+:co:`SHARD_CHUNK_SHAPE` array creation option.
+
+Multiscales (overviews / pyramids)
+----------------------------------
+
+.. versionadded:: 3.13
+
+The driver supports reading the Zarr
+`multiscales convention <https://github.com/zarr-conventions/multiscales>`__
+for Zarr V3 datasets. This convention describes a pyramid of arrays at
+decreasing resolutions within a group hierarchy.
+
+When a Zarr V3 array has a parent (or grandparent) group whose
+attributes contain a ``zarr_conventions`` entry with the multiscales UUID and
+a ``multiscales`` attribute with a ``layout`` array, the driver exposes
+lower-resolution levels as overviews via :cpp:func:`GDALMDArray::GetOverview`
+and the classic raster band overview API.
+
+Overviews can be generated using :cpp:func:`GDALMDArray::BuildOverviews` or
+equivalently via :cpp:func:`GDALDataset::BuildOverviews` on datasets obtained
+through :cpp:func:`GDALMDArray::AsClassicDataset`. For arrays with more than
+two dimensions, only the spatial dimensions are downsampled; non-spatial
+dimensions (e.g., time) are preserved. Each overview level is resampled
+sequentially from the previous level (e.g., 4x from 2x, not from base).
+Codec settings are inherited from the source array. Calling
+``BuildOverviews`` replaces all existing overviews (unlike the default
+``GDALDataset::BuildOverviews`` behavior which adds new levels).
 
 Kerchunk reference stores
 -------------------------
@@ -192,6 +219,8 @@ Georeferencing encoding (CRS and geotransformation matrix)
 
 The Zarr specification has no provision for spatial reference system encoding.
 Several conventions
+
+.. _raster_zarr.gdal.convention:
 
 GDAL convention
 +++++++++++++++
@@ -493,8 +522,13 @@ The following dataset open options are available:
 Multi-threaded caching
 ----------------------
 
-The driver implements the :cpp:func:`GDALMDArray::AdviseRead` method. This
-proceed to multi-threaded decoding of the tiles that intersect the area of
+Starting with GDAL 3.13, when the :config:`GDAL_NUM_THREADS` configuration
+option is set and a read request spans multiple chunks, the driver automatically
+decodes chunks in parallel, similar to the GeoTIFF driver behavior
+(since GDAL 3.6). No application changes are needed.
+
+The driver also implements the :cpp:func:`GDALMDArray::AdviseRead` method for
+explicit multi-threaded pre-fetching of tiles that intersect the area of
 interest specified. A sufficient cache size must be specified. The call is
 blocking.
 
@@ -549,6 +583,17 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
       Comma separated list of chunk size along each dimension.
       If not specified, the fastest varying 2 dimensions (the last ones) used a
       block size of 256 samples, and the other ones of 1.
+
+-  .. co:: SHARD_CHUNK_SHAPE
+      :choices: <string>
+      :since: 3.13
+
+      Comma-separated inner chunk dimensions for Zarr V3 sharded storage.
+      When set, :co:`BLOCKSIZE` defines the shard dimensions and this option
+      defines the inner chunk dimensions within each shard.
+      Each value must evenly divide the corresponding :co:`BLOCKSIZE`
+      dimension. For example, ``BLOCKSIZE=256,256`` with
+      ``SHARD_CHUNK_SHAPE=64,64`` creates shards of 4x4=16 inner chunks.
 
 -  .. co:: CHUNK_MEMORY_LAYOUT
       :choices: C, F
@@ -656,7 +701,7 @@ dataset-level creation options for the multidimensional API :
 
 -  .. co:: FORMAT
       :choices: ZARR_V2, ZARR_V3
-      :default: ZARR_V2
+      :default: ZARR_V3 (since GDAL 3.14, ZARR_V2 before)
 
 -  .. co:: CREATE_CONSOLIDATED_METADATA
       :choices: YES, NO
@@ -706,7 +751,46 @@ The following options are creation options of the classic raster API only:
       The default value is BAND in Create() mode. In CreateCopy() mode, the
       default value is the value of the INTERLEAVE metadata item of the
       IMAGE_STRUCTURE metadata domain of the source dataset, if set.
+      See :ref:`raster_data_model_interleave_mode` for more details.
 
+
+Add a georeferencing convention to an existing ZARR dataset
+-----------------------------------------------------------
+
+See :ref:`gdal_driver_zarr_add_georeferencing_convention`.
+
+
+.. _raster.zarr.pcodec:
+
+Building the Zarr driver with ``numcodecs.pcodec`` support
+----------------------------------------------------------
+
+.. versionadded:: 3.14
+
+Optional support for the `numcodecs.pcodec <https://numcodecs.readthedocs.io/en/stable/compression/pcodec.html>`__
+codec (lossless compression) requires the ``cpcodec`` C bindings library for the
+Rust ``pco`` crate from https://github.com/pcodec/pcodec/ to be available,
+and is controlled by the ``GDAL_USE_PCODEC`` CMake boolean variable.
+
+There are two main ways to add support for this codec:
+
+- either the ``cpcodec`` library is already installed on the system, in which
+  case the ``PCODEC_C_INCLUDE_DIR`` CMake variable must be set to point to
+  the directory where :file:`pcodec.h` is located, and ``PCODEC_C_LIBRARY``
+  must be set to the path of :file:`libpcodec.a/.so/.lib`. When both are set and
+  ``GDAL_USE_PCODEC`` has not been explicitly set, it is set to ``ON``. This mode takes
+  precedence over the one described below.
+
+- or, if you have a Rust toolchain available, the GDAL CMake build system
+  will, by default, automatically download
+  https://github.com/corrosion-rs/corrosion.git and
+  https://github.com/pcodec/pcodec.git (if ``git`` is available), and build
+  the required Rust crates.
+  Alternatively, if you wish to download those packages yourself, you can
+  set the ``CORROSION_SOURCE_DIR`` and ``PCODEC_SOURCE_DIR`` CMake variables
+  to point to the locations of the downloaded packages.
+  That mode requires explicit setting of ``GDAL_USE_PCODEC`` to ``ON``, in
+  particular for user consent to ``pcodec`` license (Apache v2).
 
 Examples
 --------
@@ -749,12 +833,15 @@ See Also:
 ---------
 
 - `Zarr format and its Python implementation <https://zarr.readthedocs.io/en/stable/>`__
-- `(In progress) Zarr V3 specification <https://zarr-specs.readthedocs.io/en/core-protocol-v3.0-dev/>`__
-
+- `Zarr V3 specification <https://zarr-specs.readthedocs.io/en/core-protocol-v3.0-dev/>`__
+- :ref:`raster.icechunk`
 
 
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
+    Icechunk
     Kerchunk
     Sharding
+    multiscales
+    Multiscales

@@ -1929,6 +1929,58 @@ CPLString OGRWFSLayer::GetPostHeader()
 }
 
 /************************************************************************/
+/*                      SerializeFieldValueAsXML()                      */
+/************************************************************************/
+
+static std::string SerializeFieldValueAsXML(const OGRFeature *poFeature, int i,
+                                            const OGRFieldDefn *poFDefn)
+{
+    switch (poFDefn->GetType())
+    {
+        case OFTInteger:
+        {
+            if (poFDefn->GetSubType() == OFSTBoolean)
+                return poFeature->GetFieldAsInteger(i) ? "true" : "false";
+            else
+                return CPLSPrintf("%d", poFeature->GetFieldAsInteger(i));
+        }
+
+        case OFTInteger64:
+            return CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFieldAsInteger64(i));
+
+        case OFTReal:
+            return CPLSPrintf("%.17g", poFeature->GetFieldAsDouble(i));
+
+        case OFTDateTime:
+            return poFeature->GetFieldAsISO8601DateTime(i, nullptr);
+
+        case OFTDate:
+        {
+            const auto poRawValue = poFeature->GetRawFieldRef(i);
+            return CPLSPrintf("%04d-%02d-%02d", poRawValue->Date.Year,
+                              poRawValue->Date.Month, poRawValue->Date.Day);
+        }
+
+        case OFTString:
+        case OFTIntegerList:
+        case OFTInteger64List:
+        case OFTRealList:
+        case OFTStringList:
+        case OFTWideString:
+        case OFTWideStringList:
+        case OFTBinary:
+        case OFTTime:
+            break;
+    }
+
+    char *pszXMLEncoded =
+        CPLEscapeString(poFeature->GetFieldAsString(i), -1, CPLES_XML);
+    std::string ret(pszXMLEncoded);
+    CPLFree(pszXMLEncoded);
+    return ret;
+}
+
+/************************************************************************/
 /*                           ICreateFeature()                           */
 /************************************************************************/
 
@@ -2034,20 +2086,7 @@ OGRErr OGRWFSLayer::ICreateFeature(OGRFeature *poFeature)
             osPost += "      <feature:";
             osPost += poFDefn->GetNameRef();
             osPost += ">";
-            if (poFDefn->GetType() == OFTInteger)
-                osPost += CPLSPrintf("%d", poFeature->GetFieldAsInteger(i));
-            else if (poFDefn->GetType() == OFTInteger64)
-                osPost +=
-                    CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFieldAsInteger64(i));
-            else if (poFDefn->GetType() == OFTReal)
-                osPost += CPLSPrintf("%.16g", poFeature->GetFieldAsDouble(i));
-            else
-            {
-                char *pszXMLEncoded = CPLEscapeString(
-                    poFeature->GetFieldAsString(i), -1, CPLES_XML);
-                osPost += pszXMLEncoded;
-                CPLFree(pszXMLEncoded);
-            }
+            osPost += SerializeFieldValueAsXML(poFeature, i, poFDefn);
             osPost += "</feature:";
             osPost += poFDefn->GetNameRef();
             osPost += ">\n";
@@ -2293,20 +2332,7 @@ OGRErr OGRWFSLayer::ISetFeature(OGRFeature *poFeature)
         if (poFeature->IsFieldSetAndNotNull(i))
         {
             osPost += "      <wfs:Value>";
-            if (poFDefn->GetType() == OFTInteger)
-                osPost += CPLSPrintf("%d", poFeature->GetFieldAsInteger(i));
-            else if (poFDefn->GetType() == OFTInteger64)
-                osPost +=
-                    CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFieldAsInteger64(i));
-            else if (poFDefn->GetType() == OFTReal)
-                osPost += CPLSPrintf("%.16g", poFeature->GetFieldAsDouble(i));
-            else
-            {
-                char *pszXMLEncoded = CPLEscapeString(
-                    poFeature->GetFieldAsString(i), -1, CPLES_XML);
-                osPost += pszXMLEncoded;
-                CPLFree(pszXMLEncoded);
-            }
+            osPost += SerializeFieldValueAsXML(poFeature, i, poFDefn);
             osPost += "</wfs:Value>\n";
         }
         osPost += "    </wfs:Property>\n";

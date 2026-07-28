@@ -25,6 +25,7 @@ from .vsis3 import general_s3_options
 
 pytestmark = pytest.mark.require_curl()
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -62,7 +63,7 @@ def startup_and_cleanup():
         gdaltest.webserver_process = None
         gdaltest.webserver_port = 0
 
-        (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+        gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
             handler=webserver.DispatcherHttpHandler
         )
         if gdaltest.webserver_port == 0:
@@ -2151,15 +2152,12 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size(tmp_vsimem):
         request.protocol_version = "HTTP/1.1"
         request.wfile.write("HTTP/1.1 100 Continue\r\n\r\n".encode("ascii"))
         content = request.rfile.read(124).decode("ascii")
-        if (
-            content
-            != """<?xml version="1.0" encoding="utf-8"?>
+        if content != """<?xml version="1.0" encoding="utf-8"?>
 <BlockList>
 <Latest>000000000001</Latest>
 <Latest>000000000002</Latest>
 </BlockList>
-"""
-        ):
+""":
             sys.stderr.write("Bad content: %s\n" % str(content))
             request.send_response(403)
             request.send_header("Content-Length", 0)
@@ -2254,15 +2252,12 @@ def test_vsiaz_fake_sync_multithreaded_upload_single_file(tmp_vsimem):
         request.protocol_version = "HTTP/1.1"
         request.wfile.write("HTTP/1.1 100 Continue\r\n\r\n".encode("ascii"))
         content = request.rfile.read(124).decode("ascii")
-        if (
-            content
-            != """<?xml version="1.0" encoding="utf-8"?>
+        if content != """<?xml version="1.0" encoding="utf-8"?>
 <BlockList>
 <Latest>000000000001</Latest>
 <Latest>000000000002</Latest>
 </BlockList>
-"""
-        ):
+""":
             sys.stderr.write("Bad content: %s\n" % str(content))
             request.send_response(403)
             request.send_header("Content-Length", 0)
@@ -2402,29 +2397,25 @@ def test_vsiaz_imds_authentication_expiration():
     ):
 
         handler = webserver.SequentialHandler()
-        handler.add(
-            "GET",
-            "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
-            200,
-            {},
-            """{
-                    "access_token": "my_bearer",
-                    "expires_on": "1000",
-                    }""",
-            expected_headers={"Metadata": "true"},
-        )
+
+        def add_get_token():
+            handler.add(
+                "GET",
+                "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
+                200,
+                {},
+                """{
+                        "access_token": "my_bearer",
+                        "expires_on": "1000",
+                        }""",
+                expected_headers={"Metadata": "true"},
+            )
+
+        add_get_token()
         # Credentials requested again since they are expired
-        handler.add(
-            "GET",
-            "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F",
-            200,
-            {},
-            """{
-                    "access_token": "my_bearer",
-                    "expires_on": "1000",
-                    }""",
-            expected_headers={"Metadata": "true"},
-        )
+        add_get_token()
+        add_get_token()
+        add_get_token()
         handler.add(
             "GET",
             "/azure/blob/myaccount/az_fake_bucket/resource",
@@ -2728,6 +2719,24 @@ def test_vsiaz_workload_identity_managed_authentication_expiration():
             expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
             expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
         )
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer2", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer2", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
 
         handler.add(
             "GET",
@@ -2893,15 +2902,12 @@ def test_vsiaz_read_credentials_config_file_connection_string():
 
     gdal.VSICurlClearCache()
 
-    config_content = (
-        """
+    config_content = """
 [unrelated]
 account=foo
 [storage]
 connection_string = DefaultEndpointsProtocol=http;AccountName=myaccount2;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/azure/blob/myaccount2
-"""
-        % gdaltest.webserver_port
-    )
+""" % gdaltest.webserver_port
 
     with gdaltest.tempfile(
         "/vsimem/azure_config_dir/config", config_content

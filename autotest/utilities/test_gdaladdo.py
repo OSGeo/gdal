@@ -46,7 +46,7 @@ def test_gdaladdo_1(gdaladdo_path, tmp_path):
     shutil.copy("../gcore/data/mfloat32.vrt", f"{tmp_path}/mfloat32.vrt")
     shutil.copy("../gcore/data/float32.tif", f"{tmp_path}/float32.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdaladdo_path} {tmp_path}/mfloat32.vrt 2 4"
     )
     assert err is None or err == "", "got error/warning"

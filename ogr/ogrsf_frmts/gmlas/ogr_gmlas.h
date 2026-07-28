@@ -1167,8 +1167,8 @@ class GMLASSchemaAnalyzer final
         GMLASFeatureClass &oClass, int nRecursionCounter,
         std::set<XSModelGroup *> &oSetVisitedModelGroups, XSModel *poModel,
         const std::map<CPLString, int> &oMapCountOccurrencesOfSameName);
-    void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
-                                            GMLASField &oField);
+    static void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
+                                                   GMLASField &oField);
     CPLString GetPrefix(const CPLString &osNamespaceURI);
     CPLString MakeXPath(const CPLString &osNamespace, const CPLString &osName);
     bool LaunderFieldNames(GMLASFeatureClass &oClass);

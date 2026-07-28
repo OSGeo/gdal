@@ -33,6 +33,8 @@ like creating a PDF file from a XML composition file.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/ot.rst
 
 .. include:: options/of.rst
@@ -73,10 +75,6 @@ like creating a PDF file from a XML composition file.
 
 .. include:: options/co.rst
 
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
-
 .. option:: -if <input_dataset>
 
     .. versionadded:: 3.3
@@ -88,6 +86,11 @@ like creating a PDF file from a XML composition file.
 .. option:: <out_dataset>
 
     The destination file name.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

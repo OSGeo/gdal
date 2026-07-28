@@ -1,0 +1,3 @@
+# Add 'not for AI lovers' label to any issue that gets opened
+"not for AI lovers":
+    - '/.*/'

@@ -151,7 +151,8 @@ bool GDALGeosNonStreamingAlgorithmLayer::ConvertInputsToGeos(
         1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
     const double dfProgressRatio = dfInvLayerFeatures * 0.5;
 
-    const bool sameDefn = GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
+    const bool sameDefn =
+        CPL_TO_BOOL(GetLayerDefn()->IsSame(srcLayer.GetLayerDefn()));
 
     for (auto &feature : srcLayer)
     {

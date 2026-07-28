@@ -366,7 +366,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /* -------------------------------------------------------------------- */
     CPL_IGNORE_RET_VAL(VSIFSeekL(poGDS->fp, poGDS->nDataStartOffset, 0));
 
-    double dfYMin = poGDS->m_gt[3] + (GetYSize() - 0.5) * poGDS->m_gt[5];
+    double dfYMin = poGDS->m_gt.yorig + (GetYSize() - 0.5) * poGDS->m_gt.yscale;
 
     /* -------------------------------------------------------------------- */
     /*      Read all the profiles into the image buffer.                    */
@@ -439,7 +439,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
         if (poGDS->m_oSRS.IsGeographic())
             dyStart = dyStart / 3600.0;
 
-        double dygap = (dfYMin - dyStart) / poGDS->m_gt[5] + 0.5;
+        double dygap = (dfYMin - dyStart) / poGDS->m_gt.yscale + 0.5;
         if (dygap <= INT_MIN || dygap >= INT_MAX || !std::isfinite(dygap))
         {
             CPLFree(sBuffer.buffer);
@@ -804,33 +804,41 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         /* njunk = */ ReadInt(InDem);
         const double dxStart = DConvert(InDem, 24);
 
-        nRasterYSize =
-            static_cast<int>((extent_max.y - extent_min.y) / dydelta + 1.5);
+        const double dfRasterYSize =
+            (extent_max.y - extent_min.y) / dydelta + 1.5;
+        if (dfRasterYSize <= INT_MIN || dfRasterYSize >= INT_MAX ||
+            !std::isfinite(dfRasterYSize))
+            return FALSE;
+        nRasterYSize = static_cast<int>(dfRasterYSize);
         nRasterXSize = nProfiles;
 
-        m_gt[0] = dxStart - dxdelta / 2.0;
-        m_gt[1] = dxdelta;
-        m_gt[2] = 0.0;
-        m_gt[3] = extent_max.y + dydelta / 2.0;
-        m_gt[4] = 0.0;
-        m_gt[5] = -dydelta;
+        m_gt.xorig = dxStart - dxdelta / 2.0;
+        m_gt.xscale = dxdelta;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = extent_max.y + dydelta / 2.0;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -dydelta;
     }
     /* -------------------------------------------------------------------- */
     /*      Geographic -- use corners directly.                             */
     /* -------------------------------------------------------------------- */
     else
     {
-        nRasterYSize =
-            static_cast<int>((extent_max.y - extent_min.y) / dydelta + 1.5);
+        const double dfRasterYSize =
+            (extent_max.y - extent_min.y) / dydelta + 1.5;
+        if (dfRasterYSize <= INT_MIN || dfRasterYSize >= INT_MAX ||
+            !std::isfinite(dfRasterYSize))
+            return FALSE;
+        nRasterYSize = static_cast<int>(dfRasterYSize);
         nRasterXSize = nProfiles;
 
         // Translate extents from arc-seconds to decimal degrees.
-        m_gt[0] = (extent_min.x - dxdelta / 2.0) / 3600.0;
-        m_gt[1] = dxdelta / 3600.0;
-        m_gt[2] = 0.0;
-        m_gt[3] = (extent_max.y + dydelta / 2.0) / 3600.0;
-        m_gt[4] = 0.0;
-        m_gt[5] = (-dydelta) / 3600.0;
+        m_gt.xorig = (extent_min.x - dxdelta / 2.0) / 3600.0;
+        m_gt.xscale = dxdelta / 3600.0;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = (extent_max.y + dydelta / 2.0) / 3600.0;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = (-dydelta) / 3600.0;
     }
 
     // IReadBlock() not ready for more than INT_MAX pixels, and that

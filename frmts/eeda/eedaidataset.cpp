@@ -163,12 +163,14 @@ GDALEEDAIDataset::GDALEEDAIDataset(GDALEEDAIDataset *poParentDS, int iOvrLevel)
     m_osBaseURL = poParentDS->m_osBaseURL;
     nRasterXSize = m_poParentDS->nRasterXSize >> iOvrLevel;
     nRasterYSize = m_poParentDS->nRasterYSize >> iOvrLevel;
-    m_gt[0] = m_poParentDS->m_gt[0];
-    m_gt[1] = m_poParentDS->m_gt[1] * m_poParentDS->nRasterXSize / nRasterXSize;
-    m_gt[2] = m_poParentDS->m_gt[2];
-    m_gt[3] = m_poParentDS->m_gt[3];
-    m_gt[4] = m_poParentDS->m_gt[4];
-    m_gt[5] = m_poParentDS->m_gt[5] * m_poParentDS->nRasterYSize / nRasterYSize;
+    m_gt.xorig = m_poParentDS->m_gt.xorig;
+    m_gt.xscale =
+        m_poParentDS->m_gt.xscale * m_poParentDS->nRasterXSize / nRasterXSize;
+    m_gt.xrot = m_poParentDS->m_gt.xrot;
+    m_gt.yorig = m_poParentDS->m_gt.yorig;
+    m_gt.yrot = m_poParentDS->m_gt.yrot;
+    m_gt.yscale =
+        m_poParentDS->m_gt.yscale * m_poParentDS->nRasterYSize / nRasterYSize;
 }
 
 /************************************************************************/
@@ -322,7 +324,7 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
             size_t nOffsetBand =
                 10 + nHeaderLen +
                 (static_cast<size_t>(iYBlock) * nBlockYSize * nReqXSize +
-                 iXBlock * nBlockXSize) *
+                 static_cast<size_t>(iXBlock) * nBlockXSize) *
                     nTotalDataTypeSize;
 
             for (int i = 1; i <= poGDS->GetRasterCount(); i++)
@@ -530,8 +532,8 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     const int nYOff = nBlockYOff * nBlockYSize;
     const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
-    const double dfX0 = poGDS->m_gt[0] + nXOff * poGDS->m_gt[1];
-    const double dfY0 = poGDS->m_gt[3] + nYOff * poGDS->m_gt[5];
+    const double dfX0 = poGDS->m_gt.xorig + nXOff * poGDS->m_gt.xscale;
+    const double dfY0 = poGDS->m_gt.yorig + nYOff * poGDS->m_gt.yscale;
 #ifdef DEBUG_VERBOSE
     CPLDebug("EEDAI",
              "nBlockYOff=%d nBlockYOff=%d "
@@ -548,12 +550,12 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     json_object_object_add(
         poAffineTransform, "translateY",
         json_object_new_double_with_significant_figures(dfY0, 18));
-    json_object_object_add(
-        poAffineTransform, "scaleX",
-        json_object_new_double_with_significant_figures(poGDS->m_gt[1], 18));
-    json_object_object_add(
-        poAffineTransform, "scaleY",
-        json_object_new_double_with_significant_figures(poGDS->m_gt[5], 18));
+    json_object_object_add(poAffineTransform, "scaleX",
+                           json_object_new_double_with_significant_figures(
+                               poGDS->m_gt.xscale, 18));
+    json_object_object_add(poAffineTransform, "scaleY",
+                           json_object_new_double_with_significant_figures(
+                               poGDS->m_gt.yscale, 18));
     json_object_object_add(
         poAffineTransform, "shearX",
         json_object_new_double_with_significant_figures(0.0, 18));
@@ -1312,7 +1314,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                 oSetUserBandNames.end())
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Band %s is not compatible of other bands",
+                         "Band %s is not compatible with other bands",
                          aoBandDesc[i].osName.c_str());
             }
             aoMapBandNames[aoBandDesc[i].osName] = -1;
@@ -1348,8 +1350,9 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", m_bQueryMultipleBands ? "PIXEL" : "BAND",
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE,
+                        m_bQueryMultipleBands ? "PIXEL" : "BAND",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Build subdataset list
@@ -1377,7 +1380,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                            oIter->second.size() > 1 ? "s" : "",
                            osSubDSSuffix.c_str(), m_osAsset.c_str()));
         }
-        SetMetadata(aoSubDSList.List(), "SUBDATASETS");
+        SetMetadata(aoSubDSList.List(), GDAL_MDD_SUBDATASETS);
     }
 
     // Attach metadata to dataset or bands

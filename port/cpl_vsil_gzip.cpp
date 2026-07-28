@@ -97,6 +97,7 @@
 #include "cpl_time.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
+#include "../gcore/gdal_thread_pool.h"
 
 constexpr int Z_BUFSIZE = 65536;           // Original size is 16384
 constexpr int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
@@ -1804,7 +1805,7 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nBytes)
             std::vector<GByte> *pExtraOutput = nullptr;
             z_stream *pStream = nullptr;
 
-            static unsigned inCbk(void FAR *, z_const unsigned char FAR *FAR *)
+            static unsigned inCbk(void FAR *, z_const unsigned char FAR * FAR *)
             {
                 return 0;
             }
@@ -2405,11 +2406,12 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                     uint64_t nOffset = poBaseHandle_->Tell() - nStartOffset_;
                     if (nSOZIPIndexEltSize_ == 8)
                     {
-                        CPL_LSBPTR64(&nOffset);
-                        std::copy(reinterpret_cast<const uint8_t *>(&nOffset),
-                                  reinterpret_cast<const uint8_t *>(&nOffset) +
-                                      sizeof(nOffset),
-                                  std::back_inserter(*panSOZIPIndex_));
+                        const uint64_t nLSBOffset = CPL_AS_LSB(nOffset);
+                        std::copy(
+                            reinterpret_cast<const uint8_t *>(&nLSBOffset),
+                            reinterpret_cast<const uint8_t *>(&nLSBOffset) +
+                                sizeof(nLSBOffset),
+                            std::back_inserter(*panSOZIPIndex_));
                     }
                     else
                     {
@@ -2424,13 +2426,14 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                         }
                         else
                         {
-                            uint32_t nOffset32 = static_cast<uint32_t>(nOffset);
-                            CPL_LSBPTR32(&nOffset32);
-                            std::copy(
-                                reinterpret_cast<const uint8_t *>(&nOffset32),
-                                reinterpret_cast<const uint8_t *>(&nOffset32) +
-                                    sizeof(nOffset32),
-                                std::back_inserter(*panSOZIPIndex_));
+                            const uint32_t nLSBOffset32 =
+                                CPL_AS_LSB(static_cast<uint32_t>(nOffset));
+                            std::copy(reinterpret_cast<const uint8_t *>(
+                                          &nLSBOffset32),
+                                      reinterpret_cast<const uint8_t *>(
+                                          &nLSBOffset32) +
+                                          sizeof(nLSBOffset32),
+                                      std::back_inserter(*panSOZIPIndex_));
                         }
                     }
                 }
@@ -2744,24 +2747,16 @@ VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
                                         size_t nSOZIPIndexEltSize,
                                         std::vector<uint8_t> *panSOZIPIndex)
 {
-    const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszThreads || nThreads > 0 || nChunkSize > 0)
+    nThreads = nThreads > 0
+                   ? nThreads
+                   : GDALGetNumThreads(/* nMaxVal = */ 128,
+                                       /* bDefaultToAllCPUs = */ false);
+    if (nThreads > 1 || nChunkSize > 0)
     {
-        if (nThreads == 0)
-        {
-            if (!pszThreads || EQUAL(pszThreads, "ALL_CPUS"))
-                nThreads = CPLGetNumCPUs();
-            else
-                nThreads = atoi(pszThreads);
-            nThreads = std::max(1, std::min(128, nThreads));
-        }
-        if (nThreads > 1 || nChunkSize > 0)
-        {
-            // coverity[tainted_data]
-            return new VSIGZipWriteHandleMT(
-                poBaseHandle, nDeflateTypeIn, bAutoCloseBaseHandle, nThreads,
-                nChunkSize, nSOZIPIndexEltSize, panSOZIPIndex);
-        }
+        // coverity[tainted_data]
+        return new VSIGZipWriteHandleMT(
+            poBaseHandle, nDeflateTypeIn, bAutoCloseBaseHandle, nThreads,
+            nChunkSize, nSOZIPIndexEltSize, panSOZIPIndex);
     }
     return new VSIGZipWriteHandle(poBaseHandle, nDeflateTypeIn,
                                   bAutoCloseBaseHandle);
@@ -3877,9 +3872,8 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nBytes)
             return static_cast<uint64_t>(-1);
 
         uint64_t nOffset;
-        if (poBaseHandle_->Read(&nOffset, sizeof(nOffset)) != sizeof(nOffset))
+        if (!poBaseHandle_->ReadLSB(nOffset))
             return static_cast<uint64_t>(-1);
-        CPL_LSBPTR64(&nOffset);
         return nOffset;
     };
 
@@ -4043,8 +4037,8 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 {
 
     CPLString osZipInFileName;
-    std::unique_ptr<char, VSIFreeReleaser> zipFilename(
-        SplitFilename(pszFilename, osZipInFileName, true, bSetError));
+    auto zipFilename =
+        SplitFilename(pszFilename, osZipInFileName, true, bSetError);
     if (zipFilename == nullptr)
         return false;
 
@@ -4108,14 +4102,14 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
             size_t nPos = 0;
             while (nPos + 2 * sizeof(uint16_t) <= abyExtra.size())
             {
-                uint16_t nId;
-                memcpy(&nId, &abyExtra[nPos], sizeof(uint16_t));
+                const uint16_t nId =
+                    CPL_FROM_LSB<uint16_t>(abyExtra.data() + nPos);
                 nPos += sizeof(uint16_t);
-                CPL_LSBPTR16(&nId);
-                uint16_t nSize;
-                memcpy(&nSize, &abyExtra[nPos], sizeof(uint16_t));
+
+                const uint16_t nSize =
+                    CPL_FROM_LSB<uint16_t>(abyExtra.data() + nPos);
                 nPos += sizeof(uint16_t);
-                CPL_LSBPTR16(&nSize);
+
                 if (nId == 0x564b && nPos + nSize <= abyExtra.size())  // "KV"
                 {
                     if (nSize >= strlen("KeyValuePairs") + 1 &&
@@ -4123,17 +4117,15 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
                                strlen("KeyValuePairs")) == 0)
                     {
                         int nPos2 = static_cast<int>(strlen("KeyValuePairs"));
-                        int nKVPairs = abyExtra[nPos + nPos2];
+                        const int nKVPairs = abyExtra[nPos + nPos2];
                         nPos2++;
                         for (int iKV = 0; iKV < nKVPairs; ++iKV)
                         {
                             if (nPos2 + sizeof(uint16_t) > nSize)
                                 break;
-                            uint16_t nKeyLen;
-                            memcpy(&nKeyLen, &abyExtra[nPos + nPos2],
-                                   sizeof(uint16_t));
+                            const uint16_t nKeyLen = CPL_FROM_LSB<uint16_t>(
+                                abyExtra.data() + nPos + nPos2);
                             nPos2 += sizeof(uint16_t);
-                            CPL_LSBPTR16(&nKeyLen);
                             if (nPos2 + nKeyLen > nSize)
                                 break;
                             std::string osKey;
@@ -4143,11 +4135,9 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 
                             if (nPos2 + sizeof(uint16_t) > nSize)
                                 break;
-                            uint16_t nValLen;
-                            memcpy(&nValLen, &abyExtra[nPos + nPos2],
-                                   sizeof(uint16_t));
+                            const uint16_t nValLen = CPL_FROM_LSB<uint16_t>(
+                                abyExtra.data() + nPos + nPos2);
                             nPos2 += sizeof(uint16_t);
-                            CPL_LSBPTR16(&nValLen);
                             if (nPos2 + nValLen > nSize)
                                 break;
                             std::string osVal;
@@ -4231,25 +4221,14 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
             info.bSOZipIndexFound = true;
             info.nSOZIPStartData = indexPos;
             poVirtualHandle->Seek(indexPos, SEEK_SET);
-            uint32_t nVersion = 0;
-            poVirtualHandle->Read(&nVersion, sizeof(nVersion));
-            CPL_LSBPTR32(&nVersion);
-            uint32_t nToSkip = 0;
-            poVirtualHandle->Read(&nToSkip, sizeof(nToSkip));
-            CPL_LSBPTR32(&nToSkip);
-            uint32_t nChunkSize = 0;
-            poVirtualHandle->Read(&nChunkSize, sizeof(nChunkSize));
-            CPL_LSBPTR32(&nChunkSize);
-            uint32_t nOffsetSize = 0;
-            poVirtualHandle->Read(&nOffsetSize, sizeof(nOffsetSize));
-            CPL_LSBPTR32(&nOffsetSize);
-            uint64_t nUncompressedSize = 0;
-            poVirtualHandle->Read(&nUncompressedSize,
-                                  sizeof(nUncompressedSize));
-            CPL_LSBPTR64(&nUncompressedSize);
-            uint64_t nCompressedSize = 0;
-            poVirtualHandle->Read(&nCompressedSize, sizeof(nCompressedSize));
-            CPL_LSBPTR64(&nCompressedSize);
+            const uint32_t nVersion = poVirtualHandle->ReadLSB<uint32_t>();
+            const uint32_t nToSkip = poVirtualHandle->ReadLSB<uint32_t>();
+            const uint32_t nChunkSize = poVirtualHandle->ReadLSB<uint32_t>();
+            const uint32_t nOffsetSize = poVirtualHandle->ReadLSB<uint32_t>();
+            const uint64_t nUncompressedSize =
+                poVirtualHandle->ReadLSB<uint64_t>();
+            const uint64_t nCompressedSize =
+                poVirtualHandle->ReadLSB<uint64_t>();
 
             info.nSOZIPVersion = nVersion;
             info.nSOZIPToSkip = nToSkip;
@@ -4493,23 +4472,21 @@ int VSIZipFilesystemHandler::Mkdir(const char *pszDirname, long /* nMode */)
 char **VSIZipFilesystemHandler::ReadDirEx(const char *pszDirname, int nMaxFiles)
 {
     CPLString osInArchiveSubDir;
-    char *zipFilename =
-        SplitFilename(pszDirname, osInArchiveSubDir, true, true);
+    auto zipFilename = SplitFilename(pszDirname, osInArchiveSubDir, true, true);
     if (zipFilename == nullptr)
         return nullptr;
 
     {
         std::unique_lock oLock(oMutex);
 
-        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end())
+        if (oMapZipWriteHandles.find(zipFilename.get()) !=
+            oMapZipWriteHandles.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read a zip file being written");
-            CPLFree(zipFilename);
             return nullptr;
         }
     }
-    CPLFree(zipFilename);
 
     return VSIArchiveFilesystemHandler::ReadDirEx(pszDirname, nMaxFiles);
 }
@@ -4525,23 +4502,22 @@ int VSIZipFilesystemHandler::Stat(const char *pszFilename,
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    char *zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, true,
-                                      (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
+    auto zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, true,
+                                     (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
     if (zipFilename == nullptr)
         return -1;
 
     {
         std::unique_lock oLock(oMutex);
 
-        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end())
+        if (oMapZipWriteHandles.find(zipFilename.get()) !=
+            oMapZipWriteHandles.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read a zip file being written");
-            CPLFree(zipFilename);
             return -1;
         }
     }
-    CPLFree(zipFilename);
 
     return VSIArchiveFilesystemHandler::Stat(pszFilename, pStatBuf, nFlags);
 }
@@ -4584,13 +4560,11 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename =
+    auto zipFilename =
         SplitFilename(pszFilename, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return nullptr;
-    CPLString osZipFilename = zipFilename;
-    CPLFree(zipFilename);
-    zipFilename = nullptr;
+    const CPLString osZipFilename = zipFilename.get();
 
     // Invalidate cached file list.
     auto iter = oFileList.find(osZipFilename);
@@ -4709,12 +4683,10 @@ int VSIZipFilesystemHandler::CopyFile(const char *pszSource,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename = SplitFilename(pszTarget, osZipInFileName, false, false);
+    auto zipFilename = SplitFilename(pszTarget, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return -1;
-    CPLString osZipFilename = zipFilename;
-    CPLFree(zipFilename);
-    zipFilename = nullptr;
+    const CPLString osZipFilename = zipFilename.get();
     if (osZipInFileName.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,

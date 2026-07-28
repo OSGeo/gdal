@@ -777,10 +777,10 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     }
 
     GDALDriver *poMEMDrv =
-        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("MEM");
     if (poMEMDrv == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
         return nullptr;
     }
 

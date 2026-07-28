@@ -95,6 +95,19 @@ def test_ilwis_5():
 
 
 ###############################################################################
+# A .mpr that declares an 8-byte Real store while its value domain maps to a
+# 1-byte GDAL type. The block buffer is sized from the (Byte) GDAL type, so
+# IReadBlock must not write it at the wider store size (heap overflow).
+
+
+def test_ilwis_read_real_store_value_domain():
+
+    tst = gdaltest.GDALTest("ilwis", "ilwis/real_store_value_domain.mpr", 1, 350)
+
+    tst.testOpen()
+
+
+###############################################################################
 # Cleanup.
 #
 # Currently the ILWIS driver does not keep track of the files that are

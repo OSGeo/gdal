@@ -29,6 +29,8 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALRasterPipelineStepAlgorithm,
                                    GDAL_OF_RASTER>(HELP_URL)
 {
+    AddRasterHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))
@@ -43,6 +45,11 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
 
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
+
+    AddArg(ARG_NAME_REOPEN_AND_DO_NOT_EARLY_DELETE, 0,
+           _("Reopen after materialization and do not early deleted"),
+           &m_reopenAndDoNotEarlyDelete)
+        .SetHidden();
 }
 
 /************************************************************************/
@@ -58,8 +65,29 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
+    std::string filename = m_outputDataset.GetName();
     if (m_format.empty())
-        m_format = "GTiff";
+    {
+        if (filename.empty())
+        {
+            m_format = "GTiff";
+        }
+        else
+        {
+            const auto aosFormats =
+                CPLStringList(GDALGetOutputDriversForDatasetName(
+                    filename.c_str(), GDAL_OF_RASTER,
+                    /* bSingleMatch = */ true,
+                    /* bWarn = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s", filename.c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
+        }
+    }
 
     auto poDrv = GetGDALDriverManager()->GetDriverByName(m_format.c_str());
     if (!poDrv)
@@ -69,10 +97,10 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    std::string filename = m_outputDataset.GetName();
-    const bool autoDeleteFile =
-        filename.empty() && !EQUAL(m_format.c_str(), "MEM");
-    if (autoDeleteFile)
+    const bool autoDeleteFile = !m_reopenAndDoNotEarlyDelete &&
+                                filename.empty() &&
+                                !EQUAL(m_format.c_str(), "MEM");
+    if (filename.empty() && !EQUAL(m_format.c_str(), "MEM"))
     {
         filename = CPLGenerateTempFilenameSafe(nullptr);
 
@@ -116,13 +144,17 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     bool ok = poOutDS != nullptr && poOutDS->FlushCache() == CE_None;
     if (poOutDS)
     {
-        if (poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
+        if (m_reopenAndDoNotEarlyDelete ||
+            poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
         {
             ok = poOutDS->Close() == CE_None;
             poOutDS.reset();
             if (ok)
             {
-                const char *const apszAllowedDrivers[] = {m_format.c_str(),
+                std::string reopenFormat = m_format;
+                if (m_format == "COG")
+                    reopenFormat = "GTiff";
+                const char *const apszAllowedDrivers[] = {reopenFormat.c_str(),
                                                           nullptr};
                 poOutDS.reset(GDALDataset::Open(
                     filename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
@@ -159,6 +191,8 @@ GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALVectorPipelineStepAlgorithm,
                                    GDAL_OF_VECTOR>(HELP_URL)
 {
+    AddVectorHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))
@@ -190,30 +224,49 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     CPLAssert(poSrcDS);
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
+    std::string filename = m_outputDataset.GetName();
     if (m_format.empty())
     {
-        bool bSeveralGeomFields = false;
-        for (const auto *poLayer : poSrcDS->GetLayers())
+        if (filename.empty())
         {
-            if (!bSeveralGeomFields)
-                bSeveralGeomFields =
-                    poLayer->GetLayerDefn()->GetGeomFieldCount() > 1;
-            if (!bSeveralGeomFields &&
-                poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
+            bool bSeveralGeomFields = false;
+            for (const auto *poLayer : poSrcDS->GetLayers())
             {
-                for (const auto *poFieldDefn :
-                     poLayer->GetLayerDefn()->GetFields())
+                if (!bSeveralGeomFields)
+                    bSeveralGeomFields =
+                        poLayer->GetLayerDefn()->GetGeomFieldCount() > 1;
+                if (!bSeveralGeomFields &&
+                    poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
                 {
-                    const auto eType = poFieldDefn->GetType();
-                    if (eType == OFTStringList || eType == OFTIntegerList ||
-                        eType == OFTRealList || eType == OFTInteger64List)
+                    for (const auto *poFieldDefn :
+                         poLayer->GetLayerDefn()->GetFields())
                     {
-                        bSeveralGeomFields = true;
+                        const auto eType = poFieldDefn->GetType();
+                        if (eType == OFTStringList || eType == OFTIntegerList ||
+                            eType == OFTRealList || eType == OFTInteger64List)
+                        {
+                            bSeveralGeomFields = true;
+                        }
                     }
                 }
             }
+            m_format = bSeveralGeomFields ? "SQLite" : "GPKG";
         }
-        m_format = bSeveralGeomFields ? "SQLite" : "GPKG";
+        else
+        {
+            const auto aosFormats =
+                CPLStringList(GDALGetOutputDriversForDatasetName(
+                    filename.c_str(), GDAL_OF_VECTOR,
+                    /* bSingleMatch = */ true,
+                    /* bWarn = */ true));
+            if (aosFormats.size() != 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s", filename.c_str());
+                return false;
+            }
+            m_format = aosFormats[0];
+        }
     }
 
     auto poDrv = GetGDALDriverManager()->GetDriverByName(m_format.c_str());
@@ -224,10 +277,10 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
-    std::string filename = m_outputDataset.GetName();
-    const bool autoDeleteFile =
-        filename.empty() && !EQUAL(m_format.c_str(), "MEM");
-    if (autoDeleteFile)
+    const bool autoDeleteFile = !m_reopenAndDoNotEarlyDelete &&
+                                filename.empty() &&
+                                !EQUAL(m_format.c_str(), "MEM");
+    if (filename.empty() && !EQUAL(m_format.c_str(), "MEM"))
     {
         filename = CPLGenerateTempFilenameSafe(nullptr);
 
@@ -240,7 +293,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     CPLStringList aosOptions;
-    aosOptions.AddString("--invoked-from-gdal-vector-convert");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
     if (!m_overwrite)
     {
         aosOptions.AddString("--no-overwrite");
@@ -253,6 +306,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-dsco");
         aosOptions.AddString(co.c_str());
     }
+    CPLStringList aosReopenOpenOptions;
     if (EQUAL(m_format.c_str(), "SQLite"))
     {
         const char *pszCOList =
@@ -264,6 +318,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString("-dsco");
             aosOptions.AddString("SPATIALITE=YES");
         }
+        aosReopenOpenOptions.AddString("LIST_ALL_TABLES=YES");
     }
     for (const auto &co : m_layerCreationOptions)
     {
@@ -295,7 +350,8 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     bool ok = poOutDS != nullptr && poOutDS->FlushCache() == CE_None;
     if (poOutDS)
     {
-        if (poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
+        if (m_reopenAndDoNotEarlyDelete ||
+            poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
         {
             ok = poOutDS->Close() == CE_None;
             poOutDS.reset();
@@ -305,7 +361,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                                                           nullptr};
                 poOutDS.reset(GDALDataset::Open(
                     filename.c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                    apszAllowedDrivers));
+                    apszAllowedDrivers, aosReopenOpenOptions.List()));
                 ok = poOutDS != nullptr;
             }
         }

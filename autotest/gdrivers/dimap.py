@@ -96,7 +96,6 @@ def test_dimap_2_single_component():
             "EPHEMERIS_NADIR_LON": "NADIR_LON",
             "EPHEMERIS_ACQUISITION_ORBIT_NUMBER": "ACQUISITION_ORBIT_NUMBER",
             "SPECTRAL_PROCESSING": "PMS",
-            "CLOUDCOVER_MEASURE_TYPE": "AUTOMATIC",
             "DATASET_JOB_ID": "JOB_ID",
             "MISSION": "PHR",
             "GEOMETRIC_GROUND_SETTING": "true",
@@ -104,7 +103,6 @@ def test_dimap_2_single_component():
             "DATASET_PRODUCTION_DATE": "PRODUCTION_DATE",
             "DATASET_PRODUCER_CONTACT": "PRODUCER_CONTACT",
             "IMAGING_DATE": "2016-06-17",
-            "CLOUDCOVER_QUALITY_TABLES": "PHR",
             "DATASET_PRODUCER_NAME": "PRODUCER_NAME",
             "GEOMETRIC_GEOMETRIC_PROCESSING": "SENSOR",
             "GEOMETRIC_EPHEMERIS_USED": "CORRECTED",
@@ -116,7 +114,6 @@ def test_dimap_2_single_component():
             "INSTRUMENT_INDEX": "1A",
             "EPHEMERIS_NADIR_LAT": "NADIR_LAT",
             "INSTRUMENT": "PHR",
-            "CLOUDCOVER_MEASURE_NAME": "Cloud_Cotation (CLD)",
             "FACILITY_SOFTWARE": "SOFTWARE",
             "IMAGING_TIME": "12:34:56",
             "MISSION_INDEX": "1A",
@@ -141,8 +138,14 @@ def test_dimap_2_single_component():
             "RADIOMETRIC_INTER_ARRAY_RECONSTRUCTION": "true",
             "RADIOMETRIC_RADIOMETRIC_STRETCH": "false",
             "RADIOMETRIC_OUT_OF_ORDER_THRESHOLD": "0.5",
+            "CLOUD_COVERAGE": "2",
+            "CLOUD_COVERAGE_UNIT": "percent",
+            "SNOW_COVERAGE": "3",
+            "SNOW_COVERAGE_UNIT": "percent",
         }
         assert md == expected_md, "metadata wrong."
+
+        assert ds.GetMetadata("IMAGERY") == {"CLOUDCOVER": "2"}
 
         rpc = ds.GetMetadata("RPC")
         expected_rpc = {

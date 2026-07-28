@@ -359,8 +359,7 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
                             return false;
                         }
                     }
-                    else if (m_size != 3 && kernel != "equal" &&
-                             kernel[0] != '[')
+                    else if (m_size != 3 && kernel != "equal")
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "Currently only size = 3 is supported for "

@@ -35,6 +35,8 @@ wishes to eliminate those interrupts could potentially use the CLIP=NO open
 option to get larger boundaries, and use appropriate clipping graphic primitives
 to hide those discontinuities.
 
+The driver also supports raster layers. See :ref:`PMTiles raster driver <raster.pmtiles>`
+
 Driver capabilities
 -------------------
 
@@ -246,6 +248,8 @@ The following layer creation options are supported:
 
       A description of the layer.
 
+.. _vsipmtiles:
+
 /vsipmtiles/ virtual file system
 --------------------------------
 
@@ -337,13 +341,22 @@ Extracting all content in a local directory:
 
 Examples
 --------
--  Simple translation of a single shapefile into PMTiles. Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
-   ::
+
+.. example::
+   :title: Simple translation of a single shapefile into PMTiles
+
+   Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
+
+   .. code-block:: bash
 
       ogr2ogr -dsco MINZOOM=10 -dsco MAXZOOM=20 -f "PMTiles" filename.pmtiles my_shapes.shp
 
--  Merge all PostgreSQL/PostGIS tables in a schema into a single PMTiles file. PostgreSQL table names are used as layer names. Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
-   ::
+.. example::
+   :title: Merge all PostgreSQL/PostGIS tables in a schema into a single PMTiles file
+
+   PostgreSQL table names are used as layer names. Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
+
+   .. code-block:: bash
 
       ogr2ogr -dsco MINZOOM=0 -dsco MAXZOOM=22 -f "PMTiles" filename.pmtiles "PG:host=my_host port=my_port dbname=my_database user=my_user password=my_password schemas=my_schema"
 
@@ -351,6 +364,7 @@ Examples
 See Also
 --------
 
+-  :ref:`PMTiles raster driver <raster.pmtiles>`
 -  `PMTiles specification <https://github.com/protomaps/PMTiles>`__
 -  :ref:`Mapbox Vector tiles driver <vector.mvt>`
 -  :ref:`MBTiles driver <raster.mbtiles>`

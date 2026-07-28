@@ -1,0 +1,25 @@
+{
+  "chunks":[
+    20,
+    20
+  ],
+  "compressor":null,
+  "dtype":"|u1",
+  "fill_value":null,
+  "filters":[
+    {
+      "id": "bitround",
+      "keepbits": 8
+    },
+    {
+      "id":"delta",
+      "dtype":"u1"
+    }
+  ],
+  "order":"C",
+  "shape":[
+    20,
+    20
+  ],
+  "zarr_format":2
+}

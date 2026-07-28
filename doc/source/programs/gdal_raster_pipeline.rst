@@ -1,5 +1,7 @@
 .. _gdal_raster_pipeline:
 
+.. program:: gdal_raster_pipeline
+
 ================================================================================
 ``gdal raster pipeline``
 ================================================================================
@@ -38,227 +40,61 @@ Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``mosaic``, ``stack``, ``compare``, ``info``, ``tile`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
 
-Potential steps are:
+Steps
+-----
 
-* read
+.. rst-class:: steps-toc
 
-.. program-output:: gdal raster pipeline --help-doc=read
+.. contents::
+    :local:
+    :depth: 1
 
-* calc
-
-.. program-output:: gdal raster pipeline --help-doc=calc
-
-Details for options can be found in :ref:`gdal_raster_calc`.
-
-* create
-
-.. program-output:: gdal raster pipeline --help-doc=create
-
-Details for options can be found in :ref:`gdal_raster_create`.
-
-* mosaic
-
-.. program-output:: gdal raster pipeline --help-doc=mosaic
-
-Details for options can be found in :ref:`gdal_raster_mosaic`.
-
-* stack
-
-.. program-output:: gdal raster pipeline --help-doc=stack
-
-Details for options can be found in :ref:`gdal_raster_stack`.
-
-* aspect
+aspect
+******
 
 .. program-output:: gdal raster pipeline --help-doc=aspect
 
 Details for options can be found in :ref:`gdal_raster_aspect`.
 
-* blend
+blend
+*****
 
 .. program-output:: gdal raster pipeline --help-doc=blend
 
 Details for options can be found in :ref:`gdal_raster_blend`.
 
-* clip
+calc
+****
+
+.. program-output:: gdal raster pipeline --help-doc=calc
+
+Details for options can be found in :ref:`gdal_raster_calc`.
+
+clean-collar
+************
+
+.. versionadded:: 3.14
+
+.. program-output:: gdal raster pipeline --help-doc=clean-collar
+
+Details for options can be found in :ref:`gdal_raster_clean_collar`.
+
+clip
+****
 
 .. program-output:: gdal raster pipeline --help-doc=clip
 
 Details for options can be found in :ref:`gdal_raster_clip`.
 
-* color-map
+color-map
+*********
 
 .. program-output:: gdal raster pipeline --help-doc=color-map
 
 Details for options can be found in :ref:`gdal_raster_color_map`.
 
-* edit
-
-.. program-output:: gdal raster pipeline --help-doc=edit
-
-Details for options can be found in :ref:`gdal_raster_edit`.
-
-* fill-nodata
-
-.. program-output:: gdal raster pipeline --help-doc=fill-nodata
-
-Details for options can be found in :ref:`gdal_raster_fill_nodata`.
-
-* hillshade
-
-.. program-output:: gdal raster pipeline --help-doc=hillshade
-
-Details for options can be found in :ref:`gdal_raster_hillshade`.
-
-* materialize
-
-.. program-output:: gdal raster pipeline --help-doc=materialize
-
-Details for options can be found in :ref:`gdal_raster_materialize`.
-
-* neighbors
-
-.. program-output:: gdal raster pipeline --help-doc=neighbors
-
-Details for options can be found in :ref:`gdal_raster_neighbors`.
-
-* nodata-to-alpha
-
-.. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
-
-Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
-
-* overview
-
-.. program-output:: gdal raster pipeline --help-doc=overview
-
-Details for options can be found in :ref:`gdal_raster_overview`.
-
-* pansharpen
-
-.. program-output:: gdal raster pipeline --help-doc=pansharpen
-
-Details for options can be found in :ref:`gdal_raster_pansharpen`.
-
-* proximity
-
-.. program-output:: gdal raster pipeline --help-doc=proximity
-
-Details for options can be found in :ref:`gdal_raster_proximity`.
-
-* reclassify
-
-.. program-output:: gdal raster pipeline --help-doc=reclassify
-
-Details for options can be found in :ref:`gdal_raster_reclassify`.
-
-* reproject
-
-.. program-output:: gdal raster pipeline --help-doc=reproject
-
-Details for options can be found in :ref:`gdal_raster_reproject`.
-
-* resize
-
-.. program-output:: gdal raster pipeline --help-doc=resize
-
-Details for options can be found in :ref:`gdal_raster_resize`.
-
-* rgb-to-palette
-
-.. program-output:: gdal raster pipeline --help-doc=rgb-to-palette
-
-Details for options can be found in :ref:`gdal_raster_rgb_to_palette`.
-
-* roughness
-
-.. program-output:: gdal raster pipeline --help-doc=roughness
-
-Details for options can be found in :ref:`gdal_raster_roughness`.
-
-* scale
-
-.. program-output:: gdal raster pipeline --help-doc=scale
-
-Details for options can be found in :ref:`gdal_raster_scale`.
-
-* select
-
-.. program-output:: gdal raster pipeline --help-doc=select
-
-Details for options can be found in :ref:`gdal_raster_select`.
-
-* set-type
-
-.. program-output:: gdal raster pipeline --help-doc=set-type
-
-Details for options can be found in :ref:`gdal_raster_set_type`.
-
-* sieve
-
-.. program-output:: gdal raster pipeline --help-doc=sieve
-
-Details for options can be found in :ref:`gdal_raster_sieve`.
-
-* slope
-
-.. program-output:: gdal raster pipeline --help-doc=slope
-
-Details for options can be found in :ref:`gdal_raster_slope`.
-
-* tpi
-
-.. program-output:: gdal raster pipeline --help-doc=tpi
-
-Details for options can be found in :ref:`gdal_raster_tpi`.
-
-* tri
-
-.. program-output:: gdal raster pipeline --help-doc=tri
-
-Details for options can be found in :ref:`gdal_raster_tri`.
-
-* unscale
-
-.. program-output:: gdal raster pipeline --help-doc=unscale
-
-Details for options can be found in :ref:`gdal_raster_unscale`.
-
-* update
-
-.. program-output:: gdal raster pipeline --help-doc=update
-
-Details for options can be found in :ref:`gdal_raster_update`.
-
-* viewshed
-
-.. program-output:: gdal raster pipeline --help-doc=viewshed
-
-Details for options can be found in :ref:`gdal_raster_viewshed`.
-
-* tee
-
-.. program-output:: gdal raster pipeline --help-doc=tee
-
-Details for options can be found in :ref:`gdal_output_nested_pipeline`.
-
-* info
-
-.. versionadded:: 3.12
-
-.. program-output:: gdal raster pipeline --help-doc=info
-
-Details for options can be found in :ref:`gdal_raster_info`.
-
-* tile
-
-.. versionadded:: 3.12
-
-.. program-output:: gdal raster pipeline --help-doc=tile
-
-Details for options can be found in :ref:`gdal_raster_tile`.
-
-* compare
+compare
+*******
 
 .. versionadded:: 3.12
 
@@ -266,9 +102,240 @@ Details for options can be found in :ref:`gdal_raster_tile`.
 
 Details for options can be found in :ref:`gdal_raster_compare`.
 
-* write
+create
+******
+
+.. program-output:: gdal raster pipeline --help-doc=create
+
+Details for options can be found in :ref:`gdal_raster_create`.
+
+edit
+****
+
+.. program-output:: gdal raster pipeline --help-doc=edit
+
+Details for options can be found in :ref:`gdal_raster_edit`.
+
+external
+********
+
+.. program-output:: gdal raster pipeline --help-doc=external
+
+Details for options can be found in :ref:`gdal_external`.
+
+fill-nodata
+***********
+
+.. program-output:: gdal raster pipeline --help-doc=fill-nodata
+
+Details for options can be found in :ref:`gdal_raster_fill_nodata`.
+
+hillshade
+*********
+
+.. program-output:: gdal raster pipeline --help-doc=hillshade
+
+Details for options can be found in :ref:`gdal_raster_hillshade`.
+
+info
+****
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=info
+
+Details for options can be found in :ref:`gdal_raster_info`.
+
+materialize
+***********
+
+.. program-output:: gdal raster pipeline --help-doc=materialize
+
+Details for options can be found in :ref:`gdal_raster_materialize`.
+
+mosaic
+******
+
+.. program-output:: gdal raster pipeline --help-doc=mosaic
+
+Details for options can be found in :ref:`gdal_raster_mosaic`.
+
+neighbors
+*********
+
+.. program-output:: gdal raster pipeline --help-doc=neighbors
+
+Details for options can be found in :ref:`gdal_raster_neighbors`.
+
+nodata-to-alpha
+***************
+
+.. program-output:: gdal raster pipeline --help-doc=nodata-to-alpha
+
+Details for options can be found in :ref:`gdal_raster_nodata_to_alpha`.
+
+overview
+********
+
+.. program-output:: gdal raster pipeline --help-doc=overview
+
+Details for options can be found in :ref:`gdal_raster_overview`.
+
+pansharpen
+**********
+
+.. program-output:: gdal raster pipeline --help-doc=pansharpen
+
+Details for options can be found in :ref:`gdal_raster_pansharpen`.
+
+proximity
+*********
+
+.. program-output:: gdal raster pipeline --help-doc=proximity
+
+Details for options can be found in :ref:`gdal_raster_proximity`.
+
+read
+****
+
+.. program-output:: gdal raster pipeline --help-doc=read
+
+Details for options can be found in :ref:`gdal_raster_read`.
+
+reclassify
+**********
+
+.. program-output:: gdal raster pipeline --help-doc=reclassify
+
+Details for options can be found in :ref:`gdal_raster_reclassify`.
+
+reproject
+*********
+
+.. program-output:: gdal raster pipeline --help-doc=reproject
+
+Details for options can be found in :ref:`gdal_raster_reproject`.
+
+resize
+******
+
+.. program-output:: gdal raster pipeline --help-doc=resize
+
+Details for options can be found in :ref:`gdal_raster_resize`.
+
+rgb-to-palette
+**************
+
+.. program-output:: gdal raster pipeline --help-doc=rgb-to-palette
+
+Details for options can be found in :ref:`gdal_raster_rgb_to_palette`.
+
+roughness
+*********
+
+.. program-output:: gdal raster pipeline --help-doc=roughness
+
+Details for options can be found in :ref:`gdal_raster_roughness`.
+
+scale
+*****
+
+.. program-output:: gdal raster pipeline --help-doc=scale
+
+Details for options can be found in :ref:`gdal_raster_scale`.
+
+select
+******
+
+.. program-output:: gdal raster pipeline --help-doc=select
+
+Details for options can be found in :ref:`gdal_raster_select`.
+
+set-type
+********
+
+.. program-output:: gdal raster pipeline --help-doc=set-type
+
+Details for options can be found in :ref:`gdal_raster_set_type`.
+
+sieve
+*****
+
+.. program-output:: gdal raster pipeline --help-doc=sieve
+
+Details for options can be found in :ref:`gdal_raster_sieve`.
+
+slope
+*****
+
+.. program-output:: gdal raster pipeline --help-doc=slope
+
+Details for options can be found in :ref:`gdal_raster_slope`.
+
+stack
+*****
+
+.. program-output:: gdal raster pipeline --help-doc=stack
+
+Details for options can be found in :ref:`gdal_raster_stack`.
+
+tee
+***
+
+.. program-output:: gdal raster pipeline --help-doc=tee
+
+Details for options can be found in :ref:`gdal_output_nested_pipeline`.
+
+tile
+****
+
+.. versionadded:: 3.12
+
+.. program-output:: gdal raster pipeline --help-doc=tile
+
+Details for options can be found in :ref:`gdal_raster_tile`.
+
+tpi
+***
+
+.. program-output:: gdal raster pipeline --help-doc=tpi
+
+Details for options can be found in :ref:`gdal_raster_tpi`.
+
+tri
+***
+
+.. program-output:: gdal raster pipeline --help-doc=tri
+
+Details for options can be found in :ref:`gdal_raster_tri`.
+
+unscale
+*******
+
+.. program-output:: gdal raster pipeline --help-doc=unscale
+
+Details for options can be found in :ref:`gdal_raster_unscale`.
+
+update
+******
+
+.. program-output:: gdal raster pipeline --help-doc=update
+
+Details for options can be found in :ref:`gdal_raster_update`.
+
+viewshed
+********
+
+.. program-output:: gdal raster pipeline --help-doc=viewshed
+
+Details for options can be found in :ref:`gdal_raster_viewshed`.
+
+write
+*****
 
 .. program-output:: gdal raster pipeline --help-doc=write
+
+Details for options can be found in :ref:`gdal_raster_write`.
 
 GDALG output (on-the-fly / streamed dataset)
 --------------------------------------------
@@ -286,7 +353,7 @@ line without the final ``write`` step, and is what is generated by
 
     {
         "type": "gdal_streamed_alg",
-        "command_line": "gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632"
+        "command_line": "gdal raster pipeline ! read in.tif ! reproject --output-crs=EPSG:32632"
     }
 
 The final ``write`` step can be added but if so it must explicitly specify the
@@ -296,7 +363,7 @@ The final ``write`` step can be added but if so it must explicitly specify the
 
     {
         "type": "gdal_streamed_alg",
-        "command_line": "gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write --output-format=streamed streamed_dataset"
+        "command_line": "gdal raster pipeline ! read in.tif ! reproject --output-crs=EPSG:32632 ! write --output-format=streamed streamed_dataset"
     }
 
 
@@ -322,6 +389,10 @@ Nested pipeline
 
 See :ref:`gdal_nested_pipeline`.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -331,14 +402,14 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite
+        $ gdal raster pipeline ! read in.tif ! reproject --output-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite
 
 .. example::
    :title: Serialize the command of a reprojection of a GeoTIFF file in a GDALG file, and later read it
 
    .. code-block:: bash
 
-        $ gdal raster pipeline ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
+        $ gdal raster pipeline ! read in.tif ! reproject --output-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal raster info in_epsg_32632.gdalg.json
 
 .. example::

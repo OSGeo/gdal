@@ -1,5 +1,7 @@
 .. _gdal_raster_reclassify:
 
+.. program:: gdal_raster_reclassify
+
 ================================================================================
 ``gdal raster reclassify``
 ================================================================================
@@ -84,6 +86,12 @@ These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other co
 Program-Specific Options
 ------------------------
 
+.. option:: --keep-color-table
+
+   .. versionadded:: 3.14
+
+   Preserve the color table of the input raster bands in the output.
+
 .. option:: -m, --mapping <MAPPING>
 
    A definition of mappings between input and output pixel values, as described above.
@@ -108,6 +116,11 @@ Standard Options
     .. include:: gdal_options/ot.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

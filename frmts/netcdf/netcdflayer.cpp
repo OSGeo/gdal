@@ -158,8 +158,8 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
     m_nDefaultWidth = atoi(
         CSLFetchNameValueDef(papszOptions, "STRING_DEFAULT_WIDTH",
                              CPLSPrintf("%d", m_bAutoGrowStrings ? 10 : 80)));
-    m_bWriteGDALTags = CPL_TO_BOOL(
-        CSLFetchBoolean(m_poDS->papszCreationOptions, "WRITE_GDAL_TAGS", TRUE));
+    m_bWriteGDALTags =
+        m_poDS->aosCreationOptions.FetchBool("WRITE_GDAL_TAGS", true);
     m_bUseStringInNC4 =
         CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "USE_STRING_IN_NC4", TRUE));
     m_bNCDumpCompat =
@@ -1975,12 +1975,14 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     else if (m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
              poGeom != nullptr && m_bLegacyCreateMode)
     {
-        char *pszWKT = nullptr;
-        poGeom->exportToWkt(&pszWKT, wkbVariantIso);
-        int status;
+        OGRWktOptions opts;
+        opts.variant = wkbVariantIso;
+
+        std::string osWKT = poGeom->exportToWkt(opts);
+        int status = NC_NOERR;
         if (m_nWKTNCDFType == NC_STRING)
         {
-            const char *pszWKTConst = pszWKT;
+            const char *pszWKTConst = osWKT.c_str();
             status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
                                         &pszWKTConst);
         }
@@ -1988,7 +1990,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             size_t anCount[2];
             anCount[0] = 1;
-            anCount[1] = strlen(pszWKT);
+            anCount[1] = osWKT.size();
             if (anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth))
             {
                 if (m_bAutoGrowStrings)
@@ -2005,7 +2007,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     m_nWKTMaxWidth = static_cast<int>(nNewSize);
 
                     status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID,
-                                              anIndex, anCount, pszWKT);
+                                              anIndex, anCount, osWKT.c_str());
                 }
                 else
                 {
@@ -2013,16 +2015,16 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                              "Cannot write geometry as WKT. Would require %d "
                              "characters but field width is %d",
                              static_cast<int>(anCount[1]), m_nWKTMaxWidth);
-                    status = NC_NOERR;
+                    status =
+                        NC_EEDGE;  // error that would be returned had we called nc_put_var_text
                 }
             }
             else
             {
                 status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID, anIndex,
-                                          anCount, pszWKT);
+                                          anCount, osWKT.c_str());
             }
         }
-        CPLFree(pszWKT);
         NCDF_ERR(status);
         if (status != NC_NOERR)
         {
@@ -2498,6 +2500,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Dimension '%s' does not exist",
                      poConfig->m_osMainDim.c_str());
+            return OGRERR_FAILURE;
         }
     }
 
@@ -2654,7 +2657,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
         fieldDesc.bIsDays = (eType == OFTDate);
         m_aoFieldDesc.push_back(fieldDesc);
 
-        // If we have an alternative name that is compatible of the
+        // If we have an alternative name that is compatible with the
         // standard_name attribute, then put it in it.
         // http://cfconventions.org/Data/cf-standard-names/docs/guidelines.html:
         // "Standard names consist of lower-letters, digits and underscores,

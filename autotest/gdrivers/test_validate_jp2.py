@@ -23,6 +23,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("JP2OpenJPEG")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

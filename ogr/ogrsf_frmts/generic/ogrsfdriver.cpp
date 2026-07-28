@@ -35,7 +35,7 @@ OGRDataSource *OGRSFDriver::CreateDataSource(const char *, char **)
 
 {
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateDataSource() not supported by this driver.\n");
+             "CreateDataSource() not supported by this driver.");
 
     return nullptr;
 }

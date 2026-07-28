@@ -35,8 +35,8 @@ OGRJMLWriterLayer::OGRJMLWriterLayer(const char *pszLayerName,
 
     if (poSRS)
     {
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName();
+        const char *pszAuthCode = poSRS->GetAuthorityCode();
         if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
             pszAuthCode != nullptr)
         {

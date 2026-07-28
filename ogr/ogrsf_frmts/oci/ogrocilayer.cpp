@@ -15,6 +15,8 @@
 #include "ogr_oci.h"
 #include "cpl_conv.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /*                            OGROCILayer()                             */
 /************************************************************************/
@@ -143,7 +145,7 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 
     if (papszResult == nullptr)
     {
-        iNextShapeId = MAX(1, iNextShapeId);
+        iNextShapeId = std::max(1, iNextShapeId);
         delete poStatement;
         poStatement = nullptr;
         return nullptr;
@@ -302,7 +304,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
     /* -------------------------------------------------------------------- */
     /*      Establish the dimension.                                        */
     /* -------------------------------------------------------------------- */
-    int nDimension = MAX(2, (nGType / 1000));
+    int nDimension = std::max(2, (nGType / 1000));
 
     /* -------------------------------------------------------------------- */
     /*      Handle point data directly from built-in point info.            */

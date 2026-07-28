@@ -40,7 +40,7 @@ def test_ogr2ogr_1(ogr2ogr_path, tmp_path):
 
     output_shp = str(tmp_path / "poly.shp")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + f" {output_shp} ../ogr/data/poly.shp"
     )
     assert err is None or err == "", "got error/warning"
@@ -250,7 +250,7 @@ def test_ogr2ogr_11(ogr2ogr_path, tmp_path):
     )
 
     ds = ogr.Open(output_shp)
-    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon25D
 
 
 ###############################################################################
@@ -266,7 +266,7 @@ def test_ogr2ogr_12(ogr2ogr_path, tmp_path):
     )
 
     ds = ogr.Open(output_shp)
-    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon25D
 
 
 ###############################################################################
@@ -307,7 +307,9 @@ def test_ogr2ogr_14(ogr2ogr_path, tmp_path):
     ds = ogr.Open(output_shp)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
-    assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
+    assert (
+        feat.GetGeometryRef().GetGeometryRef(0).GetGeometryRef(0).GetPointCount() == 36
+    )
 
 
 ###############################################################################
@@ -912,7 +914,7 @@ def test_ogr2ogr_33(ogr2ogr_path, tmp_path):
         ogr2ogr_path + f" -explodecollections {dst_shp} {src_csv} -select foo"
     )
 
-    ds = ogr.Open(dst_shp)
+    ds = gdal.Open(dst_shp, open_options=["PROMOTE_TO_MULTI=NO"])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 3, "-explodecollections failed"
 
@@ -1180,9 +1182,9 @@ def test_ogr2ogr_43(ogr2ogr_path, tmp_path, dim):
     ds = ogr.Open(output_shp)
     lyr = ds.GetLayerByIndex(0)
     if dim == 3:
-        assert lyr.GetGeomType() == ogr.wkbPolygon25D
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
     elif dim == 2:
-        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon
 
 
 ###############################################################################
@@ -1331,8 +1333,7 @@ def test_ogr2ogr_47(ogr2ogr_path, tmp_path):
     dst_gml = str(tmp_path / "test_ogr2ogr_47_dst.gml")
 
     f = open(src_gml, "wt")
-    f.write(
-        """<foo xmlns:gml="http://www.opengis.net/gml">
+    f.write("""<foo xmlns:gml="http://www.opengis.net/gml">
    <gml:featureMember>
       <features>
          <geometry>
@@ -1351,8 +1352,7 @@ def test_ogr2ogr_47(ogr2ogr_path, tmp_path):
          </geometry>
       </features>
    </gml:featureMember>
-</foo>"""
-    )
+</foo>""")
     f.close()
 
     gdaltest.runexternal(
@@ -1730,8 +1730,7 @@ def ogr2ogr_54_vrt(tmp_path):
     f.close()
 
     f = open(src_vrt, "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
   <OGRVRTLayer name="test_ogr2ogr_54">
     <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_54.csv</SrcDataSource>
     <SrcLayer>test_ogr2ogr_54</SrcLayer>
@@ -1741,8 +1740,7 @@ def ogr2ogr_54_vrt(tmp_path):
     <Field name="fld2" type="String" src="fld2"/>
   </OGRVRTLayer>
 </OGRVRTDataSource>
-"""
-    )
+""")
     f.close()
 
     return src_vrt
@@ -1808,8 +1806,7 @@ def ogr2ogr_55_vrt(tmp_path):
         f.write("Integer,Integer,String\n")
 
     with open(f"{tmp_path}/test_ogr2ogr_55.vrt", "wt") as f:
-        f.write(
-            """<OGRVRTDataSource>
+        f.write("""<OGRVRTDataSource>
       <OGRVRTLayer name="test_ogr2ogr_55">
         <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_55.csv</SrcDataSource>
         <SrcLayer>test_ogr2ogr_55</SrcLayer>
@@ -1819,8 +1816,7 @@ def ogr2ogr_55_vrt(tmp_path):
         <Field name="fld2" type="Integer" src="fld2" nullable="false" default="2"/>
       </OGRVRTLayer>
     </OGRVRTDataSource>
-    """
-        )
+    """)
 
     return f"{tmp_path}/test_ogr2ogr_55.vrt"
 
@@ -1909,8 +1905,7 @@ def ogr2ogr_57_vrt(tmp_path):
         f.write("Integer,String,String\n")
 
     with open(f"{tmp_path}/test_ogr2ogr_57.vrt", "wt") as f:
-        f.write(
-            """<OGRVRTDataSource>
+        f.write("""<OGRVRTDataSource>
       <OGRVRTLayer name="test_ogr2ogr_57">
         <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_57.csv</SrcDataSource>
         <SrcLayer>test_ogr2ogr_57</SrcLayer>
@@ -1920,8 +1915,7 @@ def ogr2ogr_57_vrt(tmp_path):
         <Field name="str"/>
       </OGRVRTLayer>
     </OGRVRTDataSource>
-    """
-        )
+    """)
 
     return f"{tmp_path}/test_ogr2ogr_57.vrt"
 
@@ -2149,7 +2143,7 @@ def test_ogr2ogr_62bis(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
 def test_ogr2ogr_63(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(ogr2ogr_path + " --formats")
+    ret, err = gdaltest.runexternal_out_and_err(ogr2ogr_path + " --formats")
     assert "Supported Formats" in ret, err
     assert "ERROR" not in err, ret
 
@@ -2192,11 +2186,11 @@ def test_ogr2ogr_65(ogr2ogr_path, tmp_path):
     dst_csv = str(tmp_path / "out.csv")
 
     gdaltest.runexternal(f"{ogr2ogr_path} {dst_csv} ../ogr/data/poly.shp")
-    ds = gdal.OpenEx(dst_csv)
+    ds = gdal.Open(dst_csv)
     assert ds.GetDriver().ShortName == "CSV"
     ds = None
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " /vsimem/out.xxx ../ogr/data/poly.shp"
     )
     if "Cannot guess" not in err:
@@ -2210,7 +2204,7 @@ def test_ogr2ogr_65(ogr2ogr_path, tmp_path):
 
 def test_ogr2ogr_66(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " ../ogr/data/poly.shp ../ogr/data/poly.shp"
     )
     assert (
@@ -2226,6 +2220,7 @@ def hexify_double(val):
 
 ###############################################################################
 # Test coordinates values are preserved for identity transformations
+
 
 # The x value is such that x * k * (1/k) != x with k the common factor used in degrees unit definition
 # If the coordinates are converted to radians and back to degrees the value of x will be altered
@@ -2278,7 +2273,7 @@ def test_ogr2ogr_check_identity_transformation(ogr2ogr_path, tmp_path, x, y, sri
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_if_ok(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " -if GPKG /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert ret == ""
@@ -2293,7 +2288,7 @@ def test_ogr2ogr_if_ok(ogr2ogr_path):
 @pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_if_ko(ogr2ogr_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " -if GeoJSON /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert "Unable to open datasource" in err
@@ -2317,3 +2312,30 @@ def test_ogr2ogr_parquet_dataset_limit(ogr2ogr_path, tmp_path):
 
     ds = ogr.Open(out_filename)
     assert ds.GetLayer(0).GetFeatureCount() == 1
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/14826
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("WFS")
+@pytest.mark.require_driver("VRT")
+def test_ogr2ogr_invalid_wfs_vrt(ogr2ogr_path, tmp_path):
+
+    out_filename = str(tmp_path / "out.csv")
+    vrt_filename = str(tmp_path / "out.vrt")
+    with open(vrt_filename, "wt") as f:
+        f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="layer">
+     <SrcDataSource>WFS:http://this-is-an-unreachable.url</SrcDataSource>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        ogr2ogr_path + f" {out_filename} {vrt_filename}",
+        append_returncode_to_stderr=True,
+    )
+    assert "Return code = 0" not in err
+    assert "Could not resolve host:" in err
+    assert "Error retrieving the source layer definition" in err

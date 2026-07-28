@@ -290,8 +290,8 @@ int OGRS57DataSource::Open(const char *pszFilename)
 
         for (int iModule = 0; iModule < nModules; iModule++)
         {
-            bSuccess &= CPL_TO_BOOL(
-                papoModules[iModule]->CollectClassList(anClassCount));
+            bSuccess = bSuccess &&
+                       papoModules[iModule]->CollectClassList(anClassCount);
         }
 
         bool bGeneric = false;

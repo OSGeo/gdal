@@ -38,6 +38,7 @@
 #include "pdfdrivercore.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -94,8 +95,13 @@ class GDALPDFOutputDev final : public SplashOutputDev
 
   public:
     GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
-                     bool reverseVideoA, SplashColorPtr paperColorA)
-        : SplashOutputDev(colorModeA, bitmapRowPadA, reverseVideoA,
+                     [[maybe_unused]] bool reverseVideoA,
+                     SplashColorPtr paperColorA)
+        : SplashOutputDev(colorModeA, bitmapRowPadA,
+#if POPPLER_MAJOR_VERSION < 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION < 2)
+                          reverseVideoA,
+#endif
                           paperColorA),
           bEnableVector(TRUE), bEnableText(TRUE), bEnableBitmap(TRUE)
     {
@@ -176,10 +182,34 @@ class GDALPDFOutputDev final : public SplashOutputDev
         }
     }
 
-    virtual void setSoftMaskFromImageMask(GfxState *state, Object *ref,
-                                          Stream *str, int width, int height,
-                                          bool invert, bool inlineImg,
-                                          double *baseMatrix) override
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 5) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 5 &&              \
+     POPPLER_MICRO_VERSION > 0)
+    bool setSoftMaskFromImageMask(GfxState *state, Object *ref, Stream *str,
+                                  int width, int height, bool invert,
+                                  bool inlineImg,
+                                  std::array<double, 6> &baseMatrix) override
+    {
+        if (bEnableBitmap)
+            return SplashOutputDev::setSoftMaskFromImageMask(
+                state, ref, str, width, height, invert, inlineImg, baseMatrix);
+        else
+            str->close();
+        return true;
+    }
+#else
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+    void setSoftMaskFromImageMask(GfxState *state, Object *ref, Stream *str,
+                                  int width, int height, bool invert,
+                                  bool inlineImg,
+                                  std::array<double, 6> &baseMatrix) override
+#else
+    void setSoftMaskFromImageMask(GfxState *state, Object *ref, Stream *str,
+                                  int width, int height, bool invert,
+                                  bool inlineImg, double *baseMatrix) override
+#endif
     {
         if (bEnableBitmap)
             SplashOutputDev::setSoftMaskFromImageMask(
@@ -187,9 +217,16 @@ class GDALPDFOutputDev final : public SplashOutputDev
         else
             str->close();
     }
+#endif
 
-    virtual void unsetSoftMaskFromImageMask(GfxState *state,
-                                            double *baseMatrix) override
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+    void unsetSoftMaskFromImageMask(GfxState *state,
+                                    std::array<double, 6> &baseMatrix) override
+#else
+    void unsetSoftMaskFromImageMask(GfxState *state,
+                                    double *baseMatrix) override
+#endif
     {
         if (bEnableBitmap)
             SplashOutputDev::unsetSoftMaskFromImageMask(state, baseMatrix);
@@ -284,7 +321,8 @@ class GDALPDFDumper
     GDALPDFDumper(const char *pszFilename, const char *pszDumpFile,
                   int nDepthLimitIn = -1)
         : nDepthLimit(nDepthLimitIn),
-          bDumpParent(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE"))
+          bDumpParent(
+              CPLTestBool(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE")))
     {
         if (strcmp(pszDumpFile, "stderr") == 0)
             f = stderr;
@@ -510,13 +548,15 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = 256;
         nBlockYSize = 256;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (poPDFDS->m_nBlockXSize)
     {
         nBlockXSize = poPDFDS->m_nBlockXSize;
         nBlockYSize = poPDFDS->m_nBlockYSize;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (nRasterXSize < 64 * 1024 * 1024 / nRasterYSize)
     {
@@ -527,7 +567,8 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
     {
         nBlockXSize = std::min(1024, nRasterXSize);
         nBlockYSize = std::min(1024, nRasterYSize);
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -1427,6 +1468,8 @@ class GDALPDFiumOCContext final : public CPDF_OCContextInterface
     {
     }
 
+    ~GDALPDFiumOCContext() override;
+
     virtual bool
     CheckOCGDictVisible(const CPDF_Dictionary *pOCGDict) const override
     {
@@ -1442,6 +1485,8 @@ class GDALPDFiumOCContext final : public CPDF_OCContextInterface
         return m_DefaultOCContext->CheckOCGDictVisible(pOCGDict);
     }
 };
+
+GDALPDFiumOCContext::~GDALPDFiumOCContext() = default;
 
 /************************************************************************/
 /*                     GDALPDFiumRenderDeviceDriver                     */
@@ -1469,7 +1514,7 @@ class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
     {
     }
 
-    virtual ~GDALPDFiumRenderDeviceDriver() = default;
+    ~GDALPDFiumRenderDeviceDriver() override;
 
     void SetEnableVector(int bFlag)
     {
@@ -1608,13 +1653,13 @@ class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
                                        options, blend_type);
     }
 
-    virtual bool ContinueDIBits(CFX_AggImageRenderer *handle,
+    virtual bool ContinueDIBits(Continuation *continuation,
                                 PauseIndicatorIface *pPause) override
     {
-        return m_poParent->ContinueDIBits(handle, pPause);
+        return m_poParent->ContinueDIBits(continuation, pPause);
     }
 
-    virtual bool DrawDeviceText(const pdfium::span<const TextCharPos> &pCharPos,
+    virtual bool DrawDeviceText(pdfium::span<const TextCharPos> pCharPos,
                                 CFX_Font *pFont,
                                 const CFX_Matrix &mtObject2Device,
                                 float font_size, uint32_t color,
@@ -1688,6 +1733,8 @@ class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
     }
 #endif
 };
+
+GDALPDFiumRenderDeviceDriver::~GDALPDFiumRenderDeviceDriver() = default;
 
 /************************************************************************/
 /*                       PDFiumRenderPageBitmap()                       */
@@ -1807,15 +1854,21 @@ myRenderPageWithContext(PDFDataset *poDS, CPDF_PageRenderContext *pContext,
                      color_scheme, bNeedToRestore, pause);
 }
 
+namespace
+{
 class MyRenderDevice final : public CFX_RenderDevice
 {
 
   public:
+    ~MyRenderDevice() override;
+
     // Substitution for CFX_DefaultRenderDevice::Attach
     bool Attach(const RetainPtr<CFX_DIBitmap> &pBitmap, bool bRgbByteOrder,
                 const RetainPtr<CFX_DIBitmap> &pBackdropBitmap,
                 bool bGroupKnockout, const char *pszRenderingOptions);
 };
+
+MyRenderDevice::~MyRenderDevice() = default;
 
 bool MyRenderDevice::Attach(const RetainPtr<CFX_DIBitmap> &pBitmap,
                             bool bRgbByteOrder,
@@ -1869,6 +1922,7 @@ bool MyRenderDevice::Attach(const RetainPtr<CFX_DIBitmap> &pBitmap,
     SetDeviceDriver(std::move(driver));
     return true;
 }
+}  // namespace
 
 void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
                                         int start_x, int start_y, int size_x,
@@ -2469,6 +2523,8 @@ static void PDFFreeDoc(PDFDoc *poDoc)
 {
     if (poDoc)
     {
+#if POPPLER_MAJOR_VERSION < 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION < 2)
         /* hack to avoid potential cross heap issues on Win32 */
         /* str is the VSIPDFFileStream object passed in the constructor of
          * PDFDoc */
@@ -2476,6 +2532,7 @@ static void PDFFreeDoc(PDFDoc *poDoc)
         // VSIPDFFileStream::FillBuffer() */
         delete poDoc->str;
         poDoc->str = nullptr;
+#endif
 
         delete poDoc;
     }
@@ -3561,21 +3618,21 @@ void PDFDataset::AddLayer(const std::string &osName, int iPage)
 /*                           SortLayerList()                            */
 /************************************************************************/
 
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void PDFDataset::SortLayerList()
 {
-    // Sort layers by prioritizing page number and then insertion index
-    std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
-              [](const LayerStruct &a, const LayerStruct &b)
-              {
-                  if (a.iPage < b.iPage)
-                      return true;
-                  if (a.iPage > b.iPage)
-                      return false;
-                  return a.nInsertIdx < b.nInsertIdx;
-              });
+    if (!m_oLayerNameSet.empty())
+    {
+        // Sort layers by prioritizing page number and then insertion index
+        std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
+                  [](const LayerStruct &a, const LayerStruct &b)
+                  {
+                      if (a.iPage < b.iPage)
+                          return true;
+                      if (a.iPage > b.iPage)
+                          return false;
+                      return a.nInsertIdx < b.nInsertIdx;
+                  });
+    }
 }
 
 /************************************************************************/
@@ -3730,7 +3787,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 }
                 else
                     osCurLayer = std::move(osName);
-                    // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+                // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)
@@ -4630,8 +4687,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (globalParamsCreatedByGDAL)
                 registerErrorCallback();
             Object oObj;
-            auto poStream =
-                new VSIPDFFileStream(fp.get(), pszFilename, std::move(oObj));
+            auto poStream = std::make_unique<VSIPDFFileStream>(
+                fp.get(), pszFilename, std::move(oObj));
+            const bool bFoundLinearizedHint = poStream->FoundLinearizedHint();
 #if POPPLER_MAJOR_VERSION > 22 ||                                              \
     (POPPLER_MAJOR_VERSION == 22 && POPPLER_MINOR_VERSION > 2)
             std::optional<GooString> osUserPwd;
@@ -4639,8 +4697,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 osUserPwd = std::optional<GooString>(pszUserPwd);
             try
             {
-                poDocPoppler =
-                    new PDFDoc(poStream, std::optional<GooString>(), osUserPwd);
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+                poDocPoppler = new PDFDoc(
+                    std::move(poStream), std::optional<GooString>(), osUserPwd);
+#else
+                poDocPoppler = new PDFDoc(
+                    poStream.release(), std::optional<GooString>(), osUserPwd);
+#endif
             }
             catch (const std::exception &e)
             {
@@ -4652,7 +4716,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             GooString *poUserPwd = nullptr;
             if (pszUserPwd)
                 poUserPwd = new GooString(pszUserPwd);
-            poDocPoppler = new PDFDoc(poStream, nullptr, poUserPwd);
+            poDocPoppler = new PDFDoc(poStream.release(), nullptr, poUserPwd);
             delete poUserPwd;
 #endif
             if (globalParamsCreatedByGDAL)
@@ -4702,8 +4766,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 PDFFreeDoc(poDocPoppler);
                 return nullptr;
             }
-            else if (poDocPoppler->isLinearized() &&
-                     !poStream->FoundLinearizedHint())
+            else if (poDocPoppler->isLinearized() && !bFoundLinearizedHint)
             {
                 // This is a likely defect of poppler Linearization.cc file that
                 // recognizes a file as linearized if the /Linearized hint is
@@ -5021,7 +5084,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             aosList.AddNameValue(szKey, CPLSPrintf("Page %d of %s", i + 1,
                                                    poOpenInfo->pszFilename));
         }
-        poDS->SetMetadata(aosList.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosList.List(), GDAL_MDD_SUBDATASETS);
     }
 
 #ifdef HAVE_POPPLER
@@ -5151,7 +5214,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
     {
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 5) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 5 &&              \
+     POPPLER_MICRO_VERSION > 0)
+        const auto *psMediaBox = &(poPagePoppler->getMediaBox());
+#else
         const auto *psMediaBox = poPagePoppler->getMediaBox();
+#endif
         dfX1 = psMediaBox->x1;
         dfY1 = psMediaBox->y1;
         dfX2 = psMediaBox->x2;
@@ -5266,7 +5336,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->CheckTiledRaster();
         if (!poDS->m_aiTiles.empty())
-            poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     GDALPDFObject *poLGIDict = nullptr;
@@ -5282,38 +5353,40 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 if (dfRotation == 90)
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4];
-                    poDS->m_gt[1] = poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[2] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5];
-                    poDS->m_gt[4] = poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_gt[5] = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.xorig = poDS->m_adfCTM[4];
+                    poDS->m_gt.xscale = poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.xrot = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.yorig = poDS->m_adfCTM[5];
+                    poDS->m_gt.yrot = poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.yscale = poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else if (dfRotation == -90 || dfRotation == 270)
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
-                                    poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
-                                    poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
-                    poDS->m_gt[1] = -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[2] = -poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
-                                    poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
-                                    poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
-                    poDS->m_gt[4] = -poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_gt[5] = -poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.xorig =
+                        poDS->m_adfCTM[4] +
+                        poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
+                    poDS->m_gt.xscale = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.xrot = -poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.yorig =
+                        poDS->m_adfCTM[5] +
+                        poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
+                    poDS->m_gt.yrot = -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.yscale = -poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
-                                    poDS->m_adfCTM[2] * dfY2 +
-                                    poDS->m_adfCTM[0] * dfX1;
-                    poDS->m_gt[1] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[2] = -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
-                                    poDS->m_adfCTM[3] * dfY2 +
-                                    poDS->m_adfCTM[1] * dfX1;
-                    poDS->m_gt[4] = poDS->m_adfCTM[1] / dfUserUnit;
-                    poDS->m_gt[5] = -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.xorig = poDS->m_adfCTM[4] +
+                                       poDS->m_adfCTM[2] * dfY2 +
+                                       poDS->m_adfCTM[0] * dfX1;
+                    poDS->m_gt.xscale = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.xrot = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.yorig = poDS->m_adfCTM[5] +
+                                       poDS->m_adfCTM[3] * dfY2 +
+                                       poDS->m_adfCTM[1] * dfX1;
+                    poDS->m_gt.yrot = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.yscale = -poDS->m_adfCTM[3] / dfUserUnit;
                 }
 
                 poDS->m_bGeoTransformValid = true;
@@ -5426,14 +5499,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                                     CPLSPrintf("PDF_IMAGE:%d:%d:%s", iPage,
                                                poObj->GetRefNum().toInt(),
                                                pszFilename),
-                                    "SUBDATASETS");
+                                    GDAL_MDD_SUBDATASETS);
                                 poDS->SetMetadataItem(
                                     CPLSPrintf("SUBDATASET_%d_DESC",
                                                nSubDataset),
                                     CPLSPrintf("Georeferenced image of size "
                                                "%dx%d of page %d of %s",
                                                nW, nH, iPage, pszFilename),
-                                    "SUBDATASETS");
+                                    GDAL_MDD_SUBDATASETS);
                             }
                             else if (poObj->GetRefNum().toInt() == nImageNum)
                             {
@@ -5470,25 +5543,26 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* If pixel size or top left coordinates are very close to an int, round
      * them to the int */
     double dfEps =
-        (fabs(poDS->m_gt[0]) > 1e5 && fabs(poDS->m_gt[3]) > 1e5) ? 1e-5 : 1e-8;
-    poDS->m_gt[0] = ROUND_IF_CLOSE(poDS->m_gt[0], dfEps);
-    poDS->m_gt[1] = ROUND_IF_CLOSE(poDS->m_gt[1]);
-    poDS->m_gt[3] = ROUND_IF_CLOSE(poDS->m_gt[3], dfEps);
-    poDS->m_gt[5] = ROUND_IF_CLOSE(poDS->m_gt[5]);
+        (fabs(poDS->m_gt.xorig) > 1e5 && fabs(poDS->m_gt.yorig) > 1e5) ? 1e-5
+                                                                       : 1e-8;
+    poDS->m_gt.xorig = ROUND_IF_CLOSE(poDS->m_gt.xorig, dfEps);
+    poDS->m_gt.xscale = ROUND_IF_CLOSE(poDS->m_gt.xscale);
+    poDS->m_gt.yorig = ROUND_IF_CLOSE(poDS->m_gt.yorig, dfEps);
+    poDS->m_gt.yscale = ROUND_IF_CLOSE(poDS->m_gt.yscale);
 
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
         // Attempt to "fix" the loss of precision due to the use of float32 for
         // numbers by pdfium
-        if ((fabs(poDS->m_gt[0]) > 1e5 || fabs(poDS->m_gt[3]) > 1e5) &&
-            fabs(poDS->m_gt[0] - std::round(poDS->m_gt[0])) <
-                1e-6 * fabs(poDS->m_gt[0]) &&
-            fabs(poDS->m_gt[1] - std::round(poDS->m_gt[1])) <
-                1e-3 * fabs(poDS->m_gt[1]) &&
-            fabs(poDS->m_gt[3] - std::round(poDS->m_gt[3])) <
-                1e-6 * fabs(poDS->m_gt[3]) &&
-            fabs(poDS->m_gt[5] - std::round(poDS->m_gt[5])) <
-                1e-3 * fabs(poDS->m_gt[5]))
+        if ((fabs(poDS->m_gt.xorig) > 1e5 || fabs(poDS->m_gt.yorig) > 1e5) &&
+            fabs(poDS->m_gt.xorig - std::round(poDS->m_gt.xorig)) <
+                1e-6 * fabs(poDS->m_gt.xorig) &&
+            fabs(poDS->m_gt.xscale - std::round(poDS->m_gt.xscale)) <
+                1e-3 * fabs(poDS->m_gt.xscale) &&
+            fabs(poDS->m_gt.yorig - std::round(poDS->m_gt.yorig)) <
+                1e-6 * fabs(poDS->m_gt.yorig) &&
+            fabs(poDS->m_gt.yscale - std::round(poDS->m_gt.yscale)) <
+                1e-3 * fabs(poDS->m_gt.yscale))
         {
             for (int i = 0; i < 6; i++)
             {
@@ -5525,10 +5599,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                     x = (-dfX1 + poRing->getX(i)) * dfUserUnit;
                     y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
-                double X =
-                    poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
-                double Y =
-                    poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
+                double X = poDS->m_gt.xorig + x * poDS->m_gt.xscale +
+                           y * poDS->m_gt.xrot;
+                double Y = poDS->m_gt.yorig + x * poDS->m_gt.yrot +
+                           y * poDS->m_gt.yscale;
                 poRing->setPoint(i, X, Y);
             }
         }
@@ -7255,17 +7329,20 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     // If the non scaling terms of the geotransform are significantly smaller
     // than the pixel size, then nullify them as being just artifacts of
     //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
-    const double dfPixelSize = std::min(fabs(m_gt[1]), fabs(m_gt[5]));
-    const double dfRotationShearTerm = std::max(fabs(m_gt[2]), fabs(m_gt[4]));
+    const double dfPixelSize = std::min(fabs(m_gt.xscale), fabs(m_gt.yscale));
+    const double dfRotationShearTerm =
+        std::max(fabs(m_gt.xrot), fabs(m_gt.yrot));
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
         (m_bUseLib.test(PDFLIB_PDFIUM) &&
-         std::min(fabs(m_gt[2]), fabs(m_gt[4])) < 1e-5 * dfPixelSize))
+         std::min(fabs(m_gt.xrot), fabs(m_gt.yrot)) < 1e-5 * dfPixelSize))
     {
-        dfLRX = m_gt[0] + nRasterXSize * m_gt[1] + nRasterYSize * m_gt[2];
-        dfLRY = m_gt[3] + nRasterXSize * m_gt[4] + nRasterYSize * m_gt[5];
-        m_gt[1] = (dfLRX - m_gt[0]) / nRasterXSize;
-        m_gt[5] = (dfLRY - m_gt[3]) / nRasterYSize;
-        m_gt[2] = m_gt[4] = 0;
+        dfLRX =
+            m_gt.xorig + nRasterXSize * m_gt.xscale + nRasterYSize * m_gt.xrot;
+        dfLRY =
+            m_gt.yorig + nRasterXSize * m_gt.yrot + nRasterYSize * m_gt.yscale;
+        m_gt.xscale = (dfLRX - m_gt.xorig) / nRasterXSize;
+        m_gt.yscale = (dfLRY - m_gt.yorig) / nRasterYSize;
+        m_gt.xrot = m_gt.yrot = 0;
     }
 
     return TRUE;
@@ -7402,7 +7479,7 @@ CSLConstList PDFDataset::GetMetadata(const char *pszDomain)
         return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
     if (EQUAL(pszDomain, "LAYERS") || EQUAL(pszDomain, "xml:XMP") ||
-        EQUAL(pszDomain, "SUBDATASETS"))
+        EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
@@ -7440,7 +7517,7 @@ CPLErr PDFDataset::SetMetadata(CSLConstList papszMetadata,
         m_bXMPDirty = true;
         return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
-    else if (EQUAL(pszDomain, "SUBDATASETS"))
+    else if (EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
@@ -7530,7 +7607,7 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         m_bXMPDirty = true;
         return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
-    else if (EQUAL(pszDomain, "SUBDATASETS"))
+    else if (EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
@@ -7723,6 +7800,7 @@ class GDALPDFListLayersAlgorithm final : public GDALAlgorithm
                         std::string("List layers of a PDF dataset"),
                         "/drivers/raster/pdf.html")
     {
+        AddProgressArg(/* hidden = */ true);
         AddInputDatasetArg(&m_dataset, GDAL_OF_RASTER | GDAL_OF_VECTOR);
         AddOutputFormatArg(&m_format).SetDefault(m_format).SetChoices("json",
                                                                       "text");

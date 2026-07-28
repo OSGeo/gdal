@@ -766,7 +766,7 @@ int OGRGPXDataSource::Create(const char *pszFilename, CSLConstList papszOptions)
         }
         if (pszMetadataAuthorEmail)
         {
-            std::string osEmail = pszMetadataAuthorEmail;
+            const std::string osEmail(pszMetadataAuthorEmail);
             auto nPos = osEmail.find('@');
             if (nPos != std::string::npos)
             {

@@ -331,7 +331,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         n.a8[0] = 1;
         n.a8[1] = 0;
         (void)n;
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
         assert(n.a16 == 256);
 #else
         assert(n.a16 == 1);
@@ -378,8 +378,6 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER; /* non-existent directory */
     tif->tif_curdircount = TIFF_NON_EXISTENT_DIR_NUMBER;
     tif->tif_curoff = 0;
-    tif->tif_curstrip = (uint32_t)-1; /* invalid strip */
-    tif->tif_row = (uint32_t)-1;      /* read/write pre-increment */
     tif->tif_clientdata = clientdata;
     tif->tif_readproc = readproc;
     tif->tif_writeproc = writeproc;
@@ -398,6 +396,10 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_max_cumulated_mem_alloc = opts->max_cumulated_mem_alloc;
         tif->tif_warn_about_unknown_tags = opts->warn_about_unknown_tags;
     }
+
+    /* Reset tif->tif_dir structure to zero and
+     * initialize some IFD strile counter and index parameters. */
+    _TIFFResetTifDirAndInitStrileCounters(&tif->tif_dir);
 
     if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc)
     {
@@ -481,13 +483,13 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         switch (*cp)
         {
             case 'b':
-#ifndef WORDS_BIGENDIAN
+#if !WORDS_BIGENDIAN
                 if (m & O_CREAT)
                     tif->tif_flags |= TIFF_SWAB;
 #endif
                 break;
             case 'l':
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
                 if ((m & O_CREAT))
                     tif->tif_flags |= TIFF_SWAB;
 #endif
@@ -539,6 +541,8 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
                     tif->tif_flags |=
                         (TIFF_LAZYSTRILELOAD_ASKED | TIFF_DEFERSTRILELOAD);
                 break;
+            default:
+                break;
         }
 
 #ifdef DEFER_STRILE_LOAD
@@ -562,7 +566,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         /*
          * Setup header and write.
          */
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
         tif->tif_header.common.tiff_magic =
             (tif->tif_flags & TIFF_SWAB) ? TIFF_LITTLEENDIAN : TIFF_BIGENDIAN;
 #else
@@ -655,13 +659,13 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     }
     if (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN)
     {
-#ifndef WORDS_BIGENDIAN
+#if !WORDS_BIGENDIAN
         tif->tif_flags |= TIFF_SWAB;
 #endif
     }
     else
     {
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
         tif->tif_flags |= TIFF_SWAB;
 #endif
     }
@@ -781,6 +785,8 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             if (!TIFFDefaultDirectory(tif))
                 goto bad;
             return (tif);
+        default:
+            break;
     }
 bad:
     tif->tif_mode = O_RDONLY; /* XXX avoid flush */
@@ -862,7 +868,7 @@ int TIFFIsTiled(TIFF *tif) { return (isTiled(tif)); }
 /*
  * Return current row being read/written.
  */
-uint32_t TIFFCurrentRow(TIFF *tif) { return (tif->tif_row); }
+uint32_t TIFFCurrentRow(TIFF *tif) { return (tif->tif_dir.td_row); }
 
 /*
  * Return index of the current directory.
@@ -872,12 +878,12 @@ tdir_t TIFFCurrentDirectory(TIFF *tif) { return (tif->tif_curdir); }
 /*
  * Return current strip.
  */
-uint32_t TIFFCurrentStrip(TIFF *tif) { return (tif->tif_curstrip); }
+uint32_t TIFFCurrentStrip(TIFF *tif) { return (tif->tif_dir.td_curstrip); }
 
 /*
  * Return current tile.
  */
-uint32_t TIFFCurrentTile(TIFF *tif) { return (tif->tif_curtile); }
+uint32_t TIFFCurrentTile(TIFF *tif) { return (tif->tif_dir.td_curtile); }
 
 /*
  * Return nonzero if the file has byte-swapped data.

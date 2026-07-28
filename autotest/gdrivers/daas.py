@@ -46,7 +46,7 @@ def startup_and_cleanup():
         "GDAL_DAAS_ACCESS_TOKEN": None,
     }
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+    gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:
@@ -215,7 +215,7 @@ def test_daas_authentication():
             }
         ):
             with gdal.quiet_errors():
-                gdal.OpenEx(
+                gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["X_FORWARDED_USER=user"],
@@ -264,7 +264,7 @@ def test_daas_authentication():
             }
         ):
             with gdal.quiet_errors():
-                gdal.OpenEx(
+                gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port
                 )
@@ -983,7 +983,7 @@ def test_daas_getbuffer_failure():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1143,7 +1143,7 @@ Content-Type: application/json
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port
             )
@@ -1162,11 +1162,7 @@ Content-Type: application/json
 Content-Disposition: form-data; name="Data";
 Content-Type: image/png
 
-""".replace(
-            "\n", "\r\n"
-        ).encode(
-            "ascii"
-        )
+""".replace("\n", "\r\n").encode("ascii")
         + png_content
         + """
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
@@ -1176,9 +1172,7 @@ Content-Type: application/json
 {"properties":{"format":"application/octet-stream","width":2,"height":1}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""".replace(
             "\n", "\r\n"
-        ).encode(
-            "ascii"
-        ),
+        ).encode("ascii"),
     )
     handler.add("POST", "/getbuffer", 404)
 
@@ -1202,11 +1196,7 @@ Content-Type: application/json
 Content-Disposition: form-data; name="Data";
 Content-Type: image/png
 
-""".replace(
-            "\n", "\r\n"
-        ).encode(
-            "ascii"
-        )
+""".replace("\n", "\r\n").encode("ascii")
         + png_content
         + """
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
@@ -1216,9 +1206,7 @@ Content-Type: application/json
 {"properties":{"format":"application/octet-stream","width":2,"height":1}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""".replace(
             "\n", "\r\n"
-        ).encode(
-            "ascii"
-        ),
+        ).encode("ascii"),
     )
     handler.add("POST", "/getbuffer", 404)
 
@@ -1277,7 +1265,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=PNG"],
@@ -1297,7 +1285,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=JPEG"],
@@ -1317,7 +1305,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=FOO"],
@@ -1371,7 +1359,7 @@ def test_daas_getbuffer_pixel_encoding_failures():
             }
         ):
             with gdal.quiet_errors():
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                     % gdaltest.webserver_port,
                     open_options=["PIXEL_ENCODING=JPEG2000"],
@@ -1427,7 +1415,7 @@ def test_daas_getbuffer_raw():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1481,9 +1469,7 @@ Content-Type: application/json
     "Band 2",
     "Band 3"
   ]
-}""".encode(
-        "ascii"
-    )
+}""".encode("ascii")
     handler.add(
         "POST",
         "/getbuffer",
@@ -1566,7 +1552,7 @@ def test_daas_getbuffer(tmp_vsimem, pixel_encoding, drv_name, drv_options, mime_
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=" + pixel_encoding],
@@ -1606,9 +1592,7 @@ Content-Type: application/json
 {"properties":{"format":"application/octet-stream","width":100,"height":100}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""".replace(
             "\n", "\r\n"
-        ).encode(
-            "ascii"
-        )
+        ).encode("ascii")
     )
     handler.add(
         "POST",
@@ -1672,7 +1656,7 @@ def test_daas_getbuffer_overview():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1732,9 +1716,7 @@ Content-Type: application/json
   "bands":[
     "Band 1"
   ]
-}""".encode(
-        "ascii"
-    )
+}""".encode("ascii")
     handler.add(
         "POST",
         "/getbuffer",
@@ -1796,7 +1778,7 @@ def test_daas_rasterio():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1851,9 +1833,7 @@ Content-Type: application/json
   "bands":[
     "Band 1"
   ]
-}""".encode(
-        "ascii"
-    )
+}""".encode("ascii")
     handler.add(
         "POST",
         "/getbuffer",
@@ -1894,7 +1874,7 @@ Content-Type: application/json
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -1951,9 +1931,7 @@ Content-Type: application/json
   "bands":[
     "Band 1"
   ]
-}""".encode(
-        "ascii"
-    )
+}""".encode("ascii")
     handler.add(
         "POST",
         "/getbuffer",
@@ -2035,7 +2013,7 @@ def test_daas_mask():
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port,
                 open_options=["PIXEL_ENCODING=RAW"],
@@ -2057,9 +2035,7 @@ Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
 {"properties":{"format":"application/octet-stream","width":2,"height":3,"bands":[{"name":"PAN","pixelType":"Byte"}]}}
---bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (
-        "XXXXXX"
-    )
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % ("XXXXXX")
     response = response.replace("\n", "\r\n")
 
     response2 = """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
@@ -2072,9 +2048,7 @@ Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
 {"properties":{"format":"application/octet-stream","width":2,"height":3,"bands":[{"name":"THE_MASK","pixelType":"Byte"}]}}
---bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (
-        "GHIJKL"
-    )
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % ("GHIJKL")
     response2 = response2.replace("\n", "\r\n")
 
     handler = webserver.SequentialHandler()
@@ -2180,7 +2154,7 @@ def test_daas_png_response_4_bands_for_a_one_band_request(tmp_vsimem):
                 % gdaltest.webserver_port,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar"
                 % gdaltest.webserver_port
             )
@@ -2210,11 +2184,7 @@ def test_daas_png_response_4_bands_for_a_one_band_request(tmp_vsimem):
 Content-Disposition: form-data; name="Data";
 Content-Type: image/png
 
-""".replace(
-            "\n", "\r\n"
-        ).encode(
-            "ascii"
-        )
+""".replace("\n", "\r\n").encode("ascii")
         + png_content
         + """
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
@@ -2224,9 +2194,7 @@ Content-Type: application/json
 {"properties":{"format":"application/octet-stream","width":2,"height":3}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""".replace(
             "\n", "\r\n"
-        ).encode(
-            "ascii"
-        ),
+        ).encode("ascii"),
     )
 
     with webserver.install_http_handler(handler):

@@ -25,20 +25,43 @@
  =====================================================================*/
 
 /**
- * \file cpl_error.h
- *
- * CPL error handling services.
+ \file cpl_error.h
+
+ CPL error handling services.
+
+ \verbatim embed:rst
+ See :ref:`error handling <error_handling>` for an introduction.
+ \endverbatim
  */
 
 CPL_C_START
 
-/** Error category */
+/** Error category / error level.
+ *
+ * Can be used either as return code for a number of functions of the GDAL API,
+ * or as the error level in warning/errors raised by CPLError().
+ */
 typedef enum
 {
+    /** No error. Only used as the return value of a function */
     CE_None = 0,
+
+    /** Debug message. Emitted through CPLDebug(). */
     CE_Debug = 1,
+
+    /** Non-nominal situation that is worth bringing to the attention of the
+     * user, but that does not prevent the ongoing operation to complete.
+     */
     CE_Warning = 2,
+
+    /** Error that prevents the current operation to succeed. Other following
+     * GDAL operations might succeed.
+     */
     CE_Failure = 3,
+
+    /** Fatal unrecoverable error. The process is terminated with
+     * abort() after it is emitted.
+     */
     CE_Fatal = 4
 } CPLErr;
 
@@ -79,7 +102,7 @@ typedef enum
 /** Error number */
 typedef int CPLErrorNum;
 
-/** No error */
+/** No error. Category used by CPLDebug() */
 #define CPLE_None 0
 /** Application defined error */
 #define CPLE_AppDefined 1
@@ -305,6 +328,15 @@ void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
  * @since GDAL 3.1
  */
 #define CPLDebugOnly(...) CPLDebug(__VA_ARGS__)
+#elif __cplusplus >= 201703L
+#define CPLDebugOnly(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (false)                                                   \
+        {                                                                      \
+            CPLDebug(__VA_ARGS__);                                             \
+        }                                                                      \
+    } while (0)
 #else
 /** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
  * @since GDAL 3.1
@@ -318,10 +350,14 @@ void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
 void CPL_DLL CPL_STDCALL _CPLAssert(const char *, const char *,
                                     int) CPL_NO_RETURN;
 
+/** Assert on an expression, in DEBUG or release mode */
+#define CPLAssertAlways(expr)                                                  \
+    ((expr) ? (void)(0) : _CPLAssert(#expr, __FILE__, __LINE__))
+
 #if defined(DEBUG) && !defined(CPPCHECK)
 /** Assert on an expression. Only enabled in DEBUG mode */
-#define CPLAssert(expr)                                                        \
-    ((expr) ? (void)(0) : _CPLAssert(#expr, __FILE__, __LINE__))
+#define CPLAssert(expr) CPLAssertAlways(expr)
+
 /** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode
  * (useful to 'consume' a error return variable) */
 #define CPLAssertAlwaysEval(expr) CPLAssert(expr)

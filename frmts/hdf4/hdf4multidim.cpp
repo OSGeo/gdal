@@ -1412,7 +1412,8 @@ HDF4SwathSubGroup::OpenMDArray(const std::string &osName, CSLConstList) const
     }
     dimNames.resize(nStrBufSize);
     if (SWfieldinfo(m_poSwathHandle->m_handle, osName.c_str(), &iRank,
-                    &aiDimSizes[0], &iNumType, &dimNames[0]) < 0)
+                    &aiDimSizes[0], &iNumType, &dimNames[0],
+                    nStrBufSize + 1) < 0)
     {
         return nullptr;
     }

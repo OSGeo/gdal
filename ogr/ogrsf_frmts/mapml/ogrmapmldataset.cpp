@@ -1000,8 +1000,8 @@ OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
 
     if (m_oSRS.IsEmpty())
     {
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName();
+        const char *pszAuthCode = poSRS->GetAuthorityCode();
         if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
         {
             const int nEPSGCode = atoi(pszAuthCode);
@@ -1134,9 +1134,7 @@ void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
     bool bFirstRing = true;
     for (const auto poRing : *poPoly)
     {
-        const bool bReversePointOrder =
-            (bFirstRing && CPL_TO_BOOL(poRing->isClockwise())) ||
-            (!bFirstRing && !CPL_TO_BOOL(poRing->isClockwise()));
+        const bool bReversePointOrder = bFirstRing == poRing->isClockwise();
         bFirstRing = false;
         CPLXMLNode *psCoordinates =
             CPLCreateXMLNode(psPolygon, CXT_Element, "map-coordinates");

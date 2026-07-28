@@ -13,6 +13,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <cassert>
 #include <cstring>
 
 #include "cpl_conv.h"
@@ -464,7 +465,7 @@ CSLConstList GDALOverviewDataset::GetMetadata(const char *pszDomain)
     CSLConstList papszMD = poMainDS->GetMetadata(pszDomain);
 
     // We may need to rescale some values from the RPC metadata domain.
-    if (pszDomain != nullptr && EQUAL(pszDomain, MD_DOMAIN_RPC) &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_RPC) &&
         papszMD != nullptr)
     {
         if (papszMD_RPC)
@@ -490,7 +491,7 @@ CSLConstList GDALOverviewDataset::GetMetadata(const char *pszDomain)
     }
 
     // We may need to rescale some values from the GEOLOCATION metadata domain.
-    if (pszDomain != nullptr && EQUAL(pszDomain, "GEOLOCATION") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_GEOLOCATION) &&
         papszMD != nullptr)
     {
         if (papszMD_GEOLOCATION)
@@ -531,8 +532,8 @@ const char *GDALOverviewDataset::GetMetadataItem(const char *pszName,
             return pszValue;
     }
 
-    if (pszDomain != nullptr &&
-        (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "GEOLOCATION")))
+    if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
+                                 EQUAL(pszDomain, GDAL_MDD_GEOLOCATION)))
     {
         CSLConstList papszMD = GetMetadata(pszDomain);
         return CSLFetchNameValue(papszMD, pszName);
@@ -551,19 +552,28 @@ GDALOverviewBand::GDALOverviewBand(GDALOverviewDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     if (nBandIn == 0)
     {
-        poUnderlyingBand =
-            GetOverviewEx(poDSIn->poMainDS->GetRasterBand(1), poDSIn->nOvrLevel)
-                ->GetMaskBand();
+        poUnderlyingBand = GetOverviewEx(poDSIn->poMainDS->GetRasterBand(1),
+                                         poDSIn->nOvrLevel);
+        assert(poUnderlyingBand);
+        poUnderlyingBand = poUnderlyingBand->GetMaskBand();
     }
     else
     {
         poUnderlyingBand = GetOverviewEx(
             poDSIn->poMainDS->GetRasterBand(nBandIn), poDSIn->nOvrLevel);
     }
+    assert(poUnderlyingBand);
     eDataType = poUnderlyingBand->GetRasterDataType();
     poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/

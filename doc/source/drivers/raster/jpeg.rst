@@ -190,10 +190,10 @@ The following creation options are supported:
       :since: 3.7
 
       Whether conversion should be lossless.
-      In AUTO or YES mode, if LOSSLESS=YES and the source dataset uses JPEG
+      In AUTO or YES mode, if the source dataset uses JPEG
       compression, or JPEGXL compression with a JPEG reconstruction box, lossless
       recoding from it is done.
-      If set to NO, or in AUTO mode and the source is not compatible of lossless
+      If set to NO, or in AUTO mode and the source is not compatible with lossless
       transcoding, the regular conversion code path is taken.
 
 -  .. co:: PROGRESSIVE

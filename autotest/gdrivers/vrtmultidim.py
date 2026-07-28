@@ -25,16 +25,13 @@ pytestmark = pytest.mark.skipif(
     reason="VRT driver open missing",
 )
 
+
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
 
 
 def test_vrtmultidim_dimension():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="2" type="foo" direction="bar" indexingVariable="X"/>
@@ -54,36 +51,35 @@ def test_vrtmultidim_dimension():
     assert dim_0.GetSize() == 2
     assert dim_0.GetType() == "foo"
     assert dim_0.GetDirection() == "bar"
-    with gdal.quiet_errors():
-        gdal.ErrorReset()
-        assert not dim_0.GetIndexingVariable()
-        assert gdal.GetLastErrorMsg() == "Cannot find variable X"
+    with pytest.raises(Exception, match="Cannot find variable X"):
+        dim_0.GetIndexingVariable()
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        assert dim_0.GetIndexingVariable() is None
+
     dim_1 = dims[1]
     assert dim_1.GetName() == "Y"
     assert dim_1.GetSize() == 1234567890123
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Missing name"):
+        gdal.Open(
             """<VRTDataset>
         <Group MISSING_name="/">
         </Group>
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Missing name"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="INVALID">
         </Group>
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Missing name attribute on Dimension"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension MISSING_name="X" size="1"/>
@@ -91,10 +87,11 @@ def test_vrtmultidim_dimension():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(
+        Exception, match="Invalid value for size attribute on Dimension"
+    ):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" MISSING_size="1"/>
@@ -102,12 +99,11 @@ def test_vrtmultidim_dimension():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_attribute():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Attribute name="foo">
@@ -160,8 +156,11 @@ def test_vrtmultidim_attribute():
     attrs = ar.GetAttributes()
     assert len(attrs) == 1
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+
+@pytest.mark.parametrize(
+    "xml,error",
+    (
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute MISSING_name="foo">
@@ -170,12 +169,10 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Missing name attribute on Attribute",
+            id="missing_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute name="foo">
@@ -184,12 +181,10 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Unhandled content for DataType or Missing",
+            id="missing_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Attribute name="foo">
@@ -198,14 +193,23 @@ def test_vrtmultidim_attribute():
         </Attribute>
         </Group>
     </VRTDataset>""",
+            "Unknown DataType",
+            id="invalid_datatype",
+        ),
+    ),
+)
+def test_vrtmultidim_attribute_invalid(xml, error):
+
+    with pytest.raises(Exception, match=error):
+        gdal.Open(
+            xml,
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_subgroup_and_cross_references():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="20" indexingVariable="X"/>
@@ -274,19 +278,20 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert Y.GetDimensionCount() == 1
     assert Y.GetDimensions()[0].GetSize() == 30
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+
+@pytest.mark.parametrize(
+    "xml,error",
+    (
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Group MISSING_name="subgroup"/>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Missing name attribute on Group",
+            id="missing_group_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array MISSING_name="X">
@@ -294,12 +299,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Missing name attribute on Array",
+            id="missing_array_name",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -307,12 +310,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Unhandled content for DataType or Missing",
+            id="missing_array_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -320,12 +321,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Unknown DataType",
+            id="invalid_array_datatype",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -334,12 +333,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Missing ref attribute on DimensionRef",
+            id="missing_dimensionref_ref",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -348,12 +345,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Cannot find dimension INVALID in this group",
+            id="invalid_dimensionref_ref",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -362,12 +357,10 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
-            gdal.OF_MULTIDIM_RASTER,
-        )
-        assert not ds
-
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+            "Cannot find dimension /INVALID",
+            id="invalid_dimensionref_ref_2",
+        ),
+        pytest.param(
             """<VRTDataset>
         <Group name="/">
             <Array name="X">
@@ -376,14 +369,23 @@ def test_vrtmultidim_subgroup_and_cross_references():
             </Array>
         </Group>
     </VRTDataset>""",
+            "Cannot find group INVALID_GROUP",
+            id="invalid_dimensionref_ref_3",
+        ),
+    ),
+)
+def test_vrtmultidim_missing_or_invalid_attributes(xml, error):
+
+    with pytest.raises(Exception, match=error):
+        gdal.Open(
+            xml,
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_srs():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="4"/>
@@ -413,7 +415,7 @@ def test_vrtmultidim_srs():
 
 def test_vrtmultidim_nodata_unit_offset_scale():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar1">
@@ -457,7 +459,7 @@ def test_vrtmultidim_nodata_unit_offset_scale():
 
 def test_vrtmultidim_RegularlySpacedValues():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="X" size="4"/>
@@ -478,8 +480,8 @@ def test_vrtmultidim_RegularlySpacedValues():
         "d" * 2, X.Read(array_start_idx=[1], count=[2], array_step=[2])
     ) == (11.0, 32.0)
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="start attribute missing"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" size="4"/>
@@ -492,10 +494,9 @@ def test_vrtmultidim_RegularlySpacedValues():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="increment attribute missing"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="X" size="4"/>
@@ -508,12 +509,11 @@ def test_vrtmultidim_RegularlySpacedValues():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_ConstantValue():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -549,8 +549,8 @@ def test_vrtmultidim_ConstantValue():
     ar = rg.OpenMDArray("no_dim")
     assert struct.unpack("d", ar.Read()) == (50,)
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Wrong number of values in offset"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -566,10 +566,9 @@ def test_vrtmultidim_ConstantValue():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Wrong value in offset"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -585,10 +584,9 @@ def test_vrtmultidim_ConstantValue():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Wrong number of values in count"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -604,10 +602,9 @@ def test_vrtmultidim_ConstantValue():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Wrong value in count"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -623,10 +620,9 @@ def test_vrtmultidim_ConstantValue():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="Wrong value in count"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4"/>
@@ -642,12 +638,11 @@ def test_vrtmultidim_ConstantValue():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_InlineValues():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -695,8 +690,8 @@ def test_vrtmultidim_InlineValues():
     ar = rg.OpenMDArray("no_dim")
     assert struct.unpack("d", ar.Read()) == (50,)
 
-    with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+    with pytest.raises(Exception, match="(Invalid content|Integer overflow)"):
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Dimension name="Y" size="4000000"/>
@@ -712,7 +707,6 @@ def test_vrtmultidim_InlineValues():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
-        assert not ds
 
 
 def test_vrtmultidim_Source():
@@ -739,7 +733,7 @@ def test_vrtmultidim_Source():
 </VRTDataset>""",
         )
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -915,39 +909,39 @@ def test_vrtmultidim_Source():
 
         ar = rg.OpenMDArray("ar_non_existing_source")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="No such file or directory"):
+            ar.Read()
 
         ar = rg.OpenMDArray("ar_invalid_source_slab_offset")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="Invalid SourceSlab.offset"):
+            ar.Read()
 
         ar = rg.OpenMDArray("ar_invalid_number_of_dimensions")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="Inconsistent number of dimensions"):
+            ar.Read()
 
         ar = rg.OpenMDArray("ar_non_existing_array_source")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="Cannot find array"):
+            ar.Read()
 
         ar = rg.OpenMDArray("ar_view_invalid")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="out of bounds"):
+            ar.Read()
 
         ar = rg.OpenMDArray("ar_transposed_invalid")
         assert ar
-        with gdal.quiet_errors():
-            assert not ar.Read()
+        with pytest.raises(Exception, match="axis missing"):
+            ar.Read()
 
         gdal.Unlink("/vsimem/src.vrt")
 
         # Check that the cache is correctly working by opening a second
         # dataset after having remove the source
-        ds2 = gdal.OpenEx(
+        ds2 = gdal.Open(
             """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -976,7 +970,7 @@ def test_vrtmultidim_Source():
 
     # Check that the cache is correctly working: we should get an error
     # now that all referencing arrays have been cleaned up
-    ds2 = gdal.OpenEx(
+    ds2 = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -998,13 +992,13 @@ def test_vrtmultidim_Source():
     assert ds2
     rg2 = ds2.GetRootGroup()
     ar2 = rg2.OpenMDArray("ar")
-    with gdal.quiet_errors():
-        assert not ar2.Read()
+    with pytest.raises(Exception, match="No such file or directory"):
+        ar2.Read()
 
 
 def test_vrtmultidim_Source_classic_dataset():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Dimension name="Y" size="4"/>
@@ -1045,8 +1039,8 @@ def test_vrtmultidim_Source_classic_dataset():
 
     ar_wrong_band = rg.OpenMDArray("ar_wrong_band")
     assert ar_wrong_band
-    with gdal.quiet_errors():
-        assert not ar_wrong_band.Read()
+    with pytest.raises(Exception, match="Illegal band"):
+        ar_wrong_band.Read()
 
 
 def _validate(content):
@@ -1141,7 +1135,7 @@ def test_vrtmultidim_serialize():
     </Group>
 </VRTDataset>""",
     )
-    ds = gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    ds = gdal.Open(tmpfile, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
     rg = ds.GetRootGroup()
     ds = None
     attr = rg.CreateAttribute("foo", [], gdal.ExtendedDataType.CreateString())
@@ -1154,9 +1148,7 @@ def test_vrtmultidim_serialize():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="X" size="3" />
     <Dimension name="Y" size="4" indexingVariable="Y" />
@@ -1220,7 +1212,6 @@ def test_vrtmultidim_serialize():
   </Group>
 </VRTDataset>
 """
-    )
 
     _validate(got_data)
 
@@ -1261,9 +1252,7 @@ def test_vrtmultidim_createcopy():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="dim" size="3" />
     <Array name="array">
@@ -1283,7 +1272,6 @@ def test_vrtmultidim_createcopy():
   </Group>
 </VRTDataset>
 """
-    )
 
     _validate(got_data)
 
@@ -1301,18 +1289,20 @@ def test_vrtmultidim_createmultidimensional():
 
     dim = rg.CreateDimension("dim", "", "", 3)
     assert dim
-    with gdal.quiet_errors():
-        assert not rg.CreateDimension("", "", "", 1)
-        assert not rg.CreateDimension("dim", "", "", 1)
+    with pytest.raises(Exception, match="Empty dimension name"):
+        rg.CreateDimension("", "", "", 1)
+    with pytest.raises(Exception, match="dimension .* already exists"):
+        rg.CreateDimension("dim", "", "", 1)
 
     assert rg.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
-    with gdal.quiet_errors():
-        assert not rg.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
-        assert not rg.CreateAttribute(
-            "attr_2dim", [1, 2], gdal.ExtendedDataType.CreateString()
-        )
-        assert not rg.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
-        assert not rg.CreateAttribute(
+    with pytest.raises(Exception, match="Empty attribute name"):
+        rg.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
+    with pytest.raises(Exception, match="Only single dimensional attribute handled"):
+        rg.CreateAttribute("attr_2dim", [1, 2], gdal.ExtendedDataType.CreateString())
+    with pytest.raises(Exception, match="attribute .* already exists"):
+        rg.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
+    with pytest.raises(Exception, match="Too large attribute"):
+        rg.CreateAttribute(
             "attr_too_big", [4000 * 1000 * 1000], gdal.ExtendedDataType.CreateString()
         )
 
@@ -1320,27 +1310,30 @@ def test_vrtmultidim_createmultidimensional():
         "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32), ["BLOCKSIZE=2"]
     )
     assert ar[0]
-    with gdal.quiet_errors():
-        assert not rg.CreateMDArray(
-            "", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
-        )
-        assert not rg.CreateMDArray(
-            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
-        )
-        assert not rg.CreateMDArray(
+    with pytest.raises(Exception, match="Empty array name not supported"):
+        rg.CreateMDArray("", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    with pytest.raises(Exception, match="array .* already exists"):
+        rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    with pytest.raises(
+        Exception,
+        match="One input dimension is not a VRTDimension",
+    ):
+        rg.CreateMDArray(
             "ar2", [dim_other], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
         )
 
     assert ar.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
-    with gdal.quiet_errors():
-        assert not ar.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
-        assert not ar.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
+    with pytest.raises(Exception, match="Empty attribute name not supported"):
+        ar.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
+    with pytest.raises(Exception, match="attribute .* already exists"):
+        ar.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
 
     subg = rg.CreateGroup("subgroup")
     assert subg
-    with gdal.quiet_errors():
-        assert not rg.CreateGroup("subgroup")
-        assert not rg.CreateGroup("")
+    with pytest.raises(Exception, match="group .* already exists"):
+        rg.CreateGroup("subgroup")
+    with pytest.raises(Exception, match="Empty group name not supported"):
+        rg.CreateGroup("")
 
     ds.FlushCache()
 
@@ -1349,9 +1342,7 @@ def test_vrtmultidim_createmultidimensional():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="dim" size="3" />
     <Attribute name="attr">
@@ -1369,10 +1360,9 @@ def test_vrtmultidim_createmultidimensional():
   </Group>
 </VRTDataset>
 """
-    )
     _validate(got_data)
 
-    with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("ar")
         assert ar.GetBlockSize() == [2]
@@ -1492,33 +1482,28 @@ def test_vrtmultidim_arraysource_derivedarray_getmask():
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_no_array_in_array_source():
 
     with pytest.raises(
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <ArraySource>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_no_SourceFilename():
 
     with pytest.raises(
         Exception, match="Cannot find <SourceFilename> in <SingleSourceArray>"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1528,19 +1513,16 @@ def test_vrtmultidim_arraysource_error_no_SourceFilename():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_no_SourceArray():
 
     with pytest.raises(
         Exception, match="Cannot find <SourceArray> in <SingleSourceArray>"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1550,17 +1532,14 @@ def test_vrtmultidim_arraysource_error_no_SourceArray():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_wrong_SourceFilename():
 
     with pytest.raises(Exception, match="i/do/not/exist.nc"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1570,17 +1549,14 @@ def test_vrtmultidim_arraysource_error_wrong_SourceFilename():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_wrong_SourceArray():
 
     with pytest.raises(Exception, match="Cannot find array"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1590,20 +1566,17 @@ def test_vrtmultidim_arraysource_error_wrong_SourceArray():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_not_a_2D_array():
 
     with pytest.raises(
         Exception,
         match="Array referenced in <ArraySource> should be a two-dimensional array",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1613,37 +1586,31 @@ def test_vrtmultidim_arraysource_error_not_a_2D_array():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_no_source_array_in_DerivedArray():
 
     with pytest.raises(
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <DerivedArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
             <DerivedArray/>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_unknown_step():
 
     with pytest.raises(Exception, match="Unknown <Step>.<wrong> element"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1656,19 +1623,16 @@ def test_vrtmultidim_arraysource_error_unknown_step():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_view_missing_expr():
 
     with pytest.raises(
         Exception, match="Cannot find 'expr' attribute in <View> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1681,19 +1645,16 @@ def test_vrtmultidim_arraysource_error_view_missing_expr():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_transpose_missing_order():
 
     with pytest.raises(
         Exception, match="Cannot find 'newOrder' attribute in <Transpose> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1706,17 +1667,14 @@ def test_vrtmultidim_arraysource_error_transpose_missing_order():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_resample_wrong_dimension():
 
     with pytest.raises(Exception, match="Missing name attribute on Dimension"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1733,17 +1691,14 @@ def test_vrtmultidim_arraysource_error_resample_wrong_dimension():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_resample_wrong_srs():
 
     with pytest.raises(Exception, match="Invalid value for <SRS>"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1760,19 +1715,16 @@ def test_vrtmultidim_arraysource_error_resample_wrong_srs():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_error_resample_wrong_option():
 
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1789,17 +1741,14 @@ def test_vrtmultidim_arraysource_error_resample_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_grid_missing_gridoptions():
 
     with pytest.raises(Exception, match="Cannot find <GridOptions> in <Grid> element"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1815,20 +1764,17 @@ def test_vrtmultidim_arraysource_grid_missing_gridoptions():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_grid_invalid_XArray():
 
     with pytest.raises(
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <XArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1846,20 +1792,17 @@ def test_vrtmultidim_arraysource_grid_invalid_XArray():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_grid_invalid_YArray():
 
     with pytest.raises(
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <YArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1877,19 +1820,16 @@ def test_vrtmultidim_arraysource_grid_invalid_YArray():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_grid_error_wrong_option():
 
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1907,19 +1847,16 @@ def test_vrtmultidim_arraysource_grid_error_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_arraysource_getmask_error_wrong_option():
 
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1936,11 +1873,9 @@ def test_vrtmultidim_arraysource_getmask_error_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
-@gdaltest.enable_exceptions()
 @pytest.mark.parametrize(
     "source_slab,dest_slab,view_expr,expected",
     [
@@ -1973,8 +1908,7 @@ def test_vrtmultidim_arraysource_view(
             0, 0, 2, 3, array.array("B", [0, 1, 2, 3, 4, 5])
         )
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="2" rasterYSize="3">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="2" rasterYSize="3">
   <VRTRasterBand dataType="Byte" band="1">
     <ArraySource>
       <DerivedArray>
@@ -1995,8 +1929,7 @@ def test_vrtmultidim_arraysource_view(
       </DerivedArray>
     </ArraySource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     assert array.array("B", ds.GetRasterBand(1).ReadRaster()) == array.array(
         "B", expected
@@ -2004,7 +1937,6 @@ def test_vrtmultidim_arraysource_view(
 
 
 @pytest.mark.require_driver("HDF5")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
 
     if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
@@ -2013,7 +1945,7 @@ def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
     gdal.Run(
         "mdim convert", input="data/hdf5/deflate.h5", output=tmp_vsimem / "out.vrt"
     )
-    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         info = array.GetRawBlockInfo([0, 0])
@@ -2035,11 +1967,10 @@ def test_vrtmultidim_GetRawBlockInfo_single_source(tmp_vsimem):
 
 
 @pytest.mark.require_driver("netCDF")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_GetRawBlockInfo_unblocked(tmp_vsimem):
 
     gdal.Run("mdim convert", input="data/netcdf/byte.nc", output=tmp_vsimem / "out.vrt")
-    with gdal.OpenEx(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_vsimem / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         with pytest.raises(Exception, match="block size for dimension 0 is unknown"):
@@ -2048,7 +1979,6 @@ def test_vrtmultidim_GetRawBlockInfo_unblocked(tmp_vsimem):
 
 @pytest.mark.require_driver("netCDF")
 @pytest.mark.require_driver("HDF5")
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
 
     if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
@@ -2074,7 +2004,7 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
         output=tmp_path / "out.vrt",
     )
 
-    with gdal.OpenEx(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(tmp_path / "out.vrt", gdal.OF_MULTIDIM_RASTER) as ds:
         array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
 
         for y in range(10):
@@ -2086,10 +2016,9 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
             assert "out_top.nc" in info.GetFilename()
 
 
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_overview_by_ref():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2114,10 +2043,9 @@ def test_vrtmultidim_overview_by_ref():
     assert ar.GetOverview(0).GetFullName() == "/ar2"
 
 
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_overview_by_ref_wrong():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2139,10 +2067,9 @@ def test_vrtmultidim_overview_by_ref_wrong():
         ar.GetOverview(0)
 
 
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_overview_inline():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         """<VRTDataset>
     <Group name="/">
         <Array name="ar">
@@ -2193,11 +2120,10 @@ def test_vrtmultidim_overview_inline():
     assert ar_from_band.GetOverview(0).GetDimensions()[1].GetSize() == 10
 
 
-@gdaltest.enable_exceptions()
 def test_vrtmultidim_overview_inline_wrong():
 
     with pytest.raises(Exception, match="Missing name attribute on Array"):
-        gdal.OpenEx(
+        gdal.Open(
             """<VRTDataset>
         <Group name="/">
             <Array name="ar">
@@ -2210,3 +2136,26 @@ def test_vrtmultidim_overview_inline_wrong():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
+
+
+@pytest.mark.require_driver("netCDF")
+def test_vrtmultidim_ref_vrtmultidim(tmp_vsimem):
+
+    # Check we don't dead lock on dataset closing
+    with gdal.Open(
+        "data/vrt/multidim_ref_multidim_vrt.vrt", gdal.OF_MULTIDIM_RASTER
+    ) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+        array.Read()
+
+
+@pytest.mark.require_driver("netCDF")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_GUESS_REGULARLY_SPACED_ARRAYS_disabled(tmp_vsimem):
+
+    src_ds = gdal.Open("data/netcdf/byte.nc", gdal.OF_MULTIDIM_RASTER)
+    gdal.GetDriverByName("VRT").CreateCopy(
+        tmp_vsimem / "out.vrt", src_ds, options=["GUESS_REGULARLY_SPACED_ARRAYS=NO"]
+    )
+    with gdal.VSIFile(tmp_vsimem / "out.vrt", "rb") as f:
+        assert b"RegularlySpacedValues" not in f.read()

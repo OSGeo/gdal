@@ -172,6 +172,13 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
                             poFeatureKML->sDescription.c_str());
         poFeature->SetFID(iNextKMLId_ - 1);
 
+        for (const auto &[key, value] : poFeatureKML->oFields)
+        {
+            const int nFieldIdx = poFeatureDefn_->GetFieldIndex(key.c_str());
+            if (nFieldIdx > 0)
+                poFeature->SetField(nFieldIdx, value.c_str());
+        }
+
         if (poFeature->GetGeometryRef() != nullptr && poSRS_ != nullptr)
         {
             poFeature->GetGeometryRef()->assignSpatialReference(poSRS_);

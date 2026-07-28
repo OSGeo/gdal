@@ -104,7 +104,7 @@ def generate_tif(comb_val):
                 has_strip = True
             count_non_none = count_non_none + 1
 
-    content = "\x49\x49\x2A\x00\x08\x00\x00\x00" + ("%c" % count_non_none) + "\x00"
+    content = "\x49\x49\x2a\x00\x08\x00\x00\x00" + ("%c" % count_non_none) + "\x00"
     for level, tag in enumerate(tags):
         code = tag[1]
         possible_vals = tag[2]

@@ -107,10 +107,9 @@ const char *OGRMultiCurve::getGeometryName() const
 /*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiCurve::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiCurve::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
-    return OGR_GT_IsCurve(eGeomType);
+    return CPL_TO_BOOL(OGR_GT_IsCurve(eGeomType));
 }
 
 /*! @cond Doxygen_Suppress */
@@ -160,7 +159,7 @@ std::string OGRMultiCurve::exportToWkt(const OGRWktOptions &opts,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
 {
     if (bLookForNonLinear)
         return OGRGeometryCollection::hasCurveGeometry(TRUE);

@@ -33,6 +33,7 @@ def test_gdal2tiles_logger():
         argv=[
             "gdal2tiles",
             "--verbose",
+            "--legacy",
             "-z",
             "13-14",
             "../../gcore/data/byte.tif",

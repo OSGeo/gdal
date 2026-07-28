@@ -106,7 +106,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
     src_name = os.path.join("data", "shp", name + ".shp")
-    shp_ds = ogr.Open(src_name)
+    shp_ds = gdal.Open(src_name, open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
@@ -310,7 +310,7 @@ def test_ogr_flatgeobuf_directory():
     ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/multi_layer")
+    ds = gdal.Open("/vsimem/multi_layer")
     assert set(ds.GetFileList()) == set(
         ["/vsimem/multi_layer/bar.fgb", "/vsimem/multi_layer/foo_.fgb"]
     )
@@ -333,8 +333,8 @@ def test_ogr_flatgeobuf_srs_epsg():
     lyr = ds.GetLayer(0)
     srs_got = lyr.GetSpatialRef()
     assert srs_got.IsSame(srs)
-    assert srs_got.GetAuthorityName(None) == "EPSG"
-    assert srs_got.GetAuthorityCode(None) == "32631"
+    assert srs_got.GetAuthorityName() == "EPSG"
+    assert srs_got.GetAuthorityCode() == "32631"
     ds = None
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
@@ -353,8 +353,8 @@ def test_ogr_flatgeobuf_srs_other_authority():
     lyr = ds.GetLayer(0)
     srs_got = lyr.GetSpatialRef()
     assert srs_got.IsSame(srs)
-    assert srs_got.GetAuthorityName(None) == "ESRI"
-    assert srs_got.GetAuthorityCode(None) == "104009"
+    assert srs_got.GetAuthorityName() == "ESRI"
+    assert srs_got.GetAuthorityCode() == "104009"
     ds = None
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
@@ -372,7 +372,7 @@ def test_ogr_flatgeobuf_srs_no_authority():
     lyr = ds.GetLayer(0)
     srs_got = lyr.GetSpatialRef()
     assert srs_got.IsSame(srs)
-    assert srs_got.GetAuthorityName(None) is None
+    assert srs_got.GetAuthorityName() is None
     ds = None
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
@@ -412,7 +412,7 @@ def test_ogr_flatgeobuf_alldatatypes():
 
 
 def test_ogr_flatgeobuf_mixed():
-    srcDS = gdal.OpenEx("data/testfgb/testmixed.geojson")
+    srcDS = gdal.Open("data/testfgb/testmixed.geojson")
     destDS = gdal.VectorTranslate(
         "/vsimem/test.fgb",
         srcDS=srcDS,
@@ -509,7 +509,7 @@ def test_ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
         pytest.skip()
 
-    (process, port) = webserver.launch(handler=WFSHTTPHandler)
+    process, port = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
 
@@ -560,7 +560,7 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
     f["bool"] = True
     f["short"] = -32768
     f["float"] = 1.5
-    f["bin"] = b"\x01\xFF"
+    f["bin"] = b"\x01\xff"
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
 
@@ -584,7 +584,7 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
     assert f["bool"] == True
     assert f["short"] == -32768
     assert f["float"] == 1.5
-    assert f.GetFieldAsBinary("bin") == b"\x01\xFF"
+    assert f.GetFieldAsBinary("bin") == b"\x01\xff"
     f = lyr.GetNextFeature()
     assert f.GetFieldAsBinary("bin") == b""
     ds = None
@@ -598,7 +598,7 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
 )
 def test_ogr_flatgeobuf_write_to_vsizip(options):
 
-    srcDS = gdal.OpenEx("data/poly.shp")
+    srcDS = gdal.Open("data/poly.shp")
     destDS = gdal.VectorTranslate(
         "/vsizip//vsimem/test.fgb.zip/test.fgb",
         srcDS=srcDS,
@@ -846,7 +846,7 @@ def test_ogr_flatgeobuf_ossfuzz_bug_29462():
 )
 def test_ogr_flatgeobuf_read_invalid_geometries(filename):
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(filename)
+        ds = gdal.Open(filename)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception, match="Fatal error parsing feature"):
             for f in lyr:
@@ -865,7 +865,7 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
     ],
 )
 def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
-    with gdal.OpenEx(filename) as ds:
+    with gdal.Open(filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         ogrtest.check_feature_geometry(f, "MULTILINESTRING ((0 0,1 1))")
@@ -876,7 +876,7 @@ def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
 
 def test_ogr_flatgeobuf_read_coordinate_metadata_wkt():
 
-    ds = gdal.OpenEx("data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb")
+    ds = gdal.Open("data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb")
     lyr = ds.GetLayer(0)
     got_srs = lyr.GetSpatialRef()
     assert got_srs is not None
@@ -897,10 +897,10 @@ def test_ogr_flatgeobuf_coordinate_epoch():
     ds.CreateLayer("foo", srs=srs)
     ds = None
 
-    ds = gdal.OpenEx(filename)
+    ds = gdal.Open(filename)
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     assert srs.GetCoordinateEpoch() == 2021.3
     assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
     ds = None
@@ -914,8 +914,7 @@ def test_ogr_flatgeobuf_coordinate_epoch():
 def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCRS["myTRF2021",
+    srs.SetFromUserInput("""GEOGCRS["myTRF2021",
     DYNAMIC[
         FRAMEEPOCH[2010]],
     DATUM["myTRF2021",
@@ -929,8 +928,7 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
             ANGLEUNIT["degree",0.0174532925199433]],
         AXIS["geodetic longitude (Lon)",east,
             ORDER[2],
-            ANGLEUNIT["degree",0.0174532925199433]]]"""
-    )
+            ANGLEUNIT["degree",0.0174532925199433]]]""")
     srs.SetCoordinateEpoch(2021.3)
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
@@ -939,7 +937,7 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
     ds.CreateLayer("foo", srs=srs)
     ds = None
 
-    ds = gdal.OpenEx(filename)
+    ds = gdal.Open(filename)
     lyr = ds.GetLayer(0)
     got_srs = lyr.GetSpatialRef()
     assert got_srs.IsSame(srs)
@@ -1014,7 +1012,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
     f.SetField("float64", 1.250123)
     f.SetField("str", "abc")
     f.SetField("datetime", "2022-05-31T12:34:56.789Z")
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -1064,7 +1062,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
         assert batch[fieldname][0] == f.GetField(fieldname)
     assert batch["str"][0] == f.GetField("str").encode("utf-8")
     assert batch["datetime"][0] == numpy.datetime64("2022-05-31T12:34:56.789")
-    assert bytes(batch["binary"][0]) == b"\xDE\xAD"
+    assert bytes(batch["binary"][0]) == b"\xde\xad"
     assert len(bytes(batch["wkb_geometry"][0])) == 21
 
     assert batch["OGC_FID"][1] == 1
@@ -1180,7 +1178,7 @@ def test_ogr_flatgeobuf_issue_7401():
 
     ds = None
 
-    ds = gdal.OpenEx("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
+    ds = gdal.Open("/vsimem/test.fgb", open_options=["VERIFY_BUFFERS=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
@@ -1332,7 +1330,7 @@ def test_ogr_flatgeobuf_write_arrow(tmp_vsimem):
     src_feature.SetField("field_real", 18.4)
     src_feature.SetField("field_string", "abc def")
     src_feature.SetFieldBinary("field_binary", b"\x00\x01")
-    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     src_feature.SetField("field_date", "2011/11/11")
     src_feature.SetField("field_time", "14:10:35")
     src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
@@ -1371,9 +1369,7 @@ def test_ogr_flatgeobuf_write_arrow(tmp_vsimem):
     dst_ds = ogr.Open(filename)
     dst_lyr = dst_ds.GetLayer(0)
     dst_feature = dst_lyr.GetNextFeature()
-    assert (
-        str(dst_feature)
-        == """OGRFeature(dst_lyr):0
+    assert str(dst_feature) == """OGRFeature(dst_lyr):0
   field_bool (Integer(Boolean)) = 1
   field_integer (Integer) = 17
   field_int16 (Integer(Int16)) = -17
@@ -1395,7 +1391,6 @@ def test_ogr_flatgeobuf_write_arrow(tmp_vsimem):
   POINT (1 2)
 
 """
-    )
 
 
 ###############################################################################
@@ -1628,7 +1623,7 @@ def test_ogr_flatgeobuf_write_empty_geometries_no_spatial_index(tmp_vsimem):
         f = ogr.Feature(lyr.GetLayerDefn())
         lyr.CreateFeature(f)
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
@@ -1645,8 +1640,84 @@ def test_ogr_flatgeobuf_write_empty_file_no_spatial_index(tmp_vsimem):
             "test", geom_type=ogr.wkbPolygon, srs=srs, options=["SPATIAL_INDEX=NO"]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
         assert lyr.GetExtent(can_return_null=True) is None
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_in_vsimem(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_vsimem / "out.fgb") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_vsimem)) == {"out.fgb", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_regular(tmp_path):
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_path / "out.fgb") as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_path)) - {".", ".."} == {"out.fgb", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_vsizip(tmp_path):
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(
+        "/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")
+    ) as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open("/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+    with gdal.VSIFile(tmp_path / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_path)) - {".", ".."} == {"out.fgb.zip", "out_temp.fgb"}
+
+
+def test_ogr_flatgeobuf_write_check_temporary_file_TEMPORARY_DIR(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "wb") as f:
+        f.write(b"foo")
+
+    with gdal.GetDriverByName("FlatGeobuf").CreateVector(tmp_vsimem / "out.fgb") as ds:
+        with pytest.raises(Exception, match="Failed to create"):
+            ds.CreateLayer("test", options=["TEMPORARY_DIR=/i_do/not/exist"])
+        lyr = ds.CreateLayer("test", options=["TEMPORARY_DIR=" + str(tmp_vsimem)])
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out_temp.fgb", "rb") as f:
+        assert f.read() == b"foo"
+
+    assert set(gdal.ReadDir(tmp_vsimem)) == {"out.fgb", "out_temp.fgb"}

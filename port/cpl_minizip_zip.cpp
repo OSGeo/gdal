@@ -51,6 +51,7 @@
 #include <limits>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -1484,9 +1485,8 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw(zipFile file,
 
             if (zi->sozip_index)
             {
-                uint64_t nVal =
-                    static_cast<uint64_t>(zi->ci.totalCompressedData);
-                CPL_LSBPTR64(&nVal);
+                uint64_t nVal = CPL_AS_LSB(
+                    static_cast<uint64_t>(zi->ci.totalCompressedData));
                 memcpy(zi->sozip_index->data() + 24, &nVal, sizeof(uint64_t));
             }
         }
@@ -2192,7 +2192,7 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
             abyExtra.push_back(GByte('K'));
             abyExtra.push_back(GByte('V'));
             const uint16_t nDataLengthLE =
-                CPL_LSBWORD16(static_cast<uint16_t>(nDataLength));
+                CPL_AS_LSB(static_cast<uint16_t>(nDataLength));
             abyExtra.insert(
                 abyExtra.end(), reinterpret_cast<const GByte *>(&nDataLengthLE),
                 reinterpret_cast<const GByte *>(&nDataLengthLE) + 2);
@@ -2201,20 +2201,20 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
                             reinterpret_cast<const GByte *>("KeyValuePairs") +
                                 strlen("KeyValuePairs"));
             abyExtra.push_back(1);  // number of key/value pairs
-            const uint16_t nKeyLen =
-                CPL_LSBWORD16(static_cast<uint16_t>(strlen("Content-Type")));
+            const uint16_t nKeyLenLSB =
+                CPL_AS_LSB(static_cast<uint16_t>(strlen("Content-Type")));
             abyExtra.insert(abyExtra.end(),
-                            reinterpret_cast<const GByte *>(&nKeyLen),
-                            reinterpret_cast<const GByte *>(&nKeyLen) + 2);
+                            reinterpret_cast<const GByte *>(&nKeyLenLSB),
+                            reinterpret_cast<const GByte *>(&nKeyLenLSB) + 2);
             abyExtra.insert(abyExtra.end(),
                             reinterpret_cast<const GByte *>("Content-Type"),
                             reinterpret_cast<const GByte *>("Content-Type") +
                                 strlen("Content-Type"));
-            const uint16_t nValLen =
-                CPL_LSBWORD16(static_cast<uint16_t>(strlen(pszContentType)));
+            const uint16_t nValLenLSB =
+                CPL_AS_LSB(static_cast<uint16_t>(strlen(pszContentType)));
             abyExtra.insert(abyExtra.end(),
-                            reinterpret_cast<const GByte *>(&nValLen),
-                            reinterpret_cast<const GByte *>(&nValLen) + 2);
+                            reinterpret_cast<const GByte *>(&nValLenLSB),
+                            reinterpret_cast<const GByte *>(&nValLenLSB) + 2);
             abyExtra.insert(abyExtra.end(),
                             reinterpret_cast<const GByte *>(pszContentType),
                             reinterpret_cast<const GByte *>(
@@ -2378,7 +2378,7 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
     }
 
     VSIFSeekL(fpInput, 0, SEEK_END);
-    const auto nUncompressedSize = VSIFTellL(fpInput);
+    const uint64_t nUncompressedSize = VSIFTellL(fpInput);
     VSIFSeekL(fpInput, 0, SEEK_SET);
 
     CPLStringList aosNewsOptions(papszOptions);
@@ -2428,8 +2428,8 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
 
         bSeekOptimized = true;
 
-        aosNewsOptions.SetNameValue(
-            "UNCOMPRESSED_SIZE", CPLSPrintf(CPL_FRMT_GUIB, nUncompressedSize));
+        aosNewsOptions.SetNameValue("UNCOMPRESSED_SIZE",
+                                    CPLSPrintf("%" PRIu64, nUncompressedSize));
 
         zi->nOffsetSize = nOffsetSize;
         nExpectedIndexSize =
@@ -2454,20 +2454,19 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
         sozip_index.resize(32);
         uint32_t nVal32;
         // Version
-        nVal32 = CPL_LSBWORD32(1);
+        nVal32 = CPL_AS_LSB<uint32_t>(1);
         memcpy(sozip_index.data(), &nVal32, sizeof(nVal32));
         // Extra reserved space after 32 bytes of header
-        nVal32 = CPL_LSBWORD32(0);
+        nVal32 = CPL_AS_LSB<uint32_t>(0);
         memcpy(sozip_index.data() + 4, &nVal32, sizeof(nVal32));
         // Chunksize
-        nVal32 = CPL_LSBWORD32(nChunkSize);
+        nVal32 = CPL_AS_LSB<uint32_t>(nChunkSize);
         memcpy(sozip_index.data() + 8, &nVal32, sizeof(nVal32));
         // SOZIPIndexEltSize
-        nVal32 = CPL_LSBWORD32(static_cast<uint32_t>(nOffsetSize));
+        nVal32 = CPL_AS_LSB(static_cast<uint32_t>(nOffsetSize));
         memcpy(sozip_index.data() + 12, &nVal32, sizeof(nVal32));
         // Uncompressed size
-        uint64_t nVal64 = nUncompressedSize;
-        CPL_LSBPTR64(&nVal64);
+        uint64_t nVal64 = CPL_AS_LSB(nUncompressedSize);
         memcpy(sozip_index.data() + 16, &nVal64, sizeof(nVal64));
         zi->sozip_index = &sozip_index;
 

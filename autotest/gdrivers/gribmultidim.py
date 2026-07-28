@@ -24,7 +24,7 @@ pytestmark = pytest.mark.require_driver("GRIB")
 
 def test_grib_multidim_grib2_3d_same_ref_time_different_forecast_time():
 
-    ds = gdal.OpenEx("data/grib/ds.mint.bin", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/grib/ds.mint.bin", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -125,7 +125,7 @@ def test_grib_multidim_grib2_3d_same_ref_time_different_forecast_time():
 
 def test_grib_multidim_grib1_2d():
 
-    ds = gdal.OpenEx("data/grib/Sample_QuikSCAT.grb", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/grib/Sample_QuikSCAT.grb", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -170,7 +170,7 @@ def test_grib_multidim_grib1_2d():
 
 def test_grib_multidim_different_sizes_messages():
 
-    ds = gdal.OpenEx("data/grib/bug3246.grb", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/grib/bug3246.grb", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -204,9 +204,7 @@ def test_grib_multidim_different_sizes_messages():
 
 def test_grib_multidim_grib2_sidecar():
 
-    ds = gdal.OpenEx(
-        "data/grib/gfs.t06z.pgrb2.10p0.f010.grib2", gdal.OF_MULTIDIM_RASTER
-    )
+    ds = gdal.Open("data/grib/gfs.t06z.pgrb2.10p0.f010.grib2", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg

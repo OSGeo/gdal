@@ -1,5 +1,7 @@
 .. _gdal_raster_resize:
 
+.. program:: gdal_raster_resize
+
 ================================================================================
 ``gdal raster resize``
 ================================================================================
@@ -84,12 +86,17 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
 
 .. example::
    :title: Resize a dataset to 1000 columns and 500 lines using cubic resampling
+   :id: gdal-raster-resize-cubic
 
    .. code-block:: bash
 

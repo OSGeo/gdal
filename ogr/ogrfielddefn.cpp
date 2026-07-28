@@ -14,6 +14,7 @@
 #include "cpl_port.h"
 #include "ogr_feature.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "ogr_api.h"
@@ -1123,6 +1124,52 @@ int OGR_AreTypeSubTypeCompatible(OGRFieldType eType, OGRFieldSubType eSubType)
 }
 
 /************************************************************************/
+/*                        OGR_GetFieldTypeIsList                        */
+/************************************************************************/
+/**
+ * \brief Return if a type represents a list type
+ *
+ * @param eType the field type.
+ * @return TRUE if the type represents is a list type
+ * @since GDAL 3.14
+ */
+
+bool OGR_GetFieldTypeIsList(OGRFieldType eType)
+{
+    return eType == OFTIntegerList || eType == OFTInteger64List ||
+           eType == OFTRealList || eType == OFTStringList;
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldTypeAsScalar                       */
+/************************************************************************/
+/**
+ * \brief Return the scalar type associated with a list type, or the
+ *        input type (if input is already a scalar type)
+ *
+ * @param eType the field type.
+ * @return a scalar type
+ * @since GDAL 3.14
+ */
+
+OGRFieldType OGR_GetFieldTypeAsScalar(OGRFieldType eType)
+{
+    switch (eType)
+    {
+        case OFTIntegerList:
+            return OFTInteger;
+        case OFTInteger64List:
+            return OFTInteger64;
+        case OFTRealList:
+            return OFTReal;
+        case OFTStringList:
+            return OFTString;
+        default:
+            return eType;
+    }
+}
+
+/************************************************************************/
 /*                             GetJustify()                             */
 /************************************************************************/
 
@@ -1251,7 +1298,7 @@ void OGRFieldDefn::SetWidth(int nWidthIn)
                  "OGRFieldDefn::SetWidth() not allowed on a sealed object");
         return;
     }
-    nWidth = MAX(0, nWidthIn);
+    nWidth = std::max(0, nWidthIn);
 }
 
 /************************************************************************/
@@ -1786,7 +1833,7 @@ void OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
 
 void OGR_Fld_SetGenerated(OGRFieldDefnH hDefn, int bGeneratedIn)
 {
-    OGRFieldDefn::FromHandle(hDefn)->SetGenerated(bGeneratedIn);
+    OGRFieldDefn::FromHandle(hDefn)->SetGenerated(CPL_TO_BOOL(bGeneratedIn));
 }
 
 /************************************************************************/

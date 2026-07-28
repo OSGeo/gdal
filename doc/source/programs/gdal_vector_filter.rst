@@ -1,5 +1,7 @@
 .. _gdal_vector_filter:
 
+.. program:: gdal_vector_filter
+
 ================================================================================
 ``gdal vector filter``
 ================================================================================
@@ -41,6 +43,16 @@ Program-Specific Options
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
     Note that filtering does not clip geometries to the bounding box.
+
+.. option:: --bbox-crs <CRS>
+
+    .. versionadded:: 3.14
+
+    CRS in which the <xmin>,<ymin>,<xmax>,<ymax> values of :option:`--bbox`
+    are expressed. If not specified, it is assumed to be the CRS of each input
+    layer. Note that in the general case, the reprojected bounding box will
+    generally cover a larger area than the one specified in the bounding box CRS,
+    since a rectangle does not generally reproject to a rectangle.
 
 .. option:: --update-extent
 
@@ -89,6 +101,11 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -98,3 +115,23 @@ Examples
    .. code-block:: bash
 
         $ gdal vector filter --bbox=2,49,3,50 in.gpkg out.gpkg --overwrite
+
+.. example::
+   :title: Filter Shapefile features with an attribute query
+   :id: gdal-vector-filter-where
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read in.shp \
+            ! filter --where "CODE IS NULL AND NAME NOT LIKE 'TEMP%'" \
+            ! write out.gpkg
+
+      .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read in.shp `
+            ! filter --where "CODE IS NULL AND NAME NOT LIKE 'TEMP%'" `
+            ! write out.gpkg

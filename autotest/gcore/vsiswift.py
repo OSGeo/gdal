@@ -267,8 +267,7 @@ def test_vsiswift_fake_auth_v3_url(server):
             password = request_json["auth"]["identity"]["password"]["user"]["password"]
             assert password == "pwd"
 
-            content = (
-                """{
+            content = """{
                  "token" : {
                    "catalog" : [
                      {
@@ -294,9 +293,7 @@ def test_vsiswift_fake_auth_v3_url(server):
                      }
                    ]
                  }
-              }"""
-                % server.port
-            )
+              }""" % server.port
             content = content.encode("ascii")
             request.send_response(200)
             request.send_header("Content-Length", len(content))
@@ -377,8 +374,7 @@ def test_vsiswift_fake_auth_v3_application_credential_url(server):
             assert cred_id == "xxxyyycredential-idyyyxxx=="
             assert cred_secret == "xxxyyycredential-secretyyyxxx=="
 
-            content = (
-                """{
+            content = """{
                  "token" : {
                    "catalog" : [
                      {
@@ -404,9 +400,7 @@ def test_vsiswift_fake_auth_v3_application_credential_url(server):
                      }
                    ]
                  }
-              }"""
-                % server.port
-            )
+              }""" % server.port
             content = content.encode("ascii")
             request.send_response(200)
             request.send_header("Content-Length", len(content))

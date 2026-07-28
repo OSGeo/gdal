@@ -95,8 +95,7 @@ const char *OGRMultiPolygon::getGeometryName() const
 /*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiPolygon::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiPolygon::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
     return wkbFlatten(eGeomType) == wkbPolygon;
 }
@@ -154,7 +153,7 @@ std::string OGRMultiPolygon::exportToWkt(const OGRWktOptions &opts,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
+bool OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
 {
     return FALSE;
 }

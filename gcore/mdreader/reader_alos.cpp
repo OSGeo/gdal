@@ -98,7 +98,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     if (osBaseName.size() >= 6)
     {
         CPLString osRPCFileName = CPLFormFilenameSafe(
-            osDirName, (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(),
+            osDirName,
+            (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 6)).c_str(),
             "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
@@ -108,7 +109,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         {
             osRPCFileName = CPLFormFilenameSafe(
                 osDirName,
-                (std::string("RPC") + (osBaseName.c_str() + 6)).c_str(), "TXT");
+                (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 6)).c_str(),
+                "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);
@@ -120,7 +122,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     if (osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
     {
         CPLString osRPCFileName = CPLFormFilenameSafe(
-            osDirName, (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(),
+            osDirName,
+            (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 3)).c_str(),
             "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
@@ -130,7 +133,8 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         {
             osRPCFileName = CPLFormFilenameSafe(
                 osDirName,
-                (std::string("RPC") + (osBaseName.c_str() + 3)).c_str(), "TXT");
+                (std::string(GDAL_MDD_RPC) + (osBaseName.c_str() + 3)).c_str(),
+                "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
                 m_osRPBSourceFilename = std::move(osRPCFileName);
@@ -225,18 +229,18 @@ void GDALMDReaderALOS::LoadMetadata()
     if (nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(
-            m_papszIMAGERYMD, MD_NAME_SATELLITE,
+            m_papszIMAGERYMD, GDALMD_SATELLITEID,
             CPLSPrintf("%s %s", CPLStripQuotes(pszSatId1).c_str(),
                        CPLStripQuotes(pszSatId2).c_str()));
     }
     else if (nullptr != pszSatId1 && nullptr == pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId1));
     }
     else if (nullptr == pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId2));
     }
 
@@ -248,12 +252,12 @@ void GDALMDReaderALOS::LoadMetadata()
         if (nCC >= 99)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
             m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
                                 CPLSPrintf("%d", nCC * 10));
         }
     }
@@ -268,8 +272,8 @@ void GDALMDReaderALOS::LoadMetadata()
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
+                                           GDALMD_ACQUISITIONDATETIME, buffer);
     }
     else
     {
@@ -285,8 +289,8 @@ void GDALMDReaderALOS::LoadMetadata()
             struct tm tmBuf;
             strftime(buffer, 80, MD_DATETIMEFORMAT,
                      CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-            m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+            m_papszIMAGERYMD = CSLAddNameValue(
+                m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, buffer);
         }
     }
 }

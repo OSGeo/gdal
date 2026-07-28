@@ -365,7 +365,7 @@ def CheckLinearBinning(fname):
     band = ds.GetRasterBand(1)
     rat = band.GetDefaultRAT()
 
-    (state, mini, size) = rat.GetLinearBinning()
+    state, mini, size = rat.GetLinearBinning()
     if not state:
         raise HFATestError("GetLinearBinning failed")
 

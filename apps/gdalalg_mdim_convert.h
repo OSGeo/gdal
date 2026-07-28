@@ -13,7 +13,7 @@
 #ifndef GDALALG_MDIM_CONVERT_INCLUDED
 #define GDALALG_MDIM_CONVERT_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_mdim_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -21,7 +21,7 @@
 /*                       GDALMdimConvertAlgorithm                       */
 /************************************************************************/
 
-class GDALMdimConvertAlgorithm final : public GDALAlgorithm
+class GDALMdimConvertAlgorithm final : public GDALMdimPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "convert";
@@ -32,15 +32,9 @@ class GDALMdimConvertAlgorithm final : public GDALAlgorithm
     explicit GDALMdimConvertAlgorithm();
 
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_outputFormat{};
-    GDALArgDatasetValue m_inputDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    bool m_overwrite = false;
     bool m_strict = false;
     std::vector<std::string> m_arrays{};
     std::vector<std::string> m_arrayOptions{};

@@ -68,11 +68,20 @@ VSIPDFFileStream::~VSIPDFFileStream()
 /*                                copy()                                */
 /************************************************************************/
 
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+std::unique_ptr<BaseStream> VSIPDFFileStream::copy()
+{
+    return std::make_unique<VSIPDFFileStream>(poParent, nStart, bLimited,
+                                              nLength, dict.copy());
+}
+#else
 BaseStream *VSIPDFFileStream::copy()
 {
     return new VSIPDFFileStream(poParent, nStart, bLimited, nLength,
                                 dict.copy());
 }
+#endif
 
 /************************************************************************/
 /*                           makeSubStream()                            */

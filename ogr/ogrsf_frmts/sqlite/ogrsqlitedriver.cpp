@@ -431,7 +431,7 @@ void RegisterOGRSQLite()
         "column to create' default='OGC_FID'/>"
 #if SQLITE_VERSION_NUMBER >= 3037000
         "  <Option name='STRICT' type='boolean' description='Whether to create "
-        "the table in STRICT mode (only compatible of readers with sqlite >= "
+        "the table in STRICT mode (only compatible with readers with sqlite >= "
         "3.37)' default='NO'/>"
 #endif
         "</LayerCreationOptionList>");

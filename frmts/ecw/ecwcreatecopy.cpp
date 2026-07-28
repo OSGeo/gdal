@@ -588,7 +588,7 @@ CPLErr GDALECWCompressor::Initialize(
         (NCSFileBandInfo *)NCSMalloc(sizeof(NCSFileBandInfo) * nBands, true);
     for (iBand = 0; iBand < nBands; iBand++)
     {
-        const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+        const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
         if (pszNBITS && atoi(pszNBITS) > 0)
             psClient->pBands[iBand].nBits = (UINT8)atoi(pszNBITS);
         else
@@ -719,16 +719,16 @@ CPLErr GDALECWCompressor::Initialize(
     psClient->fCellIncrementY = -1.0;
     psClient->fCWRotationDegrees = 0.0;
 
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotational coefficients ignored, georeferencing of\n"
-                 "output ECW file will be incorrect.\n");
+                 "output ECW file will be incorrect.");
     else
     {
-        psClient->fOriginX = gt[0];
-        psClient->fOriginY = gt[3];
-        psClient->fCellIncrementX = gt[1];
-        psClient->fCellIncrementY = gt[5];
+        psClient->fOriginX = gt.xorig;
+        psClient->fOriginY = gt.yorig;
+        psClient->fCellIncrementX = gt.xscale;
+        psClient->fCellIncrementY = gt.yscale;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1102,7 +1102,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ECW driver does not support source dataset with zero band.\n");
+            "ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
@@ -1115,10 +1115,10 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (poSrcDS->GetGCPCount() > 0)
         poSRS = poSrcDS->GetGCPSpatialRef();
 
-        /* --------------------------------------------------------------------
+    /* --------------------------------------------------------------------
          */
-        /*      For ECW, confirm the datatype is 8bit (or uint16 for ECW v3) */
-        /* --------------------------------------------------------------------
+    /*      For ECW, confirm the datatype is 8bit (or uint16 for ECW v3) */
+    /* --------------------------------------------------------------------
          */
 #if ECWSDK_VERSION >= 50
     bool bECWV3 = false;
@@ -1163,7 +1163,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                          "ECW version 2 does not support UInt16 data type, "
                          "truncating to Byte."
                          " Consider specifying ECW_FORMAT_VERSION=3 for full "
-                         "UInt16 support available in ECW version 3. \n");
+                         "UInt16 support available in ECW version 3. ");
             }
             else
 #endif
@@ -1208,7 +1208,8 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             pszFilename, papszOptions, nXSize, nYSize, nBands,
             aosBandDescriptions.List(), bRGBColorSpace, eType, poSRS, gt,
             poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), bIsJPEG2000,
-            bPixelIsPoint, poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
+            bPixelIsPoint, poSrcDS->GetMetadata(GDAL_MDD_RPC),
+            poSrcDS) != CE_None)
     {
         return nullptr;
     }
@@ -1299,7 +1300,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ECW driver does not support source dataset with zero band.\n");
+            "ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
@@ -1335,7 +1336,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "ECW v2 does not support UInt16 data type. Consider "
                      " specifying ECW_FORMAT_VERSION=3 for full UInt16 support "
-                     "available in ECW v3. \n");
+                     "available in ECW v3. ");
         }
         else
 #endif
@@ -1369,7 +1370,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
                  "ECW driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -1394,7 +1395,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "JP2ECW driver does not support source dataset with zero band.\n");
+            "JP2ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
@@ -1428,7 +1429,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
                  "JP2ECW driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }

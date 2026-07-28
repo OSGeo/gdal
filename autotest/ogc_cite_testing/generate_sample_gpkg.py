@@ -24,18 +24,18 @@ sr4326.SetFromUserInput("WGS84")
 sr32631 = osr.SpatialReference()
 sr32631.ImportFromEPSG(32631)
 
-byte_src_ds = gdal.OpenEx(
+byte_src_ds = gdal.Open(
     "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif",
     allowed_drivers=["GTIFF", "HTTP"],
 )
-elev_src_ds = gdal.OpenEx(
+elev_src_ds = gdal.Open(
     "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/n43.dt0",
     allowed_drivers=["DTED", "HTTP"],
 )
 
 gdal.SetConfigOption("CREATE_METADATA_TABLES", "NO")
 
-for (out_filename, options) in [
+for out_filename, options in [
     ("gdal_sample_v1.2_no_extensions.gpkg", {}),
     (
         "gdal_sample_v1.2_no_extensions_with_gpkg_ogr_contents.gpkg",

@@ -12,7 +12,7 @@ GDALDimension C++ API
 Include file
 ------------
 
-:source_file:`gcore/gdal_multidim.h`
+:source_file:`gcore/multidim/gdal_multidim.h`
 
 GDALDimension class
 -------------------

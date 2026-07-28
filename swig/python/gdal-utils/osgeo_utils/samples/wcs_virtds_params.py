@@ -147,15 +147,14 @@ def main(argv=sys.argv):
 
     xres /= counter
     yres /= counter
-    (xmin, xmax, ymin, ymax) = lyr.GetExtent()
+    xmin, xmax, ymin, ymax = lyr.GetExtent()
     xsize = (int)((xmax - xmin) / xres + 0.5)
     ysize = (int)((ymax - ymin) / abs(yres) + 0.5)
 
     layername = lyr.GetName()
 
     if ogr_ds.GetDriver().GetName() != "ESRI Shapefile":
-        print(
-            """LAYER
+        print("""LAYER
       NAME "%s_tileindex"
       TYPE POLYGON
       STATUS OFF
@@ -164,9 +163,7 @@ def main(argv=sys.argv):
       PROJECTION
         "+init=epsg:%s"
       END
-    END"""
-            % (layername, ogr_ds_name, lyr.GetName(), authority_code)
-        )
+    END""" % (layername, ogr_ds_name, lyr.GetName(), authority_code))
         print("")
 
         tileindex = "%s_tileindex" % layername

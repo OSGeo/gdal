@@ -3,18 +3,18 @@
 
 """Module exposing GDAL Virtual File Systems (VSI) as a "gdalvsi" fsspec implementation.
 
-   Importing "osgeo.gdal_fsspec" requires the Python "fsspec"
-   (https://filesystem-spec.readthedocs.io/en/latest/) module to be available.
+Importing "osgeo.gdal_fsspec" requires the Python "fsspec"
+(https://filesystem-spec.readthedocs.io/en/latest/) module to be available.
 
-   A generic "gdalvsi" fsspec protocol is available. All GDAL VSI file names must be
-   simply prefixed with "gdalvsi://". For example:
+A generic "gdalvsi" fsspec protocol is available. All GDAL VSI file names must be
+simply prefixed with "gdalvsi://". For example:
 
-   - "gdalvsi://data/byte.tif" to access relative file "data/byte.tif"
-   - "gdalvsi:///home/user/byte.tif" to access absolute file "/home/user/byte.tif"
-   - "gdalvsi:///vsimem/byte.tif" (note the 3 slashes) to access VSIMem file "/vsimem/byte.tif"
-   - "gdalvsi:///vsicurl/https://example.com/byte.tif (note the 3 slashes) to access "https://example.com/byte.tif" through /vsicurl/
+- "gdalvsi://data/byte.tif" to access relative file "data/byte.tif"
+- "gdalvsi:///home/user/byte.tif" to access absolute file "/home/user/byte.tif"
+- "gdalvsi:///vsimem/byte.tif" (note the 3 slashes) to access VSIMem file "/vsimem/byte.tif"
+- "gdalvsi:///vsicurl/https://example.com/byte.tif (note the 3 slashes) to access "https://example.com/byte.tif" through /vsicurl/
 
-   :since: GDAL 3.11
+:since: GDAL 3.11
 """
 
 from pathlib import PurePath
@@ -120,9 +120,7 @@ class VSIFileSystem(AbstractFileSystem):
                     "type": (
                         "file"
                         if (entry.mode & 32768) != 0
-                        else "directory"
-                        if (entry.mode & 16384) != 0
-                        else None
+                        else "directory" if (entry.mode & 16384) != 0 else None
                     ),
                 }
                 if ret_entry["type"] == "file":

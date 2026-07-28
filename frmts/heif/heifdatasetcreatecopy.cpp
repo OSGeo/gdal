@@ -192,7 +192,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         heif_encoder_release(encoder);
         heif_context_free(ctx);
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to create libheif input image.\n");
+                 "Failed to create libheif input image.");
         return nullptr;
     }
 

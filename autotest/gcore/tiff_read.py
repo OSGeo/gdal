@@ -577,7 +577,7 @@ def test_tiff_g4_split():
 
     ds = gdal.Open("data/slim_g4.tif")
 
-    (_, blocky) = ds.GetRasterBand(1).GetBlockSize()
+    _, blocky = ds.GetRasterBand(1).GetBlockSize()
 
     assert blocky == 1, "Did not get scanline sized blocks."
 
@@ -783,8 +783,7 @@ def test_tiff_read_from_tab(tmp_path):
     ds = None
 
     f = open(tmp_path / "tiff_read_from_tab.tab", "wt")
-    f.write(
-        """!table
+    f.write("""!table
 !version 300
 !charset WindowsLatin1
 
@@ -797,8 +796,7 @@ Definition Table
   (400000,1300000) (0,0) Label "Pt 4"
   CoordSys Earth Projection 8, 79, "m", -2, 49, 0.9996012717, 400000, -100000
   Units "m"
-"""
-    )
+""")
     f.close()
 
     ds = gdal.Open(tmp_path / "tiff_read_from_tab.tif")
@@ -1011,7 +1009,7 @@ def test_tiff_read_rpc_tif():
 
 def test_tiff_small(tmp_vsimem):
 
-    content = "\x49\x49\x2A\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00"
+    content = "\x49\x49\x2a\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00"
 
     # Create in-memory file
     gdal.FileFromMemBuffer(tmp_vsimem / "small.tif", content)
@@ -1138,7 +1136,7 @@ def test_tiff_read_vsicurl_multirange():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -1343,7 +1341,7 @@ def test_tiff_direct_and_virtual_mem_io():
                         ("GTIFF_VIRTUAL_MEM_IO", "/vsimem"),
                         ("GTIFF_VIRTUAL_MEM_IO", "tmp"),
                     ]
-                for (option, prefix) in options:
+                for option, prefix in options:
                     if dt == gdal.GDT_CInt16:
                         niter = 3
                     elif prefix == "tmp":
@@ -1467,7 +1465,7 @@ def test_tiff_direct_and_virtual_mem_io():
                             nbands = ds.RasterCount
                             nxsize = ds.RasterXSize
                             nysize = ds.RasterYSize
-                            (nblockxsize, nblockysize) = ds.GetRasterBand(
+                            nblockxsize, nblockysize = ds.GetRasterBand(
                                 1
                             ).GetBlockSize()
                             band_interleaved = (
@@ -2626,7 +2624,7 @@ def test_tiff_read_strace_check():
         ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
 
@@ -3229,7 +3227,7 @@ def test_tiff_read_gcp_internal_and_auxxml(
         open_options = []
         if config_option_value is not None:
             open_options += ["GEOREF_SOURCES=" + config_option_value]
-        ds = gdal.OpenEx(tmp_vsimem / "byte_gcp.tif", open_options=open_options)
+        ds = gdal.Open(tmp_vsimem / "byte_gcp.tif", open_options=open_options)
         if iteration == 0:
             gcp_count = ds.GetGCPCount()
             srs_wkt = ds.GetGCPProjection()
@@ -3441,7 +3439,7 @@ def test_tiff_read_arcgis93_geodataxform_gcp():
 def test_tiff_read_arcgis10_geodataxform_gcp_ignored():
 
     ds = gdal.Open("data/gtiff/esri_geodataxform_no_resolutionunit.tif")
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "3857"
     assert ds.GetGCPCount() == 0
     assert ds.GetGeoTransform() == pytest.approx(
         (
@@ -3826,8 +3824,8 @@ def test_tiff_read_stripbytecounts_count_not_same_as_stripoffsets_count():
         pytest.skip()
 
     ds = gdal.Open("data/stripbytecounts_count_not_same_as_stripoffsets_count.tif")
-    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") is None
-    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") is None
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF") == "170"
+    assert ds.GetRasterBand(1).GetMetadataItem("BLOCK_SIZE_0_0", "TIFF") == "1"
 
 
 ###############################################################################
@@ -4209,7 +4207,7 @@ def test_tiff_read_cog_vsicurl(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4348,7 +4346,7 @@ def test_tiff_read_cog_with_mask_vsicurl(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4487,7 +4485,7 @@ def test_tiff_read_vsicurl_multi_threaded_beyond_advise_read_limit(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4919,7 +4917,7 @@ def test_tiff_read_multi_threaded(
 
     if reopen:
         ds = None
-        ds = gdal.OpenEx(tmpfile, gdal.OF_UPDATE, open_options=["NUM_THREADS=ALL_CPUS"])
+        ds = gdal.Open(tmpfile, gdal.OF_UPDATE, open_options=["NUM_THREADS=ALL_CPUS"])
 
         if write_after_reopen:
             x_off, y_off, x_size, y_size = (
@@ -5027,7 +5025,7 @@ def test_tiff_read_multi_threaded_vsicurl(
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5123,7 +5121,7 @@ def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5204,7 +5202,7 @@ def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5259,7 +5257,7 @@ def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
             }
         ):
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
                 )
                 with pytest.raises(
@@ -5297,8 +5295,8 @@ def test_tiff_warning_get_metadata_item_PIXELTYPE():
 def test_tiff_read_projection_from_esri_xml():
 
     ds = gdal.Open("data/gtiff/projection_from_esri_xml.tif")
-    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "25833"
+    assert ds.GetSpatialRef().GetAuthorityName() == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "25833"
     assert ds.GetGeoTransform() == pytest.approx((250000, 0.2, 0.0, 5887000, 0.0, -0.2))
 
 
@@ -5401,7 +5399,7 @@ def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5450,7 +5448,7 @@ def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN
             }
         ):
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
                     open_options=["OVERVIEW_LEVEL=0"],
                 )
@@ -5693,7 +5691,7 @@ def test_tiff_read_multithreaded_read_fresh_file(tmp_vsimem):
 @gdaltest.enable_exceptions()
 def test_tiff_read_multithreaded_read_missing_tilebytecounts_and_offsets():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gtiff/missing_tilebytecounts_and_offsets.tif",
         open_options=["NUM_THREADS=2"],
     )

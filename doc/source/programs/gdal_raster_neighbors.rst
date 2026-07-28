@@ -1,5 +1,7 @@
 .. _gdal_raster_neighbors:
 
+.. program:: gdal_raster_neighbors
+
 ================================================================================
 ``gdal raster neighbors``
 ================================================================================
@@ -159,6 +161,11 @@ Standard Options
     .. include:: gdal_options/ot.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

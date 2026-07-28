@@ -56,7 +56,7 @@ def test_gnm_dir(tmp_path_factory):
 
 def test_gnmmanage_1(gnmmanage_path, test_gnm_dir):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gnmmanage_path
         + f' create -f GNMFile -t_srs EPSG:4326 -dsco net_name=test_gnm -dsco net_description="Test file based GNM" {test_gnm_dir.parent}'
     )
@@ -73,12 +73,12 @@ def test_gnmmanage_1(gnmmanage_path, test_gnm_dir):
 
 def test_gnmmanage_2(gnmmanage_path, test_gnm_dir):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gnmmanage_path} import ../gnm/data/pipes.shp {test_gnm_dir}"
     )
     assert err is None or err == "", "got error/warning"
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gnmmanage_path} import ../gnm/data/wells.shp {test_gnm_dir}"
     )
     assert err is None or err == "", "got error/warning"
@@ -137,9 +137,7 @@ def test_gnmanalyse_2(gnmanalyse_path, test_gnm_dir):
 
 def test_gnm_cleanup(gnmmanage_path, test_gnm_dir):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
-        f"{gnmmanage_path} delete {test_gnm_dir}"
-    )
+    _, err = gdaltest.runexternal_out_and_err(f"{gnmmanage_path} delete {test_gnm_dir}")
     assert err is None or err == "", "got error/warning"
 
     assert not os.path.exists(test_gnm_dir)

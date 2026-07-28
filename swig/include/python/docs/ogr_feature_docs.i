@@ -32,7 +32,7 @@ See :cpp:func:`OGRFeature::DumpReadable`.
 
 Examples
 --------
->>> with gdal.OpenEx('poly.shp', gdal.OF_VECTOR) as ds:
+>>> with gdal.Open('poly.shp', gdal.OF_VECTOR) as ds:
 ...     lyr = ds.GetLayer(0)
 ...     feature = lyr.GetNextFeature()
 ...     feature.DumpReadable()

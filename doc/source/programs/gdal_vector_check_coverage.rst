@@ -1,5 +1,7 @@
 .. _gdal_vector_check_coverage:
 
+.. program:: gdal_vector_check_coverage
+
 ================================================================================
 ``gdal vector check-coverage``
 ================================================================================
@@ -84,6 +86,8 @@ Standard Options
 
     .. include:: gdal_options/lco.rst
 
+    .. include:: gdal_options/no_create_empty_layers.rst
+
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/of_vector.rst
@@ -99,6 +103,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

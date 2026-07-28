@@ -168,7 +168,7 @@ static int SetupUncompressedBuffer(TIFF *tif, JXLState *sp, const char *module)
     else
     {
         sp->segment_width = td->td_imagewidth;
-        sp->segment_height = td->td_imagelength - tif->tif_row;
+        sp->segment_height = td->td_imagelength - td->td_row;
         if (sp->segment_height > td->td_rowsperstrip)
             sp->segment_height = td->td_rowsperstrip;
     }
@@ -1284,6 +1284,24 @@ static int JXLVGetField(TIFF *tif, uint32_t tag, va_list ap)
     return 1;
 }
 
+static uint64_t JXLGetMaxCompressionRatio(TIFF *tif)
+{
+    (void)tif;
+    /* 1024x1024:                5323 */
+    /* 1024x1024 RGB:           16216 */
+    /* 4096x4096:               25079 */
+    /* 4096x4096 UInt16:        46669 */
+    /* 4096x4096 RGB:           75574 */
+    /* 4096x4096 RGBA:          90934 */
+    /* 4096x4096 RGB UInt16:   117735 */
+    /* 16383x16383:             45360 */
+    /* 16383x16383 RGB:        136148 */
+    /* 16383x16383 UInt16:      90069 */
+    /* 16383x16383 RGB UInt16: 228234 */
+
+    return 1000000;
+}
+
 int TIFFInitJXL(TIFF *tif, int scheme)
 {
     static const char module[] = "TIFFInitJXL";
@@ -1333,6 +1351,7 @@ int TIFFInitJXL(TIFF *tif, int scheme)
     tif->tif_encodestrip = JXLEncode;
     tif->tif_encodetile = JXLEncode;
     tif->tif_cleanup = JXLCleanup;
+    tif->tif_getmaxcompressionratio = JXLGetMaxCompressionRatio;
 
     /* Default values for codec-specific fields */
     sp->decoder = NULL;

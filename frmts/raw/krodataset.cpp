@@ -214,7 +214,8 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     if (nComp > 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -303,7 +304,8 @@ GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (nRet != 6)
         return nullptr;
 
-    return GDALDataset::FromHandle(GDALOpen(pszFilename, GA_Update));
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/

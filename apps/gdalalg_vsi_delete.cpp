@@ -32,6 +32,8 @@
 GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
+    AddProgressArg(/* hidden = */ true);
+
     {
         auto &arg = AddArg("filename", 0, _("File or directory name to delete"),
                            &m_filename)

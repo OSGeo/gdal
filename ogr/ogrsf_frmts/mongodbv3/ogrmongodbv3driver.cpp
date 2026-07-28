@@ -2698,7 +2698,7 @@ class OGRMongoDBv3SingleFeatureLayer final : public OGRLayer
   public:
     explicit OGRMongoDBv3SingleFeatureLayer(const char *pszVal);
 
-    ~OGRMongoDBv3SingleFeatureLayer()
+    ~OGRMongoDBv3SingleFeatureLayer() override
     {
         m_poFeatureDefn->Release();
     }

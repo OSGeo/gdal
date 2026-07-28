@@ -1,5 +1,7 @@
 .. _gdal_vector_simplify_coverage:
 
+.. program:: gdal_vector_simplify_coverage
+
 ================================================================================
 ``gdal vector simplify-coverage``
 ================================================================================
@@ -94,6 +96,10 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

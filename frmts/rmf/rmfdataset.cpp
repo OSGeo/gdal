@@ -19,6 +19,7 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_thread_pool.h"
 
 #include "rmfdataset.h"
 
@@ -786,11 +787,11 @@ CPLErr RMFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 CPLErr RMFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     m_gt = gt;
-    sHeader.dfPixelSize = m_gt[1];
+    sHeader.dfPixelSize = m_gt.xscale;
     if (sHeader.dfPixelSize != 0.0)
         sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
-    sHeader.dfLLX = m_gt[0];
-    sHeader.dfLLY = m_gt[3] - nRasterYSize * sHeader.dfPixelSize;
+    sHeader.dfLLX = m_gt.xorig;
+    sHeader.dfLLY = m_gt.yorig - nRasterYSize * sHeader.dfPixelSize;
     sHeader.iGeorefFlag = 1;
 
     bHeaderDirty = true;
@@ -850,11 +851,11 @@ CPLErr RMFDataset::WriteHeader()
         sHeader.dfStdP2 = adfPrjParams[1];
         sHeader.dfCenterLat = adfPrjParams[2];
         sHeader.dfCenterLong = adfPrjParams[3];
-        if (m_oSRS.GetAuthorityName(nullptr) != nullptr &&
-            m_oSRS.GetAuthorityCode(nullptr) != nullptr &&
-            EQUAL(m_oSRS.GetAuthorityName(nullptr), "EPSG"))
+        if (m_oSRS.GetAuthorityName() != nullptr &&
+            m_oSRS.GetAuthorityCode() != nullptr &&
+            EQUAL(m_oSRS.GetAuthorityName(), "EPSG"))
         {
-            sHeader.iEPSGCode = atoi(m_oSRS.GetAuthorityCode(nullptr));
+            sHeader.iEPSGCode = atoi(m_oSRS.GetAuthorityCode());
         }
 
         sExtHeader.nEllipsoid = static_cast<GInt32>(iEllips);
@@ -1822,7 +1823,8 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
     if (poDS->nBands > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     /* -------------------------------------------------------------------- */
     /*  Set up projection.                                                  */
@@ -1894,13 +1896,13 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     if ((poDS->eRMFType == RMFT_RSW && poDS->sHeader.iGeorefFlag) ||
         (poDS->eRMFType == RMFT_MTW && poDS->sHeader.dfPixelSize != 0.0))
     {
-        poDS->m_gt[0] = poDS->sHeader.dfLLX;
-        poDS->m_gt[3] = poDS->sHeader.dfLLY +
-                        poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
-        poDS->m_gt[1] = poDS->sHeader.dfPixelSize;
-        poDS->m_gt[5] = -poDS->sHeader.dfPixelSize;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
+        poDS->m_gt.xorig = poDS->sHeader.dfLLX;
+        poDS->m_gt.yorig = poDS->sHeader.dfLLY +
+                           poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
+        poDS->m_gt.xscale = poDS->sHeader.dfPixelSize;
+        poDS->m_gt.yscale = -poDS->sHeader.dfPixelSize;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1983,10 +1985,10 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
                 CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
 
-                double dfX =
-                    poDS->m_gt[0] + nX * poDS->m_gt[1] + nY * poDS->m_gt[2];
-                double dfY =
-                    poDS->m_gt[3] + nX * poDS->m_gt[4] + nY * poDS->m_gt[5];
+                double dfX = poDS->m_gt.xorig + nX * poDS->m_gt.xscale +
+                             nY * poDS->m_gt.xrot;
+                double dfY = poDS->m_gt.yorig + nX * poDS->m_gt.yrot +
+                             nY * poDS->m_gt.yscale;
 
                 if (bFirst)
                 {
@@ -2380,7 +2382,8 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
     if (nBandsIn > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     poDS->WriteHeader();
@@ -2797,7 +2800,7 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
     {
         Decompress = &LZWDecompress;
         Compress = &LZWCompress;
-        SetMetadataItem("COMPRESSION", "LZW", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "LZW", GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (sHeader.iCompression == RMF_COMPRESSION_JPEG)
     {
@@ -2813,8 +2816,8 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
         oBuf.Printf("%d", sHeader.iJpegQuality);
         Decompress = &JPEGDecompress;
         Compress = &JPEGCompress;
-        SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), "IMAGE_STRUCTURE");
-        SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        SetMetadataItem("JPEG_QUALITY", oBuf.c_str(), GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG", GDAL_MDD_IMAGE_STRUCTURE);
 #else   // HAVE_LIBJPEG
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JPEG codec is needed to open <%s>.\n"
@@ -2828,7 +2831,8 @@ int RMFDataset::SetupCompression(GDALDataType eType, const char *pszFilename)
     {
         Decompress = &DEMDecompress;
         Compress = &DEMCompress;
-        SetMetadataItem("COMPRESSION", "RMF_DEM", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "RMF_DEM",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
@@ -2891,29 +2895,12 @@ void RMFDataset::WriteTileJobFunc(void *pData)
 
 CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
 {
-    const char *pszNumThreads =
-        CSLFetchNameValue(papszParamList, "NUM_THREADS");
-    if (pszNumThreads == nullptr)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-
-    int nThreads = 0;
-    if (pszNumThreads != nullptr)
-    {
-        nThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                    : atoi(pszNumThreads);
-    }
-
-    if (nThreads < 0)
-    {
-        nThreads = 0;
-    }
-    if (nThreads > 1024)
-    {
-        nThreads = 1024;
-    }
+    const int nThreads = GDALGetNumThreads(papszParamList, "NUM_THREADS",
+                                           GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultAllCPUs = */ false);
 
     poCompressData = std::make_shared<RMFCompressData>();
-    if (nThreads > 0)
+    if (nThreads > 1)
     {
         if (!poCompressData->oThreadPool.Setup(nThreads, nullptr, nullptr))
         {
@@ -2942,7 +2929,7 @@ CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
         return CE_Failure;
     }
 
-    for (size_t i = 0; i != poCompressData->asJobs.size(); ++i)
+    for (size_t i = 0; i < poCompressData->asJobs.size(); ++i)
     {
         RMFCompressionJob &sJob(poCompressData->asJobs[i]);
         sJob.pabyCompressedData =
@@ -2951,7 +2938,7 @@ CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
         poCompressData->asReadyJobs.push_back(&sJob);
     }
 
-    if (nThreads > 0)
+    if (nThreads > 1)
     {
         poCompressData->hReadyJobMutex = CPLCreateMutex();
         CPLReleaseMutex(poCompressData->hReadyJobMutex);
@@ -3271,8 +3258,8 @@ void RMFDataset::SetupNBits()
         snprintf(szNBits, sizeof(szNBits), "%d", nBitDepth);
         for (int iBand = 1; iBand <= nBands; iBand++)
         {
-            GetRasterBand(iBand)->SetMetadataItem("NBITS", szNBits,
-                                                  "IMAGE_STRUCTURE");
+            GetRasterBand(iBand)->SetMetadataItem(GDALMD_NBITS, szNBits,
+                                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 }

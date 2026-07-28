@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <limits>
 #include <new>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -329,7 +330,11 @@ OGRErr CPL_DLL OGR_G_CreateFromWkbEx(const void *pabyData,
  *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
  * \endcode
  *
- *
+ * Since GDAL 3.14, PostGIS-style "extended" WKT inputs of the format
+ * SRID=EPSG_CODE;WKT are supported. (The axis order of the coordinates
+ * is assumed to follow the OAMS_TRADITIONAL_GIS_ORDER convention.)
+ * If ppszData points to an EWKT input and poSR is also specified,
+ * the value of poSR will override the SRS specified in the EWKT.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
@@ -343,6 +348,52 @@ OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
 {
     const char *pszInput = *ppszData;
     *ppoReturn = nullptr;
+
+    OGRSpatialReferenceRefCountedPtr poEwktSR;
+
+    /* -------------------------------------------------------------------- */
+    /*      Check for a SRID (PostGIS EWKT)                                 */
+    /* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszInput, "SRID="))
+    {
+        const char *pszSRID = pszInput + 5;
+        char *pszEnd;
+
+        auto nSRID = std::strtol(pszSRID, &pszEnd, 10);
+
+        if (static_cast<int>(nSRID) != nSRID || !isdigit(*pszSRID))
+        {
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        while (pszSRID != pszEnd)
+        {
+            if (!isdigit(*pszSRID))
+            {
+                return OGRERR_CORRUPT_DATA;
+            }
+            pszSRID++;
+        }
+
+        if (*pszEnd != ';')
+        {
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        pszInput = pszEnd + 1;
+
+        if (poSR == nullptr)
+        {
+            poEwktSR = OGRSpatialReferenceRefCountedPtr::makeInstance();
+            if (poEwktSR->importFromEPSG(static_cast<int>(nSRID)) !=
+                OGRERR_NONE)
+            {
+                return OGRERR_CORRUPT_DATA;
+            }
+            poEwktSR->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poSR = poEwktSR.get();
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Get the first token, which should be the geometry type.         */
@@ -1441,7 +1492,7 @@ OGRGeometryFactory::removeLowerDimensionSubGeoms(const OGRGeometry *poGeom)
     }
     const OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
     int nMaxDim = 0;
-    OGRBoolean bHasCurve = FALSE;
+    bool bHasCurve = false;
     for (const auto poSubGeom : *poGC)
     {
         nMaxDim = std::max(nMaxDim, poSubGeom->getDimension());
@@ -1533,7 +1584,8 @@ struct sPolyExtended
     sPolyExtended(sPolyExtended &&) = default;
     sPolyExtended &operator=(sPolyExtended &&) = default;
 
-    std::unique_ptr<OGRCurvePolygon> poPolygon{};
+    std::unique_ptr<OGRCurvePolygon> poCurvePolygon{};  // always not null
+    std::unique_ptr<OGRPolygon> poPolygonForTest{};     // may be null
     OGREnvelope sEnvelope{};
     OGRPoint sPoint{};
     size_t nInitialIndex = 0;
@@ -1541,11 +1593,20 @@ struct sPolyExtended
     double dfArea = 0.0;
     bool bIsTopLevel = false;
     bool bIsCW = false;
-    bool bIsPolygon = false;
 
     inline const OGRLinearRing *getExteriorLinearRing() const
     {
-        return poPolygon->getExteriorRingCurve()->toLinearRing();
+        if (poPolygonForTest)
+        {
+            return poPolygonForTest->getExteriorRingCurve()->toLinearRing();
+        }
+        else
+        {
+            const auto *poPoly =
+                dynamic_cast<const OGRPolygon *>(poCurvePolygon.get());
+            CPLAssert(poPoly);
+            return poPoly->getExteriorRingCurve()->toLinearRing();
+        }
     }
 
     static void GetBoundsFromPolyEx(const void *hFeature, CPLRectObj *pBounds)
@@ -1555,17 +1616,6 @@ struct sPolyExtended
         pBounds->miny = poPolyEx->sEnvelope.MinY;
         pBounds->maxx = poPolyEx->sEnvelope.MaxX;
         pBounds->maxy = poPolyEx->sEnvelope.MaxY;
-    }
-
-    // recent libc++ std::sort() involve unsigned integer overflow in some
-    // situation
-    CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-    static void SortByIncreasingArea(const sPolyExtended **pStart,
-                                     const sPolyExtended **pEnd)
-    {
-        std::sort(pStart, pEnd,
-                  [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
-                  { return psPoly1->dfArea < psPoly2->dfArea; });
     }
 };
 
@@ -1826,8 +1876,54 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
     size_t indexOfCWPolygon = INVALID_INDEX;
     OGREnvelope sGlobalEnvelope;
 
-    for (size_t i = 0; i < apoPolygons.size(); ++i)
+    const auto AddRingToPolyOrCurvePoly =
+        [](OGRCurvePolygon *poDst, std::unique_ptr<OGRCurve> poRing)
     {
+        const bool bIsCurvePoly =
+            wkbFlatten(poDst->getGeometryType()) == wkbCurvePolygon;
+        const OGRLinearRing *poLinearRing =
+            dynamic_cast<const OGRLinearRing *>(poRing.get());
+        if (bIsCurvePoly)
+        {
+            if (poLinearRing)
+                poDst->addRing(std::make_unique<OGRLineString>(*poLinearRing));
+            else
+                poDst->addRing(std::move(poRing));
+        }
+        else
+        {
+            if (poLinearRing)
+            {
+                poDst->addRing(std::move(poRing));
+            }
+            else
+            {
+                CPLAssert(wkbFlatten(poRing->getGeometryType()) ==
+                          wkbLineString);
+                const OGRLineString *poLS =
+                    cpl::down_cast<const OGRLineString *>(poRing.get());
+                CPLAssert(poLS->get_IsClosed());
+                auto poNewLR = std::make_unique<OGRLinearRing>();
+                poNewLR->addSubLineString(poLS);
+                poDst->addRing(std::move(poNewLR));
+            }
+        }
+    };
+
+    for (size_t i = 0; !bHasCurves && i < apoPolygons.size(); ++i)
+    {
+        const OGRwkbGeometryType eType =
+            wkbFlatten(apoPolygons[i]->getGeometryType());
+        if (eType == wkbCurvePolygon)
+            bHasCurves = true;
+    }
+
+    bool bIncrementINextIter = true;
+    // Size of apoPolygons might increase during the loop
+    for (size_t i = 0; i < apoPolygons.size(); bIncrementINextIter ? ++i : 0)
+    {
+        bIncrementINextIter = true;
+
         const OGRwkbGeometryType eType =
             wkbFlatten(apoPolygons[i]->getGeometryType());
 
@@ -1843,36 +1939,200 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
         sPolyExtended sPolyEx;
 
         sPolyEx.nInitialIndex = i;
-        sPolyEx.poPolygon.reset(apoPolygons[i].release()->toCurvePolygon());
+        sPolyEx.poCurvePolygon.reset(
+            apoPolygons[i].release()->toCurvePolygon());
 
-        sPolyEx.poPolygon->getEnvelope(&sPolyEx.sEnvelope);
+#ifdef HAVE_GEOS
+        {
+            // This method may be called with ESRI geometries whose validity
+            // rules are different from OGC ones. So do a cheap test to detect
+            // potential invalidity with repeated points (excluding initial and final
+            // one), and do the real one after.
+            bool bLikelySimpleFeaturesInvalid = false;
+
+            std::set<std::pair<double, double>> xyPairSet;
+            const auto *poExteriorRing =
+                sPolyEx.poCurvePolygon->getExteriorRingCurve();
+            const auto *poLS =
+                dynamic_cast<const OGRLineString *>(poExteriorRing);
+            if (poLS)
+            {
+                const int nNumPoints = poLS->getNumPoints();
+                for (int iPnt = 0; iPnt < nNumPoints - 1; ++iPnt)
+                {
+                    if (!xyPairSet.insert({poLS->getX(iPnt), poLS->getY(iPnt)})
+                             .second)
+                    {
+                        bLikelySimpleFeaturesInvalid = true;
+                        break;
+                    }
+                }
+            }
+
+            bool bSelfTouchingRingFormingHole = false;
+            if (bLikelySimpleFeaturesInvalid)
+            {
+                CPLErrorStateBackuper oErrorBackuper(CPLQuietErrorHandler);
+                auto geosContext = OGRGeometry::createGEOSContext();
+                GEOSGeometry *poGeosGeom =
+                    sPolyEx.poCurvePolygon->exportToGEOS(geosContext);
+                if (poGeosGeom)
+                {
+                    bSelfTouchingRingFormingHole =
+                        (GEOSisValidDetail_r(
+                             geosContext, poGeosGeom,
+                             GEOSVALID_ALLOW_SELFTOUCHING_RING_FORMING_HOLE,
+                             nullptr, nullptr) == 1);
+                    GEOSGeom_destroy_r(geosContext, poGeosGeom);
+                }
+                finishGEOS_r(geosContext);
+            }
+
+            if (bSelfTouchingRingFormingHole)
+            {
+                // Make it a valid one and insert all new rings in apoPolygons[]
+                auto poValid = std::unique_ptr<OGRGeometry>(
+                    sPolyEx.poCurvePolygon->MakeValid());
+                if (poValid)
+                {
+                    if (method == METHOD_ONLY_CCW ||
+                        method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER)
+                    {
+                        CPLDebug("OGR", "organizePolygons(): switch to NORMAL "
+                                        "mode due to invalid geometries");
+                        method = METHOD_NORMAL;
+                    }
+
+                    const auto InsertRings =
+                        [&apoPolygons](const OGRCurvePolygon *poCurvePoly)
+                    {
+                        const bool bIsCurvePoly =
+                            wkbFlatten(poCurvePoly->getGeometryType()) ==
+                            wkbCurvePolygon;
+                        for (const auto *ring : poCurvePoly)
+                        {
+                            if (bIsCurvePoly)
+                            {
+                                auto poTmpPoly =
+                                    std::make_unique<OGRCurvePolygon>();
+                                if (const OGRLinearRing *poLinearRing =
+                                        dynamic_cast<const OGRLinearRing *>(
+                                            ring))
+                                    poTmpPoly->addRing(
+                                        std::make_unique<OGRLineString>(
+                                            *poLinearRing));
+                                else
+                                    poTmpPoly->addRing(ring);
+                                apoPolygons.push_back(std::move(poTmpPoly));
+                            }
+                            else
+                            {
+                                auto poTmpPoly = std::make_unique<OGRPolygon>();
+                                poTmpPoly->addRing(ring);
+                                apoPolygons.push_back(std::move(poTmpPoly));
+                            }
+                        }
+                    };
+
+                    const auto eValidGeometryType =
+                        wkbFlatten(poValid->getGeometryType());
+                    if (eValidGeometryType == wkbPolygon ||
+                        eValidGeometryType == wkbCurvePolygon)
+                    {
+                        std::unique_ptr<OGRCurvePolygon> poValidPoly(
+                            cpl::down_cast<OGRCurvePolygon *>(
+                                poValid.release()));
+                        if (poValidPoly->getNumInteriorRings() == 0)
+                        {
+                            sPolyEx.poCurvePolygon = std::move(poValidPoly);
+                        }
+                        else
+                        {
+                            InsertRings(poValidPoly.get());
+                            apoPolygons.erase(apoPolygons.begin() + i);
+                            bIncrementINextIter = false;
+                            continue;
+                        }
+                    }
+                    else if (OGR_GT_IsSubClassOf(eValidGeometryType,
+                                                 wkbGeometryCollection))
+                    {
+                        const auto *poGeomColl =
+                            cpl::down_cast<OGRGeometryCollection *>(
+                                poValid.get());
+                        for (const auto *poPart : *poGeomColl)
+                        {
+                            const auto ePartGeometryType =
+                                wkbFlatten(poPart->getGeometryType());
+                            if (ePartGeometryType == wkbPolygon ||
+                                ePartGeometryType == wkbCurvePolygon)
+                            {
+                                const auto *poPartCP =
+                                    cpl::down_cast<const OGRCurvePolygon *>(
+                                        poPart);
+                                InsertRings(poPartCP);
+                            }
+                        }
+                        apoPolygons.erase(apoPolygons.begin() + i);
+                        bIncrementINextIter = false;
+                        continue;
+                    }
+                }
+            }
+        }
+#endif
+
+        sPolyEx.poCurvePolygon->getEnvelope(&sPolyEx.sEnvelope);
         sGlobalEnvelope.Merge(sPolyEx.sEnvelope);
 
-        if (eType == wkbCurvePolygon)
-            bHasCurves = true;
-        if (!sPolyEx.poPolygon->IsEmpty() &&
-            sPolyEx.poPolygon->getNumInteriorRings() == 0 &&
-            sPolyEx.poPolygon->getExteriorRingCurve()->getNumPoints() >= 4)
+        if (bUseFastVersion)
+        {
+            if (eType == wkbCurvePolygon)
+            {
+                sPolyEx.poPolygonForTest.reset(
+                    cpl::down_cast<const OGRCurvePolygon *>(
+                        sPolyEx.poCurvePolygon.get())
+                        ->CurvePolyToPoly());
+
+                // Above CurvePolyToPoly() can fail on non-closed rings
+                if (sPolyEx.poPolygonForTest == nullptr ||
+                    sPolyEx.poPolygonForTest->IsEmpty())
+                {
+                    apoPolygons[i].reset();
+                    continue;
+                }
+            }
+            else if (bHasCurves)
+            {
+                CPLAssert(eType == wkbPolygon);
+                sPolyEx.poPolygonForTest.reset(
+                    cpl::down_cast<const OGRPolygon *>(
+                        sPolyEx.poCurvePolygon.get())
+                        ->clone());
+            }
+        }
+
+        // If the final geometry is a CurvePolygon or a MultiSurface, we
+        // need to promote regular Polygon to CurvePolygon, as they may contain
+        // curve rings.
+        if (bHasCurves && eType == wkbPolygon)
+        {
+            sPolyEx.poCurvePolygon.reset(cpl::down_cast<OGRCurvePolygon *>(
+                OGRGeometryFactory::forceTo(std::move(sPolyEx.poCurvePolygon),
+                                            wkbCurvePolygon)
+                    .release()));
+        }
+
+        if (!sPolyEx.poCurvePolygon->IsEmpty() &&
+            sPolyEx.poCurvePolygon->getNumInteriorRings() == 0 &&
+            sPolyEx.poCurvePolygon->getExteriorRingCurve()->getNumPoints() >= 4)
         {
             if (method != METHOD_CCW_INNER_JUST_AFTER_CW_OUTER)
-                sPolyEx.dfArea = sPolyEx.poPolygon->get_Area();
-            auto *poExteriorRing = sPolyEx.poPolygon->getExteriorRingCurve();
+                sPolyEx.dfArea = sPolyEx.poCurvePolygon->get_Area();
+            const auto *poExteriorRing =
+                sPolyEx.poCurvePolygon->getExteriorRingCurve();
+            sPolyEx.bIsCW = poExteriorRing->isClockwise();
             poExteriorRing->StartPoint(&sPolyEx.sPoint);
-            if (eType == wkbPolygon)
-            {
-                sPolyEx.bIsCW =
-                    CPL_TO_BOOL(poExteriorRing->toLinearRing()->isClockwise());
-                sPolyEx.bIsPolygon = true;
-            }
-            else
-            {
-                OGRLineString *poLS = poExteriorRing->CurveToLine();
-                OGRLinearRing oLR;
-                oLR.addSubLineString(poLS);
-                sPolyEx.bIsCW = CPL_TO_BOOL(oLR.isClockwise());
-                sPolyEx.bIsPolygon = false;
-                delete poLS;
-            }
             if (sPolyEx.bIsCW)
             {
                 indexOfCWPolygon = i;
@@ -1896,6 +2156,8 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
 
         asPolyEx.push_back(std::move(sPolyEx));
     }
+    if (asPolyEx.empty())
+        return std::make_unique<OGRPolygon>();
 
     // If we are in ONLY_CCW mode and that we have found that there is only one
     // outer ring, then it is pretty easy : we can assume that all other rings
@@ -1905,13 +2167,14 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
         nCountCWPolygon == 1 && bUseFastVersion)
     {
         assert(indexOfCWPolygon != INVALID_INDEX);
-        auto poCP = std::move(asPolyEx[indexOfCWPolygon].poPolygon);
+        auto poCP = std::move(asPolyEx[indexOfCWPolygon].poCurvePolygon);
         for (size_t i = 0; i < asPolyEx.size(); i++)
         {
             if (i != indexOfCWPolygon)
             {
-                poCP->addRingDirectly(
-                    asPolyEx[i].poPolygon->stealExteriorRingCurve());
+                std::unique_ptr<OGRCurve> poRing(
+                    asPolyEx[i].poCurvePolygon->stealExteriorRingCurve());
+                AddRingToPolyOrCurvePoly(poCP.get(), std::move(poRing));
             }
         }
 
@@ -1925,7 +2188,7 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
         // Inner rings are CCW oriented and follow immediately the outer
         // ring (that is CW oriented) in which they are included.
         std::unique_ptr<OGRMultiSurface> poMulti;
-        auto poCurvePoly = std::move(asPolyEx[0].poPolygon);
+        auto poOuterCurvePoly = std::move(asPolyEx[0].poCurvePolygon);
 
         // We have already checked that the first ring is CW.
         const OGREnvelope *psEnvelope = &(asPolyEx[0].sEnvelope);
@@ -1939,25 +2202,23 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                         poMulti = std::make_unique<OGRMultiSurface>();
                     else
                         poMulti = std::make_unique<OGRMultiPolygon>();
-                    poMulti->addGeometry(std::move(poCurvePoly));
+                    poMulti->addGeometry(std::move(poOuterCurvePoly));
                 }
-                poMulti->addGeometry(std::move(asPolyEx[i].poPolygon));
+                poMulti->addGeometry(std::move(asPolyEx[i].poCurvePolygon));
                 psEnvelope = &(asPolyEx[i].sEnvelope);
             }
             else
             {
                 auto poExteriorRing = std::unique_ptr<OGRCurve>(
-                    asPolyEx[i].poPolygon->stealExteriorRingCurve());
-                if (poCurvePoly)
-                {
-                    poCurvePoly->addRing(std::move(poExteriorRing));
-                }
-                else
-                {
-                    poMulti->getGeometryRef(poMulti->getNumGeometries() - 1)
-                        ->toCurvePolygon()
-                        ->addRing(std::move(poExteriorRing));
-                }
+                    asPolyEx[i].poCurvePolygon->stealExteriorRingCurve());
+                auto poCurCurvePoly =
+                    poOuterCurvePoly
+                        ? poOuterCurvePoly.get()
+                        : poMulti
+                              ->getGeometryRef(poMulti->getNumGeometries() - 1)
+                              ->toCurvePolygon();
+                AddRingToPolyOrCurvePoly(poCurCurvePoly,
+                                         std::move(poExteriorRing));
                 if (!(asPolyEx[i].sPoint.getX() >= psEnvelope->MinX &&
                       asPolyEx[i].sPoint.getX() <= psEnvelope->MaxX &&
                       asPolyEx[i].sPoint.getY() >= psEnvelope->MinY &&
@@ -1974,10 +2235,10 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
         if (pbIsValidGeometry)
             *pbIsValidGeometry = true;
         // cppcheck-suppress accessMoved
-        if (poCurvePoly)
+        if (poOuterCurvePoly)
         {
             // cppcheck-suppress accessMoved
-            return poCurvePoly;
+            return poOuterCurvePoly;
         }
         else
             return poMulti;
@@ -1986,7 +2247,7 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
     {
         method = METHOD_ONLY_CCW;
         for (std::size_t i = 0; i < asPolyEx.size(); i++)
-            asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
+            asPolyEx[i].dfArea = asPolyEx[i].poCurvePolygon->get_Area();
     }
 
     // Emits a warning if the number of parts is sufficiently big to anticipate
@@ -2119,8 +2380,14 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                 CPLFree);
 
         // Sort candidate outer rings by increasing area
-        sPolyExtended::SortByIncreasingArea(
-            aphCandidateShells.get(), aphCandidateShells.get() + nCandidates);
+        if (nCandidates)
+        {
+            std::sort(
+                aphCandidateShells.get(),
+                aphCandidateShells.get() + nCandidates,
+                [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
+                { return psPoly1->dfArea < psPoly2->dfArea; });
+        }
 
         int j = 0;
         for (; bValidTopology && j < nCandidates; j++)
@@ -2152,8 +2419,7 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                         // broken.
                         thisInsideOther = true;
                     }
-                    else if (thisPoly.bIsPolygon && otherPoly.bIsPolygon &&
-                             otherPoly.getExteriorLinearRing()
+                    else if (otherPoly.getExteriorLinearRing()
                                  ->isPointOnRingBoundary(&thisPoly.sPoint,
                                                          FALSE))
                     {
@@ -2241,15 +2507,14 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                     }
                     // Note that isPointInRing only test strict inclusion in the
                     // ring.
-                    else if (thisPoly.bIsPolygon && otherPoly.bIsPolygon &&
-                             otherPoly.getExteriorLinearRing()->isPointInRing(
+                    else if (otherPoly.getExteriorLinearRing()->isPointInRing(
                                  &thisPoly.sPoint, FALSE))
                     {
                         thisInsideOther = true;
                     }
                 }
-                else if (otherPoly.poPolygon->Contains(
-                             thisPoly.poPolygon.get()))
+                else if (otherPoly.poCurvePolygon->Contains(
+                             thisPoly.poCurvePolygon.get()))
                 {
                     thisInsideOther = true;
                 }
@@ -2261,7 +2526,8 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                 {
                     // We are a lake.
                     thisPoly.bIsTopLevel = false;
-                    thisPoly.poEnclosingPolygon = otherPoly.poPolygon.get();
+                    thisPoly.poEnclosingPolygon =
+                        otherPoly.poCurvePolygon.get();
                 }
                 else
                 {
@@ -2275,8 +2541,8 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
             }
             // Use Overlaps instead of Intersects to be more
             // tolerant about touching polygons.
-            else if (bUseFastVersion ||
-                     !thisPoly.poPolygon->Overlaps(otherPoly.poPolygon.get()))
+            else if (bUseFastVersion || !thisPoly.poCurvePolygon->Overlaps(
+                                            otherPoly.poCurvePolygon.get()))
             {
             }
             else
@@ -2289,8 +2555,8 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
 #ifdef DEBUG
                 char *wkt1 = nullptr;
                 char *wkt2 = nullptr;
-                thisPoly.poPolygon->exportToWkt(&wkt1);
-                otherPoly.poPolygon->exportToWkt(&wkt2);
+                thisPoly.poCurvePolygon->exportToWkt(&wkt1);
+                otherPoly.poCurvePolygon->exportToWkt(&wkt2);
                 const int realJ = static_cast<int>(&otherPoly - &asPolyEx[0]);
                 CPLDebug("OGR",
                          "Bad intersection for polygons %d and %d\n"
@@ -2343,13 +2609,15 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
     {
         if (!sPolyEx.bIsTopLevel)
         {
-            sPolyEx.poEnclosingPolygon->addRing(std::unique_ptr<OGRCurve>(
-                sPolyEx.poPolygon->stealExteriorRingCurve()));
-            sPolyEx.poPolygon.reset();
+            AddRingToPolyOrCurvePoly(
+                sPolyEx.poEnclosingPolygon,
+                std::unique_ptr<OGRCurve>(
+                    sPolyEx.poCurvePolygon->stealExteriorRingCurve()));
+            sPolyEx.poCurvePolygon.reset();
         }
         else if (nCountTopLevel == 1)
         {
-            geom = std::move(sPolyEx.poPolygon);
+            geom = std::move(sPolyEx.poCurvePolygon);
         }
     }
 
@@ -2365,7 +2633,7 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
         {
             if (sPolyEx.bIsTopLevel)
             {
-                poMS->addGeometry(std::move(sPolyEx.poPolygon));
+                poMS->addGeometry(std::move(sPolyEx.poCurvePolygon));
             }
         }
         geom = std::move(poMS);
@@ -3324,7 +3592,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
 /*                            RemovePoint()                             */
 /************************************************************************/
 
-static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
+static void RemovePoint(OGRGeometry *poGeom, const OGRPoint *poPoint)
 {
     const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
     switch (eType)
@@ -3361,14 +3629,11 @@ static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
         case wkbPolygon:
         {
             OGRPolygon *poPoly = poGeom->toPolygon();
-            if (poPoly->getExteriorRing() != nullptr)
+            for (auto *poRing : *poPoly)
             {
-                RemovePoint(poPoly->getExteriorRing(), poPoint);
-                for (int i = 0; i < poPoly->getNumInteriorRings(); ++i)
-                {
-                    RemovePoint(poPoly->getInteriorRing(i), poPoint);
-                }
+                RemovePoint(poRing, poPoint);
             }
+            poPoly->closeRings();
             break;
         }
 
@@ -3377,9 +3642,9 @@ static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
         case wkbGeometryCollection:
         {
             OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
-            for (int i = 0; i < poGC->getNumGeometries(); ++i)
+            for (auto *poPart : *poGC)
             {
-                RemovePoint(poGC->getGeometryRef(i), poPoint);
+                RemovePoint(poPart, poPoint);
             }
             break;
         }
@@ -3649,7 +3914,7 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
     OGRPoint oNearPoleAntimeridian(dfNearPoleAntiMeridianX,
                                    dfNearPoleAntiMeridianY);
     const bool bContainsNearPoleAntimeridian =
-        CPL_TO_BOOL(poDstGeom->Contains(&oNearPoleAntimeridian));
+        poDstGeom->Contains(&oNearPoleAntimeridian);
 
     // Does the geometry intersects the antimeridian ?
     OGRLineString oAntiMeridianLine;
@@ -3658,12 +3923,12 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
     oAntiMeridianLine.transform(poRevCT);
     const bool bIntersectsAntimeridian =
         bContainsNearPoleAntimeridian ||
-        CPL_TO_BOOL(poDstGeom->Intersects(&oAntiMeridianLine));
+        poDstGeom->Intersects(&oAntiMeridianLine);
 
     // Does the geometry touches the pole (but not intersect the antimeridian) ?
     const bool bRegularTouchesPole =
         !bContainsPole && !bContainsNearPoleAntimeridian &&
-        !bIntersectsAntimeridian && CPL_TO_BOOL(poDstGeom->Touches(&oPole));
+        !bIntersectsAntimeridian && poDstGeom->Touches(&oPole);
 
     // Create a polygon of nearly a full hemisphere, but excluding the anti
     // meridian and the pole.
@@ -4978,8 +5243,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         if (poRet)
         {
             poRet->assignSpatialReference(poGeom->getSpatialReference());
-            poRet->set3D(OGR_GT_HasZ(eTargetType));
-            poRet->setMeasured(OGR_GT_HasM(eTargetType));
+            poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         }
         return poRet;
     }
@@ -4993,16 +5258,16 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             forceTo(std::move(poGeom), eTargetTypeFlat, papszOptions);
         if (poGeomNew)
         {
-            poGeomNew->set3D(OGR_GT_HasZ(eTargetType));
-            poGeomNew->setMeasured(OGR_GT_HasM(eTargetType));
+            poGeomNew->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poGeomNew->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         }
         return poGeomNew;
     }
 
     if (eTypeFlat == eTargetTypeFlat)
     {
-        poGeom->set3D(OGR_GT_HasZ(eTargetType));
-        poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        poGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poGeom;
     }
 
@@ -5027,8 +5292,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         OGRGeometryCollection *poGC = poGeom.release()->toGeometryCollection();
         auto poRet = std::unique_ptr<OGRGeometry>(
             OGRGeometryCollection::CastToGeometryCollection(poGC));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
 
@@ -5037,8 +5302,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poPS = std::make_unique<OGRPolyhedralSurface>();
         poPS->assignSpatialReference(poGeom->getSpatialReference());
         poPS->addGeometryDirectly(OGRTriangle::CastToPolygon(poGeom.release()));
-        poPS->set3D(OGR_GT_HasZ(eTargetType));
-        poPS->setMeasured(OGR_GT_HasM(eTargetType));
+        poPS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poPS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poPS;
     }
     else if (eType == wkbPolygon && eTargetTypeFlat == wkbPolyhedralSurface)
@@ -5046,8 +5311,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poPS = std::make_unique<OGRPolyhedralSurface>();
         poPS->assignSpatialReference(poGeom->getSpatialReference());
         poPS->addGeometry(std::move(poGeom));
-        poPS->set3D(OGR_GT_HasZ(eTargetType));
-        poPS->setMeasured(OGR_GT_HasM(eTargetType));
+        poPS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poPS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poPS;
     }
     else if (eType == wkbMultiPolygon &&
@@ -5059,8 +5324,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         {
             poPS->addGeometry(poPoly);
         }
-        poPS->set3D(OGR_GT_HasZ(eTargetType));
-        poPS->setMeasured(OGR_GT_HasM(eTargetType));
+        poPS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poPS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poPS;
     }
     else if (eType == wkbTIN && eTargetTypeFlat == wkbPolyhedralSurface)
@@ -5096,8 +5361,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poTS = std::make_unique<OGRTriangulatedSurface>();
         poTS->assignSpatialReference(poGeom->getSpatialReference());
         poTS->addGeometry(std::move(poGeom));
-        poTS->set3D(OGR_GT_HasZ(eTargetType));
-        poTS->setMeasured(OGR_GT_HasM(eTargetType));
+        poTS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poTS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poTS;
     }
     else if (eType == wkbPolygon && eTargetTypeFlat == wkbTIN)
@@ -5114,8 +5379,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poTS = std::make_unique<OGRTriangulatedSurface>();
         poTS->assignSpatialReference(poGeom->getSpatialReference());
         poTS->addGeometry(std::move(poTriangle));
-        poTS->set3D(OGR_GT_HasZ(eTargetType));
-        poTS->setMeasured(OGR_GT_HasM(eTargetType));
+        poTS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poTS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poTS;
     }
     else if (eType == wkbMultiPolygon && eTargetTypeFlat == wkbTIN)
@@ -5137,8 +5402,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometry(std::make_unique<OGRTriangle>(*poPoly, eErr));
         }
-        poTS->set3D(OGR_GT_HasZ(eTargetType));
-        poTS->setMeasured(OGR_GT_HasM(eTargetType));
+        poTS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poTS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poTS;
     }
     else if (eType == wkbPolyhedralSurface && eTargetTypeFlat == wkbTIN)
@@ -5150,8 +5415,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             if (!(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0))
             {
-                poGeom->set3D(OGR_GT_HasZ(eTargetType));
-                poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+                poGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+                poGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
                 return poGeom;
             }
         }
@@ -5162,8 +5427,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometry(std::make_unique<OGRTriangle>(*poPoly, eErr));
         }
-        poTS->set3D(OGR_GT_HasZ(eTargetType));
-        poTS->setMeasured(OGR_GT_HasM(eTargetType));
+        poTS->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poTS->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poTS;
     }
 
@@ -5174,14 +5439,14 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         if (!(poLR != nullptr && poLR->getNumPoints() == 4 &&
               poPoly->getNumInteriorRings() == 0))
         {
-            poGeom->set3D(OGR_GT_HasZ(eTargetType));
-            poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+            poGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
             return poGeom;
         }
         OGRErr eErr = OGRERR_NONE;
         auto poTriangle = std::make_unique<OGRTriangle>(*poPoly, eErr);
-        poTriangle->set3D(OGR_GT_HasZ(eTargetType));
-        poTriangle->setMeasured(OGR_GT_HasM(eTargetType));
+        poTriangle->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poTriangle->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poTriangle;
     }
 
@@ -5205,8 +5470,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poGC = std::make_unique<OGRGeometryCollection>();
         poGC->assignSpatialReference(poGeom->getSpatialReference());
         poGC->addGeometry(std::move(poGeom));
-        poGC->set3D(OGR_GT_HasZ(eTargetType));
-        poGC->setMeasured(OGR_GT_HasM(eTargetType));
+        poGC->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poGC->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poGC;
     }
 
@@ -5224,8 +5489,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             poGeom.reset(
                 OGRCurve::CastToLineString(poGeom.release()->toCurve()));
         poRet->toGeometryCollection()->addGeometry(std::move(poGeom));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
 
@@ -5236,8 +5501,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             OGRCurve::CastToCompoundCurve(poGeom.release()->toCurve()));
         if (poRet)
         {
-            poRet->set3D(OGR_GT_HasZ(eTargetType));
-            poRet->setMeasured(OGR_GT_HasM(eTargetType));
+            poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         }
         return poRet;
     }
@@ -5250,8 +5515,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             if (poCP->addRing(std::move(poCurve)) == OGRERR_NONE)
             {
                 poCP->assignSpatialReference(poGeom->getSpatialReference());
-                poCP->set3D(OGR_GT_HasZ(eTargetType));
-                poCP->setMeasured(OGR_GT_HasM(eTargetType));
+                poCP->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+                poCP->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
                 return poCP;
             }
         }
@@ -5283,16 +5548,16 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poRet =
             std::unique_ptr<OGRGeometry>(OGRSurface::CastToCurvePolygon(
                 OGRTriangle::CastToPolygon(poGeom.release())->toSurface()));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
     else if (eType == wkbPolygon && eTargetTypeFlat == wkbCurvePolygon)
     {
         auto poRet = std::unique_ptr<OGRGeometry>(
             OGRSurface::CastToCurvePolygon(poGeom.release()->toPolygon()));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
     else if (OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) &&
@@ -5313,8 +5578,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poRet =
             std::unique_ptr<OGRGeometry>(OGRMultiPolygon::CastToMultiSurface(
                 poGeom.release()->toMultiPolygon()));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
     else if (eType == wkbMultiLineString && eTargetTypeFlat == wkbMultiCurve)
@@ -5322,8 +5587,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         auto poRet =
             std::unique_ptr<OGRGeometry>(OGRMultiLineString::CastToMultiCurve(
                 poGeom.release()->toMultiLineString()));
-        poRet->set3D(OGR_GT_HasZ(eTargetType));
-        poRet->setMeasured(OGR_GT_HasM(eTargetType));
+        poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         return poRet;
     }
     else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
@@ -5375,8 +5640,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
     {
         auto poNewGeom =
             std::unique_ptr<OGRGeometry>(forceToLineString(poGeom.release()));
-        poNewGeom->set3D(OGR_GT_HasZ(eTargetType));
-        poNewGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        poNewGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poNewGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         poGeom = std::move(poNewGeom);
     }
     else if (eTargetTypeFlat == wkbPolygon)
@@ -5385,8 +5650,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             std::unique_ptr<OGRGeometry>(forceToPolygon(poGeom.release()));
         if (poNewGeom)
         {
-            poNewGeom->set3D(OGR_GT_HasZ(eTargetType));
-            poNewGeom->setMeasured(OGR_GT_HasM(eTargetType));
+            poNewGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poNewGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         }
         poGeom = std::move(poNewGeom);
     }
@@ -5396,8 +5661,8 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
             std::unique_ptr<OGRGeometry>(forceToMultiPolygon(poGeom.release()));
         if (poNewGeom)
         {
-            poNewGeom->set3D(OGR_GT_HasZ(eTargetType));
-            poNewGeom->setMeasured(OGR_GT_HasM(eTargetType));
+            poNewGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+            poNewGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         }
         poGeom = std::move(poNewGeom);
     }
@@ -5405,16 +5670,16 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
     {
         auto poNewGeom = std::unique_ptr<OGRGeometry>(
             forceToMultiLineString(poGeom.release()));
-        poNewGeom->set3D(OGR_GT_HasZ(eTargetType));
-        poNewGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        poNewGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poNewGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         poGeom = std::move(poNewGeom);
     }
     else if (eTargetTypeFlat == wkbMultiPoint)
     {
         auto poNewGeom =
             std::unique_ptr<OGRGeometry>(forceToMultiPoint(poGeom.release()));
-        poNewGeom->set3D(OGR_GT_HasZ(eTargetType));
-        poNewGeom->setMeasured(OGR_GT_HasM(eTargetType));
+        poNewGeom->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
+        poNewGeom->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
         poGeom = std::move(poNewGeom);
     }
 

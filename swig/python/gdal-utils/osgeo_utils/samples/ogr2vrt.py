@@ -215,7 +215,7 @@ def main(argv=sys.argv):
         if openoptions:
             vrt += "    <OpenOptions>\n"
             for option in openoptions:
-                (key, value) = option.split("=")
+                key, value = option.split("=")
                 vrt += '        <OOI key="%s">%s</OOI>\n' % (Esc(key), Esc(value))
             vrt += "    </OpenOptions>\n"
 
@@ -238,7 +238,7 @@ def main(argv=sys.argv):
             if srs is not None:
                 vrt += "    <LayerSRS>%s</LayerSRS>\n" % (Esc(srs.ExportToWkt()))
             if extent:
-                (xmin, xmax, ymin, ymax) = layer.GetExtent()
+                xmin, xmax, ymin, ymax = layer.GetExtent()
                 vrt += "    <ExtentXMin>%.15g</ExtentXMin>\n" % xmin
                 vrt += "    <ExtentYMin>%.15g</ExtentYMin>\n" % ymin
                 vrt += "    <ExtentXMax>%.15g</ExtentXMax>\n" % xmax
@@ -259,7 +259,7 @@ def main(argv=sys.argv):
                 if srs is not None:
                     vrt += "      <SRS>%s</SRS>\n" % (Esc(srs.ExportToWkt()))
                 if extent:
-                    (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
+                    xmin, xmax, ymin, ymax = layer.GetExtent(geom_field=fld_index)
                     vrt += "      <ExtentXMin>%.15g</ExtentXMin>\n" % xmin
                     vrt += "      <ExtentYMin>%.15g</ExtentYMin>\n" % ymin
                     vrt += "      <ExtentXMax>%.15g</ExtentXMax>\n" % xmax

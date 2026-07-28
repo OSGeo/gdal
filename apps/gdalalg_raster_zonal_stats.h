@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_ZONAL_STATS_INCLUDED
 #define GDALALG_RASTER_ZONAL_STATS_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -54,6 +54,7 @@ class GDALRasterZonalStatsAlgorithm /* non final */
     std::vector<int> m_bands{};
     std::vector<std::string> m_stats{};
     std::vector<std::string> m_includeFields{};
+    bool m_includeZoneGeom{false};
     std::string m_strategy{};
     std::string m_memoryStr{"5%"};
     std::string m_pixels{"default"};

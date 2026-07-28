@@ -1401,9 +1401,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                     if (pszDefaultSRS)
                     {
                         auto poSRS =
-                            std::unique_ptr<OGRSpatialReference,
-                                            OGRSpatialReferenceReleaser>(
-                                new OGRSpatialReference());
+                            OGRSpatialReferenceRefCountedPtr::makeInstance();
                         if (poSRS->SetFromUserInput(
                                 pszDefaultSRS,
                                 OGRSpatialReference::
@@ -1426,10 +1424,8 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                                 CPLGetXMLValue(psIter, "", nullptr);
                             if (pszSRS && IsValidCRSName(pszSRS))
                             {
-                                auto poSRS = std::unique_ptr<
-                                    OGRSpatialReference,
-                                    OGRSpatialReferenceReleaser>(
-                                    new OGRSpatialReference());
+                                auto poSRS = OGRSpatialReferenceRefCountedPtr::
+                                    makeInstance();
                                 if (poSRS->SetFromUserInput(
                                         EQUAL(pszSRS, "CRS:84") ? "OGC:CRS84"
                                                                 : pszSRS,
@@ -1895,29 +1891,40 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
         return;
     }
 
-    if (strstr(reinterpret_cast<const char *>(psResult->pabyData),
-               "<ServiceExceptionReport") != nullptr)
+    const char *pszResponse =
+        reinterpret_cast<const char *>(psResult->pabyData);
+    if (STARTS_WITH(pszResponse, "<html"))
     {
-        if (IsOldDeegree(reinterpret_cast<const char *>(psResult->pabyData)))
+        // WFS:https://www.statistik.at/gs-open/GEODATA/ows returns a HTML error
+        // (with code 200) when requesting all feature types...
+        CPLDebug("WFS", "Response to multi-layer DescribeFeatureType: %s",
+                 pszResponse);
+        CPLHTTPDestroyResult(psResult);
+        bLoadMultipleLayerDefn = false;
+        return;
+    }
+
+    if (strstr(pszResponse, "<ServiceExceptionReport") != nullptr)
+    {
+        if (IsOldDeegree(pszResponse))
         {
             /* just silently forgive */
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Error returned by server : %s", psResult->pabyData);
+                     "Error returned by server : %s", pszResponse);
         }
         CPLHTTPDestroyResult(psResult);
         bLoadMultipleLayerDefn = false;
         return;
     }
 
-    CPLXMLNode *psXML =
-        CPLParseXMLString(reinterpret_cast<const char *>(psResult->pabyData));
+    CPLXMLNode *psXML = CPLParseXMLString(pszResponse);
     if (psXML == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid XML content : %s",
-                 psResult->pabyData);
+                 pszResponse);
         CPLHTTPDestroyResult(psResult);
         bLoadMultipleLayerDefn = false;
         return;

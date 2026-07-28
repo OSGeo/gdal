@@ -826,7 +826,7 @@ void OGRParquetDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "COMPRESSION");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_COMPRESSION);
         CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Compression method");
@@ -1031,6 +1031,8 @@ class OGRParquetCreateMetadataFileAlgorithm final : public GDALAlgorithm
               "Create the _metadata file for a partitioned Parquet dataset",
               "/programs/gdal_driver_parquet_create_metadata_file.html")
     {
+        AddProgressArg(/* hidden = */ true);
+
         auto &inputArg =
             AddArg(GDAL_ARG_NAME_INPUT, 0, _("Input Parquet datasets"),
                    &m_input, GDAL_OF_VECTOR)

@@ -53,8 +53,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
 
     # Test altering a value to check that the file will be used
     f = open("tmppamproxydir/000000_tmpdirreadonly_byte.tif.aux.xml", "w")
-    f.write(
-        """<PAMDataset>
+    f.write("""<PAMDataset>
   <PAMRasterBand band="1">
     <Metadata>
       <MDI key="STATISTICS_MAXIMUM">255</MDI>
@@ -63,8 +62,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
       <MDI key="STATISTICS_STDDEV">22.928470838676</MDI>
     </Metadata>
   </PAMRasterBand>
-</PAMDataset>"""
-    )
+</PAMDataset>""")
     f.close()
 
     ds = gdal.Open("tmpdirreadonly/byte.tif")

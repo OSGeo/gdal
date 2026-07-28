@@ -273,7 +273,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "Unable to write using band ordered IRasterIO when using "
-                 "interleave 'ATTRIBUTES'.\n");
+                 "interleave 'ATTRIBUTES'.");
         return CE_Failure;
     }
 
@@ -418,7 +418,7 @@ CPLErr TileDBRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset is opened read only.\n");
+                 "Unable to write block, dataset is opened read only.");
         return CE_Failure;
     }
 
@@ -1283,7 +1283,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
 CSLConstList TileDBRasterDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         if (m_aosSubdatasetMD.empty())
         {
@@ -1352,8 +1352,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     const char *pszTimestamp =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_TIMESTAMP");
 
-    poDS->bStats =
-        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "STATS", FALSE);
+    poDS->bStats = CPL_TO_BOOL(
+        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "STATS", FALSE));
 
     if (pszConfig != nullptr)
     {
@@ -1422,7 +1422,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     }
 
     if ((poOpenInfo->eAccess == GA_ReadOnly) &&
-        (!TileDBDataset::TileDBObjectExists(poDS->m_osArrayURI)))
+        (!TileDBDataset::TileDBObjectExists(*poDS->m_ctx, poDS->m_osArrayURI)))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open %s as an array or group.",
@@ -1459,7 +1459,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
     tiledb::ArraySchema schema = poDS->m_array->schema();
 
-    CSLConstList papszStructMeta = poDS->GetMetadata("IMAGE_STRUCTURE");
+    CSLConstList papszStructMeta = poDS->GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
     const char *pszXSize = CSLFetchNameValue(papszStructMeta, "X_SIZE");
     if (pszXSize)
     {
@@ -1486,7 +1486,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const char *pszNBits = CSLFetchNameValue(papszStructMeta, "NBITS");
+    const char *pszNBits = CSLFetchNameValue(papszStructMeta, GDALMD_NBITS);
     if (pszNBits)
     {
         poDS->nBitsPerSample = atoi(pszNBits);
@@ -1527,7 +1527,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const char *pszIndexMode = CSLFetchNameValue(papszStructMeta, "INTERLEAVE");
+    const char *pszIndexMode =
+        CSLFetchNameValue(papszStructMeta, GDALMD_INTERLEAVE);
 
     if (pszIndexMode)
         option_to_index_type(pszIndexMode, poDS->eIndexMode);
@@ -1577,7 +1578,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         else
         {
             const char *pszBands =
-                poDS->GetMetadataItem("NUM_BANDS", "IMAGE_STRUCTURE");
+                poDS->GetMetadataItem("NUM_BANDS", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszBands)
             {
                 poDS->nBands = atoi(pszBands);
@@ -1676,7 +1677,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     else  // subdatasets or only attributes
     {
         if ((poOpenInfo->eAccess == GA_Update) &&
-            (poDS->GetMetadata("SUBDATASETS") != nullptr))
+            (poDS->GetMetadata(GDAL_MDD_SUBDATASETS) != nullptr))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "The TileDB driver does not support update access "
@@ -1716,7 +1717,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            CSLConstList papszMeta = poDS->GetMetadata("SUBDATASETS");
+            CSLConstList papszMeta = poDS->GetMetadata(GDAL_MDD_SUBDATASETS);
             if (papszMeta != nullptr)
             {
                 if ((CSLCount(papszMeta) / 2) == 1)
@@ -1724,8 +1725,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     const char *pszSubDSName =
                         poDS->m_aosSubdatasetMD.FetchNameValueDef(
                             "SUBDATASET_1_NAME", "");
-                    return GDALDataset::FromHandle(
-                        GDALOpen(pszSubDSName, poOpenInfo->eAccess));
+                    GDALOpenInfo oOpenInfo(pszSubDSName, poOpenInfo->eAccess);
+                    return OpenInternal(&oOpenInfo, objectType);
                 }
             }
             else if (poDS->eIndexMode == ATTRIBUTES)
@@ -1735,10 +1736,16 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                 // Create band information objects.
                 for (int i = 1; i <= poDS->nBands; ++i)
                 {
-                    CPLString osAttr =
-                        TILEDB_VALUES + CPLString().Printf("_%i", i);
-                    poDS->SetBand(i,
-                                  new TileDBRasterBand(poDS.get(), i, osAttr));
+                    tiledb::Attribute const &attr = schema.attribute(i - 1);
+                    std::string const &attr_name = attr.name();
+
+                    CPLDebug("TileDB", "Set attribute '%s' from TileDB schema",
+                             attr_name.c_str());
+
+                    GDALRasterBand *band =
+                        new TileDBRasterBand(poDS.get(), i, attr_name.c_str());
+
+                    poDS->SetBand(i, band);
                 }
             }
             else
@@ -1989,7 +1996,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
                     CPLCreateXMLNode(psSubNode, CXT_Element, "PAMDataset"),
                     CXT_Element, "Metadata");
                 CPLAddXMLAttributeAndValue(psMetaNode, "domain",
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
 
                 CPLAddXMLAttributeAndValue(
                     CPLCreateXMLElementAndValue(
@@ -2030,7 +2037,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
                     CPLCreateXMLElementAndValue(
                         psMetaNode, "MDI",
                         CPLString().Printf("%d", nBitsPerSample)),
-                    "KEY", "NBITS");
+                    "KEY", GDALMD_NBITS);
             }
         }
         return CE_None;
@@ -2100,7 +2107,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         else
         {
             const char *pszIndexMode =
-                CSLFetchNameValue(papszOptions, "INTERLEAVE");
+                CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
 
             if (option_to_index_type(pszIndexMode, poDS->eIndexMode))
                 return nullptr;
@@ -2146,7 +2153,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         }
 
         const char *pszCompression =
-            CSLFetchNameValue(papszOptions, "COMPRESSION");
+            CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
         const char *pszCompressionLevel =
             CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
 
@@ -2156,7 +2163,8 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         const char *pszBlockYSize =
             CSLFetchNameValue(papszOptions, "BLOCKYSIZE");
         poDS->nBlockYSize = (pszBlockYSize) ? atoi(pszBlockYSize) : 256;
-        poDS->bStats = CSLFetchBoolean(papszOptions, "STATS", FALSE);
+        poDS->bStats =
+            CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "STATS", FALSE));
 
         const char *pszTimestamp =
             CSLFetchNameValue(papszOptions, "TILEDB_TIMESTAMP");
@@ -2178,8 +2186,8 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
                                          *(poDS->m_filterList.get()),
                                          pszCompression, nLevel) == CE_None)
             {
-                poDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                      "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                      GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->m_schema->set_coords_filter_list(*poDS->m_filterList);
             }
         }
@@ -2375,7 +2383,8 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
     {
         std::vector<std::unique_ptr<GDALDataset>> apoDatasets;
         poDstDS->m_bHasSubDatasets = true;
-        CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+        CSLConstList papszSrcSubDatasets =
+            poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
         if (!papszSrcSubDatasets)
             return CE_Failure;
         const char *pszSubDSName =
@@ -2477,7 +2486,8 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
             }
         }
 
-        poDstDS->SetMetadata(poDstDS->m_aosSubdatasetMD.List(), "SUBDATASETS");
+        poDstDS->SetMetadata(poDstDS->m_aosSubdatasetMD.List(),
+                             GDAL_MDD_SUBDATASETS);
 
         poDstDS->CreateArray();
 
@@ -2611,7 +2621,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
     {
         CPLStringList aosImageStruct;
         aosImageStruct.SetNameValue(
-            "NBITS", CPLString().Printf("%d", poDS->nBitsPerSample));
+            GDALMD_NBITS, CPLString().Printf("%d", poDS->nBitsPerSample));
         aosImageStruct.SetNameValue(
             "DATA_TYPE",
             CPLString().Printf("%s", GDALGetDataTypeName(poDS->eDataType)));
@@ -2619,7 +2629,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
             "X_SIZE", CPLString().Printf("%d", poDS->nRasterXSize));
         aosImageStruct.SetNameValue(
             "Y_SIZE", CPLString().Printf("%d", poDS->nRasterYSize));
-        aosImageStruct.SetNameValue("INTERLEAVE",
+        aosImageStruct.SetNameValue(GDALMD_INTERLEAVE,
                                     index_type_name(poDS->eIndexMode));
         aosImageStruct.SetNameValue("DATASET_TYPE", RASTER_DATASET_TYPE);
 
@@ -2633,7 +2643,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
                     CPLGetBasenameSafe(poAttrDS->GetDescription()).c_str());
             }
         }
-        poDS->SetMetadata(aosImageStruct.List(), "IMAGE_STRUCTURE");
+        poDS->SetMetadata(aosImageStruct.List(), GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     return poDS.release();
@@ -2664,7 +2674,8 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    CSLConstList papszSrcSubDatasets = poSrcDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszSrcSubDatasets =
+        poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
 
     if (papszSrcSubDatasets == nullptr)
     {
@@ -2719,7 +2730,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "TileDB driver does not support "
-                     "source dataset with zero bands.");
+                     "source datasets with zero bands.");
             return nullptr;
         }
     }
@@ -3022,8 +3033,8 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
             CPLStringList aosCreationOptions;
             aosCreationOptions.SetNameValue("CREATE_GROUP", "NO");
             aosCreationOptions.SetNameValue(
-                "NBITS", CPLString().Printf("%d", nBitsPerSample));
-            aosCreationOptions.SetNameValue("INTERLEAVE",
+                GDALMD_NBITS, CPLString().Printf("%d", nBitsPerSample));
+            aosCreationOptions.SetNameValue(GDALMD_INTERLEAVE,
                                             index_type_name(eIndexMode));
             if (nTimestamp)
             {

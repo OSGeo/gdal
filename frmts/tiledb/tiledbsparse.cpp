@@ -328,7 +328,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
 
     if (!m_osGroupName.empty() && strchr(pszName, '/'))
     {
-        // Otherwise a layer name wit ha slash when groups are enabled causes
+        // Otherwise a layer name with a slash when groups are enabled causes
         // a "[TileDB::Array] Error: FragmentID: input URI is invalid. Provided URI does not contain a fragment name."
         // exception on re-opening starting with TileDB 2.21
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -472,7 +472,8 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         CSLFetchNameValueDef(papszOptions, "TILEDB_TIMESTAMP", "0");
     poLayer->m_nTimestamp = std::strtoull(pszTimestamp, nullptr, 10);
 
-    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszCompression =
+        CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     const char *pszCompressionLevel =
         CSLFetchNameValue(papszOptions, "COMPRESSION_LEVEL");
 
@@ -3574,7 +3575,7 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
         for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
         {
             const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-            const bool bIsNullable = poFieldDefn->IsNullable();
+            const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
 
             const auto CreateAttr =
                 [this, poFieldDefn, bIsNullable](tiledb_datatype_t type,
@@ -3734,7 +3735,7 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
                 default:
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
-                             "Unsupported attribute definition.\n");
+                             "Unsupported attribute definition.");
                     return;
                 }
             }
@@ -4209,7 +4210,7 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
             default:
             {
                 CPLError(CE_Failure, CPLE_NoWriteAccess,
-                         "Unsupported attribute definition.\n");
+                         "Unsupported attribute definition.");
                 return OGRERR_FAILURE;
             }
         }
@@ -4960,7 +4961,7 @@ void OGRTileDBLayer::FillTimeOrDateArray(
             }
         }
     }
-    psChild->buffers[1] = newValuesPtr->data();
+    psChild->buffers[1] = newValues.data();
 
     SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }

@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_INFO_INCLUDED
 #define GDALALG_VECTOR_INFO_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -46,7 +46,9 @@ class GDALVectorInfoAlgorithm /* non final */
     std::string m_sql{};
     std::string m_where{};
     std::string m_dialect{};
+    int m_fid = -1;
     int m_limit = 0;
+    std::string m_crsFormat = "AUTO";
 };
 
 /************************************************************************/

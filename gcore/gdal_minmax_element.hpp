@@ -31,7 +31,7 @@
 // Just to please cppcheck
 #ifndef GDAL_COMPUTE_VERSION
 #define GDAL_COMPUTE_VERSION(maj, min, rev)                                    \
-    ((maj)*1000000 + (min)*10000 + (rev)*100)
+    ((maj) * 1000000 + (min) * 10000 + (rev) * 100)
 #endif
 
 #ifdef GDAL_COMPILATION
@@ -232,7 +232,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
                 if constexpr (IS_MAX)
                 {
                     return std::max_element(buffer, buffer + size,
-                                            [](T a, T b) {
+                                            [](T a, T b)
+                                            {
                                                 return IsNan(b)   ? false
                                                        : IsNan(a) ? true
                                                                   : a < b;
@@ -242,7 +243,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
                 else
                 {
                     return std::min_element(buffer, buffer + size,
-                                            [](T a, T b) {
+                                            [](T a, T b)
+                                            {
                                                 return IsNan(b)   ? true
                                                        : IsNan(a) ? false
                                                                   : a < b;
@@ -289,7 +291,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             if constexpr (IS_MAX)
             {
                 return std::max_element(buffer, buffer + size,
-                                        [noDataValue](T a, T b) {
+                                        [noDataValue](T a, T b)
+                                        {
                                             return (b == noDataValue)   ? false
                                                    : (a == noDataValue) ? true
                                                                         : a < b;
@@ -299,7 +302,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             else
             {
                 return std::min_element(buffer, buffer + size,
-                                        [noDataValue](T a, T b) {
+                                        [noDataValue](T a, T b)
+                                        {
                                             return (b == noDataValue)   ? true
                                                    : (a == noDataValue) ? false
                                                                         : a < b;
@@ -315,7 +319,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             if constexpr (IS_MAX)
             {
                 return std::max_element(buffer, buffer + size,
-                                        [](T a, T b) {
+                                        [](T a, T b)
+                                        {
                                             return IsNan(b)   ? false
                                                    : IsNan(a) ? true
                                                               : a < b;
@@ -325,7 +330,8 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
             else
             {
                 return std::min_element(buffer, buffer + size,
-                                        [](T a, T b) {
+                                        [](T a, T b)
+                                        {
                                             return IsNan(b)   ? true
                                                    : IsNan(a) ? false
                                                               : a < b;
@@ -705,8 +711,7 @@ template <>
 // Disabling inlining works around it...
 __attribute__((noinline))
 #endif
-__m128i
-compeq<int64_t>(__m128i a, __m128i b)
+__m128i compeq<int64_t>(__m128i a, __m128i b)
 {
     return compeq<uint64_t>(a, b);
 }
@@ -739,8 +744,7 @@ template <class T, bool IS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-size_t
-extremum_element_sse2(const T *v, size_t size, T noDataValue)
+size_t extremum_element_sse2(const T *v, size_t size, T noDataValue)
 {
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
                   std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||

@@ -79,7 +79,7 @@ def test_ogr_sxf_3(tmp_path):
     fake_rsc = open(rsc_name, "w")
     fake_rsc.close()
     shutil.copy("data/sxf/100_test.sxf", sxf_name)
-    sxf_ds = gdal.OpenEx(
+    sxf_ds = gdal.Open(
         sxf_name, gdal.OF_VECTOR, open_options=["SXF_RSC_FILENAME=" + rsc_name]
     )
 
@@ -108,7 +108,7 @@ def test_ogr_sxf_4():
         "Not_Classified",
     ]
     sxf_name = "data/sxf/100_test.sxf"
-    sxf_ds = gdal.OpenEx(
+    sxf_ds = gdal.Open(
         sxf_name, gdal.OF_VECTOR, open_options=["SXF_LAYER_FULLNAME=YES"]
     )
 
@@ -123,3 +123,29 @@ def test_ogr_sxf_4():
         actual_layer_names.append(lyr.GetName())
 
     assert actual_layer_names == lyr_names
+
+
+###############################################################################
+# Test that a string attribute whose length byte is 0xFF does not overflow.
+# The length byte (nScale) is a signed char; 0xFF used to sign-extend to -1 and
+# wrap the computed length to 0, bypassing the bounds check.
+
+
+@pytest.mark.parametrize("attr_type", [0, 126, 127])  # ASCIIZ_DOS, ANSI_WIN, UNICODE
+def test_ogr_sxf_attribute_length_overflow(tmp_path, attr_type):
+
+    data = bytearray(open("data/sxf/100_test.sxf", "rb").read())
+    # First feature record holds an ANSI_WIN attribute; nType at offset 744,
+    # nScale at offset 745. Force the length byte to 0xFF.
+    data[744] = attr_type
+    data[745] = 0xFF
+    sxf_name = str(tmp_path / "attr_overflow.sxf")
+    open(sxf_name, "wb").write(data)
+
+    with gdal.quiet_errors():
+        ds = ogr.Open(sxf_name)
+        assert ds is not None
+        for layer_n in range(ds.GetLayerCount()):
+            lyr = ds.GetLayer(layer_n)
+            for feat in lyr:
+                pass

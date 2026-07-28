@@ -449,11 +449,11 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
     {
         if (m_osElementName == "Name" || m_osElementName == "ValueReference")
         {
-            const char *pszName;
-            pszName = strrchr(m_pszCurField, '/');
-            pszName = pszName ? pszName + 1 : m_pszCurField;
-            pszName = strrchr(pszName, ':');
-            pszName = pszName ? pszName + 1 : m_pszCurField;
+            const char *pszName = m_pszCurField;
+            if (const char *p = strrchr(pszName, '/'))
+                pszName = p + 1;
+            if (const char *p = strrchr(pszName, ':'))
+                pszName = p + 1;
 
             CPLAssert(m_osUpdatePropertyName == "");
             m_osUpdatePropertyName = pszName;

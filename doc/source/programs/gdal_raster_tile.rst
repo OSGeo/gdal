@@ -1,5 +1,7 @@
 .. _gdal_raster_tile:
 
+.. program:: gdal_raster_tile
+
 ================================================================================
 ``gdal raster tile``
 ================================================================================
@@ -65,9 +67,9 @@ Program-Specific Options
     - ``tms``: from bottom, as in OSGeo Tile Map Service (TMS) Specification.
 
 
-.. option:: --dst-nodata <DSTNODATA>
+.. option:: --output-nodata <NODATA>
 
-    Destination nodata value.
+    Output nodata value.
 
 .. option:: -i, --input <INPUT>
 
@@ -318,6 +320,10 @@ Standard Options
 
         Defaults to PNG.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -337,7 +343,7 @@ Examples
       gdal raster tile --tiling-scheme raster input.tif output_folder
 
 .. example::
-   :title: Creating a tiled dataset, compatible of the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
+   :title: Creating a tiled dataset, compatible with the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
 
    .. code-block:: bash
 

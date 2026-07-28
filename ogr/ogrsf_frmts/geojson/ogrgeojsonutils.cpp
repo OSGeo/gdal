@@ -1070,7 +1070,9 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
 /*               GeoJSONHTTPFetchWithContentTypeHeader()                */
 /************************************************************************/
 
-CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
+CPLHTTPResult *
+GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL, bool bCanUsePOST,
+                                      const GDALOpenInfo *poOpenInfo)
 {
     std::string osHeaders;
     const char *pszGDAL_HTTP_HEADERS =
@@ -1120,7 +1122,29 @@ CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
 
     CPLStringList aosOptions;
     aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
-    CPLHTTPResult *pResult = CPLHTTPFetch(pszURL, aosOptions.List());
+
+    std::string osURL(pszURL);
+    if (bCanUsePOST && poOpenInfo)
+    {
+        const char *pszHTTPMethod = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "HTTP_METHOD", "AUTO");
+        constexpr size_t MAX_URL_LEN_FOR_GET = 256;  // arbitrary
+        if (EQUAL(pszHTTPMethod, "AUTO"))
+            pszHTTPMethod =
+                (strlen(pszURL) < MAX_URL_LEN_FOR_GET) ? "GET" : "POST";
+        if (EQUAL(pszHTTPMethod, "POST"))
+        {
+            const auto nQuestionMarkPos = osURL.find('?');
+            if (nQuestionMarkPos != std::string::npos)
+            {
+                aosOptions.SetNameValue(
+                    "POSTFIELDS", osURL.substr(nQuestionMarkPos + 1).c_str());
+                osURL.resize(nQuestionMarkPos);
+            }
+        }
+    }
+
+    CPLHTTPResult *pResult = CPLHTTPFetch(osURL.c_str(), aosOptions.List());
 
     if (nullptr == pResult || 0 == pResult->nDataLen ||
         0 != CPLGetLastErrorNo())

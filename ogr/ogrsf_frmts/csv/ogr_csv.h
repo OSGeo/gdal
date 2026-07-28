@@ -70,7 +70,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
   private:
     GDALDataset *m_poDS = nullptr;
-    OGRFeatureDefn *poFeatureDefn = nullptr;
+    OGRFeatureDefnRefCountedPtr m_poFeatureDefn{};
     std::set<CPLString> m_oSetFields{};
 
     VSILFILE *fpCSV = nullptr;
@@ -220,7 +220,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     int TestCapability(const char *) const override;

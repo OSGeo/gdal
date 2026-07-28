@@ -196,13 +196,14 @@ GDALVectorCleanCoverageOutputLayer::~GDALVectorCleanCoverageOutputLayer()
 bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
+    auto poDstDS =
+        std::make_unique<GDALVectorNonStreamingAlgorithmDataset>(*poSrcDS);
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
-        if (m_activeLayer.empty() ||
+        if ((m_activeLayer.empty() && poSrcLayer->GetGeomType() != wkbNone) ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
             progressHelper.AddProcessedLayer(*poSrcLayer);
@@ -213,7 +214,7 @@ bool GDALVectorCleanCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
-    if (!progressHelper.HasProcessedLayers())
+    if (!m_activeLayer.empty() && !progressHelper.HasProcessedLayers())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Specified layer '%s' was not found",

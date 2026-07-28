@@ -58,14 +58,17 @@ int NITFDriverIdentify(GDALOpenInfo *poOpenInfo)
         !STARTS_WITH_CI(pszHeader, "NITF"))
         return FALSE;
 
-    /* Check that it is not in fact a NITF A.TOC file, which is handled by the
-     * RPFTOC driver */
-    for (int i = 0; i < static_cast<int>(poOpenInfo->nHeaderBytes) -
-                            static_cast<int>(strlen("A.TOC"));
-         i++)
+    if (!poOpenInfo->IsSingleAllowedDriver("NITF"))
     {
-        if (STARTS_WITH_CI(pszHeader + i, "A.TOC"))
-            return FALSE;
+        /* Check that it is not in fact a NITF A.TOC file, which is handled by the
+     * RPFTOC driver */
+        for (int i = 0; i < static_cast<int>(poOpenInfo->nHeaderBytes) -
+                                static_cast<int>(strlen("A.TOC"));
+             i++)
+        {
+            if (STARTS_WITH_CI(pszHeader + i, "A.TOC"))
+                return FALSE;
+        }
     }
 
     return TRUE;
@@ -202,6 +205,18 @@ void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->pfnIdentify = RPFTOCDriverIdentify;
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='FORCE_RGBA' type='boolean' description='Whether "
+        "dataset should be exposed as RGBA rather than single band with "
+        "color palette' default='NO' />"
+        "</OpenOptionList>");
+
+#ifdef GDAL_ENABLE_ALGORITHMS
+    poDriver->DeclareAlgorithm({"create"});
+#endif
 }
 
 /************************************************************************/

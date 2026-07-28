@@ -8,8 +8,8 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-ARG BASE_IMAGE=ubuntu:24.04
-ARG TARGET_BASE_IMAGE=ubuntu:24.04
+ARG BASE_IMAGE=ubuntu:26.04
+ARG TARGET_BASE_IMAGE=ubuntu:26.04
 
 FROM $BASE_IMAGE AS builder
 
@@ -20,7 +20,7 @@ ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
-COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+COPY --link ./docker/ubuntu-small/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -30,18 +30,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
     rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-backports main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-updates main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute-backports main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu resolute-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute-security main restricted universe" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
-    && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends g++-15-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-15 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-15 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
 
 # Setup build env for PROJ
@@ -64,6 +64,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} python3-setuptools${APT_ARCH_SUFFIX} \
+       python3-pip${APT_ARCH_SUFFIX} \
        libjpeg-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
@@ -72,13 +73,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
        libmuparser-dev${APT_ARCH_SUFFIX} \
+       cargo${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
+
+RUN mkdir proj gdal
 
 ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
     mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
@@ -89,8 +93,7 @@ ARG WITH_CCACHE
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && mkdir proj \
-    && curl -Lo - -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && export PROJ_DB_CACHE_PARAM="" \
     && cd proj \
@@ -105,7 +108,7 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
         ccache -M 100M; \
     fi \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2 -fzero-init-padding-bits=unions' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -fzero-init-padding-bits=unions' \
         cmake . \
 	-G Ninja \
         -DPROJ_OUTPUT_NAME=internalproj \
@@ -138,15 +141,25 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
+COPY --link . gdal/
+
 RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     # Forcefully remove the development files for libproj so GDAL cannot
     # include the wrong header. This is the last step of the build container,
     # so we can break things without anything else suffering.
     && dpkg --force depends -r libproj-dev \
+    && cd gdal \
     && if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "${GDAL_VERSION}" = "local"; then \
+        export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
+    else \
+        rm -rf ./*; \
+        (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+          | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
@@ -156,10 +169,6 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     else \
         export GDAL_CMAKE_EXTRA_OPTS=""; \
     fi \
-    && mkdir gdal \
-    && curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
-        | tar xz -C gdal --strip-components=1 \
-    && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
@@ -178,7 +187,9 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && mkdir build \
     && cd build \
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi' LDFLAGS="-Wl,-rpath=${PROJ_INSTALL_PREFIX}/lib" \
+    # -fzero-init-padding-bits=unions: restore GCC < 15 behavior with respect
+    # to union initialization.
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2 -fzero-init-padding-bits=unions' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi -fzero-init-padding-bits=unions' LDFLAGS="-Wl,-rpath=${PROJ_INSTALL_PREFIX}/lib" \
        cmake .. \
         -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -187,9 +198,10 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
+        -DGDAL_USE_PCODEC=ON \
         -DBUILD_TESTING=OFF \
     && ninja \
-    && DESTDIR="/build" ninja install \
+    && DEB_PYTHON_INSTALL_LAYOUT=deb_system DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Uploading cache..."; \
@@ -233,8 +245,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip ca-certificates \
     # GDAL dependencies
     && apt-get install -y --no-install-recommends \
-        bash-completion python3-numpy libpython3.12 \
-        libjpeg-turbo8 libgeos3.12.1 libgeos-c1v5 \
+        bash-completion python3-numpy libpython3.14 \
+        libjpeg-turbo8 libgeos3.14.1 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
         libwebp7 libpng16-16 \
@@ -242,25 +254,26 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         libmuparser2v5 \
         libtcmalloc-minimal4 \
-    && apt-get install -y python-is-python3
+        python-is-python3
 
 # Order layers starting with less frequently varying ones
 # Only used for custom libopenjp2
-# COPY --from=builder  /build_thirdparty/usr/ /usr/
+# COPY --from=builder --link  /build_thirdparty/usr/ /usr/
 
-COPY --from=builder  /build_projgrids/usr/ /usr/
+COPY --from=builder --link  /build_projgrids/usr/ /usr/
 
 ARG PROJ_INSTALL_PREFIX
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
-COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_python/usr/ /usr/
-COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
+COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/share/doc/ /usr/share/doc/
+COPY --from=builder --link  /build/usr/include/ /usr/include/
+COPY --from=builder --link  /build_gdal_python/usr/ /usr/
+COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
 

@@ -40,12 +40,14 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                               OGRFeatureDefn *poDefn, int iShape,
                               SHPObject *psShape, const char *pszSHPEncoding,
                               bool &bHasWarnedWrongWindingOrder);
-OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
-                              bool &bHasWarnedWrongWindingOrder);
-OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
-                                      DBFHandle hDBF, VSILFILE *fpSHPXML,
-                                      const char *pszSHPEncoding,
-                                      int bAdjustType);
+std::unique_ptr<OGRGeometry>
+SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
+                 bool &bHasWarnedWrongWindingOrder,
+                 OGRwkbGeometryType eLayerGeomType);
+OGRFeatureDefnRefCountedPtr
+SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP, DBFHandle hDBF,
+                      VSILFILE *fpSHPXML, const char *pszSHPEncoding,
+                      int bAdjustType);
 OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                           OGRFeatureDefn *m_poFeatureDefn,
                           OGRFeature *poFeature, const char *pszSHPEncoding,
@@ -65,7 +67,7 @@ class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn
 
   public:
     OGRShapeGeomFieldDefn(const char *pszFullNameIn, OGRwkbGeometryType eType,
-                          int bSRSSetIn, OGRSpatialReference *poSRSIn)
+                          int bSRSSetIn, const OGRSpatialReference *poSRSIn)
         : OGRGeomFieldDefn("", eType), m_osFullName(pszFullNameIn),
           m_bSRSSet(CPL_TO_BOOL(bSRSSetIn))
     {
@@ -102,7 +104,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     OGRShapeDataSource *m_poDS = nullptr;
 
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    OGRFeatureDefnRefCountedPtr m_poFeatureDefn{};
     int m_iNextShapeId = 0;
     int m_nTotalShapeCount = 0;
 
@@ -220,8 +222,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                   SHPHandle hSHP, DBFHandle hDBF,
                   const OGRSpatialReference *poSRS, bool bSRSSet,
                   const std::string &osPrjFilename, bool bUpdate,
-                  OGRwkbGeometryType eReqType,
-                  CSLConstList papszCreateOptions = nullptr);
+                  OGRwkbGeometryType eReqType, bool bCreateLayer);
     ~OGRShapeLayer() override;
 
     GDALDataset *GetDataset() override;
@@ -245,7 +246,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     GIntBig GetFeatureCount(int) override;

@@ -153,6 +153,10 @@ def test_gdalalg_raster_sieve_overwrite(tmp_path, tmp_vsimem):
     with pytest.raises(Exception, match="already exists"):
         alg.Run()
 
+    alg = get_alg()
+    alg["input"] = tmp_filename
+    alg["output"] = result_tif
+    alg["size-threshold"] = 2
     alg["overwrite"] = True
     assert alg.Run()
     assert alg.Finalize()

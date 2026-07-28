@@ -30,7 +30,7 @@
 #define MITAB_VERSION_INT 2000000 /* version x.y.z -> xxxyyyzzz */
 
 #ifndef ROUND_INT
-#define ROUND_INT(dX) static_cast<int>((dX) < 0.0 ? (dX)-0.5 : (dX) + 0.5)
+#define ROUND_INT(dX) static_cast<int>((dX) < 0.0 ? (dX) - 0.5 : (dX) + 0.5)
 #endif
 
 #define MITAB_AREA(x1, y1, x2, y2)                                             \

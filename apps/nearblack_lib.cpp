@@ -282,7 +282,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "-color args must have the same number of values as "
-                 "the non alpha input band count.\n");
+                 "the non alpha input band count.");
         if (bCloseOutDSOnError)
             GDALClose(hDstDS);
         return nullptr;

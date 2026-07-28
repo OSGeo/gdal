@@ -244,7 +244,7 @@ def test_jp2metadata_5():
 
     ds = gdal.Open("data/jpeg2000/gmljp2_epsg3035_easting_northing.jp2")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "3035"
+    assert sr.GetAuthorityCode() == "3035"
 
     gt = ds.GetGeoTransform()
     gte = (4895766.000000001, 2.0, 0.0, 2296946.0, 0.0, -2.0)

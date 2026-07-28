@@ -116,7 +116,7 @@ TEST_P(OrganizePolygonsTest, MixedPolygonCurvePolygonInput)
 {
     std::vector<OGRGeometry *> polygons;
     polygons.push_back(
-        readWKT("POLYGON ((10 10, 20 10, 20 20, 20 10, 10 10))"));
+        readWKT("POLYGON ((10 10, 20 10, 20 20, 10 20, 10 10))"));
     polygons.push_back(readWKT("CURVEPOLYGON ((0 0, 1 0, 1 1, 0 0))"));
 
     const auto &method = GetParam();
@@ -127,7 +127,7 @@ TEST_P(OrganizePolygonsTest, MixedPolygonCurvePolygonInput)
 
     std::unique_ptr<OGRGeometry> expected(
         readWKT("MULTISURFACE ("
-                "POLYGON ((10 10, 20 10, 20 20, 20 10, 10 10)),"
+                "CURVEPOLYGON ((10 10, 20 10, 20 20, 10 20, 10 10)),"
                 "CURVEPOLYGON ((0 0, 1 0, 1 1, 0 0)))"));
 
     ASSERT_TRUE(result->Equals(expected.get()));

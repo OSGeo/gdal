@@ -1,5 +1,7 @@
 .. _gdal_raster_contour:
 
+.. program:: gdal_raster_contour
+
 ================================================================================
 ``gdal raster contour``
 ================================================================================
@@ -86,7 +88,7 @@ Program-Specific Options
 
     Create polygons instead of lines.
 
-.. option:: --src-nodata <SRCNODATA>
+.. option:: --input-nodata <INPUT-NODATA>
 
     Input pixel value to treat as 'nodata'.
 
@@ -108,6 +110,11 @@ Standard Options
     .. include:: gdal_options/of_vector.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

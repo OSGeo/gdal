@@ -106,6 +106,8 @@ exclude_patterns = [
     "programs/options/*.rst",
     "api/python/modules.rst",
     "gdal_rtd/README.md",
+    "user/geometry_validity_examples.rst",
+    "programs/nodata_handling_gdaladdo_gdal_translate.rst",
 ]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
@@ -129,7 +131,9 @@ if doc_version_known:
 else:
     offline_download_text = "Documentation for the latest version of GDAL is "
     url_root = "https://gdal.org"
-offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZIP of individual HTML pages <{url_root}{zip_url}>`__ for offline browsing."
+offline_download_text += (
+    f"available as a `PDF <{url_root}{pdf_url}>`__ for offline browsing."
+)
 rst_prolog += f"""
 .. |offline-download| replace:: {offline_download_text}
 """
@@ -158,6 +162,7 @@ nitpick_ignore = [
     ("cpp:identifier", "tm"),
     ("cpp:identifier", "TRUE"),
     ("cpp:identifier", "uint8_t"),
+    ("cpp:identifier", "int32_t"),
     ("cpp:identifier", "uint32_t"),
     ("cpp:identifier", "uint64_t"),
     ("cpp:identifier", "va_list"),
@@ -221,7 +226,7 @@ nitpick_ignore = [
     ("cpp:identifier", "GNMGFID"),
     ("cpp:identifier", "GNM_EDGE_DIR_BOTH"),
     ("cpp:identifier", "OGRFeatureUniquePtr"),
-    ("cpp:identifier", "OGRSpatialReferenceReleaser"),
+    ("cpp:identifier", "OGRSpatialReferenceRefCountedPtr"),
     ("cpp:identifier", "OGRStyleParamId"),
     ("cpp:identifier", "OGRStyleValue"),
     ("cpp:identifier", "string"),
@@ -285,6 +290,8 @@ nitpick_ignore_regex = [
     # Deprecated classes
     (".*", "classOGRDataSource"),
     (".*", "classOGRSFDriver"),
+    # Public class referenced by importFromISISPVL but not in the API doc tree
+    (".*", "classCPLJSONObject"),
     # Internal GDAL types
     (".*", "classAxisMappingCoordinateTransformation"),
     (".*", "classCompositeCT"),
@@ -488,6 +495,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_mdim_compare",
+        "gdal-mdim-compare",
+        "Compare two multidimensional datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_mdim_convert",
         "gdal-mdim-convert",
         "Convert a multidimensional dataset",
@@ -498,6 +512,34 @@ man_pages = [
         "programs/gdal_mdim_mosaic",
         "gdal-mdim-mosaic",
         "Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_pipeline",
+        "gdal-mdim-pipeline",
+        "Process a multidimensional dataset applying several steps",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_read",
+        "gdal-mdim-read",
+        "Read a multidimensional dataset (pipeline only)",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_reproject",
+        "gdal-mdim-reproject",
+        "Reproject a multidimensional dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_mdim_write",
+        "gdal-mdim-write",
+        "Write a multidimensional dataset (pipeline only)",
         [author_evenr],
         1,
     ),
@@ -719,6 +761,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_read",
+        "gdal-raster-read",
+        "Read a raster dataset (pipeline only)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_reclassify",
         "gdal-raster-reclassify",
         "Reclassify a raster dataset",
@@ -831,6 +880,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_write",
+        "gdal-raster-write",
+        "Write a raster dataset (pipeline only)",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_zonal_stats",
         "gdal-raster-zonal-stats",
         "Compute raster zonal statistics.",
@@ -849,6 +905,13 @@ man_pages = [
         "gdal-vector-info",
         "Get information on a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_export_schema",
+        "gdal-vector-export-schema",
+        "Export the OGR_SCHEMA from a vector dataset",
+        [author_elpaso],
         1,
     ),
     (
@@ -880,6 +943,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_combine",
+        "gdal-vector-combine",
+        "Combine geometries into geometry collections",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_concat",
         "gdal-vector-concat",
         "Concatenate vector datasets",
@@ -894,6 +964,20 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_create",
+        "gdal-vector-create",
+        "Create a vector dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
+        "programs/gdal_vector_dissolve",
+        "gdal-vector-dissolve",
+        "Unions the elements of each feature's geometry.",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_vector_edit",
         "gdal-vector-edit",
         "Edit metadata of a vector dataset",
@@ -905,6 +989,13 @@ man_pages = [
         "gdal-vector-filter",
         "Filter a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_explode",
+        "gdal-vector-explode",
+        "Explode fields or geometries of a vector dataset",
+        [author_dbaston],
         1,
     ),
     (
@@ -925,6 +1016,13 @@ man_pages = [
         "programs/gdal_vector_make_valid",
         "gdal-vector-make-valid",
         "Fix validity of geometries of a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_read",
+        "gdal-vector-read",
+        "Read a vector dataset (pipeline only)",
         [author_evenr],
         1,
     ),
@@ -954,6 +1052,20 @@ man_pages = [
         "gdal-vector-buffer",
         "Compute a buffer around geometries of a vector dataset",
         [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_concave-hull",
+        "gdal-vector-concave-hull",
+        "Compute the concave hull of geometries of a vector dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
+        "programs/gdal_vector_convex-hull",
+        "gdal-vector-convex-hull",
+        "Compute the convex hull of geometries of a vector dataset",
+        [author_dbaston],
         1,
     ),
     (
@@ -1006,6 +1118,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_rename_layer",
+        "gdal-vector-rename-layer",
+        "Rename layer(s) of a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_select",
         "gdal-vector-select",
         "Select a subset of fields from a vector dataset",
@@ -1037,6 +1156,13 @@ man_pages = [
         "programs/gdal_vector_update",
         "gdal-vector-update",
         "Update an existing vector dataset with an input vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_write",
+        "gdal-vector-write",
+        "Write a vector dataset (pipeline only)",
         [author_evenr],
         1,
     ),
@@ -1405,11 +1531,23 @@ man_pages = [
 
 # latex
 
+# preamble adds customisations to the top of the generated .tex file
+
+# \DeclareUnicodeCharacter: map unicode chars (prime, zero-width space) to LaTeX equivalents
+# \newcolumntype{P}: custom column type for line-wrapping long cells (e.g. XML tags)
+#   \raggedright turns off justification
+#   \hspace{0pt} inserts a zero-width breakpoint so long unspaced strings can break
+#   \sloppy relaxes LaTeX's line-breaking strictness for edge cases
+# \LTleft/\LTright: fix longtable centering (caused gaps at the sides and misaligned border)
+
 preamble = r"""
 \ifdefined\DeclareUnicodeCharacter
   \DeclareUnicodeCharacter{2032}{$'$}% prime
   \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
 \fi
+\newcolumntype{P}[1]{>{\raggedright\hspace{0pt}\sloppy}p{#1}}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
 """
 
 # Package substitutefont no longer exists since TeXLive 2023 later than August 2023
@@ -1437,7 +1575,7 @@ latex_elements = {
     + substitutefont_package
     + "}",
     "babel": "\\usepackage[russian,main=english]{babel}\n\\selectlanguage{english}",
-    "fontenc": "\\usepackage[LGR,X2,T1]{fontenc}"
+    "fontenc": "\\usepackage[LGR,X2,T1]{fontenc}",
     # Latex figure (float) alignment
     #'figure_align': 'htbp',
 }

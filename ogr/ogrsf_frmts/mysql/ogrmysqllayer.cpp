@@ -340,18 +340,16 @@ const OGRSpatialReference *OGRMySQLGeomFieldDefn::GetSpatialRef() const
 
 {
     if (!poDS)
-        return poSRS;
+        return poSRS.get();
 
     if (poSRS == nullptr && nSRSId > -1)
     {
         poSRS = poDS->FetchSRS(nSRSId);
-        if (poSRS != nullptr)
-            const_cast<OGRSpatialReference *>(poSRS)->Reference();
-        else
+        if (poSRS == nullptr)
             nSRSId = poDS->GetUnknownSRID();
     }
 
-    return poSRS;
+    return poSRS.get();
 }
 
 /************************************************************************/

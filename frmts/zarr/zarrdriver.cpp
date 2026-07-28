@@ -16,12 +16,15 @@
 
 #include "cpl_minixml.h"
 
+#include "gdalalgorithm.h"
 #include "gdal_frmts.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 #include <limits>
+#include <future>
 #include <mutex>
 
 #ifdef HAVE_BLOSC
@@ -49,34 +52,20 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     if (osFilename.back() == '/')
         osFilename.pop_back();
 
-    // Syntaxic sugar to detect Parquet reference files automatically
-    if (!STARTS_WITH(pszFilename, "/vsikerchunk"))
-    {
-        const std::string osZmetadataFilename(
-            CPLFormFilenameSafe(osFilename.c_str(), ".zmetadata", nullptr));
-        CPLJSONDocument oDoc;
-        bool bOK;
-        {
-            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            bOK = oDoc.Load(osZmetadataFilename);
-        }
-        if (bOK && oDoc.GetRoot().GetObj("record_size").IsValid())
-        {
-            const std::string osKerchunkParquetRefFilename =
-                CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX, osFilename.c_str());
-            CPLDebugOnly("ZARR", "Opening %s",
-                         osKerchunkParquetRefFilename.c_str());
-            return OpenMultidim(osKerchunkParquetRefFilename.c_str(),
-                                bUpdateMode, papszOpenOptionsIn);
-        }
-    }
-
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
     auto poRG = poSharedResource->GetRootGroup();
     if (!poRG)
+    {
+        // Kerchunk Parquet auto-detection: OpenRootGroup found a
+        // .zmetadata with record_size, signaling a redirect.
+        const auto &osKerchunkPath = poSharedResource->GetKerchunkParquetPath();
+        if (!osKerchunkPath.empty())
+            return OpenMultidim(osKerchunkPath.c_str(), bUpdateMode,
+                                papszOpenOptionsIn);
         return nullptr;
+    }
     return new ZarrDataset(poRG);
 }
 
@@ -132,8 +121,10 @@ static bool ExploreGroup(const std::shared_ptr<GDALGroup> &poGroup,
 const char *ZarrDataset::GetMetadataItem(const char *pszName,
                                          const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.FetchNameValue(pszName);
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
+        return GDALDataset::GetMetadataItem(pszName, pszDomain);
     return nullptr;
 }
 
@@ -143,8 +134,10 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 
 CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubdatasets.List();
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
+        return GDALDataset::GetMetadata(pszDomain);
     return nullptr;
 }
 
@@ -243,6 +236,37 @@ GetExtraDimSampleCount(const std::shared_ptr<GDALMDArray> &poArray,
             nExtraDimSamples *= apoDims[i]->GetSize();
     }
     return nExtraDimSamples;
+}
+
+/************************************************************************/
+/*                        PrefetchCoordArrays()                         */
+/************************************************************************/
+
+// Warm g_oCoordCache by reading X and Y coordinate arrays in parallel.
+// For remote datasets this avoids sequential HTTP round-trips in
+// GuessGeoTransform() (can save ~800 ms).  Each ZarrArray has its own
+// mutex and VSI opens independent handles, so sibling reads are safe.
+static void PrefetchCoordArrays(const std::shared_ptr<GDALMDArray> &poArray,
+                                size_t iXDim, size_t iYDim)
+{
+    const auto nDimCount = poArray->GetDimensionCount();
+    if (nDimCount < 2 || iXDim >= nDimCount || iYDim >= nDimCount)
+        return;
+    const auto &dims = poArray->GetDimensions();
+    auto poVarX = dims[iXDim]->GetIndexingVariable();
+    auto poVarY = dims[iYDim]->GetIndexingVariable();
+    if (!poVarX || poVarX->GetDimensionCount() != 1 || !poVarY ||
+        poVarY->GetDimensionCount() != 1)
+        return;
+    if (VSIIsLocal(poVarX->GetFilename().c_str()))
+        return;
+
+    double dfXStart = 0, dfXSpacing = 0, dfYStart = 0, dfYSpacing = 0;
+    auto futureX =
+        std::async(std::launch::async, [&poVarX, &dfXStart, &dfXSpacing]()
+                   { return poVarX->IsRegularlySpaced(dfXStart, dfXSpacing); });
+    CPL_IGNORE_RET_VAL(poVarY->IsRegularlySpaced(dfYStart, dfYSpacing));
+    CPL_IGNORE_RET_VAL(futureX.get());
 }
 
 /************************************************************************/
@@ -485,7 +509,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 for (const auto &osArrayName : aosArrays)
                 {
                     auto poArray = poRG->OpenMDArrayFromFullname(osArrayName);
-                    if (poArray && poArray->GetDimensionCount() >= 2)
+                    if (poArray && poArray->GetDimensionCount() >= 2 &&
+                        osArrayName.find("/ovr_") == std::string::npos)
                     {
                         if (osMainArray.empty())
                         {
@@ -584,7 +609,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
             for (size_t i = 0; i < aosArrays.size(); ++i)
             {
                 auto poArray = poRG->OpenMDArrayFromFullname(aosArrays[i]);
-                if (poArray)
+                if (poArray && (bListAllArrays || aosArrays[i].find("/ovr_") ==
+                                                      std::string::npos))
                 {
                     bool bAddSubDS = false;
                     if (bListAllArrays)
@@ -640,6 +666,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poMainArray && (bMultiband || poMainArray->GetDimensionCount() <= 2))
     {
+        PrefetchCoordArrays(poMainArray, iXDim, iYDim);
+
         // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
         auto poNewDS =
             std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
@@ -689,7 +717,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (!poDS->m_aosSubdatasets.empty())
         {
-            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
+            poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(),
+                                 GDAL_MDD_SUBDATASETS);
         }
         return poNewDS.release();
     }
@@ -748,6 +777,16 @@ static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
                    nullptr, nullptr, nullptr)
                ? CE_None
                : CE_Failure;
+}
+
+/************************************************************************/
+/*                       ZarrDriverClearCaches()                        */
+/************************************************************************/
+
+static void ZarrDriverClearCaches(GDALDriver *)
+{
+    ZarrClearCoordinateCache();
+    ZarrClearShardIndexCache();
 }
 
 /************************************************************************/
@@ -1065,7 +1104,7 @@ void ZarrDriver::InitMetadata()
                 CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
             CPLAddXMLAttributeAndValue(psFormat, "name", "FORMAT");
             CPLAddXMLAttributeAndValue(psFormat, "type", "string-select");
-            CPLAddXMLAttributeAndValue(psFormat, "default", "ZARR_V2");
+            CPLAddXMLAttributeAndValue(psFormat, "default", "ZARR_V3");
             {
                 auto poValueNode =
                     CPLCreateXMLNode(psFormat, CXT_Element, "Value");
@@ -1102,7 +1141,8 @@ void ZarrDriver::InitMetadata()
 
             auto psInterleaveNode =
                 CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-            CPLAddXMLAttributeAndValue(psInterleaveNode, "name", "INTERLEAVE");
+            CPLAddXMLAttributeAndValue(psInterleaveNode, "name",
+                                       GDALMD_INTERLEAVE);
             CPLAddXMLAttributeAndValue(psInterleaveNode, "type",
                                        "string-select");
             CPLAddXMLAttributeAndValue(psInterleaveNode, "default", "BAND");
@@ -1144,7 +1184,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
                                     CSLConstList papszOptions)
 {
     const char *pszFormat =
-        CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+        CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V3");
     std::shared_ptr<ZarrGroupBase> poRG;
     auto poSharedResource =
         ZarrSharedResource::Create(pszFilename, /*bUpdatable=*/true);
@@ -1222,22 +1262,21 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     {
         VSIStatBufL sStat;
         const bool bExists = VSIStatL(pszName, &sStat) == 0;
-        const bool bIsFile = bExists && !VSI_ISDIR(sStat.st_mode);
-        const bool bIsDirectory =
-            !bIsFile && ((bExists && VSI_ISDIR(sStat.st_mode)) ||
-                         !CPLStringList(VSIReadDirEx(pszName, 1)).empty());
-        if (bIsFile || bIsDirectory || bExists)
+        const char *pszObjType = nullptr;
+        if (bExists && !VSI_ISDIR(sStat.st_mode))
+            pszObjType = "File";
+        else if ((bExists /* && VSI_ISDIR(sStat.st_mode)*/) ||
+                 !CPLStringList(VSIReadDirEx(pszName, 1)).empty())
+            pszObjType = "Directory";
+        if (pszObjType)
         {
             CPLError(CE_Failure, CPLE_FileIO, "%s %s already exists.",
-                     bIsFile        ? "File"
-                     : bIsDirectory ? "Directory"
-                                    : "Object",
-                     pszName);
+                     pszObjType, pszName);
             return nullptr;
         }
 
         const char *pszFormat =
-            CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+            CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V3");
         auto poSharedResource =
             ZarrSharedResource::Create(pszName, /*bUpdatable=*/true);
         const bool bCreateZMetadata = CPLTestBool(CSLFetchNameValueDef(
@@ -1375,8 +1414,8 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
 
     const bool bSingleArray =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
-    const bool bBandInterleave =
-        EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
+    const bool bBandInterleave = EQUAL(
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "BAND"), "BAND");
     std::shared_ptr<GDALDimension> poBandDim(
         (bSingleArray && nBandsIn > 1)
             ? poRG->CreateDimension("Band", std::string(), std::string(),
@@ -1399,16 +1438,34 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                 poDS->m_poDimY, poDS->m_poDimX, poBandDim};
         }
         CPL_IGNORE_RET_VAL(poBandDim);
-        poDS->m_poSingleArray = poRG->CreateMDArray(
-            osNonNullArrayName.c_str(), apoDims,
-            GDALExtendedDataType::Create(eType), papszOptions);
+        poDS->m_poSingleArray =
+            std::dynamic_pointer_cast<ZarrArray>(poRG->CreateMDArray(
+                osNonNullArrayName.c_str(), apoDims,
+                GDALExtendedDataType::Create(eType), papszOptions));
         if (!poDS->m_poSingleArray)
         {
             CleanupCreatedFiles();
             return nullptr;
         }
-        poDS->SetMetadataItem("INTERLEAVE", bBandInterleave ? "BAND" : "PIXEL",
-                              "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE,
+                              bBandInterleave ? "BAND" : "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
+        if (bBandInterleave)
+        {
+            const char *pszBlockSize =
+                CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+            if (pszBlockSize)
+            {
+                const CPLStringList aosTokens(
+                    CSLTokenizeString2(pszBlockSize, ",", 0));
+                if (aosTokens.size() == 3 && atoi(aosTokens[0]) == nBandsIn)
+                {
+                    // Actually expose as pixel interleaved
+                    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                          GDAL_MDD_IMAGE_STRUCTURE);
+                }
+            }
+        }
         for (int i = 0; i < nBandsIn; i++)
         {
             auto poSlicedArray = poDS->m_poSingleArray->GetView(
@@ -1456,20 +1513,145 @@ ZarrDataset::~ZarrDataset()
 CPLErr ZarrDataset::FlushCache(bool bAtClosing)
 {
     CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
-    if (m_poRootGroup)
+
+    if (m_poSingleArray && !m_poSingleArray->Flush())
     {
-        if (!m_poRootGroup->Close())
-            eErr = CE_Failure;
+        eErr = CE_Failure;
     }
-    if (m_poSingleArray)
+
+    if (bAtClosing && m_poSingleArray)
     {
-        bool bFound = false;
+        auto poFirstBand = cpl::down_cast<ZarrRasterBand *>(papoBands[0]);
+        if (poFirstBand->m_dfNoData.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue = poBand->m_dfNoData.has_value() &&
+                             ((std::isnan(poFirstBand->m_dfNoData.value()) &&
+                               std::isnan(poBand->m_dfNoData.value())) ||
+                              (poFirstBand->m_dfNoData.value() ==
+                               poBand->m_dfNoData.value()));
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same nodata value. It will be "
+                         "ignored as the array can only have a single nodata "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetNoDataValue(
+                    poFirstBand->m_dfNoData.value());
+            }
+        }
+        else if (poFirstBand->m_nNoDataInt64.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue = poBand->m_nNoDataInt64.has_value() &&
+                             poFirstBand->m_nNoDataInt64.value() ==
+                                 poBand->m_nNoDataInt64.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same nodata value. It will be "
+                         "ignored as the array can only have a single nodata "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetNoDataValue(
+                    poFirstBand->m_nNoDataInt64.value());
+            }
+        }
+        else if (poFirstBand->m_nNoDataUInt64.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue = poBand->m_nNoDataUInt64.has_value() &&
+                             poFirstBand->m_nNoDataUInt64.value() ==
+                                 poBand->m_nNoDataUInt64.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same nodata value. It will be "
+                         "ignored as the array can only have a single nodata "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetNoDataValue(
+                    poFirstBand->m_nNoDataUInt64.value());
+            }
+        }
+
+        if (poFirstBand->m_dfOffset.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue = poBand->m_dfOffset.has_value() &&
+                             poFirstBand->m_dfOffset.value() ==
+                                 poBand->m_dfOffset.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same offset value. It will be "
+                         "ignored as the array can only have a single offset "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetOffset(poFirstBand->m_dfOffset.value());
+            }
+        }
+
+        if (poFirstBand->m_dfScale.has_value())
+        {
+            bool bSameValue = true;
+            for (int i = 1; bSameValue && i < nBands; ++i)
+            {
+                auto poBand = cpl::down_cast<ZarrRasterBand *>(papoBands[i]);
+                bSameValue =
+                    poBand->m_dfScale.has_value() &&
+                    poFirstBand->m_dfScale.value() == poBand->m_dfScale.value();
+            }
+            if (!bSameValue)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Not all bands have the same scale value. It will be "
+                         "ignored as the array can only have a single scale "
+                         "value for all bands.");
+                eErr = CE_Failure;
+            }
+            else
+            {
+                m_poSingleArray->SetScale(poFirstBand->m_dfScale.value());
+            }
+        }
+
+        bool bFoundColorInterp = false;
         for (int i = 0; i < nBands; ++i)
         {
             if (papoBands[i]->GetColorInterpretation() != GCI_Undefined)
-                bFound = true;
+                bFoundColorInterp = true;
         }
-        if (bFound)
+        if (bFoundColorInterp)
         {
             const auto oStringDT = GDALExtendedDataType::CreateString();
             auto poAttr = m_poSingleArray->GetAttribute("COLOR_INTERPRETATION");
@@ -1496,6 +1678,21 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
             }
         }
     }
+
+    if (m_poRootGroup)
+    {
+        if (bAtClosing)
+        {
+            if (!m_poRootGroup->Close())
+                eErr = CE_Failure;
+        }
+        else
+        {
+            if (!m_poRootGroup->Flush())
+                eErr = CE_Failure;
+        }
+    }
+
     return eErr;
 }
 
@@ -1514,11 +1711,20 @@ std::shared_ptr<GDALGroup> ZarrDataset::GetRootGroup() const
 
 const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
 {
-    if (nBands >= 1)
+    if (m_poSingleArray)
+    {
+        return m_poSingleArray->GetSpatialRef().get();
+    }
+    else if (nBands >= 1)
+    {
         return cpl::down_cast<ZarrRasterBand *>(papoBands[0])
             ->m_poArray->GetSpatialRef()
             .get();
-    return nullptr;
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 /************************************************************************/
@@ -1527,10 +1733,17 @@ const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
 
 CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
-    for (int i = 0; i < nBands; ++i)
+    if (m_poSingleArray)
     {
-        cpl::down_cast<ZarrRasterBand *>(papoBands[i])
-            ->m_poArray->SetSpatialRef(poSRS);
+        m_poSingleArray->SetSpatialRef(poSRS);
+    }
+    else
+    {
+        for (int i = 0; i < nBands; ++i)
+        {
+            cpl::down_cast<ZarrRasterBand *>(papoBands[i])
+                ->m_poArray->SetSpatialRef(poSRS);
+        }
     }
     return CE_None;
 }
@@ -1551,7 +1764,7 @@ CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    const bool bHasRotatedTerms = (gt[2] != 0 || gt[4] != 0);
+    const bool bHasRotatedTerms = (gt.xrot != 0 || gt.yrot != 0);
 
     if (bHasRotatedTerms)
     {
@@ -1618,7 +1831,7 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
             {
                 adfX.reserve(nRasterXSize);
                 for (int i = 0; i < nRasterXSize; ++i)
-                    adfX.emplace_back(m_gt[0] + m_gt[1] * (i + 0.5));
+                    adfX.emplace_back(m_gt.xorig + m_gt.xscale * (i + 0.5));
             }
             catch (const std::exception &)
             {
@@ -1649,7 +1862,7 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
         {
             adfY.reserve(nRasterYSize);
             for (int i = 0; i < nRasterYSize; ++i)
-                adfY.emplace_back(m_gt[3] + m_gt[5] * (i + 0.5));
+                adfY.emplace_back(m_gt.yorig + m_gt.yscale * (i + 0.5));
         }
         catch (const std::exception &)
         {
@@ -1733,6 +1946,12 @@ ZarrRasterBand::ZarrRasterBand(const std::shared_ptr<GDALMDArray> &poArray)
 
 double ZarrRasterBand::GetNoDataValue(int *pbHasNoData)
 {
+    if (m_dfNoData.has_value())
+    {
+        if (pbHasNoData)
+            *pbHasNoData = true;
+        return m_dfNoData.value();
+    }
     bool bHasNodata = false;
     const auto res = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
     if (pbHasNoData)
@@ -1746,6 +1965,12 @@ double ZarrRasterBand::GetNoDataValue(int *pbHasNoData)
 
 int64_t ZarrRasterBand::GetNoDataValueAsInt64(int *pbHasNoData)
 {
+    if (m_nNoDataInt64.has_value())
+    {
+        if (pbHasNoData)
+            *pbHasNoData = true;
+        return m_nNoDataInt64.value();
+    }
     bool bHasNodata = false;
     const auto res = m_poArray->GetNoDataValueAsInt64(&bHasNodata);
     if (pbHasNoData)
@@ -1759,6 +1984,12 @@ int64_t ZarrRasterBand::GetNoDataValueAsInt64(int *pbHasNoData)
 
 uint64_t ZarrRasterBand::GetNoDataValueAsUInt64(int *pbHasNoData)
 {
+    if (m_nNoDataUInt64.has_value())
+    {
+        if (pbHasNoData)
+            *pbHasNoData = true;
+        return m_nNoDataUInt64.value();
+    }
     bool bHasNodata = false;
     const auto res = m_poArray->GetNoDataValueAsUInt64(&bHasNodata);
     if (pbHasNoData)
@@ -1772,7 +2003,13 @@ uint64_t ZarrRasterBand::GetNoDataValueAsUInt64(int *pbHasNoData)
 
 CPLErr ZarrRasterBand::SetNoDataValue(double dfNoData)
 {
-    return m_poArray->SetNoDataValue(dfNoData) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetNoDataValue(dfNoData) ? CE_None : CE_Failure;
+    }
+    m_dfNoData = dfNoData;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1781,7 +2018,13 @@ CPLErr ZarrRasterBand::SetNoDataValue(double dfNoData)
 
 CPLErr ZarrRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
 {
-    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+    }
+    m_nNoDataInt64 = nNoData;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1790,7 +2033,13 @@ CPLErr ZarrRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
 
 CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
 {
-    return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetNoDataValue(nNoData) ? CE_None : CE_Failure;
+    }
+    m_nNoDataUInt64 = nNoData;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1799,6 +2048,12 @@ CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
 
 double ZarrRasterBand::GetOffset(int *pbSuccess)
 {
+    if (m_dfOffset.has_value())
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return m_dfOffset.value();
+    }
     bool bHasValue = false;
     double dfRet = m_poArray->GetOffset(&bHasValue);
     if (pbSuccess)
@@ -1812,7 +2067,13 @@ double ZarrRasterBand::GetOffset(int *pbSuccess)
 
 CPLErr ZarrRasterBand::SetOffset(double dfNewOffset)
 {
-    return m_poArray->SetOffset(dfNewOffset) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetOffset(dfNewOffset) ? CE_None : CE_Failure;
+    }
+    m_dfOffset = dfNewOffset;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1821,6 +2082,12 @@ CPLErr ZarrRasterBand::SetOffset(double dfNewOffset)
 
 double ZarrRasterBand::GetScale(int *pbSuccess)
 {
+    if (m_dfScale.has_value())
+    {
+        if (pbSuccess)
+            *pbSuccess = true;
+        return m_dfScale.value();
+    }
     bool bHasValue = false;
     double dfRet = m_poArray->GetScale(&bHasValue);
     if (pbSuccess)
@@ -1834,7 +2101,13 @@ double ZarrRasterBand::GetScale(int *pbSuccess)
 
 CPLErr ZarrRasterBand::SetScale(double dfNewScale)
 {
-    return m_poArray->SetScale(dfNewScale) ? CE_None : CE_Failure;
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    if (!poGDS->m_poSingleArray)
+    {
+        return m_poArray->SetScale(dfNewScale) ? CE_None : CE_Failure;
+    }
+    m_dfScale = dfNewScale;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1954,9 +2227,15 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  GDALRasterIOExtraArg *psExtraArg)
 {
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    // If reading/writing at full resolution and with proper stride, go
+    // directly to the array, but, for performance reasons,
+    // only if exactly on chunk boundaries, otherwise go through the block cache.
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
-        (nLineSpaceBuf % nBufferDTSize) == 0)
+        (nLineSpaceBuf % nBufferDTSize) == 0 && (nXOff % nBlockXSize) == 0 &&
+        (nYOff % nBlockYSize) == 0 &&
+        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
+        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize))
     {
         GUInt64 arrayStartIdx[] = {static_cast<GUInt64>(nYOff),
                                    static_cast<GUInt64>(nXOff)};
@@ -1984,9 +2263,107 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                        : CE_Failure;
         }
     }
+
     return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpaceBuf, nLineSpaceBuf, psExtraArg);
+}
+
+/************************************************************************/
+/*                       ZarrDataset::IRasterIO()                       */
+/************************************************************************/
+
+CPLErr ZarrDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                              int nXSize, int nYSize, void *pData,
+                              int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, int nBandCount,
+                              BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              GDALRasterIOExtraArg *psExtraArg)
+{
+    const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    // If reading/writing at full resolution and with proper stride, go
+    // directly to the array, but, for performance reasons,
+    // only if exactly on chunk boundaries, otherwise go through the block cache.
+    int nBlockXSize = 0, nBlockYSize = 0;
+    papoBands[0]->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    if (m_poSingleArray && nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
+        (nLineSpace % nBufferDTSize) == 0 &&
+        (nBandSpace % nBufferDTSize) == 0 && (nXOff % nBlockXSize) == 0 &&
+        (nYOff % nBlockYSize) == 0 &&
+        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
+        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize) &&
+        IsAllBands(nBandCount, panBandMap))
+    {
+        CPLAssert(m_poSingleArray->GetDimensionCount() == 3);
+        if (m_poSingleArray->GetDimensions().back().get() == m_poDimX.get())
+        {
+            GUInt64 arrayStartIdx[] = {0, static_cast<GUInt64>(nYOff),
+                                       static_cast<GUInt64>(nXOff)};
+            size_t count[] = {static_cast<size_t>(nBands),
+                              static_cast<size_t>(nYSize),
+                              static_cast<size_t>(nXSize)};
+            constexpr GInt64 arrayStep[] = {1, 1, 1};
+            GPtrDiff_t bufferStride[] = {
+                static_cast<GPtrDiff_t>(nBandSpace / nBufferDTSize),
+                static_cast<GPtrDiff_t>(nLineSpace / nBufferDTSize),
+                static_cast<GPtrDiff_t>(nPixelSpace / nBufferDTSize)};
+
+            if (eRWFlag == GF_Read)
+            {
+                return m_poSingleArray->Read(
+                           arrayStartIdx, count, arrayStep, bufferStride,
+                           GDALExtendedDataType::Create(eBufType), pData)
+                           ? CE_None
+                           : CE_Failure;
+            }
+            else
+            {
+                return m_poSingleArray->Write(
+                           arrayStartIdx, count, arrayStep, bufferStride,
+                           GDALExtendedDataType::Create(eBufType), pData)
+                           ? CE_None
+                           : CE_Failure;
+            }
+        }
+        else
+        {
+            GUInt64 arrayStartIdx[] = {static_cast<GUInt64>(nYOff),
+                                       static_cast<GUInt64>(nXOff), 0};
+            size_t count[] = {static_cast<size_t>(nYSize),
+                              static_cast<size_t>(nXSize),
+                              static_cast<size_t>(nBands)};
+            constexpr GInt64 arrayStep[] = {1, 1, 1};
+            GPtrDiff_t bufferStride[] = {
+                static_cast<GPtrDiff_t>(nLineSpace / nBufferDTSize),
+                static_cast<GPtrDiff_t>(nPixelSpace / nBufferDTSize),
+                static_cast<GPtrDiff_t>(nBandSpace / nBufferDTSize),
+            };
+
+            if (eRWFlag == GF_Read)
+            {
+                return m_poSingleArray->Read(
+                           arrayStartIdx, count, arrayStep, bufferStride,
+                           GDALExtendedDataType::Create(eBufType), pData)
+                           ? CE_None
+                           : CE_Failure;
+            }
+            else
+            {
+                return m_poSingleArray->Write(
+                           arrayStartIdx, count, arrayStep, bufferStride,
+                           GDALExtendedDataType::Create(eBufType), pData)
+                           ? CE_None
+                           : CE_Failure;
+            }
+        }
+    }
+
+    return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nBandCount,
+                                  panBandMap, nPixelSpace, nLineSpace,
+                                  nBandSpace, psExtraArg);
 }
 
 /************************************************************************/
@@ -2023,11 +2400,104 @@ GDALDataset *ZarrDataset::CreateCopy(const char *pszFilename,
         {
             aosCreationOptions.SetNameValue("@HAS_GEOTRANSFORM", "YES");
         }
-        return poDriver->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
-                                           aosCreationOptions.List(),
-                                           pfnProgress, pProgressData);
+        auto poDS = std::unique_ptr<GDALDataset>(poDriver->DefaultCreateCopy(
+            pszFilename, poSrcDS, bStrict, aosCreationOptions.List(),
+            pfnProgress, pProgressData));
+        if (poDS)
+        {
+            if (poDS->FlushCache() != CE_None)
+                poDS.reset();
+        }
+        return poDS.release();
     }
     return nullptr;
+}
+
+/************************************************************************/
+/*               ZARRAddGeoreferencingConventionAlgorithm               */
+/************************************************************************/
+
+#ifndef _
+#define _(x) (x)
+#endif
+
+namespace
+{
+class ZARRAddGeoreferencingConventionAlgorithm final : public GDALAlgorithm
+{
+  public:
+    ZARRAddGeoreferencingConventionAlgorithm()
+        : GDALAlgorithm(
+              "add-georeferencing-convention",
+              std::string("Add a georeferencing convention to an existing ZARR "
+                          "dataset"),
+              "/programs/gdal_driver_zarr_add_georeferencing_convention.html")
+    {
+        AddProgressArg(/* hidden = */ true);
+        AddInputDatasetArg(&m_dataset,
+                           GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
+        AddArg("convention", 0, _("Georeferencing convention"),
+               &m_georeferencingConvention)
+            .SetRequired()
+            .SetPositional()
+            .SetChoices("GDAL", "spatial_proj");
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override;
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+    std::string m_georeferencingConvention{};
+};
+
+bool ZARRAddGeoreferencingConventionAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS = dynamic_cast<ZarrDataset *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a ZARR dataset",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+
+    auto poRG = poDS->GetRootGroup();
+    CPLAssert(poRG);
+
+    poRG->RecursivelyVisitArrays(
+        [this](const std::shared_ptr<GDALMDArray> &poArray)
+        {
+            ZarrArray *poZarrArray = dynamic_cast<ZarrArray *>(poArray.get());
+            if (poZarrArray && poZarrArray->GetSpatialRef())
+            {
+                CPLStringList aosOptions;
+                aosOptions.SetNameValue("GEOREFERENCING_CONVENTION",
+                                        m_georeferencingConvention.c_str());
+                poZarrArray->SetCreationOptions(aosOptions.List());
+                poZarrArray->InvalidateGeoreferencing();
+            }
+        });
+
+    return true;
+}
+}  // namespace
+
+/************************************************************************/
+/*                   ZarrDriverInstantiateAlgorithm()                   */
+/************************************************************************/
+
+static GDALAlgorithm *
+ZarrDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "add-georeferencing-convention")
+    {
+        return std::make_unique<ZARRAddGeoreferencingConventionAlgorithm>()
+            .release();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 /************************************************************************/
@@ -2045,6 +2515,10 @@ void GDALRegister_Zarr()
     GDALDriver *poDriver = new ZarrDriver();
     ZARRDriverSetCommonMetadata(poDriver);
 
+#ifdef HAVE_PCODEC
+    poDriver->SetMetadataItem("HAVE_PCODEC", "YES");
+#endif
+
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
     poDriver->pfnCreate = ZarrDataset::Create;
@@ -2052,6 +2526,8 @@ void GDALRegister_Zarr()
     poDriver->pfnDelete = ZarrDatasetDelete;
     poDriver->pfnRename = ZarrDatasetRename;
     poDriver->pfnCopyFiles = ZarrDatasetCopyFiles;
+    poDriver->pfnClearCaches = ZarrDriverClearCaches;
+    poDriver->pfnInstantiateAlgorithm = ZarrDriverInstantiateAlgorithm;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

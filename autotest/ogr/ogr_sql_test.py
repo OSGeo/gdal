@@ -48,7 +48,7 @@ def test_ogr_sql_execute_sql(tmp_path, use_gdal):
 
     def get_dataset():
         return (
-            gdal.OpenEx(tmp_path / "test_ogr_sql_execute_sql.shp")
+            gdal.Open(tmp_path / "test_ogr_sql_execute_sql.shp")
             if use_gdal
             else ogr.Open(tmp_path / "test_ogr_sql_execute_sql.shp")
         )
@@ -127,7 +127,7 @@ def test_ogr_sql_execute_sql_empty_database(tmp_vsimem):
 @pytest.mark.parametrize("use_gdal", [True, False])
 def test_ogr_sql_invalid_release_result_set(use_gdal):
 
-    ds = gdal.OpenEx("data/poly.shp") if use_gdal else ogr.Open("data/poly.shp")
+    ds = gdal.Open("data/poly.shp") if use_gdal else ogr.Open("data/poly.shp")
     lyr = ds.GetLayer(0)
     with pytest.raises(Exception):
         ds.ReleaseResultSet(lyr)
@@ -407,10 +407,10 @@ def test_ogr_sql_12():
 
 def test_ogr_sql_13(data_ds):
 
-    expect = ["POLYGON"] * 10
+    expect = ["MULTIPOLYGON"] * 10
 
     with data_ds.ExecuteSQL(
-        "select ogr_geometry from poly where ogr_geometry = 'POLYGON'"
+        "select ogr_geometry from poly where ogr_geometry = 'MULTIPOLYGON'"
     ) as sql_lyr:
 
         ogrtest.check_features_against_list(sql_lyr, "ogr_geometry", expect)
@@ -1292,8 +1292,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 @pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="poly">
     <SrcDataSource relativeToVRT="0" shared="1">data/poly.shp</SrcDataSource>
     <SrcLayer>poly</SrcLayer>
@@ -1303,8 +1302,7 @@ def test_ogr_sql_45():
     <Field name="PRFEDEA" type="Integer" src="PRFEDEA"/>
     <FeatureCount>1000000000000</FeatureCount>
   </OGRVRTLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
 
     assert lyr.GetFeatureCount() == 1000000000000
@@ -1600,6 +1598,7 @@ def test_ogr_sql_min_max_string_field():
 ##############################################################################
 # Test SELECT * EXCEPT
 
+
 # Test some error cases. Some of these could potentially be tolerated
 # in the future.
 @pytest.mark.parametrize(
@@ -1793,15 +1792,15 @@ def test_ogr_sql_like_utf8():
     assert lyr.GetFeatureCount() == 1
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' LIKE '_'")
+    lyr.SetAttributeFilter("'\xc3' LIKE '_'")
     lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' LIKE 'é'")
+    lyr.SetAttributeFilter("'\xc3' LIKE 'é'")
     assert lyr.GetFeatureCount() == 0
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'é' LIKE '\xC3'")
+    lyr.SetAttributeFilter("'é' LIKE '\xc3'")
     assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'éven' LIKE '_ven'")
@@ -1851,15 +1850,15 @@ def test_ogr_sql_ilike_utf8():
     assert lyr.GetFeatureCount() == 1
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' ILIKE '_'")
+    lyr.SetAttributeFilter("'\xc3' ILIKE '_'")
     lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' ILIKE 'é'")
+    lyr.SetAttributeFilter("'\xc3' ILIKE 'é'")
     assert lyr.GetFeatureCount() == 0
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'é' ILIKE '\xC3'")
+    lyr.SetAttributeFilter("'é' ILIKE '\xc3'")
     assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'éven' ILIKE '_ven'")
@@ -2229,8 +2228,32 @@ def test_ogr_sql_max_expr_depth_other():
 @pytest.mark.require_driver("GPKG")
 def test_ogr_sql_union_layer_feature_count_add_overflow():
 
-    with gdal.OpenEx("data/gpkg/huge_feature_count.gpkg") as ds:
+    with gdal.Open("data/gpkg/huge_feature_count.gpkg") as ds:
         with ds.ExecuteSQL(
             "select * from test union all select * from test2", dialect="OGRSQL"
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == 0
+
+
+def test_ogr_sql_test_spatial_filter_on_summary_result_set():
+
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("x", ogr.OFTReal))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["x"] = 1
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["x"] = 2
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 2)"))
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL(
+        "SELECT SUM(x) FROM test",
+        spatialFilter=ogr.CreateGeometryFromWkt(
+            "POLYGON((1.5 1.5,1.5 2.5,2.5 2.5,2.5 1.5,1.5 1.5))"
+        ),
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 2

@@ -27,6 +27,7 @@ pytestmark = pytest.mark.require_curl()
 #
 
 
+@pytest.mark.network
 def test_vsicurl_streaming_real_resource():
     # Occasionally fails on Travis graviton2 configuration
     gdaltest.skip_on_travis()

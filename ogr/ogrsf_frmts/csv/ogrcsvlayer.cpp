@@ -55,16 +55,16 @@ OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
                          VSILFILE *fp, int nMaxLineSize,
                          const char *pszFilenameIn, int bNewIn,
                          int bInWriteModeIn, char chDelimiterIn)
-    : m_poDS(poDS), fpCSV(fp), m_nMaxLineSize(nMaxLineSize),
-      bNew(CPL_TO_BOOL(bNewIn)), bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
+    : m_poDS(poDS), m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(
+                        pszLayerNameIn)),
+      fpCSV(fp), m_nMaxLineSize(nMaxLineSize), bNew(CPL_TO_BOOL(bNewIn)),
+      bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
       pszFilename(CPLStrdup(pszFilenameIn)), nTotalFeatures(bNewIn ? 0 : -1)
 {
     szDelimiter[0] = chDelimiterIn;
     szDelimiter[1] = 0;
-    poFeatureDefn = new OGRFeatureDefn(pszLayerNameIn);
-    SetDescription(poFeatureDefn->GetName());
-    poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType(wkbNone);
+    SetDescription(m_poFeatureDefn->GetName());
+    m_poFeatureDefn->SetGeomType(wkbNone);
 }
 
 /************************************************************************/
@@ -300,7 +300,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             {
                 OGRFieldDefn oFieldDefn(asGeonamesFieldDesc[iField].pszName,
                                         asGeonamesFieldDesc[iField].eType);
-                poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
             }
 
             iLatitudeField = 4;
@@ -363,7 +363,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         CSLFetchNameValueDef(papszOpenOptions, "KEEP_GEOM_COLUMNS", "YES"));
 
     // Build field definitions.
-    poFeatureDefn->ReserveSpaceForFields(nFieldCount);
+    m_poFeatureDefn->ReserveSpaceForFields(nFieldCount);
 
     constexpr int knMAX_GEOM_COLUMNS = 100;
     bool bWarnedMaxGeomFields = false;
@@ -412,9 +412,9 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             if (EQUAL(papszFieldTypes[iField], "WKT"))
             {
                 if (bKeepGeomColumns)
-                    poFeatureDefn->AddFieldDefn(&oField);
+                    m_poFeatureDefn->AddFieldDefn(&oField);
 
-                if (poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS)
+                if (m_poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS)
                 {
                     if (!bWarnedMaxGeomFields)
                     {
@@ -429,14 +429,15 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 }
 
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
-                panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
+                panGeomFieldIndex[iField] =
+                    m_poFeatureDefn->GetGeomFieldCount();
                 std::string osGeomColName;
                 if (bKeepGeomColumns)
                     osGeomColName += "geom_";
                 osGeomColName += oField.GetNameRef();
                 OGRGeomFieldDefn oGeomFieldDefn(osGeomColName.c_str(),
                                                 wkbUnknown);
-                poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+                m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
                 continue;
             }
             else if (EQUAL(papszFieldTypes[iField], "CoordX") ||
@@ -446,7 +447,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 iLongitudeField = iField;
                 osXField = oField.GetNameRef();
                 if (bKeepGeomColumns)
-                    poFeatureDefn->AddFieldDefn(&oField);
+                    m_poFeatureDefn->AddFieldDefn(&oField);
                 continue;
             }
             else if (EQUAL(papszFieldTypes[iField], "CoordY") ||
@@ -456,7 +457,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 iLatitudeField = iField;
                 osYField = oField.GetNameRef();
                 if (bKeepGeomColumns)
-                    poFeatureDefn->AddFieldDefn(&oField);
+                    m_poFeatureDefn->AddFieldDefn(&oField);
                 continue;
             }
             else if (EQUAL(papszFieldTypes[iField], "CoordZ") ||
@@ -466,7 +467,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 iZField = iField;
                 osZField = oField.GetNameRef();
                 if (bKeepGeomColumns)
-                    poFeatureDefn->AddFieldDefn(&oField);
+                    m_poFeatureDefn->AddFieldDefn(&oField);
                 continue;
             }
             else if (EQUAL(papszFieldTypes[iField], "Integer(Boolean)"))
@@ -553,7 +554,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                   STARTS_WITH_CI(oField.GetNameRef(), "_WKT")) &&
                  oField.GetType() == OFTString)
         {
-            if (poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS)
+            if (m_poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS)
             {
                 if (!bWarnedMaxGeomFields)
                 {
@@ -569,7 +570,8 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             {
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
 
-                panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
+                panGeomFieldIndex[iField] =
+                    m_poFeatureDefn->GetGeomFieldCount();
                 OGRGeomFieldDefn oGeomFieldDefn(
                     EQUAL(pszFieldName, "WKT")
                         ? ""
@@ -581,11 +583,11 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 if (pszEPSG != nullptr)
                 {
                     const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
-                    OGRSpatialReference *poSRS = new OGRSpatialReference();
+                    auto poSRS =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poSRS->importFromEPSG(nEPSGCode);
-                    oGeomFieldDefn.SetSpatialRef(poSRS);
-                    poSRS->Release();
+                    oGeomFieldDefn.SetSpatialRef(poSRS.get());
                 }
 
                 if (strstr(pszFieldName, "_POINT"))
@@ -621,7 +623,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 else if (strstr(pszFieldName, "_TRIANGLE"))
                     oGeomFieldDefn.SetType(wkbTriangle);
 
-                poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+                m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
                 if (!bKeepGeomColumns)
                     continue;
             }
@@ -629,14 +631,14 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         else if (Matches(oField.GetNameRef(), papszGeomPossibleNames))
         {
             eGeometryFormat = OGR_CSV_GEOM_AS_SOME_GEOM_FORMAT;
-            panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
+            panGeomFieldIndex[iField] = m_poFeatureDefn->GetGeomFieldCount();
             OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(), wkbUnknown);
-            poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+            m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
             if (!bKeepGeomColumns)
                 continue;
         }
         else if (Matches(oField.GetNameRef(), papszXPossibleNames) &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             oField.SetType(OFTReal);
             iLongitudeField = iField;
@@ -645,7 +647,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 continue;
         }
         else if (Matches(oField.GetNameRef(), papszYPossibleNames) &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             oField.SetType(OFTReal);
             iLatitudeField = iField;
@@ -662,7 +664,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                         strlen(pszNfdcGeomField)) &&
                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField),
                        "LatitudeS") &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             iNfdcLatitudeS = iField;
             if (!bKeepGeomColumns)
@@ -673,7 +675,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                         strlen(pszNfdcGeomField)) &&
                  EQUAL(oField.GetNameRef() + strlen(pszNfdcGeomField),
                        "LongitudeS") &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             iNfdcLongitudeS = iField;
             if (!bKeepGeomColumns)
@@ -692,7 +694,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                   EQUAL(oField.GetNameRef() +
                             strlen(pszGeonamesGeomFieldPrefix),
                         "_LATITUDE")) &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             m_bIsGNIS = true;
             oField.SetType(OFTReal);
@@ -713,7 +715,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                   EQUAL(oField.GetNameRef() +
                             strlen(pszGeonamesGeomFieldPrefix),
                         "_LONGITUDE")) &&
-                 poFeatureDefn->GetGeomFieldCount() == 0)
+                 m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
             m_bIsGNIS = true;
             oField.SetType(OFTReal);
@@ -723,22 +725,22 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 continue;
         }
 
-        poFeatureDefn->AddFieldDefn(&oField);
+        m_poFeatureDefn->AddFieldDefn(&oField);
 
         if (bKeepSourceColumns && oField.GetType() != OFTString)
         {
             OGRFieldDefn oFieldOriginal(
                 CPLSPrintf("%s_original", oField.GetNameRef()), OFTString);
-            poFeatureDefn->AddFieldDefn(&oFieldOriginal);
+            m_poFeatureDefn->AddFieldDefn(&oFieldOriginal);
         }
     }
 
     if (iNfdcLatitudeS != -1 && iNfdcLongitudeS != -1)
     {
         bHonourStrings = false;
-        if (poFeatureDefn->GetGeomFieldCount() == 0)
+        if (m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
-            poFeatureDefn->SetGeomType(wkbPoint);
+            m_poFeatureDefn->SetGeomType(wkbPoint);
         }
         else
         {
@@ -750,9 +752,9 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
     }
     else if (iLatitudeField != -1 && iLongitudeField != -1)
     {
-        if (poFeatureDefn->GetGeomFieldCount() == 0)
+        if (m_poFeatureDefn->GetGeomFieldCount() == 0)
         {
-            poFeatureDefn->SetGeomType(iZField >= 0 ? wkbPoint25D : wkbPoint);
+            m_poFeatureDefn->SetGeomType(iZField >= 0 ? wkbPoint25D : wkbPoint);
         }
         else
         {
@@ -763,8 +765,8 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         }
     }
 
-    if (poFeatureDefn->GetGeomFieldCount() > 0 &&
-        poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() == nullptr)
+    if (m_poFeatureDefn->GetGeomFieldCount() > 0 &&
+        m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() == nullptr)
     {
         VSILFILE *fpPRJ =
             VSIFOpenL(CPLResetExtensionSafe(pszFilename, "prj").c_str(), "rb");
@@ -773,7 +775,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             GByte *pabyRet = nullptr;
             if (VSIIngestFile(fpPRJ, nullptr, &pabyRet, nullptr, 1000000))
             {
-                OGRSpatialReference *poSRS = new OGRSpatialReference();
+                auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
                         reinterpret_cast<const char *>(pabyRet),
@@ -781,9 +783,9 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                             SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
                     OGRERR_NONE)
                 {
-                    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+                    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
+                        poSRS.get());
                 }
-                poSRS->Release();
             }
             CPLFree(pabyRet);
             VSIFCloseL(fpPRJ);
@@ -807,7 +809,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             for (int iSubField = 0; iSubField < nEurostatDims; iSubField++)
             {
                 OGRFieldDefn oField(papszDims[iSubField], OFTString);
-                poFeatureDefn->AddFieldDefn(&oField);
+                m_poFeatureDefn->AddFieldDefn(&oField);
             }
 
             if (nEurostatDims >= 0)
@@ -826,12 +828,12 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             OGRFieldDefn oField(
                 CPLSPrintf("%s_%s", osSeqDim.c_str(), papszTokens[iField]),
                 OFTReal);
-            poFeatureDefn->AddFieldDefn(&oField);
+            m_poFeatureDefn->AddFieldDefn(&oField);
 
             OGRFieldDefn oField2(
                 CPLSPrintf("%s_%s_flag", osSeqDim.c_str(), papszTokens[iField]),
                 OFTString);
-            poFeatureDefn->AddFieldDefn(&oField2);
+            m_poFeatureDefn->AddFieldDefn(&oField2);
         }
     }
 
@@ -1238,7 +1240,7 @@ OGRCSVLayer::~OGRCSVLayer()
     if (m_nFeaturesRead > 0)
     {
         CPLDebug("CSV", "%d features read on layer '%s'.",
-                 static_cast<int>(m_nFeaturesRead), poFeatureDefn->GetName());
+                 static_cast<int>(m_nFeaturesRead), m_poFeatureDefn->GetName());
     }
 
     // Make sure the header file is written even if no features are written.
@@ -1247,7 +1249,6 @@ OGRCSVLayer::~OGRCSVLayer()
 
     CPLFree(panGeomFieldIndex);
 
-    poFeatureDefn->Release();
     CPLFree(pszFilename);
 
     if (fpCSV)
@@ -1339,7 +1340,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         return nullptr;
 
     // Create the OGR feature.
-    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn.get());
 
     // Set attributes for any indicated attribute records.
     int iOGRField = 0;
@@ -1384,7 +1385,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         if (iGeom >= 0)
         {
             const OGRGeomFieldDefn *poGeomFieldDefn =
-                poFeatureDefn->GetGeomFieldDefn(iGeom);
+                m_poFeatureDefn->GetGeomFieldDefn(iGeom);
             if (papszTokens[iAttr][0] != '\0' &&
                 !(poGeomFieldDefn->IsIgnored()))
             {
@@ -1440,7 +1441,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         }
 
         const OGRFieldDefn *poFieldDefn =
-            poFeatureDefn->GetFieldDefn(iOGRField);
+            m_poFeatureDefn->GetFieldDefn(iOGRField);
         const OGRFieldType eFieldType = poFieldDefn->GetType();
         const OGRFieldSubType eFieldSubType = poFieldDefn->GetSubType();
 
@@ -1596,7 +1597,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         {
             iOGRField++;
             if (papszTokens[iAttr][0] != '\0' &&
-                !poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored())
+                !m_poFeatureDefn->GetFieldDefn(iOGRField)->IsIgnored())
             {
                 poFeature->SetField(iOGRField, papszTokens[iAttr]);
             }
@@ -1619,7 +1620,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             }
             for (int iSubAttr = 0; iSubAttr < nEurostatDims; iSubAttr++)
             {
-                if (!poFeatureDefn->GetFieldDefn(iSubAttr)->IsIgnored())
+                if (!m_poFeatureDefn->GetFieldDefn(iSubAttr)->IsIgnored())
                     poFeature->SetField(iSubAttr, papszDims[iSubAttr]);
             }
             CSLDestroy(papszDims);
@@ -1631,7 +1632,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             if ((papszVals[0] && papszVals[0][0] != '\0') &&
                 (eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL))
             {
-                if (!poFeatureDefn
+                if (!m_poFeatureDefn
                          ->GetFieldDefn(nEurostatDims + 2 * (iAttr - 1))
                          ->IsIgnored())
                     poFeature->SetField(nEurostatDims + 2 * (iAttr - 1),
@@ -1639,7 +1640,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             }
             if (CSLCount(papszVals) == 2)
             {
-                if (!poFeatureDefn
+                if (!m_poFeatureDefn
                          ->GetFieldDefn(nEurostatDims + 2 * (iAttr - 1) + 1)
                          ->IsIgnored())
                     poFeature->SetField(nEurostatDims + 2 * (iAttr - 1) + 1,
@@ -1679,7 +1680,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         const double dfLat =
             CPLAtof(papszTokens[iNfdcLatitudeS]) / 3600.0 *
             (strchr(papszTokens[iNfdcLatitudeS], 'S') ? -1.0 : 1.0);
-        if (!poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
+        if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
             poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
     }
 
@@ -1699,7 +1700,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         {
             const double dfLon = CPLAtofM(papszTokens[iLongitudeField]);
             const double dfLat = CPLAtofM(papszTokens[iLatitudeField]);
-            if (!poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
+            if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
             {
                 if (iZField != -1 && nAttrCount > iZField &&
                     papszTokens[iZField][0] != 0 &&
@@ -1871,29 +1872,29 @@ OGRErr OGRCSVLayer::CreateField(const OGRFieldDefn *poNewField, int bApproxOK)
 
     if (m_oSetFields.empty())
     {
-        for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
         {
             m_oSetFields.insert(
-                CPLString(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
+                CPLString(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef())
                     .toupper());
         }
     }
 
-    const OGRCSVCreateFieldAction eAction =
-        PreCreateField(poFeatureDefn, m_oSetFields, poNewField, bApproxOK);
+    const OGRCSVCreateFieldAction eAction = PreCreateField(
+        m_poFeatureDefn.get(), m_oSetFields, poNewField, bApproxOK);
     if (eAction == CREATE_FIELD_DO_NOTHING)
         return OGRERR_NONE;
     if (eAction == CREATE_FIELD_ERROR)
         return OGRERR_FAILURE;
 
     // Seems ok, add to field list.
-    poFeatureDefn->AddFieldDefn(poNewField);
+    m_poFeatureDefn->AddFieldDefn(poNewField);
     nCSVFieldCount++;
     m_oSetFields.insert(CPLString(poNewField->GetNameRef()).toupper());
 
     panGeomFieldIndex = static_cast<int *>(CPLRealloc(
-        panGeomFieldIndex, sizeof(int) * poFeatureDefn->GetFieldCount()));
-    panGeomFieldIndex[poFeatureDefn->GetFieldCount() - 1] = -1;
+        panGeomFieldIndex, sizeof(int) * m_poFeatureDefn->GetFieldCount()));
+    panGeomFieldIndex[m_poFeatureDefn->GetFieldCount() - 1] = -1;
 
     return OGRERR_NONE;
 }
@@ -1913,7 +1914,7 @@ OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
     }
 
     // Does this duplicate an existing field?
-    if (poFeatureDefn->GetGeomFieldIndex(poGeomField->GetNameRef()) >= 0)
+    if (m_poFeatureDefn->GetGeomFieldIndex(poGeomField->GetNameRef()) >= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create geom field %s, "
@@ -1923,23 +1924,22 @@ OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
         return OGRERR_FAILURE;
     }
     OGRGeomFieldDefn oGeomField(poGeomField);
-    auto poSRSOri = poGeomField->GetSpatialRef();
+    const auto poSRSOri = poGeomField->GetSpatialRef();
     if (poSRSOri)
     {
-        auto poSRS = poSRSOri->Clone();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        oGeomField.SetSpatialRef(poSRS);
-        poSRS->Release();
+        auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSOri);
+        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oGeomField.SetSpatialRef(poSRSClone.get());
     }
-    poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
 
     const char *pszName = poGeomField->GetNameRef();
     if (EQUAL(pszName, ""))
     {
-        const int nIdx = poFeatureDefn->GetFieldIndex("WKT");
+        const int nIdx = m_poFeatureDefn->GetFieldIndex("WKT");
         if (nIdx >= 0)
         {
-            panGeomFieldIndex[nIdx] = poFeatureDefn->GetGeomFieldCount() - 1;
+            panGeomFieldIndex[nIdx] = m_poFeatureDefn->GetGeomFieldCount() - 1;
             return OGRERR_NONE;
         }
         pszName = "WKT";
@@ -1950,13 +1950,13 @@ OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
         pszName = CPLSPrintf("_WKT%s", pszName);
 
     OGRFieldDefn oRegularFieldDefn(pszName, OFTString);
-    poFeatureDefn->AddFieldDefn(&oRegularFieldDefn);
+    m_poFeatureDefn->AddFieldDefn(&oRegularFieldDefn);
     nCSVFieldCount++;
 
     panGeomFieldIndex = static_cast<int *>(CPLRealloc(
-        panGeomFieldIndex, sizeof(int) * poFeatureDefn->GetFieldCount()));
-    panGeomFieldIndex[poFeatureDefn->GetFieldCount() - 1] =
-        poFeatureDefn->GetGeomFieldCount() - 1;
+        panGeomFieldIndex, sizeof(int) * m_poFeatureDefn->GetFieldCount()));
+    panGeomFieldIndex[m_poFeatureDefn->GetFieldCount() - 1] =
+        m_poFeatureDefn->GetGeomFieldCount() - 1;
 
     return OGRERR_NONE;
 }
@@ -2056,7 +2056,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             if (fpCSV)
             {
                 const char *pszColName =
-                    poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+                    m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
                 bOK &= VSIFPrintfL(fpCSV, "%s", pszColName) >= 0;
             }
             if (fpCSVT)
@@ -2064,7 +2064,8 @@ OGRErr OGRCSVLayer::WriteHeader()
             bNeedDelimiter = true;
         }
 
-        for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
+        for (int iField = 0; iField < m_poFeatureDefn->GetFieldCount();
+             iField++)
         {
             if (bNeedDelimiter)
             {
@@ -2076,7 +2077,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             bNeedDelimiter = true;
 
             char *pszEscaped = CPLEscapeString(
-                poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
+                m_poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
                 m_eStringQuoting == StringQuoting::ALWAYS
                     ? CPLES_CSV_FORCE_QUOTING
                     : CPLES_CSV);
@@ -2103,22 +2104,22 @@ OGRErr OGRCSVLayer::WriteHeader()
 
             if (fpCSVT)
             {
-                int nWidth = poFeatureDefn->GetFieldDefn(iField)->GetWidth();
+                int nWidth = m_poFeatureDefn->GetFieldDefn(iField)->GetWidth();
                 const int nPrecision =
-                    poFeatureDefn->GetFieldDefn(iField)->GetPrecision();
+                    m_poFeatureDefn->GetFieldDefn(iField)->GetPrecision();
 
-                switch (poFeatureDefn->GetFieldDefn(iField)->GetType())
+                switch (m_poFeatureDefn->GetFieldDefn(iField)->GetType())
                 {
                     case OFTInteger:
                     {
-                        if (poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
-                            OFSTBoolean)
+                        if (m_poFeatureDefn->GetFieldDefn(iField)
+                                ->GetSubType() == OFSTBoolean)
                         {
                             nWidth = 0;
                             bOK &= VSIFPrintfL(fpCSVT, "%s",
                                                "Integer(Boolean)") > 0;
                         }
-                        else if (poFeatureDefn->GetFieldDefn(iField)
+                        else if (m_poFeatureDefn->GetFieldDefn(iField)
                                      ->GetSubType() == OFSTInt16)
                         {
                             nWidth = 0;
@@ -2136,8 +2137,8 @@ OGRErr OGRCSVLayer::WriteHeader()
                         break;
                     case OFTReal:
                     {
-                        if (poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
-                            OFSTFloat32)
+                        if (m_poFeatureDefn->GetFieldDefn(iField)
+                                ->GetSubType() == OFSTFloat32)
                         {
                             nWidth = 0;
                             bOK &=
@@ -2309,7 +2310,7 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
         const OGRGeometry *poGeom = poNewFeature->GetGeometryRef();
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
-            const auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
             const OGRPoint *poPoint = poGeom->toPoint();
             std::string osCoord;
             if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
@@ -2346,7 +2347,7 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
         const OGRGeometry *poGeom = poNewFeature->GetGeomFieldRef(0);
         if (poGeom)
         {
-            const auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
             const std::string wkt =
                 poGeom->exportToWkt(GetWktOptions(poGeomFieldDefn));
             if (!wkt.empty())
@@ -2361,7 +2362,7 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
 
     // Write out all the field values.
-    for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
+    for (int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++)
     {
         char *pszEscaped = nullptr;
 
@@ -2380,7 +2381,7 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
             if (poGeom)
             {
                 const auto poGeomFieldDefn =
-                    poFeatureDefn->GetGeomFieldDefn(iGeom);
+                    m_poFeatureDefn->GetGeomFieldDefn(iGeom);
                 const std::string wkt =
                     poGeom->exportToWkt(GetWktOptions(poGeomFieldDefn));
                 if (!wkt.empty())
@@ -2409,11 +2410,11 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
         else
         {
             const OGRFieldType eType(
-                poFeatureDefn->GetFieldDefn(iField)->GetType());
+                m_poFeatureDefn->GetFieldDefn(iField)->GetType());
             if (eType == OFTReal || eType == OFTInteger ||
                 eType == OFTInteger64)
             {
-                if (poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
+                if (m_poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
                         OFSTFloat32 &&
                     poNewFeature->IsFieldSetAndNotNull(iField))
                 {
@@ -2518,11 +2519,11 @@ void OGRCSVLayer::SetWriteGeometry(OGRwkbGeometryType eGType,
         // a geometry field in first position, as it confuses applications
         // (such as MapServer <= 6.4) that assume that the first regular field
         // they add will be at index 0.
-        poFeatureDefn->AddGeomFieldDefn(&oGFld);
+        m_poFeatureDefn->AddGeomFieldDefn(&oGFld);
     }
     else
     {
-        poFeatureDefn->SetGeomType(eGType);
+        m_poFeatureDefn->SetGeomType(eGType);
     }
 }
 

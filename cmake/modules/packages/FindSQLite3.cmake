@@ -8,7 +8,7 @@ Find the SQLite libraries, v3
 IMPORTED targets
 ^^^^^^^^^^^^^^^^
 This module defines the following :prop_tgt:`IMPORTED` target:
-``SQLite::SQLite3``
+``SQLite3::SQLite3``
 Result variables
 ^^^^^^^^^^^^^^^^
 This module will set the following variables if found:
@@ -73,6 +73,8 @@ if(SQLite3_INCLUDE_DIR)
 endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
+    include(CheckCSourceCompiles)
+    include(CheckCXXSourceCompiles)
     include(CheckSymbolExists)
     cmake_push_check_state(RESET)
     # check column metadata
@@ -173,19 +175,34 @@ find_package_handle_standard_args(SQLite3
 if(SQLite3_FOUND)
   set(SQLite3_LIBRARIES ${SQLite3_LIBRARY})
   set(SQLite3_INCLUDE_DIRS ${SQLite3_INCLUDE_DIR})
-  if(NOT TARGET SQLite::SQLite3)
-    add_library(SQLite::SQLite3 UNKNOWN IMPORTED)
-    set_target_properties(SQLite::SQLite3 PROPERTIES
+  if(NOT TARGET SQLite3::SQLite3)
+    add_library(SQLite3::SQLite3 UNKNOWN IMPORTED)
+    set_target_properties(SQLite3::SQLite3 PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                           IMPORTED_LOCATION "${SQLite3_LIBRARY}")
     if(SQLite3_HAS_COLUMN_METADATA)
-        set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
+        set_property(TARGET SQLite3::SQLite3 APPEND PROPERTY
                      INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_COLUMN_METADATA")
     endif()
     if(SQLite3_HAS_RTREE)
-        set_property(TARGET SQLite::SQLite3 APPEND PROPERTY
+        set_property(TARGET SQLite3::SQLite3 APPEND PROPERTY
                      INTERFACE_COMPILE_DEFINITIONS "SQLite3_HAS_RTREE")
     endif()
   endif()
+
+  # Alias SQLite3::SQLite3 to SQLite::SQLite3 since that's what PROJ will
+  # expect (when static linking PROJ)
+  if(NOT TARGET SQLite::SQLite3)
+    get_target_property(IS_SQLITE3_IMPORTED SQLite3::SQLite3 IMPORTED)
+    if(IS_SQLITE3_IMPORTED AND CMAKE_VERSION VERSION_LESS "3.18")
+        set_target_properties(SQLite3::SQLite3 PROPERTIES IMPORTED_GLOBAL TRUE)
+        message(DEPRECATION "If your project consumes GDAL as a subdirectory \
+          and also uses either the SQLite3::SQLite3 or SQLite::SQLite3 target, \
+          make sure you have your own call to find_package.\nThese targets \
+          will no longer be available to the global CMake scope once GDAL bumps to CMake v3.18+.")
+    endif()
+    add_library(SQLite::SQLite3 ALIAS SQLite3::SQLite3)
+  endif()
+
 endif()

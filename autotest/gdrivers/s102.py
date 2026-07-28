@@ -37,7 +37,7 @@ def test_s102_basic(filename):
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     assert ds.GetMetadata_Dict() == {
         "AREA_OR_POINT": "Point",
@@ -85,13 +85,13 @@ def test_s102_basic(filename):
 
 
 def test_s102_elevation():
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/s102/test_s102_v2.1.h5", open_options=["DEPTH_OR_ELEVATION=ELEVATION"]
     )
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
 
     elevation = ds.GetRasterBand(1)
@@ -122,11 +122,11 @@ def test_s102_elevation():
 
 
 def test_s102_north_up_no():
-    ds = gdal.OpenEx("data/s102/test_s102_v2.1.h5", open_options=["NORTH_UP=NO"])
+    ds = gdal.Open("data/s102/test_s102_v2.1.h5", open_options=["NORTH_UP=NO"])
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 47.75, 0.0, 0.5))
 
     depth = ds.GetRasterBand(1)
@@ -171,12 +171,12 @@ def test_s102_identify_fallback_through_HDF5_driver():
 
 
 def test_s102_multidim():
-    ds = gdal.OpenEx("data/s102/test_s102_v2.1.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/s102/test_s102_v2.1.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArrayFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values"
     )
-    assert ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ar.GetSpatialRef().GetAuthorityCode() == "4326"
 
     assert ar.GetDimensions()[0].GetName() == "Y"
     y = ar.GetDimensions()[0].GetIndexingVariable()
@@ -238,7 +238,7 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     band = ds.GetRasterBand(1)
     assert band.DataType == gdal.GDT_UInt32
@@ -272,7 +272,7 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
     assert rat.GetValueAsDouble(4, 1) == 5.5
     assert rat.GetValueAsString(4, 2) == "e"
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f'S102:"{filename}":{quality_group_name}',
         open_options=["NORTH_UP=NO"],
     )
@@ -286,7 +286,7 @@ def test_s102_QualityOfSurvey(filename, quality_group_name):
 
 def test_s102_QualityOfSurvey_multidim():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/s102/test_s102_v2.2_with_QualityOfSurvey_nodata_0.h5",
         gdal.OF_MULTIDIM_RASTER,
     )
@@ -294,7 +294,7 @@ def test_s102_QualityOfSurvey_multidim():
     ar = rg.OpenMDArrayFromFullname(
         "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values"
     )
-    assert ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ar.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ar.GetNoDataValue() == 0
 
     assert ar.GetDimensions()[0].GetName() == "Y"
@@ -454,7 +454,10 @@ def validate(
     errors, warnings, checks_done = validate_s102.check(filename)
 
     if expected_errors:
-        assert errors == expected_errors
+        assert len(errors) == len(expected_errors)
+        for error, expected_error in zip(errors, expected_errors):
+            assert error[0] == expected_error[0]
+            assert expected_error[1] in error[1]
     else:
         if errors:
             print(errors)
@@ -621,7 +624,7 @@ def test_s102_validator():
         ),
         (
             "Critical error",
-            "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values type is not uint32",
+            "/QualityOfBathymetryCoverage/QualityOfBathymetryCoverage.01/Group_001/values type is not uint32",
         ),
     ]
     expected_warnings = [
@@ -755,7 +758,7 @@ def test_s102_write_basic(tmp_path):
             creationOptions={"VERTICAL_DATUM": "MLLW"},
         )
         assert out_ds.GetRasterBand(1).Checksum() == 4672
-        assert out_ds.GetSpatialRef().GetAuthorityCode(None) == "32611"
+        assert out_ds.GetSpatialRef().GetAuthorityCode() == "32611"
         assert out_ds.GetGeoTransform() == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
         out_ds.Close()

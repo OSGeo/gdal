@@ -552,15 +552,15 @@ VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
     }
 
     CPLString osFileInArchive;
-    char *pszArchiveFileName =
+    auto pszArchiveFileName =
         SplitFilename(pszFilename, osFileInArchive, true, bSetError);
     if (pszArchiveFileName == nullptr)
         return nullptr;
 
     auto poReader = std::unique_ptr<VSILibArchiveReader>(
         cpl::down_cast<VSILibArchiveReader *>(
-            OpenArchiveFile(pszArchiveFileName, osFileInArchive).release()));
-    CPLFree(pszArchiveFileName);
+            OpenArchiveFile(pszArchiveFileName.get(), osFileInArchive)
+                .release()));
     if (poReader == nullptr)
     {
         return nullptr;

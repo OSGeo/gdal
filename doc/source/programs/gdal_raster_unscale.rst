@@ -1,5 +1,7 @@
 .. _gdal_raster_unscale:
 
+.. program:: gdal_raster_unscale
+
 ================================================================================
 ``gdal raster unscale``
 ================================================================================
@@ -66,6 +68,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

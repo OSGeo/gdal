@@ -306,8 +306,8 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize(const char *pszSchema,
         }
         else
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
-            const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            const char *pszAuthorityName = poSRS->GetAuthorityName();
+            const char *pszAuthorityCode = poSRS->GetAuthorityCode();
             if (pszAuthorityName && pszAuthorityCode &&
                 EQUAL(pszAuthorityName, "EPSG"))
             {
@@ -2745,7 +2745,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
 
     // Flag indicating NULL or not-a-date date value
     // e.g. 0000-00-00 - there is no year 0
-    OGRBoolean bIsDateNull = FALSE;
+    bool bIsDateNull = FALSE;
 
     const char *pszStrValue = poFeature->GetFieldAsString(i);
 

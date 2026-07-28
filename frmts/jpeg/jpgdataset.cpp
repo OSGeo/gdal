@@ -236,8 +236,8 @@ size_t JPGVSIFileMultiplexerHandler::Read(void *pBuffer, size_t nBytes)
     }
     const size_t nRet = fp->Read(pBuffer, nBytes);
     m_nCurPos = fp->Tell();
-    m_bEOF = fp->Eof();
-    m_bError = fp->Error();
+    m_bEOF = CPL_TO_BOOL(fp->Eof());
+    m_bError = CPL_TO_BOOL(fp->Error());
     fp->ClearErr();
     m_poCommon->m_poCurrentOwner = this;
     return nRet;
@@ -329,8 +329,9 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
             (!bIsYCbCr &&
              memcmp(md5JPEGQuantTable_generic_8bit[i], digest, 16) == 0))
         {
-            GDALDataset::SetMetadataItem(
-                "JPEG_QUALITY", CPLSPrintf("%d", i + 1), "IMAGE_STRUCTURE");
+            GDALDataset::SetMetadataItem("JPEG_QUALITY",
+                                         CPLSPrintf("%d", i + 1),
+                                         GDAL_MDD_IMAGE_STRUCTURE);
             break;
         }
     }
@@ -658,10 +659,10 @@ void JPGDatasetCommon::ReadDJIMetadata()
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":DJI_RAW_THERMAL_IMAGE",
                            GetDescription()),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             GDALDataset::SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
-                "DJI raw thermal image", "SUBDATASETS");
+                "DJI raw thermal image", GDAL_MDD_SUBDATASETS);
         }
     }
 }
@@ -911,10 +912,44 @@ void JPGDatasetCommon::ReadFLIRMetadata()
                 CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
                 CPLSPrintf("JPEG:\"%s\":FLIR_RAW_THERMAL_IMAGE",
                            GetDescription()),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             SetMetadataItem(
                 CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
-                "FLIR raw thermal image", "SUBDATASETS");
+                "FLIR raw thermal image", GDAL_MDD_SUBDATASETS);
+        }
+    };
+
+    // Read the Embedded Image record
+    const auto ReadEmbeddedImage =
+        [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if (!(nRecLength >= 32 && nRecOffset + nRecLength <= abyFLIR.size()))
+            return;
+
+        const int nByteOrder = ReadUInt16(nRecOffset);
+        if (nByteOrder >= 4)
+            bLittleEndian = !bLittleEndian;
+        const auto nImageWidth = ReadUInt16(nRecOffset + 2);
+        SetMetadataItem("EmbeddedImageWidth", CPLSPrintf("%d", nImageWidth),
+                        "FLIR");
+        const auto nImageHeight = ReadUInt16(nRecOffset + 4);
+        SetMetadataItem("EmbeddedImageHeight", CPLSPrintf("%d", nImageHeight),
+                        "FLIR");
+        m_abyEmbeddedImage.clear();
+        m_abyEmbeddedImage.insert(m_abyEmbeddedImage.end(),
+                                  abyFLIR.begin() + nRecOffset + 32,
+                                  abyFLIR.begin() + nRecOffset + nRecLength);
+
+        if (!STARTS_WITH(GetDescription(), "JPEG:"))
+        {
+            m_nSubdatasetCount++;
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
+                CPLSPrintf("JPEG:\"%s\":FLIR_EMBEDDED_IMAGE", GetDescription()),
+                GDAL_MDD_SUBDATASETS);
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
+                "FLIR embedded image", GDAL_MDD_SUBDATASETS);
         }
     };
 
@@ -1159,6 +1194,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     {
         FLIR_REC_FREE = 0,
         FLIR_REC_RAWDATA = 1,
+        FLIR_REC_EMBEDDEDIMAGE = 14,
         FLIR_REC_CAMERA_INFO = 32,
         FLIR_REC_PALETTE_INFO = 34,
         FLIR_REC_GPS_INFO = 43,
@@ -1191,6 +1227,13 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             {
                 const auto bLittleEndianBackup = bLittleEndian;
                 ReadRawData(nRecOffset, nRecLength);
+                bLittleEndian = bLittleEndianBackup;
+                break;
+            }
+            case FLIR_REC_EMBEDDEDIMAGE:
+            {
+                const auto bLittleEndianBackup = bLittleEndian;
+                ReadEmbeddedImage(nRecOffset, nRecLength);
                 bLittleEndian = bLittleEndianBackup;
                 break;
             }
@@ -1251,7 +1294,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
     if (eAccess == GA_ReadOnly && !bHasReadImageStructureMetadata &&
-        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+        pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
         ReadImageStructureMetadata();
     if (eAccess == GA_ReadOnly && pszDomain != nullptr &&
         EQUAL(pszDomain, "xml:XMP"))
@@ -1276,7 +1319,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
     if (eAccess == GA_ReadOnly && !bHasReadDJIMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "DJI"))
         ReadDJIMetadata();
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         ReadThermalMetadata();
 }
 
@@ -1295,7 +1338,7 @@ CSLConstList JPGDatasetCommon::GetMetadata(const char *pszDomain)
 const char *JPGDatasetCommon::GetMetadataItem(const char *pszName,
                                               const char *pszDomain)
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
     {
         if (EQUAL(pszName, "JPEG_QUALITY"))
             LoadForMetadataDomain(pszDomain);
@@ -1707,9 +1750,11 @@ JPGRasterBand::JPGRasterBand(JPGDatasetCommon *poDSIn, int nBandIn)
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    GDALMajorObject::SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+    GDALMajorObject::SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     if (eDataType == GDT_UInt16)
-        GDALMajorObject::SetMetadataItem("NBITS", "12", "IMAGE_STRUCTURE");
+        GDALMajorObject::SetMetadataItem(GDALMD_NBITS, "12",
+                                         GDAL_MDD_IMAGE_STRUCTURE);
 }
 
 /************************************************************************/
@@ -2214,7 +2259,7 @@ void JPGDatasetCommon::InitInternalOverviews()
             }
         }
 
-        if (nImplicitOverviews > 0)
+        if (nImplicitOverviews > 0 && m_poCommon)
         {
             ppoActiveDS = &poActiveDS;
             papoInternalOverviews = static_cast<GDALDataset **>(
@@ -2386,7 +2431,7 @@ CPLErr JPGDataset::StartDecompress()
         /* in libjpeg */
 
         // 1 MB for regular libjpeg usage
-        vsi_l_offset nRequiredMemory = 1024 * 1024;
+        uint64_t nRequiredMemory = 1024 * 1024;
 
         for (int ci = 0; ci < sDInfo.num_components; ci++)
         {
@@ -2397,12 +2442,27 @@ CPLErr JPGDataset::StartDecompress()
                          "Invalid sampling factor(s)");
                 return CE_Failure;
             }
-            nRequiredMemory +=
-                static_cast<vsi_l_offset>(DIV_ROUND_UP(
-                    compptr->width_in_blocks, compptr->h_samp_factor)) *
-                DIV_ROUND_UP(compptr->height_in_blocks,
-                             compptr->v_samp_factor) *
-                sizeof(JBLOCK);
+            const unsigned nWidthSubsampled = cpl::div_round_up(
+                compptr->width_in_blocks, compptr->h_samp_factor);
+            const unsigned nHeightSubsampled = cpl::div_round_up(
+                compptr->height_in_blocks, compptr->v_samp_factor);
+            if (nHeightSubsampled > 0 &&
+                nWidthSubsampled >
+                    std::numeric_limits<uint64_t>::max() / nHeightSubsampled)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Corrupted image");
+                return CE_Failure;
+            }
+            const uint64_t nTmp =
+                static_cast<uint64_t>(nWidthSubsampled) * nHeightSubsampled;
+            if (nTmp > std::numeric_limits<uint64_t>::max() / sizeof(JBLOCK) ||
+                nRequiredMemory > std::numeric_limits<uint64_t>::max() -
+                                      nTmp * sizeof(JBLOCK))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Corrupted image");
+                return CE_Failure;
+            }
+            nRequiredMemory += nTmp * sizeof(JBLOCK);
         }
 
         if (nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS &&
@@ -3069,6 +3129,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     CPLString osFilename(poOpenInfo->pszFilename);
     bool bFLIRRawThermalImage = false;
     bool bDJIRawThermalImage = false;
+    bool bFLIREmbeddedImage = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "JPEG:"))
     {
         CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":",
@@ -3081,6 +3142,8 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
             bFLIRRawThermalImage = true;
         else if (std::string(aosTokens[2]) == "DJI_RAW_THERMAL_IMAGE")
             bDJIRawThermalImage = true;
+        else if (std::string(aosTokens[2]) == "FLIR_EMBEDDED_IMAGE")
+            bFLIREmbeddedImage = true;
         else
             return nullptr;
     }
@@ -3117,6 +3180,10 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     if (bFLIRRawThermalImage || bDJIRawThermalImage)
     {
         poDS.reset(poJPG_DS->OpenRawThermalImage(poOpenInfo->pszFilename));
+    }
+    if (bFLIREmbeddedImage)
+    {
+        poDS.reset(poJPG_DS->OpenEmbeddedImage(poOpenInfo->pszFilename));
     }
 
     if (poDS &&
@@ -3252,6 +3319,42 @@ JPGDatasetCommon::OpenRawThermalImage(const char *pszConnectionString)
              "Unrecognized format for raw thermal image");
     VSIUnlink(osTmpFilename.c_str());
     return nullptr;
+}
+
+/************************************************************************/
+/*                         OpenEmbeddedImage()                          */
+/************************************************************************/
+
+GDALDataset *
+JPGDatasetCommon::OpenEmbeddedImage(const char *pszConnectionString)
+{
+    ReadThermalMetadata();
+    if (m_abyEmbeddedImage.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find embedded image");
+        return nullptr;
+    }
+
+    GByte *pabyData =
+        static_cast<GByte *>(CPLMalloc(m_abyEmbeddedImage.size()));
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("jpeg_embedded"));
+    memcpy(pabyData, m_abyEmbeddedImage.data(), m_abyEmbeddedImage.size());
+    VSILFILE *fpRaw = VSIFileFromMemBuffer(osTmpFilename.c_str(), pabyData,
+                                           m_abyEmbeddedImage.size(), true);
+
+    VSIFCloseL(fpRaw);
+
+    auto poEmbeddedDS = GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
+                                          nullptr, nullptr, nullptr);
+    VSIUnlink(osTmpFilename.c_str());
+    if (poEmbeddedDS == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid embedded image");
+        return nullptr;
+    }
+    poEmbeddedDS->SetDescription(pszConnectionString);
+    return poEmbeddedDS;
 }
 
 #endif  // !defined(JPGDataset)
@@ -3473,7 +3576,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->sDInfo.out_color_space = JCS_RGB;
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
     else if (poDS->sDInfo.jpeg_color_space == JCS_CMYK)
@@ -3484,7 +3587,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "CMYK",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
@@ -3499,7 +3602,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             poDS->eGDALColorSpace = JCS_RGB;
             poDS->nBands = 3;
             poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCrK",
-                                  "IMAGE_STRUCTURE");
+                                  GDAL_MDD_IMAGE_STRUCTURE);
 
             // libjpeg does the translation from YCrCbK -> CMYK internally
             // and we'll do the translation to RGB in IReadBlock().
@@ -3526,14 +3629,16 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     // More metadata.
     if (poDS->nBands > 1)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-        poDS->SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "JPEG",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (psArgs->bIsLossless)
     {
         poDS->SetMetadataItem("COMPRESSION_REVERSIBILITY", "LOSSLESS",
-                              "IMAGE_STRUCTURE");
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
@@ -3588,10 +3693,82 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->bIsSubfile = bIsSubfile;
 
+    poDS->ArtemisIIEasterEgg();
+
     return poDS;
 }
 
 #if !defined(JPGDataset)
+
+/************************************************************************/
+/*                         ArtemisIIEasterEgg()                         */
+/************************************************************************/
+
+void JPGDatasetCommon::ArtemisIIEasterEgg()
+{
+    // Is this the Artemis II mythic image of https://www.nasa.gov/wp-content/uploads/2026/04/art002e000192.jpg ?
+    // If so, then use georeferencing kindly provided by Simeon Schmauß (https://mastodon.social/@stim3on@fosstodon.org)
+    // in https://fosstodon.org/@stim3on/116353715518726592
+    GDALGeoTransform gt;
+    // Do cheapest tests first...
+    if (nRasterXSize == 5568 && nRasterYSize == 3712 &&
+        strstr(GetDescription(), "art002e000192") != nullptr &&
+        GetSpatialRef() == nullptr && GetGeoTransform(gt) != CE_None)
+    {
+        const char *pszWKT =
+            "PROJCRS[\"Tilted perspective projection for Hello world picture "
+            "taken by Reid Wiseman from Artemis II\","
+            "    BASEGEOGCRS[\"WGS84\","
+            "        DATUM[\"World Geodetic System 1984\","
+            "            ELLIPSOID[\"WGS 84\",6378137,298.257223563,"
+            "                LENGTHUNIT[\"metre\",1]],"
+            "            ID[\"EPSG\",6326]],"
+            "        PRIMEM[\"Greenwich\",0,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433],"
+            "            ID[\"EPSG\",8901]]],"
+            "    CONVERSION[\"Tilted perspective - Hello world - Artemis II\","
+            "        METHOD[\"PROJ tpers\"],"
+            "        PARAMETER[\"lat_0\",-1.6359082148,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"lon_0\",-17.4323556611,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"h\",10290019.124,"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "        PARAMETER[\"tilt\",-4.15,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"azi\",121.5,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]]],"
+            "    CS[Cartesian,2],"
+            "        AXIS[\"(E)\",east,"
+            "            ORDER[1],"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "        AXIS[\"(N)\",north,"
+            "            ORDER[2],"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "    REMARK[\"Credits to Simeon Schmauß for deriving this CRS: "
+            "https://fosstodon.org/@stim3on/116353715518726592\"]]";
+
+        m_oSRS.importFromWkt(pszWKT);
+        bGeoTransformValid = true;
+        m_gt[0] = -5.2217134991559219e+06;
+        m_gt[1] = 2.6965734323778038e+03;
+        m_gt[2] = -1.2177960904732563e+03;
+        m_gt[3] = 7.5987852091184044e+06;
+        m_gt[4] = -1.2009140912982348e+03;
+        m_gt[5] = -2.6924269785799042e+03;
+        GDALDataset::SetMetadataItem(
+            "GEOREFERENCING_CREDITS",
+            "Simeon Schmauß: "
+            "https://fosstodon.org/@stim3on/116353715518726592");
+    }
+}
 
 /************************************************************************/
 /*                         LoadWorldFileOrTab()                         */
@@ -4975,12 +5152,22 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
 
+    int eGDALColorSpace;
     if (nBands == 3)
+    {
+        eGDALColorSpace = JCS_RGB;
         sCInfo.in_color_space = JCS_RGB;
+    }
     else if (nBands == 1)
+    {
+        eGDALColorSpace = JCS_GRAYSCALE;
         sCInfo.in_color_space = JCS_GRAYSCALE;
+    }
     else
+    {
+        eGDALColorSpace = JCS_CMYK;
         sCInfo.in_color_space = JCS_UNKNOWN;
+    }
 
     jpeg_set_defaults(&sCInfo);
 
@@ -5268,6 +5455,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     }
 
     JPGDataset *poJPG_DS = new JPGDataset();
+    poJPG_DS->eGDALColorSpace = eGDALColorSpace;
     poJPG_DS->nRasterXSize = nXSize;
     poJPG_DS->nRasterYSize = nYSize;
     for (int i = 0; i < nBands; i++)

@@ -87,7 +87,44 @@ struct CPL_DLL VSIVirtualHandle
 
     virtual vsi_l_offset Tell() = 0;
     size_t Read(void *pBuffer, size_t nSize, size_t nCount);
+
     virtual size_t Read(void *pBuffer, size_t nBytes) = 0;
+
+    /** Read a primitive type from LSB-ordered byte sequence.
+     *
+     * Failure to read the value can be detected by testing *pbError,
+     * or Eof() || Error()
+     *
+     * @param[out] pbError Pointer to a boolean that will be set to true if
+     * the value cannot be read, or nullptr.
+     * Note that this boolean must be initialized to false by the caller,
+     * and that this method will not set it to false.
+     */
+    template <class T> inline T ReadLSB(bool *pbError = nullptr)
+    {
+        T val;
+        if (Read(&val, sizeof(val)) != sizeof(val))
+        {
+            if (pbError)
+                *pbError = true;
+            return 0;
+        }
+        return CPL_AS_LSB(val);
+    }
+
+    /** Read a primitive type from LSB-ordered byte sequence */
+    template <class T> inline bool ReadLSB(T &val)
+    {
+        if (Read(&val, sizeof(val)) != sizeof(val))
+        {
+            return false;
+        }
+        val = CPL_AS_LSB(val);
+        return true;
+    }
+
+    bool ReadLSB(bool &) = delete;
+
     virtual int ReadMultiRange(int nRanges, void **ppData,
                                const vsi_l_offset *panOffsets,
                                const size_t *panSizes);
@@ -129,6 +166,13 @@ struct CPL_DLL VSIVirtualHandle
 
     virtual size_t Write(const void *pBuffer, size_t nBytes) = 0;
     size_t Write(const void *pBuffer, size_t nSize, size_t nCount);
+
+    /** Write a primitive type as LSB-ordered byte sequence */
+    template <class T> inline bool WriteLSB(T val)
+    {
+        val = CPL_AS_LSB(val);
+        return Write(&val, sizeof(val)) == sizeof(val);
+    }
 
     int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
         CPL_PRINT_FUNC_FORMAT(2, 3);
@@ -570,6 +614,24 @@ class CPL_DLL VSIFilesystemHandler
     {
         return "/";
     }
+
+    /** Returns a hint about the path that this file system
+     * could (potentially) recognize given the input path.
+     *
+     * e.g. /vsizip/ will return "/vsizip/my.zip" if provided with "my.zip",
+     * /vsicurl/ will return "/vsicurl/https://example.com" if provided with
+     * "https://example.com", /vsis3/ will return "/vsis3/bucket/object" if
+     * provided with "s3://bucket/object", etc.
+     *
+     * Returns an empty string if the input path cannot easily be identified
+     * as a potential match for the file system.
+     */
+    virtual std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath)
+    {
+        (void)osPath;
+        return std::string();
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -584,6 +646,7 @@ class CPL_DLL VSIFileManager
     std::shared_ptr<VSIFilesystemHandler> m_poDefaultHandler{};
     std::map<std::string, std::shared_ptr<VSIFilesystemHandler>>
         m_apoHandlers{};
+    std::map<std::string, void (*)(void)> m_oMapHandlerLoader{};
 
     VSIFileManager();
 
@@ -601,6 +664,9 @@ class CPL_DLL VSIFileManager
                                VSIFilesystemHandler *)
         CPL_WARN_DEPRECATED("Use version with std::shared_ptr<> instead");
     static void RemoveHandler(const std::string &osPrefix);
+
+    static void RegisterHandlerLoader(const char *pszPrefix,
+                                      void (*pfnLoadHandler)(void));
 
     static char **GetPrefixes();
 };
@@ -698,10 +764,9 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
     virtual const VSIArchiveContent *
     GetContentOfArchive(const char *archiveFilename,
                         VSIArchiveReader *poReader = nullptr);
-    virtual char *SplitFilename(const char *pszFilename,
-                                CPLString &osFileInArchive,
-                                bool bCheckMainFileExists,
-                                bool bSetError) const;
+    virtual std::unique_ptr<char, VSIFreeReleaser>
+    SplitFilename(const char *pszFilename, CPLString &osFileInArchive,
+                  bool bCheckMainFileExists, bool bSetError) const;
     virtual std::unique_ptr<VSIArchiveReader>
     OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
 
@@ -720,6 +785,9 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
     {
         return false;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override;
 };
 
 /************************************************************************/

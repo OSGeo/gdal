@@ -68,6 +68,34 @@ def test_gdalalg_vector_materialize_temp_output_shapefile(tmp_path):
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
 
 
+@pytest.mark.require_driver("ESRI Shapefile")
+def test_gdalalg_vector_materialize_named_output_shapefile(
+    tmp_vsimem,
+):
+
+    with gdal.Run(
+        "vector",
+        "pipeline",
+        pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_vsimem}/out.shp ! write --of stream streamed_dataset",
+    ) as alg:
+        with alg.Output() as ds:
+            assert ds.GetDriver().GetDescription() == "ESRI Shapefile"
+            assert ds.GetDescription() == str(tmp_vsimem / "out.shp")
+            assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_vector_materialize_named_output_error(
+    tmp_vsimem,
+):
+
+    with pytest.raises(Exception, match="Cannot guess driver"):
+        gdal.Run(
+            "vector",
+            "pipeline",
+            pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_vsimem}/out.unknown ! write --of stream streamed_dataset",
+        )
+
+
 def test_gdalalg_vector_materialize_temp_output_mem(tmp_path):
 
     with gdal.config_option("CPL_TMPDIR", str(tmp_path)):
@@ -81,6 +109,19 @@ def test_gdalalg_vector_materialize_temp_output_mem(tmp_path):
                 assert ds.GetLayer(0).GetFeatureCount() == 10
 
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("alg_path", [["pipeline"], ["vector", "pipeline"]])
+def test_gdalalg_vector_materialize_named_output(tmp_path, alg_path):
+
+    with gdal.Run(
+        alg_path,
+        pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_path}/out.gpkg ! write --of stream streamed_dataset",
+    ) as alg:
+        with alg.Output() as ds:
+            assert ds.GetDriver().GetDescription() == "GPKG"
+            assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
 @pytest.mark.require_driver("SQLite")
@@ -129,6 +170,38 @@ def test_gdalalg_vector_materialize_temp_output_sqlite_because_of_list_field_typ
                     ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0).GetType()
                     == ogr.OFTStringList
                 )
+
+    assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
+
+
+@pytest.mark.require_driver("SQLite")
+def test_gdalalg_vector_materialize_temp_output_sqlite_spatial_and_aspatial(
+    tmp_path,
+):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test_aspatial", geom_type=ogr.wkbNone)
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr = src_ds.CreateLayer("test_spatial")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    lyr.CreateFeature(f)
+
+    with gdal.config_option("CPL_TMPDIR", str(tmp_path)):
+        with gdal.Run(
+            "vector",
+            "pipeline",
+            input=src_ds,
+            pipeline="read ! materialize --format SQLite ! write --of stream streamed_dataset",
+        ) as alg:
+            with alg.Output() as ds:
+                assert ds.GetDriver().GetDescription() == "SQLite"
+                assert ds.GetLayer(0).GetName() == "test_aspatial"
+                assert ds.GetLayer(0).GetFeatureCount() == 1
+                assert ds.GetLayer(1).GetName() == "test_spatial"
+                assert ds.GetLayer(1).GetFeatureCount() == 1
+                f = ds.GetLayer(1).GetNextFeature()
+                assert f.GetGeometryRef() is not None
 
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
 

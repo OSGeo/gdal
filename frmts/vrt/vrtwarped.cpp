@@ -78,7 +78,7 @@
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");
@@ -339,7 +339,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");
@@ -619,7 +619,8 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     return eErr;
@@ -1395,7 +1396,8 @@ CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */

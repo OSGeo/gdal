@@ -20,6 +20,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <vector>
@@ -36,9 +37,9 @@ class SFRegion
   public:
     CPLString osFilename{};
     VSILFILE *fp = nullptr;
-    GUIntBig nDstOffset = 0;
-    GUIntBig nSrcOffset = 0;
-    GUIntBig nLength = 0;
+    uint64_t nDstOffset = 0;
+    uint64_t nSrcOffset = 0;
+    uint64_t nLength = 0;
     GByte byValue = 0;
     bool bTriedOpen = false;
 };
@@ -67,8 +68,8 @@ class VSISparseFileHandle final : public VSIVirtualHandle
 
     ~VSISparseFileHandle() override;
 
-    GUIntBig nOverallLength = 0;
-    GUIntBig nCurOffset = 0;
+    uint64_t nOverallLength = 0;
+    uint64_t nCurOffset = 0;
 
     std::vector<SFRegion> aoRegions{};
 
@@ -250,7 +251,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nBytes)
     /*      requests.                                                       */
     /* -------------------------------------------------------------------- */
     size_t nBytesReturnCount = 0;
-    const GUIntBig nEndOffsetOfRegion =
+    const uint64_t nEndOffsetOfRegion =
         aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength;
 
     if (nCurOffset + nBytesRequested > nEndOffsetOfRegion)
@@ -259,7 +260,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nBytes)
             nCurOffset + nBytesRequested - nEndOffsetOfRegion);
         // Recurse to get the rest of the request.
 
-        const GUIntBig nCurOffsetSave = nCurOffset;
+        const uint64_t nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
         bool bEOFSave = bEOF;
         bEOF = false;
@@ -427,7 +428,7 @@ VSIVirtualHandleUniquePtr VSISparseFileFilesystemHandler::Open(
     /* -------------------------------------------------------------------- */
     /*      Read the XML file.                                              */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psXMLRoot = CPLParseXMLFile(osSparseFilePath);
+    CPLXMLTreeCloser psXMLRoot(CPLParseXMLFile(osSparseFilePath));
 
     if (psXMLRoot == nullptr)
         return nullptr;
@@ -460,15 +461,14 @@ VSIVirtualHandleUniquePtr VSISparseFileFilesystemHandler::Open(
                 osSFPath.c_str(), oRegion.osFilename, nullptr);
         }
 
-        // TODO(schwehr): Symbolic constant and an explanation for 32.
-        oRegion.nDstOffset = CPLScanUIntBig(
-            CPLGetXMLValue(psRegion, "DestinationOffset", "0"), 32);
+        oRegion.nDstOffset = std::strtoull(
+            CPLGetXMLValue(psRegion, "DestinationOffset", "0"), nullptr, 10);
 
-        oRegion.nSrcOffset =
-            CPLScanUIntBig(CPLGetXMLValue(psRegion, "SourceOffset", "0"), 32);
+        oRegion.nSrcOffset = std::strtoull(
+            CPLGetXMLValue(psRegion, "SourceOffset", "0"), nullptr, 10);
 
-        oRegion.nLength =
-            CPLScanUIntBig(CPLGetXMLValue(psRegion, "RegionLength", "0"), 32);
+        oRegion.nLength = std::strtoull(
+            CPLGetXMLValue(psRegion, "RegionLength", "0"), nullptr, 10);
 
         oRegion.byValue =
             static_cast<GByte>(atoi(CPLGetXMLValue(psRegion, "Value", "0")));
@@ -480,19 +480,23 @@ VSIVirtualHandleUniquePtr VSISparseFileFilesystemHandler::Open(
     /*      Get sparse file length, use maximum bound of regions if not     */
     /*      explicit in file.                                               */
     /* -------------------------------------------------------------------- */
-    poHandle->nOverallLength =
-        CPLScanUIntBig(CPLGetXMLValue(psXMLRoot, "Length", "0"), 32);
+    poHandle->nOverallLength = std::strtoull(
+        CPLGetXMLValue(psXMLRoot.get(), "Length", "0"), nullptr, 10);
     if (poHandle->nOverallLength == 0)
     {
         for (unsigned int i = 0; i < poHandle->aoRegions.size(); i++)
         {
+            if (poHandle->aoRegions[i].nDstOffset >
+                std::numeric_limits<uint64_t>::max() -
+                    poHandle->aoRegions[i].nLength)
+            {
+                return nullptr;
+            }
             poHandle->nOverallLength = std::max(
                 poHandle->nOverallLength, poHandle->aoRegions[i].nDstOffset +
                                               poHandle->aoRegions[i].nLength);
         }
     }
-
-    CPLDestroyXMLNode(psXMLRoot);
 
     return VSIVirtualHandleUniquePtr(poHandle.release());
 }

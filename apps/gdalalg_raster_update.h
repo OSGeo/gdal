@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_UPDATE_INCLUDED
 #define GDALALG_RASTER_UPDATE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 #include "gdalalg_clip_common.h"
 

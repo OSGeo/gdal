@@ -42,6 +42,11 @@ def _has_sqlite_driver():
 
 
 def _has_duckdb_driver():
+
+    if gdaltest.is_travis_branch("sanitize"):
+        print("heap-use-after-free in duckdb")
+        return False
+
     import ctypes
 
     for libname in ["libduckdb.so", "libduckdb.dylib", "duckdb.dll"]:
@@ -65,7 +70,7 @@ def test_ogr_adbc_driver_open_option():
     if not _has_sqlite_driver():
         pytest.skip("adbc_driver_sqlite missing")
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ADBC:", gdal.OF_VECTOR, open_options=["ADBC_DRIVER=adbc_driver_sqlite"]
     ) as ds:
         assert ds.GetLayerCount() == 0
@@ -81,9 +86,7 @@ def test_ogr_adbc_driver_open_option():
 def test_ogr_adbc_invalid_driver():
 
     with pytest.raises(Exception):
-        gdal.OpenEx(
-            "ADBC:", gdal.OF_VECTOR, open_options=["ADBC_DRIVER=invalid_driver"]
-        )
+        gdal.Open("ADBC:", gdal.OF_VECTOR, open_options=["ADBC_DRIVER=invalid_driver"])
 
 
 ###############################################################################
@@ -96,7 +99,7 @@ def test_ogr_adbc_invalid_driver():
 def test_ogr_adbc_invalid_dataset():
 
     with pytest.raises(Exception):
-        gdal.OpenEx(
+        gdal.Open(
             "ADBC:/i/do/not/exist.db",
             gdal.OF_VECTOR,
             open_options=["ADBC_DRIVER=adbc_driver_sqlite"],
@@ -116,7 +119,7 @@ def test_ogr_adbc_invalid_dataset():
 )
 def test_ogr_adbc_sqlite3():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/sqlite/poly_spatialite.sqlite", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
     ) as ds:
         assert ds.GetLayerCount() == 13
@@ -145,7 +148,7 @@ def test_ogr_adbc_create_empty_gpkg_and_open(tmp_path):
     with pytest.raises(Exception):
         ogr.Open(filename)
 
-    with gdal.OpenEx(filename, allowed_drivers=["ADBC"]) as ds:
+    with gdal.Open(filename, allowed_drivers=["ADBC"]) as ds:
         assert ds.GetLayerCount() == 6
 
     with ogr.Open("ADBC:" + str(filename)) as ds:
@@ -165,7 +168,7 @@ def test_ogr_adbc_create_empty_gpkg_and_open(tmp_path):
 )
 def test_ogr_adbc_sql_open_option():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ADBC:data/sqlite/poly_spatialite.sqlite",
         gdal.OF_VECTOR,
         open_options=["SQL=SELECT * FROM poly"],
@@ -185,7 +188,7 @@ def test_ogr_adbc_sql_open_option():
 def test_ogr_adbc_invalid_sql():
 
     with pytest.raises(Exception):
-        gdal.OpenEx(
+        gdal.Open(
             "ADBC:data/sqlite/poly_spatialite.sqlite",
             gdal.OF_VECTOR,
             open_options=["SQL=SELECT * FROM"],
@@ -205,7 +208,7 @@ def test_ogr_adbc_invalid_sql():
 )
 def test_ogr_adbc_generic_open_option():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ADBC:",
         gdal.OF_VECTOR,
         open_options=[
@@ -229,7 +232,7 @@ def test_ogr_adbc_generic_open_option():
 )
 def test_ogr_adbc_execute_sql():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/sqlite/poly_spatialite.sqlite",
         gdal.OF_VECTOR,
         open_options=["SQL="],
@@ -249,7 +252,7 @@ def test_ogr_adbc_execute_sql():
 )
 def test_ogr_adbc_duckdb_parquet():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/parquet/partitioned_flat/part.0.parquet",
         gdal.OF_VECTOR,
         allowed_drivers=["ADBC"],
@@ -269,7 +272,7 @@ def test_ogr_adbc_duckdb_parquet():
 )
 def test_ogr_adbc_duckdb_parquet_with_sql_open_option():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/parquet/partitioned_flat/part.0.parquet",
         gdal.OF_VECTOR,
         allowed_drivers=["ADBC"],
@@ -294,15 +297,17 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
     with gdal.config_option(
         "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
     ):
-        with gdal.OpenEx(
+        with gdal.Open(
             "data/parquet/poly.parquet",
             gdal.OF_VECTOR,
             allowed_drivers=["ADBC"],
-            open_options=[
-                "PRELUDE_STATEMENTS=INSTALL spatial",
-            ]
-            if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON"
-            else [],
+            open_options=(
+                [
+                    "PRELUDE_STATEMENTS=INSTALL spatial",
+                ]
+                if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON"
+                else []
+            ),
         ) as ds:
             lyr = ds.GetLayer(0)
             assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -323,7 +328,7 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
                 float("inf"),
                 float("-inf"),
             )
-            assert lyr.GetSpatialRef().GetAuthorityCode(None) == "27700"
+            assert lyr.GetSpatialRef().GetAuthorityCode() == "27700"
             f = lyr.GetNextFeature()
             assert f.GetGeometryRef().ExportToWkt().startswith("POLYGON ((")
 
@@ -365,7 +370,7 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
     reason="duckdb driver missing",
 )
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
-def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
+def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_option(
     OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL,
 ):
 
@@ -375,7 +380,7 @@ def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
         open_options = ["SQL=SELECT * FROM 'data/parquet/poly.parquet' LIMIT 1"]
         if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON":
             open_options += ["PRELUDE_STATEMENTS=INSTALL spatial"]
-        with gdal.OpenEx("ADBC:", gdal.OF_VECTOR, open_options=open_options) as ds:
+        with gdal.Open("ADBC:", gdal.OF_VECTOR, open_options=open_options) as ds:
             lyr = ds.GetLayer(0)
             assert lyr.GetGeomType() == ogr.wkbPolygon
             assert lyr.GetFeatureCount() == 1
@@ -418,7 +423,7 @@ def test_ogr_adbc_duckdb_sql(tmp_path):
 
     tmp_filename = str(tmp_path / "test.parquet")
     shutil.copy("data/parquet/poly.parquet", tmp_filename)
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "ADBC:",
         open_options=[
             "ADBC_DRIVER=libduckdb",
@@ -444,7 +449,7 @@ def test_ogr_adbc_duckdb_sql(tmp_path):
 def test_ogr_adbc_duckdb_not_existing_file(tmp_path):
 
     with pytest.raises(Exception, match="/i/do_not/exist does not exist"):
-        gdal.OpenEx(
+        gdal.Open(
             "ADBC:/i/do_not/exist",
             open_options=["ADBC_DRIVER=libduckdb"],
         )
@@ -463,7 +468,7 @@ def test_ogr_adbc_duckdb_not_existing_file(tmp_path):
 )
 def test_ogr_adbc_duckdb_memory(tmp_path):
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "ADBC::memory:",
         open_options=["ADBC_DRIVER=libduckdb", "SQL=SELECT 1"],
     ) as ds:
@@ -584,8 +589,10 @@ def test_ogr_adbc_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    with gdal.OpenEx(
-        "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
+    with gdal.Open(
+        "data/parquet/test_geoparquet_1_1.parquet",
+        gdal.OF_VECTOR,
+        allowed_drivers=["ADBC"],
     ) as ds:
         lyr = ds.GetLayer(0)
         stream = lyr.GetArrowStreamAsNumPy(
@@ -668,7 +675,7 @@ def test_ogr_adbc_test_ogrsf_duckdb_with_spatial_index(
 )
 def test_ogr_adbc_layer_list():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/sqlite/poly_spatialite.sqlite", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
     ) as ds:
         assert ds.GetLayerCount() == 13

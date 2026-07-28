@@ -26,6 +26,7 @@ pytestmark = pytest.mark.require_driver("GML")
 
 _fgd_dir = "data/gml_jpfgd/"
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():

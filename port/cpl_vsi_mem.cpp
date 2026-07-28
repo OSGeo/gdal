@@ -216,6 +216,12 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 
     static CPLString NormalizePath(const std::string &in);
 
+    std::string
+    GetCanonicalFilename(const std::string &osFilename) const override
+    {
+        return NormalizePath(osFilename);
+    }
+
     int Unlink_unlocked(const char *pszFilename);
 
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override

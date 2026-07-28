@@ -88,17 +88,43 @@ class CPL_DLL GDALRelationship
     /** Get the name of the left (or base/origin) table in the relationship.
      *
      * @see GetRightTableName()
+     * @see SetLeftTableName()
      */
     const std::string &GetLeftTableName() const
     {
         return m_osLeftTableName;
     }
 
+    /** Sets the name of the left (or base/origin) table in the relationship.
+     *
+     * @see GetLeftTableName()
+     * @since 3.13
+     */
+    void SetLeftTableName(const std::string &osName)
+    {
+        m_osLeftTableName = osName;
+    }
+
     /** Get the name of the right (or related/destination) table in the
-     * relationship */
+     * relationship.
+     *
+     * @see GetLeftTableName()
+     * @see SetRightTableName()
+     */
     const std::string &GetRightTableName() const
     {
         return m_osRightTableName;
+    }
+
+    /** Sets the name of the right (or related/destination) table in the
+     * relationship.
+     *
+     * @see GetRightTableName()
+     * @since 3.13
+     */
+    void SetRightTableName(const std::string &osName)
+    {
+        m_osRightTableName = osName;
     }
 
     /** Get the name of the mapping table for many-to-many relationships.

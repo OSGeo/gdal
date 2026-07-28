@@ -70,7 +70,10 @@ const GTIFFTag *GTiffDataset::GetTIFFTags()
 /************************************************************************/
 
 GTiffDataset::GTiffDataset()
-    : m_bStreamingIn(false), m_bStreamingOut(false), m_bScanDeferred(true),
+    : m_apoJPEGOverviewDS(std::vector<std::unique_ptr<GTiffJPEGOverviewDS>>{}),
+      m_apoJPEGOverviewDSOld(
+          std::vector<std::unique_ptr<GTiffJPEGOverviewDS>>{}),
+      m_bStreamingIn(false), m_bStreamingOut(false), m_bScanDeferred(true),
       m_bSingleIFDOpened(false), m_bLoadedBlockDirty(false),
       m_bWriteError(false), m_bLookedForProjection(false),
       m_bLookedForMDAreaOrPoint(false), m_bGeoTransformValid(false),
@@ -1076,6 +1079,8 @@ void GTiffDataset::ScanDirectories()
 
     FlushDirectory();
 
+    bool bIsOverviewFile = false;
+
     do
     {
         toff_t nTopDir = TIFFCurrentDirOffset(m_hTIFF);
@@ -1106,6 +1111,11 @@ void GTiffDataset::ScanDirectories()
             break;
         }
 
+        uint32_t nIFDXSize = 0;
+        TIFFGetField(m_hTIFF, TIFFTAG_IMAGEWIDTH, &nIFDXSize);
+        uint32_t nIFDYSize = 0;
+        TIFFGetField(m_hTIFF, TIFFTAG_IMAGELENGTH, &nIFDYSize);
+
         for (uint16_t iSubIFD = 0; iSubIFD <= nSubIFDs; iSubIFD++)
         {
             toff_t nThisDir = nTopDir;
@@ -1126,6 +1136,15 @@ void GTiffDataset::ScanDirectories()
 
             if (!TIFFGetField(m_hTIFF, TIFFTAG_SUBFILETYPE, &nSubType))
                 nSubType = 0;
+
+            // If the first IFD is FILETYPE_REDUCEDIMAGE, then this is a .ovr
+            // file and one IFD with FILETYPE_REDUCEDIMAGE | FILETYPE_MASK
+            // could actually be a mask of the main dataset.
+            if (iDirIndex == 1 && nSubIFDs == 0 &&
+                nSubType == FILETYPE_REDUCEDIMAGE)
+            {
+                bIsOverviewFile = true;
+            }
 
             /* Embedded overview of the main image */
             if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
@@ -1175,8 +1194,9 @@ void GTiffDataset::ScanDirectories()
                     // poODS->m_nZSTDLevel = m_nZSTDLevel;
 
                     if (const char *pszOverviewResampling =
-                            m_oGTiffMDMD.GetMetadataItem("OVERVIEW_RESAMPLING",
-                                                         "IMAGE_STRUCTURE"))
+                            m_oGTiffMDMD.GetMetadataItem(
+                                "OVERVIEW_RESAMPLING",
+                                GDAL_MDD_IMAGE_STRUCTURE))
                     {
                         for (int iBand = 1; iBand <= poODS->GetRasterCount();
                              ++iBand)
@@ -1194,10 +1214,18 @@ void GTiffDataset::ScanDirectories()
                 }
             }
             // Embedded mask of the main image.
-            else if ((nSubType & FILETYPE_MASK) != 0 &&
-                     (nSubType & FILETYPE_REDUCEDIMAGE) == 0 &&
-                     ((nSubIFDs == 0 && iDirIndex != 1) || iSubIFD > 0) &&
-                     m_poMaskDS == nullptr)
+            else if (m_poMaskDS == nullptr && (nSubType & FILETYPE_MASK) != 0 &&
+                     // If it is flagged with FILETYPE_REDUCEDIMAGE, it might
+                     // still be a mask of the main IFD if the whole file is
+                     // an overview file.
+                     ((bIsOverviewFile &&
+                       (nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
+                       nIFDXSize == static_cast<uint32_t>(nRasterXSize) &&
+                       nIFDYSize == static_cast<uint32_t>(nRasterYSize))
+                      // Nominal case: FILETYPE_REDUCEDIMAGE not set
+                      || (!bIsOverviewFile &&
+                          (nSubType & FILETYPE_REDUCEDIMAGE) == 0)) &&
+                     ((nSubIFDs == 0 && iDirIndex != 1) || iSubIFD > 0))
             {
                 m_poMaskDS = std::make_shared<GTiffDataset>();
                 m_poMaskDS->ShareLockWithParentDataset(this);
@@ -1395,7 +1423,7 @@ void GTiffDataset::ScanDirectories()
     /* -------------------------------------------------------------------- */
     if (aosSubdatasets.size() > 2)
     {
-        m_oGTiffMDMD.SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        m_oGTiffMDMD.SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
     }
 }
 

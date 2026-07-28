@@ -23,6 +23,7 @@ as just names e.g. 'gdal_edit somefile.tif ...'
 Scripts: python files that need to called from python in order to be run,
 e.g. 'python path/to/samples/pct2rgb.py somefile.tif ...'
 """
+
 import glob
 import os
 import subprocess

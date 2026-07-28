@@ -14,6 +14,7 @@
 
 #include "cpl_vsi.h"
 #include "cpl_mem_cache.h"
+#include "ogr_p.h"
 
 #include <algorithm>
 #include <set>
@@ -61,8 +62,12 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     if (standaloneStep)
     {
         AddVectorInputArgs(false);
+        AddProgressArg();
     }
-    AddProgressArg();
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
 
     AddArg(GDAL_ARG_NAME_OUTPUT, 'o', _("Output directory"), &m_output)
         .SetRequired()
@@ -84,9 +89,13 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
 
-    AddArg("field", 0,
-           _("Attribute or geometry field(s) on which to partition"),
-           &m_fields);
+    auto &fieldNameArg = AddArg(
+        "field", 0, _("Attribute or geometry field(s) on which to partition"),
+        &m_fields);
+    SetAutoCompleteFunctionForFieldName(fieldNameArg, nullptr,
+                                        /* attributeFields = */ true,
+                                        /* geometryFields = */ true,
+                                        m_inputDataset);
     AddArg("scheme", 0, _("Partitioning scheme"), &m_scheme)
         .SetChoices(SCHEME_HIVE, SCHEME_FLAT)
         .SetDefault(m_scheme);
@@ -147,7 +156,7 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
                     {
                         ReportError(CE_Failure, CPLE_IllegalArg,
                                     "Number of digits in part number "
-                                    "specifiation should be in [1,10] range");
+                                    "specification should be in [1,10] range");
                         return false;
                     }
                     m_partDigitLeadingZeroes =
@@ -878,10 +887,9 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                         if (VSI_ISDIR(psEntry->nMode))
                         {
                             std::string_view v(psEntry->pszName);
-                            if (std::count_if(v.begin(), v.end(),
-                                              [](char c) {
-                                                  return c == '/' || c == '\\';
-                                              }) == 1)
+                            if (std::count_if(
+                                    v.begin(), v.end(), [](char c)
+                                    { return c == '/' || c == '\\'; }) == 1)
                             {
                                 const auto nPosDirSep = v.find_first_of("/\\");
                                 const auto nPosEqual = v.find('=', nPosDirSep);
@@ -1001,9 +1009,21 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             int nIdx = poSrcFeatureDefn->GetFieldIndex(fieldName.c_str());
             if (nIdx < 0)
             {
-                if (fieldName == "OGR_GEOMETRY" &&
+                if (EQUAL(fieldName.c_str(), "OGR_GEOMETRY") &&
                     poSrcFeatureDefn->GetGeomFieldCount() > 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "'%s' is deprecated. Please use '%s' instead",
+                             "OGR_GEOMETRY",
+                             OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
                     nIdx = 0;
+                }
+                else if (EQUAL(fieldName.c_str(),
+                               OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) &&
+                         poSrcFeatureDefn->GetGeomFieldCount() > 0)
+                {
+                    nIdx = 0;
+                }
                 else
                     nIdx =
                         poSrcFeatureDefn->GetGeomFieldIndex(fieldName.c_str());
@@ -1022,7 +1042,8 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     f.nIdx = nIdx;
                     f.bIsGeom = true;
                     if (fieldName.empty())
-                        f.encodedFieldName = "OGR_GEOMETRY";
+                        f.encodedFieldName =
+                            OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
                     else
                         f.encodedFieldName = PercentEncode(fieldName);
                     asFields.push_back(std::move(f));

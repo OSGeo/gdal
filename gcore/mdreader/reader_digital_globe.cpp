@@ -124,7 +124,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
     const char *pszSatId = CSLFetchNameValue(m_papszIMDMD, "IMAGE.SATID");
     if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
                                            CPLStripQuotes(pszSatId));
     }
     else
@@ -133,7 +133,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         if (nullptr != pszSatId)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_SATELLITE, CPLStripQuotes(pszSatId));
+                m_papszIMAGERYMD, GDALMD_SATELLITEID, CPLStripQuotes(pszSatId));
         }
     }
 
@@ -145,12 +145,12 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         if (fCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
             m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
                                 CPLSPrintf("%d", int(fCC * 100)));
         }
     }
@@ -163,12 +163,12 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
             if (fCC < 0)
             {
                 m_papszIMAGERYMD = CSLAddNameValue(
-                    m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                    m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
             }
             else
             {
                 m_papszIMAGERYMD =
-                    CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                    CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
                                     CPLSPrintf("%d", int(fCC * 100)));
             }
         }
@@ -184,8 +184,8 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         strftime(szMidDateTime, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeStart, &tmBuf));
 
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, szMidDateTime);
+        m_papszIMAGERYMD = CSLAddNameValue(
+            m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, szMidDateTime);
     }
     else
     {
@@ -199,7 +199,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
                      CPLUnixTimeToYMDHMS(timeStart, &tmBuf));
 
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_ACQDATETIME, szMidDateTime);
+                m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, szMidDateTime);
         }
     }
 }

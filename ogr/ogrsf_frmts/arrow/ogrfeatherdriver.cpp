@@ -387,7 +387,7 @@ void OGRFeatherDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "COMPRESSION");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_COMPRESSION);
         CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Compression method");

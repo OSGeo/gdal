@@ -14,6 +14,7 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
+#include <cassert>
 #include <map>
 #include <new>
 #include <utility>
@@ -103,8 +104,15 @@ OGRGTFSLayer::OGRGTFSLayer(const std::string &osDirname, const char *pszName,
     m_poFeatureDefn->Reference();
 
     m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
-
+    assert(m_poUnderlyingLayer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     auto poSrcLayerDefn = m_poUnderlyingLayer->GetLayerDefn();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     const int nFieldCount = poSrcLayerDefn->GetFieldCount();
     m_nTripIdIdx = poSrcLayerDefn->GetFieldIndex("trip_id");
     if (EQUAL(pszName, "stops"))

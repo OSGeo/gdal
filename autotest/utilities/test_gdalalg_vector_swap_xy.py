@@ -43,9 +43,7 @@ def test_gdalalg_vector_swap_xy():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
-    assert (
-        out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "32631"
-    )
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef() is None
     assert out_lyr.GetFeatureCount() == 2

@@ -13,6 +13,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <string>
 
 #include "gdal_unit_test.h"
 
@@ -112,7 +113,7 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal)
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfSrcNoDataReal[0] = -1.0;
     GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int16);
+    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int8);
 
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfSrcNoDataReal[0] = 2.0;
@@ -220,7 +221,7 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfDstNoDataReal)
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfDstNoDataReal[0] = -1.0;
     GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int16);
+    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int8);
 
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfDstNoDataReal[0] = 2.0;
@@ -325,18 +326,19 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
     // One point below terrain
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr,
                                           nullptr, nullptr));
-    int xIntersection, yIntersection;
-    int *pXIntersection = &xIntersection;
-    int *pYIntersection = &yIntersection;
+    int xIntersection = -1;
+    int yIntersection = -1;
+
     EXPECT_FALSE(GDALIsLineOfSightVisible(
-        pBand, 0, 0, 0.0, 0, 0, 43.0, pXIntersection, pYIntersection, nullptr));
-    EXPECT_EQ(*pXIntersection, 0);
-    EXPECT_EQ(*pYIntersection, 0);
+        pBand, 0, 0, 0.0, 0, 0, 43.0, &xIntersection, &yIntersection, nullptr));
+    EXPECT_EQ(xIntersection, 0);
+    EXPECT_EQ(yIntersection, 0);
+
     // Both points above terrain
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr,
                                          nullptr, nullptr));
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0,
-                                         pXIntersection, pYIntersection,
+                                         &xIntersection, &yIntersection,
                                          nullptr));
 }
 
@@ -362,8 +364,11 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     // Both points are above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0,
                                          nullptr, nullptr, nullptr));
+
     // Both points are above terrain, supply intersection.
-    int xIntersection, yIntersection;
+    int xIntersection = -1;
+    int yIntersection = -1;
+
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0,
                                          &xIntersection, &yIntersection,
                                          nullptr));
@@ -374,19 +379,23 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     // One point is below terrain.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0,
                                           nullptr, nullptr, nullptr));
-    int *pXIntersection = &xIntersection;
-    int *pYIntersection = &yIntersection;
+
+    // One point exactly on terrain.
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 0.0, x2, y2, 1.0,
+                                         nullptr, nullptr, nullptr));
+
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0,
-                                          pXIntersection, pYIntersection,
+                                          &xIntersection, &yIntersection,
                                           nullptr));
-    EXPECT_EQ(*pXIntersection, 1);
-    EXPECT_EQ(*pYIntersection, 1);
-    // Flip the order, same result.
+    EXPECT_EQ(xIntersection, 1);
+    EXPECT_EQ(yIntersection, 1);
+
+    // Flip the order.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, 1.0,
-                                          pXIntersection, pYIntersection,
+                                          &xIntersection, &yIntersection,
                                           nullptr));
-    EXPECT_EQ(*pXIntersection, 2);
-    EXPECT_EQ(*pYIntersection, 2);
+    EXPECT_EQ(xIntersection, 2);
+    EXPECT_EQ(yIntersection, 2);
 
     // Both points are below terrain.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, -1.0,
@@ -396,7 +405,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
                                           nullptr, nullptr, nullptr));
 }
 
-// Test GDALIsLineOfSightVisible() through a mountain (not a unit test)
+// Test GDALIsLineOfSightVisible() through a mountain
 TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
 {
     GDALAllRegister();
@@ -426,7 +435,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     const double mesaLatBottom = 43.4645;
     const double mesaLngBottom = -79.8985;
 
-    // In between the two locations, the mesa reaches a local max altiude of 321.
+    // Between the two locations, the mesa reaches local max altitude of 321.
 
     double dMesaTopX, dMesaTopY, dMesaBottomX, dMesaBottomY;
     GDALApplyGeoTransform(geoInvTransform.data(), mesaLngTop, mesaLatTop,
@@ -461,32 +470,34 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     // Both high above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 460, 120, 120, 460,
                                          nullptr, nullptr, nullptr));
-    // Both heights are 1m above in the corners, but middle terrain violates LOS.
+
+    // Both heights are 1m above in the corners, but middle terrain breaks LOS.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183,
                                           nullptr, nullptr, nullptr));
 
-    int xIntersection, yIntersection;
-    int *pXIntersection = &xIntersection;
-    int *pYIntersection = &yIntersection;
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183,
-                                          pXIntersection, pYIntersection,
-                                          nullptr));
-    EXPECT_EQ(*pXIntersection, 2);
-    EXPECT_EQ(*pYIntersection, 2);
+    int xIntersection = -1;
+    int yIntersection = -1;
 
-    // Test positive slope bresenham diagnoals across the whole raster.
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183,
+                                          &xIntersection, &yIntersection,
+                                          nullptr));
+    EXPECT_EQ(xIntersection, 2);
+    EXPECT_EQ(yIntersection, 2);
+
+    // Test positive slope bresenham diagonals across the whole raster.
     // Both high above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 120, 460, 120, 0, 460,
                                          nullptr, nullptr, nullptr));
-    // Both heights are 1m above in the corners, but middle terrain violates LOS.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247,
+    // Both heights are 1m above in the corners, but middle terrain breaks LOS.
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 248,
                                           nullptr, nullptr, nullptr));
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247,
-                                          pXIntersection, pYIntersection,
+
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 248,
+                                          &xIntersection, &yIntersection,
                                           nullptr));
 
-    EXPECT_EQ(*pXIntersection, 120);
-    EXPECT_EQ(*pYIntersection, 0);
+    EXPECT_EQ(xIntersection, 16);
+    EXPECT_EQ(yIntersection, 104);
 
     // Vertical line tests with hill between two points, in both directions.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 83, 111, 154, 83, 117, 198,

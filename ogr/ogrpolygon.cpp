@@ -767,7 +767,7 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions &opts,
 /** Return whether the point is on the surface.
  * @return TRUE or FALSE
  */
-OGRBoolean OGRPolygon::IsPointOnSurface(const OGRPoint *pt) const
+bool OGRPolygon::IsPointOnSurface(const OGRPoint *pt) const
 {
     if (nullptr == pt)
         return FALSE;
@@ -827,7 +827,7 @@ OGRPolygon::CurvePolyToPoly(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+bool OGRPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 {
     return FALSE;
 }

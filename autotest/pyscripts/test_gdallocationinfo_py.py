@@ -12,11 +12,13 @@
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
+
+import gdaltest
 import pytest
 
 # test that numpy is available, if not skip all tests
 np = pytest.importorskip("numpy")
-pytest.importorskip("osgeo_utils.samples.gdallocationinfo", exc_type=ImportError)
+gdaltest.importorskip("osgeo_utils.samples.gdallocationinfo")
 
 from itertools import product
 

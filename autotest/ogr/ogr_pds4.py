@@ -151,7 +151,7 @@ def validate_xml(filename):
         force_download=True,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"GMLAS:{filename}",
         open_options=[
             "VALIDATE=YES",
@@ -183,7 +183,7 @@ def hide_substitution_warnings_error_handler():
 
 def test_ogr_pds4_read_table_character():
 
-    ds = gdal.OpenEx("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.xml")
+    ds = gdal.Open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.xml")
     assert ds
     assert ds.GetLayerCount() == 1
     fl = ds.GetFileList()
@@ -705,7 +705,7 @@ def test_ogr_pds4_create_table_delimited(tmp_vsimem, line_ending):
         # Only do that check in that configuration for faster test execution
         assert validate_xml(tmp_vsimem / "test.xml")
 
-    ds = gdal.OpenEx(tmp_vsimem / "test.xml")
+    ds = gdal.Open(tmp_vsimem / "test.xml")
     assert ds
     assert ds.GetLayerCount() == 1
     fl = ds.GetFileList()

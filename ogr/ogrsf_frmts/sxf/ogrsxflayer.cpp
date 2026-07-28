@@ -205,7 +205,8 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
                                 oField.SetWidth(255);
                                 poFeatureDefn->AddFieldDefn(&oField);
                             }
-                            unsigned nLen = unsigned(stAttrInfo.nScale) + 1;
+                            unsigned nLen =
+                                static_cast<unsigned>(stAttrInfo.nScale + 1);
                             offset += nLen;
                             nCurrOff = nLen;
                             break;
@@ -219,7 +220,8 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
                                 poFeatureDefn->AddFieldDefn(&oField);
                             }
                             unsigned nLen =
-                                (unsigned(stAttrInfo.nScale) + 1) * 2;
+                                static_cast<unsigned>(stAttrInfo.nScale + 1) *
+                                2;
                             offset += nLen;
                             nCurrOff = nLen;
                             break;
@@ -906,7 +908,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                 {
                     case SXF_RAT_ASCIIZ_DOS:
                     {
-                        unsigned nLen = unsigned(stAttInfo.nScale) + 1;
+                        unsigned nLen =
+                            unsigned(static_cast<GByte>(stAttInfo.nScale)) + 1;
                         if (nLen > nSemanticsSize ||
                             nSemanticsSize - nLen < offset)
                         {
@@ -922,7 +925,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                         CPLFree(pszRecoded);
                         CPLFree(value);
 
-                        offset += stAttInfo.nScale + 1;
+                        offset += nLen;
                         break;
                     }
                     case SXF_RAT_ONEBYTE:
@@ -997,7 +1000,8 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     }
                     case SXF_RAT_ANSI_WIN:
                     {
-                        unsigned nLen = unsigned(stAttInfo.nScale) + 1;
+                        unsigned nLen =
+                            unsigned(static_cast<GByte>(stAttInfo.nScale)) + 1;
                         if (nLen > nSemanticsSize ||
                             nSemanticsSize - nLen < offset)
                         {
@@ -1019,9 +1023,12 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     case SXF_RAT_UNICODE:
                     {
                         uint64_t nLen64 =
-                            (static_cast<uint64_t>(stAttInfo.nScale) + 1) * 2;
+                            (static_cast<uint64_t>(
+                                 static_cast<GByte>(stAttInfo.nScale)) +
+                             1) *
+                            2;
                         unsigned nLen = static_cast<unsigned>(nLen64);
-                        if (/* nLen < 2 || */ nLen64 > nSemanticsSize ||
+                        if (nLen64 > nSemanticsSize ||
                             nSemanticsSize - nLen < offset)
                         {
                             nSemanticsSize = 0;

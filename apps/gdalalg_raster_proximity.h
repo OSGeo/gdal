@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_PROXIMITY_INCLUDED
 #define GDALALG_RASTER_PROXIMITY_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinenonnativelystreamingalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

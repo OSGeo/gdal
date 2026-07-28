@@ -110,7 +110,7 @@ def test_jsonfg_read_coordRefSys_valid(coordRefSys, expected_crs):
         "features": [{"type": "Feature", "properties": {}, "geometry": None}],
     }
 
-    ds = gdal.OpenEx(json.dumps(j))
+    ds = gdal.Open(json.dumps(j))
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
@@ -159,7 +159,7 @@ def test_jsonfg_read_coordRefSys_invalid(coordRefSys):
     }
 
     gdal.ErrorReset()
-    ds = gdal.OpenEx(json.dumps(j))
+    ds = gdal.Open(json.dumps(j))
     assert gdal.GetLastErrorMsg() != ""
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
@@ -293,14 +293,14 @@ def test_jsonfg_read_coordRefSys_invalid(coordRefSys):
 def test_jsonfg_read_crs(
     filename, epsg_code_lyr, mapping_lyr, x, y, epsg_code_feat, mapping_feat
 ):
-    ds = gdal.OpenEx(filename)
+    ds = gdal.Open(filename)
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr_srs = lyr.GetSpatialRef()
     if epsg_code_lyr:
         assert lyr_srs
-        assert lyr_srs.GetAuthorityCode(None) == str(epsg_code_lyr)
+        assert lyr_srs.GetAuthorityCode() == str(epsg_code_lyr)
         assert lyr_srs.GetDataAxisToSRSAxisMapping() == mapping_lyr
     else:
         assert lyr_srs is None
@@ -315,7 +315,7 @@ def test_jsonfg_read_crs(
                 assert geom_srs
                 assert geom_srs.IsSame(lyr_srs)
             elif epsg_code_lyr is None and epsg_code_feat is not None:
-                assert geom_srs.GetAuthorityCode(None) == str(epsg_code_feat[i])
+                assert geom_srs.GetAuthorityCode() == str(epsg_code_feat[i])
                 assert geom_srs.GetDataAxisToSRSAxisMapping() == mapping_feat[i]
 
     else:
@@ -329,7 +329,7 @@ def test_jsonfg_read_crs(
             assert geom_srs.IsSame(lyr_srs)
         elif epsg_code_feat is not None:
             assert geom_srs
-            assert geom_srs.GetAuthorityCode(None) == str(epsg_code_feat)
+            assert geom_srs.GetAuthorityCode() == str(epsg_code_feat)
             assert geom_srs.GetDataAxisToSRSAxisMapping() == mapping_feat
 
 
@@ -399,12 +399,12 @@ def test_jsonfg_read_crs(
 def test_jsonfg_read_GEOMETRY_ELEMENT_open_option(
     filename, open_options, epsg_code_lyr, mapping_lyr, x, y
 ):
-    ds = gdal.OpenEx(filename, open_options=open_options)
+    ds = gdal.Open(filename, open_options=open_options)
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     lyr_srs = lyr.GetSpatialRef()
     assert lyr_srs
-    assert lyr_srs.GetAuthorityCode(None) == str(epsg_code_lyr)
+    assert lyr_srs.GetAuthorityCode() == str(epsg_code_lyr)
     assert lyr_srs.GetDataAxisToSRSAxisMapping() == mapping_lyr
     f = lyr.GetNextFeature()
     geom = f.GetGeometryRef()
@@ -421,7 +421,7 @@ def test_jsonfg_read_GEOMETRY_ELEMENT_open_option(
 
 def test_jsonfg_read_feature_type_top_level():
 
-    ds = gdal.OpenEx("data/jsonfg/feature_type_top_level.json")
+    ds = gdal.Open("data/jsonfg/feature_type_top_level.json")
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayerByName("type1")
     assert lyr
@@ -433,7 +433,7 @@ def test_jsonfg_read_feature_type_top_level():
 
 def test_jsonfg_read_two_features_types():
 
-    ds = gdal.OpenEx("data/jsonfg/two_feature_types.json")
+    ds = gdal.Open("data/jsonfg/two_feature_types.json")
     assert ds.GetDriver().GetDescription() == "JSONFG"
     assert ds.GetLayerCount() == 2
     lyr = ds.GetLayerByName("type1")
@@ -472,13 +472,11 @@ def test_jsonfg_read_single_feature_large(tmp_vsimem):
       "properties": { "foo": 1 },
       "place": null,
       "time": null
-    }""" % (
-        " " * 100000
-    )
+    }""" % (" " * 100000)
 
     gdal.FileFromMemBuffer(tmp_file, content)
 
-    ds = gdal.OpenEx(tmp_file)
+    ds = gdal.Open(tmp_file)
     assert ds.GetDriver().GetDescription() == "JSONFG"
 
 
@@ -570,11 +568,11 @@ def test_jsonfg_read_time(time_values, expected_fields, expected_values_array):
             {"type": "Feature", "properties": {}, "geometry": None, "time": time}
         )
 
-    ds = gdal.OpenEx(json.dumps(j))
+    ds = gdal.Open(json.dumps(j))
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    for (field_name, field_type) in expected_fields:
+    for field_name, field_type in expected_fields:
         idx = lyr_defn.GetFieldIndex(field_name)
         assert idx >= 0, field_name
         assert lyr_defn.GetFieldDefn(idx).GetType() == field_type
@@ -606,7 +604,7 @@ def test_jsonfg_read_time_with_time_property():
         ],
     }
 
-    ds = gdal.OpenEx(json.dumps(j))
+    ds = gdal.Open(json.dumps(j))
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -620,7 +618,7 @@ def test_jsonfg_read_time_with_time_property():
 
 def test_jsonfg_read_prism_with_point_base():
 
-    ds = gdal.OpenEx("data/jsonfg/pylon.json")
+    ds = gdal.Open("data/jsonfg/pylon.json")
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -636,7 +634,7 @@ def test_jsonfg_read_prism_with_point_base():
 
 def test_jsonfg_read_prism_with_line_base():
 
-    ds = gdal.OpenEx("data/jsonfg/fence.json")
+    ds = gdal.Open("data/jsonfg/fence.json")
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -652,7 +650,7 @@ def test_jsonfg_read_prism_with_line_base():
 
 def test_jsonfg_read_prism_with_polygon_base():
 
-    ds = gdal.OpenEx("data/jsonfg/prism_with_polygon_base.json")
+    ds = gdal.Open("data/jsonfg/prism_with_polygon_base.json")
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1397,10 +1395,10 @@ def test_ogr_jsonfg_geom_coord_precision(tmp_vsimem, single_layer):
 def test_ogr_jsonfg_force_opening():
 
     if ogr.GetDriverByName("GeoJSON"):
-        ds = gdal.OpenEx("data/geojson/featuretype.json")
+        ds = gdal.Open("data/geojson/featuretype.json")
         assert ds.GetDriver().GetDescription() == "GeoJSON"
 
-    ds = gdal.OpenEx("data/geojson/featuretype.json", allowed_drivers=["JSONFG"])
+    ds = gdal.Open("data/geojson/featuretype.json", allowed_drivers=["JSONFG"])
     assert ds.GetDriver().GetDescription() == "JSONFG"
 
 
@@ -1620,6 +1618,14 @@ def test_jsonfg_write_circular_string_longer_than_11_points(tmp_vsimem):
         f.SetGeometry(g)
         lyr.CreateFeature(f)
 
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+        assert j["conformsTo"] == [
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/core",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/circular-arcs",
+        ]
+
     with ogr.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
@@ -1649,6 +1655,11 @@ def test_jsonfg_write_read_measure_unit_description(tmp_vsimem, single_layer):
 
     with gdal.VSIFile(out_filename, "rb") as f:
         j = json.loads(f.read())
+        assert j["conformsTo"] == [
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/core",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/measures",
+        ]
         if single_layer == "YES":
             assert "measures" in j
             assert j["measures"] == {
@@ -1706,10 +1717,10 @@ def test_jsonfg_read_ogc_crs84():
         ],
     }
 
-    ds = gdal.OpenEx(json.dumps(j))
+    ds = gdal.Open(json.dumps(j))
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 49)"

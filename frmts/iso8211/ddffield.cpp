@@ -6,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 2026, Even Rouault
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -19,6 +20,7 @@
 #include <algorithm>
 
 #include "cpl_conv.h"
+#include "cpl_enumerate.h"
 
 // Note, we implement no constructor for this class to make instantiation
 // cheaper.  It is required that the Initialize() be called before anything
@@ -28,13 +30,78 @@
 /*                             Initialize()                             */
 /************************************************************************/
 
-void DDFField::Initialize(DDFFieldDefn *poDefnIn, const char *pachDataIn,
-                          int nDataSizeIn)
+bool DDFField::Initialize(const DDFFieldDefn *poDefnIn, const char *pachDataIn,
+                          int nDataSizeIn, bool bInitializeParts)
 
 {
     pachData = pachDataIn;
     nDataSize = nDataSizeIn;
     poDefn = poDefnIn;
+
+    return bInitializeParts ? InitializeParts() : true;
+}
+
+/************************************************************************/
+/*                          InitializeParts()                           */
+/************************************************************************/
+
+bool DDFField::InitializeParts()
+{
+    const bool bCreateParts = apoFieldParts.empty();
+    const size_t nDefnPartsCount = poDefn->GetParts().size();
+    CPLAssert(bCreateParts || apoFieldParts.size() == nDefnPartsCount);
+
+    int iOffset = 0;
+    for (const auto &[iPart, poFieldDefnPart] :
+         cpl::enumerate(poDefn->GetParts()))
+    {
+        if (iOffset > nDataSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Not enough bytes for part %d of field %s",
+                     static_cast<int>(iPart), poDefn->GetName());
+            return false;
+        }
+        const int iOffsetBefore = iOffset;
+        if (nDataSize > 0)
+        {
+            if (iPart + 1 < nDefnPartsCount)
+            {
+                for (const auto &poThisSFDefn : poFieldDefnPart->GetSubfields())
+                {
+                    int nBytesConsumed = 0;
+                    poThisSFDefn->GetDataLength(pachData + iOffset,
+                                                nDataSize - iOffset,
+                                                &nBytesConsumed);
+
+                    iOffset += nBytesConsumed;
+                }
+            }
+            else
+            {
+                iOffset = nDataSize;
+                if (pachData[nDataSize - 1] == DDF_FIELD_TERMINATOR)
+                    --iOffset;
+            }
+        }
+
+        if (bCreateParts)
+        {
+            auto poFieldPart = std::make_unique<DDFField>();
+            poFieldPart->Initialize(poFieldDefnPart.get(),
+                                    pachData + iOffsetBefore,
+                                    iOffset - iOffsetBefore, false);
+            apoFieldParts.push_back(std::move(poFieldPart));
+        }
+        else
+        {
+            apoFieldParts[iPart]->Initialize(poFieldDefnPart.get(),
+                                             pachData + iOffsetBefore,
+                                             iOffset - iOffsetBefore, false);
+        }
+    }
+
+    return true;
 }
 
 /************************************************************************/
@@ -51,24 +118,45 @@ void DDFField::Initialize(DDFFieldDefn *poDefnIn, const char *pachDataIn,
  * @param fp The standard IO file handle to write to.  i.e. stderr
  */
 
-void DDFField::Dump(FILE *fp)
+void DDFField::Dump(FILE *fp, int nNestingLevel) const
 
 {
+    std::string osIndent;
+    for (int i = 0; i < nNestingLevel; ++i)
+        osIndent += "  ";
+
+#define Print(...)                                                             \
+    do                                                                         \
+    {                                                                          \
+        fprintf(fp, "%s", osIndent.c_str());                                   \
+        fprintf(fp, __VA_ARGS__);                                              \
+    } while (0)
+
     int nMaxRepeat = 8;
 
     const char *pszDDF_MAXDUMP = getenv("DDF_MAXDUMP");
     if (pszDDF_MAXDUMP != nullptr)
         nMaxRepeat = atoi(pszDDF_MAXDUMP);
 
-    fprintf(fp, "  DDFField:\n");
-    fprintf(fp, "      Tag = `%s'\n", poDefn->GetName());
-    fprintf(fp, "      DataSize = %d\n", nDataSize);
+    Print("DDFField:\n");
+    Print("    Tag = `%s'\n", poDefn->GetName());
+    Print("    DataSize = %d\n", nDataSize);
 
-    fprintf(fp, "      Data = `");
+    if (!apoFieldParts.empty())
+    {
+        for (const auto &poPart : apoFieldParts)
+        {
+            poPart->Dump(fp, nNestingLevel + 1);
+        }
+        return;
+    }
+
+    Print("    Data = `");
     for (int i = 0; i < std::min(nDataSize, 40); i++)
     {
         if (pachData[i] < 32 || pachData[i] > 126)
-            fprintf(fp, "\\%02X", ((unsigned char *)pachData)[i]);
+            fprintf(fp, "\\%02X",
+                    reinterpret_cast<const unsigned char *>(pachData)[i]);
         else
             fprintf(fp, "%c", pachData[i]);
     }
@@ -81,23 +169,22 @@ void DDFField::Dump(FILE *fp)
     /*      dump the data of the subfields.                                 */
     /* -------------------------------------------------------------------- */
     int iOffset = 0;
-
-    for (int nLoopCount = 0; nLoopCount < GetRepeatCount(); nLoopCount++)
+    const int nRepeatCount = GetRepeatCount();
+    for (int nLoopCount = 0; nLoopCount < nRepeatCount; nLoopCount++)
     {
         if (nLoopCount > nMaxRepeat)
         {
-            fprintf(fp, "      ...\n");
+            Print("     ...\n");
             break;
         }
 
-        for (int i = 0; i < poDefn->GetSubfieldCount(); i++)
+        for (const auto &poThisSFDefn : poDefn->GetSubfields())
         {
-            poDefn->GetSubfield(i)->DumpData(pachData + iOffset,
-                                             nDataSize - iOffset, fp);
+            poThisSFDefn->DumpData(pachData + iOffset, nDataSize - iOffset, fp);
 
             int nBytesConsumed = 0;
-            poDefn->GetSubfield(i)->GetDataLength(
-                pachData + iOffset, nDataSize - iOffset, &nBytesConsumed);
+            poThisSFDefn->GetDataLength(pachData + iOffset, nDataSize - iOffset,
+                                        &nBytesConsumed);
 
             iOffset += nBytesConsumed;
         }
@@ -147,10 +234,8 @@ const char *DDFField::GetSubfieldData(const DDFSubfieldDefn *poSFDefn,
 
     while (iSubfieldIndex >= 0)
     {
-        for (int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++)
+        for (const auto &poThisSFDefn : poDefn->GetSubfields())
         {
-            const DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
-
             if (nDataSize <= iOffset)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -159,7 +244,7 @@ const char *DDFField::GetSubfieldData(const DDFSubfieldDefn *poSFDefn,
                 return nullptr;
             }
 
-            if (poThisSFDefn == poSFDefn && iSubfieldIndex == 0)
+            if (poThisSFDefn.get() == poSFDefn && iSubfieldIndex == 0)
             {
                 if (pnMaxBytes != nullptr)
                     *pnMaxBytes = nDataSize - iOffset;
@@ -198,6 +283,9 @@ const char *DDFField::GetSubfieldData(const DDFSubfieldDefn *poSFDefn,
 int DDFField::GetRepeatCount() const
 
 {
+    if (!apoFieldParts.empty())
+        return 0;
+
     if (!poDefn->IsRepeating())
         return 1;
 
@@ -225,10 +313,8 @@ int DDFField::GetRepeatCount() const
     while (true)
     {
         const int iOffsetBefore = iOffset;
-        for (int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++)
+        for (const auto &poThisSFDefn : poDefn->GetSubfields())
         {
-            const DDFSubfieldDefn *poThisSFDefn = poDefn->GetSubfield(iSF);
-
             int nBytesConsumed = 0;
             if (poThisSFDefn->GetWidth() > nDataSize - iOffset)
                 nBytesConsumed = poThisSFDefn->GetWidth();
@@ -275,7 +361,14 @@ int DDFField::GetRepeatCount() const
 const char *DDFField::GetInstanceData(int nInstance, int *pnInstanceSize)
 
 {
-    int nRepeatCount = GetRepeatCount();
+    const int nRepeatCount = GetRepeatCount();
+    if (!apoFieldParts.empty() && nInstance == 0)
+    {
+        const char *pachWrkData = GetData();
+        if (pnInstanceSize != nullptr)
+            *pnInstanceSize = GetDataSize();
+        return pachWrkData;
+    }
 
     if (nInstance < 0 || nInstance >= nRepeatCount)
         return nullptr;
@@ -298,7 +391,8 @@ const char *DDFField::GetInstanceData(int nInstance, int *pnInstanceSize)
     /* -------------------------------------------------------------------- */
     int nBytesRemaining1 = 0;
     int nBytesRemaining2 = 0;
-    const DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
+    const DDFSubfieldDefn *poFirstSubfield =
+        poDefn->GetSubfields().front().get();
 
     const char *pachWrkData =
         GetSubfieldData(poFirstSubfield, &nBytesRemaining1, nInstance);
@@ -312,7 +406,7 @@ const char *DDFField::GetInstanceData(int nInstance, int *pnInstanceSize)
     if (pnInstanceSize != nullptr)
     {
         const DDFSubfieldDefn *poLastSubfield =
-            poDefn->GetSubfield(poDefn->GetSubfieldCount() - 1);
+            poDefn->GetSubfields().back().get();
 
         const char *pachLastData =
             GetSubfieldData(poLastSubfield, &nBytesRemaining2, nInstance);

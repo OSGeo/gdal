@@ -27,6 +27,7 @@ wkts = [
 
 pytestmark = pytest.mark.require_driver("PCIDSK")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -82,7 +83,7 @@ def pcidsk_1(tmp_path):
     assert feat.GetField(1) == 1
     assert feat.GetField(2) == 3.45
 
-    for (wkt, layername, epsgcode) in wkts:
+    for wkt, layername, epsgcode in wkts:
         geom = ogr.CreateGeometryFromWkt(wkt)
         if epsgcode != 0:
             srs = osr.SpatialReference()
@@ -124,7 +125,7 @@ def test_ogr_pcidsk_2(pcidsk_1):
     assert feat.GetField(1) == 1
     assert feat.GetField(2) == 3.45
 
-    for (wkt, layername, epsgcode) in wkts:
+    for wkt, layername, epsgcode in wkts:
         geom = ogr.CreateGeometryFromWkt(wkt)
         lyr = ds.GetLayerByName(layername)
         assert lyr.GetGeomType() == geom.GetGeometryType(), layername

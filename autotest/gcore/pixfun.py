@@ -661,8 +661,7 @@ def test_pixfun_inv_r():
 
 def test_pixfun_inv_r_zero():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="1" rasterYSize="1">
+    ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Inverse</Description>
     <PixelFunctionType>inv</PixelFunctionType>
@@ -674,8 +673,7 @@ def test_pixfun_inv_r_zero():
       <ScaleRatio>0</ScaleRatio>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     data = ds.GetRasterBand(1).ReadAsArray()
     assert math.isinf(data[0][0])
 
@@ -704,8 +702,7 @@ def test_pixfun_inv_c():
 
 def test_pixfun_inv_c_zero():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="1" rasterYSize="1">
+    ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="CFloat64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Inverse</Description>
     <PixelFunctionType>inv</PixelFunctionType>
@@ -717,8 +714,7 @@ def test_pixfun_inv_c_zero():
       <ScaleRatio>0</ScaleRatio>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     data = ds.GetRasterBand(1).ReadAsArray()
     assert math.isinf(data[0][0].real)
     assert math.isinf(data[0][0].imag)
@@ -1114,9 +1110,7 @@ def interpolate_vrt(*, fname, bands, method, nx, ny, t0, dt, t):
           <SrcRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}"/>
           <DstRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}"/>
         </SimpleSource>
-        """.format(
-            fname=fname, band=b, nx=nx, ny=ny
-        )
+        """.format(fname=fname, band=b, nx=nx, ny=ny)
 
     vrtXml += """
     </VRTRasterBand>
@@ -1232,8 +1226,7 @@ def test_pixfun_interpolate_linear():
 def test_pixfun_nan():
 
     src_ds = gdal.Open("data/test_nodatavalues.tif")
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Nan</Description>
     <NoDataValue>0.0</NoDataValue>
@@ -1244,8 +1237,7 @@ def test_pixfun_nan():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     data_src = src_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
     data_vrt = vrt_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
     NoData = src_ds.GetRasterBand(1).GetNoDataValue()
@@ -1261,8 +1253,7 @@ def test_pixfun_nan():
 def test_pixfun_replacenodata():
 
     src_ds = gdal.Open("data/test_nodatavalues.tif")
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Nan</Description>
     <NoDataValue>0.0</NoDataValue>
@@ -1274,8 +1265,7 @@ def test_pixfun_replacenodata():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     data_src = src_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
     data_vrt = vrt_ds.GetRasterBand(1).ReadAsArray(buf_type=gdal.GDT_Float32)
     NoData = src_ds.GetRasterBand(1).GetNoDataValue()
@@ -1290,8 +1280,7 @@ def test_pixfun_replacenodata():
 
 def test_pixfun_scale():
     src_ds = gdal.Open("data/float32.tif")
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Scaling</Description>
     <PixelFunctionType>scale</PixelFunctionType>
@@ -1303,8 +1292,7 @@ def test_pixfun_scale():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     band_src = src_ds.GetRasterBand(1)
     band_vrt = vrt_ds.GetRasterBand(1)
@@ -1318,8 +1306,7 @@ def test_pixfun_scale():
 
 
 def test_pixfun_missing_builtin():
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Scaling</Description>
     <PixelFunctionType>replace_nodata</PixelFunctionType>
@@ -1329,8 +1316,7 @@ def test_pixfun_missing_builtin():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     band_vrt = vrt_ds.GetRasterBand(1)
     assert band_vrt.GetOffset() == 0
@@ -1343,8 +1329,7 @@ def test_pixfun_missing_builtin():
 
 def test_pixfun_min():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <NoDataValue>0</NoDataValue>
     <PixelFunctionType>min</PixelFunctionType>
@@ -1362,8 +1347,7 @@ def test_pixfun_min():
       <SourceBand>2</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ar = vrt_ds.GetRasterBand(1).ReadAsArray()
     assert ar[10][9] == 0
     assert ar[10][10] == 32
@@ -1373,8 +1357,7 @@ def test_pixfun_min():
 
 def test_pixfun_min_propagateNoData():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <NoDataValue>0</NoDataValue>
     <PixelFunctionType>min</PixelFunctionType>
@@ -1389,8 +1372,7 @@ def test_pixfun_min_propagateNoData():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ar = vrt_ds.GetRasterBand(1).ReadAsArray()
     assert ar[10][9] == 0
     assert ar[10][10] == 32
@@ -1400,8 +1382,7 @@ def test_pixfun_min_propagateNoData():
 
 def test_pixfun_max():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <NoDataValue>0</NoDataValue>
     <PixelFunctionType>max</PixelFunctionType>
@@ -1419,8 +1400,7 @@ def test_pixfun_max():
       <SourceBand>2</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ar = vrt_ds.GetRasterBand(1).ReadAsArray()
     assert ar[10][9] == 0
     assert ar[10][10] == 255
@@ -1430,8 +1410,7 @@ def test_pixfun_max():
 
 def test_pixfun_max_nodata_255():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <NoDataValue>255</NoDataValue>
     <PixelFunctionType>max</PixelFunctionType>
@@ -1449,8 +1428,7 @@ def test_pixfun_max_nodata_255():
       <SourceBand>2</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ar = vrt_ds.GetRasterBand(1).ReadAsArray()
     assert ar[10][9] == 0
     assert ar[10][10] == 32
@@ -1460,8 +1438,7 @@ def test_pixfun_max_nodata_255():
 
 def test_pixfun_max_no_nodata():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="50" rasterYSize="50">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>max</PixelFunctionType>
     <SourceTransferType>Byte</SourceTransferType>
@@ -1478,8 +1455,7 @@ def test_pixfun_max_no_nodata():
       <SourceBand>2</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ar = vrt_ds.GetRasterBand(1).ReadAsArray()
     assert ar[10][9] == 0
     assert ar[10][10] == 255

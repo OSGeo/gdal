@@ -30,7 +30,10 @@ jobs:
 
       - name: Checkout code
         if: steps.check_branch.outputs.run == 'true'
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # We need to persist credentials because of git push later
+          persist-credentials: true
 
       - name: Tag
         if: steps.check_branch.outputs.run == 'true'

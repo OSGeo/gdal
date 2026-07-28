@@ -238,8 +238,8 @@ GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
         wkbExportOptions.sPrecision = *psPrecision;
     wkbExportOptions.eByteOrder = static_cast<OGRwkbByteOrder>(CPL_IS_LSB);
     OGRErr err;
-    OGRBoolean bPoint = (wkbFlatten(poGeometry->getGeometryType()) == wkbPoint);
-    OGRBoolean bEmpty = poGeometry->IsEmpty();
+    bool bPoint = (wkbFlatten(poGeometry->getGeometryType()) == wkbPoint);
+    bool bEmpty = poGeometry->IsEmpty();
     /* We voluntarily use getCoordinateDimension() so as to get only 2 for
      * XY/XYM */
     /* and 3 for XYZ/XYZM as we currently don't write envelopes with M extent.
@@ -373,7 +373,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
 #ifdef notdef
     poHeader->bExtentHasM = false;
 #endif
-    OGRBoolean bSwap = OGR_SWAP(poHeader->eByteOrder);
+    bool bSwap = OGR_SWAP(poHeader->eByteOrder);
 
     /* Envelope */
     int iEnvelope = (byFlags & (0x07 << 1)) >> 1;
@@ -521,7 +521,7 @@ bool GPkgUpdateHeader(GByte *pabyGpkg, size_t nGpkgLen, int nSrsId, double MinX,
     /* Flags */
     const GByte byFlags = pabyGpkg[3];
     const auto eByteOrder = static_cast<OGRwkbByteOrder>(byFlags & 0x01);
-    const OGRBoolean bSwap = OGR_SWAP(eByteOrder);
+    const bool bSwap = OGR_SWAP(eByteOrder);
 
     /* SrsId */
     if (bSwap)

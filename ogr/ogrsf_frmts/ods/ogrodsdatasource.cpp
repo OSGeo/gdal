@@ -53,8 +53,7 @@ class ODSCellEvaluator : public IODSCellEvaluator
 OGRODSLayer::OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
                          bool bUpdatedIn)
     : OGRMemLayer(pszName, nullptr, wkbNone), poDS(poDSIn),
-      bUpdated(CPL_TO_BOOL(bUpdatedIn)), bHasHeaderLine(false),
-      m_poAttrQueryODS(nullptr)
+      bUpdated(bUpdatedIn), bHasHeaderLine(false), m_poAttrQueryODS(nullptr)
 {
     SetAdvertizeUTF8(true);
 }

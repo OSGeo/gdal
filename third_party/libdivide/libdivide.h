@@ -933,6 +933,7 @@ static LIBDIVIDE_INLINE uint16_t libdivide_u16_branchfree_recover(const struct l
 
 ////////// UINT32
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static LIBDIVIDE_INLINE struct libdivide_u32_t libdivide_internal_u32_gen(
     uint32_t d, int branchfree) {
     if (d == 0) {

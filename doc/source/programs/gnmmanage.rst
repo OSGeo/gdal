@@ -109,3 +109,8 @@ The :program:`gnmmanage` program can perform various managing operations on geog
 .. option:: <layer>
 
     The network layer name.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

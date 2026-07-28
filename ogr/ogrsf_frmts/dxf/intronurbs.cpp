@@ -72,7 +72,7 @@ void rbsplinu(int npts, int k, int p1, double b[], double h[], double p[]);
    = array containing the knot vector
 */
 
-static void knotu(int n, int c, double x[])
+static void knotu(int n, int c, std::vector<double> &x)
 
 {
     int nplusc, /* nplus2, */ i;
@@ -80,11 +80,20 @@ static void knotu(int n, int c, double x[])
     nplusc = n + c;
     /* nplus2 = n + 2; */
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
     x[1] = 0;
     for (i = 2; i <= nplusc; i++)
     {
         x[i] = i - 1;
     }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/
@@ -433,7 +442,7 @@ void rbsplinu(int npts, int k, int p1, double b[], double h[], double p[])
 
     /* generate the uniform periodic knot vector */
 
-    knotu(npts, k, &(x[0]));
+    knotu(npts, k, x);
 
     icount = 0;
 

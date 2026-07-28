@@ -1,11 +1,16 @@
-D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\double_with_nodata.img" "D:\tmp\double_with_nodata.tiff" -if MiraMonRaster
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\double_with_nodata.img" "D:\tmp\double_with_nodata.vrt" -if MiraMonRaster
 
 
-D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\integer_with_nodata.img" "D:\tmp\integer_with_nodata.tiff" -if MiraMonRaster
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\integer_with_nodata.img" "D:\tmp\integer_with_nodata.vrt" -if MiraMonRaster
 
 
-D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_with_nodata.img" "D:\tmp\uinteger_with_nodata.tiff" -if MiraMonRaster
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_with_nodata.img" "D:\tmp\uinteger_with_nodata.vrt" -if MiraMonRaster
 
-D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_without_nodata.img" "D:\tmp\uinteger_without_nodata.tiff" -if MiraMonRaster
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\uinteger_without_nodata.img" "D:\tmp\uinteger_without_nodata.vrt" -if MiraMonRaster
 
 
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\directassignement\byte_2x3_6_categsI.rel" "D:\tmp\byte_2x3_6_categs.vrt"
+
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\lineal\byte_2x3_6_categsI.rel" "D:\tmp\byte_2x3_6_categs.vrt"
+
+D:\GitHub-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Continous\ColorTable\lineal_rare\byte_2x3_6_categsI.rel" "D:\tmp\lineal_rare_byte_2x3_6_categs.vrt"

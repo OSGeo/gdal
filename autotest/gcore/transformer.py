@@ -30,7 +30,7 @@ def test_transformer_1():
     ds = gdal.Open("data/byte.tif")
     tr = gdal.Transformer(ds, None, [])
 
-    (success, pnt) = tr.TransformPoint(0, 20, 10)
+    success, pnt = tr.TransformPoint(0, 20, 10)
 
     assert (
         success
@@ -39,7 +39,7 @@ def test_transformer_1():
         and pnt[2] == 0.0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -62,7 +62,7 @@ def test_transformer_2():
     ds = gdal.Open("data/gcps.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_POLYNOMIAL"])
 
-    (success, pnt) = tr.TransformPoint(0, 20, 10)
+    success, pnt = tr.TransformPoint(0, 20, 10)
 
     assert (
         success
@@ -71,7 +71,7 @@ def test_transformer_2():
         and pnt[2] == 0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -94,7 +94,7 @@ def test_transformer_3():
     ds = gdal.Open("data/gcps.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
 
-    (success, pnt) = tr.TransformPoint(0, 20, 10)
+    success, pnt = tr.TransformPoint(0, 20, 10)
 
     assert (
         success
@@ -103,7 +103,7 @@ def test_transformer_3():
         and pnt[2] == 0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -126,7 +126,7 @@ def test_transformer_homography():
     ds = gdal.Open("data/gcps.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_HOMOGRAPHY"])
 
-    (success, pnt) = tr.TransformPoint(0, 20, 10)
+    success, pnt = tr.TransformPoint(0, 20, 10)
 
     assert (
         success
@@ -135,7 +135,7 @@ def test_transformer_homography():
         and pnt[2] == 0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -158,7 +158,7 @@ def test_transformer_4():
     ds = gdal.Open("data/sstgeo.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
 
-    (success, pnt) = tr.TransformPoint(0, 20, 10)
+    success, pnt = tr.TransformPoint(0, 20, 10)
 
     assert (
         success
@@ -167,7 +167,7 @@ def test_transformer_4():
         and pnt[2] == 0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -190,7 +190,7 @@ def test_transformer_5():
     ds = gdal.Open("data/rpc.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_PIXEL_ERROR_THRESHOLD=0.05"])
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5)
     assert (
         success
         and pnt[0] == pytest.approx(125.64830100509131, abs=0.000001)
@@ -198,7 +198,7 @@ def test_transformer_5():
         and pnt[2] == 0
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
     assert (
         success
         and pnt[0] == pytest.approx(20.5, abs=0.05)
@@ -208,7 +208,7 @@ def test_transformer_5():
 
     # Try with a different height.
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 30)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5, 30)
 
     assert (
         success
@@ -217,7 +217,7 @@ def test_transformer_5():
         and pnt[2] == 30
     ), "got wrong forward transform result.(2)"
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -229,7 +229,7 @@ def test_transformer_5():
     # Test RPC_HEIGHT option
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_HEIGHT=30"])
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5)
 
     assert (
         success
@@ -237,7 +237,7 @@ def test_transformer_5():
         and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001)
     ), "got wrong forward transform result.(3)"
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -260,7 +260,7 @@ def test_transformer_5():
         ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", "RPC_DEM=/vsimem/dem.tif"]
     )
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5, 0)
 
     assert (
         success
@@ -268,7 +268,7 @@ def test_transformer_5():
         and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001)
     ), "got wrong forward transform result.(4)"
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -283,7 +283,7 @@ def test_transformer_5():
     tmp_ds.SetMetadataItem("HEIGHT_DEFAULT", "30", "RPC")
     tr = gdal.Transformer(tmp_ds, None, ["METHOD=RPC"])
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5)
 
     assert (
         success
@@ -304,7 +304,7 @@ def test_transformer_5():
         ],
     )
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5, 0)
 
     assert (
         success
@@ -312,7 +312,7 @@ def test_transformer_5():
         and pnt[1] == pytest.approx(39.869345204440144, abs=0.000001)
     ), "got wrong forward transform result.(5)"
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -335,7 +335,7 @@ def test_transformer_5():
         ],
     )
 
-    (success, pnt) = tr.TransformPoint(0, 20.5, 10.5, 0)
+    success, pnt = tr.TransformPoint(0, 20.5, 10.5, 0)
 
     assert (
         success
@@ -343,7 +343,7 @@ def test_transformer_5():
         and pnt[1] == pytest.approx(39.869345204874911, abs=0.000001)
     ), "got wrong forward transform result.(6)"
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
     assert (
         success
@@ -358,10 +358,10 @@ def test_transformer_5():
         ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", "RPC_DEM=/vsimem/dem.tif"]
     )
 
-    (success, pnt) = tr.TransformPoint(0, 40000, 0, 0)
+    success, pnt = tr.TransformPoint(0, 40000, 0, 0)
     assert success == 0
 
-    (success, pnt) = tr.TransformPoint(1, 125, 40, 0)
+    success, pnt = tr.TransformPoint(1, 125, 40, 0)
     assert success == 0
 
     tr = None
@@ -385,14 +385,14 @@ def test_transformer_5():
         ],
     )
 
-    (success, pnt) = tr.TransformPoint(0, -99.5, 0.5, 0)
+    success, pnt = tr.TransformPoint(0, -99.5, 0.5, 0)
     assert (
         success
         and pnt[0] == pytest.approx(125.64746155942839, abs=0.000001)
         and pnt[1] == pytest.approx(39.869506789921168, abs=0.000001)
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
     assert (
         success
         and pnt[0] == pytest.approx(-99.5, abs=0.05)
@@ -417,7 +417,7 @@ def test_transformer_6():
     ds = gdal.Open("data/rpc_5395.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=RPC"])
 
-    (success, pnt) = tr.TransformPoint(0, 0.5, 0.5)
+    success, pnt = tr.TransformPoint(0, 0.5, 0.5)
 
     assert (
         success
@@ -436,7 +436,7 @@ def test_transformer_7():
     ds = gdal.Open("data/byte.tif")
     tr = gdal.Transformer(ds, None, [])
 
-    (pnt, success) = tr.TransformPoints(0, [(20, 10)])
+    pnt, success = tr.TransformPoints(0, [(20, 10)])
 
     assert (
         success[0] != 0
@@ -481,13 +481,13 @@ def test_transformer_8():
             ],
         )
 
-        (success, pnt) = tr.TransformPoint(0, 20, 10, 0)
+        success, pnt = tr.TransformPoint(0, 20, 10, 0)
 
         if success:
             print(success, pnt)
             pytest.fail("got wrong forward transform result.")
 
-        (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
         if success:
             print(success, pnt)
@@ -544,11 +544,11 @@ def test_transformer_9():
         )
 
         points = [(125.64828521533849, 39.869345204440144)] * 10
-        (pnt, success) = tr.TransformPoints(1, points)
+        pnt, success = tr.TransformPoints(1, points)
         assert success[0], method
         pnt_optimized = pnt[0]
 
-        (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
         assert success, method
 
         assert pnt == pnt_optimized, method
@@ -603,8 +603,7 @@ def test_transformer_10():
     vrt_dem = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/dem.vrt", ds_dem)
     ds_dem = None
 
-    vrt_dem.SetProjection(
-        """COMPD_CS["WGS 84 + my_height",
+    vrt_dem.SetProjection("""COMPD_CS["WGS 84 + my_height",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -620,14 +619,13 @@ def test_transformer_10():
             EXTENSION["PROJ4_GRIDS","./tmp/fake.gtx"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
-        AXIS["Up",UP]]]"""
-    )
+        AXIS["Up",UP]]]""")
     vrt_dem = None
 
     ds = gdal.Open("data/rpc.vrt")
 
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/dem.vrt"])
-    (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
     assert (
         success
         and pnt[0] == pytest.approx(27.31476045569616, abs=1e-5)
@@ -640,7 +638,7 @@ def test_transformer_10():
         None,
         ["METHOD=RPC", "RPC_DEM=/vsimem/dem.vrt", "RPC_DEM_APPLY_VDATUM_SHIFT=FALSE"],
     )
-    (success, pnt) = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
     assert (
         success
@@ -680,12 +678,12 @@ def test_transformer_11():
     ds.SetMetadata(rpc, "RPC")
 
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_HEIGHT=4000"])
-    (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
+    success, pnt = tr.TransformPoint(0, 0, 0, 0)
     assert not success, pnt
 
     # But this one should succeed
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_HEIGHT=1150"])
-    (success, pnt) = tr.TransformPoint(0, 0, 0, 0)
+    success, pnt = tr.TransformPoint(0, 0, 0, 0)
     assert (
         success
         and pnt[0] == pytest.approx(77.350939956024618, abs=1e-7)
@@ -703,8 +701,7 @@ def test_transformer_11():
 )
 def test_transformer_12():
 
-    ds = gdal.Open(
-        """
+    ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
   <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
     <GCP Id="" Pixel="0" Line="0" X="-1" Y="-1"/>
@@ -719,34 +716,32 @@ def test_transformer_12():
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
     assert tr is not None
-    (success, pnt) = tr.TransformPoint(0, 0, 0)
+    success, pnt = tr.TransformPoint(0, 0, 0)
     assert (
         success
         and pnt[0] == pytest.approx(-1, abs=1e-7)
         and pnt[1] == pytest.approx(-1, abs=1e-7)
     )
 
-    (success, pnt) = tr.TransformPoint(1, -1, -1)
+    success, pnt = tr.TransformPoint(1, -1, -1)
     assert (
         success
         and pnt[0] == pytest.approx(0, abs=1e-7)
         and pnt[1] == pytest.approx(0, abs=1e-7)
     )
 
-    (success, pnt) = tr.TransformPoint(1, 0.2, 0.8)
+    success, pnt = tr.TransformPoint(1, 0.2, 0.8)
     assert (
         success
         and pnt[0] == pytest.approx(12, abs=1e-7)
         and pnt[1] == pytest.approx(18, abs=1e-7)
     )
 
-    ds = gdal.Open(
-        """
+    ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
   <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
     <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
@@ -761,16 +756,14 @@ def test_transformer_12():
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     gdal.ErrorReset()
     with gdaltest.disable_exceptions(), gdaltest.error_handler():
         tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
         assert gdal.GetLastErrorMsg() != ""
 
-    ds = gdal.Open(
-        """
+    ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
   <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
     <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
@@ -785,8 +778,7 @@ def test_transformer_12():
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     gdal.ErrorReset()
     with gdaltest.disable_exceptions(), gdaltest.error_handler():
@@ -822,7 +814,7 @@ def test_transformer_13():
     tr = gdal.Transformer(
         ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_13_dem.tif"]
     )
-    (success, pnt) = tr.TransformPoint(0, 6600, 24)
+    success, pnt = tr.TransformPoint(0, 6600, 24)
     assert (
         success
         and pnt[0] == pytest.approx(-108.00069819119149, abs=1e-7)
@@ -864,7 +856,7 @@ def test_transformer_14():
         tr = gdal.Transformer(
             ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
         )
-    (success, pnt) = tr.TransformPoint(0, 45, 73)
+    success, pnt = tr.TransformPoint(0, 45, 73)
     # on debug it should say this two messages
     # Oscillation detected...
     # Converged!
@@ -884,10 +876,8 @@ def test_transformer_14():
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode("ASCII")
         gdal.VSIFCloseL(f)
-    assert content.startswith(
-        """iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
-0,"""
-    )
+    assert content.startswith("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
+0,""")
 
     gdal.Unlink("/vsimem/transformer_14.csvt")
     gdal.Unlink("/vsimem/transformer_14.csv")
@@ -940,21 +930,21 @@ def test_transformer_15():
     tr = gdal.Transformer(
         ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/transformer_15_dem.vrt"]
     )
-    (success, pnt) = tr.TransformPoint(0, 0, 0)
+    success, pnt = tr.TransformPoint(0, 0, 0)
     assert (
         success
         and pnt[0] == pytest.approx(180.02280735469199, abs=1e-7)
         and pnt[1] == pytest.approx(0.061069145746997976, abs=1e-7)
     )
 
-    (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
+    success, pnt_forward = tr.TransformPoint(1, pnt[0], pnt[1], 0)
     assert (
         success
         and pnt_forward[0] == pytest.approx(0, abs=0.1)
         and pnt_forward[1] == pytest.approx(0, abs=0.1)
     ), "got wrong reverse transform result."
 
-    (success, pnt_forward) = tr.TransformPoint(1, pnt[0] - 360, pnt[1], 0)
+    success, pnt_forward = tr.TransformPoint(1, pnt[0] - 360, pnt[1], 0)
     assert (
         success
         and pnt_forward[0] == pytest.approx(0, abs=0.1)
@@ -970,21 +960,21 @@ def test_transformer_15():
     tr = gdal.Transformer(
         ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/transformer_15_dem.vrt"]
     )
-    (success, pnt) = tr.TransformPoint(0, 6600, 4400)
+    success, pnt = tr.TransformPoint(0, 6600, 4400)
     assert (
         success
         and pnt[0] == pytest.approx(-180.02313813793387, abs=1e-7)
         and pnt[1] == pytest.approx(-0.061398913932229765, abs=1e-7)
     )
 
-    (success, pnt_forward) = tr.TransformPoint(1, pnt[0], pnt[1], 0)
+    success, pnt_forward = tr.TransformPoint(1, pnt[0], pnt[1], 0)
     assert (
         success
         and pnt_forward[0] == pytest.approx(6600, abs=0.1)
         and pnt_forward[1] == pytest.approx(4400, abs=0.1)
     ), "got wrong reverse transform result."
 
-    (success, pnt_forward) = tr.TransformPoint(1, pnt[0] + 360, pnt[1], 0)
+    success, pnt_forward = tr.TransformPoint(1, pnt[0] + 360, pnt[1], 0)
     assert (
         success
         and pnt_forward[0] == pytest.approx(6600, abs=0.1)
@@ -1060,7 +1050,7 @@ def test_transformer_longlat_wrap_outside_180():
     ds.SetGeoTransform([-180, 1, 0, 0, 0, -1])
     tr = gdal.Transformer(ds, ds, [])
 
-    (success, pnt) = tr.TransformPoint(0, -0.5, 0.5, 0)
+    success, pnt = tr.TransformPoint(0, -0.5, 0.5, 0)
     assert success
     assert pnt[0] == pytest.approx(359.5, abs=0.000001), pnt
     assert pnt[1] == pytest.approx(0.5, abs=0.000001), pnt
@@ -1081,7 +1071,7 @@ def test_transformer_no_reverse_method():
     )
     assert tr
 
-    (success, pnt) = tr.TransformPoint(0, 2, 49)
+    success, pnt = tr.TransformPoint(0, 2, 49)
     assert success
     assert pnt[0] == pytest.approx(141270.54731856665, abs=1e-3), pnt
     assert pnt[1] == pytest.approx(4656605.104980032, abs=1e-3), pnt
@@ -1108,14 +1098,14 @@ def test_transformer_tps_precision():
     maxDiffResult = 0.0
     gcps = ds.GetGCPs()
     for i, gcp in enumerate(gcps):
-        (s, result) = tr.TransformPoint(0, gcp.GCPPixel, gcp.GCPLine)
+        s, result = tr.TransformPoint(0, gcp.GCPPixel, gcp.GCPLine)
         success &= s
         diffResult = math.sqrt(
             (gcp.GCPX - result[0]) ** 2 + (gcp.GCPY - result[1]) ** 2
         )
         maxDiffResult = max(maxDiffResult, diffResult)
 
-        (s, result) = tr.TransformPoint(1, result[0], result[1])
+        s, result = tr.TransformPoint(1, result[0], result[1])
         assert s
         # The test fails on point 172 only with ICC 2024.0.2.29
         if i not in (172, 1639):
@@ -1126,9 +1116,9 @@ def test_transformer_tps_precision():
             # Try transforming "random" points
             xIn = 0.5 * (gcps[i].GCPPixel + gcps[i + 1].GCPPixel)
             yIn = 0.5 * (gcps[i].GCPLine + gcps[i + 1].GCPLine)
-            (s, result) = tr.TransformPoint(0, xIn, yIn)
+            s, result = tr.TransformPoint(0, xIn, yIn)
             assert s
-            (s, result) = tr.TransformPoint(1, result[0], result[1])
+            s, result = tr.TransformPoint(1, result[0], result[1])
             assert s
             # A few points fail to converge with reasonable accuracy
             if i not in (
@@ -1169,7 +1159,7 @@ def test_transformer_image_no_srs():
         ds, None, ["COORDINATE_OPERATION=+proj=unitconvert +xy_in=1 +xy_out=2"]
     )
     assert tr
-    (success, pnt) = tr.TransformPoint(0, 10, 20, 0)
+    success, pnt = tr.TransformPoint(0, 10, 20, 0)
     assert success
     assert pnt[0] == pytest.approx(50), pnt
     assert pnt[1] == pytest.approx(-100), pnt
@@ -1203,14 +1193,14 @@ def test_transformer_dem_overrride_srs():
         ],
     )
 
-    (success, pnt) = tr.TransformPoint(0, 0.5, 0.5, 0)
+    success, pnt = tr.TransformPoint(0, 0.5, 0.5, 0)
     assert (
         success
         and pnt[0] == pytest.approx(125.64813723085801, abs=1e-4)
         and pnt[1] == pytest.approx(39.869345977927146, abs=1e-4)
     ), "got wrong forward transform result."
 
-    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
     assert (
         success
         and pnt[0] == pytest.approx(0.5, abs=0.05)
@@ -1347,8 +1337,7 @@ def test_transformer_validate_options():
 
     from lxml import etree
 
-    schema_optionlist = etree.XML(
-        r"""
+    schema_optionlist = etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -1397,8 +1386,7 @@ def test_transformer_validate_options():
     </xs:complexType>
   </xs:element>
 </xs:schema>
-"""
-    )
+""")
 
     schema = etree.XMLSchema(schema_optionlist)
 

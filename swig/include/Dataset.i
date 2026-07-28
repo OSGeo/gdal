@@ -602,6 +602,9 @@ public:
 %clear (GIntBig buf_len, char *buf_string);
 #endif
 
+#ifdef SWIGPYTHON
+%feature("kwargs") AdviseRead;
+#endif
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 #if defined(SWIGCSHARP)
 %apply int PINNED[] {int *pband_list};
@@ -625,6 +628,8 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
         return CE_Failure;
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
+    if( band_list == 0 && pband_list == NULL )
+        band_list = GDALGetRasterCount( self );
     return GDALDatasetAdviseRead(self, xoff, yoff, xsize, ysize,
                                  nxsize, nysize, ntype,
                                  band_list, pband_list, options);

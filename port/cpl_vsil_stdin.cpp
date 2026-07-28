@@ -174,10 +174,10 @@ size_t VSIStdinHandle::ReadAndCache(void *pUserBuffer, size_t nToRead)
 
     if (nRead < nToRead)
     {
-        gbHasSoughtToEnd = feof(gStdinFile);
+        gbHasSoughtToEnd = CPL_TO_BOOL(feof(gStdinFile));
         if (gbHasSoughtToEnd)
             gnFileSize = gnRealPos;
-        gbHasErrored = ferror(gStdinFile);
+        gbHasErrored = CPL_TO_BOOL(ferror(gStdinFile));
     }
 
     return nRead;

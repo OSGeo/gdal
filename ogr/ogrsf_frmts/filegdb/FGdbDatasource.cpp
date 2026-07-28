@@ -404,7 +404,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
             m_osFSName, CPLSPrintf("a%08x", iGDBItems + 1), "gdbtable");
         std::unique_ptr<GDALDataset> poGDBItems(GDALDataset::Open(
             osGDBItems.c_str(), GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
-        if (poGDBItems != nullptr && poGDBItems->GetLayer(0) != nullptr)
+        if (poGDBItems != nullptr)
         {
             if (OGRLayer *poItemsLayer = poGDBItems->GetLayer(0))
             {
@@ -486,7 +486,7 @@ class OGRFGdbSingleFeatureLayer final : public OGRLayer
 
   public:
     OGRFGdbSingleFeatureLayer(const char *pszLayerName, const char *pszVal);
-    virtual ~OGRFGdbSingleFeatureLayer();
+    ~OGRFGdbSingleFeatureLayer() override;
 
     void ResetReading() override
     {

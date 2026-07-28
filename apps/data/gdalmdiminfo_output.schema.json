@@ -20,6 +20,9 @@
         "name": {
           "type": "string"
         },
+        "full_name": {
+          "type": "string"
+        },
         "type": {
           "type": "string",
           "enum": [
@@ -278,6 +281,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "full_name": {
           "type": "string"
         },
         "type": {

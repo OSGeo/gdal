@@ -647,8 +647,17 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
     if (!pszPathname)
         return -1;
 
-    const std::string osPathnameOri(pszPathname);
-    if (osPathnameOri.empty() || osPathnameOri == "/")
+    std::string osPathnameOri(pszPathname);
+    if (cpl::starts_with(osPathnameOri, "/vsimem/"))
+    {
+        osPathnameOri = VSIFileManager::GetHandler(pszPathname)
+                            ->GetCanonicalFilename(osPathnameOri);
+    }
+    // Limit to avoid performance issues such as in
+    // https://issues.oss-fuzz.com/issues/471096341
+    constexpr size_t CPL_MAX_PATH = 4096;
+    if (osPathnameOri.empty() || osPathnameOri == "/" ||
+        osPathnameOri.size() > CPL_MAX_PATH)
         return -1;
 
     VSIStatBufL sStat;
@@ -683,11 +692,23 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
 
     for (auto oIter = aosQueue.rbegin(); oIter != aosQueue.rend(); ++oIter)
     {
-        if (VSIMkdir(oIter->c_str(), mode) != 0)
+        if (VSIMkdir(oIter->c_str(), mode) != 0 &&
+            // In case of concurrent VSIMkdirRecursive() on the same directory
+            (VSIStatL(oIter->c_str(), &sStat) != 0 ||
+             !VSI_ISDIR(sStat.st_mode)))
+        {
             return -1;
+        }
     }
 
-    return VSIMkdir(osPathnameOri.c_str(), mode);
+    if (VSIMkdir(osPathnameOri.c_str(), mode) != 0 &&
+        // In case of concurrent VSIMkdirRecursive() on the same directory
+        (VSIStatL(osPathnameOri.c_str(), &sStat) != 0 ||
+         !VSI_ISDIR(sStat.st_mode)))
+    {
+        return -1;
+    }
+    return 0;
 }
 
 /************************************************************************/
@@ -2283,7 +2304,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
             osTarget = CPLFormFilenameSafe(osTarget.c_str(),
                                            CPLGetFilename(pszSource), nullptr);
             bTargetIsFile = VSIStatL(osTarget.c_str(), &sTarget) == 0 &&
-                            !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
+                            !VSI_ISDIR(sTarget.st_mode);
         }
         if (bTargetIsFile)
         {
@@ -4008,7 +4029,7 @@ void VSISetCredential(const char *pszPathPrefix, const char *pszKey,
  * virtual file system.
  *
  * That option may also be set as a configuration option with
- * CPLSetConfigOption(), but this function allows to specify them with a
+ * CPLSetConfigOption(), but this function allows specifying them with a
  * granularity at the level of a file path, which makes it easier if using the
  * same virtual file system but with different credentials (e.g. different
  * credentials for bucket "/vsis3/foo" and "/vsis3/bar")
@@ -4149,7 +4170,7 @@ const char *VSIGetPathSpecificOption(const char *pszPath, const char *pszKey,
  * identical or close to popular ones (typically AWS S3), but with slightly
  * different settings (at the very least the endpoint).
  *
- * This functions allows to duplicate the source virtual file system handler
+ * This functions allows duplicating the source virtual file system handler
  * as a new one with a different prefix (when the source virtual file system
  * handler supports the duplication operation).
  *
@@ -4295,30 +4316,53 @@ char **VSIFileManager::GetPrefixes()
 VSIFilesystemHandler *VSIFileManager::GetHandler(const char *pszPath)
 
 {
-    VSIFileManager *poThis = Get();
-    const size_t nPathLen = strlen(pszPath);
-
-    for (auto &[key, handler] : poThis->m_apoHandlers)
+    void (*pfnLoader)(void) = nullptr;
     {
-        const char *pszIterKey = key.c_str();
-        const size_t nIterKeyLen = key.size();
-        if (strncmp(pszPath, pszIterKey, nIterKeyLen) == 0)
-            return handler.get();
+        CPLMutexHolder oHolder(&hVSIFileManagerMutex);
 
-        // "/vsimem\foo" should be handled as "/vsimem/foo".
-        if (nIterKeyLen && nPathLen > nIterKeyLen &&
-            pszIterKey[nIterKeyLen - 1] == '/' &&
-            pszPath[nIterKeyLen - 1] == '\\' &&
-            strncmp(pszPath, pszIterKey, nIterKeyLen - 1) == 0)
-            return handler.get();
+        VSIFileManager *poThis = Get();
+        const size_t nPathLen = strlen(pszPath);
 
-        // /vsimem should be treated as a match for /vsimem/.
-        if (nPathLen + 1 == nIterKeyLen &&
-            strncmp(pszPath, pszIterKey, nPathLen) == 0)
-            return handler.get();
+        for (auto &[key, handler] : poThis->m_apoHandlers)
+        {
+            const char *pszIterKey = key.c_str();
+            const size_t nIterKeyLen = key.size();
+            if (strncmp(pszPath, pszIterKey, nIterKeyLen) == 0)
+                return handler.get();
+
+            // "/vsimem\foo" should be handled as "/vsimem/foo".
+            if (nIterKeyLen && nPathLen > nIterKeyLen &&
+                pszIterKey[nIterKeyLen - 1] == '/' &&
+                pszPath[nIterKeyLen - 1] == '\\' &&
+                strncmp(pszPath, pszIterKey, nIterKeyLen - 1) == 0)
+                return handler.get();
+
+            // /vsimem should be treated as a match for /vsimem/.
+            if (nPathLen + 1 == nIterKeyLen &&
+                strncmp(pszPath, pszIterKey, nPathLen) == 0)
+                return handler.get();
+        }
+
+        if (pszPath[0] == '/' && !poThis->m_oMapHandlerLoader.empty())
+        {
+            const char *pszNextSlash = strchr(pszPath + 1, '/');
+            if (pszNextSlash)
+            {
+                auto oIter = poThis->m_oMapHandlerLoader.find(
+                    std::string(pszPath, pszNextSlash - pszPath + 1));
+                if (oIter != poThis->m_oMapHandlerLoader.end())
+                {
+                    pfnLoader = oIter->second;
+                }
+            }
+        }
+
+        if (!pfnLoader)
+            return poThis->m_poDefaultHandler.get();
     }
 
-    return poThis->m_poDefaultHandler.get();
+    pfnLoader();
+    return GetHandler(pszPath);
 }
 
 /************************************************************************/
@@ -4341,6 +4385,8 @@ void VSIFileManager::InstallHandler(
     const std::shared_ptr<VSIFilesystemHandler> &poHandler)
 
 {
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
     if (osPrefix == "")
         Get()->m_poDefaultHandler = poHandler;
     else
@@ -4353,10 +4399,34 @@ void VSIFileManager::InstallHandler(
 
 void VSIFileManager::RemoveHandler(const std::string &osPrefix)
 {
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
     if (osPrefix == "")
         Get()->m_poDefaultHandler.reset();
     else
         Get()->m_apoHandlers.erase(osPrefix);
+}
+
+/************************************************************************/
+/*                       RegisterHandlerLoader()                        */
+/************************************************************************/
+
+/** Register a callback function that will be called the first time a
+ * prefix is queried.
+ *
+ * This is typically used for deferred loaded driver plugins that want
+ * to register a file system.
+ *
+ * @since 3.14
+ */
+
+/* static */
+void VSIFileManager::RegisterHandlerLoader(const char *pszPrefix,
+                                           void (*pfnLoadHandler)(void))
+{
+    CPLMutexHolder oHolder(&hVSIFileManagerMutex);
+
+    Get()->m_oMapHandlerLoader[pszPrefix] = pfnLoadHandler;
 }
 
 /************************************************************************/

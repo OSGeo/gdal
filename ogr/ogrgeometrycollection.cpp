@@ -454,6 +454,63 @@ OGRErr OGRGeometryCollection::addGeometry(std::unique_ptr<OGRGeometry> geom)
 }
 
 /************************************************************************/
+/*                       addGeometryComponents()                        */
+/************************************************************************/
+
+/**
+ * \brief Add the components of another OGRGeometryCollection to this one.
+ *
+ * Some subclasses of OGRGeometryCollection restrict the types of geometry
+ * that can be added, and may return an error.
+ *
+ * @param geom geometry whose components should be added to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ *
+ * @since 3.13
+ */
+
+OGRErr OGRGeometryCollection::addGeometryComponents(
+    std::unique_ptr<OGRGeometryCollection> geom)
+{
+    if (geom->nGeomCount == 0)
+    {
+        return OGRERR_NONE;
+    }
+
+    for (int i = 0; i < geom->nGeomCount; i++)
+    {
+        if (!isCompatibleSubType(geom->papoGeoms[i]->getGeometryType()))
+        {
+            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        }
+    }
+
+    for (int i = 0; i < geom->nGeomCount; i++)
+    {
+        HomogenizeDimensionalityWith(geom->papoGeoms[i]);
+    }
+
+    OGRGeometry **papoNewGeoms = static_cast<OGRGeometry **>(
+        VSI_REALLOC_VERBOSE(papoGeoms, sizeof(OGRGeometry *) *
+                                           (nGeomCount + geom->nGeomCount)));
+    if (papoNewGeoms == nullptr)
+        return OGRERR_FAILURE;
+
+    for (int i = 0; i < geom->nGeomCount; i++)
+    {
+        papoNewGeoms[nGeomCount + i] = geom->papoGeoms[i];
+        geom->papoGeoms[i] = nullptr;
+    }
+
+    papoGeoms = papoNewGeoms;
+    nGeomCount += geom->nGeomCount;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           removeGeometry()                           */
 /************************************************************************/
 
@@ -1081,7 +1138,7 @@ void OGRGeometryCollection::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::Equals(const OGRGeometry *poOther) const
+bool OGRGeometryCollection::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -1175,7 +1232,7 @@ bool OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
     return OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-bool OGRGeometryCollection::set3D(OGRBoolean bIs3D)
+bool OGRGeometryCollection::set3D(bool bIs3D)
 {
     for (auto &poSubGeom : *this)
     {
@@ -1186,7 +1243,7 @@ bool OGRGeometryCollection::set3D(OGRBoolean bIs3D)
     return OGRGeometry::set3D(bIs3D);
 }
 
-bool OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
+bool OGRGeometryCollection::setMeasured(bool bIsMeasured)
 {
     for (auto &poSubGeom : *this)
     {
@@ -1434,7 +1491,7 @@ double OGRGeometryCollection::get_GeodesicLength(
 /*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::IsEmpty() const
+bool OGRGeometryCollection::IsEmpty() const
 {
     for (const auto &poSubGeom : *this)
     {
@@ -1495,7 +1552,7 @@ void OGRGeometryCollection::swapXY()
  * @return TRUE or FALSE
  */
 
-OGRBoolean OGRGeometryCollection::isCompatibleSubType(
+bool OGRGeometryCollection::isCompatibleSubType(
     CPL_UNUSED OGRwkbGeometryType eSubType) const
 {
     // Accept all geometries as sub-geometries.
@@ -1506,7 +1563,7 @@ OGRBoolean OGRGeometryCollection::isCompatibleSubType(
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRGeometryCollection::hasCurveGeometry(int bLookForNonLinear) const
 {
     for (const auto &poSubGeom : *this)
     {

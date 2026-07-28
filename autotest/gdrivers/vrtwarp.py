@@ -319,8 +319,7 @@ def test_vrtwarp_9(tmp_vsimem):
     gdal.CopyFile("../gcore/data/sstgeo.tif", tmp_vsimem / "sstgeo.tif")
 
     f = gdal.VSIFile(tmp_vsimem / "sstgeo.vrt", "wb")
-    f.write(
-        f"""<VRTDataset rasterXSize="60" rasterYSize="39">
+    f.write(f"""<VRTDataset rasterXSize="60" rasterYSize="39">
   <Metadata domain="GEOLOCATION">
     <MDI key="SRS">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]</MDI>
     <MDI key="X_DATASET">{tmp_vsimem}/sstgeo.tif</MDI>
@@ -343,10 +342,7 @@ def test_vrtwarp_9(tmp_vsimem):
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
-""".encode(
-            "ascii"
-        )
-    )
+""".encode("ascii"))
     f.close()
     ds = gdal.Open(tmp_vsimem / "sstgeo.vrt", gdal.GA_Update)
     ds.BuildOverviews("NEAR", overviewlist=[2])
@@ -442,10 +438,8 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
 
 
 @pytest.mark.slow()
+@pytest.mark.require_64bit()
 def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
-
-    if sys.maxsize < 2**32:
-        pytest.skip("Test not available on 32 bit")
 
     import psutil
 

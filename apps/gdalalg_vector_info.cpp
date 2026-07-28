@@ -33,26 +33,23 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                                           .SetInputDatasetMaxCount(1)
                                           .SetAddDefaultArguments(false))
 {
+    if (standaloneStep)
+        AddProgressArg(/* hidden = */ true);
+
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(!standaloneStep);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR})
         .SetHiddenForCLI(!standaloneStep);
-    GDALInConstructionAlgorithmArg *pDatasetArg = nullptr;
-    if (standaloneStep)
-    {
-        auto &datasetArg =
-            AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
-                               /* positionalAndRequired = */ standaloneStep)
-                .AddAlias("dataset")
-                .SetHiddenForCLI(!standaloneStep);
-        pDatasetArg = &datasetArg;
-    }
+
+    auto &datasetArg =
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR).AddAlias("dataset");
+    if (!standaloneStep)
+        datasetArg.SetHidden();
     auto &layerArg = AddLayerNameArg(&m_layerNames)
                          .SetMutualExclusionGroup("layer-sql")
                          .AddAlias("layer");
-    if (pDatasetArg)
-        SetAutoCompleteFunctionForLayerName(layerArg, *pDatasetArg);
+    SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     auto &argFeature =
         AddArg(
             "features", 0,
@@ -82,9 +79,17 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<WHERE>|@<filename>")
         .SetRemoveSQLCommentsEnabled();
+    AddArg("fid", 0, _("Feature identifier"), &m_fid)
+        .SetMetaVar("FID")
+        .SetMutualExclusionGroup("layer-sql");
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
+    AddArg("crs-format", 0, _("Which format to use to report CRS"),
+           &m_crsFormat)
+        .SetChoices("AUTO", "WKT2", "PROJJSON")
+        .SetDefault(m_crsFormat)
+        .SetCategory(GAAC_ESOTERIC);
 
     AddValidationAction(
         [this]()
@@ -95,6 +100,15 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                             "Option 'sql' and 'where' are mutually exclusive");
                 return false;
             }
+
+            if (m_crsFormat != "AUTO" && m_format == "json")
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "'crs-format' cannot be set when 'format' is set "
+                            "to 'json'");
+                return false;
+            }
+
             return true;
         });
 }
@@ -115,6 +129,7 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLStringList aosOptions;
 
     aosOptions.AddString("--cli");
+    aosOptions.AddString("--crs-format=" + m_crsFormat);
 
     if (m_format == "json")
     {
@@ -139,6 +154,11 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         aosOptions.AddString("-where");
         aosOptions.AddString(m_where.c_str());
+    }
+    if (m_fid >= 0)
+    {
+        aosOptions.AddString("-fid");
+        aosOptions.AddString(CPLSPrintf("%d", m_fid));
     }
     if (!m_dialect.empty())
     {

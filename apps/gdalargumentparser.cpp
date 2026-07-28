@@ -416,8 +416,7 @@ GDALArgumentParser::add_subparser(const std::string &description,
 GDALArgumentParser *GDALArgumentParser::get_subparser(const std::string &name)
 {
     auto it = std::find_if(
-        aoSubparsers.begin(), aoSubparsers.end(),
-        [&name](const auto &parser)
+        aoSubparsers.begin(), aoSubparsers.end(), [&name](const auto &parser)
         { return EQUAL(name.c_str(), parser->m_program_name.c_str()); });
     return it != aoSubparsers.end() ? it->get() : nullptr;
 }
@@ -440,8 +439,7 @@ bool GDALArgumentParser::is_used_globally(const std::string &name)
         // convert subparser name to lower case
         std::string subparser_name = subparser->m_program_name;
         std::transform(subparser_name.begin(), subparser_name.end(),
-                       subparser_name.begin(),
-                       [](int c) -> char
+                       subparser_name.begin(), [](int c) -> char
                        { return static_cast<char>(::tolower(c)); });
         if (m_subparser_used.find(subparser_name) != m_subparser_used.end())
         {

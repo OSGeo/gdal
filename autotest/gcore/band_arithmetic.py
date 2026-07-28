@@ -88,6 +88,10 @@ def test_band_arithmetic_sub_constant():
 
 
 def test_band_arithmetic_sub_constant_to_band():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def get():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1)
         R = ds.GetRasterBand(1)
@@ -213,6 +217,10 @@ def test_band_arithmetic_astype_numpy():
 
 
 def test_band_arithmetic_rgb_to_greylevel_subfunc():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def greylevel():
         ds = gdal.Open("data/rgbsmall.tif")
         R = ds.GetRasterBand(1)
@@ -225,6 +233,9 @@ def test_band_arithmetic_rgb_to_greylevel_subfunc():
 
 def test_band_arithmetic_rgb_to_greylevel_with():
 
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     with gdal.Open("data/rgbsmall.tif") as ds:
         R = ds.GetRasterBand(1)
         G = ds.GetRasterBand(2)
@@ -234,6 +245,9 @@ def test_band_arithmetic_rgb_to_greylevel_with():
 
 
 def test_band_arithmetic_rgb_to_greylevel_with_error():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
 
     with gdal.Open("data/rgbsmall.tif") as ds:
         R = ds.GetRasterBand(1)
@@ -246,6 +260,9 @@ def test_band_arithmetic_rgb_to_greylevel_with_error():
 
 
 def test_band_arithmetic_rgb_to_greylevel_using_numpy_array():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
 
     pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
@@ -279,6 +296,10 @@ def test_band_arithmetic_minimum():
 
 
 def test_band_arithmetic_minimum_with_constant():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def get():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
         R = ds.GetRasterBand(1)
@@ -293,6 +314,10 @@ def test_band_arithmetic_minimum_with_constant():
 
 
 def test_band_arithmetic_minimum_with_constant_bis():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def get():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
         R = ds.GetRasterBand(1)
@@ -334,6 +359,10 @@ def test_band_arithmetic_maximum():
 
 
 def test_band_arithmetic_maximum_with_constant():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def get():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
         R = ds.GetRasterBand(1)
@@ -348,6 +377,10 @@ def test_band_arithmetic_maximum_with_constant():
 
 
 def test_band_arithmetic_maximum_with_constant_bis():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
     def get():
         ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 3)
         R = ds.GetRasterBand(1)
@@ -375,6 +408,9 @@ def test_band_arithmetic_maximum_error():
 
 
 def test_band_arithmetic_rgb_to_greylevel_vrt(tmp_vsimem):
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
 
     with gdal.Open("data/rgbsmall.tif") as ds:
         R = ds.GetRasterBand(1)
@@ -896,3 +932,22 @@ def test_band_arithmetic_pow_band_band_error():
     ds2 = gdal.GetDriverByName("MEM").Create("", 2, 1)
     with pytest.raises(Exception, match="Bands do not have the same dimensions"):
         gdal.pow(ds1.GetRasterBand(1), ds2.GetRasterBand(1))
+
+
+def test_band_arithmetic_recursive():
+
+    if not gdaltest.gdal_has_vrt_expression_dialect("muparser"):
+        pytest.skip("Expression dialect muparser is not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("x", 1, 1)
+    ds.GetRasterBand(1).Fill(1)
+
+    res = ds.GetRasterBand(1)
+    for i in range(8):
+        res = res + res
+    assert res.ComputeRasterMinMax(False) == (256, 256)
+
+    src_ds = res.GetDataset()
+    vrt_ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
+    vrt_xml = vrt_ds.GetMetadata("xml:VRT")[0]
+    assert '<PixelFunctionArguments expression="(((((((band_' in vrt_xml

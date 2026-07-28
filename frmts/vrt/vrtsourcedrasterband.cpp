@@ -36,6 +36,7 @@
 #include "cpl_quad_tree.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 #include "gdalantirecursion.h"
 #include "gdal_priv.h"
@@ -115,6 +116,33 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 {
     VRTSourcedRasterBand::CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                     CopyForCloneWithoutSources()                     */
+/************************************************************************/
+
+void VRTSourcedRasterBand::CopyForCloneWithoutSources(
+    const VRTSourcedRasterBand *poSrcBand)
+{
+    CopyCommonInfoFrom(poSrcBand);
+    m_bNoDataValueSet = poSrcBand->m_bNoDataValueSet;
+    m_dfNoDataValue = poSrcBand->m_dfNoDataValue;
+    m_bHideNoDataValue = poSrcBand->m_bHideNoDataValue;
+}
+
+/************************************************************************/
+/*                        CloneWithoutSources()                         */
+/************************************************************************/
+
+std::unique_ptr<VRTSourcedRasterBand>
+VRTSourcedRasterBand::CloneWithoutSources(GDALDataset *poNewDS, int nNewXSize,
+                                          int nNewYSize) const
+{
+    auto poClone = std::make_unique<VRTSourcedRasterBand>(
+        poNewDS, GetBand(), GetRasterDataType(), nNewXSize, nNewYSize);
+    poClone->CopyForCloneWithoutSources(this);
+    return poClone;
 }
 
 /************************************************************************/
@@ -481,6 +509,71 @@ bool VRTSourcedRasterBand::MayMultiBlockReadingBeMultiThreaded() const
 }
 
 /************************************************************************/
+/*            VRTSourcedRasterBand::InitializeOutputBuffer()            */
+/************************************************************************/
+
+void VRTSourcedRasterBand::InitializeOutputBuffer(void *pData, int nBufXSize,
+                                                  int nBufYSize,
+                                                  GDALDataType eBufType,
+                                                  GSpacing nPixelSpace,
+                                                  GSpacing nLineSpace) const
+{
+    if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+        !(m_bNoDataValueSet && m_dfNoDataValue != 0.0) &&
+        !(m_bNoDataSetAsInt64 && m_nNoDataValueInt64 != 0) &&
+        !(m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 != 0))
+    {
+        if (nLineSpace == nBufXSize * nPixelSpace)
+        {
+            memset(pData, 0, static_cast<size_t>(nBufYSize * nLineSpace));
+        }
+        else
+        {
+            for (int iLine = 0; iLine < nBufYSize; iLine++)
+            {
+                memset(static_cast<GByte *>(pData) +
+                           static_cast<GIntBig>(iLine) * nLineSpace,
+                       0, static_cast<size_t>(nBufXSize * nPixelSpace));
+            }
+        }
+    }
+    else if (m_bNoDataSetAsInt64)
+    {
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&m_nNoDataValueInt64, GDT_Int64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+    else if (m_bNoDataSetAsUInt64)
+    {
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&m_nNoDataValueUInt64, GDT_UInt64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+    else
+    {
+        double dfWriteValue = 0.0;
+        if (m_bNoDataValueSet)
+            dfWriteValue = m_dfNoDataValue;
+
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -587,62 +680,10 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     /*      Initialize the buffer to some background value. Use the         */
     /*      nodata value if available.                                      */
     /* -------------------------------------------------------------------- */
-    if (SkipBufferInitialization())
+    if (!SkipBufferInitialization())
     {
-        // Do nothing
-    }
-    else if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
-             !(m_bNoDataValueSet && m_dfNoDataValue != 0.0) &&
-             !(m_bNoDataSetAsInt64 && m_nNoDataValueInt64 != 0) &&
-             !(m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 != 0))
-    {
-        if (nLineSpace == nBufXSize * nPixelSpace)
-        {
-            memset(pData, 0, static_cast<size_t>(nBufYSize * nLineSpace));
-        }
-        else
-        {
-            for (int iLine = 0; iLine < nBufYSize; iLine++)
-            {
-                memset(static_cast<GByte *>(pData) +
-                           static_cast<GIntBig>(iLine) * nLineSpace,
-                       0, static_cast<size_t>(nBufXSize * nPixelSpace));
-            }
-        }
-    }
-    else if (m_bNoDataSetAsInt64)
-    {
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&m_nNoDataValueInt64, GDT_Int64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
-    }
-    else if (m_bNoDataSetAsUInt64)
-    {
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&m_nNoDataValueUInt64, GDT_UInt64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
-    }
-    else
-    {
-        double dfWriteValue = 0.0;
-        if (m_bNoDataValueSet)
-            dfWriteValue = m_dfNoDataValue;
-
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
+        InitializeOutputBuffer(pData, nBufXSize, nBufYSize, eBufType,
+                               nPixelSpace, nLineSpace);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1458,9 +1499,9 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             {
                 CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 CPLErrorReset();
-                eErr =
-                    ComputeStatistics(bApproxOK, &adfMinMax[0], &adfMinMax[1],
-                                      nullptr, nullptr, nullptr, nullptr);
+                eErr = ComputeStatistics(bApproxOK, &adfMinMax[0],
+                                         &adfMinMax[1], nullptr, nullptr,
+                                         nullptr, nullptr, nullptr);
                 if (eErr == CE_Failure)
                 {
                     osLastErrorMsg = CPLGetLastErrorMsg();
@@ -1489,7 +1530,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
         {
             EnablePixelTypeSignedByteWarning(false);
             const char *pszPixelType =
-                GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             EnablePixelTypeSignedByteWarning(true);
             bSignedByte =
                 pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
@@ -1667,7 +1708,8 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                                double *pdfMax, double *pdfMean,
                                                double *pdfStdDev,
                                                GDALProgressFunc pfnProgress,
-                                               void *pProgressData)
+                                               void *pProgressData,
+                                               CSLConstList papszOptions)
 
 {
     const std::string osFctId("VRTSourcedRasterBand::ComputeStatistics");
@@ -1684,6 +1726,9 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         return CE_Failure;
     }
+
+    const bool bSetStatistics =
+        CPLFetchBool(papszOptions, "SET_STATISTICS", true);
 
     /* -------------------------------------------------------------------- */
     /*      If we have overview bands, use them for statistics.             */
@@ -1704,16 +1749,17 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 l_poDS->m_apoOverviews.clear();
                 eErr = poBand->GDALRasterBand::ComputeStatistics(
                     TRUE, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
-                    pProgressData);
+                    pProgressData, papszOptions);
                 l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
             }
             else
             {
                 eErr = poBand->ComputeStatistics(TRUE, pdfMin, pdfMax, pdfMean,
                                                  pdfStdDev, pfnProgress,
-                                                 pProgressData);
+                                                 pProgressData, papszOptions);
             }
-            if (eErr == CE_None && pdfMin && pdfMax && pdfMean && pdfStdDev)
+            if (eErr == CE_None && pdfMin && pdfMax && pdfMean && pdfStdDev &&
+                bSetStatistics)
             {
                 SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
                 SetMetadataItem(
@@ -1729,10 +1775,10 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             /*bAllowMaxValAdjustment = */ false))
     {
         Context sContext;
-        sContext.bApproxOK = bApproxOK;
+        sContext.bApproxOK = CPL_TO_BOOL(bApproxOK);
         sContext.dfNoDataValue = m_dfNoDataValue;
         sContext.bNoDataValueSet = m_bNoDataValueSet;
-        sContext.bHideNoDataValue = m_bHideNoDataValue;
+        sContext.bHideNoDataValue = CPL_TO_BOOL(m_bHideNoDataValue);
         sContext.pfnProgress = pfnProgress;
         sContext.pProgressData = pProgressData;
         sContext.nSources = static_cast<int>(m_papoSources.size());
@@ -1748,6 +1794,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             double dfMax = 0;
             double dfMean = 0;
             double dfStdDev = 0;
+            CSLConstList papszOptions = nullptr;
 
             static int CPL_STDCALL ProgressFunc(double dfComplete,
                                                 const char *pszMessage,
@@ -1882,7 +1929,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         psContext->pfnProgress == GDALDummyProgress
                     ? GDALDummyProgress
                     : Job::ProgressFunc,
-                psJob);
+                psJob, psJob->papszOptions);
             const char *pszValidPercent =
                 poSimpleSourceBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
             psJob->nValidPixels =
@@ -2005,6 +2052,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 assert(poSimpleSourceBand);
                 asJobs[i].psContext = &sContext;
                 asJobs[i].poRasterBand = poSimpleSourceBand;
+                asJobs[i].papszOptions = papszOptions;
                 if (!poQueue->SubmitJob(JobRunner, &asJobs[i]))
                 {
                     sContext.bFailure = true;
@@ -2035,6 +2083,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 Job sJob;
                 sJob.psContext = &sContext;
                 sJob.poRasterBand = poSimpleSourceBand;
+                sJob.papszOptions = papszOptions;
                 JobRunner(&sJob);
                 if (sContext.bFailure || sContext.bFallbackToBase)
                     break;
@@ -2054,7 +2103,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                 "of source raster");
             return GDALRasterBand::ComputeStatistics(
                 bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
-                pProgressData);
+                pProgressData, papszOptions);
         }
 
         const uint64_t nTotalPixels =
@@ -2099,16 +2148,19 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
         if (sContext.nGlobalValidPixels > 0)
         {
-            if (bApproxOK)
+            if (bSetStatistics)
             {
-                SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
+                if (bApproxOK)
+                {
+                    SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
+                }
+                else if (GetMetadataItem("STATISTICS_APPROXIMATE"))
+                {
+                    SetMetadataItem("STATISTICS_APPROXIMATE", nullptr);
+                }
+                SetStatistics(sContext.dfGlobalMin, sContext.dfGlobalMax,
+                              dfGlobalMean, dfGlobalStdDev);
             }
-            else if (GetMetadataItem("STATISTICS_APPROXIMATE"))
-            {
-                SetMetadataItem("STATISTICS_APPROXIMATE", nullptr);
-            }
-            SetStatistics(sContext.dfGlobalMin, sContext.dfGlobalMax,
-                          dfGlobalMean, dfGlobalStdDev);
         }
         else
         {
@@ -2116,7 +2168,8 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             sContext.dfGlobalMax = 0.0;
         }
 
-        SetValidPercent(nTotalPixels, sContext.nGlobalValidPixels);
+        if (bSetStatistics)
+            SetValidPercent(nTotalPixels, sContext.nGlobalValidPixels);
 
         if (pdfMin)
             *pdfMin = sContext.dfGlobalMin;
@@ -2138,9 +2191,9 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
     }
     else
     {
-        return GDALRasterBand::ComputeStatistics(bApproxOK, pdfMin, pdfMax,
-                                                 pdfMean, pdfStdDev,
-                                                 pfnProgress, pProgressData);
+        return GDALRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
+            pProgressData, papszOptions);
     }
 }
 
@@ -2255,9 +2308,10 @@ CPLErr VRTSourcedRasterBand::AddSource(std::unique_ptr<VRTSource> poNewSource)
     {
         VRTSimpleSource *poSS =
             static_cast<VRTSimpleSource *>(poNewSource.get());
-        if (GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr)
+        if (GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) != nullptr)
         {
-            int nBits = atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            int nBits =
+                atoi(GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
             if (nBits >= 1 && nBits <= 31)
             {
                 poSS->SetMaxValue(static_cast<int>((1U << nBits) - 1));

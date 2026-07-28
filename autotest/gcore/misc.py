@@ -539,7 +539,7 @@ def test_update_metadata(tmp_path, tmp_vsimem, driver_name):
         assert dst_ds
         dst_ds.Close()
 
-    update_ds = gdal.OpenEx(filename, gdal.GA_Update, allowed_drivers=[driver_name])
+    update_ds = gdal.Open(filename, gdal.GA_Update, allowed_drivers=[driver_name])
     assert update_ds
 
     flags_str = drv.GetMetadataItem(gdal.DMD_UPDATE_ITEMS)
@@ -693,6 +693,7 @@ def test_misc_11():
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
+
 # Started to fail suddenly on May 14th 2025 on this config
 @pytest.mark.skipif(
     gdaltest.is_travis_branch("build-windows-conda"), reason="fails for unknown reason"
@@ -749,7 +750,7 @@ def test_misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/misc_12.vrt", src_ds)
-                (out, _) = gdaltest.runexternal_out_and_err(
+                out, _ = gdaltest.runexternal_out_and_err(
                     gdal_translate_path
                     + " -of "
                     + drv.ShortName
@@ -794,7 +795,7 @@ def test_misc_13():
     assert out_ds is None
 
     # Raster-only -> vector-only
-    ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
     with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None

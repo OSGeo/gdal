@@ -45,7 +45,7 @@ public class ogrtindex {
       /* -------------------------------------------------------------------- */
       /*      Register format(s).                                             */
       /* -------------------------------------------------------------------- */
-      // fixed: http://osgeo-org.1803224.n2.nabble.com/GDAL-Java-Binding-meomory-problem-under-intensive-method-calls-td7155011.html#a7157916
+      // fixed: https://lists.osgeo.org/pipermail/gdal-dev/2012-January/031398.html
       if( ogr.GetDriverCount() == 0 )
          ogr.RegisterAll();
 

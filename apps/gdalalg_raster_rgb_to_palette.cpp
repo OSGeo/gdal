@@ -42,7 +42,8 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
         .SetMinValueIncluded(2)
         .SetMaxValueIncluded(256);
     AddArg("color-map", 0, _("Color map filename"), &m_colorMap);
-    AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData)
+    AddArg("output-nodata", 0, _("Output nodata value"), &m_dstNoData)
+        .AddHiddenAlias("dst-nodata")
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
     AddArg("no-dither", 0, _("Disable Floyd-Steinberg dithering"), &m_noDither);
@@ -252,15 +253,18 @@ bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 oCT = std::move(*(poCT.get()));
             }
         }
-
-        m_colorCount = oCT.GetColorEntryCount();
     }
+
+    m_colorCount = oCT.GetColorEntryCount();
 
     if (m_dstNoData >= 0)
     {
         for (int i = std::min(255, m_colorCount); i > m_dstNoData; --i)
         {
-            oCT.SetColorEntry(i, oCT.GetColorEntry(i - 1));
+            // Create a temporary copy to avoid use after free when SetColorEntry()
+            // resizes the underlying vector.
+            const GDALColorEntry sEntry = *(oCT.GetColorEntry(i - 1));
+            oCT.SetColorEntry(i, &sEntry);
         }
 
         poTmpDS->GetRasterBand(1)->SetNoDataValue(m_dstNoData);

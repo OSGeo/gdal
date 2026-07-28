@@ -754,7 +754,8 @@ OGRErr OGRSpatialReference::importFromCF1(CSLConstList papszKeyValues,
     else if (pszUnits != nullptr && !EQUAL(pszUnits, "") && !bRotatedPole)
     {
         if (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "metre") ||
-            EQUAL(pszUnits, "meter"))
+            EQUAL(pszUnits, "meter") || EQUAL(pszUnits, "meters") ||
+            EQUAL(pszUnits, "metres"))
         {
             SetLinearUnits("metre", 1.0);
             SetAuthority("PROJCS|UNIT", "EPSG", 9001);

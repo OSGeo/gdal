@@ -1650,7 +1650,7 @@ static bool AreGeomsEqualAxisOrderInsensitive(const OGRGeometry *poGeomRef,
     if (poGeomRef->Equals(poGeomModifiable))
         return true;
     poGeomModifiable->swapXY();
-    return CPL_TO_BOOL(poGeomRef->Equals(poGeomModifiable));
+    return poGeomRef->Equals(poGeomModifiable);
 }
 
 /************************************************************************/

@@ -1,7 +1,7 @@
 .. _gdal_cli_gdalg:
 
 ================================================================================
-.gdalg files to replay serialized "gdal" commands
+.gdalg files to replay serialized ``gdal`` commands
 ================================================================================
 
 A subset of subcommands of :program:`gdal` support generating
@@ -54,7 +54,7 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector pipeline ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
+        $ gdal vector pipeline ! read in.gpkg ! reproject --output-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal vector info in_epsg_32632.gdalg.json
 
     The content of :file:`in_epsg_32632.gdalg.json` is:
@@ -63,5 +63,5 @@ Examples
 
         {
             "type": "gdal_streamed_alg",
-            "command_line": "gdal vector pipeline ! read in.gpkg ! reproject --dst-crs=EPSG:32632"
+            "command_line": "gdal vector pipeline ! read in.gpkg ! reproject --output-crs=EPSG:32632"
         }

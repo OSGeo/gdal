@@ -107,6 +107,8 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
     static std::string GetSAS(const char *pszFilename);
 
     static bool IsNoSignRequest(const char *pszFilename);
+
+    static const char *GetOptions();
 };
 
 namespace cpl

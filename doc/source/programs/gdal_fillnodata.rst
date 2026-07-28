@@ -90,3 +90,8 @@ Additional details on the algorithm are available in the
 .. option:: <dstfile>
 
     The new file to create with the interpolated result.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

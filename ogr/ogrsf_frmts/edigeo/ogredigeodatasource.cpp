@@ -954,7 +954,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString &osFEA,
     if (strcmp(poFeature->GetDefnRef()->GetName(), "ID_S_OBJ_Z_1_2_2") == 0 &&
         iATR != -1 && (pszATR = poFeature->GetFieldAsString(iATR)) != nullptr)
     {
-        const CPLString osATR = pszATR;
+        const CPLString osATR(pszATR);
         std::map<CPLString, CPLString>::iterator itFEA_FEA =
             mapFEA_FEA.find(osFEA);
         if (itFEA_FEA != mapFEA_FEA.end())

@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -30,47 +31,55 @@ using OSGeo.OGR;
 /// A C# based sample for demonstrating the usage of ExportToWkb.
 /// </summary>
 
-class WKT2WKB {
+class WKT2WKB
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage example: wkt2wkb \"POINT(47.0 19.2)\"");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage example: wkt2wkb \"POINT(47.0 19.2)\"");
+        System.Environment.Exit(-1);
+    }
 
-	public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 1) usage();
+        if (args.Length != 1) usage();
 
-		/* -------------------------------------------------------------------- */
-		/*      Register format(s).                                             */
-		/* -------------------------------------------------------------------- */
+        /* -------------------------------------------------------------------- */
+        /*      Register format(s).                                             */
+        /* -------------------------------------------------------------------- */
         Ogr.RegisterAll();
 
-        Geometry geom = Geometry.CreateFromWkt(args[0]);
-
-		long wkbSize = geom.WkbSize();
-        if (wkbSize > 0)
+        using (Geometry geom = Geometry.CreateFromWkt(args[0]))
         {
-            byte[] wkb = new byte[wkbSize];
-            geom.ExportToWkb( wkb );
-            Console.WriteLine( "wkt-->wkb: " + BitConverter.ToString(wkb) );
 
-			// wkb --> wkt (reverse test)
-			Geometry geom2 = Geometry.CreateFromWkb(wkb);
-			string geom_wkt;
-			geom2.ExportToWkt(out geom_wkt);
-			Console.WriteLine( "wkb->wkt: " + geom_wkt );
+            long wkbSize = geom.WkbSize();
+            if (wkbSize > 0)
+            {
+                byte[] wkb = new byte[wkbSize];
+                geom.ExportToWkb(wkb);
+                Console.WriteLine("wkt-->wkb: " + BitConverter.ToString(wkb));
+
+                // wkb --> wkt (reverse test)
+                using (Geometry geom2 = Geometry.CreateFromWkb(wkb))
+                {
+                    string geom_wkt;
+                    geom2.ExportToWkt(out geom_wkt);
+                    Console.WriteLine("wkb->wkt: " + geom_wkt);
+                }
+            }
+
+            // wkt -- gml transformation
+            string gml = geom.ExportToGML();
+            Console.WriteLine("wkt->gml: " + gml);
+
+            using (Geometry geom3 = Geometry.CreateFromGML(gml))
+            {
+                string geom_wkt2;
+                geom3.ExportToWkt(out geom_wkt2);
+                Console.WriteLine("gml->wkt: " + geom_wkt2);
+            }
         }
-
-		// wkt -- gml transformation
-       string gml = geom.ExportToGML();
-       Console.WriteLine( "wkt->gml: " + gml );
-
-       Geometry geom3 = Geometry.CreateFromGML(gml);
-	   string geom_wkt2;
-	   geom3.ExportToWkt(out geom_wkt2);
-	   Console.WriteLine( "gml->wkt: " + geom_wkt2 );
-	}
+    }
 }

@@ -122,6 +122,12 @@ recovered by untrusted code that would run in the same process as GDAL code.
 The same applies for connection strings to some drivers such as PostgreSQL, MySQL, etc.
 which may include passwords.
 
+Known issues in networking
+--------------------------
+
+See the :config:`CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED` configuration option
+to limit potential exfiltration of content from local files.
+
 Known issues in API
 -------------------
 

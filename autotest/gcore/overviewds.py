@@ -26,7 +26,7 @@ from osgeo import gdal
 
 def test_overviewds_1():
     with pytest.raises(Exception):
-        gdal.OpenEx("data/byte.tif", open_options=["OVERVIEW_LEVEL=0"])
+        gdal.Open("data/byte.tif", open_options=["OVERVIEW_LEVEL=0"])
 
 
 ###############################################################################
@@ -53,7 +53,7 @@ def test_overviewds_2(tmp_path, externalOverviews):
 
     src_ds = gdal.Open(tmpfilename)
 
-    ds = gdal.OpenEx(tmpfilename, open_options=["OVERVIEW_LEVEL=NONE"])
+    ds = gdal.Open(tmpfilename, open_options=["OVERVIEW_LEVEL=NONE"])
     assert ds.RasterXSize == 20 and ds.RasterYSize == 20 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -70,7 +70,7 @@ def test_overviewds_2(tmp_path, externalOverviews):
     )
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, open_options=["OVERVIEW_LEVEL=0only"])
+    ds = gdal.Open(tmpfilename, open_options=["OVERVIEW_LEVEL=0only"])
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     expected_data = src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
@@ -82,7 +82,7 @@ def test_overviewds_2(tmp_path, externalOverviews):
     assert got_data != expected_data
     ds = None
 
-    ds = gdal.OpenEx(tmpfilename, open_options=["OVERVIEW_LEVEL=0"])
+    ds = gdal.Open(tmpfilename, open_options=["OVERVIEW_LEVEL=0"])
     assert ds is not None
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -156,12 +156,12 @@ def test_overviewds_3(tmp_path):
     ds.SetGCPs(src_gcps, src_ds.GetProjectionRef())
 
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_POLYNOMIAL"])
-    (_, ref_pnt) = tr.TransformPoint(0, 20, 10)
+    _, ref_pnt = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews("NEAR", overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
+    ds = gdal.Open(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
     gcps = ds.GetGCPs()
     for i in range(3):
         assert (
@@ -173,7 +173,7 @@ def test_overviewds_3(tmp_path):
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_POLYNOMIAL"])
-    (_, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
+    _, pnt = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         assert ref_pnt[i] == pytest.approx(pnt[i], abs=1e-5)
@@ -199,12 +199,12 @@ def test_overviewds_4(tmp_path):
     rpc_md = ds.GetMetadata("RPC")
 
     tr = gdal.Transformer(ds, None, ["METHOD=RPC"])
-    (_, ref_pnt) = tr.TransformPoint(0, 20, 10)
+    _, ref_pnt = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews("NEAR", overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
+    ds = gdal.Open(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
     got_md = ds.GetMetadata("RPC")
 
     for key in rpc_md:
@@ -222,7 +222,7 @@ def test_overviewds_4(tmp_path):
 
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ["METHOD=RPC"])
-    (_, pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
+    _, pnt = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         assert ref_pnt[i] == pytest.approx(pnt[i], abs=1e-5)
@@ -247,12 +247,12 @@ def test_overviewds_5(tmp_path):
     geoloc_md = ds.GetMetadata("GEOLOCATION")
 
     tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
-    (_, ref_pnt) = tr.TransformPoint(0, 20, 10)
+    _, ref_pnt = tr.TransformPoint(0, 20, 10)
 
     ds.BuildOverviews("NEAR", overviewlist=[2, 4])
     ds = None
 
-    ds = gdal.OpenEx(tmp_path / "sstgeo.vrt", open_options=["OVERVIEW_LEVEL=0"])
+    ds = gdal.Open(tmp_path / "sstgeo.vrt", open_options=["OVERVIEW_LEVEL=0"])
     got_md = ds.GetMetadata("GEOLOCATION")
 
     for key in geoloc_md:
@@ -273,7 +273,7 @@ def test_overviewds_5(tmp_path):
     # Really check that the transformer works
     tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
     expected_xyz = (20.0 / 2, 10.0 / 2, 0)
-    (_, pnt) = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
+    _, pnt = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
 
     for i in range(3):
         assert pnt[i] == pytest.approx(expected_xyz[i], abs=0.5)
@@ -295,7 +295,7 @@ def test_overviewds_6(tmp_path):
     ds.BuildOverviews("NEAR", overviewlist=[2, 4])
     ds = None
 
-    src_ds = gdal.OpenEx(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
+    src_ds = gdal.Open(tmp_path / "byte.tif", open_options=["OVERVIEW_LEVEL=0"])
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = gdal.GetDriverByName("VRT").CreateCopy(tmp_path / "byte.vrt", src_ds)
     ds = None
@@ -316,11 +316,11 @@ def test_overviewds_mask(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "test.tif", 4, 4)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 4, b"\xFF" * 8)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 4, b"\xff" * 8)
     src_ds.BuildOverviews("NEAR", [2, 4])
     src_ds = None
 
-    ovr_ds = gdal.OpenEx(tmp_vsimem / "test.tif", open_options=["OVERVIEW_LEVEL=0"])
+    ovr_ds = gdal.Open(tmp_vsimem / "test.tif", open_options=["OVERVIEW_LEVEL=0"])
     assert ovr_ds
     assert ovr_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     ovrmaskband = ovr_ds.GetRasterBand(1).GetMaskBand()

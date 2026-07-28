@@ -12,6 +12,7 @@
 
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_thread_pool.h"
 #include "zarr.h"
 #include "vsikerchunk.h"
@@ -83,6 +84,8 @@ bool ZarrV2Array::Flush()
         return true;
 
     bool ret = ZarrV2Array::FlushDirtyBlock();
+
+    m_anCachedBlockIndices.clear();
 
     if (m_bDefinitionModified)
     {
@@ -677,23 +680,33 @@ bool ZarrV2Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
     for (int i = m_oFiltersArray.Size(); i > 0;)
     {
         --i;
-        const auto &oFilter = m_oFiltersArray[i];
-        const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterDecompressor =
-            EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
-            : EQUAL(osFilterId.c_str(), "quantize")
-                ? ZarrGetQuantizeDecompressor()
-            : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
-                ? ZarrGetFixedScaleOffsetDecompressor()
-                : CPLGetDecompressor(osFilterId.c_str());
-        CPLAssert(psFilterDecompressor);
-
+        const CPLCompressor *psFilterDecompressor;
         CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
+        std::string osFilterId;
         {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
+            // Below CPLJSONObject/CPLJSONArray uses are not thread safe
+            std::lock_guard<std::mutex> oLock(m_oMutex);
+            const auto &oFilter = m_oFiltersArray[i];
+            osFilterId = oFilter["id"].ToString();
+            if (osFilterId == "bitround")
+                continue;  // no-op on decoding
+            psFilterDecompressor =
+                EQUAL(osFilterId.c_str(), "shuffle")
+                    ? ZarrGetShuffleDecompressor()
+                : EQUAL(osFilterId.c_str(), "quantize")
+                    ? ZarrGetQuantizeDecompressor()
+                : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
+                    ? ZarrGetFixedScaleOffsetDecompressor()
+                    : CPLGetDecompressor(osFilterId.c_str());
+            CPLAssert(psFilterDecompressor);
+
+            for (const auto &obj : oFilter.GetChildren())
+            {
+                aosOptions.SetNameValue(obj.GetName().c_str(),
+                                        obj.ToString().c_str());
+            }
         }
+
         void *out_buffer = &abyTmpRawBlockData[0];
         size_t nOutSize = abyTmpRawBlockData.size();
         if (!psFilterDecompressor->pfnFunc(
@@ -961,7 +974,8 @@ bool ZarrV2Array::FlushDirtyBlock() const
     for (const auto &oFilter : m_oFiltersArray)
     {
         const auto osFilterId = oFilter["id"].ToString();
-        if (osFilterId == "quantize" || osFilterId == "fixedscaleoffset")
+        if (osFilterId == "quantize" || osFilterId == "fixedscaleoffset" ||
+            osFilterId == "bitround")
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "%s filter not supported for writing", osFilterId.c_str());
@@ -1274,9 +1288,6 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             }
             else if (chType == 'f' && nBytes == 2)
             {
-                // elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                // elt.gdalTypeIsApproxOfNative = true;
-                // eDT = GDT_Float32;
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float16;
             }
@@ -1925,15 +1936,11 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
                               oType.GetNumericDataType(), 0, 1);
             }
-            else if (oType.GetNumericDataType() == GDT_UInt64 &&
-                     /* we can't really deal with nodata value between */
-                     /* int64::max and uint64::max due to json-c limitations */
-                     dfNoDataValue >= 0)
+            else if (oType.GetNumericDataType() == GDT_UInt64)
             {
-                const int64_t nNoDataValue =
-                    static_cast<int64_t>(oFillValue.ToLong());
+                const uint64_t nNoDataValue = oFillValue.ToUInt64();
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+                GDALCopyWords(&nNoDataValue, GDT_UInt64, 0, &abyNoData[0],
                               oType.GetNumericDataType(), 0, 1);
             }
             else
@@ -2023,7 +2030,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             }
             if (!EQUAL(osFilterId.c_str(), "shuffle") &&
                 !EQUAL(osFilterId.c_str(), "quantize") &&
-                !EQUAL(osFilterId.c_str(), "fixedscaleoffset"))
+                !EQUAL(osFilterId.c_str(), "fixedscaleoffset") &&
+                !EQUAL(osFilterId.c_str(), "bitround"))
             {
                 const auto psFilterCompressor =
                     CPLGetCompressor(osFilterId.c_str());

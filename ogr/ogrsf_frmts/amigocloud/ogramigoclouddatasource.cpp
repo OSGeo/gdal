@@ -223,7 +223,7 @@ int OGRAmigoCloudDataSource::Open(const char *pszFilename,
     if (osAPIKey.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "AMIGOCLOUD_API_KEY is not defined.\n");
+                 "AMIGOCLOUD_API_KEY is not defined.");
         return FALSE;
     }
 
@@ -308,7 +308,7 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
     // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = nullptr;
 
-    const char *pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+    const char *pszAuthorityName = oSRS.GetAuthorityName();
 
     if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
     {
@@ -319,16 +319,16 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
          */
         oSRS.AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        pszAuthorityName = oSRS.GetAuthorityName();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char *pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            const char *pszAuthorityCode = oSRS.GetAuthorityCode();
             if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
             {
                 /* Import 'clean' SRS */
                 oSRS.importFromEPSG(atoi(pszAuthorityCode));
 
-                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+                pszAuthorityName = oSRS.GetAuthorityName();
             }
         }
     }
@@ -341,7 +341,7 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        const int nAuthorityCode = atoi(oSRS.GetAuthorityCode(nullptr));
+        const int nAuthorityCode = atoi(oSRS.GetAuthorityCode());
 
         return nAuthorityCode;
     }
@@ -788,7 +788,7 @@ json_object *OGRAmigoCloudDataSource::RunSQL(const char *pszUnescapedSQL)
     CPLString osSQL;
     std::string pszAPIURL = GetAPIURL();
     osSQL = pszAPIURL + "/users/0/projects/" + CPLString(pszProjectId) + "/sql";
-    std::string sql = pszUnescapedSQL;
+    const std::string sql(pszUnescapedSQL);
     if (sql.find("DELETE") != std::string::npos ||
         sql.find("delete") != std::string::npos ||
         sql.find("INSERT") != std::string::npos ||

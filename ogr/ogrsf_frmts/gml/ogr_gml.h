@@ -38,7 +38,7 @@ typedef enum
 
 class OGRGMLLayer final : public OGRLayer
 {
-    OGRFeatureDefn *poFeatureDefn;
+    OGRFeatureDefnRefCountedPtr poFeatureDefn;
 
     GIntBig m_iNextGMLId = 0;
     bool m_bInvalidFIDFound = false;
@@ -78,7 +78,7 @@ class OGRGMLLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return poFeatureDefn;
+        return poFeatureDefn.get();
     }
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
@@ -122,7 +122,7 @@ class OGRGMLDataSource final : public GDALDataset
     bool m_bWriteGlobalSRS = true;
 
     //! The global SRS (may be null), that is valid only if m_bWriteGlobalSRS == true
-    std::unique_ptr<OGRSpatialReference> m_poWriteGlobalSRS{};
+    OGRSpatialReferenceRefCountedPtr m_poWriteGlobalSRS{};
 
     //! Whether at least one geometry field has been created
     bool m_bWriteGlobalSRSInit = false;
@@ -149,7 +149,7 @@ class OGRGMLDataSource final : public GDALDataset
     bool m_bGetSecondaryGeometryOption;
 
     ReadMode eReadMode;
-    GMLFeature *poStoredGMLFeature;
+    std::unique_ptr<GMLFeature> poStoredGMLFeature{};
     OGRGMLLayer *poLastReadLayer;
 
     bool bEmptyAsNull;
@@ -270,14 +270,19 @@ class OGRGMLDataSource final : public GDALDataset
         return eReadMode;
     }
 
-    void SetStoredGMLFeature(GMLFeature *poStoredGMLFeatureIn)
+    void SetStoredGMLFeature(std::unique_ptr<GMLFeature> poStoredGMLFeatureIn)
     {
-        poStoredGMLFeature = poStoredGMLFeatureIn;
+        poStoredGMLFeature = std::move(poStoredGMLFeatureIn);
     }
 
-    GMLFeature *PeekStoredGMLFeature() const
+    const GMLFeature *GetStoredGMLFeature() const
     {
-        return poStoredGMLFeature;
+        return poStoredGMLFeature.get();
+    }
+
+    std::unique_ptr<GMLFeature> BorrowStoredGMLFeature()
+    {
+        return std::move(poStoredGMLFeature);
     }
 
     OGRGMLLayer *GetLastReadLayer() const

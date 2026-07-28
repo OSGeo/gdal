@@ -1210,12 +1210,12 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    poDS->m_gt[0] = header.fWest - metersPerPixel / 2.0;
-    poDS->m_gt[1] = metersPerPixel;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = header.fNorth + metersPerPixel / 2.0;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -metersPerPixel;
+    poDS->m_gt.xorig = header.fWest - metersPerPixel / 2.0;
+    poDS->m_gt.xscale = metersPerPixel;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = header.fNorth + metersPerPixel / 2.0;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -metersPerPixel;
 
     poDS->nBlockXSize = header.iBlockWidth;
     poDS->nBlockYSize = header.iBlockHeight;

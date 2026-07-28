@@ -25,6 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PDF")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -119,7 +120,7 @@ def pdf_checksum_available():
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
 
-    (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    _, err = gdaltest.runexternal_out_and_err("pdftoppm -v")
     if err.startswith("pdftoppm version"):
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
@@ -1100,7 +1101,7 @@ def test_pdf_layers(poppler_or_pdfium):
     assert cs3 == cs2, "did not get expected checksum"
 
     # Turn another sublayer on
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/pdf/adobe_style_geospatial.pdf",
         open_options=["LAYERS=Layers.Measured_Grid"],
     )
@@ -1145,7 +1146,7 @@ def test_pdf_layers_with_same_name_on_different_pages(poppler_or_pdfium):
         ]
         cs_all = ds.GetRasterBand(1).Checksum()
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             f"PDF:{page}:data/pdf/layer_with_same_name_on_different_pages.pdf",
             open_options=["LAYERS_OFF=Map_Frame.Map.States"],
         )
@@ -1272,52 +1273,53 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 
 
 @pytest.mark.require_driver("CSV")
-def test_pdf_write_ogr(poppler_or_pdfium):
-    f = gdal.VSIFOpenL("tmp/test.csv", "wb")
-    data = """id,foo,WKT,style
-1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
-2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
-3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
-4,baz3,"POINT(0 0)",""
-"""
-    gdal.VSIFWriteL(data, 1, len(data), f)
-    gdal.VSIFCloseL(f)
+def test_pdf_write_ogr(tmp_path, poppler_or_pdfium):
+    csv_file = tmp_path / "test.csv"
+    with gdal.VSIFile(csv_file, "wb") as f:
+        data = b"""id,foo,WKT,style
+    1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
+    2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
+    3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
+    4,baz3,"POINT(0 0)",""
+    """
+        f.write(data)
 
-    f = gdal.VSIFOpenL("tmp/test.vrt", "wb")
-    data = """<OGRVRTDataSource>
-  <OGRVRTLayer name="test">
-    <SrcDataSource relativeToVRT="0" shared="1">tmp/test.csv</SrcDataSource>
-    <SrcLayer>test</SrcLayer>
-    <GeometryType>wkbUnknown</GeometryType>
-    <LayerSRS>EPSG:26711</LayerSRS>
-    <Field name="id" type="Integer" src="id"/>
-    <Field name="foo" type="String" src="foo"/>
-    <Field name="WKT" type="String" src="WKT"/>
-    <Style>style</Style>
-  </OGRVRTLayer>
-</OGRVRTDataSource>
-"""
-    gdal.VSIFWriteL(data, 1, len(data), f)
-    gdal.VSIFCloseL(f)
+    vrt_file = tmp_path / "test.vrt"
+    with gdal.VSIFile(vrt_file, "wb") as f:
+        data = f"""<OGRVRTDataSource>
+      <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0" shared="1">{csv_file}</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryType>wkbUnknown</GeometryType>
+        <LayerSRS>EPSG:26711</LayerSRS>
+        <Field name="id" type="Integer" src="id"/>
+        <Field name="foo" type="String" src="foo"/>
+        <Field name="WKT" type="String" src="WKT"/>
+        <Style>style</Style>
+      </OGRVRTLayer>
+    </OGRVRTDataSource>
+    """
+        f.write(data.encode("utf-8"))
 
     options = [
-        "OGR_DATASOURCE=tmp/test.vrt",
+        f"OGR_DATASOURCE={vrt_file}",
         "OGR_DISPLAY_LAYER_NAMES=A_Layer",
         "OGR_DISPLAY_FIELD=foo",
     ]
 
     src_ds = gdal.Open("data/byte.tif")
-    ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_write_ogr.pdf", src_ds, options=options)
+    out_file = tmp_path / "pdf_write_ogr.pdf"
+    ds = gdaltest.pdf_drv.CreateCopy(out_file, src_ds, options=options)
     ds = None
     src_ds = None
 
     if pdf_is_poppler() or pdf_is_pdfium():
-        ds = gdal.Open("tmp/pdf_write_ogr.pdf")
+        ds = gdal.Open(out_file)
         cs_ref = ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List("LAYERS")
         ds = None
 
-    ogr_ds = ogr.Open("tmp/pdf_write_ogr.pdf")
+    ogr_ds = ogr.Open(out_file)
     ogr_lyr = ogr_ds.GetLayer(0)
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
@@ -1336,9 +1338,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
         ]
         for opt in rendering_options:
             gdal.ErrorReset()
-            ds = gdal.OpenEx(
-                "tmp/pdf_write_ogr.pdf", open_options=["RENDERING_OPTIONS=%s" % opt]
-            )
+            ds = gdal.Open(out_file, open_options=["RENDERING_OPTIONS=%s" % opt])
             cs = ds.GetRasterBand(1).Checksum()
             # When misconfigured Poppler with fonts, use this to avoid error
             if "TEXT" in opt and gdal.GetLastErrorMsg().find("font") >= 0:
@@ -1351,16 +1351,31 @@ def test_pdf_write_ogr(poppler_or_pdfium):
             # print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
-                    print("Checksum %s: %d" % (roi, cs_tab[i]))
-                    pytest.fail("Checksum %s: %d" % (rendering_options[j], cs_tab[j]))
+
+                    if gdaltest.is_travis_branch("macos_build_conda"):
+                        # Issue with poppler 26.05, fontconfig 2.18 on MacOSX
+                        pytest.skip(
+                            "Checksum %s=%d, %s=%d. See https://github.com/conda-forge/poppler-feedstock/issues/186"
+                            % (
+                                rendering_options[i],
+                                cs_tab[i],
+                                rendering_options[j],
+                                cs_tab[j],
+                            )
+                        )
+
+                    pytest.fail(
+                        "Checksum %s=%d, %s=%d"
+                        % (
+                            rendering_options[i],
+                            cs_tab[i],
+                            rendering_options[j],
+                            cs_tab[j],
+                        )
+                    )
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
         assert abs(cs_tab[len(rendering_options) - 1]) == cs_ref
-
-    gdal.GetDriverByName("PDF").Delete("tmp/pdf_write_ogr.pdf")
-
-    gdal.Unlink("tmp/test.csv")
-    gdal.Unlink("tmp/test.vrt")
 
     if pdf_is_poppler() or pdf_is_pdfium():
         assert layers == [
@@ -1476,8 +1491,7 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
 @pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
   <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
@@ -1489,8 +1503,7 @@ def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_jpeg_in_vrt_direct_copy.pdf", src_ds)
     ds = None
     src_ds = None
@@ -1562,7 +1575,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
     else:
         tmp_filename = "tmp/pdf_write_huge.pdf"
 
-    for (xsize, ysize) in [(19200, 1), (1, 19200)]:
+    for xsize, ysize in [(19200, 1), (1, 19200)]:
         src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, 1)
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
@@ -1642,7 +1655,7 @@ def test_pdf_overviews(poppler_or_pdfium):
 def test_pdf_password(poppler_or_pdfium_or_podofo):
 
     if gdaltest.is_travis_branch("alpine_32bit") or gdaltest.is_travis_branch(
-        "cmake-ubuntu-jammy"
+        "cmake-ubuntu-noble"
     ):
         pytest.skip()
 
@@ -1656,13 +1669,13 @@ def test_pdf_password(poppler_or_pdfium_or_podofo):
 
     # Wrong password
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/pdf/byte_enc.pdf", open_options=["USER_PWD=wrong_password"]
         )
     assert ds is None
 
     # Correct password
-    ds = gdal.OpenEx("data/pdf/byte_enc.pdf", open_options=["USER_PWD=user_password"])
+    ds = gdal.Open("data/pdf/byte_enc.pdf", open_options=["USER_PWD=user_password"])
     assert ds is not None
 
     import test_cli_utilities
@@ -3084,8 +3097,8 @@ def test_pdf_iso32000_esri_as_epsg():
     gdal.ErrorReset()
     ds = gdal.Open("data/pdf/esri_102422_as_epsg_code.pdf")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityName(None) == "ESRI"
-    assert sr.GetAuthorityCode(None) == "102422"
+    assert sr.GetAuthorityName() == "ESRI"
+    assert sr.GetAuthorityCode() == "102422"
     assert gdal.GetLastErrorMsg() == ""
 
 
@@ -3165,7 +3178,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
     with gdal.VSIFile(tmp_vsimem / "test.pdf", "wb") as f:
         f.write(open("data/pdf/test_ogc_bp.pdf", "rb").read())
 
-    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=144"]) as ds:
+    with gdal.Open(tmp_vsimem / "test.pdf", open_options=["DPI=144"]) as ds:
         assert ds.RasterXSize == 40
         assert ds.RasterYSize == 40
         assert ds.GetRasterBand(1).XSize == 40
@@ -3181,7 +3194,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
         assert ds.GetMetadataItem("DPI") == "72"
     assert gdal.VSIStatL(tmp_vsimem / "test.pdf.aux.xml") is None
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "test.pdf", open_options=["DPI=144", "SAVE_DPI_TO_PAM=YES"]
     ) as ds:
         assert ds.RasterXSize == 40
@@ -3204,7 +3217,7 @@ def test_pdf_dpi_save_to_pam(tmp_vsimem):
         assert ds.GetRasterBand(1).YSize == 40
         assert ds.GetMetadataItem("DPI") == "144"
 
-    with gdal.OpenEx(tmp_vsimem / "test.pdf", open_options=["DPI=72"]) as ds:
+    with gdal.Open(tmp_vsimem / "test.pdf", open_options=["DPI=72"]) as ds:
         assert ds.RasterXSize == 20
         assert ds.RasterYSize == 20
         assert ds.GetRasterBand(1).XSize == 20

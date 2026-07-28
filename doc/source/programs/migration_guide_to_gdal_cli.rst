@@ -1,11 +1,11 @@
 .. _migration_guide_to_gdal_cli:
 
 ================================================================================
-Migration guide to "gdal" command line interface
+Migration guide to ``gdal`` command line interface
 ================================================================================
 
-This page documents through examples how to migrate from the traditional GDAL
-command line utilities to the unified "gdal" command line interface added in
+This page documents, through examples, how to migrate from the traditional GDAL
+command line utilities to the unified ``gdal`` command line interface added in
 GDAL 3.11.
 
 Raster commands
@@ -41,7 +41,7 @@ Raster commands
 
     ==>
 
-    gdal raster reproject --dst-crs=EPSG:4326 --co=TILED=YES,COMPRESS=DEFLATE --overwrite in.tif out.tif
+    gdal raster reproject --output-crs=EPSG:4326 --co=TILED=YES,COMPRESS=DEFLATE --overwrite in.tif out.tif
 
 
 * Update existing out.tif with content of in.tif using cubic interpolation
@@ -214,7 +214,7 @@ Vector commands
 
     ==>
 
-    gdal vector reproject --dst-crs=EPSG:4326 in.shp out.gpkg
+    gdal vector reproject --output-crs=EPSG:4326 in.shp out.gpkg
 
 
 * Clipping a GeoPackage file
@@ -247,7 +247,7 @@ Vector commands
 
     ==>
 
-    gdal vector pipeline read in.gpkg ! filter --bbox=2,49,3,50 ! reproject --dst-crs=EPSG:32631 ! write out.gpkg
+    gdal vector pipeline read in.gpkg ! filter --bbox=2,49,3,50 ! reproject --output-crs=EPSG:32631 ! write out.gpkg
 
 
 * Selecting features from a shapefile based on an attribute query, and restricting to a few fields

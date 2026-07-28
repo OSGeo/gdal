@@ -1076,7 +1076,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nBandDataSize = GDALGetDataTypeSizeBytes(eDataType);
 #ifdef DEBUG
     // Otherwise Coverity thinks that a divide by zero is possible in
-    // AccessBlock() in the complex data type wapping case.
+    // AccessBlock() in the complex data type wrapping case.
     if (nBandDataSize == 0)
         return CE_Failure;
 #endif
@@ -1607,8 +1607,8 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // BlockBasedRasterIO, but rather used our optimized path in
     // RawRasterBand::IRasterIO().
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
-        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) !=
-            nullptr &&
+        (pszInterleave = GetMetadataItem(
+             GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         RawRasterBand *poFirstBand = nullptr;

@@ -3689,7 +3689,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     dfAngUnits * poSrcSRS->GetSemiMajor() / zunit;
                 // Take the center latitude to compute the xscale.
                 const double dfMeanLat =
-                    (gt[3] + nYSize * gt[5] / 2) * dfAngUnits;
+                    (gt.yorig + nYSize * gt.yscale / 2) * dfAngUnits;
                 if (std::fabs(dfMeanLat) / M_PI * 180 > 80)
                 {
                     CPLError(

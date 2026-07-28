@@ -151,14 +151,14 @@ static const char *WFS_ExprGetSRSName(const swq_expr_node *poExpr,
     else if (poExpr->nSubExprCount == iSubArgIndex &&
              psOptions->poSRS != nullptr)
     {
-        if (psOptions->poSRS->GetAuthorityName(nullptr) &&
-            EQUAL(psOptions->poSRS->GetAuthorityName(nullptr), "EPSG") &&
-            psOptions->poSRS->GetAuthorityCode(nullptr) &&
-            oSRS.importFromEPSGA(atoi(
-                psOptions->poSRS->GetAuthorityCode(nullptr))) == OGRERR_NONE)
+        if (psOptions->poSRS->GetAuthorityName() &&
+            EQUAL(psOptions->poSRS->GetAuthorityName(), "EPSG") &&
+            psOptions->poSRS->GetAuthorityCode() &&
+            oSRS.importFromEPSGA(atoi(psOptions->poSRS->GetAuthorityCode())) ==
+                OGRERR_NONE)
         {
             return CPLSPrintf("urn:ogc:def:crs:EPSG::%s",
-                              psOptions->poSRS->GetAuthorityCode(nullptr));
+                              psOptions->poSRS->GetAuthorityCode());
         }
     }
     return nullptr;

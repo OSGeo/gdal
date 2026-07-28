@@ -283,7 +283,7 @@ def test_aaigrid_10():
             with gdal.config_option("AAIGRID_DATATYPE", "Float64"):
                 ds = gdal.Open("data/aaigrid/float64.asc")
         else:
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "data/aaigrid/float64.asc", open_options=["DATATYPE=Float64"]
             )
 

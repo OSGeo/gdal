@@ -70,6 +70,11 @@ maximize output image visual quality.
 
     The output pseudo-colored file that will be created.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Example
 -------
 

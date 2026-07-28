@@ -1,0 +1,76 @@
+import os
+
+from gdalgviz import generate_diagram
+
+IMAGE_ROOT = os.path.join(os.path.dirname(__file__), "images")
+
+
+def test_gdal_pipeline_input_nested():
+    pipeline = """
+gdal pipeline read n43.tif
+! color-map --color-map color_file.txt
+! blend --operator=hsv-value --overlay [ read n43.tif ! hillshade -z 30 ]
+! write out.tif --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_input_nested.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs")
+
+
+def test_gdal_pipeline_ouput_nested():
+    pipeline = """
+gdal raster pipeline
+! read n43.tif
+! color-map --color-map color_file.txt
+! tee
+    [ write colored.tif --overwrite ] 
+! blend --operator=hsv-value --overlay
+    [
+        read n43.tif
+        ! hillshade -z 30
+        ! tee
+            [
+                write hillshade.tif --overwrite
+            ]
+    ]
+! write colored-hillshade.tif --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_output_nested.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs")
+
+
+def test_gdal_vector_pipeline():
+    pipeline = """
+gdal vector pipeline
+    ! read natural_earth_vector.gpkg --layer ne_110m_populated_places_simple
+    ! filter --where "worldcity = 1"
+    ! select --fields "_ogr_geometry_,name"
+    ! reproject --dst-crs=ESRI:53009
+    ! write worldcity_53009.geojson --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_vector_example.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
+
+
+def test_gdal_vector_pipeline_nested():
+    pipeline = """
+gdal vector pipeline
+    ! read natural_earth_vector.gpkg --layer "ne_10m_rivers_europe"
+    ! reproject --output-crs="EPSG:3844"
+    ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! reproject --output-crs="EPSG:3844" ]
+    ! set-geom-type --geometry-type="MULTILINESTRING"
+    ! write romania-rivers.gpkg --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_vector_nested_example.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
+
+
+def test_gdal_mixed_pipeline_nested():
+    pipeline = """
+gdal pipeline
+    ! read "NE2_50M_SR_W.tif"
+    ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ]
+    ! resize --size=70%,70% -r average
+    ! write romania.png --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_mixed_pipeline_nested.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)

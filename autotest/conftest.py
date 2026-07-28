@@ -224,6 +224,14 @@ def pytest_collection_modifyitems(config, items):
                     )
                 )
 
+        for mark in item.iter_markers("require_32bit"):
+            if sys.maxsize > (1 << 32) - 1:
+                item.add_marker(pytest.mark.skip("test requires a 32-bit system"))
+
+        for mark in item.iter_markers("require_64bit"):
+            if sys.maxsize < (1 << 63) - 1:
+                item.add_marker(pytest.mark.skip("test requires a 64-bit system"))
+
         for mark in item.iter_markers("require_curl"):
             if not gdaltest.built_against_curl():
                 item.add_marker(pytest.mark.skip("curl support not available"))

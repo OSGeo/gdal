@@ -1070,7 +1070,7 @@ GIntBig OGRNGWLayer::GetFeatureCount(int bForce)
 OGRErr OGRNGWLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
                                bool bForce)
 {
-    if (!stExtent.IsInit() || CPL_TO_BOOL(bForce))
+    if (!stExtent.IsInit() || bForce)
     {
         auto aosHTTPOptions = poDS->GetHeaders(false);
         bool bResult = NGWAPI::GetExtent(poDS->GetUrl(), osResourceId,
@@ -1296,7 +1296,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     {
         OGRSpatialReference oSRS(*poSRSConst);
         oSRS.AutoIdentifyEPSG();
-        const char *pszEPSG = oSRS.GetAuthorityCode(nullptr);
+        const char *pszEPSG = oSRS.GetAuthorityCode();
         if (pszEPSG != nullptr)
         {
             nEPSG = atoi(pszEPSG);

@@ -162,8 +162,8 @@ static void OGR2SQLITE_ogr_deflate(sqlite3_context *pContext, int argc,
     }
     if (pOut != nullptr)
     {
-        sqlite3_result_blob(pContext, pOut, static_cast<int>(nOutBytes),
-                            VSIFree);
+        sqlite3_result_blob64(pContext, pOut,
+                              static_cast<sqlite3_uint64>(nOutBytes), VSIFree);
     }
     else
     {
@@ -194,8 +194,8 @@ static void OGR2SQLITE_ogr_inflate(sqlite3_context *pContext, int argc,
 
     if (pOut != nullptr)
     {
-        sqlite3_result_blob(pContext, pOut, static_cast<int>(nOutBytes),
-                            VSIFree);
+        sqlite3_result_blob64(pContext, pOut,
+                              static_cast<sqlite3_uint64>(nOutBytes), VSIFree);
     }
     else
     {

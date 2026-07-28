@@ -557,6 +557,7 @@ def test_ogr_kml_write_schema(tmp_vsimem):
     feat.SetField("strfield", "strfield_val")
     feat.SetField("intfield", "1")
     feat.SetField("realfield", "2.34")
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
     lyr.CreateFeature(feat)
     ds = None
 
@@ -579,11 +580,20 @@ def test_ogr_kml_write_schema(tmp_vsimem):
         <SimpleData name="intfield">1</SimpleData>
         <SimpleData name="realfield">2.34</SimpleData>
     </SchemaData></ExtendedData>
+    <Point><coordinates>1,2</coordinates></Point>
   </Placemark>
 </Folder>
 </Document></kml>"""
 
     compare_output(content, expected_content)
+
+    ds = ogr.Open(tmp_vsimem / "ogr_kml_write_schema.kml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "strfield_val"
+    assert f["intfield"] == 1
+    assert f["realfield"] == 2.34
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
 
 
 ###############################################################################

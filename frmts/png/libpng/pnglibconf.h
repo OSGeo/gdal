@@ -219,6 +219,12 @@
 /* end of settings */
 
 /* added by GDAL */
+#if __clang_major__ >= 4
+#define GDAL_LIBPNG_NOSANITIZE_UNSIGNED_INT_OVERFLOW                                   \
+    __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define GDAL_LIBPNG_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
 #undef PNG_READ_INT_FUNCTIONS_SUPPORTED
 #ifdef RENAME_INTERNAL_PNG_SYMBOLS
 #include "gdal_libpng_symbol_rename.h"

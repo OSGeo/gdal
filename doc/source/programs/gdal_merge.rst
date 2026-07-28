@@ -112,6 +112,11 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
     The output file is created (and potentially pre-initialized) but no input
     image data is copied into it.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 
 Examples
 --------

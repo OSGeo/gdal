@@ -189,7 +189,7 @@ def test_ogr_ods_2():
 
 def test_ogr_ods_headers_open_option():
 
-    ds = gdal.OpenEx("data/ods/test.ods", open_options=["HEADERS=DISABLE"])
+    ds = gdal.Open("data/ods/test.ods", open_options=["HEADERS=DISABLE"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -216,7 +216,7 @@ def test_ogr_ods_3():
 
 def test_ogr_ods_field_types_open_option():
 
-    ds = gdal.OpenEx("data/ods/test.ods", open_options=["FIELD_TYPES=STRING"])
+    ds = gdal.Open("data/ods/test.ods", open_options=["FIELD_TYPES=STRING"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -335,7 +335,7 @@ def test_ogr_ods_7():
         os.unlink(filepath)
     shutil.copy("data/ods/test.ods", filepath)
 
-    ds = gdal.OpenEx(filepath, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filepath, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:

@@ -15,19 +15,13 @@ import array
 import itertools
 import json
 import math
+import operator
 import struct
 
 import gdaltest
 import pytest
 
 from osgeo import gdal, osr
-
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
 
 
 @pytest.mark.parametrize("obj_name", ["dataset", "band"])
@@ -173,6 +167,7 @@ def test_multidim_getview_with_indexing_var():
         gdal.GRIORA_RMS,
     ],
 )
+@gdaltest.disable_exceptions()
 def test_multidim_getresampled(resampling):
 
     ds = gdal.Open("../gdrivers/data/small_world.tif")
@@ -194,7 +189,7 @@ def test_multidim_getresampled(resampling):
     assert resampled_ar.GetDataType() == ar.GetDataType()
     srs = resampled_ar.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == srs_ds.GetAuthorityCode(None)
+    assert srs.GetAuthorityCode() == srs_ds.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetName() == "dimY"
@@ -234,6 +229,7 @@ def test_multidim_getresampled(resampling):
         [True, True, True, True],
     ],
 )
+@gdaltest.disable_exceptions()
 def test_multidim_getresampled_new_dims_with_variables(
     with_dim_x, with_var_x, with_dim_y, with_var_y
 ):
@@ -276,7 +272,7 @@ def test_multidim_getresampled_new_dims_with_variables(
     assert resampled_ar
     srs = resampled_ar.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == srs_ds.GetAuthorityCode(None)
+    assert srs.GetAuthorityCode() == srs_ds.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetSize() == ds.RasterYSize // 2
@@ -301,7 +297,7 @@ def test_multidim_getresampled_with_srs():
     assert resampled_ar
     got_srs = resampled_ar.GetSpatialRef()
     assert got_srs is not None
-    assert got_srs.GetAuthorityCode(None) == srs.GetAuthorityCode(None)
+    assert got_srs.GetAuthorityCode() == srs.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
 
     expected_ds = gdal.Warp("", ds, options="-of MEM -t_srs EPSG:4267 -r nearest")
@@ -315,6 +311,7 @@ def test_multidim_getresampled_with_srs():
     assert ds2.GetGeoTransform() == pytest.approx(expected_ds.GetGeoTransform())
 
 
+@gdaltest.disable_exceptions()
 def test_multidim_getresampled_3d():
 
     ds = gdal.Open("../gdrivers/data/small_world.tif")
@@ -378,9 +375,8 @@ def test_multidim_getresampled_error_single_dim():
     rg = mem_ds.GetRootGroup()
     dimX = rg.CreateDimension("X", None, None, 3)
     ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
-        assert resampled_ar is None
+    with pytest.raises(Exception, match="only supports 2 dimensions or more"):
+        ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_error_too_large_y():
@@ -393,12 +389,9 @@ def test_multidim_getresampled_error_too_large_y():
     ar = rg.CreateMDArray(
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    new_dimY = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled(
-            [new_dimY, None], gdal.GRIORA_NearestNeighbour, None
-        )
-        assert resampled_ar is None
+    new_dimY = rg.CreateDimension("Ynew", None, None, 4 * 1000 * 1000 * 1000)
+    with pytest.raises(Exception, match="Too big size for Y dimension"):
+        ar.GetResampled([new_dimY, None], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_error_too_large_x():
@@ -411,12 +404,9 @@ def test_multidim_getresampled_error_too_large_x():
     ar = rg.CreateMDArray(
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    new_dimX = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled(
-            [None, new_dimX], gdal.GRIORA_NearestNeighbour, None
-        )
-        assert resampled_ar is None
+    new_dimX = rg.CreateDimension("Xnew", None, None, 4 * 1000 * 1000 * 1000)
+    with pytest.raises(Exception, match="Too big size for X dimension"):
+        ar.GetResampled([None, new_dimX], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_error_no_geotransform():
@@ -429,9 +419,8 @@ def test_multidim_getresampled_error_no_geotransform():
     ar = rg.CreateMDArray(
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled([None, None], gdal.GRIORA_NearestNeighbour, None)
-        assert resampled_ar is None
+    with pytest.raises(Exception, match="Unable to compute a transformation"):
+        ar.GetResampled([None, None], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_error_extra_dim_not_same():
@@ -450,11 +439,10 @@ def test_multidim_getresampled_error_extra_dim_not_same():
     )
 
     dimOtherNew = rg.CreateDimension("otherNew", None, None, 1)
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled(
-            [dimOtherNew, None, None], gdal.GRIORA_NearestNeighbour, None
-        )
-        assert resampled_ar is None
+    with pytest.raises(
+        Exception, match=r"apoNewDims\[0\] should be the same as its parent"
+    ):
+        ar.GetResampled([dimOtherNew, None, None], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_bad_input_dim_count():
@@ -464,17 +452,18 @@ def test_multidim_getresampled_bad_input_dim_count():
     ar = band.AsMDArray()
     assert ar
 
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
-        assert resampled_ar is None
+    with pytest.raises(
+        Exception, match="apoNewDims size should be the same as GetDimensionCount"
+    ):
+        ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
 
-    with gdal.quiet_errors():
-        resampled_ar = ar.GetResampled(
-            [None, None, None], gdal.GRIORA_NearestNeighbour, None
-        )
-        assert resampled_ar is None
+    with pytest.raises(
+        Exception, match="apoNewDims size should be the same as GetDimensionCount"
+    ):
+        ar.GetResampled([None, None, None], gdal.GRIORA_NearestNeighbour, None)
 
 
+@gdaltest.disable_exceptions()
 def test_multidim_getgridded():
 
     drv = gdal.GetDriverByName("MEM")
@@ -686,6 +675,8 @@ def test_multidim_asclassicdataset_single_dim():
 
     assert ar.AsClassicDataset(0, 0).ReadRaster() == array.array("d", [10.5, 20])
 
+    assert ar.AsClassicDataset(0, 0).AdviseRead(0, 0, 2, 1) == gdal.CE_None
+
     with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
         ar.AsClassicDataset(0, 1)
 
@@ -729,6 +720,8 @@ def test_multidim_asclassicdataset_band_metadata():
         "aux_var", [dimOther], gdal.ExtendedDataType.CreateString()
     )
     aux_var.Write(["foo", "bar"])
+
+    assert ar.AsClassicDataset(2, 1).AdviseRead(0, 0, 2, 2) == gdal.CE_None
 
     with pytest.raises(
         Exception, match="Root group should be provided when BAND_METADATA is set"
@@ -1956,3 +1949,637 @@ def test_multidim_dataset_as_mdarray_errors():
     with pytest.raises(Exception, match="Illegal value for DIM_ORDER option"):
         with gdal.GetDriverByName("MEM").Create("", 1, 1, 1) as ds:
             ds.AsMDArray(["DIM_ORDER=invalid"])
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483647"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    assert ds.GetRasterBand(1).Checksum() == 186
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset_error():
+
+    with pytest.raises(
+        Exception, match="Array is too large to be exposed as a GDAL dataset"
+    ):
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483648"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+
+def test_multidim_guesstransform_no_indexing():
+    ## two dimensions, no indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 2)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+
+
+def test_multidim_guesstransform_regular_2d():
+    ## two regular indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_ivars")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 4)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varY.Write(array.array("d", [90 - 0.9 - i for i in range(dimY.GetSize())]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt == pytest.approx((-179.6, 1.0, 0.0, 89.6, 0.0, -1.0))
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt == pytest.approx((89.6, -1.0, 0.0, -179.6, 0.0, 1.0))
+    gt = ar.GuessGeoTransform(0, 1, True)  # pixel-is-point
+    assert gt == pytest.approx((89.1, -1.0, 0.0, -179.1, 0.0, 1.0))
+    ## allowable, harmless
+    assert ar.GuessGeoTransform(0, 0, False) is not None  # same dim twice
+
+    with pytest.raises(Exception, match="Dimension index out of range"):
+        ar.GuessGeoTransform(2, 1, False)
+
+
+def test_multidim_guessgeotransform_irregular_2d():
+    ## two indexing variables, Y is irregular
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_irreg")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 8)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    # Irregularly spaced values - spacing increases from 1.0 to 6.0
+    varY.Write(array.array("d", [90, 89, 87.5, 85.5, 82.5, 78.5, 73.5, 67.5]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt is None
+
+
+def test_multidim_get_regular_spacing():
+    ## two indexing variables, Y is irregular
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_irreg")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 8)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    # Irregularly spaced values - spacing increases from 1.0 to 6.0
+    varY.Write(array.array("d", [90, 89, 87.5, 85.5, 82.5, 78.5, 73.5, 67.5]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    assert ar.GetRegularSpacing() is None
+    assert varX.GetRegularSpacing() == pytest.approx((-179.1, 1.0))
+    assert varY.GetRegularSpacing() is None
+
+
+def _get_arithmetic_arrays(type, has_nodata):
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    dimY = rg.CreateDimension("Y", None, None, 3)
+
+    ar = rg.CreateMDArray("ar", [dimY, dimX], gdal.ExtendedDataType.Create(type))
+    if has_nodata:
+        ar.SetNoDataValueDouble(100)
+    ar_vals = [0, 10, 20, 30, 40, 50, 60]
+    ar.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar_vals))
+    ar2 = rg.CreateMDArray("ar2", [dimY, dimX], gdal.ExtendedDataType.Create(type))
+    if has_nodata:
+        ar2.SetNoDataValueDouble(100)
+    ar2_vals = [6, 5, 4, 3, 2, 1]
+    ar2.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar2_vals))
+
+    return ar, ar_vals, ar2, ar2_vals
+
+
+def _assert_equal_nan_aware(left, right):
+
+    assert len(left) == len(right)
+    for x, y in zip(left, right):
+        if math.isnan(x):
+            assert math.isnan(y)
+        else:
+            assert x == y
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        pytest.param(operator.add, id="add"),
+        pytest.param(operator.sub, id="sub"),
+        pytest.param(operator.mul, id="mul"),
+        pytest.param(operator.truediv, id="div"),
+    ],
+)
+@pytest.mark.parametrize("type", [gdal.GDT_Byte, gdal.GDT_Float32])
+@pytest.mark.parametrize("has_nodata", [True, False])
+def test_multidim_array_arithmetic_operator(op, type, has_nodata):
+
+    ar, ar_vals, ar2, ar2_vals = _get_arithmetic_arrays(type, has_nodata)
+    res_ar = op(ar, ar2)
+    assert [(x.GetName(), x.GetSize()) for x in res_ar.GetDimensions()] == [
+        (x.GetName(), x.GetSize()) for x in ar.GetDimensions()
+    ]
+    if has_nodata:
+        assert res_ar.GetNoDataValueAsDouble() == 100.0
+    else:
+        assert res_ar.GetNoDataValueAsRaw() is None
+    assert res_ar.GetUnit() == ""
+    assert res_ar.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert res_ar.GetSpatialRef() is None
+    assert len(res_ar.GetCoordinateVariables()) == 0
+    assert list(struct.unpack("d" * 6, res_ar.Read())) == [
+        op(x, y) for x, y in zip(ar_vals, ar2_vals)
+    ]
+
+    res_ar2_ar2 = op(ar2, ar2)
+    assert list(struct.unpack("d" * 6, res_ar2_ar2.Read())) == [
+        op(x, y) for x, y in zip(ar2_vals, ar2_vals)
+    ]
+
+    if has_nodata:
+        ar2_vals[-1] = 100
+        ar2.Write(array.array("B" if type == gdal.GDT_Byte else "f", ar2_vals))
+        res_ar2_ar2 = op(ar2, ar2)
+        _assert_equal_nan_aware(
+            list(struct.unpack("d" * 6, res_ar2_ar2.Read())),
+            [op(x, y) for x, y in zip(ar2_vals, ar2_vals)][0:-1] + [100],
+        )
+
+
+@pytest.mark.parametrize(
+    "op",
+    [
+        pytest.param(operator.add, id="add"),
+        pytest.param(operator.sub, id="sub"),
+        pytest.param(operator.mul, id="mul"),
+        pytest.param(operator.truediv, id="div"),
+    ],
+)
+def test_multidim_array_arithmetic_numpy_interop(op):
+
+    numpy = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.Write(array.array("B", [1, 2]))
+
+    numpy_ar = numpy.array([3, 4])
+
+    assert numpy.all(
+        op(ar, numpy_ar).ReadAsArray() == numpy.array([op(1, 3), op(2, 4)])
+    )
+    assert numpy.all(
+        op(numpy_ar, ar).ReadAsArray() == numpy.array([op(3, 1), op(4, 2)])
+    )
+
+
+def test_multidim_array_arithmetic_unit():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetUnit("unit1")
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetUnit("unit2")
+
+    ar_unitless = rg.CreateMDArray(
+        "ar_unitless", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    assert (ar + ar).GetUnit() == "unit1"
+    assert (ar + ar2).GetUnit() == ""
+    assert (ar + ar_unitless).GetUnit() == ""
+
+    assert (ar - ar).GetUnit() == "unit1"
+    assert (ar - ar2).GetUnit() == ""
+    assert (ar + ar_unitless).GetUnit() == ""
+
+    assert (ar * ar2).GetUnit() == "unit1 * unit2"
+    assert (ar * ar_unitless).GetUnit() == ""
+    assert (ar_unitless * ar).GetUnit() == ""
+
+    assert (ar / ar2).GetUnit() == "unit1 / unit2"
+    assert (ar / ar_unitless).GetUnit() == ""
+    assert (ar_unitless / ar).GetUnit() == ""
+
+
+def test_multidim_array_arithmetic_srs():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetSpatialRef(osr.SpatialReference(epsg=4326))
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetSpatialRef(osr.SpatialReference(epsg=4258))
+
+    ar_no_srs = rg.CreateMDArray(
+        "ar_no_srs", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    assert (ar + ar).GetSpatialRef().GetAuthorityCode() == "4326"
+    assert (ar + ar2).GetSpatialRef() is None
+    assert (ar + ar_no_srs).GetSpatialRef() is None
+    assert (ar_no_srs + ar).GetSpatialRef() is None
+
+
+@pytest.mark.parametrize("same_scale", [True, False])
+def test_multidim_array_arithmetic_offset_no_scale_or_same_scale(same_scale):
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    if same_scale:
+        ar.SetScale(20)
+    ar.SetOffset(1)
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    if same_scale:
+        ar2.SetScale(20)
+    ar2.SetOffset(2)
+
+    ar_no_offset = rg.CreateMDArray(
+        "ar_no_offset", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    assert (ar + ar2).GetOffset() == 3
+    assert (ar + ar_no_offset).GetOffset() is None
+    assert (ar_no_offset + ar).GetOffset() is None
+
+    assert (ar - ar2).GetOffset() == -1
+    assert (ar - ar_no_offset).GetOffset() is None
+    assert (ar_no_offset - ar).GetOffset() is None
+
+    assert (ar * ar2).GetOffset() is None
+    assert (ar / ar2).GetOffset() is None
+
+
+def test_multidim_array_arithmetic_offset_different_scale():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetOffset(1)
+    ar.SetScale(10)
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetOffset(2)
+    ar2.SetScale(20)
+
+    assert (ar + ar2).GetOffset() is None
+    assert (ar - ar2).GetOffset() is None
+    assert (ar * ar2).GetOffset() is None
+    assert (ar / ar2).GetOffset() is None
+
+
+def test_multidim_array_arithmetic_scale_same_and_zero_offset():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetOffset(0)
+    ar.SetScale(10)
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetOffset(0)
+    ar2.SetScale(10)
+
+    assert (ar + ar2).GetScale() == 10
+    assert (ar - ar2).GetScale() == 10
+    assert (ar * ar2).GetScale() == 100
+    assert (ar / ar2).GetScale() == 1
+
+
+def test_multidim_array_arithmetic_scale_same_but_non_zero_offset():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetOffset(1)
+    ar.SetScale(10)
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetOffset(0)
+    ar2.SetScale(10)
+
+    assert (ar + ar2).GetScale() is None
+    assert (ar - ar2).GetScale() is None
+    assert (ar * ar2).GetScale() is None
+    assert (ar / ar2).GetScale() is None
+
+
+@pytest.mark.require_driver("HDF5")
+def test_multidim_array_arithmetic_block_size():
+
+    ds = gdal.Open("../gdrivers/data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("Band1")
+    assert (ar + ar).GetBlockSize() == [1, 2]
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    ar_no_block_size = rg.CreateMDArray(
+        "ar", ar.GetDimensions(), gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    assert (ar + ar_no_block_size).GetBlockSize() == [0, 0]
+    assert (ar_no_block_size + ar).GetBlockSize() == [0, 0]
+
+
+def test_multidim_array_arithmetic_nodata_finite_same():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetNoDataValueDouble(100)
+    ar.Write(array.array("B", [2, 100, 3]))
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetNoDataValueDouble(100)
+    ar2.Write(array.array("B", [3, 2, 100]))
+
+    assert (ar + ar2).GetNoDataValueAsDouble() == 100.0
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar + ar2).Read()), (5, 100, 100))
+
+    _assert_equal_nan_aware(
+        struct.unpack("B" * 3, (ar + ar2).Read(buffer_datatype=ar.GetDataType())),
+        (5, 100, 100),
+    )
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar - ar2).Read()), (-1, 100, 100))
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar * ar2).Read()), (6, 100, 100))
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar / ar2).Read()), (2.0 / 3.0, 100, 100)
+    )
+
+
+def test_multidim_array_arithmetic_nodata_finite_left_only():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetNoDataValueDouble(100)
+    ar.Write(array.array("B", [2, 100, 3]))
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.Write(array.array("B", [3, 2, 100]))
+
+    assert (ar + ar2).GetNoDataValueAsDouble() == 100.0
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar + ar2).Read()), (5, 100, 103))
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar - ar2).Read()), (-1, 100, -97))
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar * ar2).Read()), (6, 100, 300))
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar / ar2).Read()), (2.0 / 3.0, 100, 3.0 / 100.0)
+    )
+
+
+def test_multidim_array_arithmetic_nodata_finite_right_only():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.Write(array.array("B", [2, 100, 3]))
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetNoDataValueDouble(100)
+    ar2.Write(array.array("B", [3, 2, 100]))
+
+    assert (ar + ar2).GetNoDataValueAsDouble() == 100.0
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar + ar2).Read()), (5, 102, 100))
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar - ar2).Read()), (-1, 98, 100))
+
+    _assert_equal_nan_aware(struct.unpack("d" * 3, (ar * ar2).Read()), (6, 200, 100))
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar / ar2).Read()), (2.0 / 3.0, 50, 100)
+    )
+
+
+def test_multidim_array_arithmetic_nodata_finite_different():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.SetNoDataValueDouble(100)
+    ar.Write(array.array("B", [2, 100, 3]))
+
+    ar2 = rg.CreateMDArray("ar2", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.SetNoDataValueDouble(200)
+    ar2.Write(array.array("B", [3, 2, 200]))
+
+    assert math.isnan((ar + ar2).GetNoDataValueAsDouble())
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar + ar2).Read()), (5, float("nan"), float("nan"))
+    )
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar - ar2).Read()), (-1, float("nan"), float("nan"))
+    )
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar * ar2).Read()), (6, float("nan"), float("nan"))
+    )
+
+    _assert_equal_nan_aware(
+        struct.unpack("d" * 3, (ar / ar2).Read()),
+        (2.0 / 3.0, float("nan"), float("nan")),
+    )
+
+
+def test_multidim_array_arithmetic_operations_error():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    dimY = rg.CreateDimension("Y", None, None, 3)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2 = rg.CreateMDArray("ar2", [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    string_ar = rg.CreateMDArray(
+        "string_ar", [dimX], gdal.ExtendedDataType.CreateString()
+    )
+
+    with pytest.raises(
+        Exception, match="Arrays /ar and /ar2 do not have the same shape"
+    ):
+        ar + ar2
+
+    with pytest.raises(
+        Exception, match="Arrays /ar and /ar2 do not have the same shape"
+    ):
+        ar - ar2
+
+    with pytest.raises(
+        Exception, match="Arrays /ar and /ar2 do not have the same shape"
+    ):
+        ar * ar2
+
+    with pytest.raises(
+        Exception, match="Arrays /ar and /ar2 do not have the same shape"
+    ):
+        ar / ar2
+
+    with pytest.raises(Exception, match="non-numeric buffer data type not supported"):
+        (ar + ar).Read(buffer_datatype=gdal.ExtendedDataType.CreateString())
+
+    with pytest.raises(Exception, match="Array /string_ar is not numeric"):
+        ar + string_ar
+
+    with pytest.raises(Exception, match="Array /string_ar is not numeric"):
+        string_ar + ar
+
+
+def test_multidim_array_arithmetic_scalar():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    ar = rg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.Write(array.array("B", [1]))
+    ar2 = rg.CreateMDArray("ar2", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar2.Write(array.array("B", [2]))
+
+    assert struct.unpack("d" * 1, (ar + ar2).Read()) == (1 + 2,)
+
+    assert struct.unpack(
+        "B" * 1, (ar + ar2).Read(buffer_datatype=ar.GetDataType())
+    ) == (1 + 2,)
+
+
+def test_multidim_array_optim_minus_self_integer_scalar():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    ar = rg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.Write(array.array("B", [1]))
+
+    assert struct.unpack("d" * 1, (ar - ar).Read()) == (0,)
+
+
+def test_multidim_array_optim_minus_self_integer():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    dimY = rg.CreateDimension("Y", None, None, 3)
+    ar = rg.CreateMDArray(
+        "ar", [dimX, dimY], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    ar.Write(array.array("B", [1, 2, 3, 4, 5, 6]))
+
+    assert struct.unpack("d" * 6, (ar - ar).Read()) == (0, 0, 0, 0, 0, 0)
+
+
+def test_multidim_array_arithmetic_write_error():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 1)
+    ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    with pytest.raises(
+        Exception,
+        match="Write operation not permitted on dataset opened in read-only mode",
+    ):
+        (ar + ar).AsClassicDataset(0, 0).WriteRaster(0, 0, 1, 1, array.array("d", [1]))
+
+
+def test_multidim_array_arithmetic_coordinate_variables():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 2)
+    rg.CreateMDArray("varX", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    dimY = rg.CreateDimension("Y", None, None, 3)
+    rg.CreateMDArray("varY", [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    ar = rg.CreateMDArray(
+        "ar", [dimX, dimY], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    coordinates = ar.CreateAttribute(
+        "coordinates", [], gdal.ExtendedDataType.CreateString()
+    )
+    assert coordinates.WriteString("varX varY") == 0
+
+    assert len((ar + ar).GetCoordinateVariables()) == 2

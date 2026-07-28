@@ -31,6 +31,7 @@ import stat
 import sys
 import tempfile
 import threading
+import warnings
 from functools import partial
 from typing import Any, Dict, List, NoReturn, Optional, Tuple
 from uuid import uuid4
@@ -750,8 +751,7 @@ def generate_kml(
         else:
             url = ""
 
-    s = (
-        """<?xml version="1.0" encoding="utf-8"?>
+    s = """<?xml version="1.0" encoding="utf-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>%(xml_escaped_title)s</name>
@@ -760,12 +760,9 @@ def generate_kml(
       <ListStyle id="hideChildren">
         <listItemType>checkHideChildren</listItemType>
       </ListStyle>
-    </Style>"""
-        % args
-    )
+    </Style>""" % args
     if tilekml:
-        s += (
-            """
+        s += """
     <Region>
       <LatLonAltBox>
         <north>%(north).14f</north>
@@ -790,9 +787,7 @@ def generate_kml(
         <west>%(west).14f</west>
       </LatLonBox>
     </GroundOverlay>
-"""
-            % args
-        )
+""" % args
 
     for cx, cy, cz in children:
         csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
@@ -1710,6 +1705,15 @@ def optparse_init() -> Tuple[optparse.OptionParser, Dict[Any, Any]]:
     profile_list, tmsMap = get_profile_list_and_tmsMap()
 
     p.add_option(
+        "--legacy",
+        dest="legacy",
+        action="store_true",
+        help=(
+            "Whether to use legacy gdal2tiles mode. Otherwise by default 'gdal raster tile' is used underneath. If you find yourself to need legacy mode and cannot find workarounds using gdal raster tile, please file a ticket at https://github.com/OSGeo/GDAL since legacy mode will be removed in GDAL 3.15."
+        ),
+    )
+
+    p.add_option(
         "-p",
         "--profile",
         dest="profile",
@@ -2406,7 +2410,7 @@ class GDAL2Tiles:
         )
         self.omaxy = self.out_gt[3]
         self.ominy = (
-            self.out_gt[3] - self.warped_input_dataset.RasterYSize * self.out_gt[1]
+            self.out_gt[3] + self.warped_input_dataset.RasterYSize * self.out_gt[5]
         )
         # Note: maybe round(x, 14) to avoid the gdal_translate behavior, when 0 becomes -1e-15
 
@@ -3033,8 +3037,7 @@ class GDAL2Tiles:
         else:
             args["srs"] = ""
 
-        s = (
-            """<?xml version="1.0" encoding="utf-8"?>
+        s = """<?xml version="1.0" encoding="utf-8"?>
     <TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
       <Title>%(xml_escaped_title)s</Title>
       <Abstract></Abstract>
@@ -3043,9 +3046,7 @@ class GDAL2Tiles:
       <Origin x="%(west).14f" y="%(south).14f"/>
       <TileFormat width="%(tile_size)d" height="%(tile_size)d" mime-type="image/%(tileformat)s" extension="%(tileformat)s"/>
       <TileSets profile="%(profile)s">
-"""
-            % args
-        )  # noqa
+""" % args  # noqa
         for z in range(self.tminz, self.tmaxz + 1):
             if self.options.profile == "raster":
                 s += (
@@ -3088,9 +3089,9 @@ class GDAL2Tiles:
             args["googlemapsurl"] += "?key=" + self.options.googlekey
             args["googlemapsurl_hint"] = ""
         else:
-            args[
-                "googlemapsurl_hint"
-            ] = "<!-- Replace URL below with https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_KEY_HERE -->"
+            args["googlemapsurl_hint"] = (
+                "<!-- Replace URL below with https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_KEY_HERE -->"
+            )
         args["south"], args["west"], args["north"], args["east"] = self.swne
         args["minzoom"] = self.tminz
         args["maxzoom"] = self.tmaxz
@@ -3102,9 +3103,7 @@ class GDAL2Tiles:
         # Logic below inspired from https://www.gavinharriss.com/code/opacity-control
         # which borrowed on gdal2tiles itself to migrate from Google Maps V2 to V3
 
-        args[
-            "custom_tile_overlay_js"
-        ] = """
+        args["custom_tile_overlay_js"] = """
 // Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
 // with CustomTileOverlay.prototype.getTileUrl() method customized for gdal2tiles needs.
 
@@ -3288,9 +3287,7 @@ CustomTileOverlay.prototype.setObjectOpacity = function (obj) {
 // End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
 """
 
-        args[
-            "ext_draggable_object_js"
-        ] = """
+        args["ext_draggable_object_js"] = """
 // Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
 
 /**
@@ -3611,8 +3608,7 @@ function ExtDraggableObject(src, opt_drag) {
  // End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
 """
 
-        s = (
-            r"""<!DOCTYPE html>
+        s = r"""<!DOCTYPE html>
             <html>
               <head>
                 <title>%(xml_escaped_title)s</title>
@@ -3853,9 +3849,7 @@ function ExtDraggableObject(src, opt_drag) {
                    <div id="map"></div>
               </body>
             </html>
-        """
-            % args
-        )  # noqa
+        """ % args  # noqa
 
         # TODO? when there is self.kml, before the transition to GoogleMapsV3 API,
         # we used to offer a way to display the KML file in Google Earth
@@ -3891,8 +3885,7 @@ function ExtDraggableObject(src, opt_drag) {
         else:
             args["tms"] = 1
 
-        s = (
-            """<!DOCTYPE html>
+        s = """<!DOCTYPE html>
         <html lang="en">
           <head>
             <meta charset="utf-8">
@@ -3995,9 +3988,7 @@ function ExtDraggableObject(src, opt_drag) {
         </body>
         </html>
 
-        """
-            % args
-        )  # noqa
+        """ % args  # noqa
 
         return s
 
@@ -4031,8 +4022,7 @@ function ExtDraggableObject(src, opt_drag) {
         args["center_x"] = (self.ominx + self.omaxx) / 2
         args["center_y"] = (self.ominy + self.omaxy) / 2
 
-        s = (
-            r"""<!DOCTYPE html>
+        s = r"""<!DOCTYPE html>
 <html>
     <head>
     <title>%(xml_escaped_title)s</title>
@@ -4065,13 +4055,10 @@ function ExtDraggableObject(src, opt_drag) {
         var map = new ol.Map({
             controls: ol.control.defaults.defaults().extend([mousePositionControl]),
             target: 'map',
-"""
-            % args
-        )
+""" % args
 
         if self.options.profile == "mercator" or self.options.profile == "geodetic":
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                         title: 'Base maps',
@@ -4110,13 +4097,10 @@ function ExtDraggableObject(src, opt_drag) {
                                 })
                             }),
                         ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         if self.options.profile == "mercator":
-            s += (
-                """
+            s += """
                 new ol.layer.Group({
                     title: 'Overlay',
                     layers: [
@@ -4133,9 +4117,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         elif self.options.profile == "geodetic":
 
@@ -4158,8 +4140,7 @@ function ExtDraggableObject(src, opt_drag) {
                 args["origin"] = "[-180,-90]"
                 args["y_formula"] = "- 1 - tileCoord[2]"
 
-            s += (
-                """
+            s += """
                 new ol.layer.Group({
                     title: 'Overlay',
                     layers: [
@@ -4187,9 +4168,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         elif self.options.profile == "raster":
 
@@ -4213,8 +4192,7 @@ function ExtDraggableObject(src, opt_drag) {
                 args["origin"] = "[%.18g,%.18g]" % (self.ominx, self.ominy)
                 args["y_formula"] = "- 1 - tileCoord[2]"
 
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                     title: 'Overlay',
@@ -4239,9 +4217,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         else:
 
@@ -4278,8 +4254,7 @@ function ExtDraggableObject(src, opt_drag) {
                 tms.topleft_y,
             )
 
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                     title: 'Overlay',
@@ -4308,33 +4283,22 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
-        s += (
-            """
+        s += """
             ],
             view: new ol.View({
-                center: [%(center_x)f, %(center_y)f],"""
-            % args
-        )  # noqa
+                center: [%(center_x)f, %(center_y)f],""" % args  # noqa
 
         if self.options.profile in ("mercator", "geodetic"):
             args["view_zoom"] = args["minzoom"]
             if self.options.profile == "geodetic" and self.options.tmscompatible:
                 args["view_zoom"] += 1
-            s += (
-                """
-                zoom: %(view_zoom)d,"""
-                % args
-            )  # noqa
+            s += """
+                zoom: %(view_zoom)d,""" % args  # noqa
         else:
-            s += (
-                """
-                resolution: %(maxres)f,"""
-                % args
-            )  # noqa
+            s += """
+                resolution: %(maxres)f,""" % args  # noqa
 
         if self.options.profile == "geodetic":
             s += """
@@ -4630,6 +4594,12 @@ def main(argv: List[str] = sys.argv, called_from_main=False) -> int:
             os.environ[argv[i + 1]] = argv[i + 2]
 
     if "--mpi" in argv:
+
+        if "--legacy" not in argv:
+            raise Exception(
+                "--mpi mode is not supported in 'gdal raster tile' non-legacy mode. You may specify --legacy to go on, but this legacy mode is going to be removed in GDAL 3.15."
+            )
+
         from mpi4py import MPI
         from mpi4py.futures import MPICommExecutor
 
@@ -4654,6 +4624,133 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
     input_file, output_folder, options, tmsMap = process_args(
         argv[1:], called_from_main=called_from_main
     )
+
+    if not options.legacy:
+
+        kwargs = {
+            "input": input_file,
+            "output": output_folder,
+        }
+        if not options.quiet:
+            kwargs["progress"] = gdal.TermProgress_nocb
+
+        if options.profile == "raster":
+            kwargs["tiling_scheme"] = "raster"
+        elif options.profile == "geodetic":
+            if options.tmscompatible:
+                kwargs["tiling_scheme"] = "WorldCRS84Quad"
+            else:
+                kwargs["tiling_scheme"] = "GlobalGeodeticOriginLat270"
+        else:
+            kwargs["tiling_scheme"] = options.profile
+
+        if options.resampling:
+            kwargs["resampling"] = options.resampling
+
+        if options.zoom[0] is not None:
+            kwargs["min_zoom"] = options.zoom[0]
+        if options.zoom[1] is not None:
+            kwargs["max_zoom"] = options.zoom[1]
+
+        if options.resume:
+            kwargs["resume"] = True
+
+        if options.s_srs or options.srcnodata is not None:
+            tmp_dir = tempfile.mkdtemp()
+            tmp_file = os.path.join(tmp_dir, "tmp.vrt")
+            gdal.Translate(
+                tmp_file, input_file, outputSRS=options.s_srs, noData=options.srcnodata
+            )
+            kwargs["input"] = str(tmp_file)
+
+        if not options.xyz:
+            kwargs["convention"] = "tms"
+
+        if options.processes:
+            kwargs["num_threads"] = options.processes
+
+        if options.tilesize:
+            kwargs["tile_size"] = options.tilesize
+
+        if options.tiledriver:
+            kwargs["output_format"] = options.tiledriver
+
+        if options.excluded_values:
+            kwargs["excluded_values"] = options.excluded_values
+
+            if options.excluded_values_pct_threshold:
+                kwargs["excluded_values_pct_threshold"] = (
+                    options.excluded_values_pct_threshold
+                )
+
+        if options.nodata_values_pct_threshold != 100:
+            kwargs["nodata_values_pct_threshold"] = options.nodata_values_pct_threshold
+
+        def is_4326_raster(kwargs):
+            ds = gdal.Open(kwargs["input"])
+            srs = ds.GetSpatialRef()
+            return srs is not None and srs.GetAuthorityCode(None) == "4326"
+
+        if options.kml is True or (
+            (
+                options.profile == "geodetic"
+                or (options.profile == "raster" and is_4326_raster(kwargs))
+            )
+            and options.kml is None
+        ):
+            kwargs["kml"] = True
+
+        if options.url:
+            kwargs["url"] = options.url
+
+        if options.webviewer:
+            kwargs["webviewer"] = options.webviewer
+
+        if options.title:
+            kwargs["title"] = options.title
+
+        if options.copyright:
+            kwargs["copyright"] = options.copyright
+
+        if options.mapml_template:
+            kwargs["mapml_template"] = options.mapml_template
+
+        kwargs["skip_blank"] = True
+
+        creation_options = {}
+
+        if options.tiledriver == "WEBP":
+            if options.webp_quality:
+                creation_options["QUALITY"] = options.webp_quality
+            if options.webp_lossless:
+                creation_options["LOSSLESS"] = True
+        elif options.tiledriver == "JPEG":
+            if options.jpeg_quality:
+                creation_options["QUALITY"] = options.jpeg_quality
+
+        if creation_options:
+            kwargs["creation_option"] = creation_options
+
+        if options.googlekey != "INSERT_YOUR_KEY_HERE":
+            raise Exception(
+                "--googlekey is no longer supported in new 'gdal raster tile' non-legacy mode."
+            )
+
+        if options.bingkey != "INSERT_YOUR_KEY_HERE":
+            raise Exception(
+                "--bingkey is no longer supported in new 'gdal raster tile' non-legacy mode."
+            )
+
+        if gdal.alg.raster.tile(**kwargs):
+            return 0
+        else:
+            return 1
+
+    warnings.warn(
+        "--legacy mode is deprecated and will be removed in GDAL 3.15. If you find yourself to need legacy mode and cannot find workarounds using 'gdal raster tile', please file a ticket at https://github.com/OSGeo/GDAL",
+        DeprecationWarning,
+    )
+
     if pool_size:
         options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1

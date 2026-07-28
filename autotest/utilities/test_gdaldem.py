@@ -38,7 +38,7 @@ def test_gdaldem_hillshade(gdaldem_path, tmp_path):
 
     output_tif = str(tmp_path / "n43_hillshade.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdaldem_path} hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
@@ -72,7 +72,7 @@ def test_gdaldem_hillshade_compressed_tiled_output(gdaldem_path, tmp_path):
 
     output_tif = str(tmp_path / "n43_hillshade_compressed_tiled.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdaldem_path} hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif {output_tif} -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0"
     )
     assert err is None or err == "", "got error/warning"
@@ -540,16 +540,14 @@ def test_gdaldem_color_relief_nodata_nan(gdaldem_path, tmp_path):
     output_tif = str(tmp_path / "nodata_nan_out.tif")
 
     f = open(input_asc, "wt")
-    f.write(
-        """ncols        2
+    f.write("""ncols        2
 nrows        2
 xllcorner    440720
 yllcorner    3750120
 cellsize     60
 NODATA_value nan
  0.0 0
- 0 nan"""
-    )
+ 0 nan""")
     f.close()
 
     f = open(colors_txt, "wt")
@@ -588,8 +586,7 @@ def test_gdaldem_color_relief_repeated_entry(gdaldem_path, tmp_path):
     output_vrt = str(tmp_path / "test_gdaldem_color_relief_repeated_entry_out.vrt")
 
     f = open(input_asc, "wt")
-    f.write(
-        """ncols        2
+    f.write("""ncols        2
 nrows        3
 xllcorner    440720
 yllcorner    3750120
@@ -597,8 +594,7 @@ cellsize     60
 NODATA_value 5
  1 4.9
  5 5.1
- 6 7 """
-    )
+ 6 7 """)
     f.close()
 
     f = open(colors_txt, "wt")

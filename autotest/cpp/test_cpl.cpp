@@ -22,6 +22,7 @@
 #include "cpl_compressor.h"
 #include "cpl_enumerate.h"
 #include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "cpl_float.h"
 #include "cpl_hash_set.h"
 #include "cpl_levenshtein.h"
@@ -44,7 +45,9 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_threadsafe_queue.hpp"
 
+#include <algorithm>
 #include <atomic>
+#include <charconv>
 #include <cmath>
 #include <limits>
 #include <fstream>
@@ -284,7 +287,7 @@ TEST_F(test_cpl, CSLTokenizeString2)
     }
     {
         CPLStringList aosStringList(
-            CSLTokenizeString2("one two, three;four,five; six", " ;,", 0));
+            CSLTokenizeString2(",one two, three;four,five; six,", " ;,", 0));
         ASSERT_EQ(aosStringList.size(), 6);
         EXPECT_STREQ(aosStringList[0], "one");
         EXPECT_STREQ(aosStringList[1], "two");
@@ -296,14 +299,16 @@ TEST_F(test_cpl, CSLTokenizeString2)
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
-            "one two,,,five,six", " ,", CSLT_ALLOWEMPTYTOKENS));
-        ASSERT_EQ(aosStringList.size(), 6);
-        EXPECT_STREQ(aosStringList[0], "one");
-        EXPECT_STREQ(aosStringList[1], "two");
-        EXPECT_STREQ(aosStringList[2], "");
+            ",one two,,,five,six,", " ,", CSLT_ALLOWEMPTYTOKENS));
+        ASSERT_EQ(aosStringList.size(), 8);
+        EXPECT_STREQ(aosStringList[0], "");
+        EXPECT_STREQ(aosStringList[1], "one");
+        EXPECT_STREQ(aosStringList[2], "two");
         EXPECT_STREQ(aosStringList[3], "");
-        EXPECT_STREQ(aosStringList[4], "five");
-        EXPECT_STREQ(aosStringList[5], "six");
+        EXPECT_STREQ(aosStringList[4], "");
+        EXPECT_STREQ(aosStringList[5], "five");
+        EXPECT_STREQ(aosStringList[6], "six");
+        EXPECT_STREQ(aosStringList[7], "");
     }
 
     {
@@ -595,8 +600,8 @@ TEST_F(test_cpl, CPLRecode)
             break;
         }
 
-        size_t nLength =
-            MIN(strlen(pszDecodedString), sizeof(oReferenceString.szEncoding));
+        size_t nLength = std::min(strlen(pszDecodedString),
+                                  sizeof(oReferenceString.szEncoding));
         bool bOK =
             (memcmp(pszDecodedString, oReferenceString.szString, nLength) == 0);
         // FIXME Some tests fail on Mac. Not sure why, but do not error out just
@@ -650,6 +655,10 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(oCSL[-1] == nullptr);
     ASSERT_EQ(oCSL.FindString("abc"), 1);
 
+    oCSL.RemoveStrings(0, 1);
+    ASSERT_EQ(oCSL.Count(), 1);
+    ASSERT_EQ(oCSL.FindString("abc"), 0);
+
     CSLDestroy(oCSL.StealList());
     ASSERT_EQ(oCSL.Count(), 0);
     ASSERT_TRUE(oCSL.List() == nullptr);
@@ -670,6 +679,38 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_EQ(oCopy.Count(), 3);
     ASSERT_EQ(oCSL.Count(), 2);
     ASSERT_TRUE(EQUAL(oCopy[2], "xyz"));
+}
+
+TEST_F(test_cpl, CPLStringList_SetString)
+{
+    CPLStringList oCSL;
+
+    oCSL.AddString("abc");
+    oCSL.AddString("def");
+    oCSL.AddString("ghi");
+
+    oCSL.Sort();
+
+    CPLStringList oCSL2(oCSL.List(), false);
+    oCSL2.Sort();
+
+    oCSL2.SetString(0, "bcd");
+    ASSERT_TRUE(EQUAL(oCSL[0], "abc"));
+    ASSERT_TRUE(EQUAL(oCSL2[0], "bcd"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(1, std::string("efg"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(2, "hij");
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    for (int i = 0; i < oCSL.size(); i++)
+    {
+        CPLStringList oCopy(oCSL);
+        oCopy.SetString(0, "xyz");
+        ASSERT_FALSE(oCopy.IsSorted());
+    }
 }
 
 TEST_F(test_cpl, CPLStringList_NameValue)
@@ -1120,11 +1161,30 @@ TEST_F(test_cpl, CPLGetDirname)
         "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
-TEST_F(test_cpl, VSIGetDiskFreeSpace)
+TEST_F(test_cpl, CPLLexicallyNormalize)
 {
-    ASSERT_TRUE(VSIGetDiskFreeSpace("/vsimem/") > 0);
-    ASSERT_TRUE(VSIGetDiskFreeSpace(".") == -1 ||
-                VSIGetDiskFreeSpace(".") >= 0);
+    EXPECT_STREQ(CPLLexicallyNormalize("", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("x", '/').c_str(), "x");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy", '/').c_str(), "xy");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/.", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/./", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/y", '/').c_str(), "x/y");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/yz", '/').c_str(), "x/yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy/z", '/').c_str(), "xy/z");
+    EXPECT_STREQ(CPLLexicallyNormalize("x//y", '/').c_str(), "x/y");
+    EXPECT_STREQ(CPLLexicallyNormalize("/", '/').c_str(), "/");
+    EXPECT_STREQ(CPLLexicallyNormalize("/x", '/').c_str(), "/x");
+    EXPECT_STREQ(CPLLexicallyNormalize("../x", '/').c_str(), "../x");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../y", '/').c_str(), "y");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/..", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy/../z", '/').c_str(), "z");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../yz", '/').c_str(), "yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../../yz", '/').c_str(), "../yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("a/x/y/../../t", '/').c_str(), "a/t");
+    EXPECT_STREQ(CPLLexicallyNormalize("a\\x\\y\\..\\..\\t", '/', '\\').c_str(),
+                 "a\\t");
 }
 
 TEST_F(test_cpl, CPLsscanf)
@@ -1197,6 +1257,7 @@ TEST_F(test_cpl, CPLSetErrorHandler)
     ASSERT_EQ(gbGotError, false);
     gbGotError = false;
     CPLSetErrorHandler(oldHandler);
+    CPLSetCurrentErrorHandlerCatchDebug(true);
 
     CPLPushErrorHandler(myErrorHandler);
     CPLSetCurrentErrorHandlerCatchDebug(FALSE);
@@ -1215,6 +1276,45 @@ TEST_F(test_cpl, CPLSetErrorHandler)
     ASSERT_EQ(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
     CPLDebug("TEST", "Test");
     CPLError(CE_Failure, CPLE_AppDefined, "test");
+    CPLSetErrorHandler(oldHandler);
+}
+
+TEST_F(test_cpl, global_error_handler_and_CPLSetCurrentErrorHandlerCatchDebug)
+{
+    static bool gbGotDebugMessage = false;
+    static bool gbGotExpectedUserData = false;
+
+    struct MyStruct
+    {
+        static void CPL_STDCALL myErrorHandler(CPLErr eErr, CPLErrorNum,
+                                               const char *msg)
+        {
+            if (CPLGetErrorHandlerUserData() == &gbGotExpectedUserData)
+            {
+                gbGotExpectedUserData = true;
+            }
+            if (eErr == CE_Debug && strcmp(msg, "TEST: my debug message") == 0)
+            {
+                gbGotDebugMessage = true;
+            }
+        }
+    };
+
+    CPLErrorHandler oldHandler =
+        CPLSetErrorHandlerEx(MyStruct::myErrorHandler, &gbGotExpectedUserData);
+
+    CPLErrorAccumulator oAccumulator;
+    {
+        auto scopedAccumulator = oAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(scopedAccumulator);
+
+        CPLConfigOptionSetter oSetter("CPL_DEBUG", "ON", false);
+        CPLDebug("TEST", "my debug message");
+    }
+
+    EXPECT_TRUE(gbGotExpectedUserData);
+    EXPECT_TRUE(gbGotDebugMessage);
+
     CPLSetErrorHandler(oldHandler);
 }
 
@@ -4331,21 +4431,39 @@ TEST_F(test_cpl, test_config_overrides_environment)
     char szEnvVar[] = "TEST_CONFIG_OVERRIDES_ENVIRONMENT=123";
     putenv(szEnvVar);
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    constexpr const char *key = "TEST_CONFIG_OVERRIDES_ENVIRONMENT";
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", "456");
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "456");
+    CPLSetConfigOption(key, "456");
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr);
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "456");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    {
+        CPLConfigOptionSetter oSetter(key, nullptr, false);
+
+        ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+    }
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetThreadLocalConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    ASSERT_EQ(CPLGetThreadLocalConfigOption(key, nullptr), nullptr);
 }
 
 // Test CPLWorkerThreadPool recursion
@@ -4849,10 +4967,37 @@ TEST_F(test_cpl, CPLStrtod)
     }
 
     {
-        const char *pszVal = "5 foo";
+        const char *pszVal = "-5 foo";
         char *pszEnd = nullptr;
-        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 5.0);
-        EXPECT_EQ(pszEnd, pszVal + 1);
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), -5.0);
+        EXPECT_EQ(pszEnd, pszVal + 2);
+    }
+
+    {
+        const char *pszVal = "3.1415";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 3.1415);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "6.022e23";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 6.022e23);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "  +6.022E+23";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 6.022e23);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.e-23";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 1.0e-23);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
     }
 
     {
@@ -5690,6 +5835,363 @@ TEST_F(test_cpl, cpl_enumerate)
         EXPECT_EQ(tab[1], 2);
         EXPECT_EQ(tab[2], 3);
     }
+}
+
+TEST_F(test_cpl, CPL_SWAP)
+{
+    {
+        uint8_t x = 1;
+        EXPECT_EQ(CPL_SWAP(x), x);
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+    }
+    {
+        int8_t x = 1;
+        EXPECT_EQ(CPL_SWAP(x), x);
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+    }
+    {
+        uint16_t x = 0x0123;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int16_t x = 0x0123;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        uint32_t x = 0x01234567;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int32_t x = 0x01234567;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        uint64_t x = (static_cast<uint64_t>(0x01234567) << 32) | 0x89ABCDEF;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int64_t x = (static_cast<int64_t>(0x01234567) << 32) | 0x89ABCDEF;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        float x = 1.5;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        double x = 1.5;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+}
+
+TEST_F(test_cpl, CPLLaunderForFilenameSafe)
+{
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("").c_str(), "");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a").c_str(), "a");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a>b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a:b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a\"b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a/b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a\\b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a|b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a?b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a*b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a^b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(".").c_str(), "._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("..").c_str(), ".._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a.b").c_str(), "a.b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(" a ").c_str(), " a _");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(".a.").c_str(), ".a._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(" a ", ';').c_str(), " a ;");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON").c_str(), "CON_");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b c", ';', " ").c_str(), "a;b;c");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b c", '\0', " ").c_str(), "abc");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON", '\0', nullptr).c_str(),
+                 "CON_");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON", ';').c_str(), "CON;");
+}
+
+TEST_F(test_cpl, cpl_starts_with)
+{
+    std::string str = "abc";
+    const char *cstr = "abc";
+    std::string_view sv = std::string_view(str).substr(0, 2);
+
+    EXPECT_TRUE(cpl::starts_with(str, "ab"));
+    EXPECT_TRUE(cpl::starts_with(cstr, "ab"));
+    EXPECT_TRUE(cpl::starts_with(sv, "ab"));
+    EXPECT_TRUE(cpl::starts_with(sv, ""));
+
+    EXPECT_TRUE(cpl::starts_with_ci(str, "ab"));
+    EXPECT_TRUE(cpl::starts_with_ci(str, "aB"));
+    EXPECT_TRUE(cpl::starts_with_ci(str, ""));
+
+    EXPECT_FALSE(cpl::starts_with(str, "ac"));
+    EXPECT_FALSE(cpl::starts_with(str, "abcd"));
+    EXPECT_FALSE(cpl::starts_with(str, "aB"));
+    EXPECT_FALSE(cpl::starts_with(std::string_view(str).substr(0, 1), "ab"));
+}
+
+TEST_F(test_cpl, cpl_ends_with)
+{
+    std::string str = "abc";
+    const char *cstr = "abc";
+    std::string_view sv = std::string_view(str).substr(0, 3);
+
+    EXPECT_TRUE(cpl::ends_with(str, "bc"));
+    EXPECT_TRUE(cpl::ends_with(cstr, "bc"));
+    EXPECT_TRUE(cpl::ends_with(sv, "bc"));
+    EXPECT_TRUE(cpl::ends_with(sv, ""));
+
+    EXPECT_TRUE(cpl::ends_with_ci(str, "bc"));
+    EXPECT_TRUE(cpl::ends_with_ci(str, "bC"));
+    EXPECT_TRUE(cpl::ends_with_ci(str, ""));
+
+    EXPECT_FALSE(cpl::ends_with(str, "ac"));
+    EXPECT_FALSE(cpl::ends_with(str, "abcd"));
+    EXPECT_FALSE(cpl::ends_with(str, "Bc"));
+    EXPECT_FALSE(cpl::ends_with(std::string_view(str).substr(0, 2), "bc"));
+}
+
+TEST_F(test_cpl, cpl_equals)
+{
+    std::string str = "abc";
+    const char *cstr = "abc";
+    std::string_view sv = str;
+
+    EXPECT_TRUE(cpl::equals(str, cstr));
+    EXPECT_TRUE(cpl::equals(cstr, sv));
+    EXPECT_TRUE(cpl::equals(sv, str));
+
+    EXPECT_FALSE(cpl::equals(str, ""));
+    EXPECT_FALSE(cpl::equals(str, std::string_view(str).substr(0, 2)));
+
+    EXPECT_FALSE(cpl::equals(str, "abC"));
+    EXPECT_TRUE(cpl::equals_ci(str, "abC"));
+    EXPECT_FALSE(cpl::equals_ci(str, ""));
+}
+
+TEST_F(test_cpl, trim)
+{
+    // input type: const char*
+    {
+        const char *str = "";
+        const auto trimmed = cpl::trim(str);
+        EXPECT_EQ(trimmed, "");
+        EXPECT_EQ(trimmed.data(), str);  // trimmed points within str
+
+        const auto ltrimmed = cpl::ltrim(str);
+        EXPECT_EQ(ltrimmed, "");
+        EXPECT_EQ(ltrimmed.data(), str);
+
+        const auto rtrimmed = cpl::rtrim(str);
+        EXPECT_EQ(rtrimmed, "");
+        EXPECT_EQ(rtrimmed.data(), str);
+    }
+
+    // input type: std::string
+    {
+        const std::string str = "\r\n\t    \r\n\t";
+        const auto trimmed = cpl::trim(str);
+
+        EXPECT_EQ(trimmed, "");
+        EXPECT_EQ(trimmed.data(), str.data() + str.size());
+
+        const auto ltrimmed = cpl::ltrim(str);
+
+        EXPECT_EQ(ltrimmed, "");
+        EXPECT_EQ(ltrimmed.data(), str.data() + str.size());
+
+        const auto rtrimmed = cpl::rtrim(str);
+
+        EXPECT_EQ(rtrimmed, "");
+        EXPECT_EQ(rtrimmed.data(), str.data());
+    }
+
+    // input type: std::string_view
+    {
+        const std::string_view str = "  abc\t  ";
+        const auto trimmed = cpl::trim(str);
+
+        EXPECT_EQ(trimmed, "abc");
+        EXPECT_EQ(trimmed.data(), str.data() + 2);  // trimmed points within str
+
+        const auto ltrimmed = cpl::ltrim(str);
+
+        EXPECT_EQ(ltrimmed, "abc\t  ");
+        EXPECT_EQ(ltrimmed.data(), str.data() + 2);
+
+        const auto rtrimmed = cpl::rtrim(str);
+
+        EXPECT_EQ(rtrimmed, "  abc");
+        EXPECT_EQ(rtrimmed.data(), str.data());
+    }
+
+    // input_type: std::string_view&&
+    {
+        // line below should not compile
+        //auto trimmed = cpl::trim(std::string("abc"));
+    }
+}
+
+TEST_F(test_cpl, parse_name_value)
+{
+    {
+        std::string input = "OPT_NAME=VALUE";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "OPT_NAME");
+        EXPECT_EQ(value, "VALUE");
+    }
+
+    {
+        const char *input = "  OPT_NAME =   VALUE WITH SPACE ";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "OPT_NAME");
+        EXPECT_EQ(value, "VALUE WITH SPACE");
+    }
+
+    {
+        std::string input = "OPT_NAME=";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "OPT_NAME");
+        EXPECT_EQ(value, "");
+    }
+
+    {
+        std::string input = "=VALUE";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "");
+        EXPECT_EQ(value, "");
+    }
+
+    {
+        std::string input = "INVALID";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "");
+        EXPECT_EQ(value, "");
+    }
+
+    {
+        const char *input = "";
+        auto [name, value] = cpl::parse_name_value(input);
+
+        EXPECT_EQ(name, "");
+        EXPECT_EQ(value, "");
+    }
+}
+
+TEST_F(test_cpl, strict_parse)
+{
+    EXPECT_EQ(cpl::strict_parse<bool>("YES"), true);
+    EXPECT_EQ(cpl::strict_parse<bool>("1 "), true);
+    EXPECT_EQ(cpl::strict_parse<bool>(" ON "), true);
+    EXPECT_EQ(cpl::strict_parse<bool>("\tyes "), true);
+    EXPECT_EQ(cpl::strict_parse<bool>("TRUEE"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<bool>(""), std::nullopt);
+
+    EXPECT_EQ(cpl::strict_parse<bool>("NO"), false);
+    EXPECT_EQ(cpl::strict_parse<bool>("0 "), false);
+    EXPECT_EQ(cpl::strict_parse<bool>(" OFF "), false);
+    EXPECT_EQ(cpl::strict_parse<bool>("\tno "), false);
+    EXPECT_EQ(cpl::strict_parse<bool>("NON"), std::nullopt);
+
+    EXPECT_EQ(cpl::strict_parse<int>("123"), 123);
+    EXPECT_EQ(cpl::strict_parse<int>("0123"), 123);
+    EXPECT_EQ(cpl::strict_parse<int>(" -456"), -456);
+    EXPECT_EQ(cpl::strict_parse<int>(" - 456"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("789."), 789);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0"), 789);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0.0"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("789.1"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("50000000000000000"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>(""), std::nullopt);
+
+    EXPECT_EQ(cpl::strict_parse<double>("3.141569"), 3.141569);
+    EXPECT_EQ(cpl::strict_parse<double>("3,141569"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<double>("-8.33e-2"), -8.33e-2);
+    EXPECT_EQ(cpl::strict_parse<double>("06.022e23"), 6.022e23);
+    EXPECT_EQ(cpl::strict_parse<double>("6.022E23"), 6.022e23);
+    EXPECT_EQ(cpl::strict_parse<double>("6.022e+23"), 6.022e23);
+    EXPECT_EQ(cpl::strict_parse<double>("6.022e+23"), 6.022e23);
+    EXPECT_EQ(cpl::strict_parse<double>(""), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<double>("  "), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<double>(" -"), std::nullopt);
+
+    EXPECT_EQ(cpl::strict_parse<double>("inf"),
+              std::numeric_limits<double>::infinity());
+    EXPECT_EQ(cpl::strict_parse<double>("-inf"),
+              -std::numeric_limits<double>::infinity());
+
+    EXPECT_EQ(std::isnan(cpl::strict_parse<double>("nan").value()), true);
+    EXPECT_EQ(std::isnan(cpl::strict_parse<double>("NaN").value()), true);
+    EXPECT_EQ(std::isnan(cpl::strict_parse<double>("NAN").value()), true);
+    EXPECT_EQ(cpl::strict_parse<double>("NANA"), std::nullopt);
+
+    EXPECT_EQ(cpl::strict_parse<float>("3.4e39"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<float>("-3.4e39"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<float>("1e-39"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<float>("-1e-39"), std::nullopt);
 }
 
 }  // namespace

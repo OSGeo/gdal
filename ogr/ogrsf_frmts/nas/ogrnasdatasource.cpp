@@ -287,7 +287,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema(GMLFeatureClass *poClass)
     }
 
     if (poSRS)
-        poSRS->Dereference();
+        poSRS->Release();
 
     return poLayer;
 }

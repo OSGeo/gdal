@@ -1,5 +1,7 @@
 .. _gdal_vector_concat:
 
+.. program:: gdal_vector_concat
+
 ================================================================================
 ``gdal vector concat``
 ================================================================================
@@ -45,7 +47,7 @@ schema will contain the union of all source fields. It is possible to select
 only the intersection with the :option:`--field-strategy` set to ``intersection``.
 Regarding the resulting CRS, by default the CRS of the source layer will be
 used as the target CRS, and features of other source layers that do no match
-this CRS will be reprojected to it. :option:`--dst-crs` can be used to select
+this CRS will be reprojected to it. :option:`--output-crs` can be used to select
 a given destination CRS.
 
 This command can also be used as the first step of :ref:`gdal_vector_pipeline`.
@@ -59,12 +61,6 @@ This command can also be used as the first step of :ref:`gdal_vector_pipeline`.
 Program-Specific Options
 ------------------------
 
-.. option:: -d, --dst-crs <SRC-CRS>
-
-    Set destination spatial reference.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
 .. option:: --field-strategy union|intersection
 
     Determines how the schema of the target layer is built from the schemas of
@@ -75,10 +71,23 @@ Program-Specific Options
     - ``intersection`` to use a sub-set of all the common fields from all
       source layers.
 
+.. option:: --input-crs, -s <INPUT-CRS>
+
+    Set (override) input spatial reference. If not specified the SRS found in the input
+    dataset will be used.
+
+    .. include:: options/srs_def_gdalwarp.rst
+
 .. option:: --mode merge-per-layer-name|stack|single
 
     Determine the strategy to create output layers from source layers. See
     introductory paragraph for more details.
+
+.. option:: --output-crs, -d <OUTPUT-CRS>
+
+    Set output spatial reference. Inputs will be reprojected to this CRS if necessary.
+
+    .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: --output-layer <OUTPUT-LAYER>
 
@@ -113,13 +122,6 @@ Program-Specific Options
     determined :option:`--source-layer-field-content`.
 
 
-.. option:: -s, --src-crs <SRC-CRS>
-
-    Set source spatial reference. If not specified the SRS found in the input
-    dataset will be used.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
 Standard Options
 ----------------
 
@@ -131,7 +133,7 @@ Standard Options
 
     .. include:: gdal_options/if.rst
 
-    .. include:: gdal_options/input_layer.rst
+    .. include:: gdal_options/input_layer_no_active_layer.rst
 
     .. include:: gdal_options/lco.rst
 
@@ -150,6 +152,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -170,4 +177,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal vector concat --mode=single --source-layer-field-name=country --dst-crs=EPSG:4258 france.shp germany.shp merged.shp
+       gdal vector concat --mode=single --source-layer-field-name=country --output-crs=EPSG:4258 france.shp germany.shp merged.shp

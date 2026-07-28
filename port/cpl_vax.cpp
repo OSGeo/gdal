@@ -339,9 +339,7 @@ static void vax_ieee_r(const unsigned char *from, unsigned char *ieee)
         ieee[0] = vaxf[0] & 0x80;
     }
 
-#ifdef CPL_LSB
-    CPL_SWAP32PTR(ieee);
-#endif
+    CPL_MSBPTR32(ieee);
 }
 
 /************************************************************************/
@@ -354,9 +352,7 @@ static void ieee_vax_r(unsigned char *ieee, unsigned char *to)
     unsigned char vaxf[4];
     unsigned char exp;
 
-#ifdef CPL_LSB
-    CPL_SWAP32PTR(ieee);
-#endif
+    CPL_MSBPTR32(ieee);
 
     memcpy(vaxf, ieee, 4); /* Since most bits are the same */
 

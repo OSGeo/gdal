@@ -996,7 +996,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     if (m_bStopParsing)
         return nullptr;
 
-    if (!m_oFeatureQueue.empty())
+    if (!this->m_oFeatureQueue.empty())
     {
         OGRFeature *poFeature = std::move(m_oFeatureQueue.front()).release();
         m_oFeatureQueue.pop_front();
@@ -1028,7 +1028,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
             break;
         }
         m_nWithoutEventCounter++;
-    } while (!nDone && m_oFeatureQueue.empty() && !m_bStopParsing &&
+    } while (!nDone && this->m_oFeatureQueue.empty() && !m_bStopParsing &&
              m_nWithoutEventCounter < 10);
 
     if (m_nWithoutEventCounter == 10)
@@ -1038,7 +1038,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         m_bStopParsing = true;
     }
 
-    if (!m_oFeatureQueue.empty())
+    if (!this->m_oFeatureQueue.empty())
     {
         OGRFeature *poFeature = std::move(m_oFeatureQueue.front()).release();
         m_oFeatureQueue.pop_front();
@@ -1358,13 +1358,13 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
         if (m_poDS->GetLastGPXGeomTypeWritten() == GPX_ROUTE)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'wpt' element after a 'rte' element.\n");
+                     "Cannot write a 'wpt' element after a 'rte' element.");
             return OGRERR_FAILURE;
         }
         else if (m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'wpt' element after a 'trk' element.\n");
+                     "Cannot write a 'wpt' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 
@@ -1404,7 +1404,7 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
             m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK_POINT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'rte' element after a 'trk' element.\n");
+                     "Cannot write a 'rte' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 
@@ -1604,7 +1604,7 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
             m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK_POINT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'rte' element after a 'trk' element.\n");
+                     "Cannot write a 'rte' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 

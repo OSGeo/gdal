@@ -162,9 +162,9 @@ def test_ogr_topojson_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["TopoJSON"])
+    ds = gdal.Open(filename, allowed_drivers=["TopoJSON"])
     assert ds.GetDriver().GetDescription() == "TopoJSON"
 
 
@@ -186,7 +186,7 @@ def test_ogr_topojson_crs():
 
     ds = ogr.Open("data/topojson/topojson_with_crs.topojson")
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
 
     lyr = ds.GetLayer(1)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"

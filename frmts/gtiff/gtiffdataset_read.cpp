@@ -36,7 +36,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "fetchbufferdirectio.h"
-#include "gdal_mdreader.h"  // MD_DOMAIN_RPC
+#include "gdal_mdreader.h"  // GDAL_MDD_RPC
 #include "gdal_priv.h"
 #include "geovalues.h"        // RasterPixelIsPoint
 #include "gt_wkt_srs_priv.h"  // GDALGTIFKeyGetSHORT()
@@ -63,8 +63,8 @@ int GTiffDataset::GetJPEGOverviewCount()
     {
         return 0;
     }
-    const char *pszSourceColorSpace =
-        m_oGTiffMDMD.GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    const char *pszSourceColorSpace = m_oGTiffMDMD.GetMetadataItem(
+        "SOURCE_COLOR_SPACE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSourceColorSpace != nullptr && EQUAL(pszSourceColorSpace, "CMYK"))
     {
         // We cannot handle implicit overviews on JPEG CMYK datasets converted
@@ -3816,7 +3816,6 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
         CPL_IGNORE_RET_VAL(oAccumulator);
-        CPLSetCurrentErrorHandlerCatchDebug(FALSE);
         const bool bDeferStrileLoading = CPLTestBool(
             CPLGetConfigOption("GTIFF_USE_DEFER_STRILE_LOADING", "YES"));
         l_hTIFF = VSI_TIFFOpen(
@@ -3937,13 +3936,12 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
             poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
     // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
-    if (poOpenInfo->AreSiblingFilesLoaded() &&
-        CSLCount(poOpenInfo->GetSiblingFiles()) <= 1)
+    if (poOpenInfo->AreSiblingFilesLoaded())
     {
         poDS->oOvManager.TransferSiblingFiles(
             CSLDuplicate(poOpenInfo->GetSiblingFiles()));
@@ -4505,13 +4503,21 @@ void GTiffDataset::ApplyPamInfo()
          papszPamDomains && papszPamDomains[iDomain] != nullptr; ++iDomain)
     {
         const char *pszDomain = papszPamDomains[iDomain];
-        char **papszGT_MD = CSLDuplicate(m_oGTiffMDMD.GetMetadata(pszDomain));
-        char **papszPAM_MD = oMDMD.GetMetadata(pszDomain);
+        // We skip IMAGE_STRUCTURE as PAM content is not supposed to modify
+        // it and it could cause consistency issues if doing GetMetadata(GDAL_MDD_IMAGE_STRUCTURE)
+        // which doesn't load PAM, then GetMetadata(other_domain) and
+        // GetMetadata(GDAL_MDD_IMAGE_STRUCTURE)
+        if (!EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
+        {
+            char **papszGT_MD =
+                CSLDuplicate(m_oGTiffMDMD.GetMetadata(pszDomain));
+            char **papszPAM_MD = oMDMD.GetMetadata(pszDomain);
 
-        papszGT_MD = CSLMerge(papszGT_MD, papszPAM_MD);
+            papszGT_MD = CSLMerge(papszGT_MD, papszPAM_MD);
 
-        m_oGTiffMDMD.SetMetadata(papszGT_MD, pszDomain);
-        CSLDestroy(papszGT_MD);
+            m_oGTiffMDMD.SetMetadata(papszGT_MD, pszDomain);
+            CSLDestroy(papszGT_MD);
+        }
     }
 
     for (int i = 1; i <= GetRasterCount(); ++i)
@@ -4940,7 +4946,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         CPLTestBool(CPLGetConfigOption("CONVERT_YCBCR_TO_RGB", "YES")))
     {
         m_oGTiffMDMD.SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         int nColorMode = 0;
         if (!TIFFGetField(m_hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode) ||
             nColorMode != JPEGCOLORMODE_RGB)
@@ -5054,7 +5060,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             if (pszSourceColorSpace)
                 m_oGTiffMDMD.SetMetadataItem("SOURCE_COLOR_SPACE",
                                              pszSourceColorSpace,
-                                             "IMAGE_STRUCTURE");
+                                             GDAL_MDD_IMAGE_STRUCTURE);
             bTreatAsRGBA = true;
         }
         else
@@ -5362,22 +5368,23 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             GTIFFGetCompressionMethodName(m_nCompression);
         if (pszCompressionMethodName)
         {
-            m_oGTiffMDMD.SetMetadataItem(
-                "COMPRESSION", pszCompressionMethodName, "IMAGE_STRUCTURE");
+            m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION,
+                                         pszCompressionMethodName,
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
             CPLString oComp;
             oComp.Printf("%d", m_nCompression);
-            m_oGTiffMDMD.SetMetadataItem("COMPRESSION", oComp.c_str());
+            m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, oComp.c_str());
         }
     }
 
     if (m_nCompression == COMPRESSION_JPEG &&
         m_nPhotometric == PHOTOMETRIC_YCBCR)
     {
-        m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "YCbCr JPEG",
-                                     "IMAGE_STRUCTURE");
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "YCbCr JPEG",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (m_nCompression == COMPRESSION_LERC)
     {
@@ -5397,13 +5404,13 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         {
             if (nAddVersion == LERC_ADD_COMPRESSION_DEFLATE)
             {
-                m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "LERC_DEFLATE",
-                                             "IMAGE_STRUCTURE");
+                m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "LERC_DEFLATE",
+                                             GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (nAddVersion == LERC_ADD_COMPRESSION_ZSTD)
             {
-                m_oGTiffMDMD.SetMetadataItem("COMPRESSION", "LERC_ZSTD",
-                                             "IMAGE_STRUCTURE");
+                m_oGTiffMDMD.SetMetadataItem(GDALMD_COMPRESSION, "LERC_ZSTD",
+                                             GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         uint32_t nLercVersion = LERC_VERSION_2_4;
@@ -5412,7 +5419,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             if (nLercVersion == LERC_VERSION_2_4)
             {
                 m_oGTiffMDMD.SetMetadataItem("LERC_VERSION", "2.4",
-                                             "IMAGE_STRUCTURE");
+                                             GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
@@ -5423,9 +5430,11 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
 
     if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1)
-        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else
-        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "BAND", "IMAGE_STRUCTURE");
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     if ((GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
          m_nBitsPerSample != 8) ||
@@ -5438,14 +5447,15 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         for (int i = 0; i < nBands; ++i)
             cpl::down_cast<GTiffRasterBand *>(GetRasterBand(i + 1))
                 ->m_oGTiffMDMD.SetMetadataItem(
-                    "NBITS",
+                    GDALMD_NBITS,
                     CPLString().Printf("%d",
                                        static_cast<int>(m_nBitsPerSample)),
-                    "IMAGE_STRUCTURE");
+                    GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     if (bMinIsWhite)
-        m_oGTiffMDMD.SetMetadataItem("MINISWHITE", "YES", "IMAGE_STRUCTURE");
+        m_oGTiffMDMD.SetMetadataItem("MINISWHITE", "YES",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     if (TIFFGetField(m_hTIFF, TIFFTAG_GDAL_METADATA, &pszText))
     {
@@ -5500,20 +5510,20 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 
             if (pszKey == nullptr || pszValue == nullptr)
                 continue;
-            if (EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+            if (EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
             {
                 if (EQUAL(pszKey, "OVERVIEW_RESAMPLING"))
                 {
                     m_oGTiffMDMD.SetMetadataItem(pszKey, pszValue,
-                                                 "IMAGE_STRUCTURE");
+                                                 GDAL_MDD_IMAGE_STRUCTURE);
                 }
-                else if (EQUAL(pszKey, "INTERLEAVE"))
+                else if (EQUAL(pszKey, GDALMD_INTERLEAVE))
                 {
                     if (EQUAL(pszValue, "TILE"))
                     {
                         m_bTileInterleave = true;
-                        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
-                                                     "IMAGE_STRUCTURE");
+                        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "TILE",
+                                                     GDAL_MDD_IMAGE_STRUCTURE);
                     }
                     else
                     {
@@ -5539,7 +5549,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     {
                         m_oGTiffMDMD.SetMetadataItem(
                             "COMPRESSION_REVERSIBILITY", "LOSSY",
-                            "IMAGE_STRUCTURE");
+                            GDAL_MDD_IMAGE_STRUCTURE);
                         m_bWebPLossless = false;
                         m_nWebPLevel = static_cast<signed char>(nLevel);
                     }
@@ -5575,7 +5585,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     {
                         m_oGTiffMDMD.SetMetadataItem(
                             "COMPRESSION_REVERSIBILITY", "LOSSY",
-                            "IMAGE_STRUCTURE");
+                            GDAL_MDD_IMAGE_STRUCTURE);
                         m_bJXLLossless = false;
                         m_fJXLDistance = static_cast<float>(dfVal);
                     }
@@ -5589,7 +5599,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     {
                         m_oGTiffMDMD.SetMetadataItem(
                             "COMPRESSION_REVERSIBILITY", "LOSSY",
-                            "IMAGE_STRUCTURE");
+                            GDAL_MDD_IMAGE_STRUCTURE);
                         m_fJXLAlphaDistance = static_cast<float>(dfVal);
                     }
                 }
@@ -5735,8 +5745,9 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             GuessJPEGQuality(bHasQuantizationTable, bHasHuffmanTable);
         if (nQuality > 0)
         {
-            m_oGTiffMDMD.SetMetadataItem(
-                "JPEG_QUALITY", CPLSPrintf("%d", nQuality), "IMAGE_STRUCTURE");
+            m_oGTiffMDMD.SetMetadataItem("JPEG_QUALITY",
+                                         CPLSPrintf("%d", nQuality),
+                                         GDAL_MDD_IMAGE_STRUCTURE);
             int nJpegTablesMode = JPEGTABLESMODE_QUANT;
             if (bHasHuffmanTable)
             {
@@ -5744,7 +5755,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             }
             m_oGTiffMDMD.SetMetadataItem("JPEGTABLESMODE",
                                          CPLSPrintf("%d", nJpegTablesMode),
-                                         "IMAGE_STRUCTURE");
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (eAccess == GA_Update)
         {
@@ -5754,12 +5765,12 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
     else if (eAccess == GA_Update &&
              m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
-                                          "IMAGE_STRUCTURE") == nullptr)
+                                          GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
     {
         if (m_nCompression == COMPRESSION_WEBP)
         {
-            const char *pszReversibility =
-                GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            const char *pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszReversibility && strstr(pszReversibility, "LOSSLESS"))
             {
                 m_bWebPLossless = true;
@@ -5773,8 +5784,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         else if (m_nCompression == COMPRESSION_JXL ||
                  m_nCompression == COMPRESSION_JXL_DNG_1_7)
         {
-            const char *pszReversibility =
-                GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            const char *pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
             if (pszReversibility && strstr(pszReversibility, "LOSSLESS"))
             {
                 m_bJXLLossless = true;
@@ -5793,8 +5804,9 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         if (TIFFGetField(m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor) &&
             nPredictor > 1)
         {
-            m_oGTiffMDMD.SetMetadataItem(
-                "PREDICTOR", CPLSPrintf("%d", nPredictor), "IMAGE_STRUCTURE");
+            m_oGTiffMDMD.SetMetadataItem("PREDICTOR",
+                                         CPLSPrintf("%d", nPredictor),
+                                         GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -5823,6 +5835,7 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     const std::string osDirname = CPLGetDirnameSafe(m_osFilename.c_str());
+    CPLDebugOnly("GTiff", "Doing '%s' file listing", osDirname.c_str());
     CPLStringList aosSiblingFiles(VSIReadDirEx(osDirname.c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
@@ -5928,7 +5941,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     nCountScale >= 2 && padfScale[0] != 0.0 &&
                     padfScale[1] != 0.0)
                 {
-                    m_gt[1] = padfScale[0];
+                    m_gt.xscale = padfScale[0];
                     if (padfScale[1] < 0)
                     {
                         const char *pszOptionVal = CPLGetConfigOption(
@@ -5946,33 +5959,35 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                 "positive. You may override this behavior "
                                 "by setting the GTIFF_HONOUR_NEGATIVE_SCALEY "
                                 "configuration option to YES");
-                            m_gt[5] = padfScale[1];
+                            m_gt.yscale = padfScale[1];
                         }
                         else if (CPLTestBool(pszOptionVal))
                         {
-                            m_gt[5] = -padfScale[1];
+                            m_gt.yscale = -padfScale[1];
                         }
                         else
                         {
-                            m_gt[5] = padfScale[1];
+                            m_gt.yscale = padfScale[1];
                         }
                     }
                     else
                     {
-                        m_gt[5] = -padfScale[1];
+                        m_gt.yscale = -padfScale[1];
                     }
 
                     if (TIFFGetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, &nCount,
                                      &padfTiePoints) &&
                         nCount >= 6)
                     {
-                        m_gt[0] = padfTiePoints[3] - padfTiePoints[0] * m_gt[1];
-                        m_gt[3] = padfTiePoints[4] - padfTiePoints[1] * m_gt[5];
+                        m_gt.xorig =
+                            padfTiePoints[3] - padfTiePoints[0] * m_gt.xscale;
+                        m_gt.yorig =
+                            padfTiePoints[4] - padfTiePoints[1] * m_gt.yscale;
 
                         if (bPixelIsPoint && !bPointGeoIgnore)
                         {
-                            m_gt[0] -= (m_gt[1] * 0.5 + m_gt[2] * 0.5);
-                            m_gt[3] -= (m_gt[4] * 0.5 + m_gt[5] * 0.5);
+                            m_gt.xorig -= (m_gt.xscale * 0.5 + m_gt.xrot * 0.5);
+                            m_gt.yorig -= (m_gt.yrot * 0.5 + m_gt.yscale * 0.5);
                         }
 
                         m_bGeoTransformValid = true;
@@ -6011,17 +6026,17 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                       &padfMatrix) &&
                          nCount == 16)
                 {
-                    m_gt[0] = padfMatrix[3];
-                    m_gt[1] = padfMatrix[0];
-                    m_gt[2] = padfMatrix[1];
-                    m_gt[3] = padfMatrix[7];
-                    m_gt[4] = padfMatrix[4];
-                    m_gt[5] = padfMatrix[5];
+                    m_gt.xorig = padfMatrix[3];
+                    m_gt.xscale = padfMatrix[0];
+                    m_gt.xrot = padfMatrix[1];
+                    m_gt.yorig = padfMatrix[7];
+                    m_gt.yrot = padfMatrix[4];
+                    m_gt.yscale = padfMatrix[5];
 
                     if (bPixelIsPoint && !bPointGeoIgnore)
                     {
-                        m_gt[0] -= m_gt[1] * 0.5 + m_gt[2] * 0.5;
-                        m_gt[3] -= m_gt[4] * 0.5 + m_gt[5] * 0.5;
+                        m_gt.xorig -= m_gt.xscale * 0.5 + m_gt.xrot * 0.5;
+                        m_gt.yorig -= m_gt.yrot * 0.5 + m_gt.yscale * 0.5;
                     }
 
                     m_bGeoTransformValid = true;
@@ -6218,10 +6233,10 @@ CPLErr GTiffDataset::GetGeoTransform(GDALGeoTransform &gt) const
     if (CPLFetchBool(papszOpenOptions, "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180",
                      false))
     {
-        if (gt[0] < -180.0 - gt[1])
-            gt[0] += 360.0;
-        else if (gt[0] > 180.0)
-            gt[0] -= 360.0;
+        if (gt.xorig < -180.0 - gt.xscale)
+            gt.xorig += 360.0;
+        else if (gt.xorig > 180.0)
+            gt.xorig -= 360.0;
     }
 
     return CE_None;
@@ -6292,8 +6307,8 @@ char **GTiffDataset::GetMetadataDomainList()
     CSLDestroy(papszBaseList);
 
     return BuildMetadataDomainList(papszDomainList, TRUE, "",
-                                   "ProxyOverviewRequest", MD_DOMAIN_RPC,
-                                   MD_DOMAIN_IMD, "SUBDATASETS", "EXIF",
+                                   "ProxyOverviewRequest", GDAL_MDD_RPC,
+                                   GDAL_MDD_IMD, GDAL_MDD_SUBDATASETS, "EXIF",
                                    "xml:XMP", "COLOR_PROFILE", nullptr);
 }
 
@@ -6304,7 +6319,7 @@ char **GTiffDataset::GetMetadataDomainList()
 CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
     {
         GTiffDataset::GetMetadataItem("COMPRESSION_REVERSIBILITY", pszDomain);
         GTiffDataset::GetMetadataItem("LAYOUT", pszDomain);
@@ -6322,12 +6337,12 @@ CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
         return GDALDataset::GetMetadata(pszDomain);
     }
 
-    else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMD) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
+    else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMD) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMAGERY)))
         LoadMetadata();
 
-    else if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    else if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         ScanDirectories();
 
     else if (pszDomain != nullptr && EQUAL(pszDomain, "EXIF"))
@@ -6350,14 +6365,14 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                                           const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_IMAGE_STRUCTURE))
     {
         if ((m_nCompression == COMPRESSION_WEBP ||
              m_nCompression == COMPRESSION_JXL ||
              m_nCompression == COMPRESSION_JXL_DNG_1_7) &&
             EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
             m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
-                                         "IMAGE_STRUCTURE") == nullptr)
+                                         GDAL_MDD_IMAGE_STRUCTURE) == nullptr)
         {
             const char *pszDriverName =
                 m_nCompression == COMPRESSION_WEBP ? "WEBP" : "JPEGXL";
@@ -6384,11 +6399,12 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                     {
                         const char *pszReversibility =
                             poWebPDataset->GetMetadataItem(
-                                "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+                                "COMPRESSION_REVERSIBILITY",
+                                GDAL_MDD_IMAGE_STRUCTURE);
                         if (pszReversibility)
                             m_oGTiffMDMD.SetMetadataItem(
                                 "COMPRESSION_REVERSIBILITY", pszReversibility,
-                                "IMAGE_STRUCTURE");
+                                GDAL_MDD_IMAGE_STRUCTURE);
                     }
                 }
             }
@@ -6397,12 +6413,12 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         if (!m_bLayoutChecked && m_poBaseDS == nullptr)
         {
             m_bLayoutChecked = true;
-            const char *pszLayout =
-                m_oGTiffMDMD.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE");
+            const char *pszLayout = m_oGTiffMDMD.GetMetadataItem(
+                "LAYOUT", GDAL_MDD_IMAGE_STRUCTURE);
             if (eAccess == GA_ReadOnly && !pszLayout && CheckCOGLayout())
             {
                 m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
-                                             "IMAGE_STRUCTURE");
+                                             GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
     }
@@ -6415,13 +6431,13 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     {
         return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
     }
-    else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMD) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
+    else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMD) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMAGERY)))
     {
         LoadMetadata();
     }
-    else if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    else if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
     {
         ScanDirectories();
     }
@@ -6695,12 +6711,12 @@ void GTiffDataset::LoadMetadata()
     {
         mdreader->FillMetadata(&m_oGTiffMDMD);
 
-        if (mdreader->GetMetadataDomain(MD_DOMAIN_RPC) == nullptr)
+        if (mdreader->GetMetadataDomain(GDAL_MDD_RPC) == nullptr)
         {
             char **papszRPCMD = GTiffDatasetReadRPCTag(m_hTIFF);
             if (papszRPCMD)
             {
-                m_oGTiffMDMD.SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+                m_oGTiffMDMD.SetMetadata(papszRPCMD, GDAL_MDD_RPC);
                 CSLDestroy(papszRPCMD);
             }
         }
@@ -6712,7 +6728,7 @@ void GTiffDataset::LoadMetadata()
         char **papszRPCMD = GTiffDatasetReadRPCTag(m_hTIFF);
         if (papszRPCMD)
         {
-            m_oGTiffMDMD.SetMetadata(papszRPCMD, MD_DOMAIN_RPC);
+            m_oGTiffMDMD.SetMetadata(papszRPCMD, GDAL_MDD_RPC);
             CSLDestroy(papszRPCMD);
         }
     }

@@ -123,15 +123,20 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 }
 
 /************************************************************************/
-/*                           SortOverviews()                            */
+/*                       EstablishOverviewInfo()                        */
 /************************************************************************/
+void CPCIDSKChannel::EstablishOverviewInfo() const
 
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static void SortOverviews(std::vector<std::string>& keys)
 {
-    std::sort(keys.begin(), keys.end(),
+    if( overviews_initialized )
+        return;
+
+    overviews_initialized = true;
+
+    std::vector<std::string> keys = GetMetadataKeys();
+    if( !keys.empty() )
+    {
+        std::sort(keys.begin(), keys.end(),
               [] (const std::string &first,
                              const std::string &second)
                 {
@@ -144,31 +149,16 @@ static void SortOverviews(std::vector<std::string>& keys)
                     int nSecond = atoi(second.c_str() + 10);
                     return nFirst < nSecond;
                 });
-}
+    }
 
-/************************************************************************/
-/*                       EstablishOverviewInfo()                        */
-/************************************************************************/
-void CPCIDSKChannel::EstablishOverviewInfo() const
-
-{
-    if( overviews_initialized )
-        return;
-
-    overviews_initialized = true;
-
-    std::vector<std::string> keys = GetMetadataKeys();
-    SortOverviews(keys);
-    size_t i;
-
-    for( i = 0; i < keys.size(); i++ )
+    for( const std::string& key: keys)
     {
-        if( !STARTS_WITH(keys[i].c_str(), "_Overview_") )
+        if( !STARTS_WITH(key.c_str(), "_Overview_") )
             continue;
 
-        overview_infos.push_back( GetMetadataValue( keys[i] ) );
+        overview_infos.push_back( GetMetadataValue( key ) );
         overview_bands.push_back( nullptr );
-        overview_decimations.push_back( atoi(keys[i].c_str()+10) );
+        overview_decimations.push_back( atoi(key.c_str()+10) );
     }
 }
 

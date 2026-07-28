@@ -144,7 +144,7 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
     {
         int bNoDataSet;
         psOptions->dfNoData = GDALGetRasterNoDataValue(*hBand, &bNoDataSet);
-        psOptions->bNoDataSet = bNoDataSet;
+        psOptions->bNoDataSet = CPL_TO_BOOL(bNoDataSet);
     }
 
     /* -------------------------------------------------------------------- */

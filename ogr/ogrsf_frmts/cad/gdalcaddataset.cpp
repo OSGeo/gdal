@@ -196,12 +196,12 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
                         CPLSPrintf("SUBDATASET_%d_NAME", nRasters),
                         CPLSPrintf("CAD:%s:%ld:%ld", osCADFilename.c_str(),
                                    nSubRasterLayer, nSubRasterFID),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     GDALDataset::SetMetadataItem(
                         CPLSPrintf("SUBDATASET_%d_DESC", nRasters),
                         CPLSPrintf("%s - %ld", oLayer.getName().c_str(),
                                    nSubRasterFID),
-                        "SUBDATASETS");
+                        GDAL_MDD_SUBDATASETS);
                     nRasters++;
                 }
             }
@@ -230,8 +230,9 @@ int GDALCADDataset::Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
                                  nullptr))
                 return poOpenInfo->nOpenFlags & GDAL_OF_VECTOR;
 
-            poRasterDS = GDALDataset::FromHandle(
-                GDALOpen(osImgFilename, poOpenInfo->eAccess));
+            poRasterDS = GDALDataset::Open(
+                osImgFilename,
+                poOpenInfo->eAccess | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
             if (poRasterDS == nullptr)
             {
                 delete pImage;

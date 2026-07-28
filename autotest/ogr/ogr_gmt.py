@@ -20,6 +20,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("OGR_GMT")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
@@ -53,7 +54,7 @@ def test_ogr_gmt_2():
 
     dst_feat = ogr.Feature(feature_def=gmt_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
@@ -223,7 +224,7 @@ def test_ogr_gmt_write_stdout():
     )
     ds = ogr.Open("/vsimem/test.gmt")
     lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon
     assert lyr.GetFeatureCount() == 10
     ds = None
     gdal.Unlink("/vsimem/test.gmt")

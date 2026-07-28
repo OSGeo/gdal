@@ -29,9 +29,8 @@ CPL_C_START  // Necessary for compiling in GDAL project
     /* -------------------------------------------------------------------- */
 
     // Initializes a MiraMon vector layer for reading
-    int
-    MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                      VSILFILE *m_fp, const char *pszFilename)
+    int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                          VSILFILE *m_fp, const char *pszFilename)
 {
     char szResult[MM_MAX_ID_SNY + 10];
     char *pszSRS;
@@ -304,7 +303,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     VSIFSeekL(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
 
     if (hMiraMonLayer->bIsPolygon && (VFG & MM_POL_REVERSE_ARC))  // &&
-        //nStartVertice > 0)
+    //nStartVertice > 0)
     {
         MM_N_VERTICES_TYPE nIVertice;
 

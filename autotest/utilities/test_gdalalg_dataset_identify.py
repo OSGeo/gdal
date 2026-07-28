@@ -63,10 +63,10 @@ def test_gdalalg_dataset_identify_complete():
     gdal_path = test_cli_utilities.get_gdal_path()
     if gdal_path is None:
         pytest.skip("gdal binary missing")
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal dataset identify data/whiteblackred"
     )
-    assert out.replace("\\", "/") == "data/whiteblackred.tif"
+    assert out[0].replace("\\", "/") == "data/whiteblackred.tif"
 
 
 def test_gdalalg_dataset_identify_text():

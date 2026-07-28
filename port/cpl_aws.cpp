@@ -21,6 +21,7 @@
 #include "cpl_time.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_nasa_earthdata.h"
 #include "cpl_spawn.h"
 #include "cpl_http.h"
 #include <algorithm>
@@ -1942,6 +1943,32 @@ bool VSIS3HandleHelper::GetConfiguration(
 {
     eCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
 
+    bool bErrorEDL = false;
+    auto poEarthdataCredentialProvider =
+        CPLNasaEarthdataCredentialProvider::Get(osPathForOption, &bErrorEDL);
+    if (poEarthdataCredentialProvider)
+    {
+        osAccessKeyId = poEarthdataCredentialProvider->GetAccessKeyId();
+        if (!osAccessKeyId.empty())
+        {
+            osSecretAccessKey =
+                poEarthdataCredentialProvider->GetSecretAccessKey();
+            osSessionToken = poEarthdataCredentialProvider->GetSessionToken();
+            eCredentialsSource = AWSCredentialsSource::NASA_EARTHDATA;
+
+            // Earthdata uses us-west-2 region and requires in-bound requests
+            // to come from that region.
+            osRegion = VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                                "AWS_REGION", "us-west-2");
+
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (bErrorEDL)
+        return false;
+
     // AWS_REGION is GDAL specific. Later overloaded by standard
     // AWS_DEFAULT_REGION
     osRegion = CSLFetchNameValueDef(
@@ -2194,6 +2221,7 @@ bool VSIS3HandleHelper::GetConfiguration(
             return false;
         }
 
+        eCredentialsSource = AWSCredentialsSource::REGULAR;
         return true;
     }
 
@@ -2254,6 +2282,8 @@ void VSIS3HandleHelper::CleanMutex()
 
 void VSIS3HandleHelper::ClearCache()
 {
+    CPLNasaEarthdataCredentialProvider::ClearCache();
+
     CPLMutexHolder oHolder(&ghMutex);
 
     geCredentialsSource = AWSCredentialsSource::UNINITIALIZED;
@@ -2304,17 +2334,20 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
         return nullptr;
     }
 
-    // According to
-    // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
-    // This variable overrides the default region of the in-use profile, if
-    // set."
-    std::string osDefaultRegion = CSLFetchNameValueDef(
-        papszOptions, "AWS_DEFAULT_REGION",
-        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_REGION",
-                                 ""));
-    if (!osDefaultRegion.empty())
+    if (eCredentialsSource != AWSCredentialsSource::NASA_EARTHDATA)
     {
-        osRegion = std::move(osDefaultRegion);
+        // According to
+        // http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html "
+        // This variable overrides the default region of the in-use profile, if
+        // set."
+        std::string osDefaultRegion = CSLFetchNameValueDef(
+            papszOptions, "AWS_DEFAULT_REGION",
+            VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                     "AWS_DEFAULT_REGION", ""));
+        if (!osDefaultRegion.empty())
+        {
+            osRegion = std::move(osDefaultRegion);
+        }
     }
 
     std::string osEndpoint = VSIGetPathSpecificOption(
@@ -2576,6 +2609,107 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
     if (!osCanonicalQueryString.empty())
         osCanonicalQueryString = osCanonicalQueryString.substr(1);
 
+    // If accessing a AWS account from a AWS VM, check that
+    // AWS is still a sponsor, and if not, make some (kind) noise.
+    if ((m_eCredentialsSource != AWSCredentialsSource::UNINITIALIZED &&
+         m_eCredentialsSource != AWSCredentialsSource::NO_SIGN_REQUEST &&
+         m_eCredentialsSource != AWSCredentialsSource::REGULAR &&
+         m_osEndpoint.find(".amazonaws.com") != std::string::npos)
+#ifdef DEBUG
+        || CPLTestBool(CPLGetConfigOption("GDAL_TEST_NAME_AND_SHAME", "NO"))
+#endif
+    )
+    {
+        static const bool bCheckSponsoring = []()
+        {
+            if (!CPLTestBool(CPLGetConfigOption("GDAL_NAME_AND_SHAME", "YES")))
+                return true;
+
+            const std::string osCacheDir = []()
+            {
+#ifdef _WIN32
+                const char *pszHome =
+                    CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+                const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+                if (pszHome != nullptr)
+                {
+                    return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
+                }
+                else
+                {
+                    const char *pszDir = CPLGetConfigOption("TEMP", "/tmp");
+                    VSIStatBufL sStat;
+                    if (VSIStatL(pszDir, &sStat) == 0)
+                    {
+                        const char *pszUsername =
+                            CPLGetConfigOption("USERNAME", nullptr);
+                        if (pszUsername == nullptr)
+                            pszUsername = CPLGetConfigOption("USER", nullptr);
+
+                        if (pszUsername != nullptr)
+                        {
+                            return CPLFormFilenameSafe(
+                                pszDir, CPLSPrintf(".gdal_%s", pszUsername),
+                                nullptr);
+                        }
+                    }
+                }
+                return std::string();
+            }();
+            if (!osCacheDir.empty())
+            {
+                VSIStatBufL sStat;
+                if (VSIStatL(osCacheDir.c_str(), &sStat) != 0)
+                    VSIMkdir(osCacheDir.c_str(), 0755);
+                const std::string osCloudCheck = CPLFormFilenameSafe(
+                    osCacheDir.c_str(), "cloud_check_aws.txt", nullptr);
+                // Sidereal day, why not? "Aim for the stars, expect dust"
+                constexpr int ONE_DAY_IN_SECS = 86164;
+                if (VSIStatL(osCloudCheck.c_str(), &sStat) == 0 &&
+                    sStat.st_mtime + ONE_DAY_IN_SECS >= time(nullptr))
+                {
+                    CPLDebugOnly("GDAL", "%s checked", osCloudCheck.c_str());
+                }
+                else
+                {
+                    FILE *f = fopen(osCloudCheck.c_str(), "wb");
+                    if (f)
+                        fclose(f);
+
+                    const auto PingURL = [](const char *pszURL)
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        const char *const apszOptions[] = {
+                            "CUSTOMREQUEST=HEAD", "TIMEOUT=1", nullptr};
+                        auto res = CPLHTTPFetch(pszURL, apszOptions);
+                        const bool bOK = res && !res->pszErrBuf;
+                        CPLHTTPDestroyResult(res);
+                        return bOK;
+                    };
+                    if (!PingURL("https://gdal.org/en/latest/sponsors/"
+                                 "did_aws_sponsor.html") &&
+                        // check that gdal.org is responding to avoid false positive
+                        PingURL("https://gdal.org/en/latest/index.html"))
+                    {
+                        const auto CPLE_NonCooperativeSponsor = CPLE_AppDefined;
+                        CPLError(
+                            CE_Warning, CPLE_NonCooperativeSponsor,
+                            "Due to lack of resources, Amazon S3 access is "
+                            "undergoing minimal maintenance and may "
+                            "be removed in the future unless AWS re-evaluates "
+                            "its decision to stop sponsoring GDAL. If you are "
+                            "interested in keeping this functionality please "
+                            "get in touch with your AWS representative.");
+                    }
+                }
+            }
+            return true;
+        }();
+        CPL_IGNORE_RET_VAL(bCheckSponsoring);
+    }
+
     const std::string osHost(m_bUseVirtualHosting && !m_osBucket.empty()
                                  ? std::string(m_osBucket + "." + m_osEndpoint)
                                  : m_osEndpoint);
@@ -2707,48 +2841,54 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
             }
             return false;
         }
+
+        /* If we have a body with
+        <Error><Code>PermanentRedirect</Code><Message>The bucket you are
+        attempting to access must be addressed using the specified endpoint.
+        Please send all future requests to this
+        endpoint.</Message><Bucket>bucket</Bucket><Endpoint>bucket.region.s3.amazonaws.com</Endpoint></Error>
+        and headers like
+        x-amz-bucket-region: eu-west-1
+        then we must use s3-$(x-amz-bucket-region).amazon.com as endpoint. */
+        const char *pszRegionPtr =
+            (pszHeaders != nullptr)
+                ? strstr(pszHeaders, "x-amz-bucket-region: ")
+                : nullptr;
+        if (pszRegionPtr != nullptr)
+        {
+            std::string osRegion(pszRegionPtr +
+                                 strlen("x-amz-bucket-region: "));
+            size_t nPos = osRegion.find('\r');
+            if (nPos != std::string::npos)
+                osRegion.resize(nPos);
+            if (strncmp(pszEndpoint, m_osBucket.c_str(), m_osBucket.size()) ==
+                    0 &&
+                pszEndpoint[m_osBucket.size()] == '.')
+            {
+                pszEndpoint += m_osBucket.size() + 1;
+            }
+
+            SetEndpoint(pszEndpoint);
+            SetRegion(osRegion.c_str());
+            CPLDebug(AWS_DEBUG_KEY, "Switching to endpoint %s",
+                     m_osEndpoint.c_str());
+            CPLDebug(AWS_DEBUG_KEY, "Switching to region %s",
+                     m_osRegion.c_str());
+            CPLDestroyXMLNode(psTree);
+            if (!bIsTemporaryRedirect)
+                VSIS3UpdateParams::UpdateMapFromHandle(this);
+            return true;
+        }
+
         if (!m_bUseVirtualHosting &&
+            m_osBucket.find('.') == std::string::npos &&
             strncmp(pszEndpoint, m_osBucket.c_str(), m_osBucket.size()) == 0 &&
             pszEndpoint[m_osBucket.size()] == '.')
         {
-            /* If we have a body with
-            <Error><Code>PermanentRedirect</Code><Message>The bucket you are
-            attempting to access must be addressed using the specified endpoint.
-            Please send all future requests to this
-            endpoint.</Message><Bucket>bucket.with.dot</Bucket><Endpoint>bucket.with.dot.s3.amazonaws.com</Endpoint></Error>
-            and headers like
-            x-amz-bucket-region: eu-west-1
-            and the bucket name has dot in it,
-            then we must use s3.$(x-amz-bucket-region).amazon.com as endpoint.
-            See #7154 */
-            const char *pszRegionPtr =
-                (pszHeaders != nullptr)
-                    ? strstr(pszHeaders, "x-amz-bucket-region: ")
-                    : nullptr;
-            if (strchr(m_osBucket.c_str(), '.') != nullptr &&
-                pszRegionPtr != nullptr)
-            {
-                std::string osRegion(pszRegionPtr +
-                                     strlen("x-amz-bucket-region: "));
-                size_t nPos = osRegion.find('\r');
-                if (nPos != std::string::npos)
-                    osRegion.resize(nPos);
-                SetEndpoint(
-                    CPLSPrintf("s3.%s.amazonaws.com", osRegion.c_str()));
-                SetRegion(osRegion.c_str());
-                CPLDebug(AWS_DEBUG_KEY, "Switching to endpoint %s",
-                         m_osEndpoint.c_str());
-                CPLDebug(AWS_DEBUG_KEY, "Switching to region %s",
-                         m_osRegion.c_str());
-                CPLDestroyXMLNode(psTree);
-                if (!bIsTemporaryRedirect)
-                    VSIS3UpdateParams::UpdateMapFromHandle(this);
-                return true;
-            }
-
             m_bUseVirtualHosting = true;
             CPLDebug(AWS_DEBUG_KEY, "Switching to virtual hosting");
         }
+
         SetEndpoint(m_bUseVirtualHosting ? pszEndpoint + m_osBucket.size() + 1
                                          : pszEndpoint);
         CPLDebug(AWS_DEBUG_KEY, "Switching to endpoint %s",
@@ -2761,17 +2901,26 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         return true;
     }
 
+    if (EQUAL(pszCode, "RequestTimeout"))
+    {
+        const char *pszMessage =
+            CPLGetXMLValue(psTree, "=Error.Message", nullptr);
+        if (pszMessage != nullptr)
+            CPLDebug("S3", "Request Timeout: %s", pszMessage);
+
+        CPLDestroyXMLNode(psTree);
+        return true;
+    }
+
     if (bSetError)
     {
         // Translate AWS errors into VSI errors.
-        const char *pszMessage =
-            CPLGetXMLValue(psTree, "=Error.Message", nullptr);
 
-        if (pszMessage == nullptr)
-        {
-            VSIError(VSIE_ObjectStorageGenericError, "%s", pszErrorMsg);
-        }
-        else if (EQUAL(pszCode, "AccessDenied"))
+        const char *pszMessage =
+            CPLGetXMLValue(psTree, "=Error.Message", pszErrorMsg);
+        // Some S3 implementations (e.g. OpenStack) skip the Message part
+
+        if (EQUAL(pszCode, "AccessDenied"))
         {
             VSIError(VSIE_AccessDenied, "%s", pszMessage);
         }

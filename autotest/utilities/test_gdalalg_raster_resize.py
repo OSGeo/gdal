@@ -43,7 +43,7 @@ def test_gdalalg_raster_resize(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 10
         assert ds.GetRasterBand(1).Checksum() == 1192
@@ -72,7 +72,7 @@ def test_gdalalg_raster_resize_resampling(tmp_vsimem):
     )
     assert last_pct[0] == 1.0
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 10
         assert ds.GetRasterBand(1).Checksum() == 1059
@@ -93,7 +93,7 @@ def test_gdalalg_raster_resize_percent(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 5
 
@@ -128,6 +128,6 @@ def test_gdalalg_raster_resize_resolution(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.RasterXSize == 10
         assert ds.RasterYSize == 40

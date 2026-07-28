@@ -37,6 +37,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("OGR_VRT")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -1269,15 +1270,13 @@ def test_ogr_vrt_27(tmp_vsimem):
 
     gdal.FileFromMemBuffer(tmp_vsimem / "ogr_vrt_27.csv", csv)
 
-    ds = ogr.Open(
-        f"""<OGRVRTDataSource>
+    ds = ogr.Open(f"""<OGRVRTDataSource>
   <OGRVRTLayer name="ogr_vrt_27">
     <SrcDataSource relativeToVRT="0" shared="0">{tmp_vsimem}/ogr_vrt_27.csv</SrcDataSource>
     <GeometryField encoding="shape" field="shapebin"/>
     <Field name="foo"/>
   </OGRVRTLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
 
     assert ds is not None
 
@@ -1376,63 +1375,54 @@ def test_ogr_vrt_29(tmp_path):
 
     # Invalid source layer
     with gdal.quiet_errors():
-        ogr.Open(
-            f"""<OGRVRTDataSource>
+        ogr.Open(f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
                 <SrcDataSource>{tmp_path}/non_existing.shp</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>EPSG:32631</TargetSRS>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-        )
+    </OGRVRTDataSource>""")
     assert gdal.GetLastErrorMsg() != ""
 
     # Non-spatial layer
     with gdal.quiet_errors():
-        ogr.Open(
-            """<OGRVRTDataSource>
+        ogr.Open("""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="flat">
                 <SrcDataSource>data/flat.dbf</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>EPSG:32631</TargetSRS>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-        )
+    </OGRVRTDataSource>""")
     assert gdal.GetLastErrorMsg() != ""
 
     # Missing TargetSRS
     with gdal.quiet_errors():
-        ogr.Open(
-            f"""<OGRVRTDataSource>
+        ogr.Open(f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
                 <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
             </OGRVRTLayer>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-        )
+    </OGRVRTDataSource>""")
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid TargetSRS
     with gdal.quiet_errors():
-        ogr.Open(
-            f"""<OGRVRTDataSource>
+        ogr.Open(f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
                 <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>foo</TargetSRS>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-        )
+    </OGRVRTDataSource>""")
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid SrcSRS
     with gdal.quiet_errors():
-        ogr.Open(
-            f"""<OGRVRTDataSource>
+        ogr.Open(f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
                 <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
@@ -1440,27 +1430,23 @@ def test_ogr_vrt_29(tmp_path):
             <SrcSRS>foo</SrcSRS>
             <TargetSRS>EPSG:32631</TargetSRS>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-        )
+    </OGRVRTDataSource>""")
     assert gdal.GetLastErrorMsg() != ""
 
     # TargetSRS == source SRS
-    ds = ogr.Open(
-        f"""<OGRVRTDataSource>
+    ds = ogr.Open(f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:4326</TargetSRS>
     </OGRVRTWarpedLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
     ds = None
 
     # Forced extent
-    ds = ogr.Open(
-        f"""<OGRVRTDataSource>
+    ds = ogr.Open(f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
@@ -1471,24 +1457,21 @@ def test_ogr_vrt_29(tmp_path):
         <ExtentXMax>485608</ExtentXMax>
         <ExtentYMax>5516874</ExtentYMax>
     </OGRVRTWarpedLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
     bb = lyr.GetExtent()
     assert bb == (426857, 485608, 5427475, 5516874)
     ds = None
 
     f = open(tmp_path / "ogr_vrt_29.vrt", "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource relativetoVRT="1">ogr_vrt_29.shp</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:32631</TargetSRS>
     </OGRVRTWarpedLayer>
-</OGRVRTDataSource>\n"""
-    )
+</OGRVRTDataSource>\n""")
     f.close()
 
     # Check reprojection in both directions
@@ -1626,16 +1609,14 @@ def test_ogr_vrt_29(tmp_path):
     ds = None
 
     f = open(tmp_path / "ogr_vrt_29_2.vrt", "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource relativetoVRT="1">ogr_vrt_29.vrt</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:4326</TargetSRS>
     </OGRVRTWarpedLayer>
-</OGRVRTDataSource>\n"""
-    )
+</OGRVRTDataSource>\n""")
     f.close()
 
     # Check failed reprojection when writing through VRT
@@ -1729,8 +1710,7 @@ def test_ogr_vrt_30(tmp_path):
     ds = None
 
     f = open(tmp_path / "ogr_vrt_30.vrt", "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="ogr_vrt_30_1">
             <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
@@ -1739,8 +1719,7 @@ def test_ogr_vrt_30(tmp_path):
             <SrcDataSource relativetoVRT="1">ogr_vrt_30_2.shp</SrcDataSource>
         </OGRVRTLayer>
     </OGRVRTUnionLayer>
-</OGRVRTDataSource>\n"""
-    )
+</OGRVRTDataSource>\n""")
     f.close()
 
     # Check
@@ -1894,8 +1873,7 @@ def test_ogr_vrt_30(tmp_path):
 
     # Test various optional attributes
     f = open(tmp_path / "ogr_vrt_30.vrt", "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="ogr_vrt_30_1">
             <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
@@ -1914,8 +1892,7 @@ def test_ogr_vrt_30(tmp_path):
         <ExtentXMax>180</ExtentXMax>
         <ExtentYMax>90</ExtentYMax>
     </OGRVRTUnionLayer>
-</OGRVRTDataSource>\n"""
-    )
+</OGRVRTDataSource>\n""")
     f.close()
 
     for check in range(9):
@@ -3006,8 +2983,7 @@ def test_ogr_vrt_35(tmp_path):
 
     # Explicit nullable
     f = open(tmp_path / "test.vrt", "wb")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
         <SrcDataSource relativeToVRT="1">test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
@@ -3016,10 +2992,7 @@ def test_ogr_vrt_35(tmp_path):
         <Field name="c1" type="Integer" nullable="false"/>
         <Field name="c2" type="Integer"/>
     </OGRVRTLayer>
-</OGRVRTDataSource>""".encode(
-            "ascii"
-        )
-    )
+</OGRVRTDataSource>""".encode("ascii"))
     f.close()
 
     ds = ogr.Open(tmp_path / "test.vrt")
@@ -3032,16 +3005,12 @@ def test_ogr_vrt_35(tmp_path):
 
     # Implicit nullable
     f = open(tmp_path / "test2.vrt", "wb")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
         <SrcDataSource relativeToVRT="1">test.vrt</SrcDataSource>
         <SrcLayer>test</SrcLayer>
     </OGRVRTLayer>
-</OGRVRTDataSource>""".encode(
-            "ascii"
-        )
-    )
+</OGRVRTDataSource>""".encode("ascii"))
     f.close()
 
     ds = ogr.Open(tmp_path / "test2.vrt")
@@ -3071,18 +3040,14 @@ def test_ogr_vrt_alternative_name_comment(tmp_path):
         pass
 
     f = open(tmp_path / "test.vrt", "wb")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
         <SrcDataSource relativeToVRT="1">test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <Field name="c1" type="Integer" alternativeName="alternative_name" comment="this is a comment"/>
         <Field name="c2" type="Integer"/>
     </OGRVRTLayer>
-</OGRVRTDataSource>""".encode(
-            "ascii"
-        )
-    )
+</OGRVRTDataSource>""".encode("ascii"))
     f.close()
 
     ds = ogr.Open(tmp_path / "test.vrt")
@@ -3300,13 +3265,11 @@ def test_ogr_vrt_40(tmp_vsimem):
 
 def test_ogr_vrt_41():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="test">
     <SrcDataSource>/i_dont/exist</SrcDataSource>
   </OGRVRTLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
     with gdal.quiet_errors():
         lyr.GetExtent()
@@ -3318,8 +3281,7 @@ def test_ogr_vrt_41():
 
 def test_ogr_vrt_nullable_unique():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="poly">
     <SrcDataSource>data/poly.shp</SrcDataSource>
     <SrcLayer>poly</SrcLayer>
@@ -3329,8 +3291,7 @@ def test_ogr_vrt_nullable_unique():
     <Field name="prfedea" type="String"/>
   </OGRVRTLayer>
 </OGRVRTDataSource>
-"""
-    )
+""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert feat_defn.GetFieldDefn(0).IsNullable()
@@ -3345,8 +3306,7 @@ def test_ogr_vrt_nullable_unique():
 
 def test_ogr_vrt_field_names_same_case():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="test">
     <SrcDataSource>{"type":"Feature","id":"foo","geometry":null,"properties":{"ID":"bar"}}</SrcDataSource>
     <SrcLayer>OGRGeoJSON</SrcLayer>
@@ -3354,8 +3314,7 @@ def test_ogr_vrt_field_names_same_case():
     <Field name="id_from_uc" type="String" src="ID"/>
   </OGRVRTLayer>
 </OGRVRTDataSource>
-"""
-    )
+""")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["id"] == "foo"
@@ -3368,8 +3327,7 @@ def test_ogr_vrt_field_names_same_case():
 
 def test_ogr_vrt_geom_coordinate_precision():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="poly">
     <SrcDataSource>data/poly.shp</SrcDataSource>
     <GeometryField>
@@ -3380,8 +3338,7 @@ def test_ogr_vrt_geom_coordinate_precision():
     </GeometryField>
   </OGRVRTLayer>
 </OGRVRTDataSource>
-"""
-    )
+""")
     lyr = ds.GetLayer(0)
     geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
     prec = geom_fld.GetCoordinatePrecision()
@@ -3397,16 +3354,14 @@ def test_ogr_vrt_geom_coordinate_precision():
 @pytest.mark.require_driver("GPKG")
 def test_ogr_vrt_warped_arrow(tmp_vsimem):
 
-    src_ds = ogr.Open(
-        """<OGRVRTDataSource>
+    src_ds = ogr.Open("""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="foo">
                 <SrcDataSource>data/gpkg/2d_envelope.gpkg</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>EPSG:32631</TargetSRS>
         </OGRVRTWarpedLayer>
-    </OGRVRTDataSource>"""
-    )
+    </OGRVRTDataSource>""")
     out_filename = str(tmp_vsimem / "out.gpkg")
     with gdal.config_option("OGR2OGR_USE_ARROW_API", "YES"):
         gdal.VectorTranslate(out_filename, src_ds)
@@ -3423,14 +3378,12 @@ def test_ogr_vrt_warped_arrow(tmp_vsimem):
 @pytest.mark.require_geos
 def test_ogr_vrt_srcregion_and_point_filter():
 
-    src_ds = ogr.Open(
-        """<OGRVRTDataSource>
+    src_ds = ogr.Open("""<OGRVRTDataSource>
             <OGRVRTLayer name="poly">
                 <SrcDataSource>data/poly.shp</SrcDataSource>
                 <SrcRegion>MULTIPOLYGON(((478315 4762880,478315 4765610,481645 4765610,481645 4762880,478315 4762880)))</SrcRegion>
             </OGRVRTLayer>
-    </OGRVRTDataSource>"""
-    )
+    </OGRVRTDataSource>""")
     lyr = src_ds.GetLayer(0)
 
     lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT(479751 4764703)"))
@@ -3465,8 +3418,7 @@ def test_ogr_vrt_getfeature_optimization(tmp_path):
                 f["i"] = iSrc * 10 + i
                 lyr.CreateFeature(f)
 
-    ds = ogr.Open(
-        f"""<OGRVRTDataSource>
+    ds = ogr.Open(f"""<OGRVRTDataSource>
                  <OGRVRTUnionLayer name="test">
                     <OGRVRTLayer name="src0">
                         <SrcDataSource>{tmp_path}/src0.dbf</SrcDataSource>
@@ -3484,8 +3436,7 @@ def test_ogr_vrt_getfeature_optimization(tmp_path):
                         <SrcDataSource>{tmp_path}/src4.dbf</SrcDataSource>
                     </OGRVRTLayer>
                 </OGRVRTUnionLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
 
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCRandomRead) == 0

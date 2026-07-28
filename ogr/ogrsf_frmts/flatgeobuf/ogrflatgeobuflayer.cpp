@@ -399,23 +399,22 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
     if (m_poSRS)
     {
         int nAuthorityCode = 0;
-        const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthorityName = m_poSRS->GetAuthorityName();
         if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
         {
             // Try to force identify an EPSG code.
             m_poSRS->AutoIdentifyEPSG();
 
-            pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            pszAuthorityName = m_poSRS->GetAuthorityName();
             if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
             {
-                const char *pszAuthorityCode =
-                    m_poSRS->GetAuthorityCode(nullptr);
+                const char *pszAuthorityCode = m_poSRS->GetAuthorityCode();
                 if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
                 {
                     /* Import 'clean' SRS */
                     m_poSRS->importFromEPSG(atoi(pszAuthorityCode));
 
-                    pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+                    pszAuthorityName = m_poSRS->GetAuthorityName();
                 }
             }
         }
@@ -423,7 +422,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
         {
             // For the root authority name 'EPSG', the authority code
             // should always be integral
-            nAuthorityCode = atoi(m_poSRS->GetAuthorityCode(nullptr));
+            nAuthorityCode = atoi(m_poSRS->GetAuthorityCode());
         }
 
         // Translate SRS to WKT.
@@ -2012,11 +2011,8 @@ after_loop:
         auto poFilterGeomBackup = m_poFilterGeom;
         m_poFilterGeom = nullptr;
         CPLStringList aosOptions;
-        if (!m_poFilterGeom)
-        {
-            aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
-                                    CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
-        }
+        aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
+                                CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
         PostFilterArrowArray(&schema, out_array, aosOptions.List());
         schema.release(&schema);
         m_poFilterGeom = poFilterGeomBackup;
@@ -2456,24 +2452,30 @@ void OGRFlatGeobufLayer::ResetReading()
     return;
 }
 
-std::string OGRFlatGeobufLayer::GetTempFilePath(const CPLString &fileName,
-                                                CSLConstList papszOptions)
+// Only for use by CreateOutputFile()
+static std::string GetTempFilePath(const CPLString &fileName,
+                                   CSLConstList papszOptions)
 {
-    const CPLString osDirname(CPLGetPathSafe(fileName.c_str()));
-    const CPLString osBasename(CPLGetBasenameSafe(fileName.c_str()));
+    const std::string osBasename(CPLGetBasenameSafe(fileName.c_str()));
+    const std::string osTmpFilename =
+        CPLGenerateTempFilenameSafe((osBasename + "_temp").c_str()) + ".fgb";
+
     const char *pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
-    std::string osTempFile =
-        pszTempDir ? CPLFormFilenameSafe(pszTempDir, osBasename, nullptr)
-        : (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
-            ? CPLGenerateTempFilenameSafe(osBasename)
-            : CPLFormFilenameSafe(osDirname, osBasename, nullptr);
-    osTempFile += "_temp.fgb";
-    return osTempFile;
+    if (pszTempDir)
+        return CPLFormFilenameSafe(
+            pszTempDir, CPLGetFilename(osTmpFilename.c_str()), nullptr);
+
+    if (STARTS_WITH(fileName, "/vsi") && !STARTS_WITH(fileName, "/vsimem/"))
+        return osTmpFilename;
+
+    const std::string osDirname(CPLGetDirnameSafe(fileName.c_str()));
+    return CPLFormFilenameSafe(osDirname.c_str(),
+                               CPLGetFilename(osTmpFilename.c_str()), nullptr);
 }
 
-VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
-                                               CSLConstList papszOptions,
-                                               bool isTemp)
+std::pair<VSILFILE *, std::string>
+OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
+                                     CSLConstList papszOptions, bool isTemp)
 {
     std::string osTempFile;
     VSILFILE *poFpWrite;
@@ -2503,9 +2505,9 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create %s:\n%s",
                  osFilename.c_str(), VSIStrerror(savedErrno));
-        return nullptr;
+        return {nullptr, std::string()};
     }
-    return poFpWrite;
+    return {poFpWrite, osTempFile};
 }
 
 OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
@@ -2513,8 +2515,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
     const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
     bool bCreateSpatialIndexAtClose, CSLConstList papszOptions)
 {
-    std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
-    VSILFILE *poFpWrite =
+    auto [poFpWrite, osTempFile] =
         CreateOutputFile(pszFilename, papszOptions, bCreateSpatialIndexAtClose);
     if (poFpWrite == nullptr)
         return nullptr;

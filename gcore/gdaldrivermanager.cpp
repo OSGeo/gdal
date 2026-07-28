@@ -550,6 +550,7 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     // calling RegisterDriver()).
     if (poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == nullptr &&
         poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
+        poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) == nullptr &&
         poDriver->GetMetadataItem(GDAL_DCAP_GNM) == nullptr)
     {
         CPLDebug("GDAL", "Assuming DCAP_RASTER for driver %s. Please fix it.",
@@ -1537,6 +1538,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
         pfnDelete = m_poRealDriver->pfnDelete;
         pfnRename = m_poRealDriver->pfnRename;
         pfnCopyFiles = m_poRealDriver->pfnCopyFiles;
+        pfnClearCaches = m_poRealDriver->pfnClearCaches;
 
         if (strcmp(GetDescription(), m_poRealDriver->GetDescription()) != 0)
         {
@@ -1616,7 +1618,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Driver %s declares a %s callback whereas its proxy "
-                         "doest not declare %s",
+                         "does not declare %s",
                          GetDescription(), pszFunc, pszItemName);
             }
             else if (!pfnFunc && GetMetadataItem(pszItemName))

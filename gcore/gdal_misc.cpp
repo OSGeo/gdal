@@ -1370,8 +1370,47 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
         case GCI_SAR_Reserved_2:
             return "SAR_Reserved_2";
+
+            // If adding any (non-reserved) value, also update GDALGetColorInterpretationList()
     }
     return "Undefined";
+}
+
+/************************************************************************/
+/*                  GDALGetColorInterpretationByName()                  */
+/************************************************************************/
+
+/**
+ * \brief Get the list of valid color interpretations.
+ *
+ * Reserved values of the GDALColorInterp enumeration are not listed.
+ *
+ * @param[out] pnCount Pointer to an integer that will be set to the number of
+ *                     values of the returned array. It must not be null.
+ *
+ * @return array of *pnCount values
+ *
+ */
+const GDALColorInterp *GDALGetColorInterpretationList(int *pnCount)
+{
+    VALIDATE_POINTER1(pnCount, "GDALGetColorInterpretationList", nullptr);
+
+    static constexpr GDALColorInterp list[] = {
+        GCI_Undefined,     GCI_GrayIndex,    GCI_PaletteIndex,
+        GCI_RedBand,       GCI_GreenBand,    GCI_BlueBand,
+        GCI_AlphaBand,     GCI_HueBand,      GCI_SaturationBand,
+        GCI_LightnessBand, GCI_CyanBand,     GCI_MagentaBand,
+        GCI_YellowBand,    GCI_BlackBand,    GCI_YCbCr_YBand,
+        GCI_YCbCr_CbBand,  GCI_YCbCr_CrBand, GCI_PanBand,
+        GCI_CoastalBand,   GCI_RedEdgeBand,  GCI_NIRBand,
+        GCI_SWIRBand,      GCI_MWIRBand,     GCI_LWIRBand,
+        GCI_TIRBand,       GCI_OtherIRBand,  GCI_SAR_Ka_Band,
+        GCI_SAR_K_Band,    GCI_SAR_Ku_Band,  GCI_SAR_X_Band,
+        GCI_SAR_C_Band,    GCI_SAR_S_Band,   GCI_SAR_L_Band,
+        GCI_SAR_P_Band,
+    };
+    *pnCount = static_cast<int>(CPL_ARRAYSIZE(list));
+    return list;
 }
 
 /************************************************************************/
@@ -2492,14 +2531,15 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszFilename the world file name.
@@ -2585,14 +2625,15 @@ int CPL_STDCALL GDALLoadWorldFile(const char *pszFilename,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
@@ -2760,14 +2801,15 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
@@ -2792,7 +2834,7 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     CPLString osTFWText;
 
-    osTFWText.Printf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
+    osTFWText.Printf("%.15f\n%.15f\n%.15f\n%.15f\n%.15f\n%.15f\n",
                      padfGeoTransform[1], padfGeoTransform[4],
                      padfGeoTransform[2], padfGeoTransform[5],
                      padfGeoTransform[0] + 0.5 * padfGeoTransform[1] +
@@ -2911,7 +2953,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
         osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
 #endif
-
+#ifdef DEBUG
+        osBuildInfo += "DEBUG=YES\n";
+#endif
 #undef STRINGIFY_HELPER
 #undef STRINGIFY
 
@@ -3453,11 +3497,11 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
     // We need to think of the geotransform in a more normal form to do
     // the matrix multiple:
     //
-    //  __                     __
-    //  | gt[1]   gt[2]   gt[0] |
-    //  | gt[4]   gt[5]   gt[3] |
-    //  |  0.0     0.0     1.0  |
-    //  --                     --
+    //  __                                __
+    //  | gt.xscale   gt.xrot     gt.xorig |
+    //  | gt.yrot     gt.yscale   gt.yorig |
+    //  |  0.0        0.0         1.0      |
+    //  --                                --
     //
     // Then we can use normal matrix multiplication to produce the
     // composed transformation.  I don't actually reform the matrix
@@ -3628,7 +3672,9 @@ std::string GDALPrintDriverList(int nOptions, bool bJSON)
         CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
 
         if (nOptions == GDAL_OF_RASTER &&
-            !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+            !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false) &&
+            // HACK For CPHD driver to appear
+            !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
             continue;
         if (nOptions == GDAL_OF_VECTOR &&
             !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
@@ -4195,6 +4241,12 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 /*ok*/ printf(
                     "  Supports: Creating geometry fields with NOT NULL "
                     "constraint.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_CURVE_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: Curve geometries.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_Z_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: 3D (Z) geometries.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_MEASURED_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: Measured (M) geometries.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION,
                              false))
                 /*ok*/ printf("  Supports: Writing geometries with given "
@@ -5040,10 +5092,12 @@ GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char *pszResampling)
 
 const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
 {
+    const char *pszRet = "Unknown";
     switch (eResampleAlg)
     {
         case GRIORA_NearestNeighbour:
-            return "NearestNeighbour";
+            pszRet = "NearestNeighbour";
+            break;
         case GRIORA_Bilinear:
             return "Bilinear";
         case GRIORA_Cubic:
@@ -5060,10 +5114,11 @@ const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
             return "Mode";
         case GRIORA_Gauss:
             return "Gauss";
-        default:
-            CPLAssert(false);
-            return "Unknown";
+        case GRIORA_RESERVED_START:
+        case GRIORA_RESERVED_END:
+            break;
     }
+    return pszRet;
 }
 
 /************************************************************************/
@@ -5905,4 +5960,36 @@ bool GDALGeoTransform::Apply(const GDALRasterWindow &window,
         std::swap(env.MinY, env.MaxY);
 
     return true;
+}
+
+/************************************************************************/
+/*                        GDALGeoTransform::Init                        */
+/************************************************************************/
+
+bool GDALGeoTransform::Init(const char *pszText, const char *pszSep)
+{
+    CPLStringList aosGeoTransform(
+        CSLTokenizeString2(pszText, pszSep, CSLT_HONOURSTRINGS));
+    if (aosGeoTransform.size() != 6)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < 6; i++)
+    {
+        (*this)[i] = CPLAtof(aosGeoTransform[i]);
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      GDALGeoTransform::ToString                      */
+/************************************************************************/
+
+std::string GDALGeoTransform::ToString(const char *pszSep) const
+{
+    return CPLSPrintf("%.17g%s%.17g%s%.17g%s%.17g%s%.17g%s%.17g", (*this)[0],
+                      pszSep, (*this)[1], pszSep, (*this)[2], pszSep,
+                      (*this)[3], pszSep, (*this)[4], pszSep, (*this)[5]);
 }

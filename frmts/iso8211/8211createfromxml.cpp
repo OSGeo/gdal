@@ -14,6 +14,8 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "iso8211.h"
+
+#include <array>
 #include <map>
 #include <string>
 
@@ -105,12 +107,9 @@ int main(int nArgc, char *papszArgv[])
     chAppIndicator = CPLGetXMLValue(poXMLDDFModule, "_appIndicator",
                                     CPLSPrintf("%c", chAppIndicator))[0];
 
-    const char *pszExtendedCharSet = " ! ";
     char szExtendedCharSet[4];
-    snprintf(
-        szExtendedCharSet, sizeof(szExtendedCharSet), "%s",
-        CPLGetXMLValue(poXMLDDFModule, "_extendedCharSet", pszExtendedCharSet));
-    pszExtendedCharSet = szExtendedCharSet;
+    snprintf(szExtendedCharSet, sizeof(szExtendedCharSet), "%s",
+             CPLGetXMLValue(poXMLDDFModule, "_extendedCharSet", " ! "));
     int nSizeFieldLength = 3;
     nSizeFieldLength = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldLength",
                                            CPLSPrintf("%d", nSizeFieldLength)));
@@ -122,10 +121,12 @@ int main(int nArgc, char *papszArgv[])
                                         CPLSPrintf("%d", nSizeFieldTag)));
 
     DDFModule oModule;
-    oModule.Initialize(chInterchangeLevel, chLeaderIden,
-                       chCodeExtensionIndicator, chVersionNumber,
-                       chAppIndicator, pszExtendedCharSet, nSizeFieldLength,
-                       nSizeFieldPos, nSizeFieldTag);
+    oModule.Initialize(
+        chInterchangeLevel, chLeaderIden, chCodeExtensionIndicator,
+        chVersionNumber, chAppIndicator,
+        std::array<char, 3>{szExtendedCharSet[0], szExtendedCharSet[1],
+                            szExtendedCharSet[2]},
+        nSizeFieldLength, nSizeFieldPos, nSizeFieldTag);
     oModule.SetFieldControlLength(atoi(
         CPLGetXMLValue(poXMLDDFModule, "_fieldControlLength",
                        CPLSPrintf("%d", oModule.GetFieldControlLength()))));
@@ -139,7 +140,7 @@ int main(int nArgc, char *papszArgv[])
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "DDFFieldDefn") == 0)
         {
-            DDFFieldDefn *poFDefn = new DDFFieldDefn();
+            auto poFDefn = std::make_unique<DDFFieldDefn>();
 
             DDF_data_struct_code eStructCode = dsc_elementary;
             const char *pszStructCode =
@@ -173,40 +174,46 @@ int main(int nArgc, char *papszArgv[])
 
             const char *pszFormatControls =
                 CPLGetXMLValue(psIter, "formatControls", nullptr);
-            if (eStructCode != dsc_elementary)
-                pszFormatControls = nullptr;
-
             const char *pszArrayDescr =
-                CPLGetXMLValue(psIter, "arrayDescr", "");
-            if (eStructCode == dsc_vector)
-                pszArrayDescr = "";
-            else if (eStructCode == dsc_array)
-                pszArrayDescr = "*";
-
-            poFDefn->Create(CPLGetXMLValue(psIter, "tag", ""),
-                            CPLGetXMLValue(psIter, "fieldName", ""),
-                            pszArrayDescr, eStructCode, eTypeCode,
-                            pszFormatControls);
-
-            CPLXMLNode *psSubIter = psIter->psChild;
-            while (psSubIter != nullptr)
+                CPLGetXMLValue(psIter, "arrayDescr", nullptr);
+            if (!pszArrayDescr && !pszFormatControls)
             {
-                if (psSubIter->eType == CXT_Element &&
-                    strcmp(psSubIter->pszValue, "DDFSubfieldDefn") == 0)
-                {
-                    poFDefn->AddSubfield(
-                        CPLGetXMLValue(psSubIter, "name", ""),
-                        CPLGetXMLValue(psSubIter, "format", ""));
-                }
-                psSubIter = psSubIter->psNext;
+                if (eStructCode == dsc_vector)
+                    pszArrayDescr = "";
+                else if (eStructCode == dsc_array)
+                    pszArrayDescr = "*";
             }
 
-            pszFormatControls =
-                CPLGetXMLValue(psIter, "formatControls", nullptr);
-            if (pszFormatControls)
-                poFDefn->SetFormatControls(pszFormatControls);
+            if (!poFDefn->Create(CPLGetXMLValue(psIter, "tag", ""),
+                                 CPLGetXMLValue(psIter, "fieldName", ""),
+                                 pszArrayDescr, eStructCode, eTypeCode,
+                                 pszFormatControls))
+            {
+                exit(1);
+            }
 
-            oModule.AddField(poFDefn);
+            const char *pszEscapeSequence =
+                CPLGetXMLValue(psIter, "escapeSequence", nullptr);
+            if (pszEscapeSequence)
+                poFDefn->SetEscapeSequence(pszEscapeSequence);
+
+            if (!pszArrayDescr && !pszFormatControls)
+            {
+                CPLXMLNode *psSubIter = psIter->psChild;
+                while (psSubIter != nullptr)
+                {
+                    if (psSubIter->eType == CXT_Element &&
+                        strcmp(psSubIter->pszValue, "DDFSubfieldDefn") == 0)
+                    {
+                        poFDefn->AddSubfield(
+                            CPLGetXMLValue(psSubIter, "name", ""),
+                            CPLGetXMLValue(psSubIter, "format", ""));
+                    }
+                    psSubIter = psSubIter->psNext;
+                }
+            }
+
+            oModule.AddField(std::move(poFDefn));
         }
         else if (psIter->eType == CXT_Element &&
                  strcmp(psIter->pszValue, "DDFRecord") == 0)
@@ -303,25 +310,46 @@ int main(int nArgc, char *papszArgv[])
                                 oMapSubfield[pszSubfieldName]++;
                                 if (strcmp(pszSubfieldType, "float") == 0)
                                 {
-                                    poRec->SetFloatSubfield(
-                                        pszFieldName, nFieldOcc,
-                                        pszSubfieldName, nOcc,
-                                        CPLAtof(pszSubfieldValue));
+                                    if (!poRec->SetFloatSubfield(
+                                            pszFieldName, nFieldOcc,
+                                            pszSubfieldName, nOcc,
+                                            CPLAtof(pszSubfieldValue)))
+                                    {
+                                        CPLError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "SetFloatSubfield(%s, %s) failed",
+                                            pszFieldName, pszSubfieldName);
+                                        exit(1);
+                                    }
                                 }
                                 else if (strcmp(pszSubfieldType, "integer") ==
                                          0)
                                 {
-                                    poRec->SetIntSubfield(
-                                        pszFieldName, nFieldOcc,
-                                        pszSubfieldName, nOcc,
-                                        atoi(pszSubfieldValue));
+                                    if (!poRec->SetIntSubfield(
+                                            pszFieldName, nFieldOcc,
+                                            pszSubfieldName, nOcc,
+                                            atoi(pszSubfieldValue)))
+                                    {
+                                        CPLError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "SetIntSubfield(%s, %s) failed",
+                                            pszFieldName, pszSubfieldName);
+                                        exit(1);
+                                    }
                                 }
                                 else if (strcmp(pszSubfieldType, "string") == 0)
                                 {
-                                    poRec->SetStringSubfield(
-                                        pszFieldName, nFieldOcc,
-                                        pszSubfieldName, nOcc,
-                                        pszSubfieldValue);
+                                    if (!poRec->SetStringSubfield(
+                                            pszFieldName, nFieldOcc,
+                                            pszSubfieldName, nOcc,
+                                            pszSubfieldValue))
+                                    {
+                                        CPLError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "SetStringSubfield(%s, %s) failed",
+                                            pszFieldName, pszSubfieldName);
+                                        exit(1);
+                                    }
                                 }
                                 else if (strcmp(pszSubfieldType, "binary") ==
                                              0 &&
@@ -348,10 +376,17 @@ int main(int nArgc, char *papszArgv[])
                                             nLow = c - '0';
                                         pabyData[i] = (nHigh << 4) + nLow;
                                     }
-                                    poRec->SetStringSubfield(
-                                        pszFieldName, nFieldOcc,
-                                        pszSubfieldName, nOcc, pabyData,
-                                        nDataLen);
+                                    if (!poRec->SetStringSubfield(
+                                            pszFieldName, nFieldOcc,
+                                            pszSubfieldName, nOcc, pabyData,
+                                            nDataLen))
+                                    {
+                                        CPLError(
+                                            CE_Failure, CPLE_AppDefined,
+                                            "SetStringSubfield(%s, %s) failed",
+                                            pszFieldName, pszSubfieldName);
+                                        exit(1);
+                                    }
                                     CPLFree(pabyData);
                                 }
                             }

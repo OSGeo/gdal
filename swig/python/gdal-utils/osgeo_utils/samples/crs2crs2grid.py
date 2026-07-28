@@ -187,8 +187,7 @@ def write_control(
 
 
 def Usage(brief=1):
-    print(
-        """
+    print("""
 Usage: crs2crs2grid.py
         <src_crs_id> <src_crs_date> <dst_crs_id> <dst_crs_year>
         [-griddef <ul_lon> <ul_lat> <ll_lon> <ll_lat> <lon_count> <lat_count>]
@@ -202,12 +201,10 @@ Usage: crs2crs2grid.py
 
 eg.
  crs2crs2grid.py 29 2002.0 8 2002.0 -o nad83_2002.ct2
- """
-    )
+ """)
 
     if brief == 0:
-        print(
-            """
+        print("""
 The output file will be in CTable2 format suitable for use with PROJ.4
 +nadgrids= directive.
 
@@ -236,8 +233,7 @@ CRS Ids
  14...ITRF90                             26...IGS05 = ITRF2005
  15...ITRF91                             27...ITRF2008
                                          28...IGS08 = ITRF2008
-"""
-        )
+""")
 
     return 2
 

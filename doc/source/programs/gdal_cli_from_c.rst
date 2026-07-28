@@ -1,12 +1,12 @@
 .. _gdal_cli_from_c:
 
 ================================================================================
-How to use "gdal" CLI algorithms from C
+How to use ``gdal`` CLI algorithms from C
 ================================================================================
 
 .. versionadded:: 3.12
 
-The C API for "gdal" CLI algorithms is available in :file:`gdalalgorithm.h`.
+The C API for ``gdal`` CLI algorithms is available in :file:`gdalalgorithm.h`.
 
 The first step is to get the instance of the ``GDALGlobalAlgorithmRegistry`` with
 :cpp:func:`GDALGetGlobalAlgorithmRegistry` and then call

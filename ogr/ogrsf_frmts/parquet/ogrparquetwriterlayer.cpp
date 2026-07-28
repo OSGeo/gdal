@@ -439,7 +439,8 @@ bool OGRParquetWriterLayer::SetOptions(
 
     m_osFIDColumn = CSLFetchNameValueDef(papszOptions, "FID", "");
 
-    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszCompression =
+        CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszCompression == nullptr)
     {
         auto oResult = arrow::util::Codec::GetCompressionType("snappy");
@@ -603,10 +604,8 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 {
                     OGRSpatialReference oSRSIdentified(IdentifyCRS(poSRS));
 
-                    const char *pszAuthName =
-                        oSRSIdentified.GetAuthorityName(nullptr);
-                    const char *pszAuthCode =
-                        oSRSIdentified.GetAuthorityCode(nullptr);
+                    const char *pszAuthName = oSRSIdentified.GetAuthorityName();
+                    const char *pszAuthCode = oSRSIdentified.GetAuthorityCode();
 
                     bool bOmitCRS = false;
                     if (pszAuthName != nullptr && pszAuthCode != nullptr &&
@@ -673,7 +672,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 bool bHasZ = false;
                 for (const auto eGeomType : m_oSetWrittenGeometryTypes[i])
                 {
-                    bHasZ = OGR_GT_HasZ(eGeomType);
+                    bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeomType));
                     if (bHasZ)
                         break;
                 }

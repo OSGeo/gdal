@@ -970,7 +970,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
-            poCurLayer->SetUpdatable(CPL_TO_BOOL(bUpdatable));
+            poCurLayer->SetUpdatable(bUpdatable);
             poCurLayer->SetUpdated(false);
         }
 

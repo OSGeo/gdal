@@ -53,11 +53,9 @@ IOGRMemLayerFeatureIterator::~IOGRMemLayerFeatureIterator() = default;
 OGRMemLayer::OGRMemLayer(const char *pszName,
                          const OGRSpatialReference *poSRSIn,
                          OGRwkbGeometryType eReqType)
-    : m_poFeatureDefn(new OGRFeatureDefn(pszName))
+    : m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(pszName))
 {
-    m_poFeatureDefn->Reference();
-
-    SetDescription(m_poFeatureDefn->GetName());
+    OGRMemLayer::SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(eReqType);
 
     if (eReqType != wkbNone && poSRSIn != nullptr)
@@ -74,9 +72,7 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
 OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
     : m_poFeatureDefn(oFeatureDefn.Clone())
 {
-    m_poFeatureDefn->Reference();
-
-    SetDescription(m_poFeatureDefn->GetName());
+    OGRMemLayer::SetDescription(m_poFeatureDefn->GetName());
 
     m_oMapFeaturesIter = m_oMapFeatures.begin();
     m_poFeatureDefn->Seal(/* bSealFields = */ true);
@@ -104,9 +100,6 @@ OGRMemLayer::~OGRMemLayer()
         }
         CPLFree(m_papoFeatures);
     }
-
-    if (m_poFeatureDefn)
-        m_poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -868,15 +861,12 @@ OGRErr OGRMemLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         }
         else
         {
-            if (poFieldDefn->GetType() != OGRUnknownType)
+            if (poNewFieldDefn->GetType() != OFTString)
             {
-                if (poNewFieldDefn->GetType() != OFTString)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Can only convert from OFTInteger to OFTReal, "
-                             "or from anything to OFTString");
-                    return OGRERR_FAILURE;
-                }
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Can only convert from OFTInteger to OFTReal, "
+                         "or from anything to OFTString");
+                return OGRERR_FAILURE;
             }
 
             // Update all the internal features.  Hopefully there aren't any

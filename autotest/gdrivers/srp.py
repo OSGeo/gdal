@@ -74,7 +74,7 @@ def test_srp_1(pcb):
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key, value) = md.split("=")
+        key, value = md.split("=")
         assert key in got_md and got_md[key] == value, "did not find %s" % md
 
 
@@ -115,7 +115,7 @@ def test_srp_5():
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key, value) = md.split("=")
+        key, value = md.split("=")
         assert key in got_md and got_md[key] == value, "did not find %s" % md
 
 

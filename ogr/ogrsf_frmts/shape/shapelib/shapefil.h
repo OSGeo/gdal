@@ -36,7 +36,7 @@ extern "C"
 #define SHAPELIB_VERSION_MICRO 2
 
 #define SHAPELIB_MAKE_VERSION_NUMBER(major, minor, micro)                      \
-    ((major)*10000 + (minor)*100 + (micro))
+    ((major) * 10000 + (minor) * 100 + (micro))
 
 #define SHAPELIB_VERSION_NUMBER                                                \
     SHAPELIB_MAKE_VERSION_NUMBER(SHAPELIB_VERSION_MAJOR,                       \

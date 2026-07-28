@@ -1,5 +1,7 @@
 .. _gdal_raster_create:
 
+.. program:: gdal_raster_create
+
 ================================================================================
 ``gdal raster create``
 ================================================================================
@@ -29,7 +31,7 @@ By default, metadata and the overview structure are not copied from the model
 input file, unless :option:`--copy-metadata` and :option:`--copy-overviews`
 are specified.
 Options :option:`--size`, :option:`--band-count`, :option:`--datatype`,
-:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :option:`--metadata`
+:option:`--nodata`, :option:`--crs`, :option:`--bbox`, :option:`--resolution`, :option:`--metadata`
 can be used to override the values inherited from the model input file.
 
 For GeoTIFF output, setting the ``SPARSE_OK`` creation option to ``YES``
@@ -84,12 +86,17 @@ Program-Specific Options
 
     Note that the spatial extent is also left unchanged.
 
-.. option:: --like, --like <DATASET>
+.. option:: -i, --like, --input <TEMPLATE-DATASET>
 
     Name of GDAL input dataset that serves as a template for default values of
     options :option:`--size`, :option:`--band-count`, :option:`--datatype`,
     :option:`--crs`, :option:`--bbox` and :option:`--nodata`.
     Note that the pixel values will *not* be copied.
+
+    Since GDAL 3.13, if the input dataset is tiled, and for output formats
+    ``GTiff``, ``COG`` and ``GPKG``, its tile dimensions are replicated to
+    the output file, when they are compatible with its capabilities, and if the
+    user hasn't specified any creation option related to tiling.
 
 .. option:: --metadata <KEY>=<VALUE>
 
@@ -105,11 +112,26 @@ Program-Specific Options
     to respectively mean the special values not-a-number, positive infinity and
     minus infinity.
 
-.. option:: --size <xsize>,<ysize>
+.. option:: --size <xsize[%]>,<ysize[%]>
 
     Set the size of the output file in pixels. First value is width. Second one
-    is height.
+    is height. If width or height is set to 0,
+    the other dimension will be guessed from the resolution implied by the
+    bounding box.
+    Values can be expressed as percentages of the size of the :option:`--like` dataset,
+    if specified.
 
+.. option:: --resolution <xres[%]>,<yres[%]>
+
+    .. versionadded:: 3.14
+
+    Set the pixel resolution of the output file in CRS units. First value is
+    horizontal resolution. Second one is vertical resolution. If ``xres`` or ``yres`` is set to 0,
+    the given non-zero resolution will be applied to both dimensions.
+    Values can be expressed as percentages of the resolution of the :option:`--like` dataset,
+    if specified. Note that when expressing resolution as a percentage, the value is multiplied
+    by the pixel size, so that a value of 200% will double the pixel size, and thus halve the
+    output size.
 
 Standard Options
 ----------------
@@ -129,6 +151,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 
 Examples
@@ -156,3 +183,24 @@ Examples
    .. code-block:: bash
 
       gdal raster create --like prototype.tif output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from an input one, but with a different size and CRS
+
+   .. code-block:: bash
+
+      gdal raster create --like prototype.tif --size=100,0 --crs=EPSG:3857 output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from a bounding box and 0.01 resolution on both axes (notice the 0 value for ``yres``)
+
+   .. code-block:: bash
+
+      gdal raster create --bbox=2,49,3,50 --resolution=0.01,0 output.tif
+
+.. example::
+   :title: Initialize a blank GeoTIFF file from an input one with a resolution which is half of the input one
+
+   .. code-block:: bash
+
+      gdal raster create --like prototype.tif --resolution=50%,50% output.tif

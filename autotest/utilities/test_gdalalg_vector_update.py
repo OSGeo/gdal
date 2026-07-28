@@ -256,8 +256,8 @@ def test_gdalalg_vector_update_src_is_same_as_dst_filename(tmp_vsimem):
 
     with pytest.raises(Exception, match="Input and output datasets must be different"):
         gdal.alg.vector.update(
-            input=gdal.OpenEx(filename, gdal.OF_VECTOR),
-            output=gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE),
+            input=gdal.Open(filename, gdal.OF_VECTOR),
+            output=gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE),
         )
 
 

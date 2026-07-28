@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
+#include <algorithm>
 #include <string.h>
 
 #include "georaster_priv.h"
@@ -214,7 +215,8 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
     if (CSLCount(papszParam) > 0)
     {
         char **papszFirst2 = CSLTokenizeString2(
-            papszParam[0], "/", CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS);
+            papszParam[0], "/",
+            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_PRESERVEQUOTES);
         if (CSLCount(papszFirst2) == 2)
         {
             papszParam = CSLInsertStrings(papszParam, 0, papszFirst2);
@@ -288,7 +290,7 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
     else
     {
         /**
-         * Get the session from the OCI session pool or 
+         * Get the session from the OCI session pool or
          * create a new session
          */
         if (bPool)
@@ -328,7 +330,8 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
     else
     {
         char **papszSchema = CSLTokenizeString2(
-            papszParam[3], ".", CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS);
+            papszParam[3], ".",
+            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_PRESERVEQUOTES);
 
         if (CSLCount(papszSchema) == 2)
         {
@@ -1876,7 +1879,7 @@ bool GeoRasterWrapper::InitializeIO(void)
     // Allocate buffer for one raster block
     // --------------------------------------------------------------------
 
-    long nMaxBufferSize = MAX(nBlockBytes, nGDALBlockBytes);
+    long nMaxBufferSize = std::max(nBlockBytes, nGDALBlockBytes);
 
     pabyBlockBuf = (GByte *)VSI_MALLOC_VERBOSE(nMaxBufferSize);
 

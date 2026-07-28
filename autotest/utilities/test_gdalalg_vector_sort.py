@@ -13,6 +13,7 @@
 
 import random
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -198,10 +199,10 @@ def test_gdalalg_vector_sort_invalid_method(alg):
         alg["method"] = "does_not_exist"
 
 
-@pytest.mark.parametrize("geometry_field", ("", "swapped_geom"))
+@pytest.mark.parametrize("geometry_field", (None, "", "swapped_geom"))
 def test_gdalalg_vector_sort_multiple_geom_fields(alg, geometry_field):
 
-    poly_ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
+    poly_ds = gdal.Open("../ogr/data/poly.shp", gdal.OF_VECTOR)
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("source", geom_type=ogr.wkbPolygon)
@@ -224,19 +225,59 @@ def test_gdalalg_vector_sort_multiple_geom_fields(alg, geometry_field):
     alg["output"] = ""
     alg["output-format"] = "stream"
 
-    with pytest.raises(Exception, match="Specified geometry field .* does not exist"):
-        alg.Run()
-
-    alg["geometry-field"] = geometry_field
-
-    assert alg.Run()
-
-    dst_ds = alg.Output()
-    dst_lyr = dst_ds.GetLayer(0)
-
-    f = dst_lyr.GetNextFeature()
-
-    if geometry_field == "swapped_geom":
-        assert f["EAS_ID"] == 158
+    if geometry_field is None:
+        with pytest.raises(
+            Exception, match="Specified geometry field .* does not exist"
+        ):
+            alg.Run()
     else:
-        assert f["EAS_ID"] == 173
+        alg["geometry-field"] = geometry_field
+
+        assert alg.Run()
+
+        dst_ds = alg.Output()
+        dst_lyr = dst_ds.GetLayer(0)
+
+        f = dst_lyr.GetNextFeature()
+
+        if geometry_field == "swapped_geom":
+            assert f["EAS_ID"] == 158
+        else:
+            assert f["EAS_ID"] == 173
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_sort_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector sort ../ogr/data/poly.shp --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_sort_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! sort ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"

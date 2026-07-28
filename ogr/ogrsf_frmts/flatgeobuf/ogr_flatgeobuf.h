@@ -32,6 +32,7 @@
 
 #include <deque>
 #include <limits>
+#include <utility>
 
 class OGRFlatGeobufDataset;
 
@@ -201,10 +202,9 @@ class OGRFlatGeobufLayer final : public OGRLayer,
         return this;
     }
 
-    static std::string GetTempFilePath(const CPLString &fileName,
-                                       CSLConstList papszOptions);
-    static VSILFILE *CreateOutputFile(const CPLString &pszFilename,
-                                      CSLConstList papszOptions, bool isTemp);
+    static std::pair<VSILFILE *, std::string>
+    CreateOutputFile(const CPLString &pszFilename, CSLConstList papszOptions,
+                     bool isTemp);
 
     uint16_t GetIndexNodeSize() const
     {

@@ -29,7 +29,7 @@ pytestmark = pytest.mark.require_driver("CAD")
 
 def test_ogr_cad_2():
 
-    ds = gdal.OpenEx("data/cad/ellipse_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/ellipse_r2000.dwg", allowed_drivers=["CAD"])
 
     assert ds is not None
 
@@ -92,7 +92,7 @@ def test_ogr_cad_2():
 
 def test_ogr_cad_3():
 
-    ds = gdal.OpenEx("data/cad/triple_circles_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/triple_circles_r2000.dwg", allowed_drivers=["CAD"])
 
     assert ds is not None
 
@@ -231,7 +231,7 @@ def test_ogr_cad_3():
 
 def test_ogr_cad_4():
 
-    ds = gdal.OpenEx("data/cad/point2d_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/point2d_r2000.dwg", allowed_drivers=["CAD"])
 
     assert ds.GetLayerCount() == 1, "expected exactly one layer."
 
@@ -250,7 +250,7 @@ def test_ogr_cad_4():
 
 def test_ogr_cad_5():
 
-    ds = gdal.OpenEx("data/cad/line_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/line_r2000.dwg", allowed_drivers=["CAD"])
 
     assert ds.GetLayerCount() == 1, "expected exactly one layer."
 
@@ -270,7 +270,7 @@ def test_ogr_cad_5():
 
 def test_ogr_cad_6():
 
-    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
 
     assert ds.GetLayerCount() == 1, "expected exactly one layer."
 
@@ -288,7 +288,7 @@ def test_ogr_cad_6():
 @pytest.mark.xfail(reason="cannot be sure iconv is builtin")
 def test_ogr_cad_6bis():
 
-    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
     layer = ds.GetLayer(0)
     feat = layer.GetNextFeature()
 
@@ -302,7 +302,7 @@ def test_ogr_cad_6bis():
 
 def test_ogr_cad_7():
 
-    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
     layer = ds.GetLayer(0)
 
     feat = layer.GetNextFeature()
@@ -325,7 +325,7 @@ def test_ogr_cad_7():
 
 def test_ogr_cad_8():
 
-    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    ds = gdal.Open("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
     layer = ds.GetLayer(0)
 
     feat = layer.GetNextFeature()
@@ -350,4 +350,4 @@ def test_ogr_cad_8():
 def test_ogr_cad_9():
 
     with pytest.raises(Exception, match=r".*does not support this version.*"):
-        gdal.OpenEx("data/cad/AC1018_signature.dwg", allowed_drivers=["CAD"])
+        gdal.Open("data/cad/AC1018_signature.dwg", allowed_drivers=["CAD"])

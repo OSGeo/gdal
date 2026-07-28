@@ -106,9 +106,9 @@ typedef byte cryptopp_byte;
 static CryptoPP::PNew s_pNew = nullptr;
 static CryptoPP::PDelete s_pDelete = nullptr;
 
-extern "C" __declspec(dllexport) void __cdecl SetNewAndDeleteFromCryptoPP(
-    CryptoPP::PNew pNew, CryptoPP::PDelete pDelete,
-    CryptoPP::PSetNewHandler pSetNewHandler)
+extern "C" __declspec(dllexport) void __cdecl
+SetNewAndDeleteFromCryptoPP(CryptoPP::PNew pNew, CryptoPP::PDelete pDelete,
+                            CryptoPP::PSetNewHandler pSetNewHandler)
 {
     s_pNew = pNew;
     s_pDelete = pDelete;
@@ -384,15 +384,15 @@ class VSICryptFileHeader
     int ReadFromFile(VSIVirtualHandle *fp, const CPLString &osKey);
     int WriteToFile(VSIVirtualHandle *fp, CryptoPP::BlockCipher *poEncCipher);
 
-    GUInt16 nHeaderSize = 0;
+    uint16_t nHeaderSize = 0;
     GByte nMajorVersion = 0;
     GByte nMinorVersion = 0;
-    GUInt16 nSectorSize = 512;
+    uint16_t nSectorSize = 512;
     VSICryptAlg eAlg = ALG_AES;
     VSICryptMode eMode = MODE_CBC;
     CPLString osIV{};
     bool bAddKeyCheck = false;
-    GUIntBig nPayloadFileSize = 0;
+    uint64_t nPayloadFileSize = 0;
     CPLString osFreeText{};
     CPLString osExtraContent{};
 };
@@ -487,9 +487,8 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         return FALSE;
     }
 
-    if (fp->Read(&nHeaderSize, 2, 1) == 0)
+    if (!fp->ReadLSB(nHeaderSize))
         return VSICryptReadError();
-    nHeaderSize = CPL_LSBWORD16(nHeaderSize);
     if (nHeaderSize < 8 + 2 + 1 + 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid header size : %d",
@@ -513,9 +512,8 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         CPLDebug("VSICRYPT", "Minor version in file is %d", nMinorVersion);
     }
 
-    if (fp->Read(&nSectorSize, 2, 1) == 0)
+    if (!fp->ReadLSB(nSectorSize))
         return VSICryptReadError();
-    nSectorSize = CPL_LSBWORD16(nSectorSize);
 
     GByte nAlg, nMode;
     if (fp->Read(&nAlg, 1, 1) == 0 || fp->Read(&nMode, 1, 1) == 0)
@@ -622,18 +620,17 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         }
     }
 
-    if (fp->Read(&nPayloadFileSize, 8, 1) == 0)
+    if (!fp->ReadLSB(nPayloadFileSize))
         return VSICryptReadError();
-    CPL_LSBPTR64(&nPayloadFileSize);
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "nPayloadFileSize read = " CPL_FRMT_GUIB,
              nPayloadFileSize);
 #endif
 
-    GUInt16 nExtraContentSize = 0;
-    if (fp->Read(&nExtraContentSize, 2, 1) == 0)
+    bool bError = false;
+    const uint16_t nExtraContentSize = fp->ReadLSB<uint16_t>(&bError);
+    if (bError)
         return VSICryptReadError();
-    nExtraContentSize = CPL_LSBWORD16(nExtraContentSize);
 
     osExtraContent.resize(nExtraContentSize);
     if (fp->Read(osExtraContent.data(), 1, nExtraContentSize) !=
@@ -678,32 +675,24 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     else
         nHeaderSize = nHeaderSizeNew;
 
-    GUInt16 nHeaderSizeToWrite = CPL_LSBWORD16(nHeaderSizeNew);
-    bRet &= (fp->Write(&nHeaderSizeToWrite, 2, 1) == 1);
+    bRet &= fp->WriteLSB(nHeaderSizeNew);
 
-    GByte nMajorVersionToWrite = VSICRYPT_CURRENT_MAJOR;
-    bRet &= (fp->Write(&nMajorVersionToWrite, 1, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<GByte>(VSICRYPT_CURRENT_MAJOR));
 
-    GByte nMinorVersionToWrite = VSICRYPT_CURRENT_MINOR;
-    bRet &= (fp->Write(&nMinorVersionToWrite, 1, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<GByte>(VSICRYPT_CURRENT_MINOR));
 
-    GUInt16 nSectorSizeToWrite = CPL_LSBWORD16(nSectorSize);
-    bRet &= (fp->Write(&nSectorSizeToWrite, 2, 1) == 1);
+    bRet &= fp->WriteLSB(nSectorSize);
 
-    GByte nAlg = static_cast<GByte>(eAlg);
-    bRet &= (fp->Write(&nAlg, 1, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<GByte>(eAlg));
 
-    GByte nMode = static_cast<GByte>(eMode);
-    bRet &= (fp->Write(&nMode, 1, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<GByte>(eMode));
 
     GByte nIVSizeToWrite = static_cast<GByte>(osIV.size());
     CPLAssert(nIVSizeToWrite == osIV.size());
     bRet &= (fp->Write(&nIVSizeToWrite, 1, 1) == 1);
     bRet &= (fp->Write(osIV.c_str(), 1, osIV.size()) == osIV.size());
 
-    GUInt16 nFreeTextSizeToWrite =
-        CPL_LSBWORD16(static_cast<GUInt16>(osFreeText.size()));
-    bRet &= (fp->Write(&nFreeTextSizeToWrite, 2, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<uint16_t>(osFreeText.size()));
     bRet &= (fp->Write(osFreeText.c_str(), 1, osFreeText.size()) ==
              osFreeText.size());
 
@@ -712,13 +701,9 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     bRet &= (fp->Write(osKeyCheckRes.c_str(), 1, osKeyCheckRes.size()) ==
              osKeyCheckRes.size());
 
-    GUIntBig nPayloadFileSizeToWrite = nPayloadFileSize;
-    CPL_LSBPTR64(&nPayloadFileSizeToWrite);
-    bRet &= (fp->Write(&nPayloadFileSizeToWrite, 8, 1) == 1);
+    bRet &= fp->WriteLSB(nPayloadFileSize);
 
-    GUInt16 nExtraContentSizeToWrite =
-        CPL_LSBWORD16(static_cast<GUInt16>(osExtraContent.size()));
-    bRet &= (fp->Write(&nExtraContentSizeToWrite, 2, 1) == 1);
+    bRet &= fp->WriteLSB(static_cast<uint16_t>(osExtraContent.size()));
     bRet &= (fp->Write(osExtraContent.c_str(), 1, osExtraContent.size()) ==
              osExtraContent.size());
 

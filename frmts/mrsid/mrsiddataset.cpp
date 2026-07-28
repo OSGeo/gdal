@@ -18,6 +18,8 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
+
+#include <algorithm>
 #include <string>
 
 #include "mrsiddrivercore.h"
@@ -256,6 +258,7 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     explicit MrSIDDataset(int bIsJPEG2000);
     ~MrSIDDataset() override;
 
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *poOpenInfo, int bIsJP2);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, int bIsJP2);
 
     char **GetFileList() override;
@@ -879,7 +882,7 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /* -------------------------------------------------------------------- */
     int iOverview = 0;
     double dfZoomMag =
-        MIN((nXSize / (double)nBufXSize), (nYSize / (double)nBufYSize));
+        std::min((nXSize / (double)nBufXSize), (nYSize / (double)nBufYSize));
 
     for (nZoomMag = 1; nZoomMag * 2 < (dfZoomMag + 0.1) &&
                        iOverview < poParentDS->nOverviewCount;
@@ -1042,7 +1045,7 @@ CPLErr MrSIDDataset::IBuildOverviews(const char *, int, const int *, int,
 {
     CPLError(CE_Warning, CPLE_AppDefined,
              "MrSID overviews are built-in, so building external "
-             "overviews is unnecessary. Ignoring.\n");
+             "overviews is unnecessary. Ignoring.");
 
     return CE_None;
 }
@@ -1267,10 +1270,11 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     if (!poImageReader->isGeoCoordImplicit())
     {
         const LTIGeoCoord &oGeo = poImageReader->getGeoCoord();
-        oGeo.get(m_gt[0], m_gt[3], m_gt[1], m_gt[5], m_gt[2], m_gt[4]);
+        oGeo.get(m_gt.xorig, m_gt.yorig, m_gt.xscale, m_gt.yscale, m_gt.xrot,
+                 m_gt.yrot);
 
-        m_gt[0] = m_gt[0] - m_gt[1] / 2;
-        m_gt[3] = m_gt[3] - m_gt[5] / 2;
+        m_gt.xorig = m_gt.xorig - m_gt.xscale / 2;
+        m_gt.yorig = m_gt.yorig - m_gt.yscale / 2;
         bGeoTransformValid = TRUE;
     }
     else if (iZoom == 0)
@@ -1408,6 +1412,11 @@ static GDALDataset *JP2Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
+{
+    return OpenPAM(poOpenInfo, bIsJP2);
+}
+
+GDALPamDataset *MrSIDDataset::OpenPAM(GDALOpenInfo *poOpenInfo, int bIsJP2)
 {
     if (poOpenInfo->fpL)
     {
@@ -1619,7 +1628,8 @@ GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
              poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands);
 
     if (poDS->nBands > 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     if (bIsJP2)
     {
@@ -2799,7 +2809,7 @@ char *MrSIDDataset::GetOGISDefn(GTIFDefn *psDefnIn)
         double adfParam[10];
         int i;
 
-        for (i = 0; i < MIN(10, psDefnIn->nParms); i++)
+        for (i = 0; i < std::min(10, psDefnIn->nParms); i++)
             adfParam[i] = psDefnIn->ProjParm[i];
         for (; i < 10; i++)
             adfParam[i] = 0;
@@ -3095,12 +3105,14 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     if (poDS->GetGeoTransform(m_gt) == CE_None)
     {
 #ifdef MRSID_SDK_40
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], nullptr,
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, nullptr,
                          poDS->GetProjectionRef());
 #else
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], poDS->GetProjectionRef());
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, poDS->GetProjectionRef());
 #endif
         if (!LT_SUCCESS(setGeoCoord(oGeo)))
             return LT_STS_Failure;
@@ -3193,7 +3205,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -3261,7 +3273,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
 
             // check for compression option
             const char *pszValue =
-                CSLFetchNameValue(papszOptions, "COMPRESSION");
+                CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
             if (pszValue != nullptr)
                 poMG2ImageWriter->params().setCompressionRatio(
                     (float)CPLAtof(pszValue));
@@ -3407,7 +3419,8 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo, /* bIsJP2 = */ false);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
@@ -3442,7 +3455,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -3506,7 +3519,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         oImageWriter.setWorldFileSupport(true);
 
     // check for compression option
-    const char *pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszValue = CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszValue != nullptr)
         oImageWriter.params().setCompressionRatio((float)CPLAtof(pszValue));
 
@@ -3539,7 +3552,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    GDALPamDataset *poDS = (GDALPamDataset *)JP2Open(&oOpenInfo);
+    GDALPamDataset *poDS = OpenPAM(&oOpenInfo, /* bIsJP2 = */ true);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

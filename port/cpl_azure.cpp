@@ -34,6 +34,7 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_vsil_curl_class.h"
 
 #include <mutex>
 
@@ -977,6 +978,106 @@ VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
     if (!m_osObjectKey.empty())
         osResource += "/" + CPLAWSURLEncode(m_osObjectKey, false);
 
+    // If accessing a Microsoft Azure account from a Azure VM, check that
+    // Microsoft is still a sponsor, and if not, make some (kind) noise.
+    if ((m_bFromManagedIdentities &&
+         m_osEndpoint.find("core.windows.net") != std::string::npos)
+#ifdef DEBUG
+        || CPLTestBool(CPLGetConfigOption("GDAL_TEST_NAME_AND_SHAME", "NO"))
+#endif
+    )
+    {
+        static const bool bCheckSponsoring = []()
+        {
+            if (!CPLTestBool(CPLGetConfigOption("GDAL_NAME_AND_SHAME", "YES")))
+                return true;
+
+            const std::string osCacheDir = []()
+            {
+#ifdef _WIN32
+                const char *pszHome =
+                    CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+                const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+                if (pszHome != nullptr)
+                {
+                    return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
+                }
+                else
+                {
+                    const char *pszDir = CPLGetConfigOption("TEMP", "/tmp");
+                    VSIStatBufL sStat;
+                    if (VSIStatL(pszDir, &sStat) == 0)
+                    {
+                        const char *pszUsername =
+                            CPLGetConfigOption("USERNAME", nullptr);
+                        if (pszUsername == nullptr)
+                            pszUsername = CPLGetConfigOption("USER", nullptr);
+
+                        if (pszUsername != nullptr)
+                        {
+                            return CPLFormFilenameSafe(
+                                pszDir, CPLSPrintf(".gdal_%s", pszUsername),
+                                nullptr);
+                        }
+                    }
+                }
+                return std::string();
+            }();
+            if (!osCacheDir.empty())
+            {
+                VSIStatBufL sStat;
+                if (VSIStatL(osCacheDir.c_str(), &sStat) != 0)
+                    VSIMkdir(osCacheDir.c_str(), 0755);
+                const std::string osCloudCheck = CPLFormFilenameSafe(
+                    osCacheDir.c_str(), "cloud_check_ms.txt", nullptr);
+                // Sidereal day, why not? "Aim for the stars, expect dust"
+                constexpr int ONE_DAY_IN_SECS = 86164;
+                if (VSIStatL(osCloudCheck.c_str(), &sStat) == 0 &&
+                    sStat.st_mtime + ONE_DAY_IN_SECS >= time(nullptr))
+                {
+                    CPLDebugOnly("GDAL", "%s checked", osCloudCheck.c_str());
+                }
+                else
+                {
+                    FILE *f = fopen(osCloudCheck.c_str(), "wb");
+                    if (f)
+                        fclose(f);
+
+                    const auto PingURL = [](const char *pszURL)
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        const char *const apszOptions[] = {
+                            "CUSTOMREQUEST=HEAD", "TIMEOUT=1", nullptr};
+                        auto res = CPLHTTPFetch(pszURL, apszOptions);
+                        const bool bOK = res && !res->pszErrBuf;
+                        CPLHTTPDestroyResult(res);
+                        return bOK;
+                    };
+                    if (!PingURL("https://gdal.org/en/latest/sponsors/"
+                                 "did_microsoft_sponsor.html") &&
+                        // check that gdal.org is responding to avoid false positive
+                        PingURL("https://gdal.org/en/latest/index.html"))
+                    {
+                        const auto CPLE_NonCooperativeSponsor = CPLE_AppDefined;
+                        CPLError(
+                            CE_Warning, CPLE_NonCooperativeSponsor,
+                            "Due to lack of resources, Azure Cloud Storage "
+                            "access is undergoing minimal maintenance and may "
+                            "be removed in the future unless Microsoft Azure "
+                            "re-evaluates its decision to stop sponsoring "
+                            "GDAL. If you are interested in keeping this "
+                            "functionality please get in touch with your "
+                            "Microsoft Azure representative.");
+                    }
+                }
+            }
+            return true;
+        }();
+        CPL_IGNORE_RET_VAL(bCheckSponsoring);
+    }
+
     return GetAzureBlobHeaders(osVerb, psHeaders, osResource,
                                m_oMapQueryParameters, m_osStorageAccount,
                                m_osStorageKey, m_bIncludeMSVersion);
@@ -1211,6 +1312,36 @@ std::string VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     if (!osSignedIdentifier.empty())
         AddQueryParameter("si", osSignedIdentifier);
     return m_osURL;
+}
+
+/************************************************************************/
+/*                             GetOptions()                             */
+/************************************************************************/
+
+/* static */
+const char *VSIAzureBlobHandleHelper::GetOptions()
+{
+    static std::string osOptions(
+        std::string("<Options>") +
+        "  <Option name='AZURE_STORAGE_CONNECTION_STRING' type='string' "
+        "description='Connection string that contains account name and "
+        "secret key'/>"
+        "  <Option name='AZURE_STORAGE_ACCOUNT' type='string' "
+        "description='Storage account. To use with AZURE_STORAGE_ACCESS_KEY'/>"
+        "  <Option name='AZURE_STORAGE_ACCESS_KEY' type='string' "
+        "description='Secret key'/>"
+        "  <Option name='AZURE_STORAGE_ACCESS_TOKEN' type='string' "
+        "description='Access token typically obtained using Microsoft "
+        "Authentication Library (MSAL).'/>"
+        "  <Option name='AZURE_STORAGE_SAS_TOKEN' type='string' "
+        "description='Shared Access Signature'/>"
+        "  <Option name='AZURE_NO_SIGN_REQUEST' type='boolean' "
+        "description='Whether to disable signing of requests' default='NO'/>"
+        "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
+        "description='Size in MB for chunks of files that are uploaded' "
+        "default='4' min='1' max='4'/>" +
+        cpl::VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");
+    return osOptions.c_str();
 }
 
 #endif  // HAVE_CURL

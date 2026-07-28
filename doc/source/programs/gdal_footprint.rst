@@ -37,6 +37,8 @@ proper mask bands.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <band>
 
     Band(s) of interest. Between 1 and the number of bands of the raster.
@@ -126,10 +128,6 @@ proper mask bands.
     point of each ring, which is always identical to the first point).
     The default value is 100. ``unlimited`` can be used to remove that limitation.
 
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
-
 .. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
@@ -198,6 +196,11 @@ Post-vectorization geometric operations are applied in the following order:
 * optional application of convex hull (:option:`-convex_hull`)
 * optional simplification (:option:`-simplify`)
 * limitation of number of points (:option:`-max_points`)
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

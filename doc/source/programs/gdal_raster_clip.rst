@@ -1,5 +1,7 @@
 .. _gdal_raster_clip:
 
+.. program:: gdal_raster_clip
+
 ================================================================================
 ``gdal raster clip``
 ================================================================================
@@ -149,6 +151,11 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -172,3 +179,49 @@ Examples
    .. code-block:: bash
 
         $ gdal raster clip --window=1000,2000,500,600 in.tif out.tif --overwrite
+
+.. example::
+   :title: Clip a GeoTIFF file using vector features
+   :id: gdal-raster-clip-vector
+
+   .. code-block:: bash
+
+        $ gdal raster clip NE2_50M_SR_W.tif clipped.tif \
+             --like natural_earth_vector.gpkg \
+             --like-layer "ne_50m_admin_0_countries" \
+             --like-where "ADMIN='Romania'"
+
+.. example::
+   :title: Clip a GeoTIFF file using SQL
+   :id: gdal-raster-clip-sql
+
+   This example produces the same result as :example:`gdal-raster-clip-vector`,
+   but uses :option:`--like-sql` instead of :option:`--like-layer`
+   and :option:`--like-where`.
+
+   The geometry column name (``geom`` in this case) must be included
+   in the SQL query.
+
+   .. code-block:: bash
+
+        $ gdal raster clip NE2_50M_SR_W.tif clipped.tif \
+            --like natural_earth_vector.gpkg \
+            --like-sql "SELECT geom FROM ne_50m_admin_0_countries WHERE ADMIN = 'Romania'" \
+            --overwrite
+
+.. example::
+   :title: Clip a GeoTIFF using a bounding box extending beyond the source extent, and write the result as a COG
+
+   Use ``--allow-bbox-outside-source`` to suppress the error
+   ``ERROR 1: Computed source window -180 2943 6269 6235 falls partially outside source raster extent``
+   when the bounding box exceeds the raster extent.
+
+   .. code-block:: bash
+
+      $ gdal raster clip \
+          --bbox=3757032.814272985,-626172.1357121654,4383204.9499851465,0 \
+          --bbox-crs=EPSG:3857 \
+          --allow-bbox-outside-source \
+          in.tif out.tif \
+          --overwrite \
+          --output-format COG

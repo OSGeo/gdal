@@ -155,8 +155,8 @@ The following open options are supported:
 
       Should multipoint soundings be split
       into many single point sounding features. Multipoint geometries are
-      gnot well handle by many formats, so it can be convenient to split
-      gsingle sounding features with many points into many single point
+      not well handle by many formats, so it can be convenient to split
+      single sounding features with many points into many single point
       features.
 
 -  .. oo:: ADD_SOUNDG_DEPTH
@@ -376,5 +376,6 @@ See Also
    Links to other resources, and sample datasets.
 -  `IHO S-57 Edition 3.1 standard (main)`_
 -  `S-57 Appendix B <https://iho.int/uploads/user/pubs/standards/s-57/20ApB1.pdf>`__
+-  :ref:`vector.s101`
 
 .. _`IHO S-57 Edition 3.1 standard (main)`: https://web.archive.org/web/20190330184049/http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf

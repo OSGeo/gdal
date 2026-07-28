@@ -219,12 +219,6 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
         poFeatureToWrite = poFeature;
     }
 
-    const auto IsValid = [](const OGRGeometry *poGeom)
-    {
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        return poGeom->IsValid();
-    };
-
     // Special processing to detect and repair invalid geometries due to
     // coordinate precision.
     // Normally drivers shouldn't do that as similar code is triggered by
@@ -232,11 +226,12 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     // the generic OGRLayer::CreateFeature() code path. But this code predates
     // its introduction and RFC99, and can be useful in RFC7946 mode due to
     // coordinate reprojection.
+    std::string osReason;
     OGRGeometry *poOrigGeom = poFeature->GetGeometryRef();
     if (OGRGeometryFactory::haveGEOS() &&
         oWriteOptions_.nXYCoordPrecision >= 0 && poOrigGeom &&
         wkbFlatten(poOrigGeom->getGeometryType()) != wkbPoint &&
-        IsValid(poOrigGeom))
+        poOrigGeom->IsValid(&osReason))
     {
         const double dfXYResolution =
             std::pow(10.0, double(-oWriteOptions_.nXYCoordPrecision));
@@ -245,7 +240,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
         OGRGeomCoordinatePrecision sPrecision;
         sPrecision.dfXYResolution = dfXYResolution;
         poNewGeom->roundCoordinates(sPrecision);
-        if (!IsValid(poNewGeom.get()))
+        if (!poNewGeom->IsValid(&osReason))
         {
             std::unique_ptr<OGRGeometry> poValidGeom;
             if (poFeature == poFeatureToWrite)
@@ -266,7 +261,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
                     auto poValidGeomRoundCoordinates =
                         std::unique_ptr<OGRGeometry>(poValidGeom->clone());
                     poValidGeomRoundCoordinates->roundCoordinates(sPrecision);
-                    if (!IsValid(poValidGeomRoundCoordinates.get()))
+                    if (!poValidGeomRoundCoordinates->IsValid(&osReason))
                     {
                         CPLDebug("GeoJSON",
                                  "Running SetPrecision() to correct an invalid "
@@ -277,6 +272,13 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
                         if (poValidGeom2)
                             poValidGeom = std::move(poValidGeom2);
                     }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Geometry %s is not valid: %s",
+                             poNewGeom->exportToWkt().c_str(),
+                             osReason.c_str());
                 }
             }
             if (poValidGeom)

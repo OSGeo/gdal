@@ -114,12 +114,14 @@ The following command line parameters can appear in any order
 
     Only display the first file of the file list.
 
-.. option:: -wkt_format WKT1|WKT2|WKT2_2015|WKT2_2018|WKT2_2019
+.. option:: -wkt_format WKT1|WKT1_ESRI|WKT2|WKT2_2015|WKT2_2018|WKT2_2019
 
     WKT format used to display the SRS.
     Currently the supported values are:
 
     ``WKT1``
+
+    ``WKT1_ESRI``
 
     ``WKT2`` (latest WKT version, currently *WKT2_2019*)
 
@@ -169,6 +171,11 @@ The gdalinfo will report all of the following (if known):
 -  Band overview resolutions available.
 -  Band unit type (i.e.. "meters" or "feet" for elevation bands).
 -  Band pseudo-color tables.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

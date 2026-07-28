@@ -72,7 +72,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &) override;
 
     void *GetInternalHandle(const char *) override;
-    GDALDriver *GetDriver() override;
+    GDALDriver *GetDriver() const override;
     char **GetFileList() override;
 
     int GetGCPCount() override;
@@ -171,7 +171,8 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                          double *padfStdDev) override;
     CPLErr ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
                              double *pdfMean, double *pdfStdDev,
-                             GDALProgressFunc, void *pProgressData) override;
+                             GDALProgressFunc, void *pProgressData,
+                             CSLConstList papszOptions) override;
     CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                          double dfStdDev) override;
     CPLErr ComputeRasterMinMax(int, double *) override;
@@ -233,8 +234,8 @@ class CPL_DLL GDALProxyPoolDataset /* non final */ : public GDALProxyDataset
 {
   private:
     GIntBig responsiblePID = -1;
-
     mutable char *pszProjectionRef = nullptr;
+    const CPLStringList m_aosAllowedDrivers;
     mutable OGRSpatialReference *m_poSRS = nullptr;
     mutable OGRSpatialReference *m_poGCPSRS = nullptr;
     GDALGeoTransform m_gt{};
@@ -252,7 +253,8 @@ class CPL_DLL GDALProxyPoolDataset /* non final */ : public GDALProxyDataset
     GDALDataset *RefUnderlyingDataset(bool bForceOpen) const;
 
     GDALProxyPoolDataset(const char *pszSourceDatasetDescription,
-                         GDALAccess eAccess, int bShared, const char *pszOwner);
+                         GDALAccess eAccess, int bShared, const char *pszOwner,
+                         CSLConstList papszAllowedDrivers);
 
   protected:
     GDALDataset *RefUnderlyingDataset() const override;
@@ -267,13 +269,15 @@ class CPL_DLL GDALProxyPoolDataset /* non final */ : public GDALProxyDataset
                          GDALAccess eAccess = GA_ReadOnly, int bShared = FALSE,
                          const char *pszProjectionRef = nullptr,
                          const GDALGeoTransform *pGT = nullptr,
-                         const char *pszOwner = nullptr);
+                         const char *pszOwner = nullptr,
+                         CSLConstList papszAllowedDrivers = nullptr);
 
-    static GDALProxyPoolDataset *Create(const char *pszSourceDatasetDescription,
-                                        CSLConstList papszOpenOptions = nullptr,
-                                        GDALAccess eAccess = GA_ReadOnly,
-                                        int bShared = FALSE,
-                                        const char *pszOwner = nullptr);
+    static GDALProxyPoolDataset *
+    Create(const char *pszSourceDatasetDescription,
+           CSLConstList papszOpenOptions = nullptr,
+           GDALAccess eAccess = GA_ReadOnly, int bShared = FALSE,
+           const char *pszOwner = nullptr,
+           CSLConstList papszAllowedDrivers = nullptr);
 
     ~GDALProxyPoolDataset() override;
 

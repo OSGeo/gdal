@@ -10,10 +10,9 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 # Alpine based
 
 Alpine version:
+* 3.24 for GDAL 3.14
 * 3.23 for GDAL 3.13
 * 3.22 for GDAL 3.12
-* 3.21 for GDAL 3.11
-* 3.20 for GDAL 3.10
 
 ## Small: `ghcr.io/osgeo/gdal:alpine-small-latest`
 
@@ -46,6 +45,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 # Ubuntu based
 
 Ubuntu version:
+* 26.04 for GDAL 3.13
 * 24.04 for GDAL 3.9, 3.10, 3.11 and 3.12
 * 22.04 for GDAL 3.6, 3.7 and 3.8
 * 20.04 for GDAL 3.4 and 3.5
@@ -59,13 +59,13 @@ Ubuntu version:
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libdeflate, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite,
   muparser
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
+* GDAL Python (Python 3.14 for Ubuntu 26.04)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
-## Full: `ghcr.io/osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
+## Full: `ghcr.io/osgeo/gdal:ubuntu-full-latest` (aliased to `ghcr.io/osgeo/gdal`)
 
 * Image size: ~ 1.48 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
@@ -75,9 +75,9 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate, libparquet, libjxl,
   muparser, exprtk
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
+* GDAL Python (Python 3.14 for Ubuntu 26.04)
 * GDAL Java JNI bindings
-* *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 500 MB)
+* *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 700 MB)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
@@ -102,11 +102,11 @@ If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.12.1 and PROJ 9.7.1, for linux/amd64 and linux/arm64:
-* ghcr.io/osgeo/gdal:alpine-small-3.12.1
-* ghcr.io/osgeo/gdal:alpine-normal-3.12.1
-* ghcr.io/osgeo/gdal:ubuntu-small-3.12.1
-* ghcr.io/osgeo/gdal:ubuntu-full-3.12.1
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.13.2 and PROJ 9.8.1, for linux/amd64 and linux/arm64:
+* ghcr.io/osgeo/gdal:alpine-small-3.13.2
+* ghcr.io/osgeo/gdal:alpine-normal-3.13.2
+* ghcr.io/osgeo/gdal:ubuntu-small-3.13.2
+* ghcr.io/osgeo/gdal:ubuntu-full-3.13.2
 
 ## Multi-arch Images
 

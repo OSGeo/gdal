@@ -196,6 +196,7 @@ bDstToSrc
 bedrijven
 behaviours
 Belge
+benchmarking
 Benchmarking
 Bergh
 bExactMatch
@@ -306,6 +307,7 @@ Cadcorp
 calc
 Calc
 calloc
+cancelled
 capi
 cardinality
 Cardinality
@@ -525,6 +527,7 @@ danlittle
 dat
 DataArray
 dataAxisToSRSAxisMapping
+datacube
 DATADIR
 DataElement
 datafile
@@ -579,6 +582,7 @@ Decompressor
 decompressors
 decrementing
 decrypted
+deduplicate
 Deegree
 defacto
 define'ed
@@ -816,6 +820,7 @@ eWorkingDataType
 eXchange
 exe
 executables
+exfiltration
 Exif
 explodeCollections
 eXploration
@@ -1195,6 +1200,7 @@ gpsbabel
 gpx
 gradians
 Grantor
+graticule
 graylevel
 grayscale
 Grayscale
@@ -1331,6 +1337,9 @@ hSrcBand
 hSrcDataset
 hSrcDS
 hST
+hsv
+HSV
+hsv-value
 hTarget
 hTargetEDT
 hThenBand
@@ -1487,6 +1496,7 @@ jpips
 jportiz
 jpp
 jpx
+jq
 jratike
 js
 json
@@ -1886,6 +1896,7 @@ multiproc
 multiprocess
 multireadtest
 multirecords
+multiscales
 multispectral
 multistring
 multisurface
@@ -2115,7 +2126,6 @@ nullable
 Nullable
 NullFID
 nullptr
-nulptr
 num
 numaspects
 numbase
@@ -2371,6 +2381,7 @@ pathname
 PAux
 pauxdataset
 pbCannotBeExactlyRepresented
+pbError
 pbf
 pbHasNoData
 pbHasNoDataValue
@@ -2402,6 +2413,7 @@ perl
 Petr
 pFct
 pfnCachePage
+pfnClearCaches
 pfnCopy
 pfnCopyFiles
 pfnCreate
@@ -2451,6 +2463,7 @@ pkgconfig
 pkid
 Placemark
 plaintext
+planView
 Plessis
 plmosaic
 plscenes
@@ -2522,6 +2535,7 @@ positionName
 posix
 Posix
 posList
+poSR
 poSrcDS
 poSrcFDefn
 poSrcFeature
@@ -2550,6 +2564,7 @@ ppoReturn
 pppppppppppp
 pProgressArg
 ppszAreaName
+ppszData
 ppszDetailedFormat
 ppszDstText
 ppszFailureReason
@@ -2574,9 +2589,11 @@ precompiled
 precompute
 predefine
 predelete
+prefetch
 preinstalled
 preload
 premultiplication
+premultiplied
 Prepar
 preparse
 prepended
@@ -2721,6 +2738,7 @@ qtcreator
 quadkey
 Quadrilateralized
 quadtree
+quantile
 Quantile
 quantizeCoordinates
 quantized
@@ -2855,6 +2873,7 @@ rfc
 rgb
 RGB
 rgba
+RGBA
 rgdal
 rgx
 RHEL
@@ -2964,7 +2983,6 @@ setMeasured
 SetNonLinearGeometriesEnabledFlag
 setPoint
 setProperties
-severals
 sg
 sgillies
 sgrd
@@ -2977,6 +2995,7 @@ shapefiles
 Shapefiles
 shapelib
 Shapelib
+sharded
 shortname
 shortnames
 shp
@@ -3078,7 +3097,6 @@ Steinberg
 stepsize
 stereographic
 Stereographic
-Stereograpic
 Stigter
 sto
 storageCRS
@@ -3167,7 +3185,6 @@ subsettings
 substitutable
 substring
 subsubgroup
-subtelty
 subtiles
 subtree
 subtype
@@ -3197,7 +3214,6 @@ sxf
 sym
 symlinked
 syntaxes
-syntaxic
 sys
 sysconfdir
 Szekeres
@@ -3234,7 +3250,6 @@ thescale
 thf
 THH
 Thorne
-thorougful
 threadsafe
 threadsafety
 thresholding
@@ -3294,6 +3309,7 @@ tokenizing
 tolower
 toml
 Toolchain
+toolchain
 toolchains
 toolkits
 toolset
@@ -3314,7 +3330,6 @@ tpkx
 tps
 trac
 Trac
-Traditonal
 transactional
 Transactional
 transcode
@@ -3362,6 +3377,7 @@ unary
 uncached
 uncalibrated
 unclamped
+unclosed
 uncoded
 uncomment
 Uncompress
@@ -3618,7 +3634,6 @@ worldfile
 worldfiles
 WriteArray
 WriteArrowBatch
-wwith
 www
 Wx
 xA

@@ -259,13 +259,16 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     auto poSrcGroup = poSrcDS->GetRootGroup();
     if (poSrcGroup != nullptr)
     {
-        auto poDstDS = std::unique_ptr<GDALDataset>(
-            VRTDataset::CreateMultiDimensional(pszFilename, nullptr, nullptr));
+        auto poDstDS = VRTDataset::CreateVRTMultiDimensional(pszFilename,
+                                                             nullptr, nullptr);
         if (!poDstDS)
             return nullptr;
-        auto poDstGroup = poDstDS->GetRootGroup();
+        auto poDstGroup = poDstDS->GetRootVRTGroup();
         if (!poDstGroup)
             return nullptr;
+        poDstGroup->SetGuessRegularlySpacedArrays(
+            CPLTestBool(CSLFetchNameValueDef(
+                papszOptions, "GUESS_REGULARLY_SPACED_ARRAYS", "YES")));
         if (GDALDriver::DefaultCreateCopyMultiDimensional(
                 poSrcDS, poDstDS.get(), false, nullptr, nullptr, nullptr) !=
             CE_None)
@@ -316,8 +319,8 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* -------------------------------------------------------------------- */
         /*      Copy any special domains that should be transportable.          */
         /* -------------------------------------------------------------------- */
-        constexpr const char *apszDefaultDomains[] = {"RPC", "IMD",
-                                                      "GEOLOCATION"};
+        constexpr const char *apszDefaultDomains[] = {
+            GDAL_MDD_RPC, GDAL_MDD_IMD, GDAL_MDD_GEOLOCATION};
         for (const char *pszDomain : apszDefaultDomains)
         {
             if (!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0)
@@ -333,7 +336,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             char **papszDomainList = poSrcDS->GetMetadataDomainList();
             constexpr const char *apszReservedDomains[] = {
-                "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+                GDAL_MDD_IMAGE_STRUCTURE, "DERIVED_SUBDATASETS"};
             for (char **papszIter = papszDomainList; papszIter && *papszIter;
                  ++papszIter)
             {
@@ -375,21 +378,21 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     CSLDestroy(papszSrcMDD);
 
     {
-        const char *pszInterleave =
-            poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        const char *pszInterleave = poSrcDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleave)
         {
-            poVRTDS->SetMetadataItem("INTERLEAVE", pszInterleave,
-                                     "IMAGE_STRUCTURE");
+            poVRTDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
     {
-        const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                     "IMAGE_STRUCTURE");
+            poVRTDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                     GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -444,12 +447,12 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
          */
         poVRTBand->CopyCommonInfoFrom(poSrcBand);
 
-        const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcBand->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         /* --------------------------------------------------------------------
@@ -565,6 +568,15 @@ void GDALRegister_VRT()
                                       ocoList.c_str());
         }
     }
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+        "<MultiDimDatasetCreationOptionList>"
+        "   <Option name='GUESS_REGULARLY_SPACED_ARRAYS' type='boolean' "
+        "description='Whether content of 1D-arrays should be read to deduce "
+        "if they are regularly spaced. Can be slow on huge remote datasets' "
+        "default='YES'/>"
+        "</MultiDimDatasetCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,

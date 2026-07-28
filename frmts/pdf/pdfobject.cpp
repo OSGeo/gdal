@@ -19,7 +19,9 @@
 
 #include "gdal_pdf.h"
 
+#include <cassert>
 #include <limits>
+#include <type_traits>
 #include <vector>
 #include "pdfobject.h"
 
@@ -73,9 +75,9 @@ static CPLString GDALPDFGetPDFString(const char *pszStr)
             int nHeadSurrogate = ((pwszDest[i] - 0x10000) >> 10) | 0xd800;
             int nTrailSurrogate = ((pwszDest[i] - 0x10000) & 0x3ff) | 0xdc00;
             osStr += CPLSPrintf("%02X", (nHeadSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nHeadSurrogate)&0xff);
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate) & 0xff);
             osStr += CPLSPrintf("%02X", (nTrailSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nTrailSurrogate)&0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate) & 0xff);
         }
         else
 #endif
@@ -400,11 +402,11 @@ GDALPDFDictionary::~GDALPDFDictionary()
 GDALPDFObject *GDALPDFDictionary::LookupObject(const char *pszPath)
 {
     GDALPDFObject *poCurObj = nullptr;
-    char **papszTokens = CSLTokenizeString2(pszPath, ".", 0);
-    for (int i = 0; papszTokens[i] != nullptr; i++)
+    CPLStringList aosTokens(CSLTokenizeString2(pszPath, ".", 0));
+    for (int i = 0; i < aosTokens.size(); i++)
     {
         int iElt = -1;
-        char *pszBracket = strchr(papszTokens[i], '[');
+        char *pszBracket = strchr(aosTokens[i], '[');
         if (pszBracket != nullptr)
         {
             iElt = atoi(pszBracket + 1);
@@ -413,35 +415,42 @@ GDALPDFObject *GDALPDFDictionary::LookupObject(const char *pszPath)
 
         if (i == 0)
         {
-            poCurObj = Get(papszTokens[i]);
+            poCurObj = Get(aosTokens[i]);
         }
         else
         {
             if (poCurObj->GetType() != PDFObjectType_Dictionary)
             {
-                poCurObj = nullptr;
-                break;
+                return nullptr;
             }
-            poCurObj = poCurObj->GetDictionary()->Get(papszTokens[i]);
+            auto poDict = poCurObj->GetDictionary();
+            assert(poDict);
+            poCurObj = poDict->Get(aosTokens[i]);
         }
 
         if (poCurObj == nullptr)
         {
-            poCurObj = nullptr;
-            break;
+            return nullptr;
         }
 
         if (iElt >= 0)
         {
             if (poCurObj->GetType() != PDFObjectType_Array)
             {
-                poCurObj = nullptr;
-                break;
+                return nullptr;
             }
-            poCurObj = poCurObj->GetArray()->Get(iElt);
+            auto poArray = poCurObj->GetArray();
+            assert(poArray);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+            poCurObj = poArray->Get(iElt);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         }
     }
-    CSLDestroy(papszTokens);
     return poCurObj;
 }
 
@@ -1122,8 +1131,24 @@ const std::string &GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
-        const GooString *gooString = m_poConst->getString();
-        const std::string &osStdStr = gooString->toStr();
+        const std::string &osStdStr = *(
+            [](auto &&obj) -> const std::string *
+            {
+                if constexpr (std::is_same_v<decltype(obj),
+                                             const std::string &>)
+                {
+                    // Since Poppler 26.04
+                    return &obj;
+                }
+                else
+                {
+                    static_assert(
+                        std::is_same_v<decltype(obj), const GooString *&&>);
+                    static_assert(std::is_same_v<decltype(obj->toStr()),
+                                                 const std::string &>);
+                    return &(obj->toStr());
+                }
+            }(m_poConst->getString()));
         const bool bLEUnicodeMarker =
             osStdStr.size() >= 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
             static_cast<uint8_t>(osStdStr[1]) == 0xFF;
@@ -1318,8 +1343,15 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPoppler::GetValues()
     int nLength = m_poDict->getLength();
     for (i = 0; i < nLength; i++)
     {
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 5) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 5 &&              \
+     POPPLER_MICRO_VERSION > 0)
+        Get(m_poDict->getKey(i).c_str());
+#else
         const char *pszKey = m_poDict->getKey(i);
         Get(pszKey);
+#endif
     }
     return m_map;
 }
@@ -1433,11 +1465,39 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
     return m_nLength;
 }
 
+#if (POPPLER_MAJOR_VERSION > 26 ||                                             \
+     (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 7) ||             \
+     (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 7 &&             \
+      POPPLER_MICRO_VERSION > 0))
+
 /************************************************************************/
-/*                        GooStringToCharStart()                        */
+/*                          StringToCharStar()                          */
 /************************************************************************/
 
-static char *GooStringToCharStart(GooString &gstr)
+static char *StringToCharStar(const std::string &str)
+{
+    const auto nLength = str.size();
+    if (nLength)
+    {
+        char *pszContent = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength + 1));
+        if (pszContent)
+        {
+            const char *srcStr = str.c_str();
+            memcpy(pszContent, srcStr, nLength);
+            pszContent[nLength] = '\0';
+        }
+        return pszContent;
+    }
+    return nullptr;
+}
+
+#else
+
+/************************************************************************/
+/*                        GooStringToCharStar()                         */
+/************************************************************************/
+
+static char *GooStringToCharStar(GooString &gstr)
 {
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 10)
@@ -1458,6 +1518,7 @@ static char *GooStringToCharStart(GooString &gstr)
     }
     return nullptr;
 }
+#endif
 
 /************************************************************************/
 /*                              GetBytes()                              */
@@ -1465,6 +1526,24 @@ static char *GooStringToCharStart(GooString &gstr)
 
 char *GDALPDFStreamPoppler::GetBytes()
 {
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 7) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 7 &&              \
+     POPPLER_MICRO_VERSION > 0)
+    std::string str;
+    try
+    {
+        m_poStream->fillString(str);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GDALPDFStreamPoppler::GetBytes(): %s", e.what());
+        return nullptr;
+    }
+    m_nLength = static_cast<int64_t>(str.size());
+    return StringToCharStar(str);
+#else
     GooString gstr;
     try
     {
@@ -1477,7 +1556,8 @@ char *GDALPDFStreamPoppler::GetBytes()
         return nullptr;
     }
     m_nLength = static_cast<int64_t>(gstr.toStr().size());
-    return GooStringToCharStart(gstr);
+    return GooStringToCharStar(gstr);
+#endif
 }
 
 /************************************************************************/
@@ -1511,8 +1591,26 @@ int64_t GDALPDFStreamPoppler::GetRawLength()
 
 char *GDALPDFStreamPoppler::GetRawBytes()
 {
-    GooString gstr;
     auto undecodeStream = m_poStream->getUndecodedStream();
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 7) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 7 &&              \
+     POPPLER_MICRO_VERSION > 0)
+    std::string str;
+    try
+    {
+        undecodeStream->fillString(str);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GDALPDFStreamPoppler::GetRawBytes(): %s", e.what());
+        return nullptr;
+    }
+    m_nRawLength = str.size();
+    return StringToCharStar(str);
+#else
+    GooString gstr;
     try
     {
         undecodeStream->fillGooString(&gstr);
@@ -1529,7 +1627,8 @@ char *GDALPDFStreamPoppler::GetRawBytes()
 #else
     m_nRawLength = gstr.getLength();
 #endif
-    return GooStringToCharStart(gstr);
+    return GooStringToCharStar(gstr);
+#endif
 }
 
 #endif  // HAVE_POPPLER

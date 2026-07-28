@@ -140,8 +140,9 @@ void WMSDriverSubdatasetInfo::parseFileName()
         m_driverPrefixComponent = "WMS";
 
         m_pathComponent = m_fileName;
-        m_pathComponent.erase(m_pathComponent.find(m_subdatasetComponent),
-                              m_subdatasetComponent.length());
+        m_pathComponent.erase(
+            CPLString(m_pathComponent).ifind(m_subdatasetComponent),
+            m_subdatasetComponent.length());
         m_pathComponent.erase(0, 4);
         const std::size_t nDoubleAndPos = m_pathComponent.find("&&");
         if (nDoubleAndPos != std::string::npos)

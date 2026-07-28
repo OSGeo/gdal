@@ -32,7 +32,7 @@ gdal_standard_includes(ogr_SQLite)
 set_property(TARGET ogr_SQLite PROPERTY UNITY_BUILD OFF)
 
 target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
-gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite::SQLite3)
+gdal_target_link_libraries(ogr_SQLite PRIVATE SQLite3::SQLite3)
 gdal_target_link_libraries(ogr_SQLite PRIVATE PROJ::proj)
 
 include(CMakePushCheckState)
@@ -88,7 +88,7 @@ endif()
 # Test utility
 add_executable(test_load_virtual_ogr EXCLUDE_FROM_ALL test_load_virtual_ogr.c)
 gdal_standard_includes(test_load_virtual_ogr)
-target_link_libraries(test_load_virtual_ogr PRIVATE SQLite::SQLite3)
+target_link_libraries(test_load_virtual_ogr PRIVATE SQLite3::SQLite3)
 if (GDAL_USE_SPATIALITE)
   target_include_directories(test_load_virtual_ogr PRIVATE ${SPATIALITE_INCLUDE_DIRS})
   target_compile_definitions(test_load_virtual_ogr PRIVATE -DHAVE_SPATIALITE)
@@ -109,5 +109,5 @@ if (HAVE_SQLITE3EXT_H AND BUILD_SHARED_LIBS)
                           LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
                           SKIP_BUILD_RPATH YES
                           )
-    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
+    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite3::SQLite3)
 endif()

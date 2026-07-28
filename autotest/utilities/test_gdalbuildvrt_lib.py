@@ -259,17 +259,18 @@ def test_gdalbuildvrt_lib_separate_nodata(tmp_vsimem):
 ###############################################################################
 def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
 
-    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src1_ds.GetRasterBand(1).SetNoDataValue(1)
 
-    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT(
-        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
-    )
+    with gdaltest.error_raised(gdal.CE_None):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
+        )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
@@ -284,21 +285,22 @@ def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
 ###############################################################################
 def test_gdalbuildvrt_lib_separate_nodata_3(tmp_vsimem):
 
-    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src1_ds.GetRasterBand(1).SetNoDataValue(1)
 
-    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT(
-        tmp_vsimem / "out.vrt",
-        [src1_ds, src2_ds],
-        separate=True,
-        srcNodata="3 4",
-        VRTNodata="-5 6",
-    )
+    with gdaltest.error_raised(gdal.CE_None):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt",
+            [src1_ds, src2_ds],
+            separate=True,
+            srcNodata="3 4",
+            VRTNodata="-5 6",
+        )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
@@ -335,6 +337,24 @@ def test_gdalbuildvrt_lib_separate_nodata_4(tmp_vsimem):
 
     assert b"<NoDataValue>" not in data
     assert b"<NODATA>" not in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata_incompatible_of_band_type(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 11)
+    src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "Band data type of Byte cannot represent the specified NoData value of -1",
+    ):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt",
+            [src_ds],
+            separate=True,
+            srcNodata="-1",
+        )
 
 
 ###############################################################################
@@ -755,7 +775,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x00")
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x02\x02")
     ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x03\x03")
-    ds.GetRasterBand(4).WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(4).WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
 
     vrt_ds = gdal.BuildVRT("", [ds], nodataMaxMaskThreshold=128, VRTNodata=0)
@@ -777,12 +797,12 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
     # VRTNodata=255, test remapping of 255 to 254
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xFF")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xff")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
 
     vrt_ds = gdal.BuildVRT("", [ds], nodataMaxMaskThreshold=128, VRTNodata=255)
-    assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\xFF\xFE"
+    assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\xff\xfe"
 
 
 ###############################################################################
@@ -802,7 +822,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, struct.pack("H" * 2, 2, 2))
     ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, struct.pack("H" * 2, 3, 2))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -822,7 +842,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("H" * 2, 1, 65535))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -840,7 +860,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("h" * 2, 1, -32768))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -858,7 +878,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("h" * 2, 1, 32767))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -876,7 +896,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack("f" * 2, 1, 0))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -892,7 +912,7 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack("f" * 3, 0, 1, 2))
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 3, 1, b"\x00\xFF\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 3, 1, b"\x00\xff\xff")
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -949,15 +969,15 @@ def test_gdalbuildvrt_resolution_common(tmp_vsimem, resolutions, expected):
 
     inputs = []
 
-    width = 5
-    height = 5
+    width = 1
+    height = 1
 
     for i, res in enumerate(resolutions):
         fname = tmp_vsimem / f"in_{i}.tif"
         inputs.append(fname)
 
-        nx = round(width / res)
-        ny = round(height / res)
+        nx = max(1, round(width / res))
+        ny = max(1, round(height / res))
 
         with gdal.GetDriverByName("GTiff").Create(fname, nx, ny) as ds:
             ds.SetGeoTransform((0, res, 0, height, 0, -res))
@@ -1093,7 +1113,7 @@ def test_gdalbuildvrt_lib_source_had_ds_mask_band_and_addalpha():
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     src_ds.GetRasterBand(1).Fill(255)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xff")
 
     vrt_ds = gdal.BuildVRT("", src_ds, addAlpha=True)
     assert vrt_ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
@@ -1288,3 +1308,32 @@ def test_gdalbuildvrt_preserve_band_metadata_separate_mode(
 
         assert desc == expected_desc_i
         assert rt_ds.GetRasterBand(i + 1).GetMetadata_Dict() == expected_metadata_i
+
+
+def test_gdalbuildvrt_cadrg_frames_mixing_transparent_and_not():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.GetRasterBand(1).SetNoDataValue(216)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(215, (255, 255, 255, 255))
+    ct.SetColorEntry(216, (0, 0, 0, 0))
+    src_ds.GetRasterBand(1).SetColorTable(ct)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 0, 0, -1])
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(215, (255, 255, 255, 255))
+    src2_ds.GetRasterBand(1).SetColorTable(ct)
+
+    vrt_ds = gdal.BuildVRT("", [src_ds])
+    assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 216
+    assert vrt_ds.GetRasterBand(1).GetColorTable().GetCount() == 217
+
+    vrt_ds = gdal.BuildVRT("", [src_ds, src2_ds])
+    assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 216
+    assert vrt_ds.GetRasterBand(1).GetColorTable().GetCount() == 217
+
+    vrt_ds = gdal.BuildVRT("", [src2_ds, src_ds])
+    assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 216
+    assert vrt_ds.GetRasterBand(1).GetColorTable().GetCount() == 217

@@ -1,5 +1,7 @@
 .. _gdal_vector_rasterize:
 
+.. program:: gdal_vector_rasterize
+
 ================================================================================
 ``gdal vector rasterize``
 ================================================================================
@@ -96,6 +98,14 @@ Program-Specific Options
 
     Burn value. May be repeated.
 
+.. option:: --like <DATASET>
+
+    .. versionadded:: 3.14
+
+    Vector or raster dataset to use as a template for bounds, CRS, and when it
+    is a raster dataset, for dimension/resolution.
+    Mutually exclusive with :option:`--crs` and :option:`--extent`.
+
 .. option:: --crs <CRS>
 
     Override the projection for the output file. If not specified, the projection of the input vector file will be used if available. When using this option, no reprojection of features from the CRS of the input vector to the specified CRS of the output raster, so use only this option to correct an invalid source CRS. The ``<CRS>`` may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
@@ -152,6 +162,7 @@ Program-Specific Options
 .. option:: --tap, --target-aligned-pixels
 
     (target aligned pixels) Align the coordinates of the extent of the output file to the values of `--resolution`, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+    :option:`--tap` requires :option:`--resolution`.
 
 .. option:: --transformer-option <NAME>=<VALUE>
 
@@ -178,11 +189,17 @@ Standard Options
 
     .. include:: gdal_options/update.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
    :title: Burn a shapefile into a raster
+   :id: gdal-vector-rasterize-burn
 
     The following would burn all polygons from :file:`mask.shp` into the RGB TIFF file :file:`work.tif` with the color red (RGB = 255,0,0).
 

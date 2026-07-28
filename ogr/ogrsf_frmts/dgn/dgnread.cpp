@@ -1061,6 +1061,11 @@ static DGNElemCore *DGNProcessElement(DGNInfo *psDGN, int nType, int nLevel)
             int attr_bytes =
                 psDGN->nElemBytes -
                 (psDGN->abyElem[30] + psDGN->abyElem[31] * 256) * 2 - 32;
+            if (attr_bytes < 0)
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed, "attr_bytes < 0");
+                return nullptr;
+            }
             int numelems = (psDGN->nElemBytes - 36 - attr_bytes) / 4;
             if (numelems < 1)
             {

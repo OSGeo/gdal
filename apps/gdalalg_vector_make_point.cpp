@@ -37,7 +37,9 @@ GDALVectorMakePointAlgorithm::GDALVectorMakePointAlgorithm(bool standaloneStep)
            &m_zField);
     AddArg("m", 0, _("Optional field from which M coordinate should be read"),
            &m_mField);
-    AddArg("dst-crs", 0, _("Destination CRS"), &m_dstCrs).SetIsCRSArg();
+    AddArg(GDAL_ARG_NAME_OUTPUT_CRS, 0, _("Output CRS"), &m_dstCrs)
+        .AddHiddenAlias("dst-crs")
+        .SetIsCRSArg();
 }
 
 namespace
@@ -56,7 +58,7 @@ class GDALVectorMakePointAlgorithmLayer final
                                       const std::string &yField,
                                       const std::string &zField,
                                       const std::string &mField,
-                                      OGRSpatialReference *srs)
+                                      OGRSpatialReferenceRefCountedPtr srs)
         : GDALVectorPipelineOutputLayer(oSrcLayer), m_xField(xField),
           m_yField(yField), m_zField(zField), m_mField(mField),
           m_xFieldIndex(
@@ -71,15 +73,9 @@ class GDALVectorMakePointAlgorithmLayer final
               mField.empty()
                   ? -1
                   : oSrcLayer.GetLayerDefn()->GetFieldIndex(mField.c_str())),
-          m_hasZ(!zField.empty()), m_hasM(!mField.empty()), m_srs(srs),
-          m_defn(oSrcLayer.GetLayerDefn()->Clone())
+          m_hasZ(!zField.empty()), m_hasM(!mField.empty()),
+          m_srs(std::move(srs)), m_defn(oSrcLayer.GetLayerDefn()->Clone())
     {
-        m_defn->Reference();
-        if (m_srs)
-        {
-            m_srs->Reference();
-        }
-
         if (!CheckField("X", m_xField, m_xFieldIndex, m_xFieldIsString))
             return;
         if (!CheckField("Y", m_yField, m_yFieldIndex, m_yFieldIsString))
@@ -101,21 +97,12 @@ class GDALVectorMakePointAlgorithmLayer final
             std::make_unique<OGRGeomFieldDefn>("geometry", eGeomType);
         if (m_srs)
         {
-            poGeomFieldDefn->SetSpatialRef(m_srs);
+            poGeomFieldDefn->SetSpatialRef(m_srs.get());
         }
 
         while (m_defn->GetGeomFieldCount() > 0)
             m_defn->DeleteGeomFieldDefn(0);
         m_defn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
-    }
-
-    ~GDALVectorMakePointAlgorithmLayer() override
-    {
-        m_defn->Release();
-        if (m_srs)
-        {
-            m_srs->Release();
-        }
     }
 
     double GetField(const OGRFeature &feature, int fieldIndex, bool isString)
@@ -140,7 +127,7 @@ class GDALVectorMakePointAlgorithmLayer final
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid value in field %s: %s ", pszFieldName,
                          pszValue);
-                FailTranslation();
+                m_fatalError = true;
             }
             return dfValue;
         }
@@ -158,7 +145,7 @@ class GDALVectorMakePointAlgorithmLayer final
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Specified %s field name '%s' does not exist", dim.c_str(),
                      fieldName.c_str());
-            FailTranslation();
+            m_fatalError = true;
             return false;
         }
 
@@ -171,7 +158,7 @@ class GDALVectorMakePointAlgorithmLayer final
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid %s field type: %s",
                      dim.c_str(), OGR_GetFieldTypeName(eType));
-            FailTranslation();
+            m_fatalError = true;
             return false;
         }
 
@@ -180,7 +167,7 @@ class GDALVectorMakePointAlgorithmLayer final
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     int TestCapability(const char *pszCap) const override
@@ -188,11 +175,12 @@ class GDALVectorMakePointAlgorithmLayer final
         return m_srcLayer.TestCapability(pszCap);
     }
 
-  private:
-    void TranslateFeature(
+  protected:
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 
+  private:
     const std::string m_xField;
     const std::string m_yField;
     const std::string m_zField;
@@ -203,12 +191,13 @@ class GDALVectorMakePointAlgorithmLayer final
     const int m_mFieldIndex;
     const bool m_hasZ;
     const bool m_hasM;
+    bool m_fatalError = false;
     bool m_xFieldIsString = false;
     bool m_yFieldIsString = false;
     bool m_zFieldIsString = false;
     bool m_mFieldIsString = false;
-    OGRSpatialReference *m_srs;
-    OGRFeatureDefn *m_defn;
+    const OGRSpatialReferenceRefCountedPtr m_srs;
+    const OGRFeatureDefnRefCountedPtr m_defn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorMakePointAlgorithmLayer)
 };
@@ -217,7 +206,7 @@ class GDALVectorMakePointAlgorithmLayer final
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
+bool GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
@@ -227,6 +216,11 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
         m_hasZ ? GetField(*poSrcFeature, m_zFieldIndex, m_zFieldIsString) : 0;
     const double m =
         m_hasM ? GetField(*poSrcFeature, m_mFieldIndex, m_mFieldIsString) : 0;
+
+    if (m_fatalError)
+    {
+        return false;
+    }
 
     std::unique_ptr<OGRPoint> poGeom;
 
@@ -249,15 +243,17 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
 
     if (m_srs)
     {
-        poGeom->assignSpatialReference(m_srs);
+        poGeom->assignSpatialReference(m_srs.get());
     }
 
-    auto poDstFeature = std::make_unique<OGRFeature>(m_defn);
+    auto poDstFeature = std::make_unique<OGRFeature>(m_defn.get());
     poDstFeature->SetFID(poSrcFeature->GetFID());
     poDstFeature->SetFrom(poSrcFeature.get());
     poDstFeature->SetGeometry(std::move(poGeom));
 
     apoOutFeatures.push_back(std::move(poDstFeature));
+
+    return true;
 }
 
 }  // namespace
@@ -276,10 +272,10 @@ bool GDALVectorMakePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
     }
     OGRLayer *poSrcLayer = poSrcDS->GetLayer(0);
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poCRS;
+    OGRSpatialReferenceRefCountedPtr poCRS;
     if (!m_dstCrs.empty())
     {
-        poCRS.reset(new OGRSpatialReference());
+        poCRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poCRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         auto eErr = poCRS->SetFromUserInput(m_dstCrs.c_str());
         if (eErr != OGRERR_NONE)
@@ -290,10 +286,10 @@ bool GDALVectorMakePointAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
-    outDS->AddLayer(
-        *poSrcLayer,
-        std::make_unique<GDALVectorMakePointAlgorithmLayer>(
-            *poSrcLayer, m_xField, m_yField, m_zField, m_mField, poCRS.get()));
+    outDS->AddLayer(*poSrcLayer,
+                    std::make_unique<GDALVectorMakePointAlgorithmLayer>(
+                        *poSrcLayer, m_xField, m_yField, m_zField, m_mField,
+                        std::move(poCRS)));
 
     m_outputDataset.Set(std::move(outDS));
 

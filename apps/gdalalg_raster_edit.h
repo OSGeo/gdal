@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_EDIT_INCLUDED
 #define GDALALG_RASTER_EDIT_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 namespace gdal
 {
@@ -43,16 +43,22 @@ class GDALRasterEditAlgorithm /* non final */
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only
     bool m_readOnly = false;          // standalone mode only
+    int m_band = 0;
     std::string m_overrideCrs{};
+    std::string m_colorMap{};
     std::vector<double> m_bbox{};
     std::vector<std::string> m_metadata{};
     std::vector<std::string> m_unsetMetadata{};
     std::vector<std::string> m_unsetMetadataDomain{};
+    std::vector<std::string> m_colorInterpretation{};
+    std::vector<std::string> m_scale{};
+    std::vector<std::string> m_offset{};
     std::string m_nodata{};
     std::vector<std::string> m_gcps{};
     bool m_stats = false;        // standalone mode only
     bool m_approxStats = false;  // standalone mode only
     bool m_hist = false;         // standalone mode only
+    bool m_unsetColorTable = false;
 };
 
 /************************************************************************/

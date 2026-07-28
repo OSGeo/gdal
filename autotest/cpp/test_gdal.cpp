@@ -17,6 +17,7 @@
 #include "gdal_utils.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
+#include "gdal_mem.h"
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 #include "memdataset.h"
@@ -1346,6 +1347,31 @@ TEST_F(test_gdal, GDALDataset_GetBands_const)
     EXPECT_EQ(poConstDS->GetBands()[0], poConstDS->GetRasterBand(1));
     EXPECT_EQ(poConstDS->GetBands()[static_cast<size_t>(0)],
               poConstDS->GetRasterBand(1));
+}
+
+TEST_F(test_gdal, MEMCreate)
+{
+    CPLStringList aosOptions;
+    aosOptions.AddNameValue("INTERLEAVE", "PIXEL");
+
+    GDALDatasetH hDS = MEMCreate(2, 3, 2, GDT_UInt16, aosOptions.List());
+    ASSERT_NE(hDS, nullptr);
+
+    EXPECT_EQ(GDALGetRasterXSize(hDS), 2);
+    EXPECT_EQ(GDALGetRasterYSize(hDS), 3);
+    EXPECT_EQ(GDALGetRasterCount(hDS), 2);
+    EXPECT_EQ(GDALGetAccess(hDS), GA_Update);
+
+    const char *pszInterleave =
+        GDALGetMetadataItem(hDS, "INTERLEAVE", "IMAGE_STRUCTURE");
+    ASSERT_NE(pszInterleave, nullptr);
+    EXPECT_STREQ(pszInterleave, "PIXEL");
+
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    ASSERT_NE(hBand, nullptr);
+    EXPECT_EQ(GDALGetRasterDataType(hBand), GDT_UInt16);
+
+    GDALClose(hDS);
 }
 
 TEST_F(test_gdal, GDALExtendedDataType)
@@ -5238,8 +5264,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
     GDALDatasetUniquePtr poDS(
         MEMDataset::Create("", 2, 2, 1, GDT_Byte, nullptr));
     std::array<uint8_t, 6> buffer = {
-        2, 10,  //////////////////////////////////////////////////////////
-        4, 20,  //////////////////////////////////////////////////////////
+        2,
+        10,  //////////////////////////////////////////////////////////
+        4,
+        20,  //////////////////////////////////////////////////////////
     };
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -5250,8 +5278,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
 
     poDS->GetRasterBand(1)->CreateMaskBand(0);
     std::array<uint8_t, 6> buffer_mask = {
-        0, 255,  //////////////////////////////////////////////////////////
-        255, 0,  //////////////////////////////////////////////////////////
+        0,
+        255,  //////////////////////////////////////////////////////////
+        255,
+        0,  //////////////////////////////////////////////////////////
     };
     EXPECT_EQ(poDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
                   GF_Write, 0, 0, 2, 2, buffer_mask.data(), 2, 2, GDT_Byte,
@@ -5758,6 +5788,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
 #endif
     }
 
+#ifdef HAVE_MUPARSER
     {
         const auto Calc = [](const auto &a, const auto &b, const auto &c)
         {
@@ -5765,11 +5796,7 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                     a * (1 - b) / c - 2 * a - 3 + 4) /
                        gdal::pow(3.0, a) * gdal::pow(b, 2.0) +
                    gdal::abs(-a) + gdal::fabs(-a) + gdal::sqrt(a) +
-                   gdal::log10(a)
-#ifdef HAVE_MUPARSER
-                   + gdal::log(a) + gdal::pow(a, b)
-#endif
-                ;
+                   gdal::log10(a) + gdal::log(a) + gdal::pow(a, b);
         };
 
         auto formula = Calc(firstBand, secondBand, thirdBand);
@@ -5843,7 +5870,6 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                   CE_None);
         EXPECT_NEAR(adfMinMax[0], (FIRST + SECOND + THIRD) / 3, 1e-14);
 
-#ifdef HAVE_MUPARSER
         EXPECT_EQ((firstBand > 1.4).GetRasterDataType(), GDT_Byte);
         EXPECT_EQ((firstBand > 1.4).ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
@@ -6018,8 +6044,8 @@ TEST_F(test_gdal, GDALRasterBand_arithmetic_operators)
                       .ComputeRasterMinMax(false, adfMinMax),
                   CE_None);
         EXPECT_EQ(adfMinMax[0], THIRD);
-#endif
     }
+#endif
 
 #ifdef HAVE_MUPARSER
     {
@@ -6543,6 +6569,30 @@ TEST_F(test_gdal, GDALRasterBand_HasConflictingMaskSources)
             }
         }
     }
+}
+
+TEST_F(test_gdal, GDALLoadEsriCLRAsRAT)
+{
+    auto poRAT = GDALLoadEsriCLRAsRAT(GDRIVERS_DATA_DIR "ehdr/int16_rat.clr");
+    ASSERT_TRUE(poRAT != nullptr);
+
+    ASSERT_EQ(poRAT->GetColumnCount(), 4);
+    ASSERT_EQ(poRAT->GetRowCount(), 25);
+
+    ASSERT_STREQ(poRAT->GetNameOfCol(0), "Value");
+    ASSERT_STREQ(poRAT->GetNameOfCol(1), "Red");
+    ASSERT_STREQ(poRAT->GetNameOfCol(2), "Green");
+    ASSERT_STREQ(poRAT->GetNameOfCol(3), "Blue");
+
+    ASSERT_EQ(poRAT->GetValueAsInt(0, 0), -500);
+    ASSERT_EQ(poRAT->GetValueAsInt(0, 1), 127);
+    ASSERT_EQ(poRAT->GetValueAsInt(0, 2), 40);
+    ASSERT_EQ(poRAT->GetValueAsInt(0, 3), 65);
+
+    ASSERT_EQ(poRAT->GetValueAsInt(24, 0), 2000);
+    ASSERT_EQ(poRAT->GetValueAsInt(24, 1), 145);
+    ASSERT_EQ(poRAT->GetValueAsInt(24, 2), 97);
+    ASSERT_EQ(poRAT->GetValueAsInt(24, 3), 47);
 }
 
 }  // namespace

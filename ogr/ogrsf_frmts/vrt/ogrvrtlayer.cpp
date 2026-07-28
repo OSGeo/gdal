@@ -66,11 +66,7 @@ OGRVRTGeomFieldProps::OGRVRTGeomFieldProps() = default;
 /*                       ~OGRVRTGeomFieldProps()                        */
 /************************************************************************/
 
-OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
-{
-    if (poSRS != nullptr)
-        const_cast<OGRSpatialReference *>(poSRS)->Release();
-}
+OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps() = default;
 
 /************************************************************************/
 /*                            OGRVRTLayer()                             */
@@ -105,9 +101,6 @@ OGRVRTLayer::~OGRVRTLayer()
         if (bSrcLayerFromSQL && poSrcLayer)
             poSrcDS->ReleaseResultSet(poSrcLayer);
     }
-
-    if (poFeatureDefn)
-        poFeatureDefn->Release();
 
     CPLFree(pszAttrFilter);
 }
@@ -204,7 +197,8 @@ bool OGRVRTLayer::FastInitialize(CPLXMLNode *psLTreeIn,
                          "Failed to import LayerSRS `%s'.", pszLayerSRS);
                 return FALSE;
             }
-            apoGeomFieldProps[0]->poSRS = oSRS.Clone();
+            apoGeomFieldProps[0]->poSRS =
+                OGRSpatialReferenceRefCountedPtr::makeClone(&oSRS);
         }
     }
 
@@ -422,7 +416,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
                         ->GetSpatialRef();
         }
         if (poSRS != nullptr)
-            poProps->poSRS = poSRS->Clone();
+            poProps->poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
     }
     else if (poProps->poSRS == nullptr)
     {
@@ -440,7 +434,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
                          "Failed to import SRS `%s'.", pszSRS);
                 return false;
             }
-            poProps->poSRS = oSRS.Clone();
+            poProps->poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(&oSRS);
         }
     }
 
@@ -530,8 +524,7 @@ bool OGRVRTLayer::FullInitialize()
 
     bHasFullInitialized = true;
 
-    poFeatureDefn = new OGRFeatureDefn(osName);
-    poFeatureDefn->Reference();
+    poFeatureDefn = OGRFeatureDefnRefCountedPtr::makeInstance(osName);
 
     if (poDS->GetRecursionDetected())
         return false;
@@ -792,8 +785,8 @@ try_again:
                 GetSrcLayerDefn()->GetGeomFieldDefn(iGeomField);
             poProps->osName = poFDefn->GetNameRef();
             poProps->eGeomType = poFDefn->GetType();
-            if (poFDefn->GetSpatialRef() != nullptr)
-                poProps->poSRS = poFDefn->GetSpatialRef()->Clone();
+            poProps->poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(
+                poFDefn->GetSpatialRef());
             poProps->iGeomField = iGeomField;
             poProps->bNullable = CPL_TO_BOOL(poFDefn->IsNullable());
         }
@@ -1067,7 +1060,7 @@ try_again:
     // Is VRT layer definition identical to the source layer defn?
     // If so, use it directly, and save the translation of features.
     if (GetSrcLayerDefn() != nullptr && iFIDField == -1 && iStyleField == -1 &&
-        GetSrcLayerDefn()->IsSame(poFeatureDefn))
+        GetSrcLayerDefn()->IsSame(poFeatureDefn.get()))
     {
         bool bSame = true;
         for (size_t i = 0; i < apoGeomFieldProps.size(); i++)
@@ -1083,21 +1076,13 @@ try_again:
         {
             CPLDebug("VRT", "Source feature definition is identical to VRT "
                             "feature definition. Use optimized path");
-            poFeatureDefn->Release();
-            poFeatureDefn = GetSrcLayerDefn();
-            poFeatureDefn->Reference();
+            poFeatureDefn.reset(GetSrcLayerDefn(), /* add_ref = */ true);
             for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
             {
-                if (apoGeomFieldProps[i]->poSRS != nullptr)
+                apoGeomFieldProps[i]->poSRS.reset(
                     const_cast<OGRSpatialReference *>(
-                        apoGeomFieldProps[i]->poSRS)
-                        ->Release();
-                apoGeomFieldProps[i]->poSRS =
-                    poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
-                if (apoGeomFieldProps[i]->poSRS != nullptr)
-                    const_cast<OGRSpatialReference *>(
-                        apoGeomFieldProps[i]->poSRS)
-                        ->Reference();
+                        poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef()),
+                    /* add_ref = */ true);
             }
         }
     }
@@ -1117,10 +1102,8 @@ try_again:
 
 error:
     bError = true;
-    poFeatureDefn->Release();
-    poFeatureDefn = new OGRFeatureDefn(osName);
+    poFeatureDefn = OGRFeatureDefnRefCountedPtr::makeInstance(osName);
     poFeatureDefn->SetGeomType(wkbNone);
-    poFeatureDefn->Reference();
     apoGeomFieldProps.clear();
     return false;
 }
@@ -1379,20 +1362,20 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
 
     for (; true;)
     {
-        OGRFeature *poSrcFeature = poSrcLayer->GetNextFeature();
+        auto poSrcFeature =
+            std::unique_ptr<OGRFeature>(poSrcLayer->GetNextFeature());
         if (poSrcFeature == nullptr)
             return nullptr;
 
-        OGRFeature *poFeature = nullptr;
-        if (poFeatureDefn == GetSrcLayerDefn())
+        std::unique_ptr<OGRFeature> poFeature;
+        if (poFeatureDefn.get() == GetSrcLayerDefn())
         {
-            poFeature = poSrcFeature;
-            ClipAndAssignSRS(poFeature);
+            poFeature = std::move(poSrcFeature);
+            ClipAndAssignSRS(poFeature.get());
         }
         else
         {
             poFeature = TranslateFeature(poSrcFeature, TRUE);
-            delete poSrcFeature;
         }
 
         if (poFeature == nullptr)
@@ -1403,10 +1386,11 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
                   VGS_Direct) ||
              m_poFilterGeom == nullptr ||
              FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
-            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
-            return poFeature;
-
-        delete poFeature;
+            (m_poAttrQuery == nullptr ||
+             m_poAttrQuery->Evaluate(poFeature.get())))
+        {
+            return poFeature.release();
+        }
     }
 }
 
@@ -1443,12 +1427,13 @@ void OGRVRTLayer::ClipAndAssignSRS(OGRFeature *poFeature)
 /*      Translate a source feature into a feature for this layer.       */
 /************************************************************************/
 
-OGRFeature *OGRVRTLayer::TranslateFeature(OGRFeature *&poSrcFeat,
-                                          int bUseSrcRegion)
+std::unique_ptr<OGRFeature>
+OGRVRTLayer::TranslateFeature(std::unique_ptr<OGRFeature> &poSrcFeat,
+                              int bUseSrcRegion)
 
 {
 retry:
-    OGRFeature *poDstFeat = new OGRFeature(poFeatureDefn);
+    auto poDstFeat = std::make_unique<OGRFeature>(poFeatureDefn.get());
 
     m_nFeaturesRead++;
 
@@ -1601,11 +1586,10 @@ retry:
             if (poGeom != nullptr &&
                 !poGeom->Intersects(apoGeomFieldProps[i]->poSrcRegion.get()))
             {
-                delete poSrcFeat;
-                delete poDstFeat;
+                poDstFeat.reset();
 
                 // Fetch next source feature and retry translating it.
-                poSrcFeat = poSrcLayer->GetNextFeature();
+                poSrcFeat.reset(poSrcLayer->GetNextFeature());
                 if (poSrcFeat == nullptr)
                     return nullptr;
 
@@ -1614,7 +1598,7 @@ retry:
         }
     }
 
-    ClipAndAssignSRS(poDstFeat);
+    ClipAndAssignSRS(poDstFeat.get());
 
     // Copy fields.
     for (int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount();
@@ -1670,12 +1654,12 @@ OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
     // If the FID is directly mapped, we can do a simple
     // GetFeature() to get our target feature.  Otherwise we need
     // to setup an appropriate query to get it.
-    OGRFeature *poSrcFeature = nullptr;
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poSrcFeature;
+    std::unique_ptr<OGRFeature> poFeature;
 
     if (iFIDField == -1)
     {
-        poSrcFeature = poSrcLayer->GetFeature(nFeatureId);
+        poSrcFeature.reset(poSrcLayer->GetFeature(nFeatureId));
     }
     else
     {
@@ -1690,25 +1674,24 @@ OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
         poSrcLayer->SetAttributeFilter(pszFIDQuery);
         CPLFree(pszFIDQuery);
 
-        poSrcFeature = poSrcLayer->GetNextFeature();
+        poSrcFeature.reset(poSrcLayer->GetNextFeature());
     }
 
     if (poSrcFeature == nullptr)
         return nullptr;
 
     // Translate feature and return it.
-    if (poFeatureDefn == GetSrcLayerDefn())
+    if (poFeatureDefn.get() == GetSrcLayerDefn())
     {
-        poFeature = poSrcFeature;
-        ClipAndAssignSRS(poFeature);
+        poFeature = std::move(poSrcFeature);
+        ClipAndAssignSRS(poFeature.get());
     }
     else
     {
         poFeature = TranslateFeature(poSrcFeature, FALSE);
-        delete poSrcFeature;
     }
 
-    return poFeature;
+    return poFeature.release();
 }
 
 /************************************************************************/
@@ -1740,10 +1723,10 @@ OGRErr OGRVRTLayer::SetNextByIndex(GIntBig nIndex)
 /*      Translate a VRT feature into a feature for the source layer     */
 /************************************************************************/
 
-OGRFeature *
-OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
+std::unique_ptr<OGRFeature>
+OGRVRTLayer::TranslateVRTFeatureToSrcFeature(const OGRFeature *poVRTFeature)
 {
-    OGRFeature *poSrcFeat = new OGRFeature(poSrcLayer->GetLayerDefn());
+    auto poSrcFeat = std::make_unique<OGRFeature>(poSrcLayer->GetLayerDefn());
 
     poSrcFeat->SetFID(poVRTFeature->GetFID());
 
@@ -1773,7 +1756,7 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
         }
         else if (eGeometryStyle == VGS_WKT && iGeomField >= 0)
         {
-            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            const OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if (poGeom != nullptr)
             {
                 char *pszWKT = nullptr;
@@ -1786,7 +1769,7 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
         }
         else if (eGeometryStyle == VGS_WKB && iGeomField >= 0)
         {
-            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            const OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if (poGeom != nullptr)
             {
                 const size_t nSize = poGeom->WkbSize();
@@ -1830,7 +1813,7 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
         }
         else if (eGeometryStyle == VGS_PointFromColumns)
         {
-            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            const OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if (poGeom != nullptr)
             {
                 if (wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
@@ -1940,17 +1923,16 @@ OGRErr OGRVRTLayer::ICreateFeature(OGRFeature *poVRTFeature)
         return OGRERR_FAILURE;
     }
 
-    if (GetSrcLayerDefn() == poFeatureDefn)
+    if (GetSrcLayerDefn() == poFeatureDefn.get())
         return poSrcLayer->CreateFeature(poVRTFeature);
 
-    OGRFeature *poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    auto poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
     poSrcFeature->SetFID(OGRNullFID);
-    OGRErr eErr = poSrcLayer->CreateFeature(poSrcFeature);
+    OGRErr eErr = poSrcLayer->CreateFeature(poSrcFeature.get());
     if (eErr == OGRERR_NONE)
     {
         poVRTFeature->SetFID(poSrcFeature->GetFID());
     }
-    delete poSrcFeature;
     return eErr;
 }
 
@@ -1980,13 +1962,11 @@ OGRErr OGRVRTLayer::ISetFeature(OGRFeature *poVRTFeature)
         return OGRERR_FAILURE;
     }
 
-    if (GetSrcLayerDefn() == poFeatureDefn)
+    if (GetSrcLayerDefn() == poFeatureDefn.get())
         return poSrcLayer->SetFeature(poVRTFeature);
 
-    OGRFeature *poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
-    OGRErr eErr = poSrcLayer->SetFeature(poSrcFeature);
-    delete poSrcFeature;
-    return eErr;
+    auto poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    return poSrcLayer->SetFeature(poSrcFeature.get());
 }
 
 /************************************************************************/
@@ -2250,7 +2230,7 @@ const OGRFeatureDefn *OGRVRTLayer::GetLayerDefn() const
     if (!bHasFullInitialized)
         const_cast<OGRVRTLayer *>(this)->FullInitialize();
 
-    return poFeatureDefn;
+    return poFeatureDefn.get();
 }
 
 /************************************************************************/

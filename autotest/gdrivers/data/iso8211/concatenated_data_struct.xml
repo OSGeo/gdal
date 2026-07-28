@@ -1,0 +1,30 @@
+<DDFModule _interchangeLevel="3" _leaderIden="L" _inlineCodeExtensionIndicator="E" _versionNumber="1" _appIndicator=" " _extendedCharSet=" ! " _fieldControlLength="9" _sizeFieldLength="3" _sizeFieldPos="4" _sizeFieldTag="4">
+<DDFFieldDefn tag="test" fieldName="test" dataStructCode="concatenated" dataTypeCode="mixed_data_type" arrayDescr="0001!0002!0003\\*REPE" formatControls="(2A,A(5),(b14))" escapeSequence="   ">
+  <DDFSubfieldDefn name="0001" format="A"/>
+  <DDFSubfieldDefn name="0002" format="A"/>
+  <DDFSubfieldDefn name="0003" format="A(5)"/>
+  <DDFSubfieldDefn name="REPE" format="b14"/>
+</DDFFieldDefn>
+<DDFRecord dataSize="37" _sizeFieldTag="4" _sizeFieldPos="5" _sizeFieldLength="5">
+  <DDFField name="test">
+    <DDFSubfield name="0001" type="string">one</DDFSubfield>
+    <DDFSubfield name="0002" type="string">two</DDFSubfield>
+    <DDFSubfield name="0003" type="string">three</DDFSubfield>
+    <DDFSubfield name="REPE" type="integer">2</DDFSubfield>
+    <DDFSubfield name="REPE" type="integer">1</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="65" _sizeFieldTag="4" _sizeFieldPos="5" _sizeFieldLength="5">
+  <DDFField name="test">
+    <DDFSubfield name="0001" type="string">2one</DDFSubfield>
+    <DDFSubfield name="0002" type="string">2two</DDFSubfield>
+    <DDFSubfield name="0003" type="string">2thre</DDFSubfield>
+  </DDFField>
+  <DDFField name="test">
+    <DDFSubfield name="0001" type="string">3one</DDFSubfield>
+    <DDFSubfield name="0002" type="string">3two</DDFSubfield>
+    <DDFSubfield name="0003" type="string">3thre</DDFSubfield>
+    <DDFSubfield name="REPE" type="integer">4</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+</DDFModule>

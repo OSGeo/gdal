@@ -27,7 +27,7 @@ See :cpp:func:`GDALDriver::Create`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
    Path of the dataset to create.
 xsize : int
    Width of created raster in pixels. Set to zero for vector datasets.
@@ -77,7 +77,7 @@ See :cpp:func:`GDALDriver::CreateCopy`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
    Path of the dataset to create.
 src : Dataset
    The dataset being duplicated.
@@ -103,7 +103,7 @@ See :cpp:func:`GDALDriver::CreateMultiDimensional`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
    Path of the dataset to create.
 root_group_options : list or dict
    Driver-specific options regarding the creation of the
@@ -136,7 +136,7 @@ This method is an alias for ``Create(name, 0, 0, 0, gdal.GDT_Unknown)``.
 
 Parameters
 ----------
-utf8_path : str
+path : str
    Path of the dataset to create.
 
 Returns
@@ -147,7 +147,7 @@ Examples
 --------
 >>> with gdal.GetDriverByName('ESRI Shapefile').CreateVector('test.shp') as ds:
 ...     print(ds.GetLayerCount())
-... 
+...
 0
 
 ";
@@ -158,7 +158,7 @@ See :cpp:func:`GDALDriver::Delete`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
    Path of the dataset to delete.
 
 Returns

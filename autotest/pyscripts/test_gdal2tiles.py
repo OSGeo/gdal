@@ -23,7 +23,7 @@ import gdaltest
 import pytest
 import test_py_scripts  # noqa  # pylint: disable=E0401
 
-from osgeo import gdal, osr  # noqa
+from osgeo import gdal, osr
 from osgeo_utils.gdalcompare import compare_db
 
 pytestmark = [
@@ -97,7 +97,8 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_simple(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_simple(script_path, tmp_path, legacy):
 
     input_tif = str(tmp_path / "out_gdal2tiles_smallworld.tif")
 
@@ -111,7 +112,10 @@ def test_gdal2tiles_py_simple(script_path, tmp_path):
     try:
         os.chdir(tmp_path)
         _, err = test_py_scripts.run_py_script(
-            script_path, "gdal2tiles", f"-q {input_tif}", return_stderr=True
+            script_path,
+            "gdal2tiles",
+            f"-q {input_tif}" + (" --legacy" if legacy else ""),
+            return_stderr=True,
         )
     finally:
         os.chdir(prev_wd)
@@ -120,22 +124,28 @@ def test_gdal2tiles_py_simple(script_path, tmp_path):
 
     _verify_raster_band_checksums(
         f"{tmp_path}/out_gdal2tiles_smallworld/0/0/0.png",
-        expected_cs=[31420, 32522, 16314, 17849],
+        expected_cs=[31420, 32522, 16314, 17849] if legacy else [32115, 33298, 17674],
     )
 
-    for filename in [
-        "googlemaps.html",
-        "leaflet.html",
-        "openlayers.html",
-        "tilemapresource.xml",
-    ]:
+    if legacy:
+        expected_files = [
+            "googlemaps.html",
+            "leaflet.html",
+            "openlayers.html",
+            "tilemapresource.xml",
+        ]
+    else:
+        expected_files = ["leaflet.html", "openlayers.html"]
+
+    for filename in expected_files:
         assert os.path.exists(f"{tmp_path}/out_gdal2tiles_smallworld/" + filename), (
             "%s missing" % filename
         )
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_zoom_option(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_zoom_option(script_path, tmp_path, legacy):
 
     tiles_dir = str(tmp_path / "out_gdal2tiles_smallworld")
 
@@ -148,12 +158,13 @@ def test_gdal2tiles_py_zoom_option(script_path, tmp_path):
         "-q --force-kml --processes=2 -z 0-1 "
         + "vrt://"
         + test_py_scripts.get_data_path("gdrivers")
-        + f"small_world.tif {tiles_dir}",
+        + f"small_world.tif {tiles_dir}"
+        + (" --legacy" if legacy else ""),
     )
 
     _verify_raster_band_checksums(
         f"{tiles_dir}/1/0/0.png",
-        expected_cs=[24063, 23632, 14707, 17849],
+        expected_cs=[24063, 23632, 14707, 17849] if legacy else [24302, 23636, 14857],
     )
 
     assert not os.path.exists(f"{tiles_dir}/0/0/0.png.aux.xml")
@@ -209,7 +220,8 @@ def test_gdal2tiles_py_resampling_option(script_path, tmp_path, resample):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_xyz(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_xyz(script_path, tmp_path, legacy):
 
     if gdaltest.is_travis_branch("sanitize"):
         pytest.skip("fails on sanitize for unknown reason")
@@ -225,21 +237,30 @@ def test_gdal2tiles_py_xyz(script_path, tmp_path):
     ret = test_py_scripts.run_py_script(
         script_path,
         "gdal2tiles",
-        f"-q --xyz --zoom=0-1 {input_tif} {out_dir}",
+        f"-q --xyz --zoom=0-1 {input_tif} {out_dir}" + (" --legacy" if legacy else ""),
     )
 
     assert "ERROR ret code" not in ret
 
     _verify_raster_band_checksums(
         f"{out_dir}/0/0/0.png",
-        expected_cs=[31747, 33381, 18447, 17849],
+        expected_cs=[31747, 33381, 18447, 17849] if legacy else [32874, 33678, 17458],
     )
     _verify_raster_band_checksums(
         f"{out_dir}/1/0/0.png",
-        expected_cs=[15445, 16942, 13681, 17849],
+        expected_cs=[15445, 16942, 13681, 17849] if legacy else [15844, 16904, 14254],
     )
 
-    for filename in ["googlemaps.html", "leaflet.html", "openlayers.html"]:
+    if legacy:
+        expected_files = [
+            "googlemaps.html",
+            "leaflet.html",
+            "openlayers.html",
+        ]
+    else:
+        expected_files = ["leaflet.html", "openlayers.html"]
+
+    for filename in expected_files:
         assert os.path.exists(f"{out_dir}/{filename}"), "%s missing" % filename
     assert not os.path.exists(f"{out_dir}/tilemapresource.xml")
 
@@ -269,7 +290,7 @@ def test_gdal2tiles_py_invalid_srs(script_path, tmp_path):
         script_path, "gdal2tiles", f"-q --zoom=0-1 {input_vrt} {output_dir}"
     )
 
-    assert "ERROR ret code = 2" in ret
+    assert "ERROR ret code = 1" in ret
 
     # this time pass the spatial reference system via cli options
     ret2 = test_py_scripts.run_py_script(
@@ -373,7 +394,8 @@ def test_exclude_transparent_tiles(script_path, tmp_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_profile_raster(script_path, tmp_path, legacy):
 
     out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
@@ -382,16 +404,21 @@ def test_gdal2tiles_py_profile_raster(script_path, tmp_path):
         "gdal2tiles",
         "-q -p raster -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + f"small_world.tif {out_folder}",
+        + f"small_world.tif {out_folder}"
+        + (" --legacy" if legacy else ""),
     )
 
     _verify_raster_band_checksums(
         f"{out_folder}/0/0/0.png",
-        expected_cs=[10125, 10802, 27343, 48852],
+        expected_cs=(
+            [10125, 10802, 27343, 48852] if legacy else [1614, 1448, 24219, 52014]
+        ),
     )
     _verify_raster_band_checksums(
         f"{out_folder}/1/0/0.png",
-        expected_cs=[62125, 59756, 43894, 38539],
+        expected_cs=(
+            [62125, 59756, 43894, 38539] if legacy else [60550, 62572, 46338, 38489]
+        ),
     )
 
     if gdal.GetDriverByName("KMLSuperOverlay") is None:
@@ -401,7 +428,9 @@ def test_gdal2tiles_py_profile_raster(script_path, tmp_path):
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
         _verify_raster_band_checksums(
             f"{out_folder}/0/0/0.kml",
-            expected_cs=[29839, 34244, 42706, 64319],
+            expected_cs=(
+                [29839, 34244, 42706, 64319] if legacy else [51397, 57304, 23305, 11534]
+            ),
         )
 
 
@@ -413,7 +442,7 @@ def test_gdal2tiles_py_profile_raster_oversample(script_path, tmp_path):
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
-        "-q -p raster -z 0-2 "
+        "-q -p raster -z 0-2 --legacy "
         + test_py_scripts.get_data_path("gdrivers")
         + f"small_world.tif {out_folder}",
     )
@@ -431,7 +460,8 @@ def test_gdal2tiles_py_profile_raster_oversample(script_path, tmp_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster_xyz(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_profile_raster_xyz(script_path, tmp_path, legacy):
 
     out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
@@ -440,12 +470,15 @@ def test_gdal2tiles_py_profile_raster_xyz(script_path, tmp_path):
         "gdal2tiles",
         "-q -p raster --xyz -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + f"small_world.tif {out_folder}",
+        + f"small_world.tif {out_folder}"
+        + (" --legacy" if legacy else ""),
     )
 
     _verify_raster_band_checksums(
         f"{out_folder}/0/0/0.png",
-        expected_cs=[11468, 10719, 27582, 48827],
+        expected_cs=(
+            [11468, 10719, 27582, 48827] if legacy else [1614, 1448, 24219, 52014]
+        ),
     )
     _verify_raster_band_checksums(
         f"{out_folder}/1/0/0.png",
@@ -459,12 +492,17 @@ def test_gdal2tiles_py_profile_raster_xyz(script_path, tmp_path):
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
         _verify_raster_band_checksums(
             f"{out_folder}/0/0/0.kml",
-            expected_cs=[27644, 31968, 38564, 64301],
+            expected_cs=(
+                [27644, 31968, 38564, 64301] if legacy else [51397, 57304, 23305, 11534]
+            ),
         )
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path, tmp_path):
+@pytest.mark.parametrize("legacy", [True, False])
+def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(
+    script_path, tmp_path, legacy
+):
 
     out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
@@ -473,16 +511,17 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path, tmp_path)
         "gdal2tiles",
         "-q -p geodetic --tmscompatible --xyz -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + f"small_world.tif {out_folder}",
+        + f"small_world.tif {out_folder}"
+        + (" --legacy" if legacy else ""),
     )
 
     _verify_raster_band_checksums(
         f"{out_folder}/0/0/0.png",
-        expected_cs=[8560, 8031, 7209, 17849],
+        expected_cs=[8560, 8031, 7209, 17849] if legacy else [8682, 7870, 6354],
     )
     _verify_raster_band_checksums(
         f"{out_folder}/1/0/0.png",
-        expected_cs=[2799, 3468, 8686, 17849],
+        expected_cs=[2799, 3468, 8686, 17849] if legacy else [3041, 4203, 8996],
     )
 
     if gdal.GetDriverByName("KMLSuperOverlay") is None:
@@ -492,7 +531,9 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path, tmp_path)
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
         _verify_raster_band_checksums(
             f"{out_folder}/0/0/0.kml",
-            expected_cs=[12361, 18212, 21827, 5934],
+            expected_cs=(
+                [12361, 18212, 21827, 5934] if legacy else [14917, 18500, 22006, 5934]
+            ),
         )
 
 
@@ -530,7 +571,7 @@ def test_gdal2tiles_py_mapml(script_path, tmp_path):
         in mapml
     )
     assert (
-        '<map-link tref="https://foo/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" ></map-link>'
+        '<map-link tref="https://foo/out_gdal2tiles_mapml/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" ></map-link>'
         in mapml
     )
 
@@ -666,11 +707,10 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
         f"-q -z 0-1 {input_tif} {output_folder}",
     )
 
-    ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
-        round((10 + 30 + 40) / 3),
-        255,
-    )
+    with gdal.Open(f"{output_folder}/0/0/0.png") as ds:
+        assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[
+            0
+        ] == round((10 + 30 + 40) / 3)
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
@@ -678,11 +718,10 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
         f"-q -z 0-1 --nodata-values-pct-threshold=50 {input_tif} {output_folder}",
     )
 
-    ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
-        round((10 + 30 + 40) / 3),
-        255,
-    )
+    with gdal.Open(f"{output_folder}/0/0/0.png") as ds:
+        assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[
+            0
+        ] == round((10 + 30 + 40) / 3)
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
@@ -690,8 +729,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
         f"-q -z 0-1 --nodata-values-pct-threshold=25 {input_tif} {output_folder}",
     )
 
-    ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)
+    assert not os.path.exists(f"{output_folder}/0/0/0.png")
 
 
 @pytest.mark.require_driver("JPEG")
@@ -837,3 +875,23 @@ def test_gdal2tiles_py_jpeg_1band_input(
             got_stats_14,
             got_stats_13,
         )
+
+
+@pytest.mark.require_driver("PNG")
+def test_gdal2tiles_py_non_square_pixels(script_path, tmp_path):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_path / "in.tif", 737, 1623) as src_ds:
+        src_ds.SetGeoTransform(
+            [-1019571, 0.223137232744343, 0, 4639229, 0, -0.204886113997991]
+        )
+        src_ds.SetSpatialRef(osr.SpatialReference(epsg=3857))
+
+    out_dir = str(tmp_path / "out")
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-q -z 18-19 --tiledriver=PNG " + str(tmp_path / "in.tif") + " " + out_dir,
+    )
+
+    assert os.path.exists(tmp_path / "out" / "18")

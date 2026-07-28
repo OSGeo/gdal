@@ -232,13 +232,13 @@ CPLErr JDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
     const double dfURLat = JDEMGetAngle(psHeader + 43);
     const double dfURLong = JDEMGetAngle(psHeader + 50);
 
-    gt[0] = dfLLLong;
-    gt[3] = dfURLat;
-    gt[1] = (dfURLong - dfLLLong) / GetRasterXSize();
-    gt[2] = 0.0;
+    gt.xorig = dfLLLong;
+    gt.yorig = dfURLat;
+    gt.xscale = (dfURLong - dfLLLong) / GetRasterXSize();
+    gt.xrot = 0.0;
 
-    gt[4] = 0.0;
-    gt[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
+    gt.yrot = 0.0;
+    gt.yscale = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
 
     return CE_None;
 }

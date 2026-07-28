@@ -1087,13 +1087,13 @@ bool PostGISRasterDataset::LoadOutdbRaster(int &nCurOffset, GDALDataType eDT,
     GDALGeoTransform gt;
     poDS->GetGeoTransform(gt);
     int nXOff =
-        static_cast<int>(std::round((dfTileUpperLeftX - gt[0]) / gt[1]));
+        static_cast<int>(std::round((dfTileUpperLeftX - gt.xorig) / gt.xscale));
     int nYOff =
-        static_cast<int>(std::round((dfTileUpperLeftY - gt[3]) / gt[5]));
+        static_cast<int>(std::round((dfTileUpperLeftY - gt.yorig) / gt.yscale));
     int nXOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftX + nTileXSize * dfTileResX - gt[0]) / gt[1]));
+        (dfTileUpperLeftX + nTileXSize * dfTileResX - gt.xorig) / gt.xscale));
     int nYOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftY + nTileYSize * dfTileResY - gt[3]) / gt[5]));
+        (dfTileUpperLeftY + nTileYSize * dfTileResY - gt.yorig) / gt.yscale));
     int nSrcXSize = nXOff2 - nXOff;
     int nSrcYSize = nYOff2 - nYOff;
     if (nXOff < 0 || nYOff < 0 || nXOff2 > poDS->GetRasterXSize() ||
@@ -1876,9 +1876,9 @@ void PostGISRasterDataset::BuildBands(BandMetadata *poBandMetaData,
         if (poBandMetaData[iBand].nBitsDepth < 8)
         {
             b->SetMetadataItem(
-                "NBITS",
+                GDALMD_NBITS,
                 CPLString().Printf("%d", poBandMetaData[iBand].nBitsDepth),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
         }
 
 #ifdef DEBUG_VERBOSE
@@ -3305,7 +3305,7 @@ GDALDataset *PostGISRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 char **PostGISRasterDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /*****************************************
@@ -3315,7 +3315,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  *****************************************/
 CSLConstList PostGISRasterDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);

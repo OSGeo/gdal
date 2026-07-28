@@ -262,7 +262,7 @@ OGRLineString *OGRWAsPLayer::Simplify(const OGRLineString &line) const
     OGRPoint startPt, endPt;
     poLine->StartPoint(&startPt);
     poLine->EndPoint(&endPt);
-    const bool isRing = CPL_TO_BOOL(startPt.Equals(&endPt));
+    const bool isRing = startPt.Equals(&endPt);
 
     if (pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {

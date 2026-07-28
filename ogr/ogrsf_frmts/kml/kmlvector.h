@@ -16,7 +16,11 @@
 
 #include "kml.h"
 #include "kmlnode.h"
+
+#include "ogr_feature.h"
+
 // std
+#include <map>
 #include <string>
 
 class KMLVector final : public KML
@@ -28,7 +32,18 @@ class KMLVector final : public KML
     bool isContainer(std::string const &sIn) const override;
     bool isLeaf(std::string const &sIn) const override;
     bool isRest(std::string const &sIn) const override;
-    void findLayers(KMLNode *poNode, int bKeepEmptyContainers) override;
+    void findLayers(KMLNode *poNode, int bKeepEmptyContainers);
+    void findSchemas(KMLNode *poNode = nullptr);
+
+    const std::map<std::string, std::vector<std::unique_ptr<OGRFieldDefn>>> &
+    GetSchemas() const
+    {
+        return oMapSchemas_;
+    }
+
+  private:
+    std::map<std::string, std::vector<std::unique_ptr<OGRFieldDefn>>>
+        oMapSchemas_{};
 };
 
 #endif  // HAVE_EXPAT

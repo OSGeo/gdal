@@ -26,10 +26,11 @@ WKT2:2015 and WKT2:2018) for describing coordinate systems.
 References and applicable standards
 -----------------------------------
 
-- `PROJ documentation <https://proj4.org>`_: projection methods and coordinate operations
-- `ISO:19111 and WKT standards <https://proj4.org/development/reference/cpp/cpp_general.html#standards>`_
+- |PROJ| documentation: projection methods and coordinate operations
+- `Spatial Reference <https://spatialreference.org>`_: an extensive database of spatial reference systems in standardized formats like Well-Known Text (WKT) or PROJJSON
+- `ISO:19111 and WKT standards <https://proj.org/development/reference/cpp/cpp_general.html#general_doc_1standards>`_
 - `GeoTIFF Projections Transform List <http://geotiff.maptools.org/proj_list>`_: understanding formulations of projections in WKT for GeoTIFF
-- `EPSG Geodesy web page <http://www.epsg.org>`_ is also a useful resource
+- `EPSG Geodesy web page <https://www.epsg.org>`_ is also a useful resource
 
 Defining a Geographic Coordinate Reference System
 -------------------------------------------------
@@ -171,6 +172,8 @@ This method with options is available in C as the :cpp:func:`OSRExportToWktEx` f
 
 The :cpp:func:`OGRSpatialReference::importFromWkt` method can be used to set an
 OGRSpatialReference from a WKT CRS definition.
+
+.. _osr_api_tut_axis_order:
 
 CRS and axis order
 ------------------

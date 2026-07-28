@@ -1,4 +1,4 @@
-Upgrading internal libjson is a non trivial exercice as we have a number of
+Upgrading internal libjson is a non trivial exercise as we have a number of
 patches.
 Look at
 git diff 5fee60ed3e64794f0a58bd7d4e3f6a072acd5fcf..HEAD ogr/ogrsf_frmts/geojson/libjson/

@@ -133,7 +133,7 @@ MAIN_START(argc, argv)
         sOptionsForBinary.bOverwrite)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Source and destination datasets must be different.\n");
+                 "Source and destination datasets must be different.");
         GDALExit(1);
     }
 

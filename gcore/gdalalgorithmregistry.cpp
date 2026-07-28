@@ -12,6 +12,7 @@
 
 #include "gdalalgorithm.h"
 #include "gdalalg_main.h"
+#ifdef GDAL_ENABLE_ALGORITHMS
 #include "gdalalg_raster.h"
 #include "gdalalg_vector.h"
 #include "gdalalg_dataset.h"
@@ -20,6 +21,7 @@
 #include "gdalalg_info.h"
 #include "gdalalg_pipeline.h"
 #include "gdalalg_vsi.h"
+#endif
 
 #include "cpl_vsi.h"
 
@@ -149,6 +151,7 @@ GDALAlgorithmRegistry::InstantiateInternal(std::vector<std::string> &path)
 
 GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry()
 {
+#ifdef GDAL_ENABLE_ALGORITHMS
     Register<GDALRasterAlgorithm>();
     Register<GDALVectorAlgorithm>();
     Register<GDALDatasetAlgorithm>();
@@ -157,6 +160,7 @@ GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry()
     Register<GDALInfoAlgorithm>();
     Register<GDALPipelineAlgorithm>();
     Register<GDALVSIAlgorithm>();
+#endif
 }
 
 GDALGlobalAlgorithmRegistry::~GDALGlobalAlgorithmRegistry() = default;

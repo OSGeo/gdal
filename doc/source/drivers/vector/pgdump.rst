@@ -268,21 +268,24 @@ API, which include "regular" files, as well as files in the /vsizip/,
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
-~~~~~~~
+Examples
+--------
 
--  Simple translation of a shapefile into PostgreSQL into a file
-   abc.sql. The table 'abc' will be created with the features from
+.. example::
+   :title: Simple translation of a shapefile into PostgreSQL into a file ``abc.sql``
+   
+   The table 'abc' will be created with the features from
    abc.shp and attributes from abc.dbf. The SRID is specified.
    :config:`PG_USE_COPY` is set to YES to improve the performance.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr --config PG_USE_COPY YES -f PGDump abc.sql abc.shp -lco SRID=32631
 
--  Pipe the output of the PGDump driver into the psql utility.
+.. example::
+   :title: Piping the output of the PGDump driver into the psql utility.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr --config PG_USE_COPY YES -f PGDump /vsistdout/ abc.shp | psql -d my_dbname -f -
 

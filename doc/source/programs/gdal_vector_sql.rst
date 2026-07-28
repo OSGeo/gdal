@@ -1,5 +1,7 @@
 .. _gdal_vector_sql:
 
+.. program:: gdal_vector_sql
+
 ================================================================================
 ``gdal vector sql``
 ================================================================================
@@ -90,6 +92,12 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+    .. include:: gdal_options/quiet.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -116,6 +124,14 @@ Examples
         $ gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"
 
 .. example::
+   :title: Add a new field to an existing layer of a GeoPackage
+   :id: gdal-vector-sql-addfield
+
+   .. code-block:: bash
+
+       $ gdal vector sql --update my.gpkg --sql "ALTER TABLE countries ADD COLUMN abbrev STRING(10)"
+
+.. example::
    :title: Append to an existing layer of a GeoPackage file
 
    .. code-block:: bash
@@ -123,3 +139,23 @@ Examples
        $ gdal vector pipeline read europe.gpkg ! \
                               sql --sql "SELECT * FROM country WHERE pop > 1e6" ! \
                               write --append --output-layer-name=world world.gpkg
+
+.. example::
+   :title: List unique values in a Shapefile field
+   :id: gdal-vector-sql-distinct
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read in.shp \
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" \
+            ! info --features
+
+      .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read in.shp `
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" `
+            ! info --features

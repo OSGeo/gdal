@@ -30,6 +30,7 @@ pytestmark = [
     pytest.mark.random_order(disabled=True),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -119,15 +120,16 @@ def test_ogr_hana_2():
     ds = open_datasource()
     layer = ds.GetLayerByName("TPOLY")
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     assert (
         layer.GetFeatureCount() == shp_layer.GetFeatureCount()
     ), "feature count does not match"
-    assert layer.GetSpatialRef().GetAuthorityCode(
-        None
-    ) == shp_layer.GetSpatialRef().GetAuthorityCode(None), "spatial ref does not match"
+    assert (
+        layer.GetSpatialRef().GetAuthorityCode()
+        == shp_layer.GetSpatialRef().GetAuthorityCode()
+    ), "spatial ref does not match"
 
     layer.SetAttributeFilter(None)
     field_count = layer.GetLayerDefn().GetFieldCount()
@@ -209,7 +211,7 @@ def test_ogr_hana_7():
     ds = open_datasource()
     layer = ds.ExecuteSQL("SELECT * FROM TPOLY")
     assert (
-        layer.GetSpatialRef().GetAuthorityCode(None) == "27700"
+        layer.GetSpatialRef().GetAuthorityCode() == "27700"
     ), "returned wrong spatial reference id"
     ds.ReleaseResultSet(layer)
 
@@ -1191,9 +1193,9 @@ def test_ogr_hana_38():
         assert feat.GetFieldAsBinary("EMB2") == expected
 
     # '[0.1,0.2,0.3]'
-    vec0 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\x9A\x99\x99\x3E"
+    vec0 = b"\x03\x00\x00\x00\xcd\xcc\xcc\x3d\xcd\xcc\x4c\x3e\x9a\x99\x99\x3e"
     # '[0.1,0.2,0.1]'
-    vec1 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\xCD\xCC\xCC\x3D"
+    vec1 = b"\x03\x00\x00\x00\xcd\xcc\xcc\x3d\xcd\xcc\x4c\x3e\xcd\xcc\xcc\x3d"
 
     check_value(vec0)
 
@@ -1252,7 +1254,7 @@ def create_tpoly_table(ds, layer_name="TPOLY"):
     with gdal.quiet_errors():
         ds.ExecuteSQL("DELLAYER:%s" % layer_name)
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     ######################################################
@@ -1402,7 +1404,7 @@ def open_datasource(update=0, open_opts=None):
     if open_opts is None:
         return ogr.Open(conn_str, update=update)
     else:
-        return gdal.OpenEx(conn_str, update, open_options=[open_opts])
+        return gdal.Open(conn_str, update, open_options=[open_opts])
 
 
 def check_extent(layer, expected, force=True, max_error=0.001):

@@ -637,7 +637,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
         const CPLString osValue = OSR_GDS(papszPrj, "Units", "");
         CPLString osOldAuth;
         {
-            const char *pszOldAuth = GetAuthorityCode(nullptr);
+            const char *pszOldAuth = GetAuthorityCode();
             if (pszOldAuth)
                 osOldAuth = pszOldAuth;
         }

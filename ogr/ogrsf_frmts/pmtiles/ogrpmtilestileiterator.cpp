@@ -268,8 +268,7 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
                 continue;
             }
             auto &topContext = m_aoStack.top();
-            const auto &sCurrentEntry =
-                topContext.sEntries[topContext.nIdxInEntries];
+            auto &sCurrentEntry = topContext.sEntries[topContext.nIdxInEntries];
             if (sCurrentEntry.run_length == 0)
             {
                 // Arbitrary limit. 5 seems to be the maximum value supported
@@ -369,10 +368,9 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
                         sCurrentEntry.run_length >
                             pmtiles::zxy_to_tileid(zxy.z + 1, 0, 0) - nTileId)
                     {
-                        m_bEOF = true;
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Invalid run_length");
-                        break;
+                        // Hit on /vsis3/us-west-2.opendata.source.coop/protomaps/openstreetmap/v4.pmtiles
+                        sCurrentEntry.run_length = static_cast<uint32_t>(
+                            pmtiles::zxy_to_tileid(zxy.z + 1, 0, 0) - nTileId);
                     }
 
                     topContext.nIdxInRunLength++;

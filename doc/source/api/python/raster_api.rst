@@ -125,3 +125,4 @@ Other
 
 .. spelling:word-list::
    RasterCount
+   buf

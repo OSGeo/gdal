@@ -409,6 +409,29 @@ static int TestDataset(GDALDriver **ppoDriver)
                "not advertise ODsCCreateLayer!\n");
         bRet = false;
     }
+    else if (!bReadOnly &&
+             poDriver->GetMetadataItem(
+                 GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY) &&
+             poDriver->GetMetadataItem(GDAL_DCAP_CREATE_LAYER) &&
+             !poDS->TestCapability(ODsCCreateLayer))
+    {
+        printf("FAILURE: Driver advertises GDAL_DCAP_CREATE_LAYER and "
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY capability but "
+               "dataset does "
+               "not advertise ODsCCreateLayer!\n");
+        bRet = false;
+    }
+
+    if (poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS) &&
+        poDriver->GetMetadataItem(
+            GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY))
+    {
+        printf("FAILURE: Driver advertises both and "
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS"
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY capabilities. "
+               "Only one of them can be set\n");
+        bRet = false;
+    }
 
     if (poDS->TestCapability(ODsCDeleteLayer) &&
         !poDriver->GetMetadataItem(GDAL_DCAP_DELETE_LAYER))
@@ -1586,11 +1609,11 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
 
     const bool bLayerHasMeasuredGeometriesCapability =
-        poLayer->TestCapability(ODsCMeasuredGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(ODsCMeasuredGeometries));
     const bool bLayerHasCurveGeometriesCapability =
-        poLayer->TestCapability(OLCCurveGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(OLCCurveGeometries));
     const bool bLayerHasZGeometriesCapability =
-        poLayer->TestCapability(OLCZGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(OLCZGeometries));
 
     CPLErrorReset();
 
@@ -3828,13 +3851,14 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
                     {
                         OGRGeomFieldDefn *poGFldDefn =
                             poLayer->GetLayerDefn()->GetGeomFieldDefn(i);
+                        const char *pszSrcName = poGFldDefn->GetNameRef();
                         iOtherI = poSQLLyr->GetLayerDefn()->GetGeomFieldIndex(
-                            poGFldDefn->GetNameRef());
+                            pszSrcName[0] ? pszSrcName : "_ogr_geometry_");
                         if (iOtherI == -1)
                         {
                             printf("ERROR: Cannot find geom field in SQL "
                                    "matching %s.\n",
-                                   poGFldDefn->GetNameRef());
+                                   pszSrcName);
                             break;
                         }
                     }

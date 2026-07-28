@@ -1,5 +1,7 @@
 .. _gdal_raster_mosaic:
 
+.. program:: gdal_raster_mosaic
+
 ================================================================================
 ``gdal raster mosaic``
 ================================================================================
@@ -80,17 +82,8 @@ Program-Specific Options
     Set georeferenced extents of output file. The values must be expressed in georeferenced units.
     If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
     Pixels within the extent of the output but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--dst-nodata`
+    pixels with a value of zero unless a NODATA value is specified using :option:`--output-nodata`
     or an alpha mask band is added with :option:`--add-alpha`.
-
-.. option:: --dst-nodata <value>[,<value>]...
-
-    Set nodata values at the output band level (different values can be supplied for each band).  If more
-    than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument (:example:`dstnodata`). If the option is not specified,
-    intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
-    is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
-    `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: --hide-nodata
 
@@ -99,6 +92,22 @@ Program-Specific Options
     the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
+
+.. option:: --input-nodata <value>[,<value>]...
+
+    Set nodata values for input bands (different values can be supplied for each band).
+    If the option is not specified, the intrinsic nodata settings on the source datasets
+    will be used (if they exist). The value set by this option is written in the NODATA element
+    of each ``ComplexSource`` element.
+
+.. option:: --output-nodata <value>[,<value>]...
+
+    Set nodata values at the output band level (different values can be supplied for each band).  If more
+    than one value is supplied, all values should be quoted to keep them together
+    as a single operating system argument (:example:`dstnodata`). If the option is not specified,
+    intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
+    is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
+    `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: --pixel-function
 
@@ -116,7 +125,7 @@ Program-Specific Options
 
     .. versionadded:: 3.12
 
-.. option:: --resolution {<xres,yres>|same|highest|lowest|average}
+.. option:: --resolution {<xres,yres>|same|highest|lowest|average|common}
 
     In case the resolution of all input files is not the same, the :option:`--resolution` flag
     enables the user to control the way the output resolution is computed.
@@ -133,13 +142,6 @@ Program-Specific Options
 
     <xres>,<yres>. The values must be expressed in georeferenced units.
     Both must be positive values.
-
-.. option:: --src-nodata <value>[,<value>]...
-
-    Set nodata values for input bands (different values can be supplied for each band).
-    If the option is not specified, the intrinsic nodata settings on the source datasets
-    will be used (if they exist). The value set by this option is written in the NODATA element
-    of each ``ComplexSource`` element.
 
 .. option:: --target-aligned-pixels
 
@@ -165,6 +167,11 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -174,7 +181,7 @@ Examples
 
    .. code-block:: bash
 
-       gdal raster mosaic --hide-nodata --dst-nodata=0,0,255 doq/*.tif doq_index.vrt
+       gdal raster mosaic --hide-nodata --output-nodata=0,0,255 doq/*.tif doq_index.vrt
 
 .. example::
    :title: Create a Cloud Optimized GeoTIFF (COG) mosaic from all GeoTIFFs in a folder

@@ -12,19 +12,19 @@
 
     "arrayOfTwoIntegers": {
       "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
       "items": {
-        "type": "integer",
-        "minItems": 2,
-        "maxItems": 2
+        "type": "integer"
       }
     },
 
     "arrayOfTwoNumbers": {
       "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
       "items": {
-        "type": "number",
-        "minItems": 2,
-        "maxItems": 2
+        "type": "number"
       }
     },
 
@@ -142,10 +142,10 @@
               "type": "array",
               "items": {
                 "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
                 "items": {
-                  "type": "integer",
-                  "minItems": 4,
-                  "maxItems": 4
+                  "type": "integer"
                 }
               }
             },
@@ -225,10 +225,10 @@
         },
         "geoTransform": {
           "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
           "items": {
-            "type": "number",
-            "minItems": 6,
-            "maxItems": 6
+            "type": "number"
           }
         },
         "cornerCoordinates": {
@@ -272,12 +272,12 @@
 
     "metadataDomain": {
       "$comment": " The values of a metadadomain are key: string pairs, or arbitrary JSON objects for metadata domain names starting with the \"json:\" prefix.",
-      "any": [
+      "anyOf": [
         {
           "type": "object"
         },
         {
-          "type": "#/definitions/keyValueDict"
+          "$ref": "#/definitions/keyValueDict"
         }
       ]
     },
@@ -296,10 +296,10 @@
         },
         "dataAxisToSRSAxisMapping": {
           "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
           "items": {
-            "type": "number",
-            "minItems": 2,
-            "maxItems": 3
+            "type": "number"
           }
         },
         "coordinateEpoch": {

@@ -300,6 +300,8 @@ void RegisterOGRCSV()
                               "WidthPrecision");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
                               "Name Type WidthPrecision");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
@@ -349,6 +351,7 @@ void RegisterOGRCSV()
         "    <Value>AS_XYZ</Value>"
         "    <Value>AS_XY</Value>"
         "    <Value>AS_YX</Value>"
+        "    <Value>NONE</Value>"
         "  </Option>"
         "  <Option name='CREATE_CSVT' type='boolean' description='whether to "
         "create a .csvt file' default='NO'/>"

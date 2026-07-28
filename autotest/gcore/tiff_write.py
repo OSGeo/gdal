@@ -569,7 +569,7 @@ def test_tiff_write_16():
     ds = gdal.Open("tmp/tw_16.tif")
     assert ds.GetGeoTransform() == (10, 5, 0, 30, 0, -5)
     assert ds.GetSpatialRef() is not None
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     md = ds.GetMetadata()
     assert "test" in md, "Metadata absent from .aux.xml file."
@@ -1736,7 +1736,7 @@ def test_tiff_write_46():
         # Load the working block
         data = ds.ReadRaster(0, 0, 10, 1)
 
-        # Write the working bloc
+        # Write the working block
         ds.WriteRaster(0, 0, 10, 1, ones)
 
         # This will discard the cached block for ds
@@ -2887,7 +2887,7 @@ def test_tiff_write_78():
     # new_ds = gdal.Open('tmp/tiff_write_78.tif')
 
     if "GetBlockSize" in dir(gdal.Band):
-        (_, blocky) = new_ds.GetRasterBand(1).GetBlockSize()
+        _, blocky = new_ds.GetRasterBand(1).GetBlockSize()
         if blocky != 1:
             print("")
             print(
@@ -3119,8 +3119,7 @@ def test_tiff_write_81():
 
     shutil.copyfile("data/byte.tif", "tmp/tiff_write_81.tif")
     f = open("tmp/tiff_write_81.tif.aux.xml", "wt")
-    f.write(
-        """
+    f.write("""
 <PAMDataset>
   <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
     <GCP Id="" Pixel="0.0000" Line="0.0000" X="4.407200000000E+05" Y="3.751320000000E+06"/>
@@ -3128,8 +3127,7 @@ def test_tiff_write_81():
     <GCP Id="" Pixel="0.0000" Line="100.0000" X="4.407200000000E+05" Y="3.745320000000E+06"/>
     <GCP Id="" Pixel="100.0000" Line="100.0000" X="4.467200000000E+05" Y="3.745320000000E+06"/>
   </GCPList>
-</PAMDataset>"""
-    )
+</PAMDataset>""")
     f.close()
 
     ds = gdal.Open("tmp/tiff_write_81.tif")
@@ -4227,7 +4225,7 @@ def test_tiff_write_ifd_offsets():
     ds = None
 
     # Test rewriting but without changing strile size
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
     )
     ds.GetRasterBand(1).Fill(0)
@@ -4239,7 +4237,7 @@ def test_tiff_write_ifd_offsets():
     assert "KNOWN_INCOMPATIBLE_EDITION=NO\n " in data
 
     # Test rewriting with changing strile size
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
     )
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "x")
@@ -4483,8 +4481,7 @@ def test_tiff_write_101():
     f.close()
 
     f = open("tmp/tiff_write_101.hdr", "wb")
-    f.write(
-        """ENVI
+    f.write("""ENVI
 samples = 2500
 lines   = 4000
 bands   = 1
@@ -4495,10 +4492,7 @@ interleave = bsq
 byte order = 0
 map info = {UTM, 1, 1, 440720.000000, 3751320.000000, 60.000000, 60.000000, 11, North}
 band names = {
-Band 1}""".encode(
-            "ascii"
-        )
-    )
+Band 1}""".encode("ascii"))
     f.close()
 
     src_ds = gdal.Open("tmp/tiff_write_101.bin")
@@ -5041,8 +5035,7 @@ def test_tiff_write_120():
 def test_tiff_write_121():
 
     # Test when the overview band is NULL
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
@@ -5053,8 +5046,7 @@ def test_tiff_write_121():
       <SourceBand>1</SourceBand>
     </Overview>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
@@ -5063,8 +5055,7 @@ def test_tiff_write_121():
     src_ds = None
 
     # Test when the overview count isn't the same on all base bands
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
@@ -5081,8 +5072,7 @@ def test_tiff_write_121():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
@@ -5091,8 +5081,7 @@ def test_tiff_write_121():
     src_ds = None
 
     # Test when the overview bands of same level have not the same dimensions
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
@@ -5113,8 +5102,7 @@ def test_tiff_write_121():
       <SourceBand>1</SourceBand>
     </Overview>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
@@ -5597,7 +5585,7 @@ def test_tiff_write_126():
         ),
     ]
 
-    for (options, cs1, cs2, cs3, cs4) in options_list:
+    for options, cs1, cs2, cs3, cs4 in options_list:
         os.environ["JPEGMEM"] = "500M"
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_126.tif", src_ds, options=options
@@ -5652,7 +5640,7 @@ def test_tiff_write_126():
         ),
     ]
 
-    for (options, cs1, cs3, cs4) in options_list:
+    for options, cs1, cs3, cs4 in options_list:
         os.environ["JPEGMEM"] = "500M"
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_126.tif", src_ds, options=options
@@ -6319,7 +6307,7 @@ def test_tiff_write_134():
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_134_src.tif")
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_134.tif")
 
-    for (inval, expected_val) in [
+    for inval, expected_val in [
         (0, 0),
         (1, 0),
         (2, 0),
@@ -6345,7 +6333,7 @@ def test_tiff_write_134():
             ds = None
             gdaltest.tiff_drv.Delete("/vsimem/tiff_write_134.tif")
 
-    for (inval, expected_val) in [
+    for inval, expected_val in [
         (-32768, -32768),
         (-32767, -32768),
         (-32764, -32768),
@@ -6376,7 +6364,7 @@ def test_tiff_write_134():
             ds = None
             gdaltest.tiff_drv.Delete("/vsimem/tiff_write_134.tif")
 
-    for (inval, expected_val) in [
+    for inval, expected_val in [
         (0, 0),
         (1, 0),
         (3, 0),
@@ -6758,7 +6746,7 @@ def test_tiff_write_137():
         options=["TILED=YES", "COMPRESS=DEFLATE", "PREDICTOR=2", "SPARSE_OK=YES"],
     )
     ds = None
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/tiff_write_137.tif", gdal.OF_UPDATE, open_options=["NUM_THREADS=4"]
     )
     ds.GetRasterBand(1).Fill(1)
@@ -7564,7 +7552,7 @@ def test_tiff_write_154():
     ds = None
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 162
     # SPARSE_OK in Open()/update: blocks are not written
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/tiff_write_154.tif", gdal.OF_UPDATE, open_options=["SPARSE_OK=YES"]
     )
     ds.GetRasterBand(1).Fill(0)
@@ -7572,7 +7560,7 @@ def test_tiff_write_154():
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 162
     ds = None
     # Default behaviour in Open()/update: blocks are written
-    ds = gdal.OpenEx("/vsimem/tiff_write_154.tif", gdal.OF_UPDATE)
+    ds = gdal.Open("/vsimem/tiff_write_154.tif", gdal.OF_UPDATE)
     ds.GetRasterBand(1).Fill(0)
     ds = None
     assert gdal.VSIStatL("/vsimem/tiff_write_154.tif").size == 250162
@@ -7726,13 +7714,13 @@ def test_tiff_write_156():
     )
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "X")
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 32, 32)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 32, 32)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(32, 0, 32, 32)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(32, 0, 32, 32)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(16, 16, 32, 32)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(16, 16, 32, 32)
     assert (
         flags
         == gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY
@@ -7932,9 +7920,9 @@ def test_tiff_write_158():
         1,
         options=["TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=32"],
     )
-    (w, h) = ds.GetRasterBand(1).GetActualBlockSize(0, 0)
+    w, h = ds.GetRasterBand(1).GetActualBlockSize(0, 0)
     assert (w, h) == (16, 32)
-    (w, h) = ds.GetRasterBand(1).GetActualBlockSize(1, 1)
+    w, h = ds.GetRasterBand(1).GetActualBlockSize(1, 1)
     assert (w, h) == (4, 8)
     res = ds.GetRasterBand(1).GetActualBlockSize(2, 0)
     assert res is None
@@ -9231,48 +9219,21 @@ def test_tiff_write_rewrite_lzw_strip():
 # overview on the mask
 
 
-def test_tiff_write_overviews_mask_no_ovr_on_mask():
+@gdaltest.enable_exceptions()
+def test_tiff_write_overviews_mask_no_ovr_on_mask(tmp_vsimem):
 
-    tmpfile = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask.tif"
-    ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
-    ds.GetRasterBand(1).Fill(255)
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    tmpfile = tmp_vsimem / "tiff_with_ovr_mask_but_no_ovr_of_mask.tif"
+    gdal.CopyFile("data/gtiff/tiff_with_ovr_mask_but_no_ovr_of_mask.tif", tmpfile)
 
-    ds = gdal.Open(tmpfile)
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ds.BuildOverviews("NEAR", overviewlist=[2])
-    assert (
-        "Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band."
-        in gdal.GetLastErrorMsg()
-    )
-    # No overview on the mask
-    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
-    ds = None
-
-    tmpfile2 = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif"
+    tmpfile2 = tmp_vsimem / "test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif"
     src_ds = gdal.Open(tmpfile)
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ds = gdaltest.tiff_drv.CreateCopy(
-            tmpfile2, src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-        )
-    assert (
-        "Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band."
-        in gdal.GetLastErrorMsg()
-    )
-    assert ds
-    ds = None
+    gdaltest.tiff_drv.CreateCopy(tmpfile2, src_ds, options=["COPY_SRC_OVERVIEWS=YES"])
     src_ds = None
 
     ds = gdal.Open(tmpfile)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
-    # No overview on the mask
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmpfile)
-    gdaltest.tiff_drv.Delete(tmpfile2)
 
 
 ###############################################################################
@@ -9397,7 +9358,7 @@ def test_tiff_write_compression_create_and_createcopy():
         )
 
     new_tests = []
-    for (before, after) in tests:
+    for before, after in tests:
         new_tests.append((before, after))
         new_tests.append(
             (
@@ -9411,7 +9372,7 @@ def test_tiff_write_compression_create_and_createcopy():
 
     src_ds = gdal.Open("data/rgbsmall.tif")
     data = src_ds.ReadRaster()
-    for (before, after) in tests:
+    for before, after in tests:
         ds = gdaltest.tiff_drv.Create(
             tmpfile,
             src_ds.RasterXSize,
@@ -9480,7 +9441,7 @@ def test_tiff_write_too_many_tiles():
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_tiff_write_jpeg_incompatible_of_paletted():
+def test_tiff_write_jpeg_incompatible_with_paletted():
 
     src_ds = gdal.Open("data/test_average_palette.tif")
     with gdal.quiet_errors():
@@ -9521,7 +9482,7 @@ def test_tiff_write_internal_ovr_blocksize(blockSize, numThreads):
     ds = None
 
     ds = gdal.Open(fname)
-    (bsx, bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
+    bsx, bsy = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
     assert bsx == blockSize
     assert bsy == blockSize
     ds = None
@@ -9564,7 +9525,7 @@ def test_tiff_write_internal_ovr_default_blocksize(blockSize, numThreads):
     ds = None
 
     ds = gdal.Open(fname)
-    (bsx, bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
+    bsx, bsy = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
     assert bsx == blockSize
     assert bsy == blockSize
     ds = None
@@ -9681,7 +9642,6 @@ def test_tiff_write_lerc_float_with_nan(
 @pytest.mark.parametrize("tiled", [False, True])
 @pytest.mark.require_creation_option("GTiff", "LERC")
 def test_tiff_write_lerc_float_with_nan_random(tmp_vsimem, tiled):
-
     """Stress test the floating-point LERC encoder, with several masks per strile"""
 
     width = 128
@@ -10054,7 +10014,7 @@ def test_tiff_write_setspatialref_read_only():
     ds = gdal.Open(filename)
     got_srs = ds.GetSpatialRef()
     assert got_srs
-    assert got_srs.GetAuthorityCode(None) == "4326"
+    assert got_srs.GetAuthorityCode() == "4326"
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
@@ -10084,7 +10044,7 @@ def test_tiff_write_setspatialref_read_only_override_tifftags():
     ds = gdal.Open(filename)
     got_srs = ds.GetSpatialRef()
     assert got_srs
-    assert got_srs.GetAuthorityCode(None) == "4326"
+    assert got_srs.GetAuthorityCode() == "4326"
     ds = None
 
     ds = gdal.Open(filename, gdal.GA_Update)
@@ -10098,7 +10058,7 @@ def test_tiff_write_setspatialref_read_only_override_tifftags():
     ds = gdal.Open(filename)
     got_srs = ds.GetSpatialRef()
     assert got_srs
-    assert got_srs.GetAuthorityCode(None) == "32632"
+    assert got_srs.GetAuthorityCode() == "32632"
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
@@ -10193,7 +10153,7 @@ def test_tiff_write_setgcps_read_only():
     assert got_gcps[0].GCPY == gcps[0].GCPY
     got_srs = ds.GetGCPSpatialRef()
     assert got_srs
-    assert got_srs.GetAuthorityCode(None) == "4326"
+    assert got_srs.GetAuthorityCode() == "4326"
     ds = None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
@@ -10229,7 +10189,7 @@ def test_tiff_write_setgcps_read_only_override_tifftags():
     assert got_gcps[0].GCPY == gcps[0].GCPY
     got_srs = ds.GetGCPSpatialRef()
     assert got_srs
-    assert got_srs.GetAuthorityCode(None) == "4326"
+    assert got_srs.GetAuthorityCode() == "4326"
     ds = None
 
     ds = gdal.Open(filename, gdal.GA_Update)
@@ -11875,7 +11835,7 @@ def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
     ), "Wrong color table entry."
 
     # Check we get wrong values when not specifying the appropriate multiplier
-    ds = gdal.OpenEx(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
+    ds = gdal.Open(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     assert (
         ct.GetColorEntry(0) == (0, 0, 0, 255)
@@ -11893,25 +11853,25 @@ def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
             65501,
             1,
             ["COMPRESS=JPEG"],
-            "COMPRESS=JPEG is only compatible of un-tiled images whose width is lesser or equal to 65500 pixels",
+            "COMPRESS=JPEG is only compatible with un-tiled images whose width is lesser or equal to 65500 pixels",
         ),
         (
             1,
             65501,
             ["COMPRESS=JPEG", "BLOCKYSIZE=65501"],
-            "COMPRESS=JPEG is only compatible of images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
+            "COMPRESS=JPEG is only compatible with images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
         ),
         (
             1,
             1,
             ["COMPRESS=JPEG", "TILED=YES", "BLOCKXSIZE=65536"],
-            "COMPRESS=JPEG is only compatible of tiled images whose BLOCKXSIZE is lesser or equal to 65500 pixels",
+            "COMPRESS=JPEG is only compatible with tiled images whose BLOCKXSIZE is lesser or equal to 65500 pixels",
         ),
         (
             1,
             1,
             ["COMPRESS=JPEG", "TILED=YES", "BLOCKYSIZE=65536"],
-            "COMPRESS=JPEG is only compatible of images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
+            "COMPRESS=JPEG is only compatible with images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
         ),
     ],
 )
@@ -11934,25 +11894,25 @@ def test_tiff_write_too_large_jpeg(
             16384,
             1,
             ["COMPRESS=WEBP"],
-            "COMPRESS=WEBP is only compatible of un-tiled images whose width is lesser or equal to 16383 pixels",
+            "COMPRESS=WEBP is only compatible with un-tiled images whose width is lesser or equal to 16383 pixels",
         ),
         (
             1,
             16384,
             ["COMPRESS=WEBP", "BLOCKYSIZE=16384"],
-            "COMPRESS=WEBP is only compatible of images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
+            "COMPRESS=WEBP is only compatible with images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
         ),
         (
             1,
             1,
             ["COMPRESS=WEBP", "TILED=YES", "BLOCKXSIZE=16384"],
-            "COMPRESS=WEBP is only compatible of tiled images whose BLOCKXSIZE is lesser or equal to 16383 pixels",
+            "COMPRESS=WEBP is only compatible with tiled images whose BLOCKXSIZE is lesser or equal to 16383 pixels",
         ),
         (
             1,
             1,
             ["COMPRESS=WEBP", "TILED=YES", "BLOCKYSIZE=16384"],
-            "COMPRESS=WEBP is only compatible of images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
+            "COMPRESS=WEBP is only compatible with images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
         ),
     ],
 )
@@ -12173,6 +12133,31 @@ def test_tiff_write_multi_band_interleaved_predictor_3(tmp_vsimem):
     with gdal.Open(tmp_vsimem / "test.tif") as ds:
         content = ds.ReadRaster()
         assert ref_content == content, struct.unpack("f" * 8, content)
+
+
+###############################################################################
+#
+
+
+def test_tiff_write_float16_predictor_3(tmp_vsimem):
+
+    ref_values = (1.5, -3.5, 4.5, -2.5)
+    ref_content = struct.pack("e" * len(ref_values), *ref_values)
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test.tif",
+        len(ref_values),
+        1,
+        1,
+        gdal.GDT_Float16,
+        options=["PREDICTOR=3", "COMPRESS=LZW"],
+    ) as ds:
+        ds.WriteRaster(0, 0, len(ref_values), 1, ref_content, buf_type=gdal.GDT_Float16)
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "3"
+        content = struct.unpack(
+            "e" * len(ref_values), ds.ReadRaster(buf_type=gdal.GDT_Float16)
+        )
+        assert content == pytest.approx(ref_values, abs=1e-6)
 
 
 ###############################################################################
@@ -12524,6 +12509,11 @@ def test_tiff_write_rat(tmp_vsimem, GTIFF_WRITE_RAT_TO_PAM):
         else:
             assert gdal.VSIStatL(str(filename2) + ".aux.xml") is None
 
+        # Test that RAT gets re-written when modifying another compoonent of
+        # the GDAL_METADATA tag without re-requesting the RAT.
+        with gdal.Open(filename2, gdal.GA_Update) as ds:
+            ds.SetMetadataItem("foo", "bar")
+
         with gdal.Open(filename2) as ds:
             got_rat = ds.GetRasterBand(1).GetDefaultRAT()
             assert ds.GetRasterBand(1).GetDefaultRAT()  # do it again
@@ -12615,3 +12605,67 @@ def test_tiff_cog_layout(tmp_vsimem):
         )
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+
+###############################################################################
+
+
+def test_tiff_no_get_sibling_files(tmp_vsimem):
+
+    if "DEBUG=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        pytest.skip("Only compatible with a GDAL build with -DDEBUG")
+
+    res = [False]
+
+    def handler(lvl, no, msg):
+        if "file listing" in msg:
+            res[0] = True
+
+    with gdal.config_option("CPL_DEBUG", "GTiff"):
+        with gdaltest.error_handler(handler):
+            gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "foo.tif", 1, 1)
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "YES"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "NO"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert res[0]
+
+
+@pytest.mark.parametrize("width", [1, 2, 3, 4, 5, 7, 8, 100, 101, 103, 256])
+def test_tiff_write_10bit_roundtrip(tmp_vsimem, width):
+    """Verify optimized 10-bit packing produces correct output for various widths."""
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    fname = tmp_vsimem / f"test_10bit_{width}.tif"
+    ds = gdaltest.tiff_drv.Create(
+        fname, width, 1, 1, gdal.GDT_UInt16, options=["NBITS=10"]
+    )
+    data = np.arange(width, dtype=np.uint16) % 1024
+    ds.GetRasterBand(1).WriteArray(data.reshape(1, width))
+    ds = None  # flush to disk before re-opening
+
+    with gdal.Open(fname) as ds:
+        read = ds.GetRasterBand(1).ReadAsArray().flatten()
+    assert np.array_equal(data, read)

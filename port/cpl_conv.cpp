@@ -49,12 +49,14 @@
 #include <atomic>
 #include <cctype>
 #include <cerrno>
+#include <charconv>
 #include <climits>
 #include <clocale>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <mutex>
 #include <set>
 
@@ -137,6 +139,14 @@ typedef struct
 } CPLSharedFileInfoExtra;
 
 static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = nullptr;
+
+static const char *
+CPLGetThreadLocalConfigOption(const char *pszKey, const char *pszDefault,
+                              bool bSubstituteNullValueMarkerWithNull);
+
+static const char *
+CPLGetGlobalConfigOption(const char *pszKey, const char *pszDefault,
+                         bool bSubstituteNullValueMarkerWithNull);
 
 /************************************************************************/
 /*                             CPLCalloc()                              */
@@ -1698,17 +1708,21 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
                                            const char *pszDefault)
 
 {
-    const char *pszResult = CPLGetThreadLocalConfigOption(pszKey, nullptr);
+    const char *pszResult = CPLGetThreadLocalConfigOption(
+        pszKey, nullptr, /* bSubstituteNullValueMarkerWithNull = */ false);
 
     if (pszResult == nullptr)
     {
-        pszResult = CPLGetGlobalConfigOption(pszKey, nullptr);
+        pszResult = CPLGetGlobalConfigOption(
+            pszKey, nullptr, /* bSubstituteNullValueMarkerWithNull = */ false);
     }
 
     if (gbIgnoreEnvVariables)
     {
         const char *pszEnvVar = getenv(pszKey);
-        if (pszEnvVar != nullptr)
+        // Skipping for CPL_DEBUG to avoid infinite recursion since CPLvDebug()
+        // calls CPLGetConfigOption()...
+        if (pszEnvVar != nullptr && !EQUAL(pszKey, "CPL_DEBUG"))
         {
             CPLDebug("CPL",
                      "Ignoring environment variable %s=%s because of "
@@ -1721,7 +1735,7 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
         pszResult = getenv(pszKey);
     }
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || strcmp(pszResult, CPL_NULL_VALUE) == 0)
         return pszDefault;
 
     return pszResult;
@@ -1784,6 +1798,13 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
                                                       const char *pszDefault)
 
 {
+    return CPLGetThreadLocalConfigOption(pszKey, pszDefault, true);
+}
+
+static const char *
+CPLGetThreadLocalConfigOption(const char *pszKey, const char *pszDefault,
+                              bool bSubstituteNullValueMarkerWithNull)
+{
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, TRUE);
 #endif
@@ -1796,7 +1817,8 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
     if (papszTLConfigOptions != nullptr)
         pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || (bSubstituteNullValueMarkerWithNull &&
+                                 strcmp(pszResult, CPL_NULL_VALUE) == 0))
         return pszDefault;
 
     return pszResult;
@@ -1814,6 +1836,15 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
 const char *CPL_STDCALL CPLGetGlobalConfigOption(const char *pszKey,
                                                  const char *pszDefault)
 {
+    return CPLGetGlobalConfigOption(
+        pszKey, pszDefault, /* bSubstituteNullValueMarkerWithNull = */ true);
+}
+
+static const char *
+CPLGetGlobalConfigOption(const char *pszKey, const char *pszDefault,
+                         bool bSubstituteNullValueMarkerWithNull)
+{
+
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, TRUE);
 #endif
@@ -1823,7 +1854,8 @@ const char *CPL_STDCALL CPLGetGlobalConfigOption(const char *pszKey,
     const char *pszResult =
         CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || (bSubstituteNullValueMarkerWithNull &&
+                                 strcmp(pszResult, CPL_NULL_VALUE) == 0))
         return pszDefault;
 
     return pszResult;
@@ -2060,14 +2092,22 @@ static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
  * value (note: passing NULL will not unset an existing environment variable;
  * it will just unset a value previously set by CPLSetConfigOption()).
  *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
+ *
  * Starting with GDAL 3.11, if CPL_DEBUG is enabled prior to this call, and
  * CPLSetConfigOption() is called with a key that is neither a known
  * configuration option of GDAL itself, or one that has been declared with
  * CPLDeclareKnownConfigOption(), a warning will be emitted.
  *
- * @param pszKey the key of the option
- * @param pszValue the value of the option, or NULL to clear a setting.
+ * Starting with GDAL 3.13, the CPL_NULL_VALUE macro can be used as the value
+ * to indicate that callers of CPLGetConfigOption() should see the default value,
+ * instead of the value of the corresponding environment variable.
  *
+ * @param pszKey the key of the option
+ * @param pszValue the value of the option, NULL to clear a setting, or
+ *                 macro CPL_NULL_VALUE.
  * @see https://gdal.org/user/configoptions.html
  */
 void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
@@ -2122,8 +2162,17 @@ static void CPLSetThreadLocalTLSFreeFunc(void *pData)
  * it will just unset a value previously set by
  * CPLSetThreadLocalConfigOption()).
  *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
+ *
+ * Starting with GDAL 3.13, the CPL_NULL_VALUE macro can be used as the value
+ * to indicate that callers of CPLGetConfigOption() should see the default value,
+ * instead of the value of the corresponding environment variable.
+ *
  * @param pszKey the key of the option
- * @param pszValue the value of the option, or NULL to clear a setting.
+ * @param pszValue the value of the option, NULL to clear a setting, or
+ *                 macro CPL_NULL_VALUE.
  */
 
 void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
@@ -3300,7 +3349,13 @@ int CPLMoveFile(const char *pszNewPath, const char *pszOldPath)
     const int nRet = CPLCopyFile(pszNewPath, pszOldPath);
 
     if (nRet == 0)
-        VSIUnlink(pszOldPath);
+    {
+        if (VSIUnlink(pszOldPath) != 0)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Cannot delete '%s'",
+                     pszOldPath);
+        }
+    }
     return nRet;
 }
 
@@ -3666,7 +3721,8 @@ CPLConfigOptionSetter::CPLConfigOptionSetter(const char *pszKey,
         m_bRestoreOldValue = true;
         if (pszOldValue)
             m_pszOldValue = CPLStrdup(pszOldValue);
-        CPLSetThreadLocalConfigOption(pszKey, pszValue);
+        CPLSetThreadLocalConfigOption(pszKey,
+                                      pszValue ? pszValue : CPL_NULL_VALUE);
     }
 }
 
@@ -3701,9 +3757,9 @@ CPLConfigOptionSetter::~CPLConfigOptionSetter()
 bool CPLIsInteractive(FILE *f)
 {
 #ifndef _WIN32
-    return isatty(static_cast<int>(fileno(f)));
+    return CPL_TO_BOOL(isatty(static_cast<int>(fileno(f))));
 #else
-    return _isatty(_fileno(f));
+    return CPL_TO_BOOL(_isatty(_fileno(f)));
 #endif
 }
 
@@ -4053,5 +4109,142 @@ int CPLGetRemainingFileDescriptorCount()
     return -1;
 #endif
 }
+
+namespace cpl
+{
+
+/** Attempt to parse a number of the designated type from a string. The string
+ *  must contain no characters other than a single number and surrounding
+ *  whitespace, and the parsed number must fit into the designated type.
+ *  If these conditions are not met, std::nullopt will be returned.
+ *
+ * @param str the string to parse
+ * @return a std::optional<T> containing the parsed value, or std::nullopt
+ *         in case of failure.
+ */
+template <typename T>
+std::optional<T> CPL_DLL strict_parse(std::string_view str)
+{
+    str = trim(str);
+
+    T result;
+    const auto begin = str.data();
+    const auto end = str.data() + str.size();
+
+    auto [ptr, ec] = std::from_chars(begin, end, result);
+
+    if (ec != std::errc())
+        return std::nullopt;
+
+    if (ptr != end)
+    {
+        // For integer types, allow decimal and trailing zeros
+        if constexpr (std::is_integral_v<T>)
+        {
+            constexpr char DIGIT_ZERO = '0';
+
+            if (*ptr++ == '.')
+            {
+                while (ptr != end)
+                {
+                    if (*ptr++ != DIGIT_ZERO)
+                    {
+                        return std::nullopt;
+                    }
+                }
+            }
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    return result;
+}
+
+template std::optional<std::int8_t>
+    CPL_DLL strict_parse<std::int8_t>(std::string_view str);
+template std::optional<std::uint8_t>
+    CPL_DLL strict_parse<std::uint8_t>(std::string_view str);
+template std::optional<std::int16_t>
+    CPL_DLL strict_parse<std::int16_t>(std::string_view str);
+template std::optional<std::uint16_t>
+    CPL_DLL strict_parse<std::uint16_t>(std::string_view str);
+template std::optional<std::int32_t>
+    CPL_DLL strict_parse<std::int32_t>(std::string_view str);
+template std::optional<std::uint32_t>
+    CPL_DLL strict_parse<std::uint32_t>(std::string_view str);
+template std::optional<std::int64_t>
+    CPL_DLL strict_parse<std::int64_t>(std::string_view str);
+template std::optional<std::uint64_t>
+    CPL_DLL strict_parse<std::uint64_t>(std::string_view str);
+
+template <>
+std::optional<double> CPL_DLL strict_parse<double>(std::string_view str)
+{
+    str = trim(str);
+
+    if (str.empty())
+    {
+        return std::nullopt;
+    }
+
+    char *end = nullptr;
+    double d = CPLStrtod(str.data(), &end);
+
+    auto i = static_cast<decltype(str.size())>(end - str.data());
+    while (i < str.size() && std::isspace(str[i]))
+    {
+        i++;
+    }
+    if (i < str.size())
+    {
+        return std::nullopt;
+    }
+
+    return d;
+}
+
+template <>
+std::optional<float> CPL_DLL strict_parse<float>(std::string_view str)
+{
+    auto d = strict_parse<double>(str);
+    if (!d)
+    {
+        return std::nullopt;
+    }
+    if (d.value() > static_cast<double>(std::numeric_limits<float>::max()) ||
+        d.value() < static_cast<double>(std::numeric_limits<float>::lowest()))
+    {
+        return std::nullopt;
+    }
+    if (std::abs(d.value()) <
+        static_cast<double>(std::numeric_limits<float>::min()))
+    {
+        return std::nullopt;
+    }
+    return static_cast<float>(d.value());
+}
+
+template <> std::optional<bool> CPL_DLL strict_parse<bool>(std::string_view str)
+{
+    str = trim(str);
+
+    if (str == "YES" || str == "ON" || str == "TRUE" || str == "1")
+        return true;
+
+    if (str == "NO" || str == "OFF" || str == "FALSE" || str == "0")
+        return false;
+
+    if (str == "yes" || str == "on" || str == "true")
+        return true;
+
+    if (str == "no" || str == "off" || str == "false")
+        return false;
+
+    return std::nullopt;
+}
+}  // namespace cpl
 
 #endif

@@ -342,7 +342,7 @@ static CPLErr BandAffineCombinationProcess(
     const double *CPL_RESTRICT padfSrc = static_cast<const double *>(pInBuffer);
     double *CPL_RESTRICT padfDst = static_cast<double *>(pOutBuffer);
     const bool bDstIntendedDTIsInteger =
-        GDALDataTypeIsInteger(data->m_eIntendedDstDT);
+        CPL_TO_BOOL(GDALDataTypeIsInteger(data->m_eIntendedDstDT));
     const double dfClampMin = data->m_dfClampMin;
     const double dfClampMax = data->m_dfClampMax;
     for (size_t i = 0; i < nElts; ++i)
@@ -458,7 +458,18 @@ static CPLErr LUTInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "LUT step: input band count (%d) is different from output "
+                     "band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }
@@ -694,7 +705,18 @@ LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "LocalScaleOffset step: input band count (%d) is "
+                     "different from output band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }
@@ -1162,7 +1184,18 @@ static CPLErr TrimmingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Trimming step: input band count (%d) is different from "
+                     "output band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }

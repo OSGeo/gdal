@@ -32,6 +32,8 @@ if either alpha band or mask band is not set.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -o <outfile>
 
     The name of the output file to be created.
@@ -103,10 +105,6 @@ if either alpha band or mask band is not set.
     dataset and is slower than ``twopasses``. When a non-zero value for :option:`-nb`
     is used, ``twopasses`` is actually called as an initial step of ``floodfill``.
 
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
-
 .. option:: <infile>
 
     The input file.  Any GDAL supported format, any number of bands, normally 8bit
@@ -117,6 +115,11 @@ The processing is all done in 8bit (Bytes).
 
 If the output file is omitted, the processed results will be written back
 to the input file - which must support update.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

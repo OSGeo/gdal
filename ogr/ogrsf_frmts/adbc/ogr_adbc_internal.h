@@ -288,7 +288,7 @@ struct ADBC_EXPORT AdbcError {
   ///
   /// This field may not be used unless vendor_code is
   /// ADBC_ERROR_VENDOR_CODE_PRIVATE_DATA.  If present, this field is NULLPTR
-  /// iff the error is unintialized/freed.
+  /// iff the error is uninitialized/freed.
   ///
   /// \since ADBC API revision 1.1.0
   void* private_data;
@@ -807,7 +807,7 @@ const struct AdbcError* AdbcErrorFromArrayStream(struct ArrowArrayStream* stream
 /// Must be kept alive as long as any connections exist.
 struct ADBC_EXPORT AdbcDatabase {
   /// \brief Opaque implementation-defined state.
-  /// This field is NULLPTR iff the connection is unintialized/freed.
+  /// This field is NULLPTR iff the connection is uninitialized/freed.
   void* private_data;
   /// \brief The associated driver (used by the driver manager to help
   ///   track state).
@@ -830,7 +830,7 @@ struct ADBC_EXPORT AdbcDatabase {
 /// serialize accesses to a connection.
 struct ADBC_EXPORT AdbcConnection {
   /// \brief Opaque implementation-defined state.
-  /// This field is NULLPTR iff the connection is unintialized/freed.
+  /// This field is NULLPTR iff the connection is uninitialized/freed.
   void* private_data;
   /// \brief The associated driver (used by the driver manager to help
   ///   track state).
@@ -868,7 +868,7 @@ struct ADBC_EXPORT AdbcConnection {
 /// serialize accesses to a statement.
 struct ADBC_EXPORT AdbcStatement {
   /// \brief Opaque implementation-defined state.
-  /// This field is NULLPTR iff the connection is unintialized/freed.
+  /// This field is NULLPTR iff the connection is uninitialized/freed.
   void* private_data;
 
   /// \brief The associated driver (used by the driver manager to help
@@ -907,7 +907,7 @@ struct AdbcPartitions {
   const size_t* partition_lengths;
 
   /// \brief Opaque implementation-defined state.
-  /// This field is NULLPTR iff the connection is unintialized/freed.
+  /// This field is NULLPTR iff the connection is uninitialized/freed.
   void* private_data;
 
   /// \brief Release the contained partitions.
@@ -935,11 +935,11 @@ struct AdbcPartitions {
 /// worrying about multiple definitions of the same symbol.
 struct ADBC_EXPORT AdbcDriver {
   /// \brief Opaque driver-defined state.
-  /// This field is NULL if the driver is unintialized/freed (but
+  /// This field is NULL if the driver is uninitialized/freed (but
   /// it need not have a value even if the driver is initialized).
   void* private_data;
   /// \brief Opaque driver manager-defined state.
-  /// This field is NULL if the driver is unintialized/freed (but
+  /// This field is NULL if the driver is uninitialized/freed (but
   /// it need not have a value even if the driver is initialized).
   void* private_manager;
 

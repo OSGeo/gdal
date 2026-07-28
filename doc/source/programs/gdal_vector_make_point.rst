@@ -1,5 +1,7 @@
 .. _gdal_vector_make_point:
 
+.. program:: gdal_vector_make_point
+
 ================================================================================
 ``gdal vector make-point``
 ================================================================================
@@ -25,7 +27,7 @@ Description
 Program-Specific Options
 ------------------------
 
-.. option:: --dst-crs <CRS>
+.. option:: --output-crs <CRS>
 
    Optional coordinate reference system to assign to the created points.
    The coordinate reference systems that can be passed are anything supported by the
@@ -60,7 +62,7 @@ Standard Options
 
     .. include:: gdal_options/if.rst
 
-    .. include:: gdal_options/input_layer.rst
+    .. include:: gdal_options/input_layer_no_active_layer.rst
 
     .. include:: gdal_options/lco.rst
 
@@ -82,4 +84,7 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
 
+.. include:: return_code.rst

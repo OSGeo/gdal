@@ -108,12 +108,12 @@
 
     "metadataDomain": {
       "$comment": " The values of a metadadomain are key: string pairs, or arbitrary JSON objects for metadata domain names starting with the \"json:\" prefix.",
-      "any": [
+      "anyOf": [
         {
           "type": "object"
         },
         {
-          "type": "#/definitions/keyValueDict"
+          "$ref": "#/definitions/keyValueDict"
         }
       ]
     },
@@ -210,21 +210,21 @@
         },
         "extent": {
           "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
           "items": {
-            "type": "number",
-            "minItems": 4,
-            "maxItems": 4
+            "type": "number"
           }
         },
         "extent3D": {
           "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
           "items": {
             "type": [
               "null",
               "number"
-            ],
-            "minItems": 6,
-            "maxItems": 6
+            ]
           }
         },
         "coordinateSystem": {
@@ -301,10 +301,10 @@
         },
         "dataAxisToSRSAxisMapping": {
           "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
           "items": {
-            "type": "number",
-            "minItems": 2,
-            "maxItems": 3
+            "type": "number"
           }
         },
         "coordinateEpoch": {
@@ -378,9 +378,9 @@
         },
         "minValue": {
           "$comment": "only present when type=range",
-          "any": [
+          "anyOf": [
             {
-              "type": "string "
+              "type": "string"
             },
             {
               "type": "number"
@@ -393,9 +393,9 @@
         },
         "maxValue": {
           "$comment": "only present when type=range",
-          "any": [
+          "anyOf": [
             {
-              "type": "string "
+              "type": "string"
             },
             {
               "type": "number"

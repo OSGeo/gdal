@@ -144,7 +144,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
     f["int64field"] = -1234567890123456
     f["doublefield"] = 1.2345
     f["floatfield"] = 1.5
-    f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
+    f["binaryfield"] = b"\xde\xad\xbe\xef"
     f["intlistfield"] = [-123456789, 123]
     f["int16listfield"] = [-32768, 32767]
     f["boollistfield"] = [True, False]
@@ -178,7 +178,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
     f["int64field"] = 1234567890123456
     f["doublefield"] = -1.2345
     f["floatfield"] = -1.5
-    f["binaryfield"] = b"\xBE\xEF\xDE\xAD"
+    f["binaryfield"] = b"\xbe\xef\xde\xad"
     f["intlistfield"] = [123456789, -123]
     f["int16listfield"] = [32767, -32768]
     f["boollistfield"] = [False, True]
@@ -204,7 +204,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
         f["int64field"] = 9876543210123456
         f["doublefield"] = -1.2345
         f["floatfield"] = -1.5
-        f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
+        f["binaryfield"] = b"\xde\xad\xbe\xef"
         f["intlistfield"] = [-123456789, -123]
         f["int16listfield"] = [32767, -32768]
         f["boollistfield"] = [False, True]
@@ -234,7 +234,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
 
     field_count, srs, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetGeomType() == ogr.wkbUnknown
@@ -805,7 +805,7 @@ def test_ogr_tiledb_compression():
     lyr = ds.CreateLayer(
         "test", options=["BOUNDS=-1e4,-1e4,1e4,1e4", "COMPRESSION=ZSTD"]
     )
-    for (typ, subtype) in [
+    for typ, subtype in [
         (ogr.OFTInteger, ogr.OFSTNone),
         (ogr.OFTInteger, ogr.OFSTBoolean),
         (ogr.OFTInteger, ogr.OFSTInt16),
@@ -890,17 +890,17 @@ def test_ogr_tiledb_dimension_names_open_option():
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
+    ds = gdal.Open("tmp/test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
     ds = None
 
     with pytest.raises(Exception):
-        gdal.OpenEx("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
+        gdal.Open("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
 
     with pytest.raises(Exception):
-        gdal.OpenEx(
+        gdal.Open(
             "tmp/test.tiledb",
             gdal.OF_UPDATE,
             open_options=["DIM_X=invalid", "DIM_Y=_Y"],
@@ -1104,7 +1104,7 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
 
     _, _, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
@@ -1211,14 +1211,14 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
 
     _, _, options = create_tiledb_dataset(nullable, batch_size, extra_feature=True)
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
     for f in lyr:
         mapFeatures[f.GetFID()] = f
 
-    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
@@ -1453,7 +1453,7 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb")
+    ds = gdal.Open("tmp/test.tiledb")
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()
@@ -1497,7 +1497,7 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.OpenEx("tmp/test.tiledb")
+    ds = gdal.Open("tmp/test.tiledb")
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()
@@ -1628,9 +1628,9 @@ def test_ogr_tiledb_tiledb_geometry_type(
     with gdal.config_options(
         {
             "TILEDB_WKB_GEOMETRY_TYPE": TILEDB_WKB_GEOMETRY_TYPE,
-            "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME": "YES"
-            if OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME
-            else "NO",
+            "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME": (
+                "YES" if OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME else "NO"
+            ),
         }
     ):
         filename = str(tmp_path / "test.tiledb")
@@ -1648,9 +1648,9 @@ def test_ogr_tiledb_tiledb_geometry_type(
             tiledb_md = json.loads(lyr.GetMetadata_List("json:TILEDB")[0])
             expected = {
                 "name": "wkb_geometry",
-                "type": TILEDB_WKB_GEOMETRY_TYPE
-                if TILEDB_WKB_GEOMETRY_TYPE
-                else "GEOM_WKB",
+                "type": (
+                    TILEDB_WKB_GEOMETRY_TYPE if TILEDB_WKB_GEOMETRY_TYPE else "GEOM_WKB"
+                ),
                 "cell_val_num": "variable",
                 "nullable": False,
                 "filter_list": [],

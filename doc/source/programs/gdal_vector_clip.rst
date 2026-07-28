@@ -1,5 +1,7 @@
 .. _gdal_vector_clip:
 
+.. program:: gdal_vector_clip
+
 ================================================================================
 ``gdal vector clip``
 ================================================================================
@@ -139,6 +141,10 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

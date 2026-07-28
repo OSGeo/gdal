@@ -922,7 +922,7 @@ def test_ogr_factory_failed_forceTo():
             "POLYGON M ((0 0 0,0 0 0,0 0 0,0 0 0,0 0 0))",
         ),
     ]
-    for (src_wkt, target_type, exp_wkt) in tests:
+    for src_wkt, target_type, exp_wkt in tests:
         src_geom = ogr.CreateGeometryFromWkt(src_wkt)
         dst_geom = ogr.ForceTo(src_geom, target_type)
 

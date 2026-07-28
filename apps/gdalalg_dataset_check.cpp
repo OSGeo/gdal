@@ -63,7 +63,7 @@ bool GDALDatasetCheckAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const CPLStringList aosAllowedDrivers(m_inputFormats);
 
     const CPLStringList aosSubdatasets(
-        CSLDuplicate(poDS->GetMetadata("SUBDATASETS")));
+        CSLDuplicate(poDS->GetMetadata(GDAL_MDD_SUBDATASETS)));
     const int nSubdatasets = aosSubdatasets.size() / 2;
 
     bool bRet = true;
@@ -425,7 +425,7 @@ bool GDALDatasetCheckAlgorithm::CheckDataset(GDALDataset *poDS,
         const auto nDTSize = GDALGetDataTypeSizeBytes(eDT);
         constexpr size_t BUFFER_SIZE = 10 * 1024 * 1024;
         const char *pszInterleaving =
-            poDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            poDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleaving && EQUAL(pszInterleaving, "PIXEL"))
         {
             for (const auto &oWindow :

@@ -632,7 +632,8 @@ ZarrV2Group::CreateGroup(const std::string &osName,
     if (cpl::contains(m_oSetGroupNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A group with same name already exists");
+                 "A group with same name (%s) already exists in group %s",
+                 osName.c_str(), GetFullName().c_str());
         return nullptr;
     }
 
@@ -899,7 +900,8 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     if (cpl::contains(m_oSetArrayNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An array with same name already exists");
+                 "An array with same name (%s) already exists in group %s",
+                 osName.c_str(), GetFullName().c_str());
         return nullptr;
     }
 

@@ -172,7 +172,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
 DXFBlockDefinition *OGRDXFDataSource::LookupBlock(const char *pszName)
 
 {
-    CPLString l_osName = pszName;
+    const CPLString l_osName(pszName);
 
     if (oBlockMap.count(l_osName) == 0)
         return nullptr;
@@ -190,7 +190,7 @@ DXFBlockDefinition *OGRDXFDataSource::LookupBlock(const char *pszName)
 CPLString OGRDXFDataSource::GetBlockNameByRecordHandle(const char *pszID)
 
 {
-    CPLString l_osID = pszID;
+    const CPLString l_osID(pszID);
 
     if (oBlockRecordHandles.count(l_osID) == 0)
         return "";

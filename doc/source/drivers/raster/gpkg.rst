@@ -46,6 +46,9 @@ supported in read and creation :
 -  *gpkg_zoom_other*: when resolution of consecutive zoom levels does
    not vary with a factor of 2.
 
+Validation whether a GeoPackage file conforms to the GeoPackage specification
+can be done with :ref:`gdal_driver_gpkg_validate`.
+
 Driver capabilities
 -------------------
 

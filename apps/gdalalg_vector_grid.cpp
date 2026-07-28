@@ -109,9 +109,9 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
               .SetStandaloneStep(standaloneStep)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
     if (standaloneStep)
     {
+        AddProgressArg();
         AddOutputFormatArg(&m_format).AddMetadataItem(
             GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
         AddOpenOptionsArg(&m_openOptions);
@@ -120,6 +120,10 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
         AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
         AddCreationOptionsArg(&m_creationOptions);
+    }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
     }
     AddArg("extent", 0, _("Set the target georeferenced extent"),
            &m_targetExtent)

@@ -181,8 +181,18 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     }
     else
     {
+        const std::string osFilename =
+            CPLLaunderForFilenameSafe(pszLayerName, nullptr);
+        if (osFilename != pszLayerName)
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Layer name '%s' laundered as '%s' for filename compatibility",
+                pszLayerName, osFilename.c_str());
+        }
+
         osFullMMLayerName =
-            CPLFormFilenameSafe(m_osRootName.c_str(), pszLayerName, "");
+            CPLFormFilenameSafe(m_osRootName.c_str(), osFilename.c_str(), "");
 
         /* -------------------------------------------------------------------- */
         /*      Let's create the folder if it's not already created.            */

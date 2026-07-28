@@ -755,10 +755,10 @@ bool OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
 
     nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
     nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-    m_gt[0] = dfXMin;
-    m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
-    m_gt[3] = dfYMax;
-    m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
+    m_gt.xorig = dfXMin;
+    m_gt.xscale = (dfXMax - dfXMin) / nRasterXSize;
+    m_gt.yorig = dfYMax;
+    m_gt.yscale = -(dfYMax - dfYMin) / nRasterYSize;
 
     return true;
 }
@@ -1068,7 +1068,7 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
             CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
             CPLSPrintf("Collection %s", osTitle.c_str()));
     }
-    SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+    SetMetadata(aosSubdatasets.List(), GDAL_MDD_SUBDATASETS);
 
     return true;
 }
@@ -1256,7 +1256,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
     {
         SetBand(i, new OGCAPIMapWrapperBand(this, i));
     }
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     return true;
 }
@@ -1405,10 +1405,10 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
 
             nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
             nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-            m_gt[0] = dfXMin;
-            m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
-            m_gt[3] = dfYMax;
-            m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
+            m_gt.xorig = dfXMin;
+            m_gt.xscale = (dfXMax - dfXMin) / nRasterXSize;
+            m_gt.yorig = dfYMax;
+            m_gt.yscale = -(dfYMax - dfYMin) / nRasterYSize;
         }
 
         OGRSpatialReference oSRS;
@@ -1530,7 +1530,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
     {
         SetBand(i, new OGCAPIMapWrapperBand(this, i));
     }
-    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     return true;
 }
@@ -2229,7 +2229,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             m_apoDatasetsCropped.emplace_back(
                 GDALDataset::FromHandle(hCroppedDS));
 
-            if (tileMatrix.mResX <= m_gt[1])
+            if (tileMatrix.mResX <= m_gt.xscale)
                 break;
         }
         if (!m_apoDatasetsCropped.empty())
@@ -2244,7 +2244,8 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             {
                 SetBand(i, new OGCAPITilesWrapperBand(this, i));
             }
-            SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                            GDAL_MDD_IMAGE_STRUCTURE);
 
             bFoundSomething = true;
         }

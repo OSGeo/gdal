@@ -29,6 +29,7 @@
 
 #include "zlib.h"
 #include "ogrlibjsonutils.h"
+#include "mbtiles.h"
 
 #include <math.h>
 #include <algorithm>
@@ -477,9 +478,9 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left
     // corner
     const int nShiftXPixels =
-        (int)floor(0.5 + (m_gt[0] - TMS_ORIGIN_X) / m_gt[1]);
+        (int)floor(0.5 + (m_gt.xorig - TMS_ORIGIN_X) / m_gt.xscale);
     const int nShiftYPixelsFromGPKGOrigin =
-        (int)floor(0.5 + (m_gt[3] - TMS_ORIGIN_Y) / m_gt[5]);
+        (int)floor(0.5 + (m_gt.yorig - TMS_ORIGIN_Y) / m_gt.yscale);
 
     const int iLineFromGPKGOrigin = iLine + nShiftYPixelsFromGPKGOrigin;
     const int iLineFromMBTilesOrigin =
@@ -493,8 +494,6 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
 
     char *pszKey = nullptr;
 
-    OGRLayerH hSQLLyr;
-    OGRFeatureH hFeat;
     json_object *poGrid = nullptr;
     int i;
 
@@ -505,11 +504,11 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
                    "zoom_level = %d AND tile_column = %d AND tile_row = %d",
                    m_nZoomLevel, nTileColumn, nTileRow);
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    OGRLayerH hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return nullptr;
 
-    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
     if (hFeat == nullptr || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
@@ -665,10 +664,8 @@ end:
     if (jsobj)
         json_object_put(jsobj);
     VSIFree(pabyUncompressed);
-    if (hFeat)
-        OGR_F_Destroy(hFeat);
-    if (hSQLLyr)
-        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
+    OGR_F_Destroy(hFeat);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     return pszKey;
 }
@@ -1060,7 +1057,7 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
                  "Cannot modify geotransform once set");
         return CE_Failure;
     }
-    if (gt[2] != 0.0 || gt[4] != 0 || gt[5] > 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0 || gt.yscale > 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up non rotated geotransform supported");
@@ -1072,10 +1069,10 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
         CPLString osBounds(m_osBounds);
         if (osBounds.empty())
         {
-            double minx = gt[0];
-            double miny = gt[3] + nRasterYSize * gt[5];
-            double maxx = gt[0] + nRasterXSize * gt[1];
-            double maxy = gt[3];
+            double minx = gt.xorig;
+            double miny = gt.yorig + nRasterYSize * gt.yscale;
+            double maxx = gt.xorig + nRasterXSize * gt.xscale;
+            double maxy = gt.yorig;
 
             SphericalMercatorToLongLat(&minx, &miny);
             SphericalMercatorToLongLat(&maxx, &maxy);
@@ -1128,8 +1125,9 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
             dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
         double dfExpectedPixelYSize =
             dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
-        if (fabs(gt[1] - dfExpectedPixelXSize) < 1e-8 * dfExpectedPixelXSize &&
-            fabs(fabs(gt[5]) - dfExpectedPixelYSize) <
+        if (fabs(gt.xscale - dfExpectedPixelXSize) <
+                1e-8 * dfExpectedPixelXSize &&
+            fabs(fabs(gt.yscale) - dfExpectedPixelYSize) <
                 1e-8 * dfExpectedPixelYSize)
         {
             break;
@@ -1162,11 +1160,13 @@ void MBTilesDataset::ComputeTileAndPixelShifts()
     // Compute shift between GDAL origin and TileMatrixSet origin
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left
     // corner
-    int nShiftXPixels = (int)floor(0.5 + (m_gt[0] - TMS_ORIGIN_X) / m_gt[1]);
+    int nShiftXPixels =
+        (int)floor(0.5 + (m_gt.xorig - TMS_ORIGIN_X) / m_gt.xscale);
     m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
     m_nShiftXPixelsMod =
         ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    int nShiftYPixels = (int)floor(0.5 + (m_gt[3] - TMS_ORIGIN_Y) / m_gt[5]);
+    int nShiftYPixels =
+        (int)floor(0.5 + (m_gt.yorig - TMS_ORIGIN_Y) / m_gt.yscale);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod =
         ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
@@ -1183,10 +1183,10 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
 
     ComputeTileAndPixelShifts();
 
-    double dfGDALMinX = m_gt[0];
-    double dfGDALMinY = m_gt[3] + nRasterYSize * m_gt[5];
-    double dfGDALMaxX = m_gt[0] + nRasterXSize * m_gt[1];
-    double dfGDALMaxY = m_gt[3];
+    double dfGDALMinX = m_gt.xorig;
+    double dfGDALMinY = m_gt.yorig + nRasterYSize * m_gt.yscale;
+    double dfGDALMaxX = m_gt.xorig + nRasterXSize * m_gt.xscale;
+    double dfGDALMaxY = m_gt.yorig;
 
     m_nOverviewCount = m_nZoomLevel;
     m_papoOverviewDS = (MBTilesDataset **)CPLCalloc(sizeof(MBTilesDataset *),
@@ -1240,10 +1240,10 @@ bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
     const double dfPixelYSize = 2 * MAX_GM / nTileHeight / (1 << nZoomLevel);
 
     m_bGeoTransformValid = true;
-    m_gt[0] = dfGDALMinX;
-    m_gt[1] = dfPixelXSize;
-    m_gt[3] = dfGDALMaxY;
-    m_gt[5] = -dfPixelYSize;
+    m_gt.xorig = dfGDALMinX;
+    m_gt.xscale = dfPixelXSize;
+    m_gt.yorig = dfGDALMaxY;
+    m_gt.yscale = -dfPixelYSize;
     double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
     double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
     if (dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX)
@@ -1268,7 +1268,8 @@ bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
 
     ComputeTileAndPixelShifts();
 
-    GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                 GDAL_MDD_IMAGE_STRUCTURE);
     GDALDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
 
     if (poParentDS)
@@ -1311,10 +1312,10 @@ CPLErr MBTilesDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         return CE_Failure;
     }
 
-    if (poSRS == nullptr || poSRS->GetAuthorityName(nullptr) == nullptr ||
-        !EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG") ||
-        poSRS->GetAuthorityCode(nullptr) == nullptr ||
-        !EQUAL(poSRS->GetAuthorityCode(nullptr), "3857"))
+    if (poSRS == nullptr || poSRS->GetAuthorityName() == nullptr ||
+        !EQUAL(poSRS->GetAuthorityName(), "EPSG") ||
+        poSRS->GetAuthorityCode() == nullptr ||
+        !EQUAL(poSRS->GetAuthorityCode(), "3857"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only EPSG:3857 supported on MBTiles dataset");
@@ -3063,6 +3064,17 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
+    const std::string osElevationType =
+        CSLFetchNameValueDef(papszOptions, "ELEVATION_TYPE", "");
+    if (!osElevationType.empty())
+    {
+        pszSQL = sqlite3_mprintf("INSERT INTO metadata (name, value) VALUES "
+                                 "('elevation_type', '%q')",
+                                 osElevationType.c_str());
+        sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
+        sqlite3_free(pszSQL);
+    }
+
     const char *pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
     if (pszTF)
         m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
@@ -3230,7 +3242,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
         if (bModifiedMaxLat)
         {
             const double maxNorthing = MAX_GM;
-            gt[3] = maxNorthing;
+            gt.yorig = maxNorthing;
             adfExtent[3] = maxNorthing;
         }
         if (bModifiedMinLat)
@@ -3249,7 +3261,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
     }
 
     int nZoomLevel;
-    double dfComputedRes = gt[1];
+    double dfComputedRes = gt.xscale;
     double dfPrevRes = 0.0;
     double dfRes = 0.0;
     int nBlockSize = std::max(
@@ -3301,8 +3313,8 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
 
     nXSize = (int)(0.5 + (dfMaxX - dfMinX) / dfRes);
     nYSize = (int)(0.5 + (dfMaxY - dfMinY) / dfRes);
-    gt[1] = dfRes;
-    gt[5] = -dfRes;
+    gt.xscale = dfRes;
+    gt.yscale = -dfRes;
 
     int nTargetBands = nBands;
     /* For grey level or RGB, if there's reprojection involved, add an alpha */
@@ -3314,8 +3326,8 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
         OGRSpatialReference oSrcSRS;
         oSrcSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
         oSrcSRS.AutoIdentifyEPSG();
-        if (oSrcSRS.GetAuthorityCode(nullptr) == nullptr ||
-            atoi(oSrcSRS.GetAuthorityCode(nullptr)) != 3857)
+        if (oSrcSRS.GetAuthorityCode() == nullptr ||
+            atoi(oSrcSRS.GetAuthorityCode()) != 3857)
         {
             nTargetBands++;
         }
@@ -3689,22 +3701,6 @@ void GDALRegister_MBTiles()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mbtiles");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
 
-#define COMPRESSION_OPTIONS                                                    \
-    "  <Option name='TILE_FORMAT' scope='raster' type='string-select' "        \
-    "description='Format to use to create tiles' default='PNG'>"               \
-    "    <Value>PNG</Value>"                                                   \
-    "    <Value>PNG8</Value>"                                                  \
-    "    <Value>JPEG</Value>"                                                  \
-    "    <Value>WEBP</Value>"                                                  \
-    "  </Option>"                                                              \
-    "  <Option name='QUALITY' scope='raster' type='int' min='1' max='100' "    \
-    "description='Quality for JPEG and WEBP tiles' default='75'/>"             \
-    "  <Option name='ZLEVEL' scope='raster' type='int' min='1' max='9' "       \
-    "description='DEFLATE compression level for PNG tiles' default='6'/>"      \
-    "  <Option name='DITHER' scope='raster' type='boolean' "                   \
-    "description='Whether to apply Floyd-Steinberg dithering (for "            \
-    "TILE_FORMAT=PNG8)' default='NO'/>"
-
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
@@ -3729,7 +3725,7 @@ void GDALRegister_MBTiles()
         "description='Maximum Y of area of interest'/>"
         "  <Option name='USE_BOUNDS' scope='raster,vector' type='boolean' "
         "description='Whether to use the bounds metadata, when available, to "
-        "determine the AOI' default='YES'/>" COMPRESSION_OPTIONS
+        "determine the AOI' default='YES'/>" MBTILES_COMPRESSION_OPTIONS
         "  <Option name='CLIP' scope='vector' type='boolean' "
         "description='Whether to clip geometries to tile extent' "
         "default='YES'/>"
@@ -3744,48 +3740,7 @@ void GDALRegister_MBTiles()
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='NAME' scope='raster,vector' type='string' "
-        "description='Tileset name'/>"
-        "  <Option name='DESCRIPTION' scope='raster,vector' type='string' "
-        "description='A description of the layer'/>"
-        "  <Option name='TYPE' scope='raster,vector' type='string-select' "
-        "description='Layer type' default='overlay'>"
-        "    <Value>overlay</Value>"
-        "    <Value>baselayer</Value>"
-        "  </Option>"
-        "  <Option name='VERSION' scope='raster' type='string' "
-        "description='The version of the tileset, as a plain number' "
-        "default='1.1'/>"
-        "  <Option name='BLOCKSIZE' scope='raster' type='int' "
-        "description='Block size in pixels' default='256' min='64' "
-        "max='8192'/>" COMPRESSION_OPTIONS
-        "  <Option name='ZOOM_LEVEL_STRATEGY' scope='raster' "
-        "type='string-select' description='Strategy to determine zoom level.' "
-        "default='AUTO'>"
-        "    <Value>AUTO</Value>"
-        "    <Value>LOWER</Value>"
-        "    <Value>UPPER</Value>"
-        "  </Option>"
-        "  <Option name='RESAMPLING' scope='raster' type='string-select' "
-        "description='Resampling algorithm.' default='BILINEAR'>"
-        "    <Value>NEAREST</Value>"
-        "    <Value>BILINEAR</Value>"
-        "    <Value>CUBIC</Value>"
-        "    <Value>CUBICSPLINE</Value>"
-        "    <Value>LANCZOS</Value>"
-        "    <Value>MODE</Value>"
-        "    <Value>AVERAGE</Value>"
-        "  </Option>"
-        "  <Option name='WRITE_BOUNDS' scope='raster' type='boolean' "
-        "description='Whether to write the bounds metadata' default='YES'/>"
-        "  <Option name='WRITE_MINMAXZOOM' scope='raster' type='boolean' "
-        "description='Whether to write the minzoom and maxzoom metadata' "
-        "default='YES'/>"
-        "  <Option name='BOUNDS' scope='raster,vector' type='string' "
-        "description='Override default value for bounds metadata item'/>"
-        "  <Option name='CENTER' scope='raster,vector' type='string' "
-        "description='Override default value for center metadata item'/>"
+        "<CreationOptionList>" MBTILES_RASTER_CREATION_OPTIONS
 #ifdef HAVE_MVT_WRITE_SUPPORT
         MVT_MBTILES_COMMON_DSCO
 #endif

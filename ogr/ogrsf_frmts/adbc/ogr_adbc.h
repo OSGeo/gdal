@@ -117,10 +117,10 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
     std::unique_ptr<OGRArrowArrayStream> m_stream{};
     bool m_bInternalUse = false;
     bool m_bLayerDefinitionError = false;
+    bool m_bGetNextArrayHasRun = false;
+    bool m_bNextStreamUsageMaybeInvalid = false;
 
-    struct ArrowSchema m_schema
-    {
-    };
+    struct ArrowSchema m_schema{};
 
     bool m_bEOF = false;
     size_t m_nIdx = 0;
@@ -139,7 +139,7 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
     GIntBig GetFeatureCountArrow();
     GIntBig GetFeatureCountParquet();
 
-    bool BuildLayerDefnInit();
+    bool BuildLayerDefnInit(bool bCreateStream);
     virtual void BuildLayerDefn();
     bool ReplaceStatement(const char *pszNewStatement);
     bool UpdateStatement();

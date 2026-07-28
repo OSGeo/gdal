@@ -284,7 +284,8 @@ def test_ogr_osm_3(options=None, all_layers=False):
             "tmp/ogr_osm_3", "data/osm/test.pbf", options=layers + options
         )
 
-    test_ogr_osm_1(filepath)
+    with gdal.config_option("SHAPE_PROMOTE_TO_MULTI", "NO"):
+        test_ogr_osm_1(filepath)
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filepath)
 
@@ -730,7 +731,7 @@ def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
 
 def test_ogr_osm_15():
 
-    ds = gdal.OpenEx("data/osm/test.pbf")
+    ds = gdal.Open("data/osm/test.pbf")
 
     assert ds.TestCapability(ogr.ODsCRandomLayerRead) == 1
 
@@ -774,7 +775,7 @@ def test_ogr_osm_15():
     assert not (f is None or lyr is None)
     assert pct_array[0] == 1.0
 
-    # ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
+    # ds = gdal.Open('/home/even/gdal/data/osm/france.osm.pbf')
     # ds.ExecuteSQL('SET interest_layers = relations')
     # def test(pct, msg, unused):
     #    print(pct)
@@ -813,7 +814,7 @@ attributes=foo:baar,foo:bar
 """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/ogr_osm_16.osm",
         open_options=["CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini"],
     )
@@ -875,7 +876,7 @@ def test_ogr_osm_18():
 
 def test_ogr_osm_tags_json():
 
-    ds = gdal.OpenEx("data/osm/test.pbf", open_options=["TAGS_FORMAT=JSON"])
+    ds = gdal.Open("data/osm/test.pbf", open_options=["TAGS_FORMAT=JSON"])
 
     lyr = ds.GetLayerByName("points")
     lyr_defn = lyr.GetLayerDefn()
@@ -902,7 +903,7 @@ def test_ogr_osm_tags_json():
 
 def test_ogr_osm_tags_json_special_characters():
 
-    ds = gdal.OpenEx("data/osm/test_json.pbf", open_options=["TAGS_FORMAT=JSON"])
+    ds = gdal.Open("data/osm/test_json.pbf", open_options=["TAGS_FORMAT=JSON"])
 
     lyr = ds.GetLayerByName("points")
     lyr_defn = lyr.GetLayerDefn()
@@ -955,3 +956,15 @@ def test_ogr_osm_parse_complex_multipolygon():
         f,
         "MULTIPOLYGON (((0 10,0 11,1 11,1 10,0 10),(0.1 10.1,0.1 10.4,0.9 10.4,0.9 10.6,0.1 10.1),(0.1 10.6,0.1 10.9,0.9 10.9,0.9 10.6,0.1 10.6)))",
     )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14532
+
+
+def test_ogr_osm_parse_fix_gh14532():
+
+    ds = ogr.Open("data/osm/poc_14532.osm.pbf")
+    for lyr in ds:
+        for f in lyr:
+            pass

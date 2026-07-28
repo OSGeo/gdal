@@ -632,6 +632,33 @@ void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
     }
 }
 
+/** Add new key - value pair to json object.
+ *
+ * @param osName Key name.
+ * @param svValue String value.
+ * @since 3.13
+ */
+void CPLJSONObject::Add(const std::string &osName, std::string_view svValue)
+{
+    std::string objectName;
+    if (m_osKey == INVALID_OBJ_KEY)
+        m_osKey.clear();
+    CPLJSONObject object = GetObjectByPath(osName, objectName);
+    if (object.IsValid() && json_object_get_type(TO_JSONOBJ(
+                                object.m_poJsonObject)) == json_type_object)
+    {
+        if (svValue.size() > static_cast<size_t>(INT_MAX - 1))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too long string view");
+            return;
+        }
+        json_object *poVal = json_object_new_string_len(
+            svValue.data(), static_cast<int>(svValue.size()));
+        json_object_object_add(TO_JSONOBJ(object.GetInternalHandle()),
+                               objectName.c_str(), poVal);
+    }
+}
+
 /**
  * Add new key - value pair to json object.
  * @param osName Key name.
@@ -921,6 +948,26 @@ CPLJSONObject CPLJSONObject::GetObj(const std::string &osName) const
 }
 
 /**
+ * Get value by key (without splitting on /).
+ * @param  osName Key name.
+ * @return         Json object.
+ * @since 3.13
+ *
+ */
+CPLJSONObject CPLJSONObject::GetObjNoSplitName(const std::string &osName) const
+{
+    json_object *poVal = nullptr;
+
+    // Typically for keys that contain / character
+    if (json_object_object_get_ex(TO_JSONOBJ(GetInternalHandle()),
+                                  osName.c_str(), &poVal))
+    {
+        return CPLJSONObject(osName, poVal);
+    }
+    return CPLJSONObject(INVALID_OBJ_KEY, nullptr);
+}
+
+/**
  * Get value by key.
  * @param  osName Key name.
  * @return         Json object.
@@ -1113,6 +1160,50 @@ GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
             json_type_int*/ )
         return static_cast<GInt64>(
             json_object_get_int64(TO_JSONOBJ(m_poJsonObject)));
+    return nDefault;
+}
+
+/**
+ * Get value by key.
+ * @param  osName    Key name.
+ * @param  nDefault   Default value.
+ * @return            uint64_t value.
+ *
+ */
+uint64_t CPLJSONObject::GetUInt64(const std::string &osName,
+                                  uint64_t nDefault) const
+{
+    if (!m_osKeyForSet.empty())
+        return nDefault;
+    CPLJSONObject object = GetObj(osName);
+    return object.ToUInt64(nDefault);
+}
+
+/**
+ * Get value.
+ * @param  nDefault   Default value.
+ * @return            uint64_t value.
+ *
+ */
+uint64_t CPLJSONObject::ToUInt64(uint64_t nDefault) const
+{
+    if (!m_osKeyForSet.empty())
+        return nDefault;
+    if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
+            json_type_int*/ )
+    {
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_014)
+        // We can't do much better without json_object_get_uint64
+        const double v = json_object_get_double(TO_JSONOBJ(m_poJsonObject));
+        if (v > 0)
+        {
+            return static_cast<uint64_t>(
+                json_object_get_int64(TO_JSONOBJ(m_poJsonObject)));
+        }
+#else
+        return json_object_get_uint64(TO_JSONOBJ(m_poJsonObject));
+#endif
+    }
     return nDefault;
 }
 
@@ -1424,6 +1515,28 @@ void CPLJSONArray::Add(const std::string &osValue)
     if (m_poJsonObject)
         json_object_array_add(TO_JSONOBJ(m_poJsonObject),
                               json_object_new_string(osValue.c_str()));
+}
+
+/**
+ * Add value to array
+ * @param svValue Value to add.
+ * @since 3.13
+ *
+ */
+void CPLJSONArray::Add(std::string_view svValue)
+{
+    if (svValue.size() > static_cast<size_t>(INT_MAX - 1))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long string view");
+        return;
+    }
+    if (m_poJsonObject)
+    {
+        json_object_array_add(
+            TO_JSONOBJ(m_poJsonObject),
+            json_object_new_string_len(svValue.data(),
+                                       static_cast<int>(svValue.size())));
+    }
 }
 
 /**

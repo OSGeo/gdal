@@ -39,7 +39,7 @@ def gdalinfo_path():
 
 def test_gdalinfo_1(gdalinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " ../gcore/data/byte.tif",
         encoding="UTF-8",
     )
@@ -240,7 +240,7 @@ def test_gdalinfo_13(gdalinfo_path):
 
 def test_gdalinfo_14(gdalinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --config", check_memleak=False
     )
     assert "--config option given without" in err
@@ -252,7 +252,7 @@ def test_gdalinfo_14(gdalinfo_path):
 
 def test_gdalinfo_15(gdalinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --mempreload", check_memleak=False
     )
     assert "--mempreload option given without directory path" in err
@@ -264,7 +264,7 @@ def test_gdalinfo_15(gdalinfo_path):
 
 def test_gdalinfo_16(gdalinfo_path):
 
-    (ret, _) = gdaltest.runexternal_out_and_err(
+    ret, _ = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --debug on --mempreload ../gcore/data /vsimem/byte.tif",
         check_memleak=False,
         encoding="UTF-8",
@@ -278,7 +278,7 @@ def test_gdalinfo_16(gdalinfo_path):
 
 def test_gdalinfo_17(gdalinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --debug", check_memleak=False
     )
     assert "--debug option given without debug level" in err
@@ -290,12 +290,12 @@ def test_gdalinfo_17(gdalinfo_path):
 
 def test_gdalinfo_18(gdalinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --optfile", check_memleak=False
     )
     assert "--optfile option given without filename" in err
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --optfile /foo/bar",
         check_memleak=False,
     )
@@ -356,12 +356,12 @@ def test_gdalinfo_formats_json(gdalinfo_path):
 
 def test_gdalinfo_21(gdalinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --format", check_memleak=False
     )
     assert "--format option given without a format code" in err
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --format foo_bar",
         check_memleak=False,
     )
@@ -462,7 +462,7 @@ def test_gdalinfo_27(gdalinfo_path):
 
 def test_gdalinfo_28(gdalinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " -json ../gcore/data/byte.tif",
         encoding="UTF-8",
     )
@@ -1061,7 +1061,7 @@ def test_gdalinfo_access_to_file_without_permission(gdalinfo_path, tmp_path):
 
 def test_gdalinfo_file_does_not_exist(gdalinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(gdalinfo_path + " does_not_exist.tif")
+    ret, err = gdaltest.runexternal_out_and_err(gdalinfo_path + " does_not_exist.tif")
 
     assert "No such file or directory" in err
     assert "ogrinfo" not in err
@@ -1069,8 +1069,6 @@ def test_gdalinfo_file_does_not_exist(gdalinfo_path):
 
 def test_gdalinfo_open_vector(gdalinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
-        gdalinfo_path + " ../ogr/data/poly.shp"
-    )
+    ret, err = gdaltest.runexternal_out_and_err(gdalinfo_path + " ../ogr/data/poly.shp")
 
     assert "Did you intend to call ogrinfo" in err

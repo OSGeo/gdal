@@ -26,7 +26,7 @@ class OGRLayerWithTranslateFeature /* non final */ : virtual public OGRLayer
     ~OGRLayerWithTranslateFeature() override;
 
     /** Translate the source feature into one or several output features */
-    virtual void TranslateFeature(
+    virtual bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) = 0;
 };

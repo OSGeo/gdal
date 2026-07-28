@@ -586,4 +586,7 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 std::unique_ptr<GDALRasterAttributeTable>
     CPL_DLL GDALLoadVATDBF(const char *pszFilename);
 
+std::unique_ptr<GDALRasterAttributeTable>
+    CPL_DLL GDALLoadEsriCLRAsRAT(const char *pszFilename);
+
 #endif /* ndef GDAL_RAT_H_INCLUDED */

@@ -1457,9 +1457,9 @@ import org.gdal.osr.SpatialReference;
 
 %apply (GByte* outBytes) {GByte*};
 %inline %{
-GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *length)
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *length)
 {
-    return VSIGetMemFileBuffer(utf8_path, length, 0);
+    return VSIGetMemFileBuffer(utf8_string, length, 0);
 }
 %}
 %clear GByte*;

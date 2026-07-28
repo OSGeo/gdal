@@ -81,8 +81,8 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
 
     const double dfTileUpperLeftX = poRTDS->m_gt[GEOTRSFRM_TOPLEFT_X];
     const double dfTileUpperLeftY = poRTDS->m_gt[GEOTRSFRM_TOPLEFT_Y];
-    const double dfTileResX = poRTDS->m_gt[1];
-    const double dfTileResY = poRTDS->m_gt[5];
+    const double dfTileResX = poRTDS->m_gt.xscale;
+    const double dfTileResY = poRTDS->m_gt.yscale;
     const int nTileXSize = nBlockXSize;
     const int nTileYSize = nBlockYSize;
 

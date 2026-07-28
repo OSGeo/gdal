@@ -32,6 +32,8 @@
 GDALVSIListAlgorithm::GDALVSIListAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL), m_oWriter(JSONPrint, this)
 {
+    AddProgressArg(/* hidden = */ true);
+
     auto &arg = AddArg("filename", 0, _("File or directory name"), &m_filename)
                     .SetPositional()
                     .SetRequired();
@@ -311,6 +313,8 @@ bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)
         sEntry.bModeKnown = true;
         sEntry.nMode = sStat.st_mode;
         sEntry.nSize = sStat.st_size;
+        sEntry.nMTime = sStat.st_mtime;
+        sEntry.bMTimeKnown = true;
         PrintEntry(&sEntry);
     }
 

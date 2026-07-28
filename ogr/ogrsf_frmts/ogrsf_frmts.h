@@ -262,8 +262,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual const OGRSpatialReference *GetSpatialRef() const;
 
     /** Return type of OGRLayer::GetSupportedSRSList() */
-    typedef std::vector<
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+    typedef std::vector<OGRSpatialReferenceRefCountedPtr>
         GetSupportedSRSListRetType;
     virtual const GetSupportedSRSListRetType &
     GetSupportedSRSList(int iGeomField);
@@ -696,7 +695,11 @@ void OGRRegisterAllInternal();
 void CPL_DLL RegisterOGRFileGDB();
 void DeclareDeferredOGRFileGDBPlugin();
 void CPL_DLL RegisterOGRShape();
+void CPL_DLL RegisterOGRNTF();
+void CPL_DLL RegisterOGRTiger();
 void CPL_DLL RegisterOGRS57();
+void CPL_DLL RegisterOGRS101();
+void DeclareDeferredOGRS101Plugin();
 void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGRODBC();

@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_config.h"
@@ -759,10 +760,7 @@ std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
                     pszBasename = pszBasenameOri;
                     nLenPath = nLenPathOri;
                     if (pszAddedPathSep[0] == 0)
-                        pszAddedPathSep =
-                            pszPath[0] == '/'
-                                ? "/"
-                                : VSIGetDirectorySeparator(pszPath);
+                        pszAddedPathSep = "/";
                 }
                 break;
             }
@@ -1317,11 +1315,41 @@ const char *CPLCleanTrailingSlash(const char *pszPath)
  */
 
 char **CPLCorrespondingPaths(const char *pszOldFilename,
-                             const char *pszNewFilename, char **papszFileList)
+                             const char *pszNewFilename,
+                             CSLConstList papszFileList)
 
 {
     if (CSLCount(papszFileList) == 0)
         return nullptr;
+
+    VSIStatBufL sStatBuf;
+    if (VSIStatL(pszOldFilename, &sStatBuf) == 0 && VSI_ISDIR(sStatBuf.st_mode))
+    {
+        CPLStringList aosNewList;
+        std::string_view svOldFilename(pszOldFilename);
+        for (int i = 0; papszFileList[i] != nullptr; i++)
+        {
+            if (cpl::starts_with(std::string_view(papszFileList[i]),
+                                 svOldFilename) &&
+                (papszFileList[i][svOldFilename.size()] == '/' ||
+                 papszFileList[i][svOldFilename.size()] == '\\'))
+            {
+                // If the old file list contains entries like oldpath/filename,
+                // generate newpath/filename
+                aosNewList.push_back(CPLFormFilenameSafe(
+                    pszNewFilename, papszFileList[i] + svOldFilename.size() + 1,
+                    nullptr));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to copy/rename fileset due to unexpected "
+                         "source filename.");
+                return nullptr;
+            }
+        }
+        return aosNewList.StealList();
+    }
 
     /* -------------------------------------------------------------------- */
     /*      There is a special case for a one item list which exactly       */
@@ -1558,7 +1586,7 @@ const char *CPLGetHomeDir()
 /************************************************************************/
 
 /**
- * Launder a string to be compatible of a filename.
+ * Launder a string to be compatible with a filename.
  *
  * @param pszName The input string to launder.
  * @param pszOutputPath The directory where the file would be created.
@@ -1571,17 +1599,87 @@ const char *CPLGetHomeDir()
 std::string CPLLaunderForFilenameSafe(const char *pszName,
                                       CPL_UNUSED const char *pszOutputPath)
 {
-    std::string osRet(pszName);
-    for (char &ch : osRet)
+    return CPLLaunderForFilenameSafe(pszName, '_', nullptr);
+}
+
+/************************************************************************/
+/*                     CPLLaunderForFilenameSafe()                      */
+/************************************************************************/
+
+/** Return a string that is compatible with a filename on Linux, Windows and
+ * MacOS.
+ *
+ * Reserved characters '<', '>', ':', '"', '/', '\\', '|', '?', '*', '^', and
+ * ASCII control characters are replaced by the replacement character, or
+ * removed if it is NUL.
+ *
+ * Reserved names (".", "..", "CON", "PRN", etc.) are suffixed with the
+ * replacement character (or underscore).
+ *
+ * If the string ends with a final space or dot, the replacement character
+ * (or underscore) will be appended.
+ *
+ * @param osInput Input string.
+ * @param chReplacementChar Character to substitute to characters that are not
+ *                          compatible with a file name, or NUL character to
+ *                          remove them.
+ * @param pszExtraReservedCharacters String with extra reserved characters that
+ *                                   are replaced by the replacement character,
+ *                                   or removed if it is NUL. Or nullptr.
+ * @since GDAL 3.13
+ */
+std::string CPLLaunderForFilenameSafe(const std::string &osInput,
+                                      char chReplacementChar,
+                                      const char *pszExtraReservedCharacters)
+{
+    // Cf https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names
+    std::string ret;
+    ret.reserve(osInput.size());
+    for (char c : osInput)
     {
-        // https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
-        if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '/' ||
-            ch == '\\' || ch == '?' || ch == '*')
+        if (static_cast<unsigned>(c) < 32 || c == 127 || c == '<' || c == '>' ||
+            c == ':' || c == '"' || c == '/' || c == '\\' || c == '|' ||
+            c == '?' ||
+            c == '*'
+            // '^' invalid on FAT
+            || c == '^')
         {
-            ch = '_';
+            if (chReplacementChar)
+                ret += chReplacementChar;
+        }
+        else if (pszExtraReservedCharacters &&
+                 strchr(pszExtraReservedCharacters, c))
+        {
+            if (chReplacementChar)
+                ret += chReplacementChar;
+        }
+        else
+        {
+            ret += c;
         }
     }
-    return osRet;
+
+    // Windows reserved filenames (case-insensitive)
+    const char *const apszReservedNames[] = {
+        "CON",  "PRN",  "AUX",  "NUL",  "COM1", "COM2", "COM3",   "COM4",
+        "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",   "LPT3",
+        "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "CONIN$", "CONOUT$",
+    };
+    for (const char *pszReservedName : apszReservedNames)
+    {
+        if (EQUAL(ret.c_str(), pszReservedName))
+        {
+            ret += chReplacementChar ? chReplacementChar : '_';
+            break;
+        }
+    }
+
+    // Windows rule: no filename ending with space or dot
+    // This also prevents "." and ".." which are invalid on POSIX
+    if (!ret.empty() && (ret.back() == ' ' || ret.back() == '.'))
+        ret += chReplacementChar ? chReplacementChar : '_';
+
+    return ret;
 }
 
 /************************************************************************/
@@ -1589,7 +1687,7 @@ std::string CPLLaunderForFilenameSafe(const char *pszName,
 /************************************************************************/
 
 /**
- * Launder a string to be compatible of a filename.
+ * Launder a string to be compatible with a filename.
  *
  * @param pszName The input string to launder.
  * @param pszOutputPath The directory where the file would be created.
@@ -1706,4 +1804,103 @@ bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
     }
 
     return false;
+}
+
+/************************************************************************/
+/*                       CPLLexicallyNormalize()                        */
+/************************************************************************/
+
+/**
+ * Return a path where "/./" or "/../" sequences are removed.
+ *
+ * No filesystem access is done.
+ *
+ * @param svPath Input path
+ * @param sep1 Path separator (typically slash or backslash)
+ * @param sep2 Secondary path separator (typically slash or backslash), or NUL
+ * @return compacted path
+ *
+ * @since GDAL 3.13
+ */
+std::string CPLLexicallyNormalize(std::string_view svPath, char sep1, char sep2)
+{
+    struct Token
+    {
+        size_t iStart = 0;  // index of start of token with svPath
+        size_t nLen = 0;    // length of token (excluding ending separator)
+        char chSep = 0;     // separator at end of token, or 0 if there is none
+    };
+
+    std::vector<Token> tokens;
+
+    const auto CompactTokens = [&tokens, &svPath]()
+    {
+        Token &t = tokens.back();
+        if (t.nLen == 1 && svPath[t.iStart] == '.')
+        {
+            tokens.pop_back();
+        }
+        else if (t.nLen == 2 && svPath[t.iStart] == '.' &&
+                 svPath[t.iStart + 1] == '.')
+        {
+            if (tokens.size() >= 2)
+                tokens.resize(tokens.size() - 2);
+        }
+    };
+
+    bool lastCharIsSep = false;
+    for (size_t i = 0; i < svPath.size(); ++i)
+    {
+        const char c = svPath[i];
+        if (c == sep1 || c == sep2)
+        {
+            if (!lastCharIsSep)
+            {
+                if (tokens.empty())
+                {
+                    Token t;
+                    t.chSep = c;
+                    tokens.push_back(t);
+                }
+                else
+                {
+                    Token &t = tokens.back();
+                    t.chSep = c;
+                    CompactTokens();
+                }
+                lastCharIsSep = true;
+            }
+        }
+        else
+        {
+            if (tokens.empty() || lastCharIsSep)
+            {
+                Token t;
+                t.iStart = i;
+                t.nLen = 1;
+                tokens.push_back(t);
+            }
+            else
+            {
+                Token &t = tokens.back();
+                ++t.nLen;
+            }
+            lastCharIsSep = false;
+        }
+    }
+    if (!tokens.empty())
+    {
+        CompactTokens();
+    }
+
+    std::string s;
+    s.reserve(svPath.size());
+    for (const auto &t : tokens)
+    {
+        if (t.nLen)
+            s.append(svPath.substr(t.iStart, t.nLen));
+        if (t.chSep)
+            s.push_back(t.chSep);
+    }
+    return s;
 }

@@ -119,7 +119,7 @@ Main impacts are:
   addition, these drivers might (if implemented) now also support
   reading/writing float16 values from/to float16 arrays in memory.
 
-* C Multidimension API impacts (and equivalent C++ methods):
+* C Multidimensional API impacts (and equivalent C++ methods):
 
   - :cpp:func:`GDALGroupCreateAttribute`
   - :cpp:func:`GDALMDArrayRead`

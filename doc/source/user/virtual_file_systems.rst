@@ -276,6 +276,87 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+/vsicurl/ vs /vsicurl_streaming/ vs HTTP pseudo-driver
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+After 35 years of existence, one might reasonably hope that reliable access to
+remote files via the HTTP protocol would be a fully solved problem. While this is
+mostly true for browser-based experience, the way GDAL accesses data often pushes
+servers into less-tested territory, requiring users to understand specific
+low level details.
+
+Below are the options available for "standard" HTTP access (excluding the use
+of specific file systems such as ``/vsigs/`` to deal with the specifics of
+each cloud provider):
+
+* ``/vsicurl/``: This virtual file system relies heavily on the server's ability
+  to efficiently handle `HTTP range requests <https://en.wikipedia.org/wiki/Byte_serving>`.
+  A range request includes a header from the client (GDAL) asking the server to
+  return only a specific portion of the resource, defined by start and end
+  offsets. This allows most GDAL drivers to consume datasets piece-wise without
+  downloading the entire file. This is most effective for static resources,
+  such as pre-computed files, rather than content generated on-the-fly for each
+  request. The primary differences compared to local file access are network
+  latency and bandwidth limits, which ``/vsicurl/`` attempts to mitigate through
+  in-memory caching and by requesting chunks large enough to justify the request
+  overhead.
+
+  .. example::
+     :title: Getting metadata from a very large remote Cloud Optimized GeoTIFF
+
+     .. code-block:: bash
+
+          $ gdal raster info /vsicurl/https://example.com/very_large_cog.tif
+
+
+* ``/vsicurl_streaming/``: This virtual file system initiates a background
+  request to download the entire file into memory. It is best suited for drivers
+  that read a dataset sequentially from start to finish with no random seeking.
+  Notably, ``/vsicurl_streaming/`` does not use HTTP range requests. Of the
+  three options listed here, this is generally the least used. It is
+  particularly ill-suited when reading remote ZIP'ed files, which require
+  reading the end of the file first to get the list of files within the ZIP.
+
+  .. example::
+     :title: Converting a very large remote CSV file to GeoPackage
+
+     .. code-block:: bash
+
+          $ gdal vector convert /vsicurl_streaming/https://example.com/very_large.csv out.gpkg
+
+  .. example::
+     :title: Copying a remote file to local current directory
+
+     .. code-block:: bash
+
+          $ gdal vsi copy /vsicurl_streaming/https://example.com/file.bin .
+
+  .. spelling:word-list::
+      ZIP'ed
+
+* the ``HTTP`` (pseudo-driver): This driver downloads the full content of a file
+  into memory before passing it to other GDAL drivers. For modest file sizes
+  that fit easily into RAM and require full processing, this is often the
+  fastest option. It involves a single standard HTTP GET request and does not
+  require range request support. This is frequently the only viable approach
+  for dynamically generated content (often identifiable by the presence of
+  query parameters in the URL).
+  The HTTP pseudo-driver is automatically selected when providing a URL without
+  any ``/vsi`` prefix.
+
+  .. example::
+     :title: Reprojecting a medium size (fitting into RAM) remote GeoTIFF file
+
+     .. code-block:: bash
+
+         $ gdal raster reproject --dst-crs EPSG:32631 -r cubic https://example.com/medium_size.tif out.tif
+
+
+While the HTTP protocol technically allows servers to advertise whether they
+support range requests (via the Accept-Ranges header), this is not consistently
+(or efficiently) implemented enough for GDAL to use it as a reliable, automated
+check for selecting the best access strategy.
+
 How to set credentials ?
 ++++++++++++++++++++++++
 
@@ -388,7 +469,8 @@ Options can be passed in the filename with the following syntax: ``/vsicurl?[opt
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
-- header_file=value: Filename that contains one or several "Header: Value" lines
+- header_file=filename: Filename that contains one or several "Header: Value" lines.
+  Starting with GDAL 3.13.2, for security reasons, the filename is restricted by default to be located under ``/vsimem/``, ``/tmp`` or the value of the ``TEMP`` environment variable (or ``TMP`` if ``TEMP`` not defined). See the :config:`CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED` configuration option to define the policy.
 - header.<key>=<value>: HTTP request header of name <key> and value <value>. (GDAL >= 3.11). e.g. ``header.Accept=application%2Fjson``
 - unsafessl=yes/no
 - low_speed_time=value
@@ -697,6 +779,50 @@ The following configuration options can be set to access a
 - AWS_REGION="us-east-1"
 - AWS_SECRET_ACCESS_KEY="your_secret_access_key"
 - AWS_ACCESS_KEY_ID="your_access_key"
+
+.. _vsis3_nasa_edl:
+
+/vsis3/ and NASA Earthdata login (EDL)
+++++++++++++++++++++++++++++++++++++++
+
+Starting with GDAL 3.14, it is possible to automatically retrieve S3 credentials
+for resources protected by
+`NASA Earthdata login (EDL) <https://urs.earthdata.nasa.gov/documentation>`__.
+
+.. warning::
+
+    This mechanism only works when running GDAL on EC2 instances in
+    the ``us-west-2`` region.
+
+To enable the automatic retrieval of those S3 credentials, the
+``VSIS3_EARTHDATA_CREDENTIALS_URL`` configuration option, or path-specific option,
+must be set to a URL of the form ``https://{hostname}/s3credentials``,
+as indicated in the documentation of the data product to access.
+
+The request to obtain those S3 credentials must itself include an authentication token.
+That token can be obtained through one of the following methods, in decreasing order of
+priority:
+
+- ``EARTHDATA_TOKEN`` configuration option with value of a token from
+  ``https://urs.earthdata.nasa.gov/users/{your_account}/user_tokens``
+
+- ``EARTHDATA_USERNAME`` and ``EARTHDATA_PASSWORD`` configuration options with
+  the username and password of the EDL account, which will cause a request to
+  be emitted to ``urs.earthdata.nasa.gov`` to get or create a token.
+
+- Username and password retrieved from the file whose path is given by the
+  ``NETRC`` configuration option.
+
+- Username and password retrieved from the file in ``$HOME/.netrc`` on Unix systems,
+  or ``$USERPROFILE/_netrc`` on Windows
+
+.. note::
+
+    This is similar to how the Python
+    `earthaccess <https://earthaccess.readthedocs.io/en/latest/user/authenticate/>`__ package works.
+
+.. spelling:word-list::
+    Earthdata
 
 .. _vsis3_streaming:
 

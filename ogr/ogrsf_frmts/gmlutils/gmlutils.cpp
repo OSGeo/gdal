@@ -160,8 +160,8 @@ OGRGML_SRSCache_GetInfo(OGRGML_SRSCache *hSRSCache, const char *pszSRSName)
             return nullptr;
         }
         entry->nAxisCount = poSRS->GetAxesCount();
-        entry->bIsGeographic = poSRS->IsGeographic();
-        entry->bIsProjected = poSRS->IsProjected();
+        entry->bIsGeographic = CPL_TO_BOOL(poSRS->IsGeographic());
+        entry->bIsProjected = CPL_TO_BOOL(poSRS->IsProjected());
         entry->bInvertedAxisOrder = !STARTS_WITH(pszSRSName, "EPSG:") &&
                                     (poSRS->EPSGTreatsAsLatLong() ||
                                      poSRS->EPSGTreatsAsNorthingEasting());
@@ -328,8 +328,8 @@ char *GML_GetSRSName(const OGRSpatialReference *poSRS,
         *pbCoordSwap = true;
     }
 
-    const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-    const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+    const char *pszAuthName = poSRS->GetAuthorityName();
+    const char *pszAuthCode = poSRS->GetAuthorityCode();
     if (nullptr != pszAuthName && nullptr != pszAuthCode)
     {
         if (eSRSNameFormat == SRSNAME_SHORT)

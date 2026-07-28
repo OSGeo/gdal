@@ -59,9 +59,7 @@
 #  define  PRECOND(x)
 #  define  POSTCOND(x)
 # endif
-#ifndef USE_IN_GDAL
 # define  ABS(x)        abs(x)
-#endif
 # define  USED_UNINIT_ZERO 0
 #endif
 

@@ -930,7 +930,7 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
 
     // Find at which offset the compressed record is.
     // For BASIC compression, each compressed run is preceded by a uint32 value
-    // givin its size, including the size of this uint32 value
+    // given its size, including the size of this uint32 value
     // For BASIC2 compression, the uint32 sizes of all records are put
     // immediately after the label.
     for (; poGDS->m_nLastRecordOffset <= nRecord; poGDS->m_nLastRecordOffset++)
@@ -1247,7 +1247,8 @@ CPLErr VICARDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     if (eAccess == GA_ReadOnly)
         return GDALPamDataset::SetGeoTransform(gt);
-    if (gt[1] <= 0.0 || gt[1] != -gt[5] || gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xscale <= 0.0 || gt.xscale != -gt.yscale || gt.xrot != 0.0 ||
+        gt.yrot != 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform with square pixels supported");
@@ -1860,20 +1861,20 @@ void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
                 if (m_oSRS.IsProjected())
                 {
                     const double dfLinearUnits = m_oSRS.GetLinearUnits();
-                    const double dfScale = m_gt[1] * dfLinearUnits;
+                    const double dfScale = m_gt.xscale * dfLinearUnits;
                     oMap.Add("SAMPLE_PROJECTION_OFFSET",
-                             -m_gt[0] * dfLinearUnits / dfScale - 0.5);
+                             -m_gt.xorig * dfLinearUnits / dfScale - 0.5);
                     oMap.Add("LINE_PROJECTION_OFFSET",
-                             m_gt[3] * dfLinearUnits / dfScale - 0.5);
+                             m_gt.yorig * dfLinearUnits / dfScale - 0.5);
                     oMap.Add("MAP_SCALE", dfScale / 1000.0);
                 }
                 else if (m_oSRS.IsGeographic())
                 {
-                    const double dfScale = m_gt[1] * dfDegToMeter;
+                    const double dfScale = m_gt.xscale * dfDegToMeter;
                     oMap.Add("SAMPLE_PROJECTION_OFFSET",
-                             -m_gt[0] * dfDegToMeter / dfScale - 0.5);
+                             -m_gt.xorig * dfDegToMeter / dfScale - 0.5);
                     oMap.Add("LINE_PROJECTION_OFFSET",
-                             m_gt[3] * dfDegToMeter / dfScale - 0.5);
+                             m_gt.yorig * dfDegToMeter / dfScale - 0.5);
                     oMap.Add("MAP_SCALE", dfScale / 1000.0);
                 }
             }
@@ -2212,7 +2213,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
         // body name 'GCS' = Geographic/Geocentric Coordinate System
         const CPLString geog_name = "GCS_" + target_name;
 
-        // The datum and sphere names will be the same basic name aas the planet
+        // The datum and sphere names will be the same basic name as the planet
         const CPLString datum_name = "D_" + target_name;
 
         CPLString sphere_name = std::move(target_name);
@@ -2291,12 +2292,12 @@ void VICARDataset::ReadProjectionFromMapGroup()
     if (bProjectionSet)
     {
         m_bGotTransform = true;
-        m_gt[0] = dfULXMap;
-        m_gt[1] = dfXDim;
-        m_gt[2] = 0.0;
-        m_gt[3] = dfULYMap;
-        m_gt[4] = 0.0;
-        m_gt[5] = dfYDim;
+        m_gt.xorig = dfULXMap;
+        m_gt.xscale = dfXDim;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = dfULYMap;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = dfYDim;
     }
 }
 
@@ -2533,7 +2534,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     if (eDataType == GDT_Unknown)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Could not find known VICAR label entries!\n");
+                 "Could not find known VICAR label entries!");
         return nullptr;
     }
     double dfNoData = 0.0;
@@ -2740,7 +2741,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                      "Update of compressed VICAR file not supported");
             return nullptr;
         }
-        poDS->SetMetadataItem("COMPRESS", osCompress, "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem("COMPRESS", osCompress, GDAL_MDD_IMAGE_STRUCTURE);
         poDS->m_eCompress =
             EQUAL(osCompress, "BASIC") ? COMPRESS_BASIC : COMPRESS_BASIC2;
         if (poDS->nRasterYSize > 100 * 1000 * 1000 / nBands)
@@ -2752,7 +2753,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!GDALDataTypeIsInteger(eDataType))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Data type incompatible of compression");
+                     "Data type incompatible with compression");
             return nullptr;
         }
         // To avoid potential issues in basic_decode()

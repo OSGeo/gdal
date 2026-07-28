@@ -4,6 +4,57 @@
 Migration guide
 ================================================================================
 
+From GDAL 3.13 to GDAL 3.14
+---------------------------
+
+- Behavior changes:
+
+    * Shapefile driver: on reading, layers with LineString (resp. Polygon)
+      are automatically exposed as MultiLineString (resp. MultiPolygon) at
+      the layer geometry type and feature's geometry level. This is aimed at
+      avoiding later issues when converting to formats that do not accept mixing
+      single and multi-geometries.
+      GDAL < 3.14 behavior can be obtained by setting the PROMOTE_TO_MULTI open
+      option, or the :config:`SHAPE_PROMOTE_TO_MULTI` configuration option, to NO.
+
+    * Zarr driver: the new default value for the ``FORMAT`` creation option is
+      ``ZARR_V3`` (was ``ZARR_V2`` before)
+
+- Changes impacting C++ users:
+
+    * All methods accepting or returning ``OGRBoolean`` (aliased to ``int``)
+      have been changed to use ``bool`` instead.
+
+- Changes impacting out-of-tree vector drivers:
+
+    * :cpp:func:`GDALRasterBand::ComputeStatistics` takes an additional
+      ``CSLConstList papszOptions`` parameter.
+
+- Changes impacting Python users:
+
+  * Past :py:func:`osgeo.gdal.Open` is now mapped onto :py:func:`osgeo.gdal.OpenEx`, and
+    :py:func:`osgeo.gdal.OpenEx` functionality is available as :py:func:`osgeo.gdal.Open`,
+    making both functions strict aliases.
+
+    This change is *mostly* backwards compatible, except the 2 following
+    situations:
+
+    + :py:func:`osgeo.gdal.Open` used to open only datasets in raster mode, or fail.
+      If no ``flags`` parameter is passed (or none of ``gdal.OF_RASTER``,
+      ``gdal.OF_VECTOR``,  ``gdal.OF_MULTIDIM_RASTER`` is set), all of them are
+      set to allow any GDAL-recognized dataset to be opened. This is a change of
+      behavior for GDAL < 3.14 users of :py:func:`Open` where this method
+      behaved as setting only ``gdal.OF_RASTER``. If opening vector or
+      multidimensional raster datasets with :py:func:`Open` is not desired,
+      ``gdal.OF_RASTER`` must be explicitly passed.
+
+    + For GDAL < 3.14 users of :py:func:`osgeo.gdal.OpenEx` in the ``gdal.DontUseExceptions()`` (default)
+      mode, that method did not set ``gdal.OF_VERBOSE_ERROR`` automatically.
+      But :py:func:`osgeo.gdal.Open` did. As that later behavior is desired, and both
+      functions are now aliases, :py:func:`osgeo.gdal.OpenEx` in the
+      ``gdal.DontUseExceptions()`` mode now also sets ``gdal.OF_VERBOSE_ERROR``
+      automatically, unless the new ``gdal.OF_SILENT_ERROR`` flag is set.
+
 From GDAL 3.12 to GDAL 3.13
 ---------------------------
 
@@ -16,6 +67,12 @@ From GDAL 3.12 to GDAL 3.13
     :cpp:func:`OGR_G_AddPoint_2D`, :cpp:func:`OGR_G_AddPointM`,
     :cpp:func:`OGR_G_AddPointZM`, :cpp:func:`OGR_G_SetPoints` and
     :cpp:func:`OGR_G_SetPointsZM`.
+
+  * ``MIN``, ``MAX`` and ``ABS`` pre-processor macros defined in :source_file:`port/cpl_port.h`
+    have been renamed to ``CPL_MIN``, ``CPL_MAX`` and ``CPL_ABS``.
+
+  * ``M_PI`` is no longer exported. Users that would rely on this macro must now
+    include :file:`math.h`, with the ``_USE_MATH_DEFINES`` macro defined before.
 
 - Changes impacting out-of-tree vector drivers:
 
@@ -36,6 +93,22 @@ From GDAL 3.12 to GDAL 3.13
     This will require users that stored the return value of those functions in
     ``char **`` to use ``CSLConstList`` instead. Such change is compatible with
     earlier GDAL versions.
+
+- GDAL CLI changes:
+
+  * Several command-line arguments in the unified GDAL CLI were renamed from a
+    --src/--dst pattern to an --input/--output pattern. The old argument names
+    are still accepted by command line tools, C, C++ and Python API.
+
+- Behavior changes:
+
+  * RasterIO resampling/VRT: do it by default in the output buffer type
+    unless new field GDALRasterIOExtraArg::bOperateInBufType in set to false
+    (#14221).
+    For example, now by default is using non-nearest resampling in RasterIO()
+    to read a Byte band into a Float32 buffer, the result will generally be
+    non-integer values, matching what is assumed to be the default wished
+    behavior.
 
 From GDAL 3.11 to GDAL 3.12
 ---------------------------

@@ -89,10 +89,12 @@ add_executable(
   test_gdal_algorithm.cpp
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
+  test_gdal_mdim.cpp
   test_gdal_minmax_element.cpp
   test_gdal_pixelfn.cpp
   test_gdal_typetraits.cpp
   test_gdal_vectorx.cpp
+  test_kdtree_vq_cadrg.cpp
   test_ogr.cpp
   test_ogr_organize_polygons.cpp
   test_ogr_geometry_stealing.cpp
@@ -131,7 +133,7 @@ target_include_directories(
 if (GDAL_USE_SQLITE3)
   target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_SQLITE3)
   target_include_directories(
-      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
+      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite3::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")

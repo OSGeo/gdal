@@ -19,7 +19,8 @@ cmake "${GDAL_SOURCE_DIR:=..}" \
     -DMRSID_ROOT=/usr/local \
     -DFileGDB_ROOT=/usr/local/FileGDB_API \
     -DSQLite3_INCLUDE_DIR=/usr/local/install-sqlite-trusted-schema-off/include \
-    -DSQLite3_LIBRARY=/usr/local/install-sqlite-trusted-schema-off/lib/libsqlite3.so
+    -DSQLite3_LIBRARY=/usr/local/install-sqlite-trusted-schema-off/lib/libsqlite3.so \
+    -DCSHARP_BINDINGS=OFF \
 
 unset CXXFLAGS
 unset CFLAGS

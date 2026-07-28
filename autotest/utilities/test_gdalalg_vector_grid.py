@@ -504,7 +504,7 @@ def test_gdalalg_vector_grid_crs():
     alg["crs"] = "EPSG:4326"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
 def test_gdalalg_vector_grid_overwrite(tmp_vsimem):
@@ -562,16 +562,16 @@ def test_gdalalg_vector_grid_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=false"
-    ).split(" ")
+    )
     assert "invdist" in out
     assert "invdistnn" in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal vector grid invdist last_word_is_complete=true"
-    ).split(" ")
-    assert out == [""]
+    )
+    assert out == ""
 
 
 @pytest.mark.require_driver("COG")

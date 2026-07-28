@@ -109,20 +109,20 @@ int CPL_DLL VSIStat(const char *, VSIStatBuf *) CPL_WARN_UNUSED_RESULT;
 
 #ifdef _WIN32
 #define VSI_ISLNK(x) (0) /* N/A on Windows */
-#define VSI_ISREG(x) ((x)&S_IFREG)
-#define VSI_ISDIR(x) ((x)&S_IFDIR)
-#define VSI_ISCHR(x) ((x)&S_IFCHR)
+#define VSI_ISREG(x) (((x) & S_IFREG) != 0)
+#define VSI_ISDIR(x) (((x) & S_IFDIR) != 0)
+#define VSI_ISCHR(x) (((x) & S_IFCHR) != 0)
 #define VSI_ISBLK(x) (0) /* N/A on Windows */
 #else
 /** Test if the file is a symbolic link */
-#define VSI_ISLNK(x) S_ISLNK(x)
+#define VSI_ISLNK(x) (S_ISLNK(x) != 0)
 /** Test if the file is a regular file */
-#define VSI_ISREG(x) S_ISREG(x)
+#define VSI_ISREG(x) (S_ISREG(x) != 0)
 /** Test if the file is a directory */
-#define VSI_ISDIR(x) S_ISDIR(x)
+#define VSI_ISDIR(x) (S_ISDIR(x) != 0)
 /*! @cond Doxygen_Suppress */
-#define VSI_ISCHR(x) S_ISCHR(x)
-#define VSI_ISBLK(x) S_ISBLK(x)
+#define VSI_ISCHR(x) (S_ISCHR(x) != 0)
+#define VSI_ISBLK(x) (S_ISBLK(x) != 0)
 /*! @endcond */
 #endif
 
@@ -321,7 +321,7 @@ void CPL_DLL VSIFree(void *);
 void CPL_DLL *VSIRealloc(void *, size_t) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *VSIStrdup(const char *) CPL_WARN_UNUSED_RESULT;
 
-#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+#if defined(__cplusplus)
 extern "C++"
 {
     /*! @cond Doxygen_Suppress */

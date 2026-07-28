@@ -1,5 +1,7 @@
 .. _gdal_vector_select:
 
+.. program:: gdal_vector_select
+
 ================================================================================
 ``gdal vector select``
 ================================================================================
@@ -62,6 +64,13 @@ Program-Specific Options
 
     Specifying a non-existing source field name results in an error.
 
+
+.. option:: --geometry
+
+    Select the default geometry field, in addition to any fields specified in :option:`--fields`.
+
+    .. versionadded:: 3.14
+
 .. option:: --ignore-missing-fields
 
     By default, if a field specified by :option:`--fields` does not exist in the input
@@ -103,6 +112,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

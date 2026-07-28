@@ -113,6 +113,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
   ],
   "arrays": {
     "ar_2d": {
+      "full_name": "/ar_2d",
       "datatype": "Byte",
       "dimensions": [
         "/dim0",
@@ -141,6 +142,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
       ]
     },
     "ar_compound": {
+      "full_name": "/ar_compound",
       "datatype": {
         "name": "mytype",
         "size": 8,
@@ -178,10 +180,6 @@ def test_gdalmdiminfo_lib_mem_dataset():
     }
   }
 }"""
-    try:
-        expected = expected.decode("UTF-8")
-    except Exception:
-        pass
     if ret != expected:
         print(ret)
     assert ret == expected
@@ -315,7 +313,7 @@ def test_gdalmdiminfo_lib_null_string():
 @pytest.mark.require_driver("Zarr")
 def test_gdalmdiminfo_lib_overviews():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "../gdrivers/data/zarr/v3/simple_multiscales/zarr.json", gdal.OF_MULTIDIM_RASTER
     )
 

@@ -95,3 +95,12 @@ def test_gdalalg_raster_stack_pipeline():
         out_ds = alg.Output()
         assert out_ds.GetRasterBand(1).Checksum() == 3
         assert out_ds.GetRasterBand(2).Checksum() == 6
+
+
+def test_gdalalg_raster_stack_pipeline_inner_pipeline():
+
+    with gdal.alg.raster.pipeline(
+        pipeline="stack [ read ../gcore/data/byte.tif ! edit ] ! edit"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRasterBand(1).Checksum() == 4672

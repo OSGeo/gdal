@@ -38,17 +38,15 @@ typedef enum
 class KML /* non final */
 {
   public:
-    KML();
     virtual ~KML();
     bool open(const char *pszFilename);
     bool isValid();
     bool isHandled(std::string const &elem) const;
-    virtual bool isLeaf(std::string const &elem) const;
-    virtual bool isFeature(std::string const &elem) const;
-    virtual bool isFeatureContainer(std::string const &elem) const;
-    virtual bool isContainer(std::string const &elem) const;
-    virtual bool isRest(std::string const &elem) const;
-    virtual void findLayers(KMLNode *poNode, int bKeepEmptyContainers);
+    virtual bool isLeaf(std::string const &elem) const = 0;
+    virtual bool isFeature(std::string const &elem) const = 0;
+    virtual bool isFeatureContainer(std::string const &elem) const = 0;
+    virtual bool isContainer(std::string const &elem) const = 0;
+    virtual bool isRest(std::string const &elem) const = 0;
 
     bool hasOnlyEmpty() const;
 
@@ -68,6 +66,7 @@ class KML /* non final */
     void unregisterLayerIfMatchingThisNode(KMLNode *poNode);
 
   protected:
+    KML();
     void checkValidity();
 
     static void XMLCALL startElement(void *, const char *, const char **);

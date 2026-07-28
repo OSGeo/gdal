@@ -439,7 +439,7 @@ def test_ogr_odbc_list_all_tables():
     assert ds.GetLayerCount() == 1, "did not get expected layer count"
 
     # Test LIST_ALL_TABLES=YES open option
-    odbc_ds_all_table = gdal.OpenEx(
+    odbc_ds_all_table = gdal.Open(
         "data/mdb/null_memo.mdb", gdal.OF_VECTOR, open_options=["LIST_ALL_TABLES=YES"]
     )
 

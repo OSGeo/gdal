@@ -526,8 +526,8 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
         }
         else if (poSRSLayer)
         {
-            const char *pszAuthName = poSRSLayer->GetAuthorityName(nullptr);
-            const char *pszAuthCode = poSRSLayer->GetAuthorityCode(nullptr);
+            const char *pszAuthName = poSRSLayer->GetAuthorityName();
+            const char *pszAuthCode = poSRSLayer->GetAuthorityCode();
             if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "OGC") &&
                 EQUAL(pszAuthCode, "CRS84"))
             {

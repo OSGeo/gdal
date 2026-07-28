@@ -81,7 +81,8 @@ PCIDSK2Band::PCIDSK2Band(PCIDSKChannel *poChannelIn)
 
     if (poChannel->GetType() == CHN_BIT)
     {
-        PCIDSK2Band::SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        PCIDSK2Band::SetMetadataItem(GDALMD_NBITS, "1",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
         if (!STARTS_WITH_CI(poChannel->GetDescription().c_str(),
                             "Contents Not Specified"))
@@ -698,6 +699,43 @@ char **PCIDSK2Band::GetMetadataDomainList()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
+{
+    const char *pszNoData = GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    PCIDSK2Dataset *poGDS = cpl::down_cast<PCIDSK2Dataset *>(poDS);
+    pszNoData = poGDS->GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    if (pbSuccess)
+        *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetNoDataValue(double dfNoData)
+{
+    return SetMetadataItem("NO_DATA_VALUE", CPLSPrintf("%.17g", dfNoData), "");
+}
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
@@ -924,41 +962,41 @@ void PCIDSK2Dataset::ProcessRPC()
             dfLineScale);
 
         osValue.Printf("%.16g", dfLineOffset);
-        GDALPamDataset::SetMetadataItem("LINE_OFF", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LINE_OFF", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfLineScale);
-        GDALPamDataset::SetMetadataItem("LINE_SCALE", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LINE_SCALE", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfSampOffset);
-        GDALPamDataset::SetMetadataItem("SAMP_OFF", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("SAMP_OFF", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfSampScale);
-        GDALPamDataset::SetMetadataItem("SAMP_SCALE", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("SAMP_SCALE", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfLongOffset);
-        GDALPamDataset::SetMetadataItem("LONG_OFF", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LONG_OFF", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfLongScale);
-        GDALPamDataset::SetMetadataItem("LONG_SCALE", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LONG_SCALE", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfLatOffset);
-        GDALPamDataset::SetMetadataItem("LAT_OFF", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LAT_OFF", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfLatScale);
-        GDALPamDataset::SetMetadataItem("LAT_SCALE", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("LAT_SCALE", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfHeightOffset);
-        GDALPamDataset::SetMetadataItem("HEIGHT_OFF", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("HEIGHT_OFF", osValue, GDAL_MDD_RPC);
 
         osValue.Printf("%.16g", dfHeightScale);
-        GDALPamDataset::SetMetadataItem("HEIGHT_SCALE", osValue, "RPC");
+        GDALPamDataset::SetMetadataItem("HEIGHT_SCALE", osValue, GDAL_MDD_RPC);
 
         if (poRPCSeg->GetXNumerator().size() != 20 ||
             poRPCSeg->GetXDenominator().size() != 20 ||
             poRPCSeg->GetYNumerator().size() != 20 ||
             poRPCSeg->GetYDenominator().size() != 20)
         {
-            GDALPamDataset::SetMetadata(nullptr, "RPC");
+            GDALPamDataset::SetMetadata(nullptr, GDAL_MDD_RPC);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Did not get 20 values in the RPC coefficients lists.");
             return;
@@ -971,7 +1009,8 @@ void PCIDSK2Dataset::ProcessRPC()
             osValue.Printf("%.16g ", adfCoef[i]);
             osCoefList += osValue;
         }
-        GDALPamDataset::SetMetadataItem("LINE_NUM_COEFF", osCoefList, "RPC");
+        GDALPamDataset::SetMetadataItem("LINE_NUM_COEFF", osCoefList,
+                                        GDAL_MDD_RPC);
 
         adfCoef = poRPCSeg->GetYDenominator();
         osCoefList = "";
@@ -980,7 +1019,8 @@ void PCIDSK2Dataset::ProcessRPC()
             osValue.Printf("%.16g ", adfCoef[i]);
             osCoefList += osValue;
         }
-        GDALPamDataset::SetMetadataItem("LINE_DEN_COEFF", osCoefList, "RPC");
+        GDALPamDataset::SetMetadataItem("LINE_DEN_COEFF", osCoefList,
+                                        GDAL_MDD_RPC);
 
         adfCoef = poRPCSeg->GetXNumerator();
         osCoefList = "";
@@ -989,7 +1029,8 @@ void PCIDSK2Dataset::ProcessRPC()
             osValue.Printf("%.16g ", adfCoef[i]);
             osCoefList += osValue;
         }
-        GDALPamDataset::SetMetadataItem("SAMP_NUM_COEFF", osCoefList, "RPC");
+        GDALPamDataset::SetMetadataItem("SAMP_NUM_COEFF", osCoefList,
+                                        GDAL_MDD_RPC);
 
         adfCoef = poRPCSeg->GetXDenominator();
         osCoefList = "";
@@ -998,11 +1039,12 @@ void PCIDSK2Dataset::ProcessRPC()
             osValue.Printf("%.16g ", adfCoef[i]);
             osCoefList += osValue;
         }
-        GDALPamDataset::SetMetadataItem("SAMP_DEN_COEFF", osCoefList, "RPC");
+        GDALPamDataset::SetMetadataItem("SAMP_DEN_COEFF", osCoefList,
+                                        GDAL_MDD_RPC);
     }
     catch (const PCIDSKException &ex)
     {
-        GDALPamDataset::SetMetadata(nullptr, "RPC");
+        GDALPamDataset::SetMetadata(nullptr, GDAL_MDD_RPC);
         CPLError(CE_Failure, CPLE_AppDefined, "%s", ex.what());
     }
 }
@@ -1247,8 +1289,8 @@ CPLErr PCIDSK2Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
     try
     {
-        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt[0], gt[1], gt[2], gt[3],
-                              gt[4], gt[5]);
+        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt.xorig, gt.xscale,
+                              gt.xrot, gt.yorig, gt.yrot, gt.yscale);
     }
     catch (const PCIDSKException &ex)
     {
@@ -1280,7 +1322,8 @@ CPLErr PCIDSK2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
     {
         try
         {
-            poGeoref->GetTransform(gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]);
+            poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                                   gt.yrot, gt.yscale);
         }
         catch (const PCIDSKException &ex)
         {
@@ -1348,12 +1391,12 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
     try
     {
-        double adfGT[6];
-        poGeoref->GetTransform(adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4],
-                               adfGT[5]);
+        GDALGeoTransform gt;
+        poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig, gt.yrot,
+                               gt.yscale);
 
-        poGeoref->WriteSimple(pszGeosys, adfGT[0], adfGT[1], adfGT[2], adfGT[3],
-                              adfGT[4], adfGT[5]);
+        poGeoref->WriteSimple(pszGeosys, gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                              gt.yrot, gt.yscale);
 
         std::vector<double> adfPCIParameters;
         for (unsigned int i = 0; i < 17; i++)
@@ -1825,10 +1868,11 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         if (EQUAL(poFile->GetInterleaving().c_str(), "PIXEL"))
-            poDS->SetMetadataItem("IMAGE_STRUCTURE", "PIXEL",
-                                  "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDAL_MDD_IMAGE_STRUCTURE, "PIXEL",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
         else if (EQUAL(poFile->GetInterleaving().c_str(), "BAND"))
-            poDS->SetMetadataItem("IMAGE_STRUCTURE", "BAND", "IMAGE_STRUCTURE");
+            poDS->SetMetadataItem(GDAL_MDD_IMAGE_STRUCTURE, "BAND",
+                                  GDAL_MDD_IMAGE_STRUCTURE);
 
         /* --------------------------------------------------------------------
          */
@@ -1996,7 +2040,7 @@ GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
         if (pszValue != nullptr)
             osOptions += pszValue;
 
-        pszValue = CSLFetchNameValue(papszParamList, "COMPRESSION");
+        pszValue = CSLFetchNameValue(papszParamList, GDALMD_COMPRESSION);
         if (pszValue != nullptr)
         {
             osOptions += " ";

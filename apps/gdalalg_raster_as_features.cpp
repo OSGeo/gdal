@@ -42,8 +42,15 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
 
     if (standaloneStep)
     {
+        AddProgressArg(/* hidden = */ true);
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
     }
 
     AddBandArg(&m_bands);
@@ -63,6 +70,8 @@ GDALRasterAsFeaturesAlgorithm::~GDALRasterAsFeaturesAlgorithm() = default;
 GDALRasterAsFeaturesAlgorithmStandalone::
     ~GDALRasterAsFeaturesAlgorithmStandalone() = default;
 
+namespace
+{
 struct RasterAsFeaturesOptions
 {
     OGRwkbGeometryType geomType{wkbNone};
@@ -70,6 +79,7 @@ struct RasterAsFeaturesOptions
     bool includeRowCol{false};
     bool skipNoData{false};
     std::vector<int> bands{};
+    std::string outputLayerName{};
 };
 
 class GDALRasterAsFeaturesLayer final
@@ -91,6 +101,8 @@ class GDALRasterAsFeaturesLayer final
           m_end(GDALRasterBand::WindowIterator(
               m_ds.GetRasterXSize(), m_ds.GetRasterYSize(),
               m_ds.GetRasterXSize(), m_ds.GetRasterYSize(), 1, 0)),
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(
+              options.outputLayerName.c_str())),
           m_includeXY(options.includeXY),
           m_includeRowCol(options.includeRowCol),
           m_excludeNoDataPixels(options.skipNoData)
@@ -116,7 +128,7 @@ class GDALRasterAsFeaturesLayer final
             }
         }
 
-        m_defn = new OGRFeatureDefn();
+        SetDescription(options.outputLayerName.c_str());
         if (options.geomType == wkbNone)
         {
             m_defn->SetGeomType(wkbNone);
@@ -126,7 +138,6 @@ class GDALRasterAsFeaturesLayer final
             m_defn->GetGeomFieldDefn(0)->SetType(options.geomType);
             m_defn->GetGeomFieldDefn(0)->SetSpatialRef(ds.GetSpatialRef());
         }
-        m_defn->Reference();
 
         if (m_includeXY)
         {
@@ -155,8 +166,6 @@ class GDALRasterAsFeaturesLayer final
 
         GDALRasterAsFeaturesLayer::ResetReading();
     }
-
-    ~GDALRasterAsFeaturesLayer() override;
 
     void ResetReading() override
     {
@@ -189,7 +198,7 @@ class GDALRasterAsFeaturesLayer final
 
     OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     OGRFeature *GetNextRawFeature()
@@ -212,7 +221,7 @@ class GDALRasterAsFeaturesLayer final
 
             if (emitFeature)
             {
-                feature.reset(OGRFeature::CreateFeature(m_defn));
+                feature.reset(OGRFeature::CreateFeature(m_defn.get()));
 
                 for (int fieldPos : m_bandFields)
                 {
@@ -279,6 +288,11 @@ class GDALRasterAsFeaturesLayer final
             {
                 m_col = 0;
                 m_row++;
+            }
+
+            if (m_row >= m_window.nYSize)
+            {
+                NextWindow();
             }
 
             if (feature)
@@ -398,16 +412,13 @@ class GDALRasterAsFeaturesLayer final
     int m_row{0};
     int m_col{0};
 
-    OGRFeatureDefn *m_defn{nullptr};
+    const OGRFeatureDefnRefCountedPtr m_defn;
     bool m_includeXY;
     bool m_includeRowCol;
     bool m_excludeNoDataPixels;
 };
 
-GDALRasterAsFeaturesLayer::~GDALRasterAsFeaturesLayer()
-{
-    m_defn->Release();
-}
+}  // namespace
 
 bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
@@ -420,6 +431,7 @@ bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
     options.includeRowCol = m_includeRowCol;
     options.includeXY = m_includeXY;
     options.skipNoData = m_skipNoData;
+    options.outputLayerName = m_outputLayerName;
 
     if (!m_bands.empty())
     {
@@ -428,7 +440,7 @@ bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto poLayer =
         std::make_unique<GDALRasterAsFeaturesLayer>(*poSrcDS, options);
-    auto poRetDS = std::make_unique<GDALVectorOutputDataset>();
+    auto poRetDS = std::make_unique<GDALVectorOutputDataset>(nullptr);
     poRetDS->AddLayer(std::move(poLayer));
 
     m_outputDataset.Set(std::move(poRetDS));

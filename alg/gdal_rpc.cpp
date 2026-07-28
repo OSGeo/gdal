@@ -397,7 +397,7 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
         {
             bWarned = true;
             CPLDebug(
-                "RPC",
+                GDAL_MDD_RPC,
                 "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
                 "i.e. with an absolute value of > 1, which may cause numeric "
                 "stability problems",
@@ -407,7 +407,7 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
         {
             bWarned = true;
             CPLDebug(
-                "RPC",
+                GDAL_MDD_RPC,
                 "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
                 "ie with an absolute value of > 1, which may cause numeric "
                 "stability problems",
@@ -417,7 +417,7 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
         {
             bWarned = true;
             CPLDebug(
-                "RPC",
+                GDAL_MDD_RPC,
                 "Normalized %s for (lon,lat,height)=(%f,%f,%f) is %f, "
                 "i.e. with an absolute value of > 1, which may cause numeric "
                 "stability problems",
@@ -430,7 +430,8 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
             if (nCountWarningsAboutAboveOneNormalizedValues ==
                 MAX_ABS_VALUE_WARNINGS)
             {
-                CPLDebug("RPC", "No more such debug warnings will be emitted");
+                CPLDebug(GDAL_MDD_RPC,
+                         "No more such debug warnings will be emitted");
             }
         }
     }
@@ -728,7 +729,7 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  *
  * Debugging of the RPC inverse transformer can be done
  * by setting the RPC_INVERSE_VERBOSE configuration option to YES (in which case
- * extra debug information will be displayed in the "RPC" debug category, so
+ * extra debug information will be displayed in the GDAL_MDD_RPC debug category, so
  * requiring CPL_DEBUG to be also set) and/or by setting RPC_INVERSE_LOG to a
  * filename that will contain the content of iterations (this last option only
  * makes sense when debugging point by point, since each time
@@ -903,7 +904,8 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
     }
     else
     {
-        CPLDebug("RPC", "Unknown interpolation %s. Defaulting to bilinear",
+        CPLDebug(GDAL_MDD_RPC,
+                 "Unknown interpolation %s. Defaulting to bilinear",
                  pszDEMInterpolation);
         psTransform->eResampleAlg = DRA_Bilinear;
     }
@@ -1149,7 +1151,8 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
 
     if (psTransform->bRPCInverseVerbose)
     {
-        CPLDebug("RPC", "Computing inverse transform for (pixel,line)=(%f,%f)",
+        CPLDebug(GDAL_MDD_RPC,
+                 "Computing inverse transform for (pixel,line)=(%f,%f)",
                  dfPixel, dfLine);
     }
     VSILFILE *fpLog = nullptr;
@@ -1203,8 +1206,8 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
         {
             if (psTransform->poDS)
             {
-                CPLDebug("RPC", "DEM (pixel, line) = (%g, %g)", dfDEMPixel,
-                         dfDEMLine);
+                CPLDebug(GDAL_MDD_RPC, "DEM (pixel, line) = (%g, %g)",
+                         dfDEMPixel, dfDEMLine);
             }
 
             // The first time, the guess might be completely out of the
@@ -1227,7 +1230,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
                                             &dfDEMH))
                     {
                         bUseRefZ = false;
-                        CPLDebug("RPC",
+                        CPLDebug(GDAL_MDD_RPC,
                                  "Iteration %d for (pixel, line) = (%g, %g): "
                                  "No elevation value at %.15g %.15g. "
                                  "Using elevation %g at DEM (pixel, line) = "
@@ -1239,7 +1242,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
                 if (bUseRefZ)
                 {
                     dfDEMH = psTransform->dfRefZ;
-                    CPLDebug("RPC",
+                    CPLDebug(GDAL_MDD_RPC,
                              "Iteration %d for (pixel, line) = (%g, %g): "
                              "No elevation value at %.15g %.15g. "
                              "Using elevation %g of reference point instead",
@@ -1249,7 +1252,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
             }
             else
             {
-                CPLDebug("RPC",
+                CPLDebug(GDAL_MDD_RPC,
                          "Iteration %d for (pixel, line) = (%g, %g): "
                          "No elevation value at %.15g %.15g. Erroring out",
                          iIter, dfPixel, dfLine, dfResultX, dfResultY);
@@ -1267,7 +1270,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
 
         if (psTransform->bRPCInverseVerbose)
         {
-            CPLDebug("RPC",
+            CPLDebug(GDAL_MDD_RPC,
                      "Iter %d: dfPixelDeltaX=%.02f, dfPixelDeltaY=%.02f, "
                      "long=%f, lat=%f, height=%f",
                      iIter, dfPixelDeltaX, dfPixelDeltaY, dfResultX, dfResultY,
@@ -1288,7 +1291,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
             iIter = -1;
             if (psTransform->bRPCInverseVerbose)
             {
-                CPLDebug("RPC", "Converged!");
+                CPLDebug(GDAL_MDD_RPC, "Converged!");
             }
             break;
         }
@@ -1300,7 +1303,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
             // oscillate forever, so take a mean position as a new guess.
             if (psTransform->bRPCInverseVerbose)
             {
-                CPLDebug("RPC",
+                CPLDebug(GDAL_MDD_RPC,
                          "Oscillation detected. "
                          "Taking mean of 2 previous results as new guess");
             }
@@ -1326,7 +1329,7 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
             dfBoostFactor = 10;
             if (psTransform->bRPCInverseVerbose)
             {
-                CPLDebug("RPC", "Applying boost factor 10");
+                CPLDebug(GDAL_MDD_RPC, "Applying boost factor 10");
             }
         }
 
@@ -1361,8 +1364,9 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
 
     if (iIter != -1)
     {
-        CPLDebug("RPC", "Failed Iterations %d: Got: %.16g,%.16g  Offset=%g,%g",
-                 iIter, dfResultX, dfResultY, dfPixelDeltaX, dfPixelDeltaY);
+        CPLDebug(GDAL_MDD_RPC,
+                 "Failed Iterations %d: Got: %.16g,%.16g  Offset=%g,%g", iIter,
+                 dfResultX, dfResultY, dfPixelDeltaX, dfPixelDeltaY);
         return false;
     }
 
@@ -1772,7 +1776,7 @@ static bool GDALRPCOpenDEM(GDALRPCTransformInfo *psTransform)
                     fabs(adfX[5] - dfRefLong) < 1.0e-12 &&
                     fabs(adfY[5] - dfRefLat) < 1.0e-12)
                 {
-                    CPLDebug("RPC",
+                    CPLDebug(GDAL_MDD_RPC,
                              "Short-circuiting coordinate transformation "
                              "from DEM SRS to WGS 84 due to apparent nop");
                     delete psTransform->poCT;
@@ -1909,7 +1913,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
                     if (!bOnce)
                     {
                         bOnce = true;
-                        CPLDebug("RPC",
+                        CPLDebug(GDAL_MDD_RPC,
                                  "Using GDALRPCTransformWholeLineWithDEM");
                     }
                     return GDALRPCTransformWholeLineWithDEM(

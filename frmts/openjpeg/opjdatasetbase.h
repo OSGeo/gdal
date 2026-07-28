@@ -28,16 +28,9 @@
 #pragma clang diagnostic pop
 #endif
 
-typedef opj_codec_t jp2_codec;
-typedef opj_image_t jp2_image;
-typedef opj_stream_t jp2_stream;
-
-typedef opj_image_cmptparm_t jp2_image_comp_param;
-typedef opj_image_comp_t jp2_image_comp;
-
 #define IS_OPENJPEG_OR_LATER(major, minor, patch)                              \
     ((OPJ_VERSION_MAJOR * 10000 + OPJ_VERSION_MINOR * 100 +                    \
-      OPJ_VERSION_BUILD) >= ((major)*10000 + (minor)*100 + (patch)))
+      OPJ_VERSION_BUILD) >= ((major) * 10000 + (minor) * 100 + (patch)))
 
 /************************************************************************/
 /*                    JP2OpenJPEG_WarningCallback()                     */
@@ -179,6 +172,13 @@ static int64_t JP2Dataset_Skip(int64_t nBytes, void *pUserData)
 
 struct OPJCodecWrapper
 {
+    typedef opj_codec_t jp2_codec;
+    typedef opj_image_t jp2_image;
+    typedef opj_stream_t jp2_stream;
+
+    typedef opj_image_cmptparm_t jp2_image_comp_param;
+    typedef opj_image_comp_t jp2_image_comp;
+
     OPJCodecWrapper() = default;
 
     explicit OPJCodecWrapper(OPJCodecWrapper *rhs)
@@ -307,7 +307,13 @@ struct OPJCodecWrapper
         return comp->w;
     }
 
+    static GDALDataType getDataType(CPL_UNUSED jp2_image_comp *comp)
+    {
+        return GDT_Int32;
+    }
+
     bool setUpDecompress(CPL_UNUSED int numThreads,
+                         CPL_UNUSED char *pszFilename,
                          vsi_l_offset nCodeStreamLength, uint32_t *nTileW,
                          uint32_t *nTileH, int *numResolutions)
     {
@@ -683,21 +689,57 @@ struct OPJCodecWrapper
         opj_stream_set_skip_function(pStream, JP2Dataset_Skip);
         opj_stream_set_user_data(pStream, psJP2File, nullptr);
 
-        return opj_start_compress(pCodec, psImage, pStream);
+        return CPL_TO_BOOL(opj_start_compress(pCodec, psImage, pStream));
+    }
+
+    /* No-ops: OpenJPEG JP2 boxes are handled by GDAL's GDALJP2Box I/O */
+    static bool ownsFile()
+    {
+        return false;
+    }
+
+    static bool initCodec([[maybe_unused]] const char *pszFilename,
+                          [[maybe_unused]] VSIVirtualHandleUniquePtr &fpOwner)
+    {
+        return true;
+    }
+
+    static void setupJP2Metadata(bool, int, bool, GDALJP2Metadata *,
+                                 GDALJP2Box *, int, int, int, int,
+                                 JP2_COLOR_SPACE, int, GDALColorTable *,
+                                 GDALDataset *, CSLConstList)
+    {
+    }
+
+    static void extractJP2BoxInfo(int, int &, int &, int &, int &,
+                                  GDALColorTable **)
+    {
+    }
+
+    static bool rewriteBoxes(const char *, GDALDataset *)
+    {
+        return false;
+    }
+
+    static bool transcode(const char *, const char *, GDALDataset *,
+                          CSLConstList)
+    {
+        return false;
     }
 
     bool compressTile(int tileIndex, GByte *buff, uint32_t buffLen)
     {
         if (!pCodec || !pStream)
             return false;
-        return opj_write_tile(pCodec, tileIndex, buff, buffLen, pStream);
+        return CPL_TO_BOOL(
+            opj_write_tile(pCodec, tileIndex, buff, buffLen, pStream));
     }
 
     bool finishCompress(void)
     {
         bool rc = false;
         if (pCodec && pStream)
-            rc = opj_end_compress(pCodec, pStream);
+            rc = CPL_TO_BOOL(opj_end_compress(pCodec, pStream));
         if (!rc)
             CPLError(CE_Failure, CPLE_AppDefined, "opj_end_compress() failed");
         free();
@@ -752,21 +794,56 @@ struct OPJCodecWrapper
 
 struct JP2OPJDatasetBase : public JP2DatasetBase
 {
+    typedef opj_codec_t jp2_codec;
+    typedef opj_image_t jp2_image;
+    typedef opj_stream_t jp2_stream;
+
+    typedef opj_image_cmptparm_t jp2_image_comp_param;
+    typedef opj_image_comp_t jp2_image_comp;
+
     int eColorSpace = OPJCodecWrapper::cvtenum(JP2_CLRSPC_UNKNOWN);
     OPJCodecWrapper *m_codec = nullptr;
     int *m_pnLastLevel = nullptr;
     bool m_bStrict = true;
 
-    ~JP2OPJDatasetBase() override;
+    virtual ~JP2OPJDatasetBase();
 
     void init(void)
     {
         (void)this;
     }
 
-    void deinit(void)
+    virtual CPLErr
+    AdviseRead([[maybe_unused]] int nXOff, [[maybe_unused]] int nYOff,
+               [[maybe_unused]] int nXSize, [[maybe_unused]] int nYSize,
+               [[maybe_unused]] int nBufXSize, [[maybe_unused]] int nBufYSize,
+               [[maybe_unused]] GDALDataType eDT,
+               [[maybe_unused]] int nBandCount,
+               [[maybe_unused]] int *panBandList,
+               [[maybe_unused]] CSLConstList papszOptions)
     {
-        (void)this;
+        return CE_None;
+    }
+
+    virtual CPLErr DirectRasterIO(
+        [[maybe_unused]] GDALRWFlag /* eRWFlag */, [[maybe_unused]] int nXOff,
+        [[maybe_unused]] int nYOff, [[maybe_unused]] int nXSize,
+        [[maybe_unused]] int nYSize, [[maybe_unused]] void *pData,
+        [[maybe_unused]] int nBufXSize, [[maybe_unused]] int nBufYSize,
+        [[maybe_unused]] GDALDataType eBufType, [[maybe_unused]] int nBandCount,
+        [[maybe_unused]] const int *panBandMap,
+        [[maybe_unused]] GSpacing nPixelSpace,
+        [[maybe_unused]] GSpacing nLineSpace,
+        [[maybe_unused]] GSpacing nBandSpace,
+        [[maybe_unused]] GDALRasterIOExtraArg *psExtraArg)
+
+    {
+        return CE_None;
+    }
+
+    static bool canPerformDirectIO(void)
+    {
+        return false;
     }
 
     CPLErr readBlockInit(VSILFILE *fpIn, OPJCodecWrapper *codec, int nBlockXOff,

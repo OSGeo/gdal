@@ -766,8 +766,8 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
     {
         if (AutoIdentifyEPSG() == OGRERR_NONE)
         {
-            const char *pszAuthName = GetAuthorityName(nullptr);
-            const char *pszAuthCode = GetAuthorityCode(nullptr);
+            const char *pszAuthName = GetAuthorityName();
+            const char *pszAuthCode = GetAuthorityCode();
             if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
                 CPL_IGNORE_RET_VAL(importFromEPSG(atoi(pszAuthCode)));
         }

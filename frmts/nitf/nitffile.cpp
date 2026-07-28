@@ -16,19 +16,26 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include <stdbool.h>
 
+#include <algorithm>
 #include <map>
 
 #ifdef EMBED_RESOURCE_FILES
 #include "embedded_resources.h"
 #endif
 
-static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
+#include "offsetpatcher.h"
+#include "rpfframewriter.h"
+
+static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetIXSHDL,
                             int *pnOffset, CSLConstList papszOptions);
-static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                                     int *pnOffset, CSLConstList papszOptions,
-                                     const char *pszTREPrefix);
+static bool
+NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetIXSHDL,
+                         int *pnOffset, CSLConstList papszOptions,
+                         const char *pszTREPrefix,
+                         GDALOffsetPatcher::OffsetPatcher *offsetPatcher);
 
 static int NITFCollectSegmentInfo(NITFFile *psFile, int nFileHeaderLenSize,
                                   int nOffset, const char szType[3],
@@ -533,13 +540,14 @@ int NITFCreate(const char *pszFilename, int nPixels, int nLines, int nBands,
 {
     return NITFCreateEx(pszFilename, nPixels, nLines, nBands, nBitsPerSample,
                         pszPVType, papszOptions, nullptr, nullptr, nullptr,
-                        nullptr);
+                        nullptr, nullptr);
 }
 
 int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
                  int nBitsPerSample, const char *pszPVType,
                  CSLConstList papszOptions, int *pnIndex, int *pnImageCount,
-                 vsi_l_offset *pnImageOffset, vsi_l_offset *pnICOffset)
+                 vsi_l_offset *pnImageOffset, vsi_l_offset *pnICOffset,
+                 GDALOffsetPatcher::OffsetPatcher *offsetPatcher)
 
 {
     VSILFILE *fp;
@@ -552,7 +560,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     int nCLevel;
     const char *pszNUMT;
     int nNUMT = 0;
-    vsi_l_offset nOffsetUDIDL;
+    vsi_l_offset nOffsetIXSHDL;
     const char *pszVersion;
     int iIM, nIM = 1;
     const char *pszNUMI;
@@ -563,20 +571,6 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
     if (pnIndex)
         *pnIndex = 0;
-
-    if (nBands <= 0 || nBands > 99999)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid band number : %d",
-                 nBands);
-        return FALSE;
-    }
-    if (nLines > 99999999 || nPixels > 99999999)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "NITF does not support image whose dimension is larger than "
-                 "99999999");
-        return FALSE;
-    }
 
     if (pszIC == nullptr)
         pszIC = "NC";
@@ -644,6 +638,24 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     if (pnImageCount)
         *pnImageCount = nIM;
 
+    if (nIM > 0)
+    {
+        if (nBands <= 0 || nBands > 99999)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid band number : %d",
+                     nBands);
+            return FALSE;
+        }
+        if (nLines > 99999999 || nPixels > 99999999)
+        {
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "NITF does not support image whose dimension is larger than "
+                "99999999");
+            return FALSE;
+        }
+    }
+
     // Reads and validates graphics segment number option
     pszNUMS = CSLFetchNameValue(papszOptions, "NUMS");
     if (pszNUMS != nullptr)
@@ -662,9 +674,8 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         nDES = atoi(pszNUMDES);
     else
     {
-        char **papszSubList = CSLFetchNameValueMultiple(papszOptions, "DES");
-        nDES = CSLCount(papszSubList);
-        CSLDestroy(papszSubList);
+        nDES = CPLStringList(CSLFetchNameValueMultiple(papszOptions, "DES"))
+                   .size();
     }
 
     /* -------------------------------------------------------------------- */
@@ -814,13 +825,14 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
     /* -------------------------------------------------------------------- */
     /*      Work out the version we are producing.  For now we really       */
-    /*      only support creating NITF02.10 or the nato analog              */
+    /*      only support creating NITF02.00, NITF02.10 or the NATO analog   */
     /*      NSIF01.00.                                                      */
     /* -------------------------------------------------------------------- */
     pszVersion = CSLFetchNameValue(papszOptions, "FHDR");
     if (pszVersion == nullptr)
         pszVersion = "NITF02.10";
-    else if (!EQUAL(pszVersion, "NITF02.10") && !EQUAL(pszVersion, "NSIF01.00"))
+    else if (!EQUAL(pszVersion, "NITF02.00") &&
+             !EQUAL(pszVersion, "NITF02.10") && !EQUAL(pszVersion, "NSIF01.00"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "FHDR=%s not supported, switching to NITF02.10.", pszVersion);
@@ -852,43 +864,111 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         bOK &= VSIFWriteL(&cVal, 1, 1, fp) == 1;                               \
     } while (0)
 
+    const auto FormatDate = [pszVersion, papszOptions](const char *pszItem)
+    {
+        const char *pszV = CSLFetchNameValue(papszOptions, pszItem);
+        if (!pszV || EQUAL(pszV, "DEFAULT"))
+        {
+            const char *pszDefaultDate = EQUAL(pszVersion, "NITF02.00")
+                                             ? "01000000ZJAN26"
+                                             : "20021216151629";
+            return pszDefaultDate;
+        }
+        if (EQUAL(pszV, "NOW"))
+        {
+            time_t now;
+            time(&now);
+            struct tm brokenDownTime;
+            CPLUnixTimeToYMDHMS(now, &brokenDownTime);
+            if (EQUAL(pszVersion, "NITF02.00"))
+            {
+                // DDHHMMSSZMONYY
+                const char *const aszMonth[] = {"JAN", "FEB", "MAR", "APR",
+                                                "MAY", "JUN", "JUL", "AUG",
+                                                "SEP", "OCT", "NOV", "DEC"};
+                return CPLSPrintf(
+                    "%02d%02d%02d%02dZ%s%02d", brokenDownTime.tm_mday,
+                    brokenDownTime.tm_hour, brokenDownTime.tm_min,
+                    brokenDownTime.tm_sec,
+                    aszMonth[std::max(0, brokenDownTime.tm_mon) % 12],
+                    brokenDownTime.tm_year % 100);
+            }
+            else
+            {
+                // CCYYMMDDhhmmss
+                return CPLSPrintf(
+                    "%04d%02d%02d%02d%02d%02d", brokenDownTime.tm_year + 1900,
+                    brokenDownTime.tm_mon + 1, brokenDownTime.tm_mday,
+                    brokenDownTime.tm_hour, brokenDownTime.tm_min,
+                    brokenDownTime.tm_sec);
+            }
+        }
+
+        return pszV;
+    };
+
+    int nCOff = 0;
     if (!bAppendSubdataset)
     {
         PLACE(0, FDHR_FVER, pszVersion);
         OVR(2, 9, CLEVEL, "03"); /* Patched at the end */
-        PLACE(11, STYPE, "BF01");
+        PLACE(11, STYPE, EQUAL(pszVersion, "NITF02.00") ? "    " : "BF01");
         OVR(10, 15, OSTAID, "GDAL");
-        OVR(14, 25, FDT, "20021216151629");
+        OVR(14, 25, FDT, FormatDate("NITF_FDT"));
         OVR(80, 39, FTITLE, "");
         OVR(1, 119, FSCLAS, "U");
-        OVR(2, 120, FSCLSY, "");
-        OVR(11, 122, FSCODE, "");
-        OVR(2, 133, FSCTLH, "");
-        OVR(20, 135, FSREL, "");
-        OVR(2, 155, FSDCTP, "");
-        OVR(8, 157, FSDCDT, "");
-        OVR(4, 165, FSDCXM, "");
-        OVR(1, 169, FSDG, "");
-        OVR(8, 170, FSDGDT, "");
-        OVR(43, 178, FSCLTX, "");
-        OVR(1, 221, FSCATP, "");
-        OVR(40, 222, FSCAUT, "");
-        OVR(1, 262, FSCRSN, "");
-        OVR(8, 263, FSSRDT, "");
-        OVR(15, 271, FSCTLN, "");
-        OVR(5, 286, FSCOP, "00000");
-        OVR(5, 291, FSCPYS, "00000");
-        PLACE(296, ENCRYP, "0");
-        WRITE_BYTE(297, 0x00); /* FBKGC */
-        WRITE_BYTE(298, 0x00);
-        WRITE_BYTE(299, 0x00);
-        OVR(24, 300, ONAME, "");
-        OVR(18, 324, OPHONE, "");
-        PLACE(342, FL, "????????????");
-        PLACE(354, HL, "??????");
-        PLACE(360, NUMI, CPLSPrintf("%03d", nIM));
 
-        int nHL = 363;
+        if (EQUAL(pszVersion, "NITF02.00"))
+        {
+            OVR(40, 120, FSCODE, "");
+            OVR(40, 160, FSCTLH, "");
+            OVR(40, 200, FSREL, "");
+            OVR(20, 240, FSCAUT, "");
+            OVR(20, 260, FSCTLN, "");
+            OVR(6, 280, FSDWNG, "");
+            if (EQUAL(CSLFetchNameValueDef(papszOptions, "FSDWNG", ""),
+                      "999998"))
+            {
+                OVR(40, 286, FSDEVT, "");
+                nCOff += 40;
+            }
+            OVR(5, 286 + nCOff, FSCOP, "00000");
+            OVR(5, 291 + nCOff, FSCPYS, "00000");
+            PLACE(296 + nCOff, ENCRYP, "0");
+            OVR(27, 297 + nCOff, ONAME, "");
+            OVR(18, 324 + nCOff, OPHONE, "");
+        }
+        else
+        {
+            OVR(2, 120, FSCLSY, "");
+            OVR(11, 122, FSCODE, "");
+            OVR(2, 133, FSCTLH, "");
+            OVR(20, 135, FSREL, "");
+            OVR(2, 155, FSDCTP, "");
+            OVR(8, 157, FSDCDT, "");
+            OVR(4, 165, FSDCXM, "");
+            OVR(1, 169, FSDG, "");
+            OVR(8, 170, FSDGDT, "");
+            OVR(43, 178, FSCLTX, "");
+            OVR(1, 221, FSCATP, "");
+            OVR(40, 222, FSCAUT, "");
+            OVR(1, 262, FSCRSN, "");
+            OVR(8, 263, FSSRDT, "");
+            OVR(15, 271, FSCTLN, "");
+            OVR(5, 286, FSCOP, "00000");
+            OVR(5, 291, FSCPYS, "00000");
+            PLACE(296, ENCRYP, "0");
+            WRITE_BYTE(297, 0x00); /* FBKGC */
+            WRITE_BYTE(298, 0x00);
+            WRITE_BYTE(299, 0x00);
+            OVR(24, 300, ONAME, "");
+            OVR(18, 324, OPHONE, "");
+        }
+        PLACE(342 + nCOff, FL, "????????????");
+        PLACE(354 + nCOff, HL, "??????");
+        PLACE(360 + nCOff, NUMI, CPLSPrintf("%03d", nIM));
+
+        int nHL = 363 + nCOff;
         for (iIM = 0; iIM < nIM; iIM++)
         {
             /* Patched when image segments are written. */
@@ -936,15 +1016,65 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
         PLACE(nHL, NUMRES, "000");
         nHL += 3;
-        PLACE(nHL, UDHDL, "00000");
-        nHL += 5;
+
+        // The RPFHDR TRE must be written in UDID and not in IXSHD
+        const int nRPFHDRPos =
+            CSLPartialFindString(papszOptions, "FILE_TRE=RPFHDR=");
+        if (nRPFHDRPos >= 0)
+        {
+            int nContentLength = 0;
+            char *pszUnescapedContents = CPLUnescapeString(
+                papszOptions[nRPFHDRPos] + strlen("FILE_TRE=RPFHDR="),
+                &nContentLength, CPLES_BackslashQuotable);
+            if (nContentLength != 48)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid length for RPFHDR : %d", nContentLength);
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+                CPLFree(pszUnescapedContents);
+                return FALSE;
+            }
+
+            constexpr const char *pszUDOFL = "000";
+            const char *pszTREPrefix = CPLSPrintf("RPFHDR%05d", nContentLength);
+            PLACE(nHL, UDHDL,
+                  CPLSPrintf("%05d", static_cast<int>(strlen(pszUDOFL) +
+                                                      strlen(pszTREPrefix) +
+                                                      nContentLength)));
+            nHL += 5;
+
+            PLACE(nHL, UDOFL, pszUDOFL);
+            nHL += static_cast<int>(strlen(pszUDOFL));
+
+            PLACE(nHL, UDID, pszTREPrefix);
+            nHL += static_cast<int>(strlen(pszTREPrefix));
+
+            if (offsetPatcher)
+            {
+                auto poBuffer = offsetPatcher->GetBufferFromName("RPFHDR");
+                if (poBuffer)
+                {
+                    poBuffer->DeclareBufferWrittenAtPosition(VSIFTellL(fp));
+                }
+            }
+
+            bOK &= VSIFWriteL(pszUnescapedContents, 1, nContentLength, fp) ==
+                   static_cast<size_t>(nContentLength);
+            nHL += nContentLength;
+            CPLFree(pszUnescapedContents);
+        }
+        else
+        {
+            PLACE(nHL, UDHDL, "00000");
+            nHL += 5;
+        }
         PLACE(nHL, XHDL, "00000");
         nHL += 5;
 
         if (CSLFetchNameValue(papszOptions, "FILE_TRE") != nullptr)
         {
             bOK &= NITFWriteTREsFromOptions(fp, nHL - 10, &nHL, papszOptions,
-                                            "FILE_TRE=");
+                                            "FILE_TRE=", offsetPatcher);
         }
 
         if (nHL > 999999)
@@ -956,7 +1086,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         }
 
         // update header length
-        PLACE(354, HL, CPLSPrintf("%06d", nHL));
+        PLACE(354 + nCOff, HL, CPLSPrintf("%06d", nHL));
 
         nCur = nHL;
         iIM = 0;
@@ -967,6 +1097,14 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         NITFFile *psFile = NITFOpenEx(fp, pszFilename);
         if (psFile == nullptr)
             return FALSE;
+
+        if (EQUAL(psFile->szVersion, "NITF02.00") &&
+            EQUAL(
+                CSLFetchNameValueDef(psFile->papszMetadata, "NITF_FSDWNG", ""),
+                "999998"))
+        {
+            nCOff = 40;
+        }
 
         iIM = -1;
         nIM = 0;
@@ -1038,25 +1176,52 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
         PLACE(nCur + 0, IM, "IM");
         OVR(10, nCur + 2, IID1, "Missing");
-        OVR(14, nCur + 12, IDATIM, "20021216151629");
+        OVR(14, nCur + 12, IDATIM, FormatDate("NITF_IDATIM"));
         OVR(17, nCur + 26, TGTID, "");
-        OVR(80, nCur + 43, IID2, "");
+        if (EQUAL(pszVersion, "NITF02.00"))
+        {
+            OVR(80, nCur + 43, ITITLE, "");
+        }
+        else
+        {
+            OVR(80, nCur + 43, IID2, "");
+        }
         OVR(1, nCur + 123, ISCLAS, "U");
-        OVR(2, nCur + 124, ISCLSY, "");
-        OVR(11, nCur + 126, ISCODE, "");
-        OVR(2, nCur + 137, ISCTLH, "");
-        OVR(20, nCur + 139, ISREL, "");
-        OVR(2, nCur + 159, ISDCTP, "");
-        OVR(8, nCur + 161, ISDCDT, "");
-        OVR(4, nCur + 169, ISDCXM, "");
-        OVR(1, nCur + 173, ISDG, "");
-        OVR(8, nCur + 174, ISDGDT, "");
-        OVR(43, nCur + 182, ISCLTX, "");
-        OVR(1, nCur + 225, ISCATP, "");
-        OVR(40, nCur + 226, ISCAUT, "");
-        OVR(1, nCur + 266, ISCRSN, "");
-        OVR(8, nCur + 267, ISSRDT, "");
-        OVR(15, nCur + 275, ISCTLN, "");
+        int nExtraOffset = 0;
+        if (EQUAL(pszVersion, "NITF02.00"))
+        {
+            OVR(40, nCur + 124, ISCODE, "");
+            OVR(40, nCur + 164, ISCTLH, "");
+            OVR(40, nCur + 204, ISREL, "");
+            OVR(20, nCur + 244, ISCAUT, "");
+            OVR(20, nCur + 264, ISCTLN, "");
+            OVR(6, nCur + 284, ISDWNG, "");
+            if (EQUAL(CSLFetchNameValueDef(papszOptions, "ISDWNG", ""),
+                      "999998"))
+            {
+                OVR(40, nCur + 290, ISDEVT, "");
+                nExtraOffset = 40;
+                nCur += 40;
+            }
+        }
+        else
+        {
+            OVR(2, nCur + 124, ISCLSY, "");
+            OVR(11, nCur + 126, ISCODE, "");
+            OVR(2, nCur + 137, ISCTLH, "");
+            OVR(20, nCur + 139, ISREL, "");
+            OVR(2, nCur + 159, ISDCTP, "");
+            OVR(8, nCur + 161, ISDCDT, "");
+            OVR(4, nCur + 169, ISDCXM, "");
+            OVR(1, nCur + 173, ISDG, "");
+            OVR(8, nCur + 174, ISDGDT, "");
+            OVR(43, nCur + 182, ISCLTX, "");
+            OVR(1, nCur + 225, ISCATP, "");
+            OVR(40, nCur + 226, ISCAUT, "");
+            OVR(1, nCur + 266, ISCRSN, "");
+            OVR(8, nCur + 267, ISSRDT, "");
+            OVR(15, nCur + 275, ISCTLN, "");
+        }
         PLACE(nCur + 290, ENCRYP, "0");
         OVR(42, nCur + 291, ISORCE, "Unknown");
         PLACE(nCur + 333, NROWS, CPLSPrintf("%08d", nLines));
@@ -1071,20 +1236,43 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
                                                    : nBitsPerSample));
         }
         OVR(1, nCur + 370, PJUST, "R");
-        OVR(1, nCur + 371, ICORDS, " ");
 
-        nOffset = 372;
-
+        bool bHasIGEOLO = false;
         {
-            const char *pszParamValue;
-            pszParamValue = CSLFetchNameValue(papszOptions, "ICORDS");
-            if (pszParamValue == nullptr)
+            const char *pszParamValue =
+                CSLFetchNameValueDef(papszOptions, "ICORDS", " ");
+            if (strlen(pszParamValue) != 1)
                 pszParamValue = " ";
-            if (*pszParamValue != ' ')
+            if (EQUAL(pszVersion, "NITF02.00"))
             {
-                OVR(60, nCur + nOffset, IGEOLO, "");
-                nOffset += 60;
+                if (EQUAL(pszParamValue, "N") || EQUAL(pszParamValue, "S"))
+                {
+                    bHasIGEOLO = true;
+                    pszParamValue = "U";  // UTM
+                }
+                else if (EQUAL(pszParamValue, " "))
+                {
+                    pszParamValue = "N";  // In NITF02.00, N stands for Nothing
+                }
+                else
+                {
+                    bHasIGEOLO = true;
+                }
             }
+            else
+            {
+                bHasIGEOLO = !EQUAL(pszParamValue, " ");
+            }
+            PLACE(nCur + 371, ICORDS, pszParamValue);
+        }
+
+        nCur -= nExtraOffset;
+        nOffset = 372 + nExtraOffset;
+
+        if (bHasIGEOLO)
+        {
+            OVR(60, nCur + nOffset, IGEOLO, "");
+            nOffset += 60;
         }
 
         {
@@ -1103,7 +1291,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
                     nICOM = 9;
                 }
                 PLACE(nCur + nOffset, NICOM, CPLSPrintf("%01d", nICOM));
-                nToWrite = MIN(nICOM * 80, nLenICOM);
+                nToWrite = std::min(nICOM * 80, nLenICOM);
                 bOK &= VSIFWriteL(pszRecodedICOM, 1, nToWrite, fp) == nToWrite;
                 nOffset += nICOM * 80;
                 CPLFree(pszRecodedICOM);
@@ -1271,12 +1459,24 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         PLACE(nCur + nOffset + 31, ILOCCOL,
               CPLSPrintf("%05d", atoi(CSLFetchNameValueDef(papszOptions,
                                                            "ILOCCOL", "0"))));
-        PLACE(nCur + nOffset + 36, IMAG, "1.0 ");
-        PLACE(nCur + nOffset + 40, UDIDL, "00000");
-        PLACE(nCur + nOffset + 45, IXSHDL, "00000");
+        OVR(4, nCur + nOffset + 36, IMAG, "1.0 ");
 
-        nOffsetUDIDL = nCur + nOffset + 40;
-        nOffset += 50;
+        // The RPFIMG TRE must be written in UDID and not in IXSHD
+        int nUDIDL = 0;
+        if (offsetPatcher &&
+            offsetPatcher->GetBufferFromName("LocationComponent"))
+        {
+            bOK &= RPFFrameWriteCADRG_RPFIMG(offsetPatcher, fp, nUDIDL);
+        }
+        else
+        {
+            PLACE(nCur + nOffset + 40, UDIDL, "00000");
+        }
+
+        PLACE(nCur + nOffset + 45 + nUDIDL, IXSHDL, "00000");
+
+        nOffsetIXSHDL = nCur + nOffset + 45 + nUDIDL;
+        nOffset += 50 + nUDIDL;
 
         /* --------------------------------------------------------------------
          */
@@ -1285,15 +1485,16 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
          */
         if (CSLFetchNameValue(papszOptions, "BLOCKA_BLOCK_COUNT") != nullptr)
         {
-            NITFWriteBLOCKA(fp, nOffsetUDIDL, &nOffset, papszOptions);
+            NITFWriteBLOCKA(fp, nOffsetIXSHDL, &nOffset, papszOptions);
         }
 
         if (CSLFetchNameValue(papszOptions, "TRE") != nullptr ||
             CSLFetchNameValue(papszOptions, "RESERVE_SPACE_FOR_TRE_OVERFLOW") !=
                 nullptr)
         {
-            bOK &= NITFWriteTREsFromOptions(fp, nOffsetUDIDL, &nOffset,
-                                            papszOptions, "TRE=");
+            bOK &=
+                NITFWriteTREsFromOptions(fp, nOffsetIXSHDL, &nOffset,
+                                         papszOptions, "TRE=", offsetPatcher);
         }
 
         /* --------------------------------------------------------------------
@@ -1311,11 +1512,11 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
             return FALSE;
         }
 
-        PLACE(363 + iIM * 16, LISH1, CPLSPrintf("%06d", nIHSize));
+        PLACE(363 + nCOff + iIM * 16, LISH1, CPLSPrintf("%06d", nIHSize));
         if (EQUAL(pszIC, "NC"))
         {
             PLACE(
-                369 + iIM * 16, LIi,
+                369 + nCOff + iIM * 16, LIi,
                 CPLSPrintf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u", nImageSize));
         }
 
@@ -1334,7 +1535,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     /* -------------------------------------------------------------------- */
     /*      Fill in image data by writing one byte at the end               */
     /* -------------------------------------------------------------------- */
-    if (EQUAL(pszIC, "NC"))
+    if (nIM > 0 && EQUAL(pszIC, "NC"))
     {
         char cNul = 0;
         bOK &= VSIFSeekL(fp, nCur - 1, SEEK_SET) == 0;
@@ -1346,7 +1547,16 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     /*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
     /*            page 96u                                                  */
     /* -------------------------------------------------------------------- */
-    nCLevel = 3;
+    if (EQUAL(pszVersion, "NITF02.00") && EQUAL(pszIC, "NC") &&
+        nPixels <= 1024 && nLines <= 1024 && nPixels == nNPPBH &&
+        nLines == nNPPBV)
+    {
+        nCLevel = 2;
+    }
+    else
+    {
+        nCLevel = 3;
+    }
     if (bAppendSubdataset)
     {
         // Get existing CLEVEL
@@ -1358,17 +1568,17 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     if (nBands > 9 || nIM > 20 || nPixels > 2048 || nLines > 2048 ||
         nNPPBH > 2048 || nNPPBV > 2048 || nCur > 52428799)
     {
-        nCLevel = MAX(nCLevel, 5);
+        nCLevel = std::max(nCLevel, 5);
     }
     if (nPixels > 8192 || nLines > 8192 || nNPPBH > 8192 || nNPPBV > 8192 ||
         nCur > 1073741833 || nDES > 10)
     {
-        nCLevel = MAX(nCLevel, 6);
+        nCLevel = std::max(nCLevel, 6);
     }
     if (nBands > 256 || nPixels > 65536 || nLines > 65536 ||
         nCur > 2147483647 || nDES > 50)
     {
-        nCLevel = MAX(nCLevel, 7);
+        nCLevel = std::max(nCLevel, 7);
     }
     OVR(2, 9, CLEVEL, CPLSPrintf("%02d", nCLevel));
 
@@ -1386,7 +1596,8 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         return FALSE;
     }
 
-    PLACE(342, FL, CPLSPrintf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d", nCur));
+    PLACE(342 + nCOff, FL,
+          CPLSPrintf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d", nCur));
 
     if (VSIFCloseL(fp) != 0)
         bOK = FALSE;
@@ -1417,7 +1628,7 @@ static bool NITFWriteOption(VSILFILE *psFile, CSLConstList papszOptions,
     }
 
     bOK &= NITFGotoOffset(psFile, nLocation);
-    nToWrite = MIN(nWidth, strlen(pszRecodedValue));
+    nToWrite = std::min(nWidth, strlen(pszRecodedValue));
     bOK &= VSIFWriteL(pszRecodedValue, 1, nToWrite, psFile) == nToWrite;
     CPLFree(pszRecodedValue);
     return bOK;
@@ -1427,19 +1638,23 @@ static bool NITFWriteOption(VSILFILE *psFile, CSLConstList papszOptions,
 /*                            NITFWriteTRE()                            */
 /************************************************************************/
 
-static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
-                         const char *pszTREName, char *pabyTREData,
-                         int nTREDataSize)
+static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetIXSHDL,
+                         int *pnOffset, const char *pszTREName,
+                         char *pabyTREData, int nTREDataSize,
+                         GDALOffsetPatcher::OffsetPatcher *offsetPatcher)
 
 {
     char szTemp[12];
     int nOldOffset;
     bool bOK = true;
 
+    if (EQUAL(pszTREName, "RPFHDR") || EQUAL(pszTREName, "RPFIMG"))
+        return true;
+
     /* -------------------------------------------------------------------- */
     /*      Update IXSHDL.                                                  */
     /* -------------------------------------------------------------------- */
-    bOK &= VSIFSeekL(fp, nOffsetUDIDL + 5, SEEK_SET) == 0;
+    bOK &= VSIFSeekL(fp, nOffsetIXSHDL, SEEK_SET) == 0;
     bOK &= VSIFReadL(szTemp, 1, 5, fp) == 5;
     szTemp[5] = 0;
     nOldOffset = atoi(szTemp);
@@ -1447,7 +1662,7 @@ static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
     if (nOldOffset == 0)
     {
         nOldOffset = 3;
-        PLACE(nOffsetUDIDL + 10, IXSOFL, "000");
+        PLACE(nOffsetIXSHDL + 5, IXSOFL, "000");
         *pnOffset += 3;
     }
 
@@ -1459,14 +1674,24 @@ static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
     }
 
     snprintf(szTemp, sizeof(szTemp), "%05d", nOldOffset + 11 + nTREDataSize);
-    PLACE(nOffsetUDIDL + 5, IXSHDL, szTemp);
+    PLACE(nOffsetIXSHDL, IXSHDL, szTemp);
 
     /* -------------------------------------------------------------------- */
     /*      Create TRE prefix.                                              */
     /* -------------------------------------------------------------------- */
     snprintf(szTemp, sizeof(szTemp), "%-6s%05d", pszTREName, nTREDataSize);
-    bOK &= VSIFSeekL(fp, nOffsetUDIDL + 10 + nOldOffset, SEEK_SET) == 0;
+    bOK &= VSIFSeekL(fp, nOffsetIXSHDL + 5 + nOldOffset, SEEK_SET) == 0;
     bOK &= VSIFWriteL(szTemp, 11, 1, fp) == 1;
+
+    if (offsetPatcher)
+    {
+        auto poBuffer = offsetPatcher->GetBufferFromName(pszTREName);
+        if (poBuffer)
+        {
+            poBuffer->DeclareBufferWrittenAtPosition(VSIFTellL(fp));
+        }
+    }
+
     bOK &= static_cast<int>(VSIFWriteL(pabyTREData, 1, nTREDataSize, fp)) ==
            nTREDataSize;
 
@@ -1482,9 +1707,11 @@ static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
 /*                      NITFWriteTREsFromOptions()                      */
 /************************************************************************/
 
-static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                                     int *pnOffset, CSLConstList papszOptions,
-                                     const char *pszTREPrefix)
+static bool
+NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetIXSHDL,
+                         int *pnOffset, CSLConstList papszOptions,
+                         const char *pszTREPrefix,
+                         GDALOffsetPatcher::OffsetPatcher *offsetPatcher)
 
 {
     int bIgnoreBLOCKA =
@@ -1533,8 +1760,8 @@ static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
         }
 
         pszTREName = CPLStrdup(papszOptions[iOption] + nTREPrefixLen);
-        pszTREName[MIN(6, pszSpace - (papszOptions[iOption] + nTREPrefixLen))] =
-            '\0';
+        pszTREName[std::min<size_t>(
+            6, pszSpace - (papszOptions[iOption] + nTREPrefixLen))] = '\0';
         pszEscapedContents = pszSpace + 1;
 
         pszUnescapedContents = CPLUnescapeString(
@@ -1566,8 +1793,8 @@ static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
             pszUnescapedContents[nContentLength] = '\0';
         }
 
-        if (!NITFWriteTRE(fp, nOffsetUDIDL, pnOffset, pszTREName,
-                          pszUnescapedContents, nContentLength))
+        if (!NITFWriteTRE(fp, nOffsetIXSHDL, pnOffset, pszTREName,
+                          pszUnescapedContents, nContentLength, offsetPatcher))
         {
             CPLFree(pszTREName);
             CPLFree(pszUnescapedContents);
@@ -1587,16 +1814,16 @@ static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
          */
         int nOldOffset;
         char szTemp[6];
-        bool bOK = VSIFSeekL(fp, nOffsetUDIDL + 5, SEEK_SET) == 0;
+        bool bOK = VSIFSeekL(fp, nOffsetIXSHDL, SEEK_SET) == 0;
         bOK &= VSIFReadL(szTemp, 1, 5, fp) == 5;
         szTemp[5] = 0;
         nOldOffset = atoi(szTemp);
 
         if (nOldOffset == 0)
         {
-            PLACE(nOffsetUDIDL + 5, IXSHDL, "00003");
+            PLACE(nOffsetIXSHDL, IXSHDL, "00003");
 
-            PLACE(nOffsetUDIDL + 10, IXSOFL, "000");
+            PLACE(nOffsetIXSHDL + 5, IXSOFL, "000");
             *pnOffset += 3;
         }
 
@@ -1610,7 +1837,7 @@ static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
 /*                          NITFWriteBLOCKA()                           */
 /************************************************************************/
 
-static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
+static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetIXSHDL,
                             int *pnOffset, CSLConstList papszOptions)
 
 {
@@ -1665,7 +1892,7 @@ static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
             memset(szBLOCKA + iStart, ' ', iSize);
             /* unsigned is always >= 0 */
             /* memcpy( szBLOCKA + iStart +
-             * MAX((size_t)0,iSize-strlen(pszValue)), */
+             * std::max((size_t)0,iSize-strlen(pszValue)), */
             memcpy(szBLOCKA + iStart +
                        (iSize - static_cast<int>(strlen(pszValue))),
                    pszValue, strlen(pszValue));
@@ -1674,7 +1901,8 @@ static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
         // required field - semantics unknown.
         memcpy(szBLOCKA + 118, "010.0", 5);
 
-        if (!NITFWriteTRE(fp, nOffsetUDIDL, pnOffset, "BLOCKA", szBLOCKA, 123))
+        if (!NITFWriteTRE(fp, nOffsetIXSHDL, pnOffset, "BLOCKA", szBLOCKA, 123,
+                          nullptr))
             return false;
     }
 
@@ -2220,6 +2448,51 @@ static const NITFSeries nitfSeries[] = {
     {"ZV", "", "1:10M", "IFR Enroute High/Low", "CADRG"},
     {"ZZ", "", "1:12M", "IFR Enroute High/Low", "CADRG"}};
 
+const NITFSeries *NITFGetRPFSeriesInfoFromIndex(int nIdx)
+{
+    if (nIdx >= 0 && static_cast<size_t>(nIdx) < CPL_ARRAYSIZE(nitfSeries))
+        return &nitfSeries[nIdx];
+    return nullptr;
+}
+
+const NITFSeries *NITFGetRPFSeriesInfoFromCode(const char *pszCode)
+{
+    for (const auto &series : nitfSeries)
+    {
+        if (EQUAL(pszCode, series.code))
+        {
+            return &series;
+        }
+    }
+    return nullptr;
+}
+
+bool NITFIsKnownRPFDataSeriesCode(const char *pszCode,
+                                  const char *pszProductType)
+{
+    return std::find_if(std::begin(nitfSeries), std::end(nitfSeries),
+                        [pszCode, &pszProductType](const auto &sEntry)
+                        {
+                            return EQUAL(pszCode, sEntry.code) &&
+                                   (!pszProductType ||
+                                    EQUAL(pszProductType, sEntry.rpfDataType));
+                        }) != std::end(nitfSeries);
+}
+
+int NITFGetScaleFromScaleResolution(const char *scaleResolution)
+{
+    int nVal = 0;
+    if (STARTS_WITH(scaleResolution, "1:"))
+    {
+        nVal = atoi(scaleResolution + strlen("1:"));
+        if (strchr(scaleResolution, 'K'))
+            nVal *= 1000;
+        else if (strchr(scaleResolution, 'M'))
+            nVal *= 1000 * 1000;
+    }
+    return nVal;
+}
+
 /* See 24111CN1.pdf paragraph 5.1.4 */
 const NITFSeries *NITFGetSeriesInfo(const char *pszFilename)
 {
@@ -2235,14 +2508,7 @@ const NITFSeries *NITFGetSeriesInfo(const char *pszFilename)
             {
                 seriesCode[0] = pszFilename[i + 1];
                 seriesCode[1] = pszFilename[i + 2];
-                for (const auto &series : nitfSeries)
-                {
-                    if (EQUAL(seriesCode, series.code))
-                    {
-                        return &series;
-                    }
-                }
-                return nullptr;
+                return NITFGetRPFSeriesInfoFromCode(seriesCode);
             }
         }
     }
@@ -2634,8 +2900,10 @@ static char **NITFGenericMetadataReadTREInternal(
     int *pnTreOffset, const char *pszMDPrefix, bool bValidate, VSILFILE *fp,
     std::map<NITFLocId, const CPLXMLNode *> &oMapLocIdToXML, int *pbError)
 {
-    const bool bRPFIMG = psOutXMLNode && EQUAL(pszDESOrTREName, "RPFIMG");
-    if (bRPFIMG && oMapLocIdToXML.empty())
+    const bool bRPFIMGOrDES =
+        psOutXMLNode &&
+        (EQUAL(pszDESOrTREName, "RPFIMG") || EQUAL(pszDESOrTREName, "RPFDES"));
+    if (bRPFIMGOrDES && oMapLocIdToXML.empty())
     {
 #define LOCATION_ENTRY(x)                                                      \
     {                                                                          \
@@ -2872,16 +3140,37 @@ static char **NITFGenericMetadataReadTREInternal(
 
                 if (papszTmp)
                 {
-                    if (*pnMDSize + 1 >= *pnMDAlloc)
+                    if (bRPFIMGOrDES)
                     {
-                        *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
-                        papszMD = static_cast<char **>(
-                            CPLRealloc(papszMD, *pnMDAlloc * sizeof(char *)));
+                        const char *pszEqual = strchr(papszTmp[0], '=');
+                        if (pszEqual)
+                        {
+                            const int nIdx = CSLPartialFindString(
+                                papszMD,
+                                std::string(papszTmp[0],
+                                            (pszEqual - papszTmp[0]) + 1)
+                                    .c_str());
+                            if (nIdx >= 0)
+                            {
+                                CPLFree(papszMD[nIdx]);
+                                papszMD[nIdx] = papszTmp[0];
+                                papszTmp[0] = nullptr;
+                            }
+                        }
                     }
-                    papszMD[*pnMDSize] = papszTmp[0];
-                    papszMD[(*pnMDSize) + 1] = nullptr;
-                    (*pnMDSize)++;
-                    papszTmp[0] = nullptr;
+                    if (papszTmp[0])
+                    {
+                        if (*pnMDSize + 1 >= *pnMDAlloc)
+                        {
+                            *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
+                            papszMD = static_cast<char **>(CPLRealloc(
+                                papszMD, *pnMDAlloc * sizeof(char *)));
+                        }
+                        papszMD[*pnMDSize] = papszTmp[0];
+                        papszMD[(*pnMDSize) + 1] = nullptr;
+                        (*pnMDSize)++;
+                        papszTmp[0] = nullptr;
+                    }
                     CSLDestroy(papszTmp);
                 }
 
@@ -2976,7 +3265,7 @@ static char **NITFGenericMetadataReadTREInternal(
                     }
                 }
 
-                if (bRPFIMG && pszValue != nullptr)
+                if (bRPFIMGOrDES && pszValue != nullptr)
                 {
                     if (EQUAL(pszName, "COMPONENT_ID"))
                     {
@@ -3238,7 +3527,7 @@ static char **NITFGenericMetadataReadTREInternal(
                 {
                     char *pszMDNewPrefix = nullptr;
                     CPLXMLNode *psGroupNode = nullptr;
-                    if (bRPFIMG)
+                    if (bRPFIMGOrDES)
                     {
                         // As we need to fetch metadata items that are in
                         // different RPF location, a prefix would hurt.
@@ -3337,7 +3626,7 @@ static char **NITFGenericMetadataReadTREInternal(
         }
     }
 
-    if (bRPFIMG && nRPFLocationId >= LID_HeaderComponent &&
+    if (bRPFIMGOrDES && nRPFLocationId >= LID_HeaderComponent &&
         nRPFLocationId <= LID_ColorTableIndexRecord &&
         nRPFLocationSize < 1000 * 1000 && psOutXMLNode &&
         strcmp(psOutXMLNode->pszValue, "group") == 0)
@@ -3538,7 +3827,10 @@ CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
     int nMDSize = 0, nMDAlloc = 0;
     const char *pszMDPrefix;
 
-    psTreNode = NITFFindTREXMLDescFromName(psFile, pszTREName);
+    psTreNode = NITFFindTREXMLDescFromName(
+        psFile, EQUAL(pszTREName, "RPFIMG") || EQUAL(pszTREName, "RPFDES")
+                    ? "RPF"
+                    : pszTREName);
     if (psTreNode == nullptr)
     {
         if (!(STARTS_WITH_CI(pszTREName, "RPF") ||

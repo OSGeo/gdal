@@ -62,8 +62,8 @@ if __name__ == "__main__":
             [691000.0, 0.1, 0.0, 6090000.0, 0.0, -0.1]
         )
         assert ds.GetSpatialRef() is not None
-        assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "28355"
+        assert ds.GetSpatialRef().GetAuthorityName() == "EPSG"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "28355"
         assert ds.GetGCPCount() == 1
         gcp = ds.GetGCPs()[0]
         assert (

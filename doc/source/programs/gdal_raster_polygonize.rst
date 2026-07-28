@@ -1,5 +1,7 @@
 .. _gdal_raster_polygonize:
 
+.. program:: gdal_raster_polygonize
+
 ================================================================================
 ``gdal raster polygonize``
 ================================================================================
@@ -97,6 +99,11 @@ Standard Options
     .. include:: gdal_options/overwrite_layer.rst
 
     .. include:: gdal_options/update.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

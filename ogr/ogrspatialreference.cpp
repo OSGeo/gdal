@@ -50,7 +50,7 @@ bool GDALThreadLocalDatasetCacheIsInDestruction();
 // Exists since 8.0.1
 #ifndef PROJ_AT_LEAST_VERSION
 #define PROJ_COMPUTE_VERSION(maj, min, patch)                                  \
-    ((maj)*10000 + (min)*100 + (patch))
+    ((maj) * 10000 + (min) * 100 + (patch))
 #define PROJ_VERSION_NUMBER                                                    \
     PROJ_COMPUTE_VERSION(PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR,               \
                          PROJ_VERSION_PATCH)
@@ -141,7 +141,7 @@ struct OGRSpatialReference::Private
     void setRoot(OGR_SRSNode *poRoot);
     void refreshProjObj();
     void nodesChanged();
-    void refreshRootFromProjObj();
+    void refreshRootFromProjObj(bool bForceWKT2);
     void invalidateNodes();
 
     void setMorphToESRI(bool b);
@@ -369,8 +369,7 @@ void OGRSpatialReference::Private::refreshProjObj()
 #if PROJ_AT_LEAST_VERSION(9, 1, 0)
             "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=NO",
 #endif
-            nullptr
-        };
+            nullptr};
         PROJ_STRING_LIST warnings = nullptr;
         PROJ_STRING_LIST errors = nullptr;
         setPjCRS(proj_create_from_wkt(getPROJContext(), pszWKT, options,
@@ -393,7 +392,7 @@ void OGRSpatialReference::Private::refreshProjObj()
     }
 }
 
-void OGRSpatialReference::Private::refreshRootFromProjObj()
+void OGRSpatialReference::Private::refreshRootFromProjObj(bool bForceWKT2)
 {
     CPLAssert(m_poRoot == nullptr);
 
@@ -407,7 +406,8 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
         }
         aosOptions.SetNameValue("STRICT", "NO");
 
-        const char *pszWKT;
+        const char *pszWKT = nullptr;
+        if (!bForceWKT2)
         {
             CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             pszWKT = proj_as_wkt(getPROJContext(), m_pj_crs,
@@ -1182,7 +1182,7 @@ OGR_SRSNode *OGRSpatialReference::GetRoot()
 
     if (!d->m_poRoot)
     {
-        d->refreshRootFromProjObj();
+        d->refreshRootFromProjObj(false);
     }
     return d->m_poRoot;
 }
@@ -1193,7 +1193,7 @@ const OGR_SRSNode *OGRSpatialReference::GetRoot() const
 
     if (!d->m_poRoot)
     {
-        d->refreshRootFromProjObj();
+        d->refreshRootFromProjObj(false);
     }
     return d->m_poRoot;
 }
@@ -1247,6 +1247,12 @@ void OGRSpatialReference::SetRoot(OGR_SRSNode *poNewRoot)
 OGR_SRSNode *OGRSpatialReference::GetAttrNode(const char *pszNodePath)
 
 {
+    if (strstr(pszNodePath, "CONVERSION") && !d->m_bNodesWKT2)
+    {
+        d->invalidateNodes();
+        d->refreshRootFromProjObj(/* bForceWKT2 = */ true);
+    }
+
     if (strchr(pszNodePath, '|') == nullptr)
     {
         // Fast path
@@ -1465,7 +1471,7 @@ const char *OGRSpatialReference::GetCelestialBodyName() const
     if (std::fabs(GetSemiMajor(nullptr) - SRS_WGS84_SEMIMAJOR) <=
         0.05 * SRS_WGS84_SEMIMAJOR)
         return "Earth";
-    const char *pszAuthName = GetAuthorityName(nullptr);
+    const char *pszAuthName = GetAuthorityName();
     if (pszAuthName && EQUAL(pszAuthName, "EPSG"))
         return "Earth";
     return nullptr;
@@ -3807,8 +3813,30 @@ OGRErr OSRSetWellKnownGeogCS(OGRSpatialReferenceH hSRS, const char *pszName)
  *
  * @return OGRERR_NONE on success or an error code.
  */
-
 OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS)
+
+{
+    return CopyGeogCSFrom(poSrcSRS, false);
+}
+
+/**
+ * \brief Copy GEOGCS from another OGRSpatialReference.
+ *
+ * The GEOGCS information is copied into this OGRSpatialReference from another.
+ * If this object has a PROJCS root already, the GEOGCS is installed within
+ * it, otherwise it is installed as the root.
+ *
+ * @param poSrcSRS the spatial reference to copy the GEOGCS information from.
+ * @param bInnerMostGeogCRS Whether the inner-most geographic CRS must be used.
+ *                          This setting makes a difference if this CRS is a
+ *                          derived geographic CRS. Setting bInnerMostGeogCRS
+ *                          to true will then extract its base CRS.
+ *
+ * @return OGRERR_NONE on success or an error code.
+ * @since 3.13.2
+ */
+OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS,
+                                           bool bInnerMostGeogCRS)
 
 {
     TAKE_OPTIONAL_LOCK();
@@ -3830,6 +3858,15 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS)
     if (!geodCRS)
     {
         return OGRERR_FAILURE;
+    }
+
+    if (bInnerMostGeogCRS && poSrcSRS->IsDerivedGeographic())
+    {
+        auto baseCRS = proj_get_source_crs(d->getPROJContext(), geodCRS);
+        if (!baseCRS)
+            return OGRERR_FAILURE;
+        proj_destroy(geodCRS);
+        geodCRS = baseCRS;
     }
 
     /* -------------------------------------------------------------------- */
@@ -5767,6 +5804,40 @@ OGRErr OSRSetCompoundCS(OGRSpatialReferenceH hSRS, const char *pszName,
 
     return ToPointer(hSRS)->SetCompoundCS(pszName, ToPointer(hHorizSRS),
                                           ToPointer(hVertSRS));
+}
+
+/************************************************************************/
+/*                        GetCompoundComponent()                        */
+/************************************************************************/
+
+/**
+ * \brief Get a CRS component from a CompoundCRS
+ *
+ * @param iComponent Index of the CRS component (typically 0 = horizontal, 1 =
+ * vertical)
+ * @return new OGRSpatialReference object, or NULL in case of error.
+ *
+ * @since 3.14
+ */
+
+std::unique_ptr<OGRSpatialReference>
+OGRSpatialReference::GetCompoundComponent(int iComponent) const
+{
+    std::unique_ptr<OGRSpatialReference> poSRS;
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    if (d->m_pjType == PJ_TYPE_COMPOUND_CRS)
+    {
+        auto subCrs =
+            proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, iComponent);
+        if (subCrs)
+        {
+            poSRS = std::make_unique<OGRSpatialReference>();
+            poSRS->d->setPjCRS(subCrs);
+        }
+    }
+    d->undoDemoteFromBoundCRS();
+    return poSRS;
 }
 
 /************************************************************************/
@@ -8895,8 +8966,8 @@ char *OGRSpatialReference::GetOGCURN() const
 {
     TAKE_OPTIONAL_LOCK();
 
-    const char *pszAuthName = GetAuthorityName(nullptr);
-    const char *pszAuthCode = GetAuthorityCode(nullptr);
+    const char *pszAuthName = GetAuthorityName();
+    const char *pszAuthCode = GetAuthorityCode();
     if (pszAuthName && pszAuthCode)
         return CPLStrdup(
             CPLSPrintf("urn:ogc:def:crs:%s::%s", pszAuthName, pszAuthCode));
@@ -10364,16 +10435,14 @@ OGRSpatialReference::FindBestMatch(int nMinimumMatchConfidence,
             const char *pszBaseAuthorityCode = nullptr;
             const char *pszBaseName = poBaseGeogCRS->GetName();
             if (adfTOWGS84 == std::vector<double>(7) &&
-                (pszAuthorityName = poSRS->GetAuthorityName(nullptr)) !=
-                    nullptr &&
+                (pszAuthorityName = poSRS->GetAuthorityName()) != nullptr &&
                 EQUAL(pszAuthorityName, "EPSG") &&
-                (pszAuthorityCode = poSRS->GetAuthorityCode(nullptr)) !=
+                (pszAuthorityCode = poSRS->GetAuthorityCode()) != nullptr &&
+                (pszBaseAuthorityName = poBaseGeogCRS->GetAuthorityName()) !=
                     nullptr &&
-                (pszBaseAuthorityName =
-                     poBaseGeogCRS->GetAuthorityName(nullptr)) != nullptr &&
                 EQUAL(pszBaseAuthorityName, "EPSG") &&
-                (pszBaseAuthorityCode =
-                     poBaseGeogCRS->GetAuthorityCode(nullptr)) != nullptr &&
+                (pszBaseAuthorityCode = poBaseGeogCRS->GetAuthorityCode()) !=
+                    nullptr &&
                 (EQUAL(pszBaseAuthorityCode, "4326") ||
                  EQUAL(pszBaseAuthorityCode, "4258") ||
                  // For ETRS89-XXX [...] new CRS added in EPSG 12.033+
@@ -10399,7 +10468,7 @@ OGRSpatialReference::FindBestMatch(int nMinimumMatchConfidence,
             {
                 const char *pszAuthName =
                     OGRSpatialReference::FromHandle(pahSRS[i])
-                        ->GetAuthorityName(nullptr);
+                        ->GetAuthorityName();
                 if (pszAuthName != nullptr &&
                     EQUAL(pszAuthName, pszPreferredAuthority))
                 {

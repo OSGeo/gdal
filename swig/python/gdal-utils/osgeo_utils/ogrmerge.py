@@ -92,8 +92,13 @@ def _GetGeomType(src_geom_type_name):
 #############################################################################
 
 
-def _Esc(x):
-    return gdal.EscapeString(x, gdal.CPLES_XML).decode("UTF-8")
+def _Esc(x, element_value=False):
+    x = gdal.EscapeString(x, gdal.CPLES_XML).decode("UTF-8")
+    # Un-encoded leading or trailing spaces are remove by the CPLMiniXML parser
+    if element_value and len(x) > 0 and (ord(x[0]) <= 32 or ord(x[-1]) <= 32):
+        x = x.replace(" ", "&#x20;")  # space
+        x = x.replace("\t", "&#x09;")  # tabulation
+    return x
 
 
 class XMLWriter:
@@ -131,7 +136,7 @@ class XMLWriter:
             self._indent(),
             name,
             xml_attrs,
-            _Esc(value.encode("utf-8")),
+            _Esc(value.encode("utf-8"), element_value=True),
             name,
         )
         x = x.encode("utf-8")
@@ -961,7 +966,7 @@ def ogrmerge(
             if not update and not overwrite_ds:
                 print(
                     "ERROR: Destination dataset already exists, "
-                    + "but -update nor -overwrite_ds are specified",
+                    + "but neither -update nor -overwrite_ds are specified",
                     file=sys.stderr,
                 )
                 return 1
@@ -990,7 +995,7 @@ def ogrmerge(
         if gdal.VSIStatL(dst_filename) and not overwrite_ds:
             print(
                 "ERROR: Destination dataset already exists, "
-                + "but -overwrite_ds are specified",
+                + "but -overwrite_ds is not specified",
                 file=sys.stderr,
             )
             return 1

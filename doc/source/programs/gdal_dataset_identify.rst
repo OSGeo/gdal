@@ -1,5 +1,7 @@
 .. _gdal_dataset_identify:
 
+.. program:: gdal_dataset_identify
+
 ================================================================================
 ``gdal dataset identify``
 ================================================================================
@@ -71,6 +73,11 @@ Options
 
     Report failures if file type is unidentified.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -123,3 +130,13 @@ Examples
     .. code-block::
 
         $ gdal dataset identify --output out.csv --detailed -r 50m_raster/
+
+.. example::
+   :title: Check if a GeoTIFF file is cloud optimized using ``--detailed``
+   :id: gdal-dataset-identify-cog
+
+   The following returns driver, and image layout details: ``GTiff, layout=COG, has CRS, has geotransform, has overview(s)``
+
+    .. code-block::
+
+        $ gdal dataset identify /vsicurl/https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/36/Q/WD/2020/7/S2A_36QWD_20200701_0_L2A/TCI.tif --detailed

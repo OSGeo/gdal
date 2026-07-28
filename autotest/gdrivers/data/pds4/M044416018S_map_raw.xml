@@ -1,0 +1,223 @@
+<!-- slightly altered version of https://pds.shadowcam.im-ldi.com/observation/2024/001/M044416018S/M044416018S_map_raw.tif
+     adjusted for dummy TIFF
+ -->
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1L00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1L00_1970.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1L00_1300.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+
+<Product_Browse
+  xmlns="http://pds.nasa.gov/pds4/pds/v1"
+  xmlns:pds="http://pds.nasa.gov/pds4/pds/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"
+  xmlns:proc="http://pds.nasa.gov/pds4/proc/v1"
+  xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1L00.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1L00_1970.xsd http://pds.nasa.gov/pds4/proc/v1 https://pds.nasa.gov/pds4/proc/v1/PDS4_PROC_1L00_1300.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:kplo-shadowcam:browse-calibrated-map:m044416018s_map_raw</logical_identifier>
+    <version_id>2.0</version_id>
+    <title>KPLO ShadowCam Map Projected Raw Cloud Optimized GeoTIFF (COG)</title>
+    <information_model_version>1.21.0.0</information_model_version>
+    <product_class>Product_Browse</product_class>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2025-08-24T17:01:19.000710Z</modification_date>
+        <version_id>2.0</version_id>
+        <description>
+          Correct a typo in the labels.
+        </description>
+      </Modification_Detail>
+      <Modification_Detail>
+        <modification_date>2024-02-15T19:08:07.073572Z</modification_date>
+        <version_id>1.0</version_id>
+        <description>
+          Initial Release
+        </description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Context_Area>
+    <Discipline_Area>
+      <cart:Cartography>
+        <Local_Internal_Reference>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>cartography_parameters_to_image_object</local_reference_type>
+        </Local_Internal_Reference>
+        <cart:Spatial_Domain>
+          <cart:Bounding_Coordinates>
+            <cart:west_bounding_coordinate unit="deg">-91.8554441747607342</cart:west_bounding_coordinate>
+            <cart:east_bounding_coordinate unit="deg">78.3355188583663704</cart:east_bounding_coordinate>
+            <cart:north_bounding_coordinate unit="deg">-84.6938878634492056</cart:north_bounding_coordinate>
+            <cart:south_bounding_coordinate unit="deg">-89.1649098069960786</cart:south_bounding_coordinate>
+          </cart:Bounding_Coordinates>
+        </cart:Spatial_Domain>
+        <cart:Spatial_Reference_Information>
+          <cart:Horizontal_Coordinate_System_Definition>
+            <cart:Planar>
+              <cart:Map_Projection>
+                <cart:map_projection_name>Polar Stereographic</cart:map_projection_name>
+                <cart:Polar_Stereographic>
+                  <cart:longitude_of_central_meridian unit="deg">-6.75</cart:longitude_of_central_meridian>
+                  <cart:latitude_of_projection_origin unit="deg">-87.0400000000000063</cart:latitude_of_projection_origin>
+                  <cart:scale_factor_at_projection_origin>1</cart:scale_factor_at_projection_origin>
+                </cart:Polar_Stereographic>
+              </cart:Map_Projection>
+              <cart:Planar_Coordinate_Information>
+                <cart:planar_coordinate_encoding_method>Coordinate Pair</cart:planar_coordinate_encoding_method>
+                <cart:Coordinate_Representation>
+                  <cart:pixel_resolution_x unit="m/pixel">1.9100950000000001</cart:pixel_resolution_x>
+                  <cart:pixel_resolution_y unit="m/pixel">1.9100950000000001</cart:pixel_resolution_y>
+                  <cart:pixel_scale_x unit="pixel/deg">15875.3100888434765</cart:pixel_scale_x>
+                  <cart:pixel_scale_y unit="pixel/deg">15875.3100888434765</cart:pixel_scale_y>
+                </cart:Coordinate_Representation>
+              </cart:Planar_Coordinate_Information>
+              <cart:Geo_Transformation>
+                <cart:upperleft_corner_x unit="m">-25316.3991300000016</cart:upperleft_corner_x>
+                <cart:upperleft_corner_y unit="m">158902.713144999987</cart:upperleft_corner_y>
+              </cart:Geo_Transformation>
+            </cart:Planar>
+            <cart:Geodetic_Model>
+              <cart:latitude_type>Planetocentric</cart:latitude_type>
+              <cart:spheroid_name>MOON</cart:spheroid_name>
+              <cart:a_axis_radius unit="m">1737400</cart:a_axis_radius>
+              <cart:b_axis_radius unit="m">1737400</cart:b_axis_radius>
+              <cart:c_axis_radius unit="m">1737400</cart:c_axis_radius>
+              <cart:longitude_direction>Positive East</cart:longitude_direction>
+            </cart:Geodetic_Model>
+          </cart:Horizontal_Coordinate_System_Definition>
+        </cart:Spatial_Reference_Information>
+      </cart:Cartography>
+      <proc:Processing_Information>
+        <Local_Internal_Reference>
+          <comment>ShadowCam Calibrated Map-Projected Product in a Cloud Optimized GeoTIFF (COG)</comment>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>processing_information_to_data_object</local_reference_type>
+        </Local_Internal_Reference>
+        <proc:Input_Product_List>
+          <proc:Input_Product>
+            <Internal_Reference>
+              <lid_reference>urn:nasa:pds:kplo-shadowcam:data-calibrated:m044416018sc</lid_reference>
+              <reference_type>data_to_input_product</reference_type>
+              <comment>Reference pointer to the calibrated source product.</comment>
+            </Internal_Reference>
+          </proc:Input_Product>
+        </proc:Input_Product_List>
+        <proc:Process>
+          <proc:name>shadowcam_cdr_p30</proc:name>
+          <proc:description>
+            Pipeline process to map project a calibrated ShadowCam image
+          </proc:description>
+          <proc:Software>
+            <proc:name>Integrated Software for Imagers and Spectrometers</proc:name>
+            <proc:software_availability>Open source</proc:software_availability>
+            <proc:description>
+              Use ISIS utilities to map project the calibrated ShadowCam image
+              using the best available DTM from SLDEM or regional LOLA products
+            </proc:description>
+            <proc:Software_Program>
+              <proc:name>spiceinit</proc:name>
+              <proc:description>
+                Update SPICE data (kernels, pointing, and position) for a camera
+                cube
+              </proc:description>
+            </proc:Software_Program>
+            <proc:Software_Program>
+              <proc:name>cam2map</proc:name>
+              <proc:description>
+                Convert camera image to a map projection
+              </proc:description>
+            </proc:Software_Program>
+          </proc:Software>
+          <proc:Software>
+            <proc:name>GDAL with dans-gdal-scripts</proc:name>
+            <proc:software_version_id>GDAL 3.8.3, released 2024/01/04</proc:software_version_id>
+            <proc:software_availability>Open source</proc:software_availability>
+            <proc:description>Generate Cloud Optimized GeoTIFF</proc:description>
+            <proc:Software_Program>
+              <proc:name>gdal_translate</proc:name>
+              <proc:program_start_date_time>2025-08-26T23:35:02.576572Z</proc:program_start_date_time>
+              <proc:program_stop_date_time>2025-08-26T23:35:55.873401Z</proc:program_stop_date_time>
+              <proc:Software_Program_Parameters>
+                <proc:Parameter>
+                  <proc:name>Parameter 1</proc:name>
+                  <proc:value>-of</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 2</proc:name>
+                  <proc:value>COG</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 3</proc:name>
+                  <proc:value>-co</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 4</proc:name>
+                  <proc:value>COMPRESS=DEFLATE</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 5</proc:name>
+                  <proc:value>-co</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 6</proc:name>
+                  <proc:value>PREDICTOR=YES</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 7</proc:name>
+                  <proc:value>-co</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 8</proc:name>
+                  <proc:value>BLOCKSIZE=256</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 9</proc:name>
+                  <proc:value>-co</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 10</proc:name>
+                  <proc:value>BIGTIFF=YES</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>Parameter 11</proc:name>
+                  <proc:value>M044416018S.map.cub</proc:value>
+                </proc:Parameter>
+                <proc:Parameter>
+                  <proc:name>output ShadowCam map projected calibrated file</proc:name>
+                  <proc:parameter_type>Output</proc:parameter_type>
+                  <proc:value>M044416018S_map_raw.tif</proc:value>
+                  <Local_Internal_Reference>
+                    <comment>ShadowCam Calibrated Map-Projected Product in a Cloud Optimized GeoTIFF (COG)</comment>
+                    <local_identifier_reference>image</local_identifier_reference>
+                    <local_reference_type>parameter_to_data_object</local_reference_type>
+                  </Local_Internal_Reference>
+                </proc:Parameter>
+              </proc:Software_Program_Parameters>
+            </proc:Software_Program>
+          </proc:Software>
+        </proc:Process>
+      </proc:Processing_Information>
+    </Discipline_Area>
+  </Context_Area>
+  <Reference_List>
+    <Internal_Reference>
+      <lid_reference>urn:nasa:pds:kplo-shadowcam:data-calibrated:m044416018sc</lid_reference>
+      <reference_type>browse_to_data</reference_type>
+      <comment>This is a reference to the calibrated data file corresponding to this map projection.</comment>
+    </Internal_Reference>
+  </Reference_List>
+  <File_Area_Browse>
+    <File>
+      <file_name>M044416018S_map_raw.tif</file_name>
+      <local_identifier>image</local_identifier>
+      <creation_date_time>2025-08-26T23:36:59.628714Z</creation_date_time>
+      <file_size unit="byte">2602</file_size>
+      <md5_checksum>3bb60e693c8651dcf8bbc8defd9fd4b5</md5_checksum>
+      <comment>ShadowCam Calibrated Map-Projected Product in a Cloud Optimized GeoTIFF (COG)</comment>
+    </File>
+    <Encoded_Image>
+      <offset unit="byte">0</offset>
+      <encoding_standard_id>TIFF</encoding_standard_id>
+    </Encoded_Image>
+  </File_Area_Browse>
+</Product_Browse>

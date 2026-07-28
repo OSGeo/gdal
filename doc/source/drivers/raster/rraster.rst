@@ -37,6 +37,7 @@ The following creation options are supported:
       which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
       is not specified, the source dataset INTERLEAVE will be automatically taken
       into account.
+      See :ref:`raster_data_model_interleave_mode` for more details.
 
 -  .. co:: PIXELTYPE
       :choices: SIGNEDBYTE

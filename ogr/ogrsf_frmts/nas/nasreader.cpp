@@ -167,7 +167,7 @@ bool NASReader::SetupParser()
         XMLString::release(&xmlUriNS);
 
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "NAS: Exception initializing Xerces based GML reader.\n");
+                 "NAS: Exception initializing Xerces based GML reader.");
         return false;
     }
 

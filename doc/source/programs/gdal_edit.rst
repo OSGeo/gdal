@@ -189,6 +189,11 @@ The :option:`-a_ullr`, :option:`-a_ulurll`, :option:`-tr` and :option:`-unsetgt`
 
 The :option:`-unsetstats` and either :option:`-stats` or :option:`-approx_stats` options are exclusive.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Example
 -------
 

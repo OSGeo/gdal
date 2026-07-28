@@ -268,7 +268,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
             Iterator(const Iterator &oOther);  // declared but not defined.
                                                // Needed for gcc 5.4 at least
             Iterator(Iterator &&oOther) noexcept;  // declared but not defined.
-                // Needed for gcc 5.4 at least
+            // Needed for gcc 5.4 at least
             ~Iterator();
             GDALRasterBand *operator*();
             Iterator &operator++();
@@ -371,7 +371,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                            CSLConstList papszOptions = nullptr);
 
     virtual void *GetInternalHandle(const char *pszHandleName);
-    virtual GDALDriver *GetDriver(void);
+    virtual GDALDriver *GetDriver(void) const;
     virtual char **GetFileList(void);
 
     const char *GetDriverName() const;
@@ -793,7 +793,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
             Iterator(const Iterator &oOther);  // declared but not defined.
                                                // Needed for gcc 5.4 at least
             Iterator(Iterator &&oOther) noexcept;  // declared but not defined.
-                // Needed for gcc 5.4 at least
+            // Needed for gcc 5.4 at least
             ~Iterator();
             const FeatureLayerPair &operator*() const;
             Iterator &operator++();

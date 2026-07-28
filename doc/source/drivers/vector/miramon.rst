@@ -326,41 +326,50 @@ Layer creation options
 Examples
 --------
 
--  A translation from an *Example_1.dxf* file with one layer but some different geometric types
+.. example::
+
+   A translation from an *Example_1.dxf* file with one layer but some different geometric types
    in the layer, will result 'file1.dxf' into a new MiraMon set of layers in the 'output_folder'.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr output_folder Example_1.dxf -f MiraMonVector -lco Version=V1.1
 
 
--  A translation from a *Example_2.dxf* file with one polygon type layer 'file1.dxf' into a new MiraMon layer
+.. example::
+
+   A translation from a *Example_2.dxf* file with one polygon type layer 'file1.dxf' into a new MiraMon layer
    'territories.pol' (with UTF-8 encoding at the *.dbf* files) is performed like this:
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr territories.pol Example_2.dxf -lco DBFEncoding=UTF8 (no needed to include **-f MiraMonVector** because the output layer is not a directory)
 
+.. example::
 
--  A translation from a MiraMon layer of arcs, 'rivers.arc', into a new *.gml* file (taking only the first element of
+   A translation from a MiraMon layer of arcs, 'rivers.arc', into a new *.gml* file (taking only the first element of
    the multirecords in the attributes table) is performed like this:
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr rivers.gml rivers.arc -oo MultiRecordIndex=1
 
--  A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the first height of
+.. example::
+
+   A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the first height of
    every point is performed like this:
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr tracks.gml tracks.arc -oo Height=First
 
--  A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the last height of
+.. example::
+
+   A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the last height of
    every point and documenting the attribute descriptors in Catalan (if the layer is multilingual
    and it has this language available) is performed like this:
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr tracks.gml tracks.arc -oo Height=First -oo Language=CAT
 

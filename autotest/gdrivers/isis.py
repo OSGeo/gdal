@@ -1377,8 +1377,7 @@ End""",
     content = gdal.VSIFReadL(1, 10000, f).decode("ASCII")
     gdal.VSIFCloseL(f)
 
-    assert (
-        """Object = Table
+    assert """Object = Table
   Name = first_table
 End_Object
 
@@ -1397,9 +1396,7 @@ End_Object
 Object = foo
   x = C
 End_Object
-"""
-        in content
-    )
+""" in content
 
     gdal.Unlink("/vsimem/in.lbl")
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
@@ -1918,8 +1915,7 @@ End""",
     lbl = ds.GetMetadata_List("json:ISIS3")[0]
     lbl = json.loads(lbl)
 
-    assert lbl["IsisCube"]["BandBin"] == json.loads(
-        """{
+    assert lbl["IsisCube"]["BandBin"] == json.loads("""{
       "_type":"group",
       "BandBinUnit":"MICROMETER",
       "Width":{
@@ -1937,12 +1933,10 @@ End""",
       "BandBinCenter":[
         2.000000
       ]
-    }"""
-    )
+    }""")
 
     assert "OriginalBandBin" in lbl["IsisCube"]
-    assert lbl["IsisCube"]["OriginalBandBin"] == json.loads(
-        """{
+    assert lbl["IsisCube"]["OriginalBandBin"] == json.loads("""{
       "_type":"group",
       "BandSuffixName":[
         "first band",
@@ -1964,8 +1958,7 @@ End""",
         ],
         "unit":"um"
       }
-    }"""
-    )
+    }""")
 
     ds = None
     gdal.GetDriverByName("GTiff").Delete("/vsimem/out.tif")
@@ -2153,13 +2146,13 @@ End
     }
     assert got == expected
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "in.lbl", open_options=["INCLUDE_OFFLINE_CONTENT=NO"]
     ) as ds:
         got = json.loads(ds.GetMetadata("json:ISIS3")[0])
     assert "_data" not in got["Table_FirstTable"]
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmp_vsimem / "in.lbl", open_options=["MAX_SIZE_OFFLINE_CONTENT=5"]
     ) as ds:
         with gdaltest.error_raised(
@@ -2359,3 +2352,138 @@ End
     assert b"TestRepeated2 = 1 <m>\n    TestRepeated2 = 2 <cm>\n" in data
     assert b"TestRepeated3 = (1, 2)\n    TestRepeated3 = 3\n" in data
     assert b"TestRepeated4 = (1 <m>, 2)\n    TestRepeated4 = 3\n" in data
+
+
+def test_isis_keyword_with_slash(tmp_vsimem):
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "in.lbl",
+        """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+
+  Group = Test
+    Test/with/slash:and:colon = 1
+  End_Group
+
+End_Object
+
+End
+""",
+    )
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "in.bin", b"\x01")
+
+    with gdal.Open(tmp_vsimem / "in.lbl") as ds:
+        j = json.loads(ds.GetMetadata("json:ISIS3")[0])
+        assert j["IsisCube"]["Test"] == {
+            "_type": "group",
+            "Test/with/slash:and:colon": 1,
+        }
+
+
+def _open_isis3_projstr(tmp_vsimem, mapping):
+    # Write a minimal detached ISIS3 label whose Mapping group is 'mapping',
+    # plus the tiny raw image it points at, and open it.
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "projstr.lbl",
+        f"""Object = IsisCube
+  Object = Core
+    StartByte = 1
+    ^Core     = projstr.cub
+    Format    = BandSequential
+    Group = Dimensions
+      Samples = 2
+      Lines   = 2
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+  Group = Mapping
+{mapping}
+  End_Group
+End_Object
+End
+""",
+    )
+    gdal.FileFromMemBuffer(tmp_vsimem / "projstr.cub", b"\x00" * 4)
+    return gdal.Open(tmp_vsimem / "projstr.lbl")
+
+
+def test_isis3_projstr_read(tmp_vsimem):
+
+    # The ISIS IProj projection (ProjectionName = IProj) carries its
+    # definition in a ProjStr PROJ string, which may span two lines.
+    with _open_isis3_projstr(
+        tmp_vsimem,
+        """    ProjectionName   = IProj
+    TargetName       = Mars
+    PixelResolution  = 10.0 <meters/pixel>
+    UpperLeftCornerX = -1000.0 <meters>
+    UpperLeftCornerY = 2000.0 <meters>
+    ProjStr          = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0
+                        +a=3396190 +b=3396190 +units=m +no_defs +type=crs" """,
+    ) as ds:
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.IsProjected()
+        assert srs.GetSemiMajor() == pytest.approx(3396190)
+        assert "+proj=eqc" in srs.ExportToProj4()
+        assert ds.GetGeoTransform() == pytest.approx(
+            [-1000.0, 10.0, 0.0, 2000.0, 0.0, -10.0]
+        )
+
+
+def test_isis3_projstr_takes_precedence(tmp_vsimem):
+
+    # When both a named projection and ProjStr are present, ProjStr wins.
+    with _open_isis3_projstr(
+        tmp_vsimem,
+        """    ProjectionName   = Equirectangular
+    TargetName       = Mars
+    EquatorialRadius = 3396190.0 <meters>
+    PolarRadius      = 3396190.0 <meters>
+    CenterLongitude  = 0.0
+    CenterLatitude   = 0.0
+    PixelResolution  = 10.0 <meters/pixel>
+    UpperLeftCornerX = -1000.0 <meters>
+    UpperLeftCornerY = 2000.0 <meters>
+    ProjStr          = "+proj=stere +lat_0=90 +lon_0=0 +k=1 +x_0=0 +y_0=0
+                        +a=3396190 +b=3396190 +units=m +no_defs +type=crs" """,
+    ) as ds:
+        assert "+proj=stere" in ds.GetSpatialRef().ExportToProj4()
+
+
+def test_isis3_projstr_invalid(tmp_vsimem):
+
+    # An unparseable ProjStr should warn and leave no spatial reference,
+    # rather than crash.
+    with gdal.quiet_errors():
+        ds = _open_isis3_projstr(
+            tmp_vsimem,
+            """    ProjectionName   = IProj
+    TargetName       = Mars
+    PixelResolution  = 10.0 <meters/pixel>
+    UpperLeftCornerX = -1000.0 <meters>
+    UpperLeftCornerY = 2000.0 <meters>
+    ProjStr          = "+proj=no_such_projection +a=3396190" """,
+        )
+    assert ds is not None
+    assert ds.GetSpatialRef() is None

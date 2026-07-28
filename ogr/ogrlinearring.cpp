@@ -449,8 +449,8 @@ void OGRLinearRing::closeRings()
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
-                                        int bTestEnvelope) const
+bool OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
+                                  int bTestEnvelope) const
 {
     if (nullptr == poPoint)
     {
@@ -517,7 +517,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
 
     // If iNumCrossings number is even, given point is outside the ring,
     // when the crossings number is odd, the point is inside the ring.
-    return iNumCrossings % 2;  // OGRBoolean
+    return (iNumCrossings % 2) != 0;
 }
 
 /************************************************************************/
@@ -530,8 +530,8 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
-                                                int bTestEnvelope) const
+bool OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
+                                          int bTestEnvelope) const
 {
     if (nullptr == poPoint)
     {
@@ -612,7 +612,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
 OGRErr OGRLinearRing::transform(OGRCoordinateTransformation *poCT)
 
 {
-    const bool bIsClosed = getNumPoints() > 2 && CPL_TO_BOOL(get_IsClosed());
+    const bool bIsClosed = getNumPoints() > 2 && get_IsClosed();
     OGRErr eErr = OGRLineString::transform(poCT);
     if (bIsClosed && eErr == OGRERR_NONE && !get_IsClosed())
     {

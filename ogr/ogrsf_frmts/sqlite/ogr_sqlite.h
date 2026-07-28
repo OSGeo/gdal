@@ -462,7 +462,7 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
     CPLString m_osQuery{};
     bool m_bHasCheckedSpatialIndexTable = false;
 
-    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_None;
+    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_Unknown;
     CPLString m_osGeomColumn{};
     bool m_bHasSpatialIndex = false;
 
@@ -661,14 +661,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
-    OGRSpatialReference *AddSRIDToCache(
-        int nId,
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            &&poSRS);
+    OGRSpatialReference *AddSRIDToCache(int nId,
+                                        OGRSpatialReferenceRefCountedPtr poSRS);
 
     bool m_bHaveGeometryColumns = false;
     bool m_bIsSpatiaLiteDB = false;

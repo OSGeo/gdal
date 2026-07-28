@@ -95,7 +95,7 @@ CPLErr GDALMultiDomainMetadata::SetMetadata(CSLConstList papszMetadata,
     // access.
     if (!STARTS_WITH_CI(pszDomain, "xml:") &&
         !STARTS_WITH_CI(pszDomain, "json:") &&
-        !EQUAL(pszDomain, "SUBDATASETS")
+        !EQUAL(pszDomain, GDAL_MDD_SUBDATASETS)
         // The IMD metadata domain should not be sorted, as order matters
         // when writing it back. Cf https://github.com/OSGeo/gdal/issues/11470
         && !EQUAL(pszDomain, "IMD"))

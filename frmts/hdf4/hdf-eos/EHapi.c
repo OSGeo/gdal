@@ -17,6 +17,7 @@ this permission notice appear in supporting documentation.
 
 #include "cpl_port.h"
 #include <errno.h>
+#include <limits.h>
 #include "mfhdf.h"
 #include "HdfEosDef.h"
 
@@ -76,7 +77,7 @@ static intn EHget_numfiles(void);
 |  Jun 96   Joel Gales    Original Programmer                                 |
 |  Jul 96   Joel Gales    Add file id offset EHIDOFFSET                       |
 |  Aug 96   Joel Gales    Add "END" statement to structural metadata          |
-|  Sep 96   Joel Gales    Reverse order of Hopen ane SDstart statements       |
+|  Sep 96   Joel Gales    Reverse order of Hopen and SDstart statements       |
 |                         for RDWR and READ access                            |
 |  Oct 96   Joel Gales    Trap CREATE & RDWR (no write permission)            |
 |                         access errors                                       |
@@ -194,7 +195,7 @@ EHopen(const char *filename, intn access)
 
 		    /* Setup structural metadata */
 		    /* ------------------------- */
-		    metabuf = (char *) calloc(32000, 1);
+		    metabuf = (char *) calloc(UTLSTRSIZE, 1);
 		    if(metabuf == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
@@ -212,7 +213,7 @@ EHopen(const char *filename, intn access)
 		    /* Write Structural metadata */
 		    /* ------------------------- */
 		    SDsetattr(sdInterfaceID, "StructMetadata.0",
-			      DFNT_CHAR8, 32000, metabuf);
+			      DFNT_CHAR8, UTLSTRSIZE, metabuf);
 		    free(metabuf);
 		} else
 		{
@@ -290,7 +291,7 @@ EHopen(const char *filename, intn access)
 		       /* --------------------------------------------- */
 		       if (attrIndex == -1)
 		       {
-			  metabuf = (char *) calloc(32000, 1);
+			  metabuf = (char *) calloc(UTLSTRSIZE, 1);
 			  if(metabuf == NULL)
 			  {
 			      HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
@@ -306,7 +307,7 @@ EHopen(const char *filename, intn access)
 			  strcat(metabuf, "END\n");
 
 			  SDsetattr(sdInterfaceID, "StructMetadata.0",
-				  DFNT_CHAR8, 32000, metabuf);
+				  DFNT_CHAR8, UTLSTRSIZE, metabuf);
 			  free(metabuf);
 		       }
                     } else
@@ -577,221 +578,6 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
     return (status);
 }
 
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHgetversion                                                     |
-|                                                                             |
-|  DESCRIPTION: Returns HDF-EOS version string                                |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file id                         |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  version        char                HDF-EOS version string                  |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Mar 97   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHgetversion(int32 fid, char *version)
-{
-    intn            status = 0;	/* routine return status variable */
-
-    uint8           access;	/* Access code */
-    int32           dum;	/* Dummy variable */
-    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
-    int32           attrIndex;	/* HDFEOS version attribute index */
-    int32           count;	/* Version string size */
-
-    char            attrname[16];	/* Attribute name */
-
-
-    /* Get SDS interface ID */
-    /* -------------------- */
-    status = EHchkfid(fid, "EHgetversion", &dum, &sdInterfaceID, &access);
-
-
-    /* Get attribute index number */
-    /* -------------------------- */
-    attrIndex = SDfindattr(sdInterfaceID, "HDFEOSVersion");
-
-    /* No such attribute */
-    /* ----------------- */
-    if (attrIndex < 0)
-        return (-1);
-
-    /* Get attribute size */
-    /* ------------------ */
-    status = SDattrinfo(sdInterfaceID, attrIndex, attrname, &dum, &count);
-
-    /* Check return status */
-    /* ------------------- */
-    if (status < 0)
-        return (-1);
-
-    /* Read version attribute */
-    /* ---------------------- */
-    status = SDreadattr(sdInterfaceID, attrIndex, (VOIDP) version);
-
-
-    /* Place string terminator on version string */
-    /* ----------------------------------------- */
-    version[count] = 0;
-
-
-    return (status);
-}
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHconvAng                                                        |
-|                                                                             |
-|  DESCRIPTION: Angle conversion Utility                                      |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  outAngle       float64             Output Angle value                      |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  inAngle        float64             Input Angle value                       |
-|  code           intn                Conversion code                         |
-!                                       HDFE_RAD_DEG (0)                      |
-|                                       HDFE_DEG_RAD (1)                      |
-|                                       HDFE_DMS_DEG (2)                      |
-|                                       HDFE_DEG_DMS (3)                      |
-|                                       HDFE_RAD_DMS (4)                      |
-|                                       HDFE_DMS_RAD (5)                      |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|     None                                                                    |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|  Feb 97   Joel Gales    Correct "60" min & "60" sec in _DMS conversion      |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-float64
-EHconvAng(float64 inAngle, intn code)
-{
-#define RADIANS_TO_DEGREES 180. / 3.14159265358979324
-#define DEGREES_TO_RADIANS 3.14159265358979324 / 180.
-
-    int32           min;	/* Truncated Minutes */
-    int32           deg;	/* Truncated Degrees */
-
-    float64         sec;	/* Seconds */
-    float64         outAngle = 0.0;	/* Angle in desired units */
-
-    switch (code)
-    {
-
-	/* Convert radians to degrees */
-	/* -------------------------- */
-    case HDFE_RAD_DEG:
-	outAngle = inAngle * RADIANS_TO_DEGREES;
-	break;
-
-
-	/* Convert degrees to radians */
-	/* -------------------------- */
-    case HDFE_DEG_RAD:
-	outAngle = inAngle * DEGREES_TO_RADIANS;
-	break;
-
-
-	/* Convert packed degrees to degrees */
-	/* --------------------------------- */
-    case HDFE_DMS_DEG:
-	deg = (int32)(inAngle / 1000000);
-	min = (int32)((inAngle - deg * 1000000) / 1000);
-	sec = (inAngle - deg * 1000000 - min * 1000);
-	outAngle = deg + min / 60.0 + sec / 3600.0;
-	break;
-
-
-	/* Convert degrees to packed degrees */
-	/* --------------------------------- */
-    case HDFE_DEG_DMS:
-	deg = (int32)(inAngle);
-	min = (int32)((inAngle - deg) * 60);
-	sec = (inAngle - deg - min / 60.0) * 3600;
-
-	if ((intn) sec == 60)
-	{
-	    sec = sec - 60;
-	    min = min + 1;
-	}
-	if (min == 60)
-	{
-	    min = min - 60;
-	    deg = deg + 1;
-	}
-	outAngle = deg * 1000000 + min * 1000 + sec;
-	break;
-
-
-	/* Convert radians to packed degrees */
-	/* --------------------------------- */
-    case HDFE_RAD_DMS:
-	inAngle = inAngle * RADIANS_TO_DEGREES;
-	deg = (int32)(inAngle);
-	min = (int32)((inAngle - deg) * 60);
-	sec = (inAngle - deg - min / 60.0) * 3600;
-
-	if ((intn) sec == 60)
-	{
-	    sec = sec - 60;
-	    min = min + 1;
-	}
-	if (min == 60)
-	{
-	    min = min - 60;
-	    deg = deg + 1;
-	}
-	outAngle = deg * 1000000 + min * 1000 + sec;
-	break;
-
-
-	/* Convert packed degrees to radians */
-	/* --------------------------------- */
-    case HDFE_DMS_RAD:
-	deg = (int32)(inAngle / 1000000);
-	min = (int32)((inAngle - deg * 1000000) / 1000);
-	sec = (inAngle - deg * 1000000 - min * 1000);
-	outAngle = deg + min / 60.0 + sec / 3600.0;
-	outAngle = outAngle * DEGREES_TO_RADIANS;
-	break;
-    }
-    return (outAngle);
-}
-
-#undef TO_DEGREES
-#undef TO_RADIANS
-
-
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -824,12 +610,14 @@ EHconvAng(float64 inAngle, intn code)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
+EHparsestr(const char *instring, const char delim,
+           char *pntr[], size_t pntrsize,
+           int32 len[], size_t lensize)
 {
-    int32           i;		/* Loop index */
-    int32           prevDelimPos = 0;	/* Previous delimiter position */
-    int32           count;	/* Number of elements in string list */
-    int32           slen;	/* String length */
+    size_t           i;		/* Loop index */
+    size_t           prevDelimPos = 0;	/* Previous delimiter position */
+    size_t           count;	/* Number of elements in string list */
+    size_t           slen;	/* String length */
 
     char           *delimitor;	/* Pointer to delimiter */
 
@@ -846,7 +634,7 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
 
     /* if string pointers are requested set first one to beginning of string */
     /* --------------------------------------------------------------------- */
-    if (&pntr[0] != NULL)
+    if (pntr != NULL && pntrsize)
     {
 	pntr[0] = (char *)instring;
     }
@@ -856,53 +644,59 @@ EHparsestr(const char *instring, const char delim, char *pntr[], int32 len[])
     {
 	/* if string length requested then set to input string length */
 	/* ---------------------------------------------------------- */
-	if (len != NULL)
+	if (len != NULL && lensize)
 	{
-	    len[0] = slen;
+	    len[0] = (int32)slen;
 	}
     } else
 	/* Delimiters Found */
 	/* ---------------- */
     {
-	/* Loop through all characters in string */
-	/* ------------------------------------- */
-	for (i = 1; i < slen; i++)
-	{
-	    /* If character is a delimiter ... */
-	    /* ------------------------------- */
-	    if (instring[i] == delim)
-	    {
+        /* Loop through all characters in string */
+        /* ------------------------------------- */
+        for (i = 1; i < slen; i++)
+        {
+            /* If character is a delimiter ... */
+            /* ------------------------------- */
+            if (instring[i] == delim)
+            {
 
-		/* If string pointer requested */
-		/* --------------------------- */
-		if (&pntr[0] != NULL)
-		{
-		    /* if requested then compute string length of entry */
-		    /* ------------------------------------------------ */
-		    if (len != NULL)
-		    {
-			len[count - 1] = i - prevDelimPos;
-		    }
-		    /* Point to beginning of string entry */
-		    /* ---------------------------------- */
-		    pntr[count] = (char *)instring + i + 1;
-		}
-		/* Reset previous delimiter position and increment counter */
-		/* ------------------------------------------------------- */
-		prevDelimPos = i + 1;
-		count++;
-	    }
-	}
+            /* If string pointer requested */
+            /* --------------------------- */
+            if (pntr != NULL)
+            {
+                /* if requested then compute string length of entry */
+                /* ------------------------------------------------ */
+                if (len != NULL)
+                {
+                    if (count - 1 >= lensize)
+                        return -1;
+                    len[count - 1] = (int32)(i - prevDelimPos);
+                }
+                /* Point to beginning of string entry */
+                /* ---------------------------------- */
+                if (count >= pntrsize)
+                    return -1;
+                pntr[count] = (char *)instring + i + 1;
+            }
+            /* Reset previous delimiter position and increment counter */
+            /* ------------------------------------------------------- */
+            prevDelimPos = i + 1;
+            count++;
+            }
+        }
 
-	/* Compute string length of last entry */
-	/* ----------------------------------- */
-	if (&pntr[0] != NULL && len != NULL)
-	{
-	    len[count - 1] = i - prevDelimPos;
-	}
+        /* Compute string length of last entry */
+        /* ----------------------------------- */
+        if (pntr != NULL && len != NULL)
+        {
+            if (count == 0 || (size_t)(count - 1) >= lensize)
+                return -1;
+            len[count - 1] = (int32)(i - prevDelimPos);
+        }
     }
 
-    return (count);
+    return (int32)(count);
 }
 
 
@@ -953,7 +747,9 @@ EHstrwithin(const char *target, const char *search, const char delim)
 
     /* Count number of entries in search string list */
     /* --------------------------------------------- */
-    nentries = EHparsestr(search, delim, NULL, NULL);
+    nentries = EHparsestr(search, delim, NULL, 0, NULL, 0);
+    if (nentries == 0)
+        return -1;
 
 
     /* Allocate string pointer and length arrays */
@@ -975,7 +771,14 @@ EHstrwithin(const char *target, const char *search, const char delim)
 
     /* Parse search string */
     /* ------------------- */
-    nentries = EHparsestr(search, delim, ptr, slen);
+    nentries = EHparsestr(search, delim, ptr, nentries, slen, nentries);
+    if (nentries < 0)
+    {
+        free(ptr);
+        free(slen);
+        HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
+        return(-1);
+    }
 
 
     /* Loop through all elements in search string list */
@@ -1008,82 +811,6 @@ EHstrwithin(const char *target, const char *search, const char delim)
 
     return (indx);
 }
-
-
-
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHloadliststr                                                    |
-|                                                                             |
-|  DESCRIPTION: Builds list string from string array                          |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  ptr            char                String pointer array                    |
-|  nentries       int32               Number of string array elements         |
-|  delim          char                Delimiter                               |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  liststr        char                Output list string                      |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHloadliststr(char *ptr[], int32 nentries, char *liststr, char delim)
-{
-    intn            status = 0;	/* routine return status variable */
-
-    int32           i;		/* Loop index */
-    int32           slen;	/* String entry length */
-    int32           off = 0;	/* Position of next entry along string list */
-    char            dstr[2];    /* string version of input variable "delim" */
-
-    dstr[0] = delim;
-    dstr[1] = '\0';
-
-
-    /* Loop through all entries in string array */
-    /* ---------------------------------------- */
-    for (i = 0; i < nentries; i++)
-    {
-	/* Get string length of string array entry */
-	/* --------------------------------------- */
-	slen = (int)strlen(ptr[i]);
-
-
-	/* Copy string entry to string list */
-	/* -------------------------------- */
-	memcpy(liststr + off, ptr[i], slen + 1);
-
-
-	/* Concatenate with delimiter */
-	/* -------------------------- */
-	if (i != nentries - 1)
-	{
-	    strcat(liststr, dstr);
-	}
-	/* Get position of next entry for string list */
-	/* ------------------------------------------ */
-	off += slen + 1;
-    }
-
-    return (status);
-}
-
 
 
 
@@ -1180,7 +907,7 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 		    /* Get ID and name */
 		    /* --------------- */
 		    id = Vattach(fid, *(refs + i), access);
-		    Vgetname(id, name);
+		    VgetnameSafe(id, name, sizeof(name));
 
 		    /* If name equals desired object name get ID */
 		    /* ----------------------------------------- */
@@ -1233,118 +960,6 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 
 
 
-
-
-/*----------------------------------------------------------------------------|
-|  BEGIN_PROLOG                                                               |
-|                                                                             |
-|  FUNCTION: EHrevflds                                                        |
-|                                                                             |
-|  DESCRIPTION: Reverses elements in a string list                            |
-|                                                                             |
-|                                                                             |
-|  Return Value    Type     Units     Description                             |
-|  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
-|                                                                             |
-|  INPUTS:                                                                    |
-|  dimlist        char                Original dimension list                 |
-|                                                                             |
-|  OUTPUTS:                                                                   |
-|  revdimlist     char                Reversed dimension list                 |
-|                                                                             |
-|  NOTES:                                                                     |
-|                                                                             |
-|                                                                             |
-|   Date     Programmer   Description                                         |
-|  ======   ============  =================================================   |
-|  Jun 96   Joel Gales    Original Programmer                                 |
-|                                                                             |
-|  END_PROLOG                                                                 |
------------------------------------------------------------------------------*/
-intn
-EHrevflds(const char *dimlist, char *revdimlist)
-{
-    intn            status = 0;	/* routine return status variable */
-
-    int32           indx;	/* Loop index */
-    int32           nentries;	/* Number of entries in search string */
-    int32          *slen;	/* Pointer to string length array */
-
-    char          **ptr;	/* Pointer to string pointer array */
-    char           *tempPtr;	/* Temporary string pointer */
-    char           *tempdimlist;/* Temporary dimension list */
-
-
-    /* Copy dimlist into temp dimlist */
-    /* ------------------------------ */
-    tempdimlist = (char *) malloc(strlen(dimlist) + 1);
-    if(tempdimlist == NULL)
-    {
-	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
-	return(-1);
-    }
-    strcpy(tempdimlist, dimlist);
-
-
-    /* Count number of entries in search string list */
-    /* --------------------------------------------- */
-    nentries = EHparsestr(tempdimlist, ',', NULL, NULL);
-
-
-    /* Allocate string pointer and length arrays */
-    /* ----------------------------------------- */
-    ptr = (char **) calloc(nentries, sizeof(char *));
-    if(ptr == NULL)
-    {
-	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
-	free(tempdimlist);
-	return(-1);
-    }
-    slen = (int32 *) calloc(nentries, sizeof(int32));
-    if(slen == NULL)
-    {
-	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
-	free(ptr);
-	free(tempdimlist);
-	return(-1);
-    }
-
-
-    /* Parse search string */
-    /* ------------------- */
-    nentries = EHparsestr(tempdimlist, ',', ptr, slen);
-
-
-    /* Reverse entries in string pointer array */
-    /* --------------------------------------- */
-    for (indx = 0; indx < nentries / 2; indx++)
-    {
-	tempPtr = ptr[indx];
-	ptr[indx] = ptr[nentries - 1 - indx];
-	ptr[nentries - 1 - indx] = tempPtr;
-    }
-
-
-    /* Replace comma delimiters by nulls */
-    /* --------------------------------- */
-    for (indx = 0; indx < nentries - 1; indx++)
-    {
-	*(ptr[indx] - 1) = 0;
-    }
-
-
-    /* Build new string list */
-    /* --------------------- */
-    status = EHloadliststr(ptr, nentries, revdimlist, ',');
-
-
-    free(slen);
-    free(ptr);
-    free(tempdimlist);
-
-    return (status);
-}
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -1480,8 +1095,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     intn            i;		/* Loop index */
 
     int32           attrIndex;	/* Structural metadata attribute index */
-    int32           nmeta;	/* Number of 32000 byte metadata sections */
-    int32           metalen;	/* Length of structural metadata */
+    int32           nmeta;	/* Number of UTLSTRSIZE byte metadata sections */
 
     char           *metabuf;	/* Pointer (handle) to structural metadata */
     char           *endptr = NULL;	/* Pointer to end of metadata section */
@@ -1522,10 +1136,16 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 	}
     }
 
+    if (nmeta > INT_MAX / UTLSTRSIZE )
+    {
+        HEpush(DFE_NOSPACE,"EHEHmetagroup", __FILE__, __LINE__);
 
-    /* Allocate space for metadata (in units of 32000 bytes) */
+        return( NULL);
+    }
+
+    /* Allocate space for metadata (in units of UTLSTRSIZE bytes) */
     /* ----------------------------------------------------- */
-    metabuf = (char *) calloc(32000 * nmeta, 1);
+    metabuf = (char *) calloc(UTLSTRSIZE * nmeta, 1);
 
     if(metabuf == NULL)
     {
@@ -1541,15 +1161,9 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%d", "StructMetadata.", i);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
-	metalen = (int)strlen(metabuf);
+	int metalen = (int)strlen(metabuf);
 	SDreadattr(sdInterfaceID, attrIndex, metabuf + metalen);
     }
-
-    /* Determine length (# of characters) of metadata */
-    /* ---------------------------------------------- */
-    metalen = (int)strlen(metabuf);
-
-
 
     /* Find HDF-EOS structure "root" group in metadata */
     /* ----------------------------------------------- */
@@ -1599,7 +1213,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
      * If not found then return to previous position in metadata and look for
      * "new-style" (ODL) metadata string
      */
-    if (metaptr == NULL)
+    if (metaptr == NULL && prevmetaptr)
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=\"", structname);
 	metaptr = strstr(prevmetaptr, utlstr);
@@ -2013,7 +1627,7 @@ EHinquire(const char *filename, const char *type, char *objectlist, int32 * strb
 	/* Get Vgroup ID, name, and class */
 	/* ------------------------------ */
 	vGrpID = Vattach(HDFfid, vgRef, "r");
-	Vgetname(vGrpID, name);
+	VgetnameSafe(vGrpID, name, sizeof(name));
 	Vgetclass(vGrpID, class);
 
 
@@ -2124,8 +1738,10 @@ EHclose(int32 fid)
 	/* "Close" SD interface, Vgroup interface, and HDF file */
 	/* ---------------------------------------------------- */
 	status = SDend(sdInterfaceID);
-	status = Vend(HDFfid);
-	status = Hclose(HDFfid);
+	if (Vend(HDFfid) < 0)
+        status = -1;
+	if (Hclose(HDFfid) < 0)
+        status = -1;
 
 	/* Clear out external array entries */
 	/* -------------------------------- */

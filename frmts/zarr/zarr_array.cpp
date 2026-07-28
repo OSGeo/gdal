@@ -13,9 +13,11 @@
 #include "zarr.h"
 
 #include "cpl_float.h"
+#include "cpl_mem_cache.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 #include "ucs4_utf8.hpp"
+#include "gdal_thread_pool.h"
 
 #include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 
@@ -225,6 +227,7 @@ ZarrArray::ZarrArray(
       m_bUseOptimizedCodePaths(CPLTestBool(
           CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES")))
 {
+    m_oCRSAttribute.Deinit();
 }
 
 /************************************************************************/
@@ -257,6 +260,9 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
         EQUAL(m_aosCreationOptions.FetchNameValueDef(
                   "GEOREFERENCING_CONVENTION", "GDAL"),
               "SPATIAL_PROJ");
+
+    if (m_oCRSAttribute.IsValid() && bUseSpatialProjConventions)
+        oAttrs.Add(CRS_ATTRIBUTE_NAME, m_oCRSAttribute);
 
     const auto ExportToWkt2AndPROJJSON = [this](CPLJSONObject &oContainer,
                                                 const char *pszWKT2AttrName,
@@ -307,8 +313,8 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 
             oZarrConventionsArray.Add(oConventionProj);
 
-            const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
-            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+            const char *pszAuthorityName = m_poSRS->GetAuthorityName();
+            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode();
             if (pszAuthorityName && pszAuthorityCode)
             {
                 oAttrs.Set("proj:code", CPLSPrintf("%s:%s", pszAuthorityName,
@@ -381,12 +387,12 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                 else if (!std::isnan(dfXOff) && !std::isnan(dfXRes) &&
                          !std::isnan(dfYOff) && !std::isnan(dfYRes))
                 {
-                    gt[0] = dfXOff;
-                    gt[1] = dfXRes;
-                    gt[2] = 0;  // xrot
-                    gt[3] = dfYOff;
-                    gt[4] = 0;  // yrot
-                    gt[5] = dfYRes;
+                    gt.xorig = dfXOff;
+                    gt.xscale = dfXRes;
+                    gt.xrot = 0;  // xrot
+                    gt.yorig = dfYOff;
+                    gt.yrot = 0;  // yrot
+                    gt.yscale = dfYRes;
                     bAddSpatialProjConvention = true;
                 }
             }
@@ -406,19 +412,19 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                     oAttrs.Delete(GDALMD_AREA_OR_POINT);
 
                     // Going from GDAL's corner convention to pixel center
-                    gt[0] += 0.5 * gt[1] + 0.5 * gt[2];
-                    gt[3] += 0.5 * gt[4] + 0.5 * gt[5];
+                    gt.xorig += 0.5 * gt.xscale + 0.5 * gt.xrot;
+                    gt.yorig += 0.5 * gt.yrot + 0.5 * gt.yscale;
                     dfWidth -= 1.0;
                     dfHeight -= 1.0;
                 }
 
                 CPLJSONArray oAttrSpatialTransform;
-                oAttrSpatialTransform.Add(gt[1]);  // xres
-                oAttrSpatialTransform.Add(gt[2]);  // xrot
-                oAttrSpatialTransform.Add(gt[0]);  // xoff
-                oAttrSpatialTransform.Add(gt[4]);  // yrot
-                oAttrSpatialTransform.Add(gt[5]);  // yres
-                oAttrSpatialTransform.Add(gt[3]);  // yoff
+                oAttrSpatialTransform.Add(gt.xscale);  // xres
+                oAttrSpatialTransform.Add(gt.xrot);    // xrot
+                oAttrSpatialTransform.Add(gt.xorig);   // xoff
+                oAttrSpatialTransform.Add(gt.yrot);    // yrot
+                oAttrSpatialTransform.Add(gt.yscale);  // yres
+                oAttrSpatialTransform.Add(gt.yorig);   // yoff
 
                 oAttrs.Add("spatial:transform_type", "affine");
                 oAttrs.Add("spatial:transform", oAttrSpatialTransform);
@@ -486,8 +492,8 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
         CPLJSONObject oCRS;
         ExportToWkt2AndPROJJSON(oCRS, "wkt", "projjson");
 
-        const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
-        const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthorityCode = m_poSRS->GetAuthorityCode();
+        const char *pszAuthorityName = m_poSRS->GetAuthorityName();
         if (pszAuthorityCode && pszAuthorityName &&
             EQUAL(pszAuthorityName, "EPSG"))
         {
@@ -602,13 +608,13 @@ void ZarrArray::DeallocateDecodedBlockData()
     if (!m_abyDecodedBlockData.empty())
     {
         const size_t nDTSize = m_oType.GetSize();
-        GByte *pDst = &m_abyDecodedBlockData[0];
         const size_t nValues = m_abyDecodedBlockData.size() / nDTSize;
         for (const auto &elt : m_aoDtypeElts)
         {
             if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
                 elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
             {
+                GByte *pDst = &m_abyDecodedBlockData[0];
                 for (size_t i = 0; i < nValues; i++, pDst += nDTSize)
                 {
                     char *ptr;
@@ -670,26 +676,9 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
         {
             if (elt.nativeSize == 2)
             {
-                if (elt.gdalTypeIsApproxOfNative)
-                {
-                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
-                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                    const uint32_t uint32Val =
-                        *reinterpret_cast<const uint32_t *>(pSrc +
-                                                            elt.gdalOffset);
-                    bool bHasWarned = false;
-                    uint16_t uint16Val =
-                        CPL_SWAP16(CPLFloatToHalf(uint32Val, bHasWarned));
-                    memcpy(pDst + elt.nativeOffset, &uint16Val,
-                           sizeof(uint16Val));
-                }
-                else
-                {
-                    const uint16_t val =
-                        CPL_SWAP16(*reinterpret_cast<const uint16_t *>(
-                            pSrc + elt.gdalOffset));
-                    memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                }
+                const uint16_t val = CPL_SWAP16(
+                    *reinterpret_cast<const uint16_t *>(pSrc + elt.gdalOffset));
+                memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
             }
             else if (elt.nativeSize == 4)
             {
@@ -733,21 +722,7 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
         }
         else if (elt.gdalTypeIsApproxOfNative)
         {
-            if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                elt.nativeSize == 2)
-            {
-                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                const uint32_t uint32Val =
-                    *reinterpret_cast<const uint32_t *>(pSrc + elt.gdalOffset);
-                bool bHasWarned = false;
-                const uint16_t uint16Val =
-                    CPLFloatToHalf(uint32Val, bHasWarned);
-                memcpy(pDst + elt.nativeOffset, &uint16Val, sizeof(uint16Val));
-            }
-            else
-            {
-                CPLAssert(false);
-            }
+            CPLAssert(false);
         }
         else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
@@ -897,19 +872,8 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
             {
                 uint16_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                if (elt.gdalTypeIsApproxOfNative)
-                {
-                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
-                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                    uint32_t uint32Val = CPLHalfToFloat(CPL_SWAP16(val));
-                    memcpy(pDst + elt.gdalOffset, &uint32Val,
-                           sizeof(uint32Val));
-                }
-                else
-                {
-                    *reinterpret_cast<uint16_t *>(pDst + elt.gdalOffset) =
-                        CPL_SWAP16(val);
-                }
+                *reinterpret_cast<uint16_t *>(pDst + elt.gdalOffset) =
+                    CPL_SWAP16(val);
             }
             else if (elt.nativeSize == 4)
             {
@@ -955,19 +919,7 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
         }
         else if (elt.gdalTypeIsApproxOfNative)
         {
-            if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                elt.nativeSize == 2)
-            {
-                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                uint16_t uint16Val;
-                memcpy(&uint16Val, pSrc + elt.nativeOffset, sizeof(uint16Val));
-                uint32_t uint32Val = CPLHalfToFloat(uint16Val);
-                memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
-            }
-            else
-            {
-                CPLAssert(false);
-            }
+            CPLAssert(false);
         }
         else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
@@ -1003,6 +955,9 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
                                   size_t &nReqBlocks) const
 {
     if (!CheckValidAndErrorOutIfNot())
+        return false;
+
+    if (!FlushDirtyBlock())
         return false;
 
     const size_t nDims = m_aoDims.size();
@@ -1069,21 +1024,27 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
         return false;
     }
 
-    const char *pszNumThreads = CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-        nThreadsMax = CPLGetNumCPUs();
-    else
-        nThreadsMax = std::max(1, atoi(pszNumThreads));
-    if (nThreadsMax > 1024)
-        nThreadsMax = 1024;
+    nThreadsMax = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                    GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                    /* bDefaultAllCPUs=*/true);
     if (nThreadsMax <= 1)
         return true;
+
+    // libhdf5 doesn't like concurrent access to the same file, even under
+    // a mutex...
+    auto poBlockPresenceArray = OpenBlockPresenceCache(false);
+    if (poBlockPresenceArray)
+    {
+        nThreadsMax = 1;
+        return true;
+    }
+
     CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",
              nThreadsMax);
 
     m_oChunkCache.clear();
+    m_anCachedAdviseReadStart.assign(arrayStartIdx, arrayStartIdx + nDims);
+    m_anCachedAdviseReadCount.assign(count, count + nDims);
 
     // Overflow checked above
     try
@@ -1213,6 +1174,71 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         arrayStartIdx = arrayStartIdxMod.data();
         arrayStep = arrayStepMod.data();
         bufferStride = bufferStrideMod.data();
+    }
+
+    // Auto-parallel: prefetch multi-chunk reads via IAdviseRead().
+    // arrayStep[i] guaranteed positive after negative-step normalization above.
+    // Skip if the current read region is already covered by a previous
+    // IAdviseRead (explicit or auto), so we don't blow away a useful cache.
+    if (nDims >= 2)
+    {
+        bool bAlreadyCached = false;
+        if (!m_oChunkCache.empty() && m_anCachedAdviseReadStart.size() == nDims)
+        {
+            bAlreadyCached = true;
+            for (size_t i = 0; i < nDims && bAlreadyCached; ++i)
+            {
+                const GUInt64 reqEnd =
+                    arrayStartIdx[i] +
+                    (count[i] - 1) * static_cast<uint64_t>(arrayStep[i]);
+                const GUInt64 cachedEnd = m_anCachedAdviseReadStart[i] +
+                                          m_anCachedAdviseReadCount[i] - 1;
+                if (arrayStartIdx[i] < m_anCachedAdviseReadStart[i] ||
+                    reqEnd > cachedEnd)
+                {
+                    bAlreadyCached = false;
+                }
+            }
+        }
+
+        if (!bAlreadyCached)
+        {
+            const char *pszNumThreads =
+                CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+            if (pszNumThreads != nullptr)
+            {
+                size_t nReqChunks = 1;
+                for (size_t i = 0; i < nDims; ++i)
+                {
+                    const uint64_t startBlock =
+                        arrayStartIdx[i] / m_anInnerBlockSize[i];
+                    const uint64_t endBlock =
+                        (arrayStartIdx[i] +
+                         (count[i] - 1) * static_cast<uint64_t>(arrayStep[i])) /
+                        m_anInnerBlockSize[i];
+                    nReqChunks *=
+                        static_cast<size_t>(endBlock - startBlock + 1);
+                }
+                if (nReqChunks > 1)
+                {
+                    // IAdviseRead expects the contiguous element count per
+                    // dimension, not the strided output count.  When step > 1,
+                    // expand count to cover the full element range.
+                    std::vector<size_t> anAdjustedCount(nDims);
+                    for (size_t i = 0; i < nDims; ++i)
+                    {
+                        anAdjustedCount[i] =
+                            1 +
+                            (count[i] - 1) * static_cast<size_t>(arrayStep[i]);
+                    }
+                    CPLStringList aosOptions;
+                    aosOptions.SetNameValue("NUM_THREADS", pszNumThreads);
+                    CPL_IGNORE_RET_VAL(IAdviseRead(arrayStartIdx,
+                                                   anAdjustedCount.data(),
+                                                   aosOptions.List()));
+                }
+            }
+        }
     }
 
     std::vector<uint64_t> indicesOuterLoop(nDims + 1);
@@ -1772,8 +1798,8 @@ lbl_next_depth:
             if (arrayStep[i] != 0)
             {
                 const auto nextBlockIdx =
-                    std::min((1 + indicesOuterLoop[i] / m_anOuterBlockSize[i]) *
-                                 m_anOuterBlockSize[i],
+                    std::min((1 + indicesOuterLoop[i] / m_anInnerBlockSize[i]) *
+                                 m_anInnerBlockSize[i],
                              arrayStartIdx[i] + count[i] * arrayStep[i]);
                 countInnerLoopInit[i] = static_cast<size_t>(cpl::div_round_up(
                     nextBlockIdx - indicesOuterLoop[i], arrayStep[i]));
@@ -1784,7 +1810,7 @@ lbl_next_depth:
                     indicesOuterLoop[i] == 0 &&
                     countInnerLoopInit[i] == m_aoDims[i]->GetSize();
                 bWriteWholeBlock =
-                    (countInnerLoopInit[i] == m_anOuterBlockSize[i] ||
+                    (countInnerLoopInit[i] == m_anInnerBlockSize[i] ||
                      bWholePartialBlockThisDim);
                 if (bWholePartialBlockThisDim)
                 {
@@ -1870,7 +1896,7 @@ lbl_next_depth:
         m_bCachedBlockEmpty = false;
         if (nDims)
             offsetDstBuffer[0] = static_cast<size_t>(
-                indicesOuterLoop[0] - blockIndices[0] * m_anOuterBlockSize[0]);
+                indicesOuterLoop[0] - blockIndices[0] * m_anInnerBlockSize[0]);
 
         GByte *pabyBlock = &abyBlock[0];
 
@@ -1882,10 +1908,10 @@ lbl_next_depth:
             for (size_t i = dimIdxSubLoop + 1; i < nDims; ++i)
             {
                 nOffset = static_cast<size_t>(
-                    nOffset * m_anOuterBlockSize[i] +
+                    nOffset * m_anInnerBlockSize[i] +
                     (indicesOuterLoop[i] -
-                     blockIndices[i] * m_anOuterBlockSize[i]));
-                step *= m_anOuterBlockSize[i];
+                     blockIndices[i] * m_anInnerBlockSize[i]));
+                step *= m_anInnerBlockSize[i];
             }
             const void *src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
             GByte *dst_ptr = pabyBlock + nOffset * nCacheDTSize;
@@ -2022,7 +2048,12 @@ lbl_next_depth:
                         {
                             memcpy(dst_ptr, pSrcStr,
                                    std::min(nLen, nNativeSize));
-                            if (nLen < nNativeSize)
+                            if (nLen > nNativeSize)
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Too long string truncated");
+                            }
+                            else if (nLen < nNativeSize)
                                 memset(dst_ptr + nLen, 0, nNativeSize - nLen);
                         }
                     }
@@ -2052,10 +2083,10 @@ lbl_next_depth:
                     srcPtrStackInnerLoop[dimIdxSubLoop - 1];
                 offsetDstBuffer[dimIdxSubLoop] = static_cast<size_t>(
                     offsetDstBuffer[dimIdxSubLoop - 1] *
-                        m_anOuterBlockSize[dimIdxSubLoop] +
+                        m_anInnerBlockSize[dimIdxSubLoop] +
                     (indicesOuterLoop[dimIdxSubLoop] -
                      blockIndices[dimIdxSubLoop] *
-                         m_anOuterBlockSize[dimIdxSubLoop]));
+                         m_anInnerBlockSize[dimIdxSubLoop]));
                 goto lbl_next_depth_inner_loop;
             lbl_return_to_caller_inner_loop:
                 dimIdxSubLoop--;
@@ -2079,7 +2110,7 @@ lbl_next_depth:
         // This level of loop loops over blocks
         indicesOuterLoop[dimIdx] = arrayStartIdx[dimIdx];
         blockIndices[dimIdx] =
-            indicesOuterLoop[dimIdx] / m_anOuterBlockSize[dimIdx];
+            indicesOuterLoop[dimIdx] / m_anInnerBlockSize[dimIdx];
         while (true)
         {
             dimIdx++;
@@ -2092,13 +2123,13 @@ lbl_next_depth:
 
             size_t nIncr;
             if (static_cast<GUInt64>(arrayStep[dimIdx]) <
-                m_anOuterBlockSize[dimIdx])
+                m_anInnerBlockSize[dimIdx])
             {
                 // Compute index at next block boundary
                 auto newIdx =
                     indicesOuterLoop[dimIdx] +
-                    (m_anOuterBlockSize[dimIdx] -
-                     (indicesOuterLoop[dimIdx] % m_anOuterBlockSize[dimIdx]));
+                    (m_anInnerBlockSize[dimIdx] -
+                     (indicesOuterLoop[dimIdx] % m_anInnerBlockSize[dimIdx]));
                 // And round up compared to arrayStartIdx, arrayStep
                 nIncr = static_cast<size_t>(cpl::div_round_up(
                     newIdx - indicesOuterLoop[dimIdx], arrayStep[dimIdx]));
@@ -2115,7 +2146,7 @@ lbl_next_depth:
                 bufferStride[dimIdx] *
                 static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
             blockIndices[dimIdx] =
-                indicesOuterLoop[dimIdx] / m_anOuterBlockSize[dimIdx];
+                indicesOuterLoop[dimIdx] / m_anInnerBlockSize[dimIdx];
         }
     }
     if (dimIdx > 0)
@@ -2503,6 +2534,7 @@ bool ZarrArray::SetSpatialRef(const OGRSpatialReference *poSRS)
     {
         return GDALPamMDArray::SetSpatialRef(poSRS);
     }
+    m_oCRSAttribute.Deinit();
     m_poSRS.reset();
     if (poSRS)
         m_poSRS.reset(poSRS->Clone());
@@ -3377,6 +3409,7 @@ void ZarrArray::SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
                             SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
                     OGRERR_NONE)
                 {
+                    m_oCRSAttribute = crs;
                     oAttributes.Delete(CRS_ATTRIBUTE_NAME);
                     break;
                 }
@@ -3743,7 +3776,7 @@ bool ZarrArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     const auto nFileSize = VSIFTellL(fp);
     VSIFCloseL(fp);
 
-    // For Kerchunk files, get information on the actual location
+    // For Icechunk/Kerchunk files, get information on the actual location
     const CPLStringList aosMetadata(
         VSIGetFileMetadata(osFilename.c_str(), "CHUNK_INFO", nullptr));
     if (!aosMetadata.empty())
@@ -3792,7 +3825,11 @@ std::shared_ptr<ZarrGroupBase> ZarrArray::GetParentGroup() const
         if (auto poRootGroup = m_poSharedResource->GetRootGroup())
         {
             const auto nPos = m_osFullName.rfind('/');
-            if (nPos != 0 && nPos != std::string::npos)
+            if (nPos == 0)
+            {
+                poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(poRootGroup);
+            }
+            else if (nPos != std::string::npos)
             {
                 poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(
                     poRootGroup->OpenGroupFromFullname(
@@ -3801,4 +3838,57 @@ std::shared_ptr<ZarrGroupBase> ZarrArray::GetParentGroup() const
         }
     }
     return poGroup;
+}
+
+/************************************************************************/
+/*                    ZarrArray::IsRegularlySpaced()                    */
+/************************************************************************/
+
+// Process-level LRU cache for coordinate array regularity results.
+// Keyed by root directory + array full name.
+// Avoids redundant HTTP reads for immutable cloud-hosted coordinate arrays.
+// Thread-safe: lru11::Cache with std::mutex handles locking internally.
+
+struct CoordCacheEntry
+{
+    bool bIsRegular;
+    double dfStart;
+    double dfIncrement;
+};
+
+static lru11::Cache<std::string, CoordCacheEntry, std::mutex> g_oCoordCache{
+    128};
+
+void ZarrClearCoordinateCache()
+{
+    g_oCoordCache.clear();
+}
+
+bool ZarrArray::IsRegularlySpaced(double &dfStart, double &dfIncrement) const
+{
+    // Only cache 1D coordinate arrays (the ones that trigger HTTP reads)
+    if (GetDimensionCount() != 1)
+        return GDALMDArray::IsRegularlySpaced(dfStart, dfIncrement);
+
+    const std::string &osKey = GetFilename();
+
+    CoordCacheEntry entry;
+    if (g_oCoordCache.tryGet(osKey, entry))
+    {
+        CPLDebugOnly("ZARR", "IsRegularlySpaced cache hit for %s",
+                     osKey.c_str());
+        dfStart = entry.dfStart;
+        dfIncrement = entry.dfIncrement;
+        return entry.bIsRegular;
+    }
+
+    // Cache miss: perform the full coordinate read
+    const bool bResult = GDALMDArray::IsRegularlySpaced(dfStart, dfIncrement);
+
+    g_oCoordCache.insert(osKey, {bResult, dfStart, dfIncrement});
+
+    CPLDebugOnly("ZARR", "IsRegularlySpaced cached for %s: %s", osKey.c_str(),
+                 bResult ? "regular" : "irregular");
+
+    return bResult;
 }

@@ -457,7 +457,7 @@ It will *not* be able to store it in its metadata.
 JSONFG
 ++++++
 
-Similar to GeoJSON. One subtelty is that this driver may write both the "place"
+Similar to GeoJSON. One subtlety is that this driver may write both the "place"
 geometry (generally in a non-WGS84 CRS) and the GeoJSON RFC7946 WGS84 "geometry".
 
 The OGRGeomFieldDefn::GetCoordinatePrecision() will qualify the "place" geometry.

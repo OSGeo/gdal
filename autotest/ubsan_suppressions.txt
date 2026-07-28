@@ -1,3 +1,4 @@
-unsigned-integer-overflow:/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/random.tcc
+unsigned-integer-overflow:std::mersenne_twister_engine
+unsigned-integer-overflow:std::__do_uninit_fill_n
 alignment:ogr_flatgeobuf::GeometryReader::readPoint
 alignment:gdal_flatbuffers::IndirectHelper<double>::Read

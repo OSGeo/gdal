@@ -278,7 +278,7 @@ static int GRIB2SectToBuffer (VSILFILE *fp,
        errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
        return -1;
    }
-   if (*buffLen < *secLen) {
+   if (*buffLen < *secLen - sizeof (sInt4)) {
       if( *secLen > 100 * 1024 * 1024 )
       {
           vsi_l_offset curPos = VSIFTellL(fp);
@@ -291,13 +291,13 @@ static int GRIB2SectToBuffer (VSILFILE *fp,
             return -1;
           }
       }
-      char* buffnew = (char *) realloc ((void *) *buff, *secLen * sizeof (char));
+      char* buffnew = (char *) realloc ((void *) *buff, *secLen - sizeof (sInt4));
       if( buffnew == nullptr )
       {
            errSprintf ("ERROR: Ran out of memory in GRIB2SectToBuffer\n");
            return -1;
       }
-      *buffLen = *secLen;
+      *buffLen = *secLen - sizeof (sInt4);
       *buff = buffnew;
       buffer = *buff;
    }
@@ -505,13 +505,14 @@ static int GRIB2Inventory2to7 (sChar sectNum, VSILFILE *fp, sInt4 gribLen,
       errSprintf ("ERROR: Problems with section 4\n");
       return -7;
    }
+
 /*
 enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    GS4_PERCENT_PNT, GS4_STATISTIC = 8, GS4_PROBABIL_TIME = 9,
    GS4_PERCENT_TIME = 10, GS4_RADAR = 20, GS4_SATELLITE = 30
 };
 */
-   if( secLen < 11 )
+   if( *buffLen < 11 )
        return -8;
 
    /* Parse the interesting data out of sect 4. */
@@ -570,7 +571,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        nOffset = 38 - 14;
    }
 
-   if( secLen < nOffset + 19 - 5 + 4 )
+   if( *buffLen < nOffset + 19 - 5 + 4 )
        return -8;
 
    cat = (*buffer)[10 - 5];
@@ -606,7 +607,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
                    inv->foreSec / 3600.0)));
       switch (templat) {
          case GS4_PROBABIL_PNT: /* 4.5 */
-            if( secLen < 44 - 5 + 4)
+            if( *buffLen < 44 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
             factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
@@ -620,13 +621,13 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             break;
 
          case GS4_PERCENT_PNT: /* 4.6 */
-            if( secLen < 35 - 5 + 1)
+            if( *buffLen < 35 - 5 + 1)
                 return -8;
             percentile = (*buffer)[35 - 5];
             break;
 
          case GS4_DERIVED_INTERVAL: /* 4.12 */
-            if( secLen < 52 - 5 + 4)
+            if( *buffLen < 52 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 37 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.12 bytes 37-43\n");
@@ -645,7 +646,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             break;
 
          case GS4_PERCENT_TIME: /* 4.10 */
-            if( secLen < 51 - 5 + 4)
+            if( *buffLen < 51 - 5 + 4)
                 return -8;
             percentile = (*buffer)[35 - 5];
             if (InventoryParseTime (*buffer + 36 - 5, &(inv->validTime)) != 0) {
@@ -664,7 +665,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_STATISTIC: /* 4.8 */
-            if( secLen < 50 - 5 + 4)
+            if( *buffLen < 50 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 35 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.8 bytes 35-41\n");
@@ -683,7 +684,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_ENSEMBLE_STAT: /* 4.11 */
-            if( secLen < 53 - 5 + 4)
+            if( *buffLen < 53 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 38 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.11 bytes 38-44\n");
@@ -701,7 +702,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_PROBABIL_TIME: /* 4.9 */
-            if( secLen < 63 - 5 + 4)
+            if( *buffLen < 63 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
             factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
@@ -739,7 +740,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        case GS4_DERIVED_INTERVAL:
        case GS4_DERIVED_INTERVAL_CLUSTER_RECTANGULAR_AREA:
        case GS4_DERIVED_INTERVAL_CLUSTER_CIRCULAR_AREA:
-           if( secLen >= 35 ) {
+           if( *buffLen >= 35 ) {
                derivedFcst = (uChar) (*buffer)[35 - 5];
            }
            break;
@@ -839,7 +840,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       sndSurfValue = 0;
       f_sndValue = 0;
    } else {
-      if( secLen < nOffset + 31 - 5 + 4)
+      if( *buffLen < nOffset + 31 - 5 + 4)
             return -8;
       fstSurfType = (*buffer)[nOffset + 23 - 5];
       unsigned char u_scale = ((unsigned char*)(*buffer))[nOffset + 24 - 5];

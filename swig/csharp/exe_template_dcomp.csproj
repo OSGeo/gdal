@@ -2,6 +2,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>${CSHARP_APPLICATION_VERSION}</TargetFramework>
+        <langversion>10.0</langversion>
         <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
         <SelfContained>true</SelfContained>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
@@ -10,6 +11,6 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="${SOURCE_NATIVE}"></Compile>
-        <Compile Include="${CMAKE_CURRENT_SOURCE_DIR}/drawing_compat.cs"></Compile>
+        <Compile Include="drawing_compat.cs"></Compile>
     </ItemGroup>
 </Project>

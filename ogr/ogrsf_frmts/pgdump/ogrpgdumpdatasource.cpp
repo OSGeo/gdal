@@ -418,11 +418,11 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     {
         if (poSRS)
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityName = poSRS->GetAuthorityName();
             if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
             {
                 /* Assume the EPSG Id is the SRS ID. Might be a wrong guess ! */
-                nSRSId = atoi(poSRS->GetAuthorityCode(nullptr));
+                nSRSId = atoi(poSRS->GetAuthorityCode());
             }
             else
             {

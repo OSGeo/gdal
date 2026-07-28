@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_FILTER_INCLUDED
 #define GDALALG_VECTOR_FILTER_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -39,8 +39,13 @@ class GDALVectorFilterAlgorithm /* non final */
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::vector<std::string>
+    CompleteWhere(const GDALAlgorithmArg &layerArg,
+                  const std::string &currentValue) const;
+
     std::string m_activeLayer{};
     std::vector<double> m_bbox{};
+    std::string m_bboxCrs{};
     std::string m_where{};
     bool m_updateExtent = false;
 };

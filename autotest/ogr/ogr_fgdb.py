@@ -26,6 +26,7 @@ pytestmark = [
     pytest.mark.random_order(disabled=True),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -219,7 +220,7 @@ def test_gdb(openfilegdb_drv, tmp_path, test_gdb_datalist):
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
             feat.SetField("xml", "<foo></foo>")
-            feat.SetField("binary", b"\x00\xFF\x7F")
+            feat.SetField("binary", b"\x00\xff\x7f")
             feat.SetField("binary2", b"\x12\x34\x56")
             feat.SetField("smallint2", -32768)
             feat.SetField("float2", 1.5)
@@ -719,7 +720,7 @@ def _check_domains(ds):
 
 def test_ogr_fgdb_read_domains():
 
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     _check_domains(ds)
 
 
@@ -752,7 +753,7 @@ def test_ogr_fgdb_read_layer_hierarchy():
             "fd2_lyr", srs=srs3, geom_type=ogr.wkbPoint, options=["FEATURE_DATASET=fd2"]
         )
 
-    ds = gdal.OpenEx("data/filegdb/featuredataset.gdb")
+    ds = gdal.Open("data/filegdb/featuredataset.gdb")
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["fd1", "fd2"]
@@ -817,7 +818,7 @@ def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
 
 
 ###############################################################################
@@ -950,11 +951,11 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
 
     # no relationships
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
     assert ds.GetDriver().GetDescription() == "FileGDB"
     assert set(ds.GetRelationshipNames()) == {
         "composite_many_to_many",

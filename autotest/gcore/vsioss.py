@@ -223,17 +223,14 @@ def test_vsioss_2(server):
     def method(request):
         request.protocol_version = "HTTP/1.1"
         request.send_response(400)
-        response = (
-            """<?xml version="1.0" encoding="UTF-8"?>
+        response = """<?xml version="1.0" encoding="UTF-8"?>
 <Error>
   <Code>AccessDenied</Code>
   <Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message>
   <HostId>unused</HostId>
   <Bucket>unuset</Bucket>
   <Endpoint>localhost:%d</Endpoint>
-</Error>"""
-            % request.server.port
-        )
+</Error>""" % request.server.port
         response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
         request.send_header("Content-type", "application/xml")
         request.send_header("Transfer-Encoding", "chunked")
@@ -910,16 +907,13 @@ def test_vsioss_6(server):
             return
 
         content = request.rfile.read(186).decode("ascii")
-        if (
-            content
-            != """<CompleteMultipartUpload>
+        if content != """<CompleteMultipartUpload>
 <Part>
 <PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
 <Part>
 <PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
 </CompleteMultipartUpload>
-"""
-        ):
+""":
             sys.stderr.write("Did not get expected content: %s\n" % content)
             request.send_response(400)
             request.send_header("Content-Length", 0)

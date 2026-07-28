@@ -39,7 +39,7 @@ def get_contour_alg():
             [5.0, 15.0, 25.0, 35.0],
         ),
         (
-            ["--interval", "10", "--elevation-name", "ELEV", "--src-nodata", "4"],
+            ["--interval", "10", "--elevation-name", "ELEV", "--input-nodata", "4"],
             False,
             [20.0, 30.0],
         ),
@@ -151,16 +151,16 @@ cellsize     1
     else:
         assert alg.ParseRunAndFinalize(alg_options)
 
-        with gdal.OpenEx(tmp_out_filename) as ds:
+        with gdal.Open(tmp_out_filename) as ds:
             lyr = ds.GetLayer()
             for i, feat in enumerate(lyr):
                 geom = feat.GetGeometryRef()
                 if polygonize:
-                    assert geom.GetGeometryType() == ogr.wkbPolygon
+                    assert geom.GetGeometryType() == ogr.wkbMultiPolygon
                     assert feat.GetField("ELEV_MIN") == expected_elev_values[i][0]
                     assert feat.GetField("ELEV_MAX") == expected_elev_values[i][1]
                 else:
-                    assert geom.GetGeometryType() == ogr.wkbLineString
+                    assert geom.GetGeometryType() == ogr.wkbMultiLineString
                     assert feat.GetField("ELEV") == expected_elev_values[i]
             lyr = None
 
@@ -244,3 +244,12 @@ def test_gdalalg_raster_contour_all_nodata(tmp_vsimem):
     ds = alg.Output()
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_raster_contour_pipeline_output_layer(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! contour --interval 10 --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "foo"

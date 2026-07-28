@@ -99,18 +99,20 @@ cd ..
 
 set -eu
 
+# -Wno-deprecated to suppress: clang: error: treating 'c-header' input as 'c++-header' when in C++ mode, this behavior is deprecated [-Werror,-Wdeprecated]
+
 CXX="${CXX:-c++}"
 echo "Test that we can compile all headers with C++11 using ${CXX}"
 for i in $prefix/include/*.h; do
   echo ".. checking $i";
-  ${CXX} -Wall -Wpedantic -std=c++11 -c $(${GDAL_CONFIG} --cflags) $i;
+  ${CXX} -Wall -Wpedantic -std=c++11 -Wsign-conversion -Werror -Wno-deprecated -c $(${GDAL_CONFIG} --cflags) $i;
   rm -f $prefix/include/*.gch
 done
 
 echo "Test that we can compile all headers with C++17 using ${CXX}"
 for i in $prefix/include/*.h; do
   echo ".. checking $i";
-  ${CXX} -Wall -Wpedantic -std=c++17 -c $(${GDAL_CONFIG} --cflags) $i;
+  ${CXX} -Wall -Wpedantic -std=c++17 -Wsign-conversion -Werror -Wno-deprecated -c $(${GDAL_CONFIG} --cflags) $i;
   rm -f $prefix/include/*.gch
 done
 

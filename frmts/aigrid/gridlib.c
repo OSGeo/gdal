@@ -35,7 +35,7 @@ static CPLErr AIGProcessRaw32BitFloatBlock(GByte *pabyCur, int nDataSize,
     int i;
 
     (void)nMin;
-    if (nDataSize < nBlockXSize * nBlockYSize * 4)
+    if (nDataSize < (GIntBig)nBlockXSize * nBlockYSize * 4)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
@@ -120,7 +120,7 @@ static CPLErr AIGProcessRaw32BitBlock(GByte *pabyCur, int nDataSize, int nMin,
 {
     int i;
 
-    if (nDataSize < nBlockXSize * nBlockYSize * 4)
+    if (nDataSize < (GIntBig)nBlockXSize * nBlockYSize * 4)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
@@ -153,7 +153,7 @@ static CPLErr AIGProcessRaw16BitBlock(GByte *pabyCur, int nDataSize, int nMin,
 {
     int i;
 
-    if (nDataSize < nBlockXSize * nBlockYSize * 2)
+    if (nDataSize < (GIntBig)nBlockXSize * nBlockYSize * 2)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
@@ -184,7 +184,7 @@ static CPLErr AIGProcessRaw4BitBlock(GByte *pabyCur, int nDataSize, int nMin,
 {
     int i;
 
-    if (nDataSize < (nBlockXSize * nBlockYSize + 1) / 2)
+    if (nDataSize < ((GIntBig)nBlockXSize * nBlockYSize + 1) / 2)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
@@ -196,7 +196,7 @@ static CPLErr AIGProcessRaw4BitBlock(GByte *pabyCur, int nDataSize, int nMin,
     for (i = 0; i < nBlockXSize * nBlockYSize; i++)
     {
         if (i % 2 == 0)
-            panData[i] = AIGRolloverSignedAdd((*(pabyCur)&0xf0) >> 4, nMin);
+            panData[i] = AIGRolloverSignedAdd((*(pabyCur) & 0xf0) >> 4, nMin);
         else
             panData[i] = AIGRolloverSignedAdd(*(pabyCur++) & 0xf, nMin);
     }
@@ -217,7 +217,7 @@ static CPLErr AIGProcessRaw1BitBlock(GByte *pabyCur, int nDataSize, int nMin,
 {
     int i;
 
-    if (nDataSize < (nBlockXSize * nBlockYSize + 7) / 8)
+    if (nDataSize < ((GIntBig)nBlockXSize * nBlockYSize + 7) / 8)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;
@@ -250,7 +250,7 @@ static CPLErr AIGProcessRawBlock(GByte *pabyCur, int nDataSize, int nMin,
 {
     int i;
 
-    if (nDataSize < nBlockXSize * nBlockYSize)
+    if (nDataSize < (GIntBig)nBlockXSize * nBlockYSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Block too small");
         return CE_Failure;

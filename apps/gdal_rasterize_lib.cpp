@@ -105,7 +105,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-at")
         .flag()
         .action(
-            [psOptions](const std::string &) {
+            [psOptions](const std::string &)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("ALL_TOUCHED",
                                                             "TRUE");
             })
@@ -135,7 +136,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .flag()
             .store_into(psOptions->b3D)
             .action(
-                [psOptions](const std::string &) {
+                [psOptions](const std::string &)
+                {
                     psOptions->aosRasterizeOptions.SetNameValue(
                         "BURN_VALUE_FROM", "Z");
                 })
@@ -146,7 +148,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-add")
         .flag()
         .action(
-            [psOptions](const std::string &) {
+            [psOptions](const std::string &)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("MERGE_ALG", "ADD");
             })
         .help(_("Instead of burning a new value, this adds the new value to "
@@ -157,7 +160,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .flag()
         .hidden()
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("CHUNKYSIZE",
                                                             s.c_str());
             });
@@ -286,7 +290,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-optim")
         .metavar("AUTO|VECTOR|RASTER")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("OPTIM", s.c_str());
             })
         .help(_("Force the algorithm used."));
@@ -533,7 +538,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 
         if (hDstSRS)
             hDstSRS = OSRClone(hDstSRS);
-        else if (GDALGetMetadata(hDstDS, "RPC") != nullptr)
+        else if (GDALGetMetadata(hDstDS, GDAL_MDD_RPC) != nullptr)
         {
             hDstSRS = OSRNewSpatialReference(nullptr);
             CPL_IGNORE_RET_VAL(
@@ -673,16 +678,16 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                     {
                         const char *pszAttribute =
                             OGR_F_GetFieldAsString(hFeat, iBurnField);
-                        char *end;
-                        dfBurnValue = CPLStrtod(pszAttribute, &end);
 
-                        while (isspace(*end) && *end != '\0')
+                        if (auto parsed =
+                                cpl::strict_parse<double>(pszAttribute);
+                            parsed.has_value())
                         {
-                            end++;
+                            dfBurnValue = parsed.value();
                         }
-
-                        if (*end != '\0')
+                        else
                         {
+                            dfBurnValue = 0;
                             CPLErrorOnce(
                                 CE_Warning, CPLE_AppDefined,
                                 "Failed to parse attribute value %s of feature "
@@ -766,18 +771,16 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
     if (papszTO != nullptr)
     {
         GDALDataset *poDS = GDALDataset::FromHandle(hDstDS);
-        char **papszTransformerOptions = CSLDuplicate(papszTO);
+        CPLStringList aosTransformerOptions(CSLDuplicate(papszTO));
         GDALGeoTransform gt;
         if (poDS->GetGeoTransform(gt) != CE_None && poDS->GetGCPCount() == 0 &&
-            poDS->GetMetadata("RPC") == nullptr)
+            poDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
-            papszTransformerOptions = CSLSetNameValue(
-                papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
+            aosTransformerOptions.SetNameValue("DST_METHOD", "NO_GEOTRANSFORM");
         }
 
         pTransformArg = GDALCreateGenImgProjTransformer2(
-            nullptr, hDstDS, papszTransformerOptions);
-        CSLDestroy(papszTransformerOptions);
+            nullptr, hDstDS, aosTransformerOptions.List());
 
         pfnTransformer = GDALGenImgProjTransform;
         if (pTransformArg == nullptr)
@@ -835,7 +838,7 @@ static std::unique_ptr<GDALDataset> CreateOutputDataset(
     const std::vector<double> &adfInitVals, const char *pszNoData)
 {
     bool bFirstLayer = true;
-    const bool bBoundsSpecifiedByUser = sEnvelop.IsInit();
+    const bool bBoundsSpecifiedByUser = CPL_TO_BOOL(sEnvelop.IsInit());
 
     for (unsigned int i = 0; i < ahLayers.size(); i++)
     {

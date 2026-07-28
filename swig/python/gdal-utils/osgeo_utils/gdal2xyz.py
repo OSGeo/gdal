@@ -231,15 +231,13 @@ class GDAL2XYZ(GDALScript):
     def __init__(self):
         super().__init__()
         self.title = "Translates a raster file into xyz format"
-        self.description = textwrap.dedent(
-            """\
+        self.description = textwrap.dedent("""\
             The gdal2xyz utility can be used to translate a raster file into xyz format.
             It can be used as an alternative to gdal_translate of=xyz,
             But supporting other options, for example:
             * Select more then one band;
             * Skip or replace nodata value;
-            * Return the output as numpy arrays."""
-        )
+            * Return the output as numpy arrays.""")
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser

@@ -10,7 +10,7 @@ Find an Open Database Connectivity (ODBC) include directory and library.
 On Windows, when building with Visual Studio, this module assumes the ODBC
 library is provided by the available Windows SDK.
 
-On Unix, this module allows to search for ODBC library provided by
+On Unix, this module allows searching for ODBC library provided by
 unixODBC or iODBC implementations of ODBC API.
 This module reads hint about location of the config program:
 

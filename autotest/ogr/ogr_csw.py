@@ -475,9 +475,7 @@ def test_ogr_csw_vsimem_csw_output_schema_csw(tmp_vsimem):
 """,
     )
 
-    ds = gdal.OpenEx(
-        f"CSW:{tmp_vsimem}/csw_endpoint", open_options=["OUTPUT_SCHEMA=CSW"]
-    )
+    ds = gdal.Open(f"CSW:{tmp_vsimem}/csw_endpoint", open_options=["OUTPUT_SCHEMA=CSW"])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer(
@@ -550,9 +548,7 @@ def test_ogr_csw_vsimem_csw_output_schema_gmd(tmp_vsimem):
 """,
     )
 
-    ds = gdal.OpenEx(
-        f"CSW:{tmp_vsimem}/csw_endpoint", open_options=["OUTPUT_SCHEMA=GMD"]
-    )
+    ds = gdal.Open(f"CSW:{tmp_vsimem}/csw_endpoint", open_options=["OUTPUT_SCHEMA=GMD"])
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer(
@@ -606,7 +602,7 @@ def test_ogr_csw_vsimem_csw_output_schema_fgdc(tmp_vsimem):
 """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         f"CSW:{tmp_vsimem}/csw_endpoint",
         open_options=["OUTPUT_SCHEMA=http://www.opengis.net/cat/csw/csdgm"],
     )

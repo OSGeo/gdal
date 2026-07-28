@@ -23,6 +23,9 @@ if(TARGET gdal_MRF_core)
     if (GDAL_USE_LERC OR GDAL_USE_LERC_INTERNAL)
         target_compile_definitions(gdal_MRF_core PRIVATE -DLERC)
     endif()
+    if (GDAL_USE_LERC_INTERNAL)
+        target_compile_definitions(gdal_MRF_core PRIVATE -DGDAL_USE_LERC_INTERNAL)
+    endif()
 endif()
 
 if(NOT TARGET gdal_MRF)
@@ -77,6 +80,7 @@ endif ()
 
 if (GDAL_USE_LERC_INTERNAL)
   gdal_add_vendored_lib(gdal_MRF lerc)
+  target_compile_definitions(gdal_MRF PRIVATE -DGDAL_USE_LERC_INTERNAL)
 endif ()
 
 # Now external libs

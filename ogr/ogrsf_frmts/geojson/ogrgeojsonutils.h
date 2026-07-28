@@ -60,6 +60,8 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
 /*                GeoJSONHTTPFetchWithContentTypeHeader                 */
 /************************************************************************/
 
-CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL);
+CPLHTTPResult *
+GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL, bool bCanUsePOST,
+                                      const GDALOpenInfo *poOpenInfo);
 
 #endif  // OGR_GEOJSONUTILS_H_INCLUDED

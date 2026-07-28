@@ -378,8 +378,8 @@ int GDALWarpOperation::ValidateOptions()
         aosWO.SetNameValue("ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", nullptr);
         aosWO.SetNameValue("MULT_FACTOR_VERTICAL_SHIFT_PIPELINE", nullptr);
         aosWO.SetNameValue("SRC_FILL_RATIO_HEURISTICS", nullptr);
-        GDALValidateOptions(GDALWarpGetOptionList(), aosWO.List(), "option",
-                            "warp options");
+        GDALValidateOptions(nullptr, GDALWarpGetOptionList(), aosWO.List(),
+                            "option", "warp options");
     }
 
     const char *pszSampleSteps =
@@ -473,7 +473,7 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
                         const char *pszKey)
 {
     const char *pszNBits =
-        GDALGetMetadataItem(hBand, "NBITS", "IMAGE_STRUCTURE");
+        GDALGetMetadataItem(hBand, GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const char *pszAlphaMax = nullptr;
     if (pszNBits)
     {
@@ -723,18 +723,43 @@ GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions,
         }
     }
 
-    if (eErr == CE_None && psOptions->hDstDS &&
-        CPLTestBool(CSLFetchNameValueDef(psOptions->papszWarpOptions,
-                                         "RESET_DEST_PIXELS", "NO")))
+    if (eErr == CE_None && psOptions->hDstDS)
     {
-        for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
+        const auto oResetDestPixels =
+            cpl::strict_parse<bool>(CSLFetchNameValueDef(
+                psOptions->papszWarpOptions, "RESET_DEST_PIXELS", "NO"));
+
+        if (!oResetDestPixels.has_value())
         {
-            eErr = GDALFillRaster(
-                GDALGetRasterBand(psOptions->hDstDS, psOptions->panDstBands[i]),
-                psOptions->padfDstNoDataReal ? psOptions->padfDstNoDataReal[i]
-                                             : 0.0,
-                psOptions->padfDstNoDataImag ? psOptions->padfDstNoDataImag[i]
-                                             : 0.0);
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid value of RESET_DEST_PIXELS");
+            return CE_Failure;
+        }
+
+        bool bResetDestPixels = false;
+        try
+        {
+            bResetDestPixels = oResetDestPixels.value();
+        }
+        catch (const std::exception &)
+        {
+            // to make Coverity Scan happy
+        }
+
+        if (bResetDestPixels)
+        {
+            for (int i = 0; eErr == CE_None && i < psOptions->nBandCount; ++i)
+            {
+                eErr =
+                    GDALFillRaster(GDALGetRasterBand(psOptions->hDstDS,
+                                                     psOptions->panDstBands[i]),
+                                   psOptions->padfDstNoDataReal
+                                       ? psOptions->padfDstNoDataReal[i]
+                                       : 0.0,
+                                   psOptions->padfDstNoDataImag
+                                       ? psOptions->padfDstNoDataImag[i]
+                                       : 0.0);
+            }
         }
     }
 
@@ -845,12 +870,9 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
         {
             if (psOptions->padfDstNoDataReal == nullptr)
             {
-                // TODO: Change to CE_Failure and error out for GDAL 3.13
-                // See https://github.com/OSGeo/gdal/pull/12189
-                CPLError(CE_Warning, CPLE_AppDefined,
+                CPLError(CE_Failure, CPLE_AppDefined,
                          "INIT_DEST was set to NO_DATA, but a NoData value was "
-                         "not defined. This warning will become a failure in a "
-                         "future GDAL release.");
+                         "not defined.");
             }
             else
             {
@@ -3286,7 +3308,17 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     if (const char *pszSourceExtra =
             CSLFetchNameValue(psOptions->papszWarpOptions, "SOURCE_EXTRA"))
     {
-        const int nSrcExtra = atoi(pszSourceExtra);
+        int nSrcExtra = cpl::strict_parse<int>(pszSourceExtra).value_or(-1);
+
+        if (nSrcExtra < 0)
+        {
+            // no point raising CE_Failure because it will get converted into
+            // a warning at an outer scope
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "SOURCE_EXTRA must be a positive integer or zero.");
+            nSrcExtra = 0;
+        }
+
         nXRadius += nSrcExtra;
         nYRadius += nSrcExtra;
     }

@@ -43,7 +43,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Login to GHCR
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
@@ -73,5 +75,5 @@ jobs:
             ${CONTAINER_NAME_FULL} \
             "${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
         env:
-          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-          COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}   # zizmor: ignore[secrets-outside-env]
+          COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}   # zizmor: ignore[secrets-outside-env]

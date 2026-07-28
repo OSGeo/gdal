@@ -7,14 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2020, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
-using System.IO;
 
-using System.Runtime.InteropServices;
 using OSGeo.GDAL;
 
 
@@ -32,14 +31,15 @@ using OSGeo.GDAL;
 /// A C# based sample for demonstrating the GDAL warp capabilities.
 /// </summary>
 
-class GDALWarp {
+class GDALWarp
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage example: GDALWarp \"destfile\" \"options\" \"input datasets\"");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage example: GDALWarp \"destfile\" \"options\" \"input datasets\"");
+        System.Environment.Exit(-1);
+    }
 
     public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
     {
@@ -53,14 +53,14 @@ class GDALWarp {
         return 1;
     }
 
-    public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 3) usage();
+        if (args.Length != 3) usage();
 
         Gdal.AllRegister();
 
-        GDALWarpAppOptions options = new GDALWarpAppOptions(args[1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-
+        // Get Sources
         string[] dstNames = args[2].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
         Dataset[] ds = new Dataset[dstNames.Length];
@@ -70,12 +70,15 @@ class GDALWarp {
             ds[i] = Gdal.Open(dstNames[i], Access.GA_ReadOnly);
         }
 
-        Dataset dso = Gdal.Warp(args[0], ds, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data");
-
-        if (dso == null)
+        // Warp
+        using (GDALWarpAppOptions options = new GDALWarpAppOptions(args[1].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)))
+        using (Dataset dso = Gdal.Warp(args[0], ds, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data"))
         {
-            Console.WriteLine("Can't create dest dataset " + args[1]);
-            System.Environment.Exit(-1);
+            if (dso == null)
+            {
+                Console.WriteLine("Can't create dest dataset " + args[1]);
+                System.Environment.Exit(-1);
+            }
         }
-	}
+    }
 }

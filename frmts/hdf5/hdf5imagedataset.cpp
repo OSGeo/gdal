@@ -11,6 +11,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "hdf5_api.h"
 
 #include "cpl_float.h"
@@ -25,6 +29,7 @@
 #include "memdataset.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <limits>
 
@@ -54,9 +59,8 @@ class HDF5ImageDataset final : public HDF5Dataset
 
     hsize_t *dims;
     hsize_t *maxdims;
-    HDF5GroupObjects *poH5Objects;
     int ndims;
-    int dimensions;
+    std::string m_osPath{};
     hid_t dataset_id;
     hid_t dataspace_id;
     hid_t native;
@@ -198,10 +202,9 @@ class HDF5ImageDataset final : public HDF5Dataset
 /*                          HDF5ImageDataset()                          */
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset()
-    : dims(nullptr), maxdims(nullptr), poH5Objects(nullptr), ndims(0),
-      dimensions(0), dataset_id(-1), dataspace_id(-1), native(-1),
-      iSubdatasetType(UNKNOWN_PRODUCT), iCSKProductType(PROD_UNKNOWN),
-      bHasGeoTransform(false)
+    : dims(nullptr), maxdims(nullptr), ndims(0), dataset_id(-1),
+      dataspace_id(-1), native(-1), iSubdatasetType(UNKNOWN_PRODUCT),
+      iCSKProductType(PROD_UNKNOWN), bHasGeoTransform(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -973,17 +976,15 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    HDF5ImageDataset *poDS = new HDF5ImageDataset();
+    auto poDS = std::make_unique<HDF5ImageDataset>();
 
     // Create a corresponding GDALDataset.
-    char **papszName =
+    const CPLStringList aosFilenameTokens(
         CSLTokenizeString2(poOpenInfo->pszFilename, ":",
-                           CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
+                           CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES));
 
-    if (!(CSLCount(papszName) == 3 || CSLCount(papszName) == 4))
+    if (aosFilenameTokens.size() != 3 && aosFilenameTokens.size() != 4)
     {
-        CSLDestroy(papszName);
-        delete poDS;
         return nullptr;
     }
 
@@ -992,24 +993,23 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     // Check for drive name in windows HDF5:"D:\...
     CPLString osSubdatasetName;
 
-    CPLString osFilename(papszName[1]);
+    CPLString osFilename(aosFilenameTokens[1]);
 
-    if ((strlen(papszName[1]) == 1 && papszName[3] != nullptr) ||
-        (STARTS_WITH(papszName[1], "/vsicurl/http") && papszName[3] != nullptr))
+    if ((strlen(aosFilenameTokens[1]) == 1 &&
+         aosFilenameTokens[3] != nullptr) ||
+        (STARTS_WITH(aosFilenameTokens[1], "/vsicurl/http") &&
+         aosFilenameTokens[3] != nullptr))
     {
         osFilename += ":";
-        osFilename += papszName[2];
-        osSubdatasetName = papszName[3];
+        osFilename += aosFilenameTokens[2];
+        osSubdatasetName = aosFilenameTokens[3];
     }
     else
     {
-        osSubdatasetName = papszName[2];
+        osSubdatasetName = aosFilenameTokens[2];
     }
 
     poDS->SetSubdatasetName(osSubdatasetName);
-
-    CSLDestroy(papszName);
-    papszName = nullptr;
 
     poDS->SetPhysicalFilename(osFilename);
 
@@ -1017,14 +1017,12 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->m_hHDF5 = GDAL_HDF5Open(osFilename);
     if (poDS->m_hHDF5 < 0)
     {
-        delete poDS;
         return nullptr;
     }
 
     poDS->hGroupID = H5Gopen(poDS->m_hHDF5, "/");
     if (poDS->hGroupID < 0)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -1032,38 +1030,39 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->ReadGlobalAttributes(FALSE);
 
     // Create HDF5 Data Hierarchy in a link list.
-    poDS->poH5Objects = poDS->HDF5FindDatasetObjectsbyPath(poDS->poH5RootGroup,
-                                                           osSubdatasetName);
+    HDF5GroupObjects *poH5Objects = poDS->HDF5FindDatasetObjectsbyPath(
+        poDS->poH5RootGroup, osSubdatasetName);
 
-    if (poDS->poH5Objects == nullptr)
+    if (poH5Objects == nullptr)
     {
-        delete poDS;
         return nullptr;
     }
 
     // Retrieve HDF5 data information.
-    poDS->dataset_id = H5Dopen(poDS->m_hHDF5, poDS->poH5Objects->pszPath);
+    poDS->m_osPath = poH5Objects->pszPath;
+    poDS->dataset_id = H5Dopen(poDS->m_hHDF5, poH5Objects->pszPath);
     poDS->dataspace_id = H5Dget_space(poDS->dataset_id);
     poDS->ndims = H5Sget_simple_extent_ndims(poDS->dataspace_id);
     if (poDS->ndims <= 0)
     {
-        delete poDS;
         return nullptr;
     }
     poDS->dims =
         static_cast<hsize_t *>(CPLCalloc(poDS->ndims, sizeof(hsize_t)));
     poDS->maxdims =
         static_cast<hsize_t *>(CPLCalloc(poDS->ndims, sizeof(hsize_t)));
-    poDS->dimensions = H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
-                                                 poDS->maxdims);
-    for (int i = 0; i < poDS->dimensions; ++i)
+    if (H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
+                                  poDS->maxdims) != poDS->ndims)
+    {
+        return nullptr;
+    }
+    for (int i = 0; i < poDS->ndims; ++i)
     {
         if (poDS->dims[i] >
             static_cast<hsize_t>(std::numeric_limits<int>::max()))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "At least one dimension size exceeds INT_MAX !");
-            delete poDS;
             return nullptr;
         }
     }
@@ -1076,7 +1075,6 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     if (eGDALDataType == GDT_Unknown)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unhandled HDF5 data type");
-        delete poDS;
         return nullptr;
     }
 
@@ -1186,7 +1184,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     // Not totally sure about that
                     aosGeolocation.AddNameValue("GEOREFERENCING_CONVENTION",
                                                 "PIXEL_CENTER");
-                    poDS->SetMetadata(aosGeolocation.List(), "GEOLOCATION");
+                    poDS->SetMetadata(aosGeolocation.List(),
+                                      GDAL_MDD_GEOLOCATION);
                 }
             }
         }
@@ -1206,10 +1205,10 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLStringList aosMetadata;
     std::map<std::string, CPLStringList> oMapBandSpecificMetadata;
-    if (poDS->poH5Objects->nType == H5G_DATASET)
+    if (poH5Objects->nType == H5G_DATASET)
     {
-        HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poDS->poH5Objects,
-                                    H5G_DATASET, false, aosMetadata);
+        HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poH5Objects, H5G_DATASET,
+                                    false, aosMetadata);
         if (nBands > 1 && poDS->nRasterXSize != nBands &&
             poDS->nRasterYSize != nBands)
         {
@@ -1286,12 +1285,12 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     static_cast<int>(panChunkDims[poDS->m_nOtherDimIndex]);
 
                 if (poDS->m_nBandChunkSize > 1)
-                    poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
-                                          "IMAGE_STRUCTURE");
+                    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                          GDAL_MDD_IMAGE_STRUCTURE);
 
                 poDS->SetMetadataItem("BAND_CHUNK_SIZE",
                                       CPLSPrintf("%d", poDS->m_nBandChunkSize),
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 
@@ -1305,12 +1304,13 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                                                nullptr, 64, szName);
             if (eFilter == H5Z_FILTER_DEFLATE)
             {
-                poDS->SetMetadataItem("COMPRESSION", "DEFLATE",
-                                      "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, "DEFLATE",
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (eFilter == H5Z_FILTER_SZIP)
             {
-                poDS->SetMetadataItem("COMPRESSION", "SZIP", "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem(GDALMD_COMPRESSION, "SZIP",
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 
@@ -1319,12 +1319,10 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     for (int i = 0; i < nBands; i++)
     {
-        HDF5ImageRasterBand *const poBand =
-            new HDF5ImageRasterBand(poDS, i + 1, eGDALDataType);
+        auto poBand = std::make_unique<HDF5ImageRasterBand>(poDS.get(), i + 1,
+                                                            eGDALDataType);
 
-        poDS->SetBand(i + 1, poBand);
-
-        if (poDS->poH5Objects->nType == H5G_DATASET)
+        if (poH5Objects->nType == H5G_DATASET)
         {
             poBand->SetMetadata(aosMetadata.List());
             for (const auto &oIter : oMapBandSpecificMetadata)
@@ -1332,9 +1330,11 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                 poBand->SetMetadataItem(oIter.first.c_str(), oIter.second[i]);
             }
         }
+
+        poDS->SetBand(i + 1, std::move(poBand));
     }
 
-    if (!poDS->GetMetadata("GEOLOCATION"))
+    if (!poDS->GetMetadata(GDAL_MDD_GEOLOCATION))
         poDS->CreateProjections();
 
     // Setup/check for pam .aux.xml.
@@ -1348,7 +1348,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     // Or scenarios like https://github.com/OSGeo/gdal/issues/12824 mixing
     // native Windows and WSL use.
     CSLConstList papszGeoLocationAfterLoadXML =
-        poDS->GetMetadata("GEOLOCATION");
+        poDS->GetMetadata(GDAL_MDD_GEOLOCATION);
     if (papszGeoLocationAfterLoadXML)
     {
         for (const char *pszItem : {"X_DATASET", "Y_DATASET"})
@@ -1369,7 +1369,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                         char *pszNewVal = GDALSubdatasetInfoModifyPathComponent(
                             hSubDSInfo, osFilename.c_str());
                         poDS->SetMetadataItem(pszItem, pszNewVal,
-                                              "GEOLOCATION");
+                                              GDAL_MDD_GEOLOCATION);
                         CPLFree(pszNewVal);
                     }
                     CPLFree(pszOriPath);
@@ -1382,9 +1382,9 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 
     // Setup overviews.
-    poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
+    poDS->oOvManager.Initialize(poDS.get(), ":::VIRTUAL:::");
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -1473,12 +1473,12 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
     const double dfPixelY = (dfURY - dfLLY) / nRasterYSize;
 
     bHasGeoTransform = true;
-    m_gt[0] = dfLLX;
-    m_gt[1] = dfPixelX;
-    m_gt[2] = 0;
-    m_gt[3] = dfURY;
-    m_gt[4] = 0;
-    m_gt[5] = -dfPixelY;
+    m_gt.xorig = dfLLX;
+    m_gt.xscale = dfPixelX;
+    m_gt.xrot = 0;
+    m_gt.yorig = dfURY;
+    m_gt.yrot = 0;
+    m_gt.yscale = -dfPixelY;
 
     return CE_None;
 }
@@ -1524,6 +1524,152 @@ CPLErr HDF5ImageDataset::CreateProjections()
         }
         case UNKNOWN_PRODUCT:
         {
+            if (ndims == 2)
+            {
+                // Check if there's a CF conventions grid_mapping attribute.
+                const char *pszGridMapping =
+                    GetRasterBand(1)->GetMetadataItem("grid_mapping");
+                if (pszGridMapping)
+                {
+                    const std::string osGroupName =
+                        CPLGetDirnameSafe(m_osPath.c_str());
+                    HDF5GroupObjects *poH5Objects =
+                        HDF5FindDatasetObjectsbyPath(
+                            poH5RootGroup,
+                            (osGroupName + "/" + pszGridMapping).c_str());
+                    if (poH5Objects && poH5Objects->nType == H5G_DATASET)
+                    {
+                        CPLStringList aosMetadata;
+                        CreateMetadata(m_hHDF5, poH5Objects, H5G_DATASET, false,
+                                       aosMetadata);
+
+                        // NISAR specific
+                        const int nEPSGCode = atoi(
+                            aosMetadata.FetchNameValueDef("epsg_code", "0"));
+                        if (nEPSGCode > 0)
+                        {
+                            if (m_oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE)
+                            {
+                                m_oSRS.Clear();
+                            }
+                        }
+                        else
+                        {
+                            if (m_oSRS.importFromCF1(
+                                    aosMetadata.List(),
+                                    /* pszUnits = */ nullptr) != OGRERR_NONE)
+                            {
+                                m_oSRS.Clear();
+                            }
+                        }
+                    }
+                }
+
+                // NISAR Level 2 specific
+                const char *pszMissionName = GetMetadataItem("mission_name");
+                if (pszMissionName && EQUAL(pszMissionName, "NISAR"))
+                {
+                    const std::string osGroupName =
+                        CPLGetDirnameSafe(m_osPath.c_str());
+                    HDF5GroupObjects *poXCoordinates =
+                        HDF5FindDatasetObjectsbyPath(
+                            poH5RootGroup,
+                            (osGroupName + "/xCoordinates").c_str());
+                    HDF5GroupObjects *poYCoordinates =
+                        HDF5FindDatasetObjectsbyPath(
+                            poH5RootGroup,
+                            (osGroupName + "/yCoordinates").c_str());
+                    if (poXCoordinates && poYCoordinates &&
+                        poXCoordinates->nType == H5G_DATASET &&
+                        poYCoordinates->nType == H5G_DATASET &&
+                        poXCoordinates->nRank == 1 &&
+                        poYCoordinates->nRank == 1 &&
+                        H5Tequal(H5T_NATIVE_DOUBLE, poXCoordinates->native) &&
+                        H5Tequal(H5T_NATIVE_DOUBLE, poYCoordinates->native) &&
+                        poXCoordinates->paDims[0] == dims[1] &&
+                        poYCoordinates->paDims[0] == dims[0])
+                    {
+                        hid_t hDSX = H5Dopen(m_hHDF5, poXCoordinates->pszPath);
+                        hid_t hDSY = H5Dopen(m_hHDF5, poYCoordinates->pszPath);
+
+                        if (hDSX >= 0 && hDSY >= 0)
+                        {
+                            const auto Read1DDoubleArray =
+                                [](hid_t hDS, hsize_t count,
+                                   std::vector<double> &v)
+                            {
+                                hsize_t anCount[1] = {count};
+                                hsize_t anStart[1] = {0};
+                                v.resize(static_cast<size_t>(count));
+                                hid_t hMem =
+                                    H5Screate_simple(1, anCount, nullptr);
+                                const hid_t hDataspace = H5Dget_space(hDS);
+                                H5Sselect_hyperslab(hDataspace, H5S_SELECT_SET,
+                                                    anStart, nullptr, anCount,
+                                                    nullptr);
+                                bool ret = H5Dread(hDS, H5T_NATIVE_DOUBLE, hMem,
+                                                   hDataspace, H5P_DEFAULT,
+                                                   v.data()) >= 0;
+                                H5Sclose(hDataspace);
+                                H5Sclose(hMem);
+                                return ret;
+                            };
+
+                            std::vector<double> adfX, adfY;
+                            if (Read1DDoubleArray(
+                                    hDSX, poXCoordinates->paDims[0], adfX) &&
+                                Read1DDoubleArray(
+                                    hDSY, poYCoordinates->paDims[0], adfY) &&
+                                adfX.size() >= 3 && adfY.size() >= 3)
+                            {
+                                constexpr double EPSILON = 1e-3;
+                                double dfXSpacing = adfX[1] - adfX[0];
+                                for (size_t i = 1; i + 1 < adfX.size(); ++i)
+                                {
+                                    const double dfDelta =
+                                        adfX[i + 1] - adfX[i];
+                                    if (!(std::fabs(dfDelta - dfXSpacing) <=
+                                          EPSILON * std::fabs(dfXSpacing)))
+                                    {
+                                        dfXSpacing = std::numeric_limits<
+                                            double>::quiet_NaN();
+                                        break;
+                                    }
+                                }
+
+                                double dfYSpacing = adfY[1] - adfY[0];
+                                for (size_t i = 1; i + 1 < adfY.size(); ++i)
+                                {
+                                    const double dfDelta =
+                                        adfY[i + 1] - adfY[i];
+                                    if (!(std::fabs(dfDelta - dfYSpacing) <=
+                                          EPSILON * std::fabs(dfYSpacing)))
+                                    {
+                                        dfYSpacing = std::numeric_limits<
+                                            double>::quiet_NaN();
+                                        break;
+                                    }
+                                }
+
+                                if (!std::isnan(dfXSpacing) &&
+                                    !std::isnan(dfYSpacing))
+                                {
+                                    bHasGeoTransform = true;
+                                    m_gt.xorig = adfX[0] - dfXSpacing / 2;
+                                    m_gt.xscale = dfXSpacing;
+                                    m_gt.yorig = adfY[0] - dfYSpacing / 2;
+                                    m_gt.yscale = dfYSpacing;
+                                }
+                            }
+                        }
+                        if (hDSX >= 0)
+                            H5Dclose(hDSX);
+                        if (hDSY >= 0)
+                            H5Dclose(hDSY);
+                    }
+                }
+            }
+
             constexpr int NBGCPLAT = 100;
             constexpr int NBGCPLON = 30;
 
@@ -1534,7 +1680,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
                 return CE_None;
 
             // Create HDF5 Data Hierarchy in a link list.
-            poH5Objects = HDF5FindDatasetObjects(poH5RootGroup, "Latitude");
+            HDF5GroupObjects *poH5Objects =
+                HDF5FindDatasetObjects(poH5RootGroup, "Latitude");
             if (!poH5Objects)
             {
                 if (GetMetadataItem("where_projdef") != nullptr)
@@ -1962,12 +2109,12 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
                 // images.
                 // geotransform[5] : height of pixel (but negative)
 
-                m_gt[0] = pdOutUL[0];
-                m_gt[1] = pdLineSpacing[0];
-                m_gt[2] = 0;
-                m_gt[3] = pdOutUL[1];
-                m_gt[4] = 0;
-                m_gt[5] = -pdColumnSpacing[0];
+                m_gt.xorig = pdOutUL[0];
+                m_gt.xscale = pdLineSpacing[0];
+                m_gt.xrot = 0;
+                m_gt.yorig = pdOutUL[1];
+                m_gt.yrot = 0;
+                m_gt.yscale = -pdColumnSpacing[0];
 
                 CPLFree(pdOutUL);
                 CPLFree(pdLineSpacing);

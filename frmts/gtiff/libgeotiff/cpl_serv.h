@@ -30,4 +30,8 @@
  */
 #define CPL_SERV_H_INTERNAL 1
 
+#define MIN CPL_MIN
+#define MAX CPL_MAX
+#define ABS CPL_ABS
+
 #endif /* ndef CPL_SERV_H_INCLUDED */

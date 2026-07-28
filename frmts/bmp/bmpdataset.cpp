@@ -292,9 +292,9 @@ BMPRasterBand::BMPRasterBand(BMPDataset *poDSIn, int nBandIn)
     eDataType = GDT_UInt8;
 
     if (poDSIn->sInfoHeader.iBitCount < 8)
-        SetMetadataItem("NBITS",
+        SetMetadataItem(GDALMD_NBITS,
                         CPLSPrintf("%d", poDSIn->sInfoHeader.iBitCount),
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
 
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
@@ -727,11 +727,11 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
     }
 
     if (poDSIn->sInfoHeader.iClrUsed <= 2)
-        SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, "1", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDSIn->sInfoHeader.iClrUsed <= 4)
-        SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, "2", GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDSIn->sInfoHeader.iClrUsed <= 16)
-        SetMetadataItem("NBITS", "4", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, "4", GDAL_MDD_IMAGE_STRUCTURE);
 
     const GUInt32 iComprSize = static_cast<GUInt32>(
         poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits);
@@ -1012,10 +1012,10 @@ CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt) const
     // See http://trac.osgeo.org/gdal/ticket/3578
     if (sInfoHeader.iXPelsPerMeter > 0 && sInfoHeader.iYPelsPerMeter > 0)
     {
-        gt[1] = sInfoHeader.iXPelsPerMeter;
-        gt[5] = -sInfoHeader.iYPelsPerMeter;
-        gt[0] = -0.5 * gt[1];
-        gt[3] = -0.5 * gt[5];
+        gt.xscale = sInfoHeader.iXPelsPerMeter;
+        gt.yscale = -sInfoHeader.iYPelsPerMeter;
+        gt.xorig = -0.5 * gt.xscale;
+        gt.yorig = -0.5 * gt.yscale;
         return CE_None;
     }
 #endif
@@ -1490,7 +1490,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
      */
     GUInt32 nScanSize =
         (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
-    if (!poDS->sInfoHeader.iWidth || !poDS->sInfoHeader.iBitCount ||
+    if (!poDS->sInfoHeader.iWidth ||
         (nScanSize - 31) / poDS->sInfoHeader.iBitCount !=
             (GUInt32)poDS->sInfoHeader.iWidth)
     {

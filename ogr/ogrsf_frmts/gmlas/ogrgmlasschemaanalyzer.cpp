@@ -25,6 +25,7 @@ static XSModel *getGrammarPool(XMLGrammarPool *pool)
 #include "ogr_gmlas.h"
 #include "ogr_pgdump.h"
 
+#include <algorithm>
 #include <list>
 
 static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef);
@@ -1381,6 +1382,7 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 /*                 SetFieldTypeAndWidthFromDefinition()                 */
 /************************************************************************/
 
+/* static */
 void GMLASSchemaAnalyzer::SetFieldTypeAndWidthFromDefinition(
     XSSimpleTypeDefinition *poST, GMLASField &oField)
 {
@@ -1399,7 +1401,7 @@ void GMLASSchemaAnalyzer::SetFieldTypeAndWidthFromDefinition(
                 XSSimpleTypeDefinition::FACET_MAXLENGTH);
         }
         if (maxLength != nullptr)
-            nMaxLength = MAX(nMaxLength, atoi(transcode(maxLength)));
+            nMaxLength = std::max(nMaxLength, atoi(transcode(maxLength)));
         poST = reinterpret_cast<XSSimpleTypeDefinition *>(poST->getBaseType());
     }
 
@@ -3062,7 +3064,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK)
                     {
                         /* We have a complex type, but no attributes, and */
-                        /* compatible of arrays, so move it to top level! */
+                        /* compatible with arrays, so move it to top level! */
                         oField.SetName(osPrefixedEltName);
                         oField.SetArray(true);
                         oField.SetMinOccurs(nMinOccurs);
@@ -3395,7 +3397,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK)
                         {
                             // In the case the sequence has a single element,
-                            // compatible of array type, and no attribute and
+                            // compatible with array type, and no attribute and
                             // no nested classes, then add an array attribute
                             // at the top-level
                             GMLASField oField(oNestedClass.GetFields()[0]);

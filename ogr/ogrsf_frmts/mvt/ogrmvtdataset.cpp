@@ -20,6 +20,7 @@
 #include "cpl_json.h"
 #include "cpl_http.h"
 #include "ogr_p.h"
+#include "gdal_thread_pool.h"
 
 #include "mvt_tile.h"
 #include "mvtutils.h"
@@ -1035,7 +1036,7 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
         {
             std::unique_ptr<OGRMultiPolygon> poMultiPoly;
             std::unique_ptr<OGRPolygon> poPoly;
-            int externalIsClockwise = 0;
+            bool externalIsClockwise = false;
             int nX = 0;
             int nY = 0;
             OGREnvelope sExteriorRingEnvelope;
@@ -2791,9 +2792,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                                          poDS->m_bClip);
                     }
 
-                    for (int k = 0; k < poTileDS->GetLayerCount(); k++)
+                    for (auto *poTileLayer : poTileDS->GetLayers())
                     {
-                        OGRLayer *poTileLayer = poTileDS->GetLayer(k);
                         OGRFeatureDefn *poTileLDefn =
                             poTileLayer->GetLayerDefn();
                         OGRwkbGeometryType eTileGeomType =
@@ -5659,8 +5659,8 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     // GDAL extension for custom tiling schemes
     if (!bIsStandardTilingScheme)
     {
-        const char *pszAuthName = m_poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = m_poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = m_poSRS->GetAuthorityName();
+        const char *pszAuthCode = m_poSRS->GetAuthorityCode();
         if (pszAuthName && pszAuthCode)
         {
             WriteMetadataItem("crs",
@@ -6403,12 +6403,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    int nThreads = CPLGetNumCPUs();
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszNumThreads && CPLGetValueType(pszNumThreads) == CPL_VALUE_INTEGER)
-    {
-        nThreads = atoi(pszNumThreads);
-    }
+    const int nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultToAllCPUs = */ true);
     if (nThreads > 1)
     {
         poDS->m_bThreadPoolOK =

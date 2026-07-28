@@ -46,6 +46,7 @@ void CPL_DLL DeclareDeferredGTAPlugin(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void DeclareDeferredJPEGPlugin(void);
 void CPL_DLL GDALRegister_JP2KAK(void);
+void CPL_DLL GDALRegister_JP2Grok(void);
 void DeclareDeferredJP2KAKPlugin(void);
 void CPL_DLL GDALRegister_JPIPKAK(void);
 void DeclareDeferredJPIPKAKPlugin(void);
@@ -183,6 +184,8 @@ void CPL_DLL GDALRegister_WMTS(void);
 void DeclareDeferredWMTSPlugin(void);
 void CPL_DLL GDALRegister_SAFE(void);
 void CPL_DLL GDALRegister_SENTINEL2(void);
+void CPL_DLL GDALRegister_LERC(void);
+void DeclareDeferredLERCPlugin(void);
 void CPL_DLL GDALRegister_MRF(void);
 void DeclareDeferredMRFPlugin(void);
 void CPL_DLL GDALRegister_RRASTER(void);
@@ -209,6 +212,8 @@ void CPL_DLL GDALRegister_OGCAPI(void);
 void CPL_DLL GDALRegister_STACTA(void);
 void CPL_DLL GDALRegister_Zarr(void);
 void DeclareDeferredZarrPlugin(void);
+void CPL_DLL GDALRegister_Icechunk(void);
+void DeclareDeferredIcechunkPlugin(void);
 void CPL_DLL GDALRegister_STACIT(void);
 void CPL_DLL GDALRegister_JPEGXL(void);
 void DeclareDeferredJPEGXLPlugin(void);
@@ -223,6 +228,7 @@ void CPL_DLL GDALRegister_RCM(void);
 void CPL_DLL GDALRegister_MiraMon(void);
 void CPL_DLL GDALRegister_GDALG(void);
 void CPL_DLL GDALRegister_E57(void);
+void CPL_DLL GDALRegister_CPHD(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

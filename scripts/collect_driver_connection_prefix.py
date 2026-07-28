@@ -13,6 +13,7 @@ prefixes["HANA:"] = "HANA"
 prefixes["PG:"] = "PostgreSQL"
 prefixes["MSSQL:"] = "MSSQLSpatial"
 prefixes["ES:"] = "Elasticsearch"
+prefixes["ICECHUNK:"] = "Icechunk"
 
 
 def collect_prefix(filename):

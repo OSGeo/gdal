@@ -41,7 +41,7 @@ def test_gdal_translate_1(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test1.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} ../gcore/data/byte.tif {dst_tif}"
     )
     assert err is None or err == "", "got error/warning"
@@ -491,7 +491,7 @@ def test_gdal_translate_18(gdal_translate_path, tmp_path):
     gdaltest.runexternal(
         f"{gdal_translate_path} {dst1_vrt} -expand rgb -of VRT {dst2_vrt}"
     )
-    (_, ret_stderr) = gdaltest.runexternal_out_and_err(
+    _, ret_stderr = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} {dst2_vrt} {dst2_tif}"
     )
 
@@ -683,15 +683,11 @@ def test_gdal_translate_26(gdal_translate_path, tmp_path):
     dst_tif = str(tmp_path / "test_gdal_translate_26.tif")
 
     f = open(src_xyz, "wb")
-    f.write(
-        """X Y Z
+    f.write("""X Y Z
 0 0 -999
 1 0 10
 0 1 15
-1 1 20""".encode(
-            "ascii"
-        )
-    )
+1 1 20""".encode("ascii"))
     f.close()
     gdaltest.runexternal(
         f"{gdal_translate_path} -a_nodata -999 -stats {src_xyz} {dst_tif}"
@@ -718,17 +714,13 @@ def test_gdal_translate_27(gdal_translate_path, tmp_path):
     dst_tif = str(tmp_path / "test_gdal_translate_27.tif")
 
     f = open(src_asc, "wb")
-    f.write(
-        """ncols        2
+    f.write("""ncols        2
 nrows        2
 xllcorner    440720.000000000000
 yllcorner    3750120.000000000000
 cellsize     60.000000000000
  0 256
- 0 0""".encode(
-            "ascii"
-        )
-    )
+ 0 0""".encode("ascii"))
     f.close()
 
     gdaltest.runexternal(f"{test_cli_utilities.get_gdalinfo_path()} -stats {src_asc}")
@@ -786,7 +778,7 @@ def test_gdal_translate_29(gdal_translate_path, tmp_path):
     dst_tif = str(tmp_path / "test_gdal_translate_29.tif")
     dst_vrt = str(tmp_path / "test_gdal_translate_29.vrt")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} ../gcore/data/byte.tif {dst_tif} -outsize 50% 50% -r cubic"
     )
     assert err is None or err == "", "got error/warning"
@@ -799,11 +791,11 @@ def test_gdal_translate_29(gdal_translate_path, tmp_path):
 
     ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} ../gcore/data/byte.tif {dst_vrt} -outsize 50% 50% -r cubic -of VRT"
     )
     assert err is None or err == "", "got error/warning"
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} {dst_vrt} {dst_tif}"
     )
     assert err is None or err == "", "got error/warning"
@@ -950,7 +942,7 @@ def test_gdal_translate_33ter(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "out.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} -outsize 0 0 ../gdrivers/data/small_world.tif {dst_tif}"
     )
     assert "-outsize 0 0 invalid" in err
@@ -983,22 +975,22 @@ def test_gdal_translate_34(gdal_translate_path, tmp_path):
 
 def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 
-    (_, err) = gdaltest.runexternal_out_and_err(gdal_translate_path)
+    _, err = gdaltest.runexternal_out_and_err(gdal_translate_path)
     assert "input_file: 1 argument(s) expected. 0 provided." in err
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_translate_path + " ../gcore/data/byte.tif"
     )
     assert "output_file: 1 argument(s) expected. 0 provided." in err
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} /non_existing_path/non_existing.tif {tmp_vsimem}/out.tif"
     )
     assert (
         "does not exist in the file system" in err or "No such file or directory" in err
     )
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_translate_path
         + " ../gcore/data/byte.tif /non_existing_path/non_existing.tif"
     )

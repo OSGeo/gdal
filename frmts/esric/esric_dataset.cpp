@@ -321,10 +321,10 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
@@ -332,10 +332,11 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
         nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         compression =
             CPLGetXMLValue(CacheInfo, "TileImageInfo.CacheTileFormat", "JPEG");
-        SetMetadataItem("COMPRESS", compression.c_str(), "IMAGE_STRUCTURE");
+        SetMetadataItem("COMPRESS", compression.c_str(),
+                        GDAL_MDD_IMAGE_STRUCTURE);
 
         nBands = EQUAL(compression, "JPEG") ? 3 : 4;
         for (int i = 1; i <= nBands; i++)
@@ -490,10 +491,10 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
@@ -501,9 +502,10 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
         nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         compression = oRoot.GetString("tileImageInfo/format");
-        SetMetadataItem("COMPRESS", compression.c_str(), "IMAGE_STRUCTURE");
+        SetMetadataItem("COMPRESS", compression.c_str(),
+                        GDAL_MDD_IMAGE_STRUCTURE);
 
         auto oInitialExtent = oRoot.GetObj("initialExtent");
         if (oInitialExtent.IsValid() &&
@@ -628,7 +630,7 @@ class ESRICProxyDataset final : public GDALProxyDataset
         m_aosFileList.AddString(pszDescription);
     }
 
-    GDALDriver *GetDriver() override
+    GDALDriver *GetDriver() const override
     {
         return GDALDriver::FromHandle(GDALGetDriverByName("ESRIC"));
     }
@@ -652,8 +654,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
                              const char *pszDescription)
 {
-    bool ignoreOversizedLods = CSLFetchBoolean(poOpenInfo->papszOpenOptions,
-                                               "IGNORE_OVERSIZED_LODS", FALSE);
+    bool ignoreOversizedLods = CPL_TO_BOOL(CSLFetchBoolean(
+        poOpenInfo->papszOpenOptions, "IGNORE_OVERSIZED_LODS", FALSE));
     if (IdentifyXML(poOpenInfo))
     {
         CPLXMLNode *config = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -929,7 +931,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
     VSIFCloseL(mfh);
     // Can't open a raster by handle?
-    auto inds = GDALOpen(magic.c_str(), GA_ReadOnly);
+    auto inds = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        magic.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
     if (!inds)
     {
         VSIUnlink(magic.c_str());
@@ -937,7 +940,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
         return CE_Failure;
     }
     // Duplicate first band if not sufficient bands are provided
-    auto inbands = GDALGetRasterCount(inds);
+    auto inbands = inds->GetRasterCount();
     int ubands[4] = {1, 1, 1, 1};
     int *usebands = nullptr;
     int bandcount = parent->nBands;
@@ -962,7 +965,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
             // Grayscale, expecting color
             usebands = ubands;
             // Check for the color table of 1 band rasters
-            hCT = GDALGetRasterColorTable(GDALGetRasterBand(inds, 1));
+            hCT = GDALGetRasterColorTable(
+                GDALGetRasterBand(GDALDataset::ToHandle(inds.get()), 1));
         }
     }
 
@@ -970,9 +974,10 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     if (nullptr != hCT)
     {
         // Expand color indexed to RGB(A)
-        errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
-            1, usebands, parent->nBands, parent->nBands * TSZ, 1);
+        errcode = GDALDatasetRasterIO(GDALDataset::ToHandle(inds.get()),
+                                      GF_Read, 0, 0, TSZ, TSZ, buffer.data(),
+                                      TSZ, TSZ, GDT_UInt8, 1, usebands,
+                                      parent->nBands, parent->nBands * TSZ, 1);
         if (CE_None == errcode)
         {
             GByte abyCT[4 * 256];
@@ -1028,11 +1033,12 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     }
     else
     {
-        errcode = GDALDatasetRasterIO(
-            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_UInt8,
-            bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
+        errcode = GDALDatasetRasterIO(GDALDataset::ToHandle(inds.get()),
+                                      GF_Read, 0, 0, TSZ, TSZ, buffer.data(),
+                                      TSZ, TSZ, GDT_UInt8, bandcount, usebands,
+                                      parent->nBands, parent->nBands * TSZ, 1);
     }
-    GDALClose(inds);
+    inds.reset();
     VSIUnlink(magic.c_str());
     // Error while unpacking tile
     if (CE_None != errcode)

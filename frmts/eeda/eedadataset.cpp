@@ -521,21 +521,22 @@ OGRFeature *GDALEEDALayer::GetNextRawFeature()
             int nWidth = 0, nHeight = 0;
             double dfMinPixelSize = std::numeric_limits<double>::max();
             CPLString osSRS(aoBands[0].osWKT);
-            double dfULX = aoBands[0].gt[0];
-            double dfULY = aoBands[0].gt[3];
+            double dfULX = aoBands[0].gt.xorig;
+            double dfULY = aoBands[0].gt.yorig;
             bool bULValid = true;
             for (size_t i = 0; i < aoBands.size(); i++)
             {
                 nWidth = std::max(nWidth, aoBands[i].nWidth);
                 nHeight = std::max(nHeight, aoBands[i].nHeight);
-                dfMinPixelSize =
-                    std::min(dfMinPixelSize, std::min(aoBands[i].gt[1],
-                                                      fabs(aoBands[i].gt[5])));
+                dfMinPixelSize = std::min(
+                    dfMinPixelSize,
+                    std::min(aoBands[i].gt.xscale, fabs(aoBands[i].gt.yscale)));
                 if (osSRS != aoBands[i].osWKT)
                 {
                     osSRS.clear();
                 }
-                if (dfULX != aoBands[i].gt[0] || dfULY != aoBands[i].gt[3])
+                if (dfULX != aoBands[i].gt.xorig ||
+                    dfULY != aoBands[i].gt.yorig)
                 {
                     bULValid = false;
                 }
@@ -554,8 +555,8 @@ OGRFeature *GDALEEDALayer::GetNextRawFeature()
                 oSRS.SetFromUserInput(
                     osSRS,
                     OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-                const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
-                const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+                const char *pszAuthName = oSRS.GetAuthorityName();
+                const char *pszAuthCode = oSRS.GetAuthorityCode();
                 if (pszAuthName && pszAuthCode)
                 {
                     poFeature->SetField(

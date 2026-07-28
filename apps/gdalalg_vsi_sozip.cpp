@@ -395,6 +395,8 @@ class GDALVSISOZIPListAlgorithm final : public GDALAlgorithm
 
     GDALVSISOZIPListAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
+        AddProgressArg(/* hidden = */ true);
+
         AddArg("input", 'i', _("Input ZIP filename"), &m_zipFilename)
             .SetRequired()
             .SetPositional();
@@ -487,6 +489,8 @@ class GDALVSISOZIPValidateAlgorithm final : public GDALAlgorithm
 
     GDALVSISOZIPValidateAlgorithm() : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
     {
+        AddProgressArg(/* hidden = */ true);
+
         AddArg("input", 'i', _("Input ZIP filename"), &m_zipFilename)
             .SetRequired()
             .SetPositional();

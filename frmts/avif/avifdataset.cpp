@@ -18,6 +18,7 @@
 #include "avifdrivercore.h"
 #include "gdalexif.h"
 #include "memdataset.h"
+#include "gdal_thread_pool.h"
 
 #include <avif/avif.h>
 
@@ -258,8 +259,8 @@ GDALAVIFRasterBand::GDALAVIFRasterBand(GDALAVIFDataset *poDSIn, int nBandIn,
 {
     if (nBits != 8 && nBits != 16)
     {
-        GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -508,6 +509,11 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
             return false;
     }
 
+#if AVIF_VERSION >= 1040000
+    m_decoder->imageContentToDecode = AVIF_IMAGE_CONTENT_COLOR_AND_ALPHA |
+                                      AVIF_IMAGE_CONTENT_SAMPLE_TRANSFORMS;
+#endif
+
     auto gdalIO = std::make_unique<GDALAVIFIO>(std::move(fp));
     avifDecoderSetIO(m_decoder, reinterpret_cast<avifIO *>(gdalIO.release()));
 
@@ -524,7 +530,12 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
     nRasterXSize = static_cast<int>(m_decoder->image->width);
     nRasterYSize = static_cast<int>(m_decoder->image->height);
 
-    if (m_decoder->image->depth > 12)
+#if AVIF_VERSION < 1040000
+    constexpr int MAX_SUPPORTED_DEPTH = 12;
+#else
+    constexpr int MAX_SUPPORTED_DEPTH = 16;
+#endif
+    if (m_decoder->image->depth > MAX_SUPPORTED_DEPTH)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported AVIF depth: %u",
                  m_decoder->image->depth);
@@ -540,13 +551,13 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
     if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV444)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "444",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV422)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "422",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     else if (m_decoder->image->yuvFormat == AVIF_PIXEL_FORMAT_YUV420)
         GDALDataset::SetMetadataItem("YUV_SUBSAMPLING", "420",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
 
     for (int i = 0; i < l_nBands; ++i)
     {
@@ -572,7 +583,7 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       CPLSPrintf("Subdataset %d", i + 1));
             }
-            GDALDataset::SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
     }
     else if (m_iPart > m_decoder->imageCount)
@@ -750,22 +761,34 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    int nBits = eDT == GDT_UInt8 ? 8 : 12;
-    const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+    int nBits = eDT == GDT_UInt8 ? 8 :
+#if AVIF_VERSION < 1040000
+                                 12
+#else
+                                 16
+#endif
+        ;
+    const char *pszNBITS = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBITS)
     {
         nBits = atoi(pszNBITS);
     }
     else if (eDT == GDT_UInt16)
     {
-        pszNBITS = poFirstBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        pszNBITS = poFirstBand->GetMetadataItem(GDALMD_NBITS,
+                                                GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBITS)
         {
             nBits = atoi(pszNBITS);
         }
     }
-    if ((eDT == GDT_UInt8 && nBits != 8) ||
-        (eDT == GDT_UInt16 && nBits != 10 && nBits != 12))
+    if ((eDT == GDT_UInt8 && nBits != 8)
+#if AVIF_VERSION < 1040000
+        || (eDT == GDT_UInt16 && nBits != 10 && nBits != 12)
+#else
+        || (eDT == GDT_UInt16 && nBits != 10 && nBits != 12 && nBits != 16)
+#endif
+    )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Invalid/inconsistent bit depth w.r.t data type");
@@ -782,8 +805,9 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                    0, 100);
 
     // Create AVIF image.
-    avifPixelFormat ePixelFormat =
-        nBands <= 2 ? AVIF_PIXEL_FORMAT_YUV400 : AVIF_PIXEL_FORMAT_YUV444;
+    avifPixelFormat ePixelFormat = nBands <= 2 && nQuality != 100
+                                       ? AVIF_PIXEL_FORMAT_YUV400
+                                       : AVIF_PIXEL_FORMAT_YUV444;
     if (nBands >= 3)
     {
         const char *pszYUV_SUBSAMPLING =
@@ -929,13 +953,9 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             avifCodecChoiceFromName(CPLString(pszCodec).tolower().c_str());
     }
 
-    const char *pszThreads = CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-    if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        encoder->maxThreads = atoi(pszThreads);
-    else
-        encoder->maxThreads = CPLGetNumCPUs();
+    encoder->maxThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                            GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                            /* bDefaultToAllCPUs = */ true);
 
 #if AVIF_VERSION_MAJOR >= 1
     encoder->quality = nQuality;
@@ -953,6 +973,15 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     encoder->speed = std::clamp(
         atoi(CSLFetchNameValueDef(papszOptions, "SPEED", DEFAULT_SPEED_STR)), 0,
         10);
+
+#if AVIF_VERSION >= 1040000
+    if (eDT == GDT_UInt16 && nBits != 10 && nBits != 12)
+    {
+        encoder->sampleTransformRecipe =
+            nBits > 12 ? AVIF_SAMPLE_TRANSFORM_BIT_DEPTH_EXTENSION_12B_4B
+                       : AVIF_SAMPLE_TRANSFORM_BIT_DEPTH_EXTENSION_8B_8B;
+    }
+#endif
 
     if (CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_EXIF_METADATA", "YES")))
@@ -1229,10 +1258,16 @@ void GDALAVIFDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "NBITS");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_NBITS);
         CPLAddXMLAttributeAndValue(psOption, "type", "int");
+#if AVIF_VERSION >= 1040000
+        CPLAddXMLAttributeAndValue(
+            psOption, "description",
+            "Bit depth. Valid values are 8, 10, 12 and 16.");
+#else
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Bit depth. Valid values are 8, 10, 12.");
+#endif
     }
 
     {

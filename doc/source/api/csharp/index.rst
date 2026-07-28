@@ -20,10 +20,10 @@ interface to control the finalization of the underlying unmanaged memory referen
 Supported platforms
 -------------------
 
-Currently the interface is compilable on and supports:
+Currently the interface supports:
 
-* the various Win32 and Win64 platforms targeting the Microsoft.NET and the MONO frameworks,
-* GNU Linux/OSX systems using the MONO framework, and
+* the various Win32 and Win64 platforms using .NET and the MONO frameworks,
+* GNU Linux/OSX systems using the .NET and the MONO framework, and
 * Unity systems on Windows, OSX and Linux (currently only the MONO framework and not IL2CPP).
 
 Getting GDAL for C#
@@ -44,7 +44,6 @@ Related Documents
    .. toctree::
        :maxdepth: 1
 
-       csharp_compile_legacy
        csharp_compile_cmake
        csharp_raster
        csharp_vector
@@ -59,9 +58,9 @@ Useful Links
 
 * The Conda Feedstock
 
-* A simple (as is) build engine of GDAL 3.2 library for .NET Core. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__
+* A simple (as is) build engine of GDAL for .NET. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__
 
-* The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in c# in a Unity environment.
+* The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in C# in a Unity environment.
 
 (Please add your project to this section)
 

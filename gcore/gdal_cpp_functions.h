@@ -203,7 +203,7 @@ int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
                              char **ppszTabFileNameOut);
 
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
-                                      GDALRasterIOExtraArg *psSrcArg);
+                                      const GDALRasterIOExtraArg *psSrcArg);
 
 void CPL_DLL GDALExpandPackedBitsToByteAt0Or1(
     const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
@@ -226,6 +226,10 @@ GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
 GDALDataset CPL_DLL *GDALGetThreadSafeDataset(GDALDataset *poDS,
                                               int nScopeFlags);
 
+int GDALBandGetBestOverviewLevel(GDALRasterBand *poBand,
+                                 double dfTargetDownsamplingRatio,
+                                 double dfOversamplingThreshold);
+
 void GDALNullifyOpenDatasetsList();
 CPLMutex **GDALGetphDMMutex();
 CPLMutex **GDALGetphDLMutex();
@@ -245,7 +249,7 @@ CPLErr CPL_DLL EXIFExtractMetadata(char **&papszMetadata, void *fpL,
 
 int GDALValidateOpenOptions(GDALDriverH hDriver,
                             const char *const *papszOptionOptions);
-int GDALValidateOptions(const char *pszOptionList,
+int GDALValidateOptions(GDALDriverH hDriver, const char *pszOptionList,
                         const char *const *papszOptionsToValidate,
                         const char *pszErrorMessageOptionType,
                         const char *pszErrorMessageContainerName);
@@ -258,8 +262,8 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
                                         int nXSize, int nYSize, int nBufXSize,
                                         int nBufYSize);
 
-GDALDataset *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
-                                       bool bThisLevelOnly);
+GDALDataset CPL_DLL *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
+                                               bool bThisLevelOnly);
 
 // Should cover particular cases of #3573, #4183, #4506, #6578
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before
@@ -404,6 +408,7 @@ GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff, int nYOff, int nXSize,
                           GDALDataType eBufType, int nBandCount,
                           int *panBandMap, int nPixelSpace, int nLineSpace,
                           int nBandSpace, CSLConstList papszOptions);
+
 //! @endcond
 
 #endif

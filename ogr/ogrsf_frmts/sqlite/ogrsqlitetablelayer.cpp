@@ -179,7 +179,7 @@ CPLErr OGRSQLiteTableLayer::Initialize(const char *m_pszTableNameIn,
 
 static OGRSQLiteGeomFormat GetGeomFormat(const char *pszGeomFormat)
 {
-    OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
+    OGRSQLiteGeomFormat eGeomFormat = OSGF_Unknown;
     if (pszGeomFormat)
     {
         if (EQUAL(pszGeomFormat, "WKT"))
@@ -444,7 +444,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
         rc = sqlite3_get_table(hDB, pszSQLConst, &papszResult, &nRowCount,
                                &nColCount, &pszErrMsg);
         OGRwkbGeometryType eGeomType = wkbUnknown;
-        OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
+        OGRSQLiteGeomFormat eGeomFormat = OSGF_Unknown;
         if (rc == SQLITE_OK && nRowCount == 1)
         {
             char **papszRow = papszResult + nColCount;
@@ -1640,10 +1640,9 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     auto poSRSIn = poGeomFieldIn->GetSpatialRef();
     if (poSRSIn)
     {
-        auto l_poSRS = poSRSIn->Clone();
+        auto l_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
         l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        poGeomField->SetSpatialRef(l_poSRS);
-        l_poSRS->Release();
+        poGeomField->SetSpatialRef(l_poSRS.get());
     }
 
     /* -------------------------------------------------------------------- */
@@ -2062,8 +2061,8 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
         return OGRERR_FAILURE;
 
-        // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
-        // there was bug fixes related to it until 3.35.5
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
 #if SQLITE_VERSION_NUMBER >= 3035005L
     const char *pszFieldName =
         m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();

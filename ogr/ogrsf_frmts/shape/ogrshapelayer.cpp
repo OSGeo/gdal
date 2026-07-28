@@ -53,8 +53,7 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
                              DBFHandle hDBFIn,
                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
                              const std::string &osPrjFilename, bool bUpdate,
-                             OGRwkbGeometryType eReqType,
-                             CSLConstList papszCreateOptions)
+                             OGRwkbGeometryType eReqType, bool bCreateLayer)
     : OGRAbstractProxiedLayer(poDSIn->GetPool()), m_poDS(poDSIn),
       m_osFullName(pszFullNameIn), m_hSHP(hSHPIn), m_hDBF(hDBFIn),
       m_bUpdateAccess(bUpdate), m_eRequestedGeomType(eReqType),
@@ -65,9 +64,15 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
         m_nTotalShapeCount = m_hSHP->nRecords;
         if (m_hDBF != nullptr && m_hDBF->nRecords != m_nTotalShapeCount)
         {
-            CPLDebug("Shape",
-                     "Inconsistent record number in .shp (%d) and in .dbf (%d)",
-                     m_hSHP->nRecords, m_hDBF->nRecords);
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Inconsistent record number in .shx (%d) and in .dbf (%d). "
+                "Using (arbitrarily) the former.\n"
+                "This dataset is likely corrupted. You may try to re-open "
+                "this dataset with the SHAPE_RESTORE_SHX configuration "
+                "option set to YES to attempt repairing it, but first "
+                "back up the original .shp, .shx and .dbf files.",
+                m_hSHP->nRecords, m_hDBF->nRecords);
         }
     }
     else if (m_hDBF != nullptr)
@@ -114,8 +119,6 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
 
     const char *pszShapeEncoding =
         CSLFetchNameValue(m_poDS->GetOpenOptions(), "ENCODING");
-    if (pszShapeEncoding == nullptr && m_osEncoding == "")
-        pszShapeEncoding = CSLFetchNameValue(papszCreateOptions, "ENCODING");
     if (pszShapeEncoding == nullptr)
         pszShapeEncoding = CPLGetConfigOption("SHAPE_ENCODING", nullptr);
     if (pszShapeEncoding != nullptr)
@@ -196,17 +199,29 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
             eType = m_eRequestedGeomType;
         }
 
-        OGRSpatialReference *poSRSClone = poSRSIn ? poSRSIn->Clone() : nullptr;
+        if (!bCreateLayer)
+        {
+            if (wkbFlatten(eType) == wkbLineString ||
+                wkbFlatten(eType) == wkbPolygon)
+            {
+                if (CPLTestBool(CSLFetchNameValueDef(
+                        m_poDS->GetOpenOptions(), "PROMOTE_TO_MULTI",
+                        CPLGetConfigOption("SHAPE_PROMOTE_TO_MULTI", "YES"))))
+                {
+                    eType = OGR_GT_GetCollection(eType);
+                }
+            }
+        }
+
+        auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
         if (poSRSClone)
         {
             poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
         auto poGeomFieldDefn = std::make_unique<OGRShapeGeomFieldDefn>(
-            m_osFullName.c_str(), eType, bSRSSetIn, poSRSClone);
+            m_osFullName.c_str(), eType, bSRSSetIn, poSRSClone.get());
         if (!osPrjFilename.empty())
             poGeomFieldDefn->SetPrjFilename(osPrjFilename);
-        if (poSRSClone)
-            poSRSClone->Release();
         m_poFeatureDefn->SetGeomType(wkbNone);
         m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
@@ -247,9 +262,6 @@ OGRShapeLayer::~OGRShapeLayer()
 
     ClearMatchingFIDs();
     ClearSpatialFIDs();
-
-    if (m_poFeatureDefn != nullptr)
-        m_poFeatureDefn->Release();
 
     if (m_hDBF != nullptr)
         DBFClose(m_hDBF);
@@ -909,7 +921,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
               psShape->dfYMin == psShape->dfYMax)) ||
             psShape->nSHPType == SHPT_NULL)
         {
-            poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn,
+            poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn.get(),
                                           iShapeId, psShape, m_osEncoding,
                                           m_bHasWarnedWrongWindingOrder);
         }
@@ -923,15 +935,15 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         }
         else
         {
-            poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn,
+            poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn.get(),
                                           iShapeId, psShape, m_osEncoding,
                                           m_bHasWarnedWrongWindingOrder);
         }
     }
     else
     {
-        poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn, iShapeId,
-                                      nullptr, m_osEncoding,
+        poFeature = SHPReadOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn.get(),
+                                      iShapeId, nullptr, m_osEncoding,
                                       m_bHasWarnedWrongWindingOrder);
     }
 
@@ -1036,8 +1048,8 @@ OGRFeature *OGRShapeLayer::GetFeature(GIntBig nFeatureId)
         return nullptr;
 
     OGRFeature *poFeature = SHPReadOGRFeature(
-        m_hSHP, m_hDBF, m_poFeatureDefn, static_cast<int>(nFeatureId), nullptr,
-        m_osEncoding, m_bHasWarnedWrongWindingOrder);
+        m_hSHP, m_hDBF, m_poFeatureDefn.get(), static_cast<int>(nFeatureId),
+        nullptr, m_osEncoding, m_bHasWarnedWrongWindingOrder);
 
     if (poFeature == nullptr)
     {
@@ -1109,9 +1121,9 @@ OGRErr OGRShapeLayer::ISetFeature(OGRFeature *poFeature)
         bIsLastRecord = (nOffset + nSize + 8 == m_hSHP->nFileSize);
     }
 
-    OGRErr eErr = SHPWriteOGRFeature(m_hSHP, m_hDBF, m_poFeatureDefn, poFeature,
-                                     m_osEncoding, &m_bTruncationWarningEmitted,
-                                     m_bRewindOnWrite);
+    OGRErr eErr = SHPWriteOGRFeature(
+        m_hSHP, m_hDBF, m_poFeatureDefn.get(), poFeature, m_osEncoding,
+        &m_bTruncationWarningEmitted, m_bRewindOnWrite);
 
     if (m_hSHP != nullptr)
     {
@@ -1256,53 +1268,53 @@ OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
             case wkbLineString:
             case wkbMultiLineString:
                 nShapeType = SHPT_ARC;
-                m_eRequestedGeomType = wkbLineString;
+                m_eRequestedGeomType = wkbMultiLineString;
                 break;
 
             case wkbLineString25D:
             case wkbMultiLineString25D:
                 nShapeType = SHPT_ARCZ;
-                m_eRequestedGeomType = wkbLineString25D;
+                m_eRequestedGeomType = wkbMultiLineString25D;
                 break;
 
             case wkbLineStringM:
             case wkbMultiLineStringM:
                 nShapeType = SHPT_ARCM;
-                m_eRequestedGeomType = wkbLineStringM;
+                m_eRequestedGeomType = wkbMultiLineStringM;
                 break;
 
             case wkbLineStringZM:
             case wkbMultiLineStringZM:
                 nShapeType = SHPT_ARCZ;
-                m_eRequestedGeomType = wkbLineStringZM;
+                m_eRequestedGeomType = wkbMultiLineStringZM;
                 break;
 
             case wkbPolygon:
             case wkbMultiPolygon:
             case wkbTriangle:
                 nShapeType = SHPT_POLYGON;
-                m_eRequestedGeomType = wkbPolygon;
+                m_eRequestedGeomType = wkbMultiPolygon;
                 break;
 
             case wkbPolygon25D:
             case wkbMultiPolygon25D:
             case wkbTriangleZ:
                 nShapeType = SHPT_POLYGONZ;
-                m_eRequestedGeomType = wkbPolygon25D;
+                m_eRequestedGeomType = wkbMultiPolygon25D;
                 break;
 
             case wkbPolygonM:
             case wkbMultiPolygonM:
             case wkbTriangleM:
                 nShapeType = SHPT_POLYGONM;
-                m_eRequestedGeomType = wkbPolygonM;
+                m_eRequestedGeomType = wkbMultiPolygonM;
                 break;
 
             case wkbPolygonZM:
             case wkbMultiPolygonZM:
             case wkbTriangleZM:
                 nShapeType = SHPT_POLYGONZ;
-                m_eRequestedGeomType = wkbPolygonZM;
+                m_eRequestedGeomType = wkbMultiPolygonZM;
                 break;
 
             default:
@@ -1351,7 +1363,7 @@ OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     const OGRErr eErr = SHPWriteOGRFeature(
-        m_hSHP, m_hDBF, m_poFeatureDefn, poFeature, m_osEncoding,
+        m_hSHP, m_hDBF, m_poFeatureDefn.get(), poFeature, m_osEncoding,
         &m_bTruncationWarningEmitted, m_bRewindOnWrite);
 
     if (m_hSHP != nullptr)
@@ -1479,7 +1491,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
         if (psShape != nullptr && psShape->nSHPType != SHPT_NULL)
         {
-            OGRGeometry *poGeometry = nullptr;
+            std::unique_ptr<OGRGeometry> poGeometry;
             OGREnvelope sGeomEnv;
             // Test if we have a degenerated bounding box.
             if (psShape->nSHPType != SHPT_POINT &&
@@ -1494,8 +1506,9 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject(
-                        m_hSHP, iShape, psShape, m_bHasWarnedWrongWindingOrder);
+                    poGeometry = SHPReadOGRObject(m_hSHP, iShape, psShape,
+                                                  m_bHasWarnedWrongWindingOrder,
+                                                  GetGeomType());
                     if (poGeometry)
                         poGeometry->getEnvelope(&sGeomEnv);
                     psShape = nullptr;
@@ -1557,9 +1570,9 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                             psShape = SHPReadObject(m_hSHP, iShape);
                         if (psShape)
                         {
-                            poGeometry =
-                                SHPReadOGRObject(m_hSHP, iShape, psShape,
-                                                 m_bHasWarnedWrongWindingOrder);
+                            poGeometry = SHPReadOGRObject(
+                                m_hSHP, iShape, psShape,
+                                m_bHasWarnedWrongWindingOrder, GetGeomType());
                             psShape = nullptr;
                         }
                     }
@@ -1571,12 +1584,12 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     {
                         if (OGRPreparedGeometryIntersects(
                                 m_pPreparedFilterGeom,
-                                OGRGeometry::ToHandle(poGeometry)))
+                                OGRGeometry::ToHandle(poGeometry.get())))
                         {
                             nFeatureCount++;
                         }
                     }
-                    else if (m_poFilterGeom->Intersects(poGeometry))
+                    else if (m_poFilterGeom->Intersects(poGeometry.get()))
                         nFeatureCount++;
                 }
                 else
@@ -1584,8 +1597,6 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     nFeatureCount++;
                 }
             }
-
-            delete poGeometry;
         }
         else
         {
@@ -2405,9 +2416,8 @@ OGRErr OGRShapeLayer::AlterGeomFieldDefn(
 
             CPLFree(pszWKT);
 
-            auto poNewSRS = poNewSRSRef->Clone();
-            poFieldDefn->SetSpatialRef(poNewSRS);
-            poNewSRS->Release();
+            poFieldDefn->SetSpatialRef(
+                OGRSpatialReferenceRefCountedPtr::makeClone(poNewSRSRef));
         }
         else
         {
@@ -2440,7 +2450,7 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
 
 {
     if (m_bSRSSet)
-        return poSRS;
+        return poSRS.get();
 
     m_bSRSSet = true;
 
@@ -2463,8 +2473,8 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
     {
         m_osPrjFile = std::move(l_osPrjFile);
 
-        auto poSRSNonConst = new OGRSpatialReference();
-        poSRSNonConst->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        auto poTmpSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
+        poTmpSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // Remove UTF-8 BOM if found
         // http://lists.osgeo.org/pipermail/gdal-dev/2014-July/039527.html
         if (static_cast<unsigned char>(papszLines[0][0]) == 0xEF &&
@@ -2497,42 +2507,41 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                 }
             }
         }
-        if (poSRSNonConst->importFromESRI(papszLines) != OGRERR_NONE)
+        if (poTmpSRS->importFromESRI(papszLines) != OGRERR_NONE)
         {
-            delete poSRSNonConst;
-            poSRSNonConst = nullptr;
+            poTmpSRS.reset();
         }
         CSLDestroy(papszLines);
 
-        if (poSRSNonConst)
+        if (poTmpSRS)
         {
             double adfTOWGS84[7];
-            const char *pszSRSName = poSRSNonConst->GetName();
+            const char *pszSRSName = poTmpSRS->GetName();
             if (CPLTestBool(
                     CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) &&
                 // Below works around bug fixed in PROJ per
                 // https://github.com/OSGeo/PROJ/pull/4599
                 !(pszSRSName && strstr(pszSRSName, "NTF (Paris)") != nullptr &&
-                  poSRSNonConst->GetTOWGS84(adfTOWGS84) == OGRERR_NONE))
+                  poTmpSRS->GetTOWGS84(adfTOWGS84) == OGRERR_NONE))
             {
-                auto poSRSMatch = poSRSNonConst->FindBestMatch();
+                OGRSpatialReferenceRefCountedPtr poSRSMatch(
+                    poTmpSRS->FindBestMatch(), /* add_ref = */ false);
                 if (poSRSMatch)
                 {
-                    poSRSNonConst->Release();
-                    poSRSNonConst = poSRSMatch;
-                    poSRSNonConst->SetAxisMappingStrategy(
+                    poTmpSRS = std::move(poSRSMatch);
+                    poTmpSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
                 }
             }
             else
             {
-                poSRSNonConst->AutoIdentifyEPSG();
+                poTmpSRS->AutoIdentifyEPSG();
             }
-            poSRS = poSRSNonConst;
+            poSRS = std::move(poTmpSRS);
         }
     }
 
-    return poSRS;
+    return poSRS.get();
 }
 
 /************************************************************************/
@@ -3916,7 +3925,7 @@ int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         !m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
         return OGRLayer::GetNextArrowArray(stream, out_array);
 
-    OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn,
+    OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn.get(),
                                 m_aosArrowArrayStreamOptions, out_array);
     if (out_array->release == nullptr)
     {

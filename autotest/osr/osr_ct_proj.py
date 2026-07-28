@@ -655,7 +655,7 @@ def test_transform_bounds__epsg_4326_to_esri_53037():
     assert src.ImportFromEPSG(4326) == 0
 
     dst = osr.SpatialReference()
-    # Expension of ESRI:53037 (proj.db of old PROJ releases don't know it)
+    # Expansion of ESRI:53037 (proj.db of old PROJ releases don't know it)
     dst.SetFromUserInput(
         "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
     )

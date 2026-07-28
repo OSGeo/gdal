@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
     for (i = 0; TRUE; i++)
     {
-        char *ds_name, *ds_type, *filename;
+        const char *ds_name, *ds_type, *filename;
         int ds_offset, ds_size, num_dsr, dsr_size;
 
         if (EnvisatFile_GetDatasetInfo(es_file, i, &ds_name, &ds_type,

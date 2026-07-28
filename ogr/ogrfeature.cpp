@@ -1669,7 +1669,8 @@ bool OGRFeature::IsFieldNull(int iField) const
     const int iSpecialField = iField - poDefn->GetFieldCountUnsafe();
     if (iSpecialField >= 0)
     {
-        // FIXME?
+        // Special fields (FID, geometry, style, area) are virtual/derived
+        // values that have no nullable state.
         return false;
     }
     else
@@ -2835,7 +2836,6 @@ const char *OGRFeature::GetFieldAsISO8601DateTime(
     OGRGetISO8601DateTime(&pauFields[iField], bAlwaysMillisecond,
                           m_pszTmpFieldValue);
     return m_pszTmpFieldValue;
-    ;
 }
 
 /************************************************************************/
@@ -2845,7 +2845,7 @@ const char *OGRFeature::GetFieldAsISO8601DateTime(
 /**
  * \brief Fetch OFTDateTime field value as a ISO8601 representation.
  *
- * Return a string like "YYYY-MM6DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
+ * Return a string like "YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
  * Milliseconds are omitted if equal to zero.
  * Other field types, or errors will result in a return of an empty string.
  *
@@ -4466,6 +4466,59 @@ void OGRFeature::SetField(int iField, const char *pszValue)
 }
 
 /************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
+ * \brief Set field to string value.
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the
+ * string.  OFTReal fields will be set based on an CPLAtof() conversion of the
+ * string.  Other field types may be unaffected.
+ *
+ * This method is the same as the C function OGR_F_SetFieldString().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param svValue the value to assign.
+ * @since 3.13
+ */
+
+void OGRFeature::SetField(int iField, std::string_view svValue)
+
+{
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    if (poFDefn == nullptr)
+        return;
+    if (poFDefn->GetType() == OFTString)
+    {
+        if (IsFieldSetAndNotNullUnsafe(iField))
+            CPLFree(pauFields[iField].String);
+
+        pauFields[iField].String =
+            static_cast<char *>(VSI_MALLOC_VERBOSE(svValue.size() + 1));
+        if (pauFields[iField].String)
+        {
+            memcpy(pauFields[iField].String, svValue.data(), svValue.size());
+            pauFields[iField].String[svValue.size()] = 0;
+        }
+        else
+        {
+            OGR_RawField_SetUnset(&pauFields[iField]);
+        }
+    }
+    else
+    {
+        SetField(iField, std::string(svValue).c_str());
+    }
+}
+
+/************************************************************************/
 /*                        OGR_F_SetFieldString()                        */
 /************************************************************************/
 
@@ -5932,7 +5985,7 @@ OGRErr OGR_F_SetFID(OGRFeatureH hFeat, GIntBig nFID)
  * @return TRUE if they are equal, otherwise FALSE.
  */
 
-OGRBoolean OGRFeature::Equal(const OGRFeature *poFeature) const
+bool OGRFeature::Equal(const OGRFeature *poFeature) const
 
 {
     if (poFeature == this)
@@ -7285,7 +7338,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7304,7 +7357,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7386,7 +7439,8 @@ void OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C function
  * OGR_F_SetNativeMediaType().
@@ -7413,7 +7467,8 @@ void OGRFeature::SetNativeMediaType(const char *pszNativeMediaType)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C++ method
  * OGRFeature::SetNativeMediaType().

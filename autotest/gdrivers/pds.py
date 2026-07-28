@@ -499,3 +499,17 @@ def test_pds_mercator_2SP():
     expected_srs.ImportFromWkt(expected_wkt)
     srs = ds.GetSpatialRef()
     assert srs.IsSame(expected_srs), srs.ExportToWkt()
+
+
+###############################################################################
+# Test reading a (fake) JPEG2000 compressed HiRISE product
+# https://github.com/OSGeo/gdal/issues/14183
+
+
+def test_pds_fake_hirise():
+
+    # Fake version of https://hirise-pds.lpl.arizona.edu/PDS/RDR/PSP/ORB_001500_001599/PSP_001503_1645/PSP_001503_1645_RED.LBL
+    ds = gdal.Open("data/pds/fake_hirise.lbl")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
+    assert ds.GetRasterBand(1).GetOffset() == 0.5
+    assert ds.GetRasterBand(1).GetScale() == 1.5

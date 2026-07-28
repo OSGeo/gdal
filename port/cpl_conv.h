@@ -20,7 +20,14 @@
 #include "cpl_error.h"
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#include <charconv>
 #include <cstdint>
+#include <limits>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <optional>
+#define HAVE_STRING_VIEW
+#include <string_view>
+#endif
 #endif
 
 /**
@@ -40,6 +47,13 @@ void CPL_DLL CPLVerifyConfiguration(void);
 /*! @endcond */
 
 bool CPL_DLL CPLIsDebugEnabled(void);
+
+/** Special value to indicate setting the null value to a configuration option,
+ * even if there is an environment variable defining it.
+ *
+ * @since 3.13
+ */
+#define CPL_NULL_VALUE "__CPL_NULL_VALUE__"
 
 const char CPL_DLL *CPL_STDCALL CPLGetConfigOption(const char *, const char *)
     CPL_WARN_UNUSED_RESULT;
@@ -109,6 +123,18 @@ double CPL_DLL CPLStrtodM(const char *, char **);
 double CPL_DLL CPLStrtodDelim(const char *, char **, char);
 float CPL_DLL CPLStrtof(const char *, char **);
 float CPL_DLL CPLStrtofDelim(const char *, char **, char);
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+    namespace cpl
+    {
+#if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
+    double CPL_DLL strtod_delim(std::string_view, char **, char);
+#endif
+    }  // namespace cpl
+}
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Convert number to string.  This function is locale agnostic     */
@@ -205,7 +231,7 @@ const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *)
     CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 char CPL_DLL **
 CPLCorrespondingPaths(const char *pszOldFilename, const char *pszNewFilename,
-                      char **papszFileList) CPL_WARN_UNUSED_RESULT;
+                      CSLConstList papszFileList) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLCheckForFile(char *pszFilename, CSLConstList papszSiblingList);
 
 const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
@@ -238,6 +264,16 @@ extern "C++"
         CPL_WARN_UNUSED_RESULT;
     std::string CPL_DLL CPLLaunderForFilenameSafe(
         const char *pszName, const char *pszOutputPath) CPL_WARN_UNUSED_RESULT;
+    std::string CPL_DLL CPLLaunderForFilenameSafe(
+        const std::string &osName, char chReplacementChar = '_',
+        const char *pszExtraReservedCharacters = nullptr)
+        CPL_WARN_UNUSED_RESULT;
+
+#ifdef HAVE_STRING_VIEW
+    std::string
+        CPL_DLL CPLLexicallyNormalize(std::string_view svPath, char sep1,
+                                      char sep2 = 0) CPL_WARN_UNUSED_RESULT;
+#endif
 }
 
 #endif  // defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
@@ -503,8 +539,17 @@ extern "C++"
         return a / b + (((a % b) == 0) ? 0 : 1);
     }
 
+#ifdef HAVE_STRING_VIEW
+    template <typename T>
+    std::optional<T> CPL_DLL strict_parse(std::string_view str);
+#endif
+
     }  // namespace cpl
 }  // extern "C++"
+
+#ifdef HAVE_STRING_VIEW
+#undef HAVE_STRING_VIEW
+#endif
 
 #endif /* def __cplusplus */
 

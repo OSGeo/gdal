@@ -203,7 +203,7 @@ void ECRGTOCDataset::AddSubDataset(const char *pszFilename,
 CSLConstList ECRGTOCDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);
@@ -447,11 +447,11 @@ bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand *poBand) const
 
     GDALGeoTransform l_gt;
     poSourceDS->GetGeoTransform(l_gt);
-    WARN_CHECK_DS(fabs(l_gt[0] - m_dfMinX) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[3] - m_dfMaxY) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[1] - m_dfPixelXSize) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[5] - (-m_dfPixelYSize)) < 1e-10);
-    WARN_CHECK_DS(l_gt[2] == 0 && l_gt[4] == 0);  // No rotation.
+    WARN_CHECK_DS(fabs(l_gt.xorig - m_dfMinX) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.yorig - m_dfMaxY) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.xscale - m_dfPixelXSize) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.yscale - (-m_dfPixelYSize)) < 1e-10);
+    WARN_CHECK_DS(l_gt.xrot == 0 && l_gt.yrot == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == m_nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == m_nRasterYSize);
@@ -614,7 +614,8 @@ GDALDataset *ECRGTOCSubDataset::Build(
         }
     }
 
-    poVirtualDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    poVirtualDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 
     return poVirtualDS.release();
 }
@@ -930,7 +931,7 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
     if (nSubDatasets == 1)
     {
         const char *pszSubDatasetName = CSLFetchNameValue(
-            poDS->GetMetadata("SUBDATASETS"), "SUBDATASET_1_NAME");
+            poDS->GetMetadata(GDAL_MDD_SUBDATASETS), "SUBDATASET_1_NAME");
         GDALOpenInfo oOpenInfo(pszSubDatasetName, GA_ReadOnly);
         poDS.reset();
         GDALDataset *poRetDS = Open(&oOpenInfo);
@@ -939,12 +940,12 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
         return poRetDS;
     }
 
-    poDS->m_gt[0] = dfGlobalMinX;
-    poDS->m_gt[1] = dfGlobalPixelXSize;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = dfGlobalMaxY;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -dfGlobalPixelYSize;
+    poDS->m_gt.xorig = dfGlobalMinX;
+    poDS->m_gt.xscale = dfGlobalPixelXSize;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = dfGlobalMaxY;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -dfGlobalPixelYSize;
 
     poDS->nRasterXSize = static_cast<int>(0.5 + (dfGlobalMaxX - dfGlobalMinX) /
                                                     dfGlobalPixelXSize);
@@ -980,49 +981,40 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
         /* PRODUCT:DISK:SCALE:FILENAME (or PRODUCT:DISK:FILENAME historically)
          */
         /* with FILENAME potentially C:\BLA... */
-        char **papszTokens = CSLTokenizeString2(pszFilename, ":", 0);
-        int nTokens = CSLCount(papszTokens);
-        if (nTokens != 3 && nTokens != 4 && nTokens != 5)
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFilename, ":", 0));
+        if (aosTokens.size() == 3)
+            osFilename = aosTokens[2];
+        else if (aosTokens.size() == 4)
         {
-            CSLDestroy(papszTokens);
-            return nullptr;
-        }
-
-        osProduct = papszTokens[0];
-        osDiscId = papszTokens[1];
-
-        if (nTokens == 3)
-            osFilename = papszTokens[2];
-        else if (nTokens == 4)
-        {
-            if (strlen(papszTokens[2]) == 1 &&
-                (papszTokens[3][0] == '\\' || papszTokens[3][0] == '/'))
+            if (strlen(aosTokens[2]) == 1 &&
+                (aosTokens[3][0] == '\\' || aosTokens[3][0] == '/'))
             {
-                osFilename = papszTokens[2];
+                osFilename = aosTokens[2];
                 osFilename += ":";
-                osFilename += papszTokens[3];
+                osFilename += aosTokens[3];
             }
             else
             {
-                osScale = papszTokens[2];
-                osFilename = papszTokens[3];
+                osScale = aosTokens[2];
+                osFilename = aosTokens[3];
             }
         }
-        else if (nTokens == 5 && strlen(papszTokens[3]) == 1 &&
-                 (papszTokens[4][0] == '\\' || papszTokens[4][0] == '/'))
+        else if (aosTokens.size() == 5 && strlen(aosTokens[3]) == 1 &&
+                 (aosTokens[4][0] == '\\' || aosTokens[4][0] == '/'))
         {
-            osScale = papszTokens[2];
-            osFilename = papszTokens[3];
+            osScale = aosTokens[2];
+            osFilename = aosTokens[3];
             osFilename += ":";
-            osFilename += papszTokens[4];
+            osFilename += aosTokens[4];
         }
         else
         {
-            CSLDestroy(papszTokens);
             return nullptr;
         }
 
-        CSLDestroy(papszTokens);
+        osProduct = aosTokens[0];
+        osDiscId = aosTokens[1];
+
         pszFilename = osFilename.c_str();
     }
 

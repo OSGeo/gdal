@@ -888,18 +888,18 @@ int OGRHanaDataSource::GetSrsId(const OGRSpatialReference *srs)
     /* -------------------------------------------------------------------- */
     OGRSpatialReference srsLocal(*srs);
 
-    const char *authorityName = srsLocal.GetAuthorityName(nullptr);
+    const char *authorityName = srsLocal.GetAuthorityName();
     if (authorityName == nullptr || strlen(authorityName) == 0)
     {
         srsLocal.AutoIdentifyEPSG();
-        authorityName = srsLocal.GetAuthorityName(nullptr);
+        authorityName = srsLocal.GetAuthorityName();
         if (authorityName != nullptr && EQUAL(authorityName, "EPSG"))
         {
-            const char *authorityCode = srsLocal.GetAuthorityCode(nullptr);
+            const char *authorityCode = srsLocal.GetAuthorityCode();
             if (authorityCode != nullptr && strlen(authorityCode) > 0)
             {
                 srsLocal.importFromEPSG(atoi(authorityCode));
-                authorityName = srsLocal.GetAuthorityName(nullptr);
+                authorityName = srsLocal.GetAuthorityName();
             }
         }
     }
@@ -907,7 +907,7 @@ int OGRHanaDataSource::GetSrsId(const OGRSpatialReference *srs)
     int authorityCode = 0;
     if (authorityName != nullptr)
     {
-        authorityCode = atoi(srsLocal.GetAuthorityCode(nullptr));
+        authorityCode = atoi(srsLocal.GetAuthorityCode());
         if (authorityCode > 0)
         {
             int ret = GetSridWithFilter(

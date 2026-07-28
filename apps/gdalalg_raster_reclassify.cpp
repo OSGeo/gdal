@@ -40,6 +40,8 @@ GDALRasterReclassifyAlgorithm::GDALRasterReclassifyAlgorithm(
              "a file containing mappings"),
            &m_mapping)
         .SetRequired();
+    AddArg("keep-color-table", 0, _("Preserve the input color table"),
+           &m_keepColorTable);
     AddOutputDataTypeArg(&m_type);
 }
 
@@ -69,7 +71,7 @@ static bool GDALReclassifyValidateMappings(GDALDataset &input,
 
 static std::unique_ptr<GDALDataset>
 GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
-                               GDALDataType eDstType)
+                               GDALDataType eDstType, bool keepColorTable)
 {
     CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
 
@@ -78,8 +80,8 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
 
     for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
     {
-        const GDALDataType srcType =
-            input.GetRasterBand(iBand)->GetRasterDataType();
+        GDALRasterBand *poSrcBand = input.GetRasterBand(iBand);
+        const GDALDataType srcType = poSrcBand->GetRasterDataType();
         const GDALDataType bandType =
             eDstType == GDT_Unknown ? srcType : eDstType;
         const GDALDataType xferType = GDALDataTypeUnion(srcType, bandType);
@@ -101,6 +103,28 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
             CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
         CPLCreateXMLNode(sourceTransferType, CXT_Text,
                          GDALGetDataTypeName(xferType));
+
+        if (const GDALColorTable *poTable =
+                keepColorTable ? poSrcBand->GetColorTable() : nullptr)
+        {
+            CPLXMLNode *colorTable =
+                CPLCreateXMLNode(band, CXT_Element, "ColorTable");
+            for (int i = 0; i < poTable->GetColorEntryCount(); ++i)
+            {
+                const GDALColorEntry *poSrcEntry = poTable->GetColorEntry(i);
+
+                CPLXMLNode *entry =
+                    CPLCreateXMLNode(colorTable, CXT_Element, "Entry");
+                CPLAddXMLAttributeAndValue(
+                    entry, "c1", std::to_string(poSrcEntry->c1).c_str());
+                CPLAddXMLAttributeAndValue(
+                    entry, "c2", std::to_string(poSrcEntry->c2).c_str());
+                CPLAddXMLAttributeAndValue(
+                    entry, "c3", std::to_string(poSrcEntry->c3).c_str());
+                CPLAddXMLAttributeAndValue(
+                    entry, "c4", std::to_string(poSrcEntry->c4).c_str());
+            }
+        }
     }
 
     auto ds = std::make_unique<VRTDataset>(nX, nY);
@@ -205,8 +229,8 @@ bool GDALRasterReclassifyAlgorithm::RunStep(GDALPipelineStepRunContext &)
             return false;
         }
 
-        m_outputDataset.Set(
-            GDALReclassifyCreateVRTDerived(*poSrcDS, m_mapping, eDstType));
+        m_outputDataset.Set(GDALReclassifyCreateVRTDerived(
+            *poSrcDS, m_mapping, eDstType, m_keepColorTable));
     }
     return m_outputDataset.GetDatasetRef() != nullptr;
 }

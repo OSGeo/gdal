@@ -30,6 +30,7 @@ void GDALRegister_raw_no_sidecar()
     GDALRegister_BYN();
     GDALRegister_NOAA_B();
     GDALRegister_NSIDCbin();
+    GDALRegister_CPHD();
 }
 
 void GDALRegister_raw_with_sidecar()

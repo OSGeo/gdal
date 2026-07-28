@@ -12,9 +12,11 @@
 
 #include "cpl_port.h"
 
+#include "gdalalgorithm.h"
 #include "gdal_proxy.h"
 #include "gdal_priv.h"
 #include "gdal_frmts.h"
+#include "gdalpython.h"
 #include "gtiff.h"
 #include "gtiffdataset.h"
 #include "gt_overview.h"
@@ -31,6 +33,8 @@
 #include <vector>
 
 static bool gbHasLZW = false;
+
+using namespace GDALPy;
 
 /************************************************************************/
 /*                         HasZSTDCompression()                         */
@@ -167,8 +171,8 @@ static bool COGGetTargetSRS(const char *const *papszOptions,
         oTargetSRS.SetFromUserInput(
             osTargetSRS,
             OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-        const char *pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
-        const char *pszAuthName = oTargetSRS.GetAuthorityName(nullptr);
+        const char *pszAuthCode = oTargetSRS.GetAuthorityCode();
+        const char *pszAuthName = oTargetSRS.GetAuthorityName();
         if (pszAuthName && pszAuthCode)
         {
             osTargetSRS = pszAuthName;
@@ -218,7 +222,7 @@ static bool COGGetWarpingCharacteristics(
     oTargetSRS.SetFromUserInput(
         osTargetSRS,
         OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-    const char *pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
+    const char *pszAuthCode = oTargetSRS.GetAuthorityCode();
     const int nEPSGCode = pszAuthCode ? atoi(pszAuthCode) : 0;
 
     // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
@@ -289,13 +293,12 @@ static bool COGGetWarpingCharacteristics(
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(hTransformArg);
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     double adfExtent[4];
 
     if (GDALSuggestedWarpOutput2(poTmpDS ? poTmpDS.get() : poSrcDS,
-                                 psInfo->pfnTransform, hTransformArg,
-                                 adfGeoTransform, &nXSize, &nYSize, adfExtent,
-                                 0) != CE_None)
+                                 psInfo->pfnTransform, hTransformArg, gt.data(),
+                                 &nXSize, &nYSize, adfExtent, 0) != CE_None)
     {
         GDALDestroyGenImgProjTransformer(hTransformArg);
         return false;
@@ -309,7 +312,7 @@ static bool COGGetWarpingCharacteristics(
     dfMinY = adfExtent[1];
     dfMaxX = adfExtent[2];
     dfMaxY = adfExtent[3];
-    dfRes = adfGeoTransform[1];
+    dfRes = gt.xscale;
 
     const CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
     const CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
@@ -366,7 +369,7 @@ static bool COGGetWarpingCharacteristics(
         }
         else
         {
-            double dfComputedRes = adfGeoTransform[1];
+            double dfComputedRes = gt.xscale;
             double dfPrevRes = 0.0;
             for (; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++)
             {
@@ -678,11 +681,12 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     std::unique_ptr<CPLConfigOptionSetter> poWarpThreadSetter;
     if (pszNumThreads)
     {
-        poWarpThreadSetter.reset(new CPLConfigOptionSetter(
-            "GDAL_NUM_THREADS", pszNumThreads, false));
+        poWarpThreadSetter = std::make_unique<CPLConfigOptionSetter>(
+            "GDAL_NUM_THREADS", pszNumThreads, false);
     }
 
     auto hRet = GDALWarp(osTmpFile, nullptr, 1, &hSrcDS, psOptions, nullptr);
+    CPL_IGNORE_RET_VAL(poWarpThreadSetter);
     GDALWarpAppOptionsFree(psOptions);
     CPLDebug("COG", "Reprojecting source dataset: end");
 
@@ -767,7 +771,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
         papszOptions, "COMPRESS", gbHasLZW ? "LZW" : "NONE");
 
     const char *pszInterleave =
-        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "PIXEL");
     if (EQUAL(osCompress, "WEBP"))
     {
         if (!EQUAL(pszInterleave, "PIXEL"))
@@ -838,8 +842,8 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
         const auto poSrcSRS = poCurDS->GetSpatialRef();
         if (poSrcSRS)
         {
-            const char *pszAuthName = poSrcSRS->GetAuthorityName(nullptr);
-            const char *pszAuthCode = poSrcSRS->GetAuthorityCode(nullptr);
+            const char *pszAuthName = poSrcSRS->GetAuthorityName();
+            const char *pszAuthCode = poSrcSRS->GetAuthorityCode();
             if (pszAuthName && pszAuthCode)
             {
                 osSrcSRS = pszAuthName;
@@ -976,7 +980,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
         {
             poCurDS->GetRasterBand(i)->ComputeStatistics(
                 /*bApproxOK=*/FALSE, nullptr, nullptr, nullptr, nullptr,
-                nullptr, nullptr);
+                nullptr, nullptr, nullptr);
         }
     }
     else if (bRemoveStats && bWrkHasStatistics)
@@ -1174,7 +1178,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 
         if (nBands > 1)
         {
-            aosOverviewOptions.SetNameValue("INTERLEAVE", "PIXEL");
+            aosOverviewOptions.SetNameValue(GDALMD_INTERLEAVE, "PIXEL");
         }
         if (!m_osTmpMskOverviewFilename.empty())
         {
@@ -1274,7 +1278,8 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
                             CSLFetchNameValue(papszOptions, "GEOTIFF_VERSION"));
     aosOptions.SetNameValue("SPARSE_OK",
                             CSLFetchNameValue(papszOptions, "SPARSE_OK"));
-    aosOptions.SetNameValue("NBITS", CSLFetchNameValue(papszOptions, "NBITS"));
+    aosOptions.SetNameValue(GDALMD_NBITS,
+                            CSLFetchNameValue(papszOptions, GDALMD_NBITS));
 
     if (EQUAL(osOverviews, "NONE"))
     {
@@ -1378,12 +1383,12 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 
     if (EQUAL(pszInterleave, "TILE"))
     {
-        aosOptions.SetNameValue("INTERLEAVE", "BAND");
+        aosOptions.SetNameValue(GDALMD_INTERLEAVE, "BAND");
         aosOptions.SetNameValue("@TILE_INTERLEAVE", "YES");
     }
     else
     {
-        aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
+        aosOptions.SetNameValue(GDALMD_INTERLEAVE, pszInterleave);
     }
 
     aosOptions.SetNameValue("@FLUSHCACHE", "YES");
@@ -1431,11 +1436,9 @@ class COGProxyDataset final : public GDALProxyDataset
         eAccess = GA_Update;
         nRasterXSize = m_poGTiffTmpDS->GetRasterXSize();
         nRasterYSize = m_poGTiffTmpDS->GetRasterYSize();
-        nBands = m_poGTiffTmpDS->GetRasterCount();
-        papoBands = static_cast<GDALRasterBand **>(
-            CPLMalloc(sizeof(GDALRasterBand *) * nBands));
-        for (int i = 0; i < nBands; ++i)
-            papoBands[i] = m_poGTiffTmpDS->GetRasterBand(i + 1);
+        const int l_nBands = m_poGTiffTmpDS->GetRasterCount();
+        for (int i = 0; i < l_nBands; ++i)
+            SetBand(i + 1, m_poGTiffTmpDS->GetRasterBand(i + 1));
     }
 
     ~COGProxyDataset() override;
@@ -1448,7 +1451,7 @@ class COGProxyDataset final : public GDALProxyDataset
         return true;
     }
 
-    GDALDriver *GetDriver() override
+    GDALDriver *GetDriver() const override
     {
         return m_poCOGDriver;
     }
@@ -1527,6 +1530,9 @@ static GDALDataset *COGCreate(const char *pszFilename, int nXSize, int nYSize,
         CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512");
     aosOptions.SetNameValue("BLOCKXSIZE", pszBlockSize);
     aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
+
+    // doesn't hurt on the temporary file even if final file doesn't need it
+    aosOptions.SetNameValue("BIGTIFF", "YES");
 
     bool bHasLZW = false;
     bool bHasDEFLATE = false;
@@ -1801,6 +1807,155 @@ void GDALCOGDriver::InitializeCreationOptionList()
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());
 }
 
+/************************************************************************/
+/*                         COGValidateAlgorithm                         */
+/************************************************************************/
+
+#ifndef _
+#define _(x) x
+#endif
+
+class COGValidateAlgorithm final : public GDALAlgorithm
+{
+  public:
+    COGValidateAlgorithm()
+        : GDALAlgorithm("validate",
+                        "Validate if a TIFF file is a Cloud Optimized GeoTIFF",
+                        "/programs/gdal_driver_cog_validate.html")
+    {
+        constexpr int type = GDAL_OF_RASTER;
+        auto &arg = AddArg("dataset", 0, _("COG dataset"), &m_dataset, type)
+                        .AddAlias("input")
+                        .SetPositional()
+                        .SetRequired();
+        SetAutoCompleteFunctionForFilename(arg, type);
+
+        AddArg("full-check", 0, _("Whether to perform full check"),
+               &m_fullCheck)
+            .SetChoices("auto", "yes", "no")
+            .SetDefault(m_fullCheck);
+
+        AddOutputStringArg(&m_output);
+        AddProgressArg();
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override;
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+    std::string m_output{};
+    std::string m_fullCheck{"auto"};
+};
+
+/************************************************************************/
+/*                              RunImpl()                               */
+/************************************************************************/
+
+bool COGValidateAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS = m_dataset.GetDatasetRef();
+    CPLAssert(poDS);
+    auto poDriver = poDS->GetDriver();
+    if (!poDriver || !EQUAL(poDriver->GetDescription(), "GTIFF"))
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a TIFF file",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+
+    if (!GDALPythonInitialize())
+        return false;
+
+    GIL_Holder oHolder(false);
+
+    const CPLString osModuleName(CPLSPrintf("cog_validate_module_%p", this));
+    PyObject *poCompiledString = Py_CompileString(
+        "from osgeo_utils.samples.validate_cloud_optimized_geotiff import "
+        "main, get_output_string\n",
+        osModuleName, Py_file_input);
+    if (poCompiledString == nullptr || PyErr_Occurred())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Couldn't compile code:\n%s",
+                 GetPyExceptionString().c_str());
+        return false;
+    }
+    PyObject *poModule =
+        PyImport_ExecCodeModule(osModuleName, poCompiledString);
+    Py_DecRef(poCompiledString);
+
+    if (poModule == nullptr || PyErr_Occurred())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 GetPyExceptionString().c_str());
+        return false;
+    }
+
+    PyObject *poMain = PyObject_GetAttrString(poModule, "main");
+    CPLAssert(poMain);
+    PyObject *poGetOutput =
+        PyObject_GetAttrString(poModule, "get_output_string");
+    CPLAssert(poGetOutput);
+
+    Py_DecRef(poModule);
+
+    PyObject *pyArgv = PyTuple_New(3);
+    PyTuple_SetItem(pyArgv, 0, PyUnicode_FromString("dummy"));
+    PyTuple_SetItem(pyArgv, 1,
+                    PyUnicode_FromString(m_dataset.GetName().c_str()));
+    PyTuple_SetItem(
+        pyArgv, 2,
+        PyUnicode_FromString(("--full-check=" + m_fullCheck).c_str()));
+    PyObject *pyKwargs = PyDict_New();
+    PyDict_SetItemString(pyKwargs, "argv", pyArgv);
+    PyDict_SetItemString(pyKwargs, "output_in_string", PyBool_FromLong(true));
+    PyObject *pyArgs = PyTuple_New(0);
+    PyObject *pRetValue = PyObject_Call(poMain, pyArgs, pyKwargs);
+    const auto nRetValue = pRetValue ? PyLong_AsLong(pRetValue) : -1;
+    Py_DecRef(pyArgs);
+    Py_DecRef(pyKwargs);
+    Py_DecRef(pRetValue);
+
+    if (!m_quiet || nRetValue)
+    {
+        pyArgs = PyTuple_New(0);
+        pyKwargs = PyDict_New();
+        PyObject *poMsg = PyObject_Call(poGetOutput, pyArgs, pyKwargs);
+        Py_DecRef(pyArgs);
+        Py_DecRef(pyKwargs);
+        if (poMsg)
+            m_output = GetString(poMsg);
+        Py_DecRef(poMsg);
+    }
+
+    Py_DecRef(poMain);
+    Py_DecRef(poGetOutput);
+
+    if (nRetValue && !IsCalledFromCommandLine())
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s", m_output.c_str());
+    }
+
+    return nRetValue == 0;
+}
+
+/************************************************************************/
+/*                   COGDriverInstantiateAlgorithm()                    */
+/************************************************************************/
+
+static GDALAlgorithm *
+COGDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "validate")
+    {
+        return std::make_unique<COGValidateAlgorithm>().release();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void GDALRegister_COG()
 
 {
@@ -1832,6 +1987,9 @@ void GDALRegister_COG()
 
     poDriver->pfnCreateCopy = COGCreateCopy;
     poDriver->pfnCreate = COGCreate;
+
+    poDriver->pfnInstantiateAlgorithm = COGDriverInstantiateAlgorithm;
+    poDriver->DeclareAlgorithm({"validate"});
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

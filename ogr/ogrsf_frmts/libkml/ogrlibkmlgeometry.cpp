@@ -328,14 +328,12 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
                 OGRGeometryFactory::haveGEOS())
             {
-                bool bError;
+                std::string osReason;
+                if (!poOgrGeom->IsValid(&osReason))
                 {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    bError = !poOgrGeom->IsValid();
-                }
-                if (bError)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported, "Invalid polygon %s: %s",
+                        poOgrGeom->exportToWkt().c_str(), osReason.c_str());
                     return nullptr;
                 }
             }
@@ -370,14 +368,12 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
                 OGRGeometryFactory::haveGEOS())
             {
-                bool bError;
+                std::string osReason;
+                if (!poOgrGeom->IsValid(&osReason))
                 {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    bError = !poOgrGeom->IsValid();
-                }
-                if (bError)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported, "Invalid polygon %s: %s",
+                        poOgrGeom->exportToWkt().c_str(), osReason.c_str());
                     return nullptr;
                 }
             }

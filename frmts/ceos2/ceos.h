@@ -14,6 +14,7 @@
 #define CEOS_H
 
 #include "cpl_conv.h"
+#include "stdint.h"
 
 CPL_C_START
 
@@ -76,6 +77,9 @@ Link_t *AddLink(Link_t *psList, Link_t *psLink);
 #define CEOS_IMAGRY_OPT_FILE 2
 #define CEOS_TRAILER_FILE 3
 #define CEOS_NULL_VOL_FILE 4
+
+#define CEOS_FILE_COUNT 5
+
 #define CEOS_ANY_FILE -1
 
 /* Defines for Recipe values */
@@ -260,7 +264,7 @@ void GetCeosRecordStruct(const CeosRecord_t *record, void *struct_ptr);
 
 void PutCeosRecordStruct(CeosRecord_t *record, const void *struct_ptr);
 
-void GetCeosField(CeosRecord_t *, int32, const char *, void *);
+void GetCeosField(const CeosRecord_t *, int32, const char *, void *);
 
 void SetCeosField(CeosRecord_t *record, int32 start_byte, const char *format,
                   int intValue, double dblValue);
@@ -283,7 +287,7 @@ void GetCeosSARImageDescInfo(CeosSARVolume_t *volume,
                              CeosSARImageDescRecipe_t *recipe);
 
 void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel,
-                                  int line, int *record, int *file_offset);
+                                  int line, int *record, uint64_t *file_offset);
 
 int32 GetCeosSARImageData(CeosSARVolume_t *volume,
                           CeosRecord_t *processed_data_record, int channel,

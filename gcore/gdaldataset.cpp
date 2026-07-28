@@ -13,6 +13,7 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <climits>
@@ -21,7 +22,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <limits>
 #include <map>
 #include <mutex>
@@ -40,6 +40,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
+#include "cpl_vsi_virtual.h"
 
 #include "gdal.h"
 #include "gdal_alg.h"
@@ -53,6 +54,7 @@
 #endif
 
 #include "gdalsubdatasetinfo.h"
+#include "gdal_thread_pool.h"
 #include "gdal_typetraits.h"
 
 #include "ogr_api.h"
@@ -265,7 +267,7 @@ GDALDataset::GDALDataset()
 
 GDALDataset::GDALDataset(int bForceCachedIOIn)
     : bForceCachedIO(CPL_TO_BOOL(bForceCachedIOIn)),
-      m_poPrivate(new(std::nothrow) GDALDataset::Private)
+      m_poPrivate(new (std::nothrow) GDALDataset::Private)
 {
 }
 
@@ -1408,8 +1410,8 @@ const OGRSpatialReference *GDALDataset::GetSpatialRefVectorOnly() const
                 bInit = true;
                 poGlobalSRS = poSRS;
             }
-            else if ((poSRS && !poGlobalSRS) || (!poSRS && poGlobalSRS) ||
-                     (poSRS && poGlobalSRS && !poSRS->IsSame(poGlobalSRS)))
+            else if (((poSRS != nullptr) != (poGlobalSRS != nullptr)) ||
+                     (poSRS && !poSRS->IsSame(poGlobalSRS)))
             {
                 CPLDebug("GDAL",
                          "Not all geometry fields or layers have the same CRS");
@@ -1602,13 +1604,13 @@ CPLErr CPL_STDCALL GDALSetProjection(GDALDatasetH hDS,
  * space, and projection coordinates (Xp,Yp) space.
  *
  * \code
- *   Xp = gt[0] + P*gt[1] + L*gt[2];
- *   Yp = gt[3] + P*padfTransform[4] + L*gt[5];
+ *   Xp = gt.xorig + P*gt.xscale + L*gt.xrot;
+ *   Yp = gt.yorig + P*padfTransform[4] + L*gt.yscale;
  * \endcode
  *
- * In a north up image, gt[1] is the pixel width, and
- * gt[5] is the pixel height.  The upper left corner of the
- * upper left pixel is at position (gt[0],gt[3]).
+ * In a north up image, gt.xscale is the pixel width, and
+ * gt.yscale is the pixel height.  The upper left corner of the
+ * upper left pixel is at position (gt.xorig,gt.yorig).
  *
  * The default transform is (0,1,0,0,0,1) and should be returned even when
  * a CE_Failure error is returned, such as for formats that don't support
@@ -1824,7 +1826,7 @@ void *CPL_STDCALL GDALGetInternalHandle(GDALDatasetH hDS,
  * GDALCreate().
  */
 
-GDALDriver *GDALDataset::GetDriver()
+GDALDriver *GDALDataset::GetDriver() const
 {
     return poDriver;
 }
@@ -2514,8 +2516,9 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
 
             CPLString osDriver;
             osDriver.Printf("driver %s", poDriver->GetDescription());
-            GDALValidateOptions(pszOptionList, aosOptions.List(),
-                                "overview creation option", osDriver);
+            GDALValidateOptions(GDALDriver::ToHandle(poDriver), pszOptionList,
+                                aosOptions.List(), "overview creation option",
+                                osDriver);
         }
     }
 
@@ -2716,8 +2719,8 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     if (!bHasSubpixelShift && nXSize == nBufXSize && nYSize == nBufYSize &&
         nBandCount > 1 &&
-        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) !=
-            nullptr &&
+        (pszInterleave = GetMetadataItem(
+             GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         return BlockBasedRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
@@ -2947,6 +2950,11 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
     int nYOff, int nXSize, int nYSize, int nBufXSize, int nBufYSize,
     int nBandCount, const int *panBandMap)
 {
+    if (nBands == 0)
+    {
+        *pbStopProcessingOnCENone = TRUE;
+        return CE_None;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Some size values are "noop".  Lets just return to avoid         */
@@ -3181,7 +3189,8 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /*      Do some validation of parameters.                               */
     /* -------------------------------------------------------------------- */
 
-    if (CPL_UNLIKELY(eRWFlag != GF_Read && eRWFlag != GF_Write))
+    if (CPL_UNLIKELY(static_cast<int>(eRWFlag) != static_cast<int>(GF_Read) &&
+                     static_cast<int>(eRWFlag) != static_cast<int>(GF_Write)))
     {
         ReportError(
             CE_Failure, CPLE_IllegalArg,
@@ -4576,6 +4585,23 @@ retry:
 
     if (nOpenFlags & GDAL_OF_VERBOSE_ERROR)
     {
+        std::string osHint;
+        const CPLStringList aosVSIFSPrefixes(VSIFileManager::GetPrefixes());
+        for (const char *pszFSPrefix : aosVSIFSPrefixes)
+        {
+            auto poFS = VSIFileManager::GetHandler(pszFSPrefix);
+            if (poFS)
+            {
+                osHint = poFS->GetHintForPotentiallyRecognizedPath(pszFilename);
+                if (!osHint.empty())
+                {
+                    osHint = " Changing the filename to " + osHint +
+                             " may help it to be recognized.";
+                    break;
+                }
+            }
+        }
+
         if (nDriverCount == 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
@@ -4595,14 +4621,19 @@ retry:
         }
         // Check to see if there was a filesystem error, and report it if so.
         // If not, return a more generic error.
+        else if (!osHint.empty() && VSIGetLastErrorNo() == VSIE_FileError)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "%s.%s", VSIGetLastErrorMsg(),
+                     osHint.c_str());
+        }
         else if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
         {
             if (oOpenInfo.bStatOK)
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "`%s' not recognized as being in a supported file "
-                         "format.",
-                         pszFilename);
+                         "format.%s",
+                         pszFilename, osHint.c_str());
             }
             else
             {
@@ -4610,8 +4641,8 @@ retry:
                 // the file did not exist on the filesystem.
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "`%s' does not exist in the file system, "
-                         "and is not recognized as a supported dataset name.",
-                         pszFilename);
+                         "and is not recognized as a supported dataset name.%s",
+                         pszFilename, osHint.c_str());
             }
         }
     }
@@ -6112,8 +6143,8 @@ int GDALDataset::ValidateLayerCreationOptions(const char *const *papszLCO)
     }
     CPLString osDataset;
     osDataset.Printf("dataset %s", GetDescription());
-    return GDALValidateOptions(pszOptionList, papszLCO, "layer creation option",
-                               osDataset);
+    return GDALValidateOptions(GDALDriver::ToHandle(poDriver), pszOptionList,
+                               papszLCO, "layer creation option", osDataset);
 }
 
 //! @endcond
@@ -6623,19 +6654,15 @@ OGRLayer *GDALDataset::GetLayerByName(const char *pszName)
         return nullptr;
 
     // First a case sensitive check.
-    for (int i = 0; i < GetLayerCount(); ++i)
+    for (auto *poLayer : GetLayers())
     {
-        OGRLayer *poLayer = GetLayer(i);
-
         if (strcmp(pszName, poLayer->GetName()) == 0)
             return poLayer;
     }
 
     // Then case insensitive.
-    for (int i = 0; i < GetLayerCount(); ++i)
+    for (auto *poLayer : GetLayers())
     {
-        OGRLayer *poLayer = GetLayer(i);
-
         if (EQUAL(pszName, poLayer->GetName()))
             return poLayer;
     }
@@ -9978,6 +10005,96 @@ std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
 }
 
 /************************************************************************/
+/*                      GDALDatasetGetRootGroup()                       */
+/************************************************************************/
+
+/** Return the root GDALGroup of this dataset.
+ *
+ * Only valid for multidimensional datasets.
+ *
+ * The returned value must be freed with GDALGroupRelease().
+ *
+ * This is the same as the C++ method GDALDataset::GetRootGroup().
+ *
+ * @since GDAL 3.1
+ */
+GDALGroupH GDALDatasetGetRootGroup(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto poGroup(GDALDataset::FromHandle(hDS)->GetRootGroup());
+    return poGroup ? new GDALGroupHS(poGroup) : nullptr;
+}
+
+/************************************************************************/
+/*                        GDALDatasetAsMDArray()                        */
+/************************************************************************/
+
+/** Return a view of this dataset as a 3D multidimensional GDALMDArray.
+ *
+ * If this dataset is not already marked as shared, it will be, so that the
+ * returned array holds a reference to it.
+ *
+ * If the dataset has a geotransform attached, the X and Y dimensions of the
+ * returned array will have an associated indexing variable.
+ *
+ * The currently supported list of options is:
+ * <ul>
+ * <li>DIM_ORDER=&lt;order&gt; where order can be "AUTO", "Band,Y,X" or "Y,X,Band".
+ * "Band,Y,X" means that the first (slowest changing) dimension is Band
+ * and the last (fastest changing direction) is X
+ * "Y,X,Band" means that the first (slowest changing) dimension is Y
+ * and the last (fastest changing direction) is Band.
+ * "AUTO" (the default) selects "Band,Y,X" for single band datasets, or takes
+ * into account the INTERLEAVE metadata item in the IMAGE_STRUCTURE domain.
+ * If it equals BAND, then "Band,Y,X" is used. Otherwise (if it equals PIXEL),
+ * "Y,X,Band" is use.
+ * </li>
+ * <li>BAND_INDEXING_VAR_ITEM={Description}|{None}|{Index}|{ColorInterpretation}|&lt;BandMetadataItem&gt;:
+ * item from which to build the band indexing variable.
+ * <ul>
+ * <li>"{Description}", the default, means to use the band description (or "Band index" if empty).</li>
+ * <li>"{None}" means that no band indexing variable must be created.</li>
+ * <li>"{Index}" means that the band index (starting at one) is used.</li>
+ * <li>"{ColorInterpretation}" means that the band color interpretation is used (i.e. "Red", "Green", "Blue").</li>
+ * <li>&lt;BandMetadataItem&gt; is the name of a band metadata item to use.</li>
+ * </ul>
+ * </li>
+ * <li>BAND_INDEXING_VAR_TYPE=String|Real|Integer: the data type of the band
+ * indexing variable, when BAND_INDEXING_VAR_ITEM corresponds to a band metadata item.
+ * Defaults to String.
+ * </li>
+ * <li>BAND_DIM_NAME=&lt;string&gt;: Name of the band dimension.
+ * Defaults to "Band".
+ * </li>
+ * <li>X_DIM_NAME=&lt;string&gt;: Name of the X dimension. Defaults to "X".
+ * </li>
+ * <li>Y_DIM_NAME=&lt;string&gt;: Name of the Y dimension. Defaults to "Y".
+ * </li>
+ * </ul>
+ *
+ * The returned pointer must be released with GDALMDArrayRelease().
+ *
+ * The "reverse" methods are GDALRasterBand::AsMDArray() and
+ * GDALDataset::AsMDArray()
+ *
+ * This is the same as the C++ method GDALDataset::AsMDArray().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Null-terminated list of strings, or nullptr.
+ * @return a new array, or NULL.
+ *
+ * @since GDAL 3.12
+ */
+GDALMDArrayH GDALDatasetAsMDArray(GDALDatasetH hDS, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto poArray(GDALDataset::FromHandle(hDS)->AsMDArray(papszOptions));
+    if (!poArray)
+        return nullptr;
+    return new GDALMDArrayHS(poArray);
+}
+
+/************************************************************************/
 /*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
@@ -11415,8 +11532,8 @@ CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
         }
 
         constexpr int DENSIFY_POINT_COUNT = 21;
-        double dfULX = gt[0];
-        double dfULY = gt[3];
+        double dfULX = gt.xorig;
+        double dfULY = gt.yorig;
         double dfURX = 0, dfURY = 0;
         gt.Apply(nRasterXSize, 0, &dfURX, &dfURY);
         double dfLLX = 0, dfLLY = 0;
@@ -11856,8 +11973,8 @@ class GDALMDArrayFromDataset final : public GDALMDArray
                 CSLFetchNameValueDef(papszOptions, "DIM_ORDER", "AUTO");
             if (EQUAL(pszDimOrder, "AUTO"))
             {
-                const char *pszInterleave =
-                    poDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+                const char *pszInterleave = poDS->GetMetadataItem(
+                    GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
                 return nBandCount == 1 || !pszInterleave ||
                        !EQUAL(pszInterleave, "PIXEL");
             }
@@ -12014,14 +12131,14 @@ class GDALMDArrayFromDataset final : public GDALMDArray
         }
 
         GDALGeoTransform gt;
-        if (m_poDS->GetGeoTransform(gt) == CE_None && gt[2] == 0 && gt[4] == 0)
+        if (m_poDS->GetGeoTransform(gt) == CE_None && gt.IsAxisAligned())
         {
             m_varX = GDALMDArrayRegularlySpaced::Create(
-                "/", poBandDim->GetName(), poXDim, gt[0], gt[1], 0.5);
+                "/", poBandDim->GetName(), poXDim, gt.xorig, gt.xscale, 0.5);
             poXDim->SetIndexingVariable(m_varX);
 
             m_varY = GDALMDArrayRegularlySpaced::Create(
-                "/", poYDim->GetName(), poYDim, gt[3], gt[5], 0.5);
+                "/", poYDim->GetName(), poYDim, gt.yorig, gt.yscale, 0.5);
             poYDim->SetIndexingVariable(m_varY);
         }
         if (bBandYX)
@@ -12288,9 +12405,9 @@ bool GDALMDArrayFromDataset::ReadWrite(
             : static_cast<int>(arrayStartIdx[m_iYDim] -
                                (count[m_iYDim] - 1) * -arrayStep[m_iYDim]);
     const int nSizeX =
-        static_cast<int>(count[m_iXDim] * ABS(arrayStep[m_iXDim]));
+        static_cast<int>(count[m_iXDim] * std::abs(arrayStep[m_iXDim]));
     const int nSizeY =
-        static_cast<int>(count[m_iYDim] * ABS(arrayStep[m_iYDim]));
+        static_cast<int>(count[m_iYDim] * std::abs(arrayStep[m_iYDim]));
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
     int nStrideXSign = 1;
     if (arrayStep[m_iXDim] < 0)
@@ -13063,8 +13180,10 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
                         "Not enough memory for intermediate computations");
                     return CE_Failure;
                 }
+#ifndef __COVERITY__
                 // coverity[escape]
                 pabyCurBlockMask[i] = &aabyCurBlockMask[i];
+#endif
             }
         }
         adfNoData[i] = static_cast<T>(dfNoData);
@@ -13097,14 +13216,9 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 #ifdef HAVE_OPENMP
     if (nBandCount >= 100)
     {
-        const int nNumCPUs = CPLGetNumCPUs();
-        nNumThreads = std::max(1, nNumCPUs / 2);
-        const char *pszThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        {
-            nNumThreads = std::clamp(atoi(pszThreads), 1, nNumCPUs);
-        }
+        const int nMaxNumThreads = std::max(1, CPLGetNumCPUs() / 2);
+        nNumThreads =
+            GDALGetNumThreads(nMaxNumThreads, /* bDefaultToAllCPUs= */ false);
     }
 #endif
 

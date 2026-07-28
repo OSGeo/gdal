@@ -50,7 +50,7 @@ static void DTEDFormatDMS(unsigned char *achField, size_t nTargetLenSize,
             chHemisphere = 'E';
     }
 
-    dfAngle = ABS(dfAngle);
+    dfAngle = CPL_ABS(dfAngle);
 
     nDegrees = (int)floor(dfAngle + 0.5 / 3600.0);
     dfRemainder = dfAngle - nDegrees;

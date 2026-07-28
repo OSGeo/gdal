@@ -108,9 +108,7 @@ tuple
 
     - ``is_visible`` (bool): True if the two points are within Line of Sight.
     - ``col_intersection`` (int): Raster column index where the LOS line intersects terrain.
-      Will be set in the future; currently -1.
     - ``row_intersection`` (int): Raster row index where the LOS line intersects terrain.
-      Will be set in the future; currently -1.
 ";
 
 // gdal.ReprojectImage

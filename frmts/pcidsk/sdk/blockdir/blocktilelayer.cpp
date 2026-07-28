@@ -145,10 +145,30 @@ bool BlockTileLayer::IsCorrupted(void) const
     if (GetXSize() == 0 || GetYSize() == 0)
         return true;
 
-    uint64 nTileSize =
-        static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
+    // or the tile size is 0.
+    if (GetTileXSize() == 0 || GetTileYSize() == 0)
+        return true;
 
-    return nTileSize == 0 || nTileSize > std::numeric_limits<uint32>::max();
+    if (GetTileXSize() > std::numeric_limits<uint32>::max() / GetTileYSize())
+        return true;
+
+    const uint32_t nDTSize = GetDataTypeSize();
+    if (nDTSize == 0)
+        return true;
+
+    if (GetTileXSize() * GetTileYSize() >
+                                std::numeric_limits<uint32>::max() / nDTSize)
+        return true;
+
+    const uint32_t nTileXCount = DIV_ROUND_UP(GetXSize(), GetTileXSize());
+    const uint32_t nTileYCount = DIV_ROUND_UP(GetYSize(), GetTileYSize());
+    assert(nTileYCount != 0);
+    if (nTileXCount > std::numeric_limits<uint32>::max() / nTileYCount)
+        return true;
+
+    // CTiledChannel::ReadBlock() expects GetTileCount() to fit in a signed int.
+    return GetTileCount() >
+                static_cast<uint32_t>(std::numeric_limits<int>::max());
 }
 
 /************************************************************************/

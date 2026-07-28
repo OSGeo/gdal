@@ -62,8 +62,6 @@ OGROCITableLayer::OGROCITableLayer(OGROCIDataSource *poDSIn,
         nSRID = LookupTableSRID();
 
     poSRS = poDSIn->FetchSRS(nSRID);
-    if (poSRS != nullptr)
-        poSRS->Reference();
 
     hOrdVARRAY = nullptr;
     hElemInfoVARRAY = nullptr;
@@ -122,9 +120,6 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree(pszQuery);
     CPLFree(pszWHERE);
-
-    if (poSRS != nullptr && poSRS->Dereference() == 0)
-        delete poSRS;
 }
 
 /************************************************************************/
@@ -181,7 +176,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                              OCI_OTYPE_NAME, OCI_DEFAULT, OCI_PTYPE_TABLE,
                              poSession->hDescribe);
 
-    if (poSession->Failed(nStatus, "OCIDescribeAny"))
+    if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
     {
         CPLErrorReset();
 
@@ -193,7 +188,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                                  OCI_OTYPE_NAME, OCI_DEFAULT, OCI_PTYPE_VIEW,
                                  poSession->hDescribe);
 
-        if (poSession->Failed(nStatus, "OCIDescribeAny"))
+        if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
         {
             CPLErrorReset();
 
@@ -205,7 +200,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
                 static_cast<ub4>(osQuotedTableName.length()), OCI_OTYPE_NAME,
                 OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe);
 
-            if (poSession->Failed(nStatus, "OCIDescribeAny"))
+            if (nStatus != OCI_SUCCESS && nStatus != OCI_SUCCESS_WITH_INFO)
             {
                 CPLErrorReset();
 
@@ -680,7 +675,7 @@ OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
     poFeature = GetNextRawFeature();
 
     if (poFeature != nullptr && poFeature->GetGeometryRef() != nullptr)
-        poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+        poFeature->GetGeometryRef()->assignSpatialReference(poSRS.get());
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup the statement.                                          */
@@ -735,7 +730,8 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
         {
             nHits++;
             if (poFeature->GetGeometryRef() != nullptr)
-                poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+                poFeature->GetGeometryRef()->assignSpatialReference(
+                    poSRS.get());
             return poFeature;
         }
 

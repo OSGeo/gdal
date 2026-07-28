@@ -30,11 +30,14 @@ namespace gdal
 /*                    listPredefinedTileMatrixSets()                    */
 /************************************************************************/
 
-std::vector<std::string> TileMatrixSet::listPredefinedTileMatrixSets()
+std::vector<std::string>
+TileMatrixSet::listPredefinedTileMatrixSets(bool includeHidden)
 {
     std::vector<std::string> l{"GoogleMapsCompatible", "WorldCRS84Quad",
                                "WorldMercatorWGS84Quad", "GoogleCRS84Quad",
                                "PseudoTMS_GlobalMercator"};
+    if (includeHidden)
+        l.push_back("GlobalGeodeticOriginLat270");
     const char *pszSomeFile = CPLFindFile("gdal", "tms_NZTM2000.json");
     if (pszSomeFile)
     {
@@ -241,6 +244,36 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
                 tm.mResX * (HALF_CIRCUMFERENCE / 180) / 0.28e-3;
             tm.mTopLeftX = -180;
             tm.mTopLeftY = 180;
+            tm.mTileWidth = 256;
+            tm.mTileHeight = 256;
+            tm.mMatrixWidth = 1 << i;
+            tm.mMatrixHeight = 1 << i;
+            poTMS->mTileMatrixList.emplace_back(std::move(tm));
+        }
+        return poTMS;
+    }
+
+    if (EQUAL(fileOrDef, "GlobalGeodeticOriginLat270"))
+    {
+        // gdal2tiles --profile=geodetic *without* --tmscompatible
+        poTMS->mTitle = "GlobalGeodeticOriginLat270";
+        poTMS->mIdentifier = "GlobalGeodeticOriginLat270";
+        poTMS->mCrs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
+        poTMS->mBbox.mCrs = poTMS->mCrs;
+        poTMS->mBbox.mLowerCornerX = -180;
+        poTMS->mBbox.mLowerCornerY = -90;
+        poTMS->mBbox.mUpperCornerX = 180;
+        poTMS->mBbox.mUpperCornerY = 270;
+        for (int i = 0; i <= 30; i++)
+        {
+            TileMatrix tm;
+            tm.mId = CPLSPrintf("%d", i);
+            tm.mResX = 360. / 256 / (1 << i);
+            tm.mResY = tm.mResX;
+            tm.mScaleDenominator =
+                tm.mResX * (HALF_CIRCUMFERENCE / 180) / 0.28e-3;
+            tm.mTopLeftX = -180;
+            tm.mTopLeftY = 270;
             tm.mTileWidth = 256;
             tm.mTileHeight = 256;
             tm.mMatrixWidth = 1 << i;

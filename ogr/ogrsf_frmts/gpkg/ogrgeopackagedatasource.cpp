@@ -140,8 +140,8 @@ GetTilingScheme(const char *pszName)
     }
     else
     {
-        const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
-        const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+        const char *pszAuthName = oSRS.GetAuthorityName();
+        const char *pszAuthCode = oSRS.GetAuthorityCode();
         if (pszAuthName == nullptr || !EQUAL(pszAuthName, "EPSG") ||
             pszAuthCode == nullptr)
         {
@@ -229,23 +229,19 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     return eErr;
 }
 
-std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+OGRSpatialReferenceRefCountedPtr
 GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
                                      bool bEmitErrorIfNotFound)
 {
     const auto oIter = m_oMapSrsIdToSrs.find(iSrsId);
     if (oIter != m_oMapSrsIdToSrs.end())
     {
-        if (oIter->second == nullptr)
-            return nullptr;
-        oIter->second->Reference();
-        return std::unique_ptr<OGRSpatialReference,
-                               OGRSpatialReferenceReleaser>(oIter->second);
+        return oIter->second;
     }
 
     if (iSrsId == 0 || iSrsId == -1)
     {
-        OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
+        auto poSpatialRef = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // See corresponding tests in GDALGeoPackageDataset::GetSrsId
@@ -261,10 +257,8 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
             poSpatialRef->SetLinearUnits(SRS_UL_METER, 1.0);
         }
 
-        m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
-        poSpatialRef->Reference();
-        return std::unique_ptr<OGRSpatialReference,
-                               OGRSpatialReferenceReleaser>(poSpatialRef);
+        return m_oMapSrsIdToSrs.insert({iSrsId, std::move(poSpatialRef)})
+            .first->second;
     }
 
     CPLString oSQL;
@@ -284,14 +278,12 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
             CPLDebug("GPKG",
                      "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
                      iSrsId);
-            OGRSpatialReference *poSRS = new OGRSpatialReference();
+            auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             if (poSRS->importFromEPSG(iSrsId) == OGRERR_NONE)
             {
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                return std::unique_ptr<OGRSpatialReference,
-                                       OGRSpatialReferenceReleaser>(poSRS);
+                return poSRS;
             }
-            poSRS->Release();
         }
         else if (bEmitErrorIfNotFound)
         {
@@ -323,31 +315,29 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
     const double dfCoordinateEpoch =
         pszCoordinateEpoch ? CPLAtof(pszCoordinateEpoch) : 0.0;
 
-    OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
+    auto poSpatialRef = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     // Try to import first from EPSG code, and then from WKT
     if (!(pszOrganization && pszOrganizationCoordsysID &&
           EQUAL(pszOrganization, "EPSG") &&
           (atoi(pszOrganizationCoordsysID) == iSrsId ||
            (dfCoordinateEpoch > 0 && strstr(pszWkt, "DYNAMIC[") == nullptr)) &&
-          GDALGPKGImportFromEPSG(
-              poSpatialRef, atoi(pszOrganizationCoordsysID)) == OGRERR_NONE) &&
+          GDALGPKGImportFromEPSG(poSpatialRef.get(),
+                                 atoi(pszOrganizationCoordsysID)) ==
+              OGRERR_NONE) &&
         poSpatialRef->importFromWkt(pszWkt) != OGRERR_NONE)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Unable to parse srs_id '%d' well-known text '%s'", iSrsId,
                  pszWkt);
-        delete poSpatialRef;
         m_oMapSrsIdToSrs[iSrsId] = nullptr;
         return nullptr;
     }
 
     poSpatialRef->StripTOWGS84IfKnownDatumAndAllowed();
     poSpatialRef->SetCoordinateEpoch(dfCoordinateEpoch);
-    m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
-    poSpatialRef->Reference();
-    return std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
-        poSpatialRef);
+    return m_oMapSrsIdToSrs.insert({iSrsId, std::move(poSpatialRef)})
+        .first->second;
 }
 
 const char *GDALGeoPackageDataset::GetSrsName(const OGRSpatialReference &oSRS)
@@ -590,8 +580,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
         return -1;
     }
 
-    std::unique_ptr<OGRSpatialReference> poSRS(poSRSIn->Clone());
-
+    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
     if (poSRS->IsGeographic() || poSRS->IsLocal())
     {
         // See corresponding tests in GDALGeoPackageDataset::GetSpatialRef
@@ -605,23 +594,23 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
         }
     }
 
-    const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+    const char *pszAuthorityName = poSRS->GetAuthorityName();
 
     if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
     {
         // Try to force identify an EPSG code.
         poSRS->AutoIdentifyEPSG();
 
-        pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+        pszAuthorityName = poSRS->GetAuthorityName();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+            const char *pszAuthorityCode = poSRS->GetAuthorityCode();
             if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
             {
                 /* Import 'clean' SRS */
                 poSRS->importFromEPSG(atoi(pszAuthorityCode));
 
-                pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+                pszAuthorityName = poSRS->GetAuthorityName();
             }
         }
 
@@ -640,7 +629,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
         "IGNORE_COORDINATE_EPOCH=YES", nullptr};
     if (pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0)
     {
-        const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthorityCode = poSRS->GetAuthorityCode();
         if (pszAuthorityCode)
         {
             if (CPLGetValueType(pszAuthorityCode) == CPL_VALUE_INTEGER)
@@ -1032,14 +1021,7 @@ CPLErr GDALGeoPackageDataset::Close(GDALProgressFunc, void *)
 
         m_apoLayers.clear();
 
-        std::map<int, OGRSpatialReference *>::iterator oIter =
-            m_oMapSrsIdToSrs.begin();
-        for (; oIter != m_oMapSrsIdToSrs.end(); ++oIter)
-        {
-            OGRSpatialReference *poSRS = oIter->second;
-            if (poSRS)
-                poSRS->Release();
-        }
+        m_oMapSrsIdToSrs.clear();
 
         if (!CloseDB())
             eErr = CE_Failure;
@@ -2386,11 +2368,11 @@ bool GDALGeoPackageDataset::InitRaster(
         {
             nBandCount = atoi(pszBAND_COUNT);
             if (nBandCount == 1)
-                GetMetadata("IMAGE_STRUCTURE");
+                GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
         }
         else
         {
-            GetMetadata("IMAGE_STRUCTURE");
+            GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
             nBandCount = m_nBandCountFromMetadata;
             if (nBandCount == 1)
                 m_eTF = GPKG_TF_PNG;
@@ -2569,7 +2551,8 @@ bool GDALGeoPackageDataset::InitRaster(
         return false;
     }
 
-    GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                    GDAL_MDD_IMAGE_STRUCTURE);
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL",
                                     CPLSPrintf("%d", m_nZoomLevel));
 
@@ -2695,7 +2678,7 @@ bool GDALGeoPackageDataset::OpenRaster(
                 }
             }
 
-            // Check that the tile offset and scales are compatible of a
+            // Check that the tile offset and scales are compatible with a
             // final integer result.
             if (m_eDT != GDT_Float32)
             {
@@ -3445,7 +3428,7 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)
             CPLFree(pszKey);
         }
         oMDMD.SetMetadata(aosMD.List());
-        oMDMD.SetMetadata(nullptr, "IMAGE_STRUCTURE");
+        oMDMD.SetMetadata(nullptr, GDAL_MDD_IMAGE_STRUCTURE);
 
         GDALPamDataset::FlushCache(bAtClosing);
     }
@@ -3826,7 +3809,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
     if (!m_osRasterTable.empty())
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -4094,7 +4077,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
 
 {
     pszDomain = CheckMetadataDomain(pszDomain);
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return m_aosSubDatasets.List();
 
     if (m_bHasReadMetadataFromStorage)
@@ -4171,7 +4154,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                     CSLConstList papszIter = papszDomainList;
                     while (papszIter && *papszIter)
                     {
-                        if (EQUAL(*papszIter, "IMAGE_STRUCTURE"))
+                        if (EQUAL(*papszIter, GDAL_MDD_IMAGE_STRUCTURE))
                         {
                             CSLConstList papszMD =
                                 oLocalMDMD.GetMetadata(*papszIter);
@@ -4217,7 +4200,7 @@ CSLConstList GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                                 m_osTFFromMetadata = pszTILE_FORMAT;
                                 oMDMD.SetMetadataItem("TILE_FORMAT",
                                                       pszTILE_FORMAT,
-                                                      "IMAGE_STRUCTURE");
+                                                      GDAL_MDD_IMAGE_STRUCTURE);
                             }
 
                             const char *pszNodataValue =
@@ -4725,7 +4708,7 @@ void GDALGeoPackageDataset::FlushMetadata()
         while (papszIter && *papszIter)
         {
             if (!EQUAL(*papszIter, "") &&
-                !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszIter, GDAL_MDD_IMAGE_STRUCTURE) &&
                 !EQUAL(*papszIter, "GEOPACKAGE"))
             {
                 oLocalMDMD.SetMetadata(oMDMD.GetMetadata(*papszIter),
@@ -4737,7 +4720,7 @@ void GDALGeoPackageDataset::FlushMetadata()
         {
             oLocalMDMD.SetMetadataItem(
                 "BAND_COUNT", CPLSPrintf("%d", m_nBandCountFromMetadata),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
             if (nBands == 1)
             {
                 const auto poCT = GetRasterBand(1)->GetColorTable();
@@ -4756,7 +4739,7 @@ void GDALGeoPackageDataset::FlushMetadata()
                     }
                     osVal += '}';
                     oLocalMDMD.SetMetadataItem("COLOR_TABLE", osVal.c_str(),
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
                 }
             }
             if (nBands == 1)
@@ -4785,7 +4768,7 @@ void GDALGeoPackageDataset::FlushMetadata()
                 }
                 if (pszTILE_FORMAT)
                     oLocalMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT,
-                                               "IMAGE_STRUCTURE");
+                                               GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         if (GetRasterCount() > 0 &&
@@ -4798,7 +4781,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             {
                 oLocalMDMD.SetMetadataItem("NODATA_VALUE",
                                            CPLSPrintf("%.17g", dfNoDataValue),
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
         for (int i = 1; i <= GetRasterCount(); ++i)
@@ -5571,8 +5554,8 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                            this, nTileWidth, nTileHeight));
         }
 
-        GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                        "IMAGE_STRUCTURE");
+        GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                        GDAL_MDD_IMAGE_STRUCTURE);
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
         if (!m_osDescription.empty())
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
@@ -5667,6 +5650,13 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
     {
         SQLCommand(hDB, "PRAGMA synchronous = OFF");
     }
+
+    // Enable SpatiaLite 4.3 GPKG mode, i.e. that SpatiaLite functions
+    // that take geometries will accept and return GPKG encoded geometries without
+    // explicit conversion.
+    // Note: we need to do that after DB creation, since EnableGpkgMode()
+    // checks for the presence of GPKG system tables.
+    sqlite3_exec(hDB, "SELECT EnableGpkgMode()", nullptr, nullptr, nullptr);
 
     return TRUE;
 }
@@ -6202,8 +6192,8 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         OGRSpatialReference oSrcSRS;
         oSrcSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
         oSrcSRS.AutoIdentifyEPSG();
-        if (oSrcSRS.GetAuthorityCode(nullptr) == nullptr ||
-            atoi(oSrcSRS.GetAuthorityCode(nullptr)) != nEPSGCode)
+        if (oSrcSRS.GetAuthorityCode() == nullptr ||
+            atoi(oSrcSRS.GetAuthorityCode()) != nEPSGCode)
         {
             nTargetBands++;
         }
@@ -6695,16 +6685,16 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     auto poLayer =
         std::make_unique<OGRGeoPackageTableLayer>(this, osTableName.c_str());
 
-    OGRSpatialReference *poSRS = nullptr;
+    OGRSpatialReferenceRefCountedPtr poSRS;
     if (poSpatialRef)
     {
-        poSRS = poSpatialRef->Clone();
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSpatialRef);
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     poLayer->SetCreationParameters(
         eGType,
         bLaunder ? LaunderName(pszGeomColumnName).c_str() : pszGeomColumnName,
-        bGeomNullable, poSRS, CSLFetchNameValue(papszOptions, "SRID"),
+        bGeomNullable, poSRS.get(), CSLFetchNameValue(papszOptions, "SRID"),
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetCoordinatePrecision()
                            : OGRGeomCoordinatePrecision(),
         CPLTestBool(
@@ -6713,10 +6703,6 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
             papszOptions, "UNDO_DISCARD_COORD_LSB_ON_READING", "NO")),
         bLaunder ? LaunderName(pszFIDColumnName).c_str() : pszFIDColumnName,
         pszIdentifier, CSLFetchNameValue(papszOptions, "DESCRIPTION"));
-    if (poSRS)
-    {
-        poSRS->Release();
-    }
 
     poLayer->SetLaunder(bLaunder);
 
@@ -7644,8 +7630,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     /* -------------------------------------------------------------------- */
     /*      Prepare statement.                                              */
     /* -------------------------------------------------------------------- */
-    sqlite3_stmt *hSQLStmt = nullptr;
-
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
@@ -7668,32 +7652,32 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    int rc = prepareSql(hDB, osSQLCommandTruncated.c_str(),
-                        static_cast<int>(osSQLCommandTruncated.size()),
-                        &hSQLStmt, nullptr);
-
-    if (rc != SQLITE_OK)
+    const auto nErrorCount = CPLGetErrorCounter();
+    sqlite3_stmt *hSQLStmt =
+        prepareSql(hDB, osSQLCommandTruncated.c_str(),
+                   static_cast<int>(osSQLCommandTruncated.size()));
+    if (!hSQLStmt)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare_v2(%s): %s",
-                 osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB));
-
-        if (hSQLStmt != nullptr)
+        if (nErrorCount == CPLGetErrorCounter())
         {
-            sqlite3_finalize(hSQLStmt);
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     SQLFormatErrorMsgFailedPrepare(
+                         GetDB(), "In ExecuteSQL(): sqlite3_prepare_v2(): ",
+                         osSQLCommand.c_str())
+                         .c_str());
         }
-
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Do we get a resultset?                                          */
     /* -------------------------------------------------------------------- */
-    rc = sqlite3_step(hSQLStmt);
+    int rc = sqlite3_step(hSQLStmt);
 
     for (auto &poLayer : m_apoLayers)
     {
-        poLayer->RunDeferredDropRTreeTableIfNecessary();
+        if (!poLayer->RunDeferredDropRTreeTableIfNecessary())
+            return nullptr;
     }
 
     if (rc != SQLITE_ROW)
@@ -8625,8 +8609,7 @@ static void OGRGeoPackageGeodesicArea(sqlite3_context *pContext, int argc,
     GDALGeoPackageDataset *poDS =
         static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSrcSRS(
-        poDS->GetSpatialRef(sHeader.iSrsId, true));
+    auto poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
     if (poSrcSRS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -8689,7 +8672,7 @@ static void OGRGeoPackageLengthOrGeodesicLength(sqlite3_context *pContext,
     GDALGeoPackageDataset *poDS =
         static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSrcSRS;
+    OGRSpatialReferenceRefCountedPtr poSrcSRS;
     if (argc == 2)
     {
         poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
@@ -8775,8 +8758,7 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
     }
     else
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            poSrcSRS(poDS->GetSpatialRef(sHeader.iSrsId, true));
+        auto poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
         if (poSrcSRS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -8785,8 +8767,7 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
             return;
         }
 
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            poDstSRS(poDS->GetSpatialRef(nDestSRID, true));
+        auto poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
         if (poDstSRS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Target SRID (%d) is invalid",
@@ -10458,6 +10439,12 @@ bool GDALGeoPackageDataset::AddRelationship(
         return false;
     }
 
+    for (auto &poLayer : m_apoLayers)
+    {
+        if (poLayer->SyncToDisk() != OGRERR_NONE)
+            return false;
+    }
+
     if (CreateExtensionsTableIfNecessary() != OGRERR_NONE)
     {
         return false;
@@ -10635,6 +10622,16 @@ bool GDALGeoPackageDataset::AddRelationship(
                                 .c_str();
             return false;
         }
+
+        auto poLayer = std::make_unique<OGRGeoPackageTableLayer>(
+            this, osMappingTableName.c_str());
+        poLayer->SetOpeningParameters(osMappingTableName.c_str(), "table",
+                                      /* bIsInGpkgContents = */ true,
+                                      /* bIsSpatial = */ false,
+                                      /* pszGeomColName =*/nullptr,
+                                      /* pszGeomType =*/nullptr,
+                                      /* bHasZ = */ false, /* bHasM = */ false);
+        m_apoLayers.push_back(std::move(poLayer));
     }
     else
     {

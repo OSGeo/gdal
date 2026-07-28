@@ -41,6 +41,28 @@
 #define CURRENT_CART_VERSION "1O00_1970"
 
 /************************************************************************/
+/*                   PDS4BrowseImageProxyRasterBand()                   */
+/************************************************************************/
+
+PDS4BrowseImageProxyRasterBand::PDS4BrowseImageProxyRasterBand(
+    GDALRasterBand *poBaseBandIn)
+    : m_poBaseBand(poBaseBandIn)
+{
+    eDataType = m_poBaseBand->GetRasterDataType();
+    m_poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+}
+
+/************************************************************************/
+/*                      RefUnderlyingRasterBand()                       */
+/************************************************************************/
+
+GDALRasterBand *PDS4BrowseImageProxyRasterBand::RefUnderlyingRasterBand(
+    bool /*bForceOpen*/) const
+{
+    return m_poBaseBand;
+}
+
+/************************************************************************/
 /*                       PDS4WrapperRasterBand()                        */
 /************************************************************************/
 
@@ -751,8 +773,10 @@ CPLErr PDS4Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 CPLErr PDS4Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
-    if (!((gt[1] > 0.0 && gt[2] == 0.0 && gt[4] == 0.0 && gt[5] < 0.0) ||
-          (gt[1] == 0.0 && gt[2] > 0.0 && gt[4] > 0.0 && gt[5] == 0.0)))
+    if (!((gt.xscale > 0.0 && gt.xrot == 0.0 && gt.yrot == 0.0 &&
+           gt.yscale < 0.0) ||
+          (gt.xscale == 0.0 && gt.xrot > 0.0 && gt.yrot > 0.0 &&
+           gt.yscale == 0.0)))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform or map_projection_rotation=90 "
@@ -1458,12 +1482,12 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
             // origin convention, but it appears from
             // https://github.com/OSGeo/gdal/issues/735 that it matches GDAL
             // top-left corner of top-left pixel
-            m_gt[0] = dfULX;
-            m_gt[1] = dfXRes;
-            m_gt[2] = 0.0;
-            m_gt[3] = dfULY;
-            m_gt[4] = 0.0;
-            m_gt[5] = -dfYRes;
+            m_gt.xorig = dfULX;
+            m_gt.xscale = dfXRes;
+            m_gt.xrot = 0.0;
+            m_gt.yorig = dfULY;
+            m_gt.yrot = 0.0;
+            m_gt.yscale = -dfYRes;
             m_bGotTransform = true;
 
             if (dfMapProjectionRotation != 0)
@@ -1476,18 +1500,18 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
                     dfMapProjectionRotation == 90
                         ? 0.0
                         : cos(dfMapProjectionRotation / 180 * M_PI);
-                const double gt_1 = cos_rot * m_gt[1] - sin_rot * m_gt[4];
-                const double gt_2 = cos_rot * m_gt[2] - sin_rot * m_gt[5];
-                const double gt_0 = cos_rot * m_gt[0] - sin_rot * m_gt[3];
-                const double gt_4 = sin_rot * m_gt[1] + cos_rot * m_gt[4];
-                const double gt_5 = sin_rot * m_gt[2] + cos_rot * m_gt[5];
-                const double gt_3 = sin_rot * m_gt[0] + cos_rot * m_gt[3];
-                m_gt[1] = gt_1;
-                m_gt[2] = gt_2;
-                m_gt[0] = gt_0;
-                m_gt[4] = gt_4;
-                m_gt[5] = gt_5;
-                m_gt[3] = gt_3;
+                const double gt_1 = cos_rot * m_gt.xscale - sin_rot * m_gt.yrot;
+                const double gt_2 = cos_rot * m_gt.xrot - sin_rot * m_gt.yscale;
+                const double gt_0 = cos_rot * m_gt.xorig - sin_rot * m_gt.yorig;
+                const double gt_4 = sin_rot * m_gt.xscale + cos_rot * m_gt.yrot;
+                const double gt_5 = sin_rot * m_gt.xrot + cos_rot * m_gt.yscale;
+                const double gt_3 = sin_rot * m_gt.xorig + cos_rot * m_gt.yorig;
+                m_gt.xscale = gt_1;
+                m_gt.xrot = gt_2;
+                m_gt.xorig = gt_0;
+                m_gt.yrot = gt_4;
+                m_gt.yscale = gt_5;
+                m_gt.yorig = gt_3;
             }
         }
     }
@@ -1712,6 +1736,97 @@ static std::optional<double> ConstantToDouble(const char *pszItem,
 }
 
 /************************************************************************/
+/*                             OpenBrowse()                             */
+/************************************************************************/
+
+/* static */ std::unique_ptr<PDS4Dataset>
+PDS4Dataset::OpenBrowse(GDALOpenInfo *poOpenInfo, const CPLXMLNode *psProduct)
+{
+    const CPLXMLNode *psFileAreaBrowse =
+        CPLGetXMLNode(psProduct, "File_Area_Browse");
+    if (!psFileAreaBrowse)
+        return nullptr;
+    const char *pszFilename =
+        CPLGetXMLValue(psFileAreaBrowse, "File.file_name", nullptr);
+    if (!pszFilename)
+        return nullptr;
+    if (CPLHasPathTraversal(pszFilename))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
+                 pszFilename);
+        return nullptr;
+    }
+    const char *pszFormat = CPLGetXMLValue(
+        psFileAreaBrowse, "Encoded_Image.encoding_standard_id", "");
+    const char *const apszAllowedDrivers[] = {EQUAL(pszFormat, "TIFF") ? "GTiff"
+                                              : EQUAL(pszFormat, "PNG")
+                                                  ? "PNG"
+                                                  : nullptr,
+                                              nullptr};
+    if (apszAllowedDrivers[0] == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unhandled encoding_standard_id=%s", pszFormat);
+        return nullptr;
+    }
+    const std::string osImageFullFilename = CPLFormFilenameSafe(
+        CPLGetPathSafe(poOpenInfo->pszFilename).c_str(), pszFilename, nullptr);
+    auto poExternalDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        osImageFullFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+        apszAllowedDrivers));
+    if (!poExternalDS)
+        return nullptr;
+
+    auto poDS = std::make_unique<PDS4Dataset>();
+    poDS->SetDescription(poOpenInfo->pszFilename);
+    poDS->m_poExternalDS = poExternalDS.release();
+    poDS->nRasterXSize = poDS->m_poExternalDS->GetRasterXSize();
+    poDS->nRasterYSize = poDS->m_poExternalDS->GetRasterYSize();
+    poDS->eAccess = GA_ReadOnly;
+    poDS->m_osImageFilename = osImageFullFilename;
+
+    for (int i = 0; i < poDS->m_poExternalDS->GetRasterCount(); i++)
+    {
+        auto poBand = std::make_unique<PDS4BrowseImageProxyRasterBand>(
+            poDS->m_poExternalDS->GetRasterBand(i + 1));
+        poDS->SetBand(i + 1, std::move(poBand));
+    }
+
+    if (poDS->m_poExternalDS->GetGeoTransform(poDS->m_gt) == CE_None)
+    {
+        poDS->m_bGotTransform = true;
+    }
+    const auto poSRS = poDS->m_poExternalDS->GetSpatialRef();
+    if (poSRS)
+        poDS->m_oSRS = *poSRS;
+
+    for (const char *pszDomain : {GDAL_MDD_DEFAULT, GDAL_MDD_IMAGE_STRUCTURE})
+    {
+        poDS->GDALDataset::SetMetadata(
+            poDS->m_poExternalDS->GetMetadata(pszDomain), pszDomain);
+    }
+
+    // Expose XML content in xml:PDS4 metadata domain
+    GByte *pabyRet = nullptr;
+    CPL_IGNORE_RET_VAL(VSIIngestFile(nullptr, poOpenInfo->pszFilename, &pabyRet,
+                                     nullptr, 10 * 1024 * 1024));
+    if (pabyRet)
+    {
+        char *apszXML[2] = {reinterpret_cast<char *>(pabyRet), nullptr};
+        poDS->GDALDataset::SetMetadata(apszXML, "xml:PDS4");
+    }
+    VSIFree(pabyRet);
+
+    /*--------------------------------------------------------------------------*/
+    /*  Initialize any PAM information */
+    /*--------------------------------------------------------------------------*/
+    poDS->SetDescription(poOpenInfo->pszFilename);
+    poDS->TryLoadXML();
+
+    return poDS;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1776,6 +1891,12 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
         if (psProduct == nullptr)
         {
             psProduct = CPLGetXMLNode(psRoot, "=Product_Collection");
+        }
+        if (psProduct == nullptr)
+        {
+            psProduct = CPLGetXMLNode(psRoot, "=Product_Browse");
+            if (psProduct)
+                return OpenBrowse(poOpenInfo, psProduct);
         }
     }
     if (psProduct == nullptr)
@@ -2178,8 +2299,9 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 if (dimSemantics[i] == 'S')
                 {
-                    if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                    if (nCountPreviousDim > 0 &&
+                        nSpacing > static_cast<vsi_l_offset>(INT_MAX /
+                                                             nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
@@ -2191,8 +2313,9 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 }
                 else if (dimSemantics[i] == 'L')
                 {
-                    if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                    if (nCountPreviousDim > 0 &&
+                        nSpacing > static_cast<vsi_l_offset>(INT_MAX /
+                                                             nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
@@ -2328,14 +2451,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             if (l_nBands > 1 && dimSemantics[0] == 'B' &&
                 dimSemantics[1] == 'L' && dimSemantics[2] == 'S')
             {
-                poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
             if (l_nBands > 1 && dimSemantics[0] == 'L' &&
                 dimSemantics[1] == 'S' && dimSemantics[2] == 'B')
             {
-                poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                                   "IMAGE_STRUCTURE");
+                poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                                   GDAL_MDD_IMAGE_STRUCTURE);
             }
 
             CPLXMLNode *psOS = CPLGetXMLNode(psSubIter, "Object_Statistics");
@@ -2430,7 +2553,8 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
     if (nFAOIdxLookup < 0 && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     else if (poDS->nBands == 0 &&
              (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -2506,20 +2630,20 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
         bHasBoundingBox = true;
 
         // upper left
-        adfX[0] = m_gt[0];
-        adfY[0] = m_gt[3];
+        adfX[0] = m_gt.xorig;
+        adfY[0] = m_gt.yorig;
 
         // upper right
-        adfX[1] = m_gt[0] + m_gt[1] * nRasterXSize;
-        adfY[1] = m_gt[3];
+        adfX[1] = m_gt.xorig + m_gt.xscale * nRasterXSize;
+        adfY[1] = m_gt.yorig;
 
         // lower left
-        adfX[2] = m_gt[0];
-        adfY[2] = m_gt[3] + m_gt[5] * nRasterYSize;
+        adfX[2] = m_gt.xorig;
+        adfY[2] = m_gt.yorig + m_gt.yscale * nRasterYSize;
 
         // lower right
-        adfX[3] = m_gt[0] + m_gt[1] * nRasterXSize;
-        adfY[3] = m_gt[3] + m_gt[5] * nRasterYSize;
+        adfX[3] = m_gt.xorig + m_gt.xscale * nRasterXSize;
+        adfY[3] = m_gt.yorig + m_gt.yscale * nRasterYSize;
     }
     else
     {
@@ -2641,17 +2765,18 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
         psSRI, CXT_Element,
         (osPrefix + "Horizontal_Coordinate_System_Definition").c_str());
 
-    double dfUnrotatedULX = m_gt[0];
-    double dfUnrotatedULY = m_gt[3];
-    double dfUnrotatedResX = m_gt[1];
-    double dfUnrotatedResY = m_gt[5];
+    double dfUnrotatedULX = m_gt.xorig;
+    double dfUnrotatedULY = m_gt.yorig;
+    double dfUnrotatedResX = m_gt.xscale;
+    double dfUnrotatedResY = m_gt.yscale;
     double dfMapProjectionRotation = 0.0;
-    if (m_gt[1] == 0.0 && m_gt[2] > 0.0 && m_gt[4] > 0.0 && m_gt[5] == 0.0)
+    if (m_gt.xscale == 0.0 && m_gt.xrot > 0.0 && m_gt.yrot > 0.0 &&
+        m_gt.yscale == 0.0)
     {
-        dfUnrotatedULX = m_gt[3];
-        dfUnrotatedULY = -m_gt[0];
-        dfUnrotatedResX = m_gt[4];
-        dfUnrotatedResY = -m_gt[2];
+        dfUnrotatedULX = m_gt.yorig;
+        dfUnrotatedULY = -m_gt.xorig;
+        dfUnrotatedResX = m_gt.yrot;
+        dfUnrotatedResY = -m_gt.xrot;
         dfMapProjectionRotation = 90.0;
     }
 
@@ -4795,7 +4920,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
     vsi_l_offset nBandOffset;
 
     const char *pszInterleave =
-        aosOptions.FetchNameValueDef("INTERLEAVE", "BSQ");
+        aosOptions.FetchNameValueDef(GDALMD_INTERLEAVE, "BSQ");
     if (bIsArray2D)
         pszInterleave = "BIP";
 
@@ -4878,14 +5003,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "CREATE_LABEL_ONLY is only compatible of CreateCopy() mode");
+                "CREATE_LABEL_ONLY is only compatible with CreateCopy() mode");
             return nullptr;
         }
         RawBinaryLayout sLayout;
         if (!poSrcDS->GetRawBinaryLayout(sLayout))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Source dataset is not compatible of a raw binary format");
+                     "Source dataset is not compatible with raw binary format");
             return nullptr;
         }
         if ((nBandsIn > 1 &&
@@ -5004,7 +5129,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
 #endif
 
         papszGTiffOptions =
-            CSLSetNameValue(papszGTiffOptions, "INTERLEAVE",
+            CSLSetNameValue(papszGTiffOptions, GDALMD_INTERLEAVE,
                             EQUAL(pszInterleave, "BSQ") ? "BAND" : "PIXEL");
         // Will make sure that our blocks at nodata are not optimized
         // away but indeed well written
@@ -5073,13 +5198,13 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
 
     if (EQUAL(pszInterleave, "BIP"))
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
     else if (EQUAL(pszInterleave, "BSQ"))
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
-                                           "IMAGE_STRUCTURE");
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     for (int i = 0; i < nBandsIn; i++)

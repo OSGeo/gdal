@@ -153,12 +153,14 @@ gdal_optional_format(e57 "E57")
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")
 gdal_dependent_format(gif "Graphics Interchange Format" "GDAL_USE_GIF OR GDAL_USE_GIF_INTERNAL")
+gdal_dependent_format(lerc "LERC image format" "GDAL_USE_LERC OR GDAL_USE_LERC_INTERNAL")
 
 gdal_dependent_format(wcs "OGC Web Coverage Service" "GDAL_USE_CURL")
 gdal_dependent_format(http "HTTP driver" "GDAL_USE_CURL")
 
 gdal_dependent_format(netcdf "NetCDF network Common Data Form" "GDAL_USE_NETCDF")
 gdal_optional_format(zarr "ZARR")
+gdal_dependent_format(icechunk "Icechunk" "GDAL_ENABLE_DRIVER_ZARR;GDAL_USE_ZSTD")
 gdal_dependent_format(daas "Airbus DS Intelligence Data As A Service(DAAS)" "GDAL_USE_CURL")
 gdal_dependent_format(eeda "Earth Engine Data API" "GDAL_USE_CURL")
 gdal_dependent_format(fits "FITS Driver" "GDAL_USE_CFITSIO")
@@ -192,6 +194,8 @@ gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
 include(mrsid/driver_declaration.cmake)
 include(georaster/driver_declaration.cmake)
 include(ecw/driver_declaration.cmake)
+
+include(grok/driver_declaration.cmake)
 
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)

@@ -13,12 +13,14 @@
 
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 #include <cerrno>
 #include <clocale>
 #include <cstring>
 #include <cstdlib>
 #include <limits>
+#include <optional>
 
 // Coverity complains about CPLAtof(CPLGetConfigOption(...)) causing
 // a "untrusted loop bound" in the loop "Find a reasonable position for the end
@@ -203,8 +205,8 @@ static char *CPLReplacePointByLocalePoint(const char *pszNumber, char point)
  *
  * This function converts the initial portion of the string pointed to
  * by nptr to double floating point representation. This function does the
- * same as standard strtod(3), but does not take locale in account. Instead of
- * locale defined decimal delimiter you can specify your own one. Also see
+ * same as standard strtod(3), but does not take locale into account. Instead of
+ * the locale-defined decimal delimiter you can specify your own one. Also see
  * notes for CPLAtof() function.
  *
  * @param nptr Pointer to string to convert.
@@ -217,152 +219,137 @@ static char *CPLReplacePointByLocalePoint(const char *pszNumber, char point)
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
-    while (*nptr == ' '
-#ifdef USE_FAST_FLOAT
-           // The GSAG driver provides leading end-of-line character
-           || *nptr == '\r' || *nptr == '\n' || *nptr == '\t'
-#endif
-    )
+    return cpl::strtod_delim(nptr, endptr, point);
+}
+
+namespace cpl
+{
+/**
+ * Converts ASCII string to floating point number using specified delimiter.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to double floating point representation. This function does the
+ * same as standard strtod(3), but does not take locale into account. Instead of
+ * the locale-defined decimal delimiter you can specify your own one. Also see
+ * notes for CPLAtof() function.
+ *
+ * @param str String view to convert.
+ * @param endptr If is not NULL, a pointer to the character after the last
+ * character used in the conversion is stored in the location referenced
+ * by endptr.
+ * @param point Decimal delimiter.
+ *
+ * @return Converted value, if any.
+ */
+double strtod_delim(std::string_view str, char **endptr, char point)
+{
+    str = trim(str);
+
+    if (str.empty())
     {
-        nptr++;
+        if (endptr)
+            *endptr = const_cast<char *>(str.data());
+        return 0;
     }
 
-    if (nptr[0] == '-')
+    if (str[0] == '-')
     {
-        if (STARTS_WITH(nptr, "-1.#QNAN") || STARTS_WITH(nptr, "-1.#IND"))
+        if (starts_with(str, "-1.#QNAN") || starts_with(str, "-1.#IND"))
         {
             if (endptr)
-                *endptr = const_cast<char *>(nptr) + strlen(nptr);
+                *endptr = const_cast<char *>(str.data()) + str.size();
             // While it is possible on some platforms to flip the sign
             // of NAN to negative, this function will always return a positive
             // quiet (non-signalling) NaN.
             return std::numeric_limits<double>::quiet_NaN();
         }
-        if (
-#ifndef USE_FAST_FLOAT
-            strcmp(nptr, "-inf") == 0 ||
-#endif
-            STARTS_WITH_CI(nptr, "-1.#INF"))
+        if (starts_with_ci(str, "-1.#INF"))
         {
             if (endptr)
-                *endptr = const_cast<char *>(nptr) + strlen(nptr);
+                *endptr = const_cast<char *>(str.data()) + str.size();
             return -std::numeric_limits<double>::infinity();
         }
     }
-    else if (nptr[0] == '1')
+    else if (str[0] == '1')
     {
-        if (STARTS_WITH(nptr, "1.#QNAN") || STARTS_WITH(nptr, "1.#SNAN"))
+        if (starts_with(str, "1.#QNAN") || starts_with(str, "1.#SNAN"))
         {
             if (endptr)
-                *endptr = const_cast<char *>(nptr) + strlen(nptr);
+                *endptr = const_cast<char *>(str.data()) + str.size();
             return std::numeric_limits<double>::quiet_NaN();
         }
-        if (STARTS_WITH_CI(nptr, "1.#INF"))
+        if (starts_with_ci(str, "1.#INF"))
         {
             if (endptr)
-                *endptr = const_cast<char *>(nptr) + strlen(nptr);
+                *endptr = const_cast<char *>(str.data()) + str.size();
             return std::numeric_limits<double>::infinity();
         }
     }
-#ifndef USE_FAST_FLOAT
-    else if (nptr[0] == 'i' && strcmp(nptr, "inf") == 0)
-    {
-        if (endptr)
-            *endptr = const_cast<char *>(nptr) + strlen(nptr);
-        return std::numeric_limits<double>::infinity();
-    }
-    else if (nptr[0] == 'n' && strcmp(nptr, "nan") == 0)
-    {
-        if (endptr)
-            *endptr = const_cast<char *>(nptr) + strlen(nptr);
-        return std::numeric_limits<double>::quiet_NaN();
-    }
-#endif
 
-#ifdef USE_FAST_FLOAT
     // Skip leading '+' as non-handled by fast_float
-    if (*nptr == '+')
-        nptr++;
+    if (str[0] == '+')
+        str = str.substr(1);
 
     // Find a reasonable position for the end of the string to provide to
     // fast_float
-    const char *endptrIn = nptr;
-    while ((*endptrIn >= '0' && *endptrIn <= '9') || *endptrIn == point ||
-           *endptrIn == '+' || *endptrIn == '-' || *endptrIn == 'e' ||
-           *endptrIn == 'E')
+    std::ptrdiff_t endPos = 0;
+    while (endPos < static_cast<std::ptrdiff_t>(str.size()) &&
+           ((str[endPos] >= '0' && str[endPos] <= '9') ||
+            str[endPos] == point || str[endPos] == '+' || str[endPos] == '-' ||
+            str[endPos] == 'e' || str[endPos] == 'E'))
     {
-        ++endptrIn;
+        ++endPos;
     }
 
     double dfValue = 0;
     const fast_float::parse_options options{fast_float::chars_format::general,
                                             point};
-    auto answer =
-        fast_float::from_chars_advanced(nptr, endptrIn, dfValue, options);
+    auto answer = fast_float::from_chars_advanced(
+        str.data(), str.data() + endPos, dfValue, options);
     if (answer.ec != std::errc())
     {
         if (
             // Triggered by ogr_pg tests
-            STARTS_WITH_CI(nptr, "-Infinity"))
+            starts_with_ci(str, "-Infinity"))
         {
             dfValue = -std::numeric_limits<double>::infinity();
-            answer.ptr = nptr + strlen("-Infinity");
+            answer.ptr = str.data() + strlen("-Infinity");
         }
-        else if (STARTS_WITH_CI(nptr, "-inf"))
+        else if (starts_with_ci(str, "-inf"))
         {
             dfValue = -std::numeric_limits<double>::infinity();
-            answer.ptr = nptr + strlen("-inf");
+            answer.ptr = str.data() + strlen("-inf");
         }
         else if (
             // Triggered by ogr_pg tests
-            STARTS_WITH_CI(nptr, "Infinity"))
+            starts_with_ci(str, "Infinity"))
         {
             dfValue = std::numeric_limits<double>::infinity();
-            answer.ptr = nptr + strlen("Infinity");
+            answer.ptr = str.data() + strlen("Infinity");
         }
-        else if (STARTS_WITH_CI(nptr, "inf"))
+        else if (cpl::starts_with_ci(str, "inf"))
         {
             dfValue = std::numeric_limits<double>::infinity();
-            answer.ptr = nptr + strlen("inf");
+            answer.ptr = str.data() + strlen("inf");
         }
-        else if (STARTS_WITH_CI(nptr, "nan"))
+        else if (cpl::starts_with_ci(str, "nan"))
         {
             dfValue = std::numeric_limits<double>::quiet_NaN();
-            answer.ptr = nptr + strlen("nan");
+            answer.ptr = str.data() + strlen("nan");
         }
         else
         {
-            errno = answer.ptr == nptr ? 0 : ERANGE;
+            errno = answer.ptr == str.data() ? 0 : ERANGE;
         }
     }
     if (endptr)
     {
         *endptr = const_cast<char *>(answer.ptr);
     }
-#else
-    /* -------------------------------------------------------------------- */
-    /*  We are implementing a simple method here: copy the input string     */
-    /*  into the temporary buffer, replace the specified decimal delimiter  */
-    /*  with the one, taken from locale settings and use standard strtod()  */
-    /*  on that buffer.                                                     */
-    /* -------------------------------------------------------------------- */
-    char *pszNewNumberOrNull = CPLReplacePointByLocalePoint(nptr, point);
-    const char *pszNumber = pszNewNumberOrNull ? pszNewNumberOrNull : nptr;
-
-    const double dfValue = strtod(pszNumber, endptr);
-    const int nError = errno;
-
-    if (endptr)
-        *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
-
-    if (pszNewNumberOrNull)
-        CPLFree(pszNewNumberOrNull);
-
-    errno = nError;
-#endif
 
     return dfValue;
 }
+}  // namespace cpl
 
 /************************************************************************/
 /*                             CPLStrtod()                              */

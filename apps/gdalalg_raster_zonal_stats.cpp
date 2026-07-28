@@ -34,10 +34,11 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
               .SetStandaloneStep(bStandalone)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
+    AddRasterInputArgs(false, false);
     if (bStandalone)
     {
-        AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
+        AddProgressArg();
     }
 
     constexpr const char *ZONES_BAND_OR_LAYER = "BAND_OR_LAYER";
@@ -72,6 +73,8 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
     AddArg("include-field", 0,
            _("Fields from polygon zones to include in output"),
            &m_includeFields);
+    AddArg("include-geom", 0, _("Include polygon zone geometry in the output"),
+           &m_includeZoneGeom);
     AddArg("strategy", 0,
            _("For polygon zones, whether to iterate over input features or "
              "raster chunks"),
@@ -80,7 +83,6 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
         .SetDefault("feature");
     AddMemorySizeArg(&m_memoryBytes, &m_memoryStr, "chunk-size",
                      _("Maximum size of raster chunks read into memory"));
-    AddProgressArg();
 }
 
 /************************************************************************/
@@ -186,6 +188,14 @@ bool GDALRasterZonalStatsAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     {
         aosOptions.AddNameValue("INCLUDE_FIELDS",
                                 Join(m_includeFields, ",").c_str());
+    }
+    if (m_includeZoneGeom)
+    {
+        aosOptions.AddNameValue("INCLUDE_GEOM", "YES");
+    }
+    if (!m_outputLayerName.empty())
+    {
+        aosOptions.AddNameValue("OUTPUT_LAYER", m_outputLayerName.c_str());
     }
     aosOptions.AddNameValue("PIXEL_INTERSECTION", m_pixels.c_str());
     if (m_memoryBytes != 0)

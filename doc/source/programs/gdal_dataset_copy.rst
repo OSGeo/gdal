@@ -1,5 +1,7 @@
 .. _gdal_dataset_copy:
 
+.. program:: gdal_dataset_copy
+
 ================================================================================
 ``gdal dataset copy``
 ================================================================================
@@ -36,6 +38,11 @@ Options
     Dataset format. Helps if automatic detection does not work.
 
 .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

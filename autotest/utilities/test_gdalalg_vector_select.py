@@ -73,6 +73,59 @@ def test_gdalalg_vector_select_fields():
     lyr.SetSpatialFilter(None)
 
 
+def test_gdalalg_vector_select_geom():
+
+    alg = get_select_alg()
+
+    alg["geometry"] = True
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+
+def test_gdalalg_vector_select_named_geom():
+
+    alg = get_select_alg()
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("lyr", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("custom_geom", ogr.wkbLineString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 1 1)"))
+    src_lyr.CreateFeature(f)
+
+    alg["geometry"] = True
+    alg["input"] = src_ds
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+    assert dst_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "custom_geom"
+
+
+def test_gdalalg_vector_select_no_fields_or_geom():
+
+    alg = get_select_alg()
+
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Must specify --fields and/or --geometry"):
+        alg.Run()
+
+
 def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -123,7 +176,7 @@ def test_gdalalg_vector_select_fields_non_existing_ignore_missing_fields(tmp_vsi
             ]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
@@ -143,7 +196,7 @@ def test_gdalalg_vector_select_fields_exclude(tmp_vsimem):
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -161,7 +214,7 @@ def test_gdalalg_vector_select_fields_exclude_ogr_geometry(tmp_vsimem):
         ["--exclude", "--fields=_ogr_geometry_", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -183,7 +236,7 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
         ["--exclude", "--fields=geom", tmp_filename, out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -205,7 +258,7 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
         ["--exclude", "--fields=i_do_not_exist", tmp_filename, out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -241,3 +294,57 @@ def test_gdalalg_vector_select_active_layer():
 
     out_lyr = out_ds.GetLayer(1)
     assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+
+
+def test_gdalalg_vector_select_pipeline_output_layer():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! select --output-layer foo --fields EAS_ID"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+
+def test_gdalalg_vector_select_pipeline_output_layer_multiple_input_layers():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("a").CreateField(ogr.FieldDefn("x"))
+    src_ds.CreateLayer("b")
+
+    with pytest.raises(
+        Exception,
+        match="Argument 'output-layer' cannot be used when the input dataset has multiple layers, unless argument 'active-layer' is specified",
+    ):
+        gdal.alg.vector.pipeline(
+            input=src_ds, pipeline="read ! select --output-layer foo --fields x"
+        )
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline="read ! select --active-layer a --output-layer foo --fields x",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+        lyr = ds.GetLayer(1)
+        assert lyr.GetDescription() == "b"
+        assert lyr.GetLayerDefn().GetName() == "b"
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_select_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! select --fields osm_id,highway,_ogr_geometry_ ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"

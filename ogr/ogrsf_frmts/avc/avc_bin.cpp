@@ -114,6 +114,8 @@
 
 #include "avc.h"
 
+#include <algorithm>
+#include <cmath>
 #include <ctype.h> /* for isspace() */
 
 #ifdef WITHOUT_SHAPEFILE
@@ -1376,7 +1378,7 @@ static int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     int numBytesRead;
 
     numVerticesBefore =
-        ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+        std::abs(psTxt->numVerticesLine) + std::abs(psTxt->numVerticesArrow);
 
     psTxt->nTxtId = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
@@ -1440,10 +1442,11 @@ static int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      */
     if (psTxt->numVerticesLine == INT_MIN ||
         psTxt->numVerticesArrow == INT_MIN ||
-        ABS(psTxt->numVerticesLine) >
-            100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow))
+        std::abs(psTxt->numVerticesLine) >
+            100 * 1024 * 1024 - std::abs(psTxt->numVerticesArrow))
         return -1;
-    numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+    numVertices =
+        std::abs(psTxt->numVerticesLine) + std::abs(psTxt->numVerticesArrow);
     if (numVertices > 10 * 1024 * 1024 &&
         !AVCRawBinIsFileGreaterThan(
             psFile,
@@ -1512,7 +1515,7 @@ static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     int i, numVerticesBefore, numVertices, numCharsToRead, nRecordSize;
 
     numVerticesBefore =
-        ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+        std::abs(psTxt->numVerticesLine) + std::abs(psTxt->numVerticesArrow);
 
     psTxt->nTxtId = AVCRawBinReadInt32(psFile);
     if (AVCRawBinEOF(psFile))
@@ -1528,7 +1531,7 @@ static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
 
     psTxt->numVerticesLine = AVCRawBinReadInt32(psFile);
     /* We are not expecting more than 4 vertices */
-    psTxt->numVerticesLine = MIN(psTxt->numVerticesLine, 4);
+    psTxt->numVerticesLine = std::min(psTxt->numVerticesLine, 4);
 
     psTxt->numVerticesArrow = 0;
 
@@ -1541,9 +1544,9 @@ static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      */
     psTxt->numVerticesLine += 1;
     if (psTxt->numVerticesLine == INT_MIN ||
-        ABS(psTxt->numVerticesLine) > 100 * 1024 * 1024)
+        std::abs(psTxt->numVerticesLine) > 100 * 1024 * 1024)
         return -1;
-    numVertices = ABS(psTxt->numVerticesLine);
+    numVertices = std::abs(psTxt->numVerticesLine);
     if (numVertices < 2)
         return -1;
     if (numVertices > 10 * 1024 * 1024 &&
@@ -1618,7 +1621,7 @@ static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
         return -1;
 
     /* Do a quick check in case file is corrupt! */
-    psTxt->numChars = MIN(psTxt->numChars, numCharsToRead);
+    psTxt->numChars = std::min(psTxt->numChars, numCharsToRead);
 
     if (psTxt->pszText == nullptr ||
         ((int)(strlen((char *)psTxt->pszText) + 3) / 4) * 4 < numCharsToRead)

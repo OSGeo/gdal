@@ -289,10 +289,10 @@ int OGR2SQLITEModule::FetchSRSId(const OGRSpatialReference *poSRS)
     {
         if (poSRS != nullptr)
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityName = poSRS->GetAuthorityName();
             if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
             {
-                const char *pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
+                const char *pszAuthorityCode = poSRS->GetAuthorityCode();
                 if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
                 {
                     nSRSId = atoi(pszAuthorityCode);

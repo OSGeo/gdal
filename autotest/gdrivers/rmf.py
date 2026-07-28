@@ -613,9 +613,9 @@ def test_rmf_29():
     wkt = test_ds.GetProjectionRef()
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
-    assert (
-        str(sr.GetAuthorityCode(None)) == "3388"
-    ), "EPSG code is %s expected 3388." % str(sr.GetAuthorityCode(None))
+    assert str(sr.GetAuthorityCode()) == "3388", "EPSG code is %s expected 3388." % str(
+        sr.GetAuthorityCode()
+    )
 
 
 ###############################################################################

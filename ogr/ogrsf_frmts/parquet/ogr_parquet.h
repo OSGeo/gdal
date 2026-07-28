@@ -58,7 +58,14 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
         int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
         std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun,
         const parquet::ColumnDescriptor *parquetColumn,
-        const parquet::FileMetaData *metadata, int iColumn);
+        const parquet::FileMetaData *fileMetadata, int iColumn);
+
+#if PARQUET_VERSION_MAJOR >= 21
+    bool DealWithArrow21GeometryGeographyNativeTypes(
+        int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
+        const parquet::ColumnDescriptor *parquetColumn,
+        const parquet::FileMetaData *fileMetadata, int iColumn);
+#endif
 
     void InvalidateCachedBatches() override;
 

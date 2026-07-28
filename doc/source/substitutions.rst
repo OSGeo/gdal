@@ -6,7 +6,7 @@
 .. |GDAL| replace:: `GDAL <https://gdal.org/>`__
 .. |JSON| replace:: `JSON <https://en.wikipedia.org/wiki/JSON>`__
 .. |XML| replace:: `XML <https://en.wikipedia.org/wiki/XML>`__
-.. |jq| replace:: `jq <https://stedolan.github.io/jq/>`__
+.. |jq| replace:: `jq <https://jqlang.org/>`__
 .. |CSV| replace:: `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`__
 .. |NumPy| replace:: `NumPy <http://www.numpy.org/>`__
 .. |Bash| replace:: `Bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`__
@@ -14,6 +14,7 @@
 .. |Docker| replace:: `Docker <https://www.docker.com/>`__
 .. |gdal-dev| replace:: `gdal-dev <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__
 .. |OSGeo/gdal| replace:: `OSGeo/gdal <https://github.com/OSGeo/gdal>`__
+.. |OGC| replace:: `OGC <https://www.ogc.org//>`__
 .. |Sphinx| replace:: `Sphinx <https://www.sphinx-doc.org/>`__
 .. |sphinx-autobuild| replace:: `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`__
 .. |about-config-options| replace:: :ref:`Configuration options <configoptions>` can be specified in command-line tools using the syntax ``--config <NAME>=<VALUE>`` or using functions such as :cpp:func:`CPLSetConfigOption` (C) or :py:func:`gdal.config_options<osgeo.gdal.config_options>` (Python).

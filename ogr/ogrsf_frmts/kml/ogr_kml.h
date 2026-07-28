@@ -35,6 +35,11 @@ class OGRKMLLayer final : public OGRLayer
                 bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
     ~OGRKMLLayer() override;
 
+    OGRFeatureDefn *GetLayerDefn()
+    {
+        return poFeatureDefn_;
+    }
+
     //
     // OGRLayer Interface
     //
@@ -134,7 +139,7 @@ class OGRKMLDataSource final : public GDALDataset
 
     void GrowExtents(OGREnvelope *psGeomBounds);
 #ifdef HAVE_EXPAT
-    KML *GetKMLFile()
+    KMLVector *GetKMLFile()
     {
         return poKMLFile_;
     }
@@ -152,7 +157,7 @@ class OGRKMLDataSource final : public GDALDataset
 
   private:
 #ifdef HAVE_EXPAT
-    KML *poKMLFile_ = nullptr;
+    KMLVector *poKMLFile_ = nullptr;
 #endif
 
     OGRKMLLayer **papoLayers_ = nullptr;

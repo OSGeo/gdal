@@ -161,8 +161,12 @@ typedef enum
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: if required, only add members at the end of the
- * structure, and when doing so increase RASTERIO_EXTRA_ARG_CURRENT_VERSION
+ * structure, and when doing so increase RASTERIO_EXTRA_ARG_CURRENT_VERSION.
+ *
+ * Also make sure to use GDALCopyRasterIOExtraArg() when creating a copy
+ * from user input.
  */
+
 /** Structure to pass extra arguments to RasterIO() method,
  * must be initialized with INIT_RASTERIO_EXTRA_ARG
  */
@@ -203,10 +207,20 @@ typedef struct
         Only available if RASTERIO_EXTRA_ARG_CURRENT_VERSION >= 2
     */
     int bUseOnlyThisScale;
+
+    /** Indicate if operations (typically non-nearest resampling)
+     * should be done in the eBufType data type of the RasterIO() request
+     * rather than the band data type.
+     * Only available if RASTERIO_EXTRA_ARG_CURRENT_VERSION >= 3 (GDAL >= 3.13)
+     * Defaults to TRUE in GDAL >= 3.13 (behavior in previous version was
+     * mostly, but not always corresponding to setting it to FALSE)
+    */
+    int bOperateInBufType;
+
 } GDALRasterIOExtraArg;
 
 #ifndef DOXYGEN_SKIP
-#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 2
+#define RASTERIO_EXTRA_ARG_CURRENT_VERSION 3
 #endif
 
 /** Macro to initialize an instance of GDALRasterIOExtraArg structure.
@@ -220,7 +234,15 @@ typedef struct
         (s).pProgressData = CPL_NULLPTR;                                       \
         (s).bFloatingPointWindowValidity = FALSE;                              \
         (s).bUseOnlyThisScale = FALSE;                                         \
+        (s).bOperateInBufType = TRUE;                                          \
     } while (0)
+
+/** Macro to return whether GDALRasterIOExtraArg::bOperateInBufType is set.
+ *
+ * @since 3.13
+ */
+#define GDAL_GET_OPERATE_IN_BUF_TYPE(s)                                        \
+    ((s).nVersion < 3 || (s).bOperateInBufType)
 
 /** Value indicating the start of the range for color interpretations belonging
  * to the InfraRed (IR) domain. All constants of the GDALColorInterp enumeration
@@ -348,6 +370,8 @@ typedef enum
 const char CPL_DLL *GDALGetColorInterpretationName(GDALColorInterp);
 GDALColorInterp CPL_DLL GDALGetColorInterpretationByName(const char *pszName);
 
+const GDALColorInterp CPL_DLL *GDALGetColorInterpretationList(int *pnCount);
+
 /*! Types of color interpretations for a GDALColorTable. */
 typedef enum
 {
@@ -358,6 +382,51 @@ typedef enum
 } GDALPaletteInterp;
 
 const char CPL_DLL *GDALGetPaletteInterpretationName(GDALPaletteInterp);
+
+/* "well known" metadata domains. */
+
+/** Name of the default metadata domain.
+ * @since 3.14
+ */
+#define GDAL_MDD_DEFAULT ""
+
+/** Name of the metadata domain that holds structural information about image
+ * organization that would not normally be carried with an image when
+ * translated into another format.
+ * @since 3.14
+ */
+#define GDAL_MDD_IMAGE_STRUCTURE "IMAGE_STRUCTURE"
+
+/** Name of the metadata domain that holds Rational Polynomial Coefficients
+ * (RPC)
+ * @since 3.14
+ */
+#define GDAL_MDD_RPC "RPC"
+
+/** Name of the metadata domain that holds the definition of a geolocation
+ * array.
+ * @since 3.14
+ */
+#define GDAL_MDD_GEOLOCATION "GEOLOCATION"
+
+/** Name of the metadata domain that holds the name and description of
+ * subdatasets.
+ * @since 3.14
+ */
+#define GDAL_MDD_SUBDATASETS "SUBDATASETS"
+
+/** Name of the metadata domain that holds information from IMD side-car files.
+ * @since 3.14
+ */
+#define GDAL_MDD_IMD "IMD"
+
+/** Name of the metadata domain that holds GDAL-standardized metadata items
+ * for satellite or aerial imagery, in particular GDALMD_SATELLITEID,
+ * GDALMD_CLOUDCOVER, GDALMD_ACQUISITIONDATETIME, GDALMD_CENTRAL_WAVELENGTH_UM,
+ * GDALMD_FWHM_UM
+ * @since 3.14
+ */
+#define GDAL_MDD_IMAGERY "IMAGERY"
 
 /* "well known" metadata items. */
 
@@ -370,6 +439,56 @@ const char CPL_DLL *GDALGetPaletteInterpretationName(GDALPaletteInterp);
 /** Value for GDALMD_AREA_OR_POINT that indicates that a pixel represents a
  * point */
 #define GDALMD_AOP_POINT "Point"
+
+/** Metadata item for compression method, in the GDAL_MDD_IMAGE_STRUCTURE
+ * domain.
+ * @since 3.14
+ */
+#define GDALMD_COMPRESSION "COMPRESSION"
+
+/** Metadata item for interleave pattern, in the GDAL_MDD_IMAGE_STRUCTURE
+ * domain.
+ * Typical values are PIXEL, LINE or BAND.
+ * @since 3.14
+ */
+#define GDALMD_INTERLEAVE "INTERLEAVE"
+
+/** Metadata item for actual number of bits used for this band, or the bands of
+ * this dataset, in the GDAL_MDD_IMAGE_STRUCTURE domain.
+ * Normally only present when the number of bits is non-standard for th
+ * datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_UInt8.
+ * @since 3.14
+ */
+#define GDALMD_NBITS "NBITS"
+
+/** Metadata item for satellite/scanner ID, in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_SATELLITEID "SATELLITEID"
+
+/** Metadata item for cloud cover, in the GDAL_MDD_IMAGERY domain.
+ * The value is between 0 and 100, or 999 if not available
+ * @since 3.14
+ */
+#define GDALMD_CLOUDCOVER "CLOUDCOVER"
+
+/** Metadata item for image acquisition date time in UTC, in the
+ * GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_ACQUISITIONDATETIME "ACQUISITIONDATETIME"
+
+/** Metadata item for the central Wavelength in micrometers,
+ * in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_CENTRAL_WAVELENGTH_UM "CENTRAL_WAVELENGTH_UM"
+
+/** Metadata item for full-width half-maximum (FWHM) in micrometers,
+ * in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_FWHM_UM "FWHM_UM"
 
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
@@ -794,15 +913,28 @@ typedef enum
  */
 #define GDAL_DCAP_COORDINATE_EPOCH "DCAP_COORDINATE_EPOCH"
 
-/** Capability set by drivers for formats which support multiple vector layers.
+/** Capability set by drivers for formats which natively support multiple vector layers.
+ *
+ * GDAL_DCAP_MULTIPLE_VECTOR_LAYERS is only set for drivers of formats
+ * which have a native concept of multiple vector layers (such as GeoPackage).
  *
  * Note: some GDAL drivers expose "virtual" layer support while the underlying
- * formats themselves do not. This capability is only set for drivers of formats
- * which have a native concept of multiple vector layers (such as GeoPackage).
+ * formats themselves do not (see GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY).
  *
  * @since GDAL 3.4
  */
 #define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS "DCAP_MULTIPLE_VECTOR_LAYERS"
+
+/** Capability set by drivers for formats which support multiple vector layers,
+ * as individual files in a directory.
+ *
+ * For example "ESRI Shapefile", "MapInfo File", "CSV", "FlatGeoBuf" or
+ * "MiraMonVector"
+ *
+ * @since GDAL 3.13
+ */
+#define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY                          \
+    "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY"
 
 /** Capability set by drivers for formats which support reading field domains.
  *
@@ -1190,6 +1322,7 @@ void CPL_DLL CPL_STDCALL GDALDestroyDriver(GDALDriverH);
 int CPL_DLL CPL_STDCALL GDALRegisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDeregisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDestroyDriverManager(void);
+void CPL_DLL GDALClearMemoryCaches(void);
 void CPL_DLL GDALDestroy(void);
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteDataset(GDALDriverH, const char *);
 CPLErr CPL_DLL CPL_STDCALL GDALRenameDataset(GDALDriverH,
@@ -1702,6 +1835,12 @@ CPLErr CPL_DLL CPL_STDCALL
 GDALComputeRasterStatistics(GDALRasterBandH, int bApproxOK, double *pdfMin,
                             double *pdfMax, double *pdfMean, double *pdfStdDev,
                             GDALProgressFunc pfnProgress, void *pProgressData);
+CPLErr CPL_DLL GDALComputeRasterStatisticsEx(GDALRasterBandH, int bApproxOK,
+                                             double *pdfMin, double *pdfMax,
+                                             double *pdfMean, double *pdfStdDev,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData,
+                                             CSLConstList papszOptions);
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics(GDALRasterBandH hBand,
                                                    double dfMin, double dfMax,
                                                    double dfMean,
@@ -2831,6 +2970,17 @@ GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
                        size_t nCountInputArrays, size_t *pnCountOutputArrays,
                        CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
+bool CPL_DLL GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
+                                          size_t nDimY, bool bPixelIsPoint,
+                                          double padfGeoTransform[6]);
+
+bool CPL_DLL GDALMDArrayIsRegularlySpaced(GDALMDArrayH hArray, double *pdfStart,
+                                          double *pdfIncrement);
+
+GDALMDArrayH CPL_DLL GDALMDArrayBinaryOperation(
+    GDALMDArrayH hArrayLeft, GDALRasterAlgebraBinaryOperation eOp,
+    GDALMDArrayH hArrayRight) CPL_WARN_UNUSED_RESULT;
+
 #ifdef __cplusplus
 extern "C++"
 {
@@ -2844,7 +2994,7 @@ extern "C++"
 #ifdef __cplusplus
         CPL_DLL
 #endif
-            GDALMDArrayRawBlockInfo
+        GDALMDArrayRawBlockInfo
     {
         /** Filename into which the raw block is found */
         char *pszFilename;
@@ -2901,6 +3051,10 @@ bool CPL_DLL GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
 
 int CPL_DLL GDALMDArrayGetOverviewCount(GDALMDArrayH hArray);
 GDALMDArrayH CPL_DLL GDALMDArrayGetOverview(GDALMDArrayH hArray, int nIdx);
+CPLErr CPL_DLL GDALMDArrayBuildOverviews(
+    GDALMDArrayH hArray, const char *pszResampling, int nOverviews,
+    const int *panOverviewList, GDALProgressFunc pfnProgress,
+    void *pProgressData, CSLConstList papszOptions);
 
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);

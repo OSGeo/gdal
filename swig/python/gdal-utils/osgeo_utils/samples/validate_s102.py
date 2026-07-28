@@ -164,6 +164,13 @@ class S102Checker:
 
             elif attr_def.name in group.attrs:
                 attr = group.attrs[attr_def.name]
+                if isinstance(attr, np.ndarray):
+                    self._critical_error(
+                        f"{ctxt_name} attribute '{attr_def.name}' is not a scalar"
+                    )
+                    if len(attr) == 1:
+                        attr = attr[0]
+
                 if isinstance(attr, bytes):
                     attr = attr.decode("utf-8")
                 h5_type = group.attrs.get_id(attr_def.name).get_type()
@@ -831,6 +838,31 @@ class S102Checker:
                 BathymetryCoverage, "dataCodingFormat", expected_values
             )
 
+        if "interpolationType" in BathymetryCoverage.attrs:
+            expected_values = {
+                1: "nearestneighbor",
+                5: "bilinear",
+                6: "biquadratic",
+                7: "bicubic",
+                9: "barycentric",
+                10: "discrete",
+            }
+            self._validate_enumeration(
+                BathymetryCoverage, "interpolationType", expected_values
+            )
+
+        if "dataOffsetCode" in BathymetryCoverage.attrs:
+            expected_values = {
+                1: 'XMin, YMin ("Lower left") corner ("Cell origin")',
+                2: 'XMax, YMax ("Upper right") corner',
+                3: 'XMax, YMin ("Lower right") corner',
+                4: 'XMin, YMax ("Upper left") corner',
+                5: "Barycenter (centroid) of cell",
+            }
+            self._validate_enumeration(
+                BathymetryCoverage, "dataOffsetCode", expected_values
+            )
+
         horizontalPositionUncertainty = _get_float_attr_or_none(
             BathymetryCoverage, "horizontalPositionUncertainty"
         )
@@ -1420,7 +1452,7 @@ class S102Checker:
                 else:
                     self._log_check("102_Dev3014")
                     if startSequence != ["0", "0"]:
-                        # other tests are probably not compatible of a non (0,0) startSequence
+                        # other tests are probably not compatible with a non (0,0) startSequence
                         self._warning(
                             f"BathymetryCoverage feature instance group {instance.name}: Values in startSequence in instance group are incompatible with the scan direction in sequencingRule"
                         )
@@ -1927,13 +1959,12 @@ class S102Checker:
             self._critical_error(
                 f"/QualityOfBathymetryCoverage/QualityOfBathymetryCoverage.01/Group_001/values dataset shape is {values.shape} instead of {(numPointsLatitudinal, numPointsLongitudinal)}"
             )
-            return
 
         self._log_check("102_Dev5007")
         values_type = values.id.get_type()
         if not self._is_uint32(values_type):
             self._critical_error(
-                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values type is not uint32"
+                f"/QualityOfBathymetryCoverage/QualityOfBathymetryCoverage.01/Group_001/values type is not uint32 but {values_type}"
             )
             if (
                 isinstance(values_type, h5py.h5t.TypeCompoundID)
@@ -1942,6 +1973,9 @@ class S102Checker:
             ):
                 # Tolerance for dataset 102DE00CA22_UNC_MD.H5 to proceed to further checks
                 values = values[:][values_type.get_member_name(0).decode("utf-8")]
+            elif self._is_int32(values_type):
+                # Go on with further checks
+                pass
             else:
                 return
 
@@ -2125,7 +2159,7 @@ class S102Checker:
                         ["Latitude", "Longitude"],
                     ):
                         self._error(
-                            f'{groupName}/axisNames must conform to CRS. Expected ["Easting", "Northing"] or ["Latitude", "Longitude"]'
+                            f'{groupName}/axisNames must conform to CRS. Expected ["Easting", "Northing"] or ["Latitude", "Longitude"]. Got {values}'
                         )
                     elif "horizontalCRS" in f.attrs:
                         horizontalCRS = f.attrs["horizontalCRS"]

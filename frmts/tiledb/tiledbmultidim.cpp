@@ -19,12 +19,7 @@
 /* static */
 std::string TileDBSharedResource::SanitizeNameForPath(const std::string &osName)
 {
-    CPLString osSanitized(osName);
-    // Reserved characters on Windows
-    for (char ch : {'<', '>', ':', '"', '/', '\\', '|', '?', '*'})
-        osSanitized.replaceAll(ch, '_');
-    std::string osRet = std::move(osSanitized);
-    return osRet;
+    return CPLLaunderForFilenameSafe(osName);
 }
 
 /************************************************************************/

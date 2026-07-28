@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_layer_algebra.h"
+#include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
@@ -30,46 +31,66 @@
 /*                  GDALVectorLayerAlgebraAlgorithm()                   */
 /************************************************************************/
 
-GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm(
+    bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetInputDatasetMaxCount(1)
+              .SetAddInputLayerNameArgument(false)
+              .SetAddDefaultArguments(false)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
+              .SetOutputLayerNameAvailableInPipelineStep(true)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
+    if (standaloneStep)
+    {
+        AddProgressArg();
+    }
 
-    AddArg("operation", 0, _("Operation to perform"), &m_operation)
-        .SetChoices("union", "intersection", "sym-difference", "identity",
-                    "update", "clip", "erase")
-        .SetRequired()
-        .SetPositional();
+    auto &opArg =
+        AddArg("operation", 0, _("Operation to perform"), &m_operation)
+            .SetChoices("union", "intersection", "sym-difference", "identity",
+                        "update", "clip", "erase")
+            .SetRequired();
+    if (standaloneStep)
+        opArg.SetPositional();
 
-    AddOutputFormatArg(&m_format).AddMetadataItem(
-        GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_VECTOR});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
+    if (standaloneStep)
+    {
+        AddVectorInputArgs(false);
+    }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
 
     {
         auto &arg = AddArg("method", 0, _("Method vector dataset"),
                            &m_methodDataset, GDAL_OF_VECTOR)
-                        .SetPositional()
                         .SetRequired();
+        if (standaloneStep)
+            arg.SetPositional();
 
         SetAutoCompleteFunctionForFilename(arg, GDAL_OF_VECTOR);
     }
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddOverwriteArg(&m_overwrite);
-    AddUpdateArg(&m_update);
-    AddOverwriteLayerArg(&m_overwriteLayer);
-    AddAppendLayerArg(&m_appendLayer);
+
+    if (standaloneStep)
+    {
+        AddVectorOutputArgs(false, false);
+    }
+    else
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
 
     AddArg(GDAL_ARG_NAME_INPUT_LAYER, 0, _("Input layer name"),
            &m_inputLayerName);
+
     AddArg("method-layer", 0, _("Method layer name"), &m_methodLayerName);
-    AddOutputLayerNameArg(&m_outputLayerName)
-        .AddHiddenAlias("nln");  // For ogr2ogr nostalgic people
 
     AddGeometryTypeArg(&m_geometryType);
 
@@ -108,14 +129,37 @@ GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
 }
 
 /************************************************************************/
-/*              GDALVectorLayerAlgebraAlgorithm::RunImpl()              */
+/*         GDALVectorLayerAlgebraAlgorithm::CanHandleNextStep()         */
+/************************************************************************/
+
+bool GDALVectorLayerAlgebraAlgorithm::CanHandleNextStep(
+    GDALPipelineStepAlgorithm *poNextStep) const
+{
+    return poNextStep->GetName() == GDALVectorWriteAlgorithm::NAME &&
+           poNextStep->GetOutputFormat() != "stream";
+}
+
+/************************************************************************/
+/*               GDALRasterPolygonizeAlgorithm::RunImpl()               */
 /************************************************************************/
 
 bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                               void *pProgressData)
 {
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*              GDALVectorLayerAlgebraAlgorithm::RunImpl()              */
+/************************************************************************/
+
+bool GDALVectorLayerAlgebraAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
 #ifdef HAVE_GEOS
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
     auto poMethodDS = m_methodDataset.GetDatasetRef();
     CPLAssert(poMethodDS);
@@ -127,134 +171,18 @@ bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    auto poDstDS = m_outputDataset.GetDatasetRef();
-    std::unique_ptr<GDALDataset> poDstDSUniquePtr;
-    const bool bNewDataset = poDstDS == nullptr;
-    if (poDstDS == nullptr)
-    {
-        if (m_format.empty())
-        {
-            const CPLStringList aosFormats(GDALGetOutputDriversForDatasetName(
-                m_outputDataset.GetName().c_str(), GDAL_OF_VECTOR,
-                /* bSingleMatch = */ true,
-                /* bEmitWarning = */ true));
-            if (aosFormats.size() != 1)
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Cannot guess driver for %s",
-                            m_outputDataset.GetName().c_str());
-                return false;
-            }
-            m_format = aosFormats[0];
-        }
+    auto poWriteStep = ctxt.m_poNextUsableStep ? ctxt.m_poNextUsableStep : this;
 
-        auto poOutDrv =
-            GetGDALDriverManager()->GetDriverByName(m_format.c_str());
-        if (!poOutDrv)
-        {
-            // shouldn't happen given checks done in GDALAlgorithm unless
-            // someone deregister the driver between ParseCommandLineArgs() and
-            // Run()
-            ReportError(CE_Failure, CPLE_AppDefined, "Driver %s does not exist",
-                        m_format.c_str());
-            return false;
-        }
-
-        const CPLStringList aosCreationOptions(m_creationOptions);
-        poDstDSUniquePtr.reset(
-            poOutDrv->Create(m_outputDataset.GetName().c_str(), 0, 0, 0,
-                             GDT_Unknown, aosCreationOptions.List()));
-        poDstDS = poDstDSUniquePtr.get();
-        if (!poDstDS)
-            return false;
-    }
-
+    GDALDataset *poDstDS = nullptr;
+    bool bTemporaryFile = false;
+    std::unique_ptr<GDALDataset> poNewRetDS;
+    std::string outputLayerName;
     OGRLayer *poDstLayer = nullptr;
-
-    if (m_outputLayerName.empty())
+    if (!CreateDatasetSingleOutputLayerIfNeeded(ctxt, "output", poDstDS,
+                                                bTemporaryFile, poNewRetDS,
+                                                outputLayerName, poDstLayer))
     {
-        if (bNewDataset)
-        {
-            auto poOutDrv = poDstDS->GetDriver();
-            if (poOutDrv && EQUAL(poOutDrv->GetDescription(), "ESRI Shapefile"))
-                m_outputLayerName =
-                    CPLGetBasenameSafe(m_outputDataset.GetName().c_str());
-            else
-                m_outputLayerName = "output";
-        }
-        else if (m_appendLayer)
-        {
-            if (poDstDS->GetLayerCount() == 1)
-                poDstLayer = poDstDS->GetLayer(0);
-            else
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "--output-layer should be specified");
-                return false;
-            }
-        }
-        else if (m_overwriteLayer)
-        {
-            if (poDstDS->GetLayerCount() == 1)
-            {
-                if (poDstDS->DeleteLayer(0) != OGRERR_NONE)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "--output-layer should be specified");
-                return false;
-            }
-        }
-        else
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "--output-layer should be specified");
-            return false;
-        }
-    }
-    else if (m_overwriteLayer)
-    {
-        const int nLayerIdx = poDstDS->GetLayerIndex(m_outputLayerName.c_str());
-        if (nLayerIdx < 0)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Layer '%s' does not exist", m_outputLayerName.c_str());
-            return false;
-        }
-        if (poDstDS->DeleteLayer(nLayerIdx) != OGRERR_NONE)
-        {
-            return false;
-        }
-    }
-    else if (m_appendLayer)
-    {
-        poDstLayer = poDstDS->GetLayerByName(m_outputLayerName.c_str());
-        if (!poDstLayer)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Layer '%s' does not exist", m_outputLayerName.c_str());
-            return false;
-        }
-    }
-
-    if (!bNewDataset && m_update && !m_appendLayer && !m_overwriteLayer)
-    {
-        poDstLayer = poDstDS->GetLayerByName(m_outputLayerName.c_str());
-        if (poDstLayer)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Output layer '%s' already exists. Specify "
-                        "--%s, --%s, --%s or "
-                        "--%s + --output-layer with a different name",
-                        m_outputLayerName.c_str(), GDAL_ARG_NAME_OVERWRITE,
-                        GDAL_ARG_NAME_OVERWRITE_LAYER, GDAL_ARG_NAME_APPEND,
-                        GDAL_ARG_NAME_UPDATE);
-            return false;
-        }
+        return false;
     }
 
     OGRLayer *poInputLayer;
@@ -281,19 +209,20 @@ bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         return false;
     }
 
-    if (bNewDataset || !m_appendLayer)
+    if (!poDstLayer)
     {
-        const CPLStringList aosLayerCreationOptions(m_layerCreationOptions);
+        const CPLStringList aosLayerCreationOptions(
+            poWriteStep->GetLayerCreationOptions());
 
         const OGRwkbGeometryType eType =
             !m_geometryType.empty() ? OGRFromOGCGeomType(m_geometryType.c_str())
                                     : poInputLayer->GetGeomType();
-        poDstLayer = poDstDS->CreateLayer(m_outputLayerName.c_str(),
+        poDstLayer = poDstDS->CreateLayer(outputLayerName.c_str(),
                                           poInputLayer->GetSpatialRef(), eType,
                                           aosLayerCreationOptions.List());
+        if (!poDstLayer)
+            return false;
     }
-    if (!poDstLayer)
-        return false;
 
     CPLStringList aosOptions;
 
@@ -398,22 +327,34 @@ bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     const auto oIter = mapOperationToMethod.find(m_operation);
     CPLAssert(oIter != mapOperationToMethod.end());
     const auto pFunc = oIter->second;
-    const bool bOK =
-        (poInputLayer->*pFunc)(poMethodLayer, poDstLayer, aosOptions.List(),
-                               pfnProgress, pProgressData) == OGRERR_NONE;
-    if (bOK && !m_outputDataset.GetDatasetRef())
+    bool bOK = (poInputLayer->*pFunc)(poMethodLayer, poDstLayer,
+                                      aosOptions.List(), ctxt.m_pfnProgress,
+                                      ctxt.m_pProgressData) == OGRERR_NONE;
+    if (bOK && poNewRetDS)
     {
-        m_outputDataset.Set(std::move(poDstDSUniquePtr));
+        if (bTemporaryFile)
+        {
+            bOK = poNewRetDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+            // For some unknown reason, unlinking the file on MacOSX
+            // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
+            VSIUnlink(poNewRetDS->GetDescription());
+#endif
+        }
+
+        m_outputDataset.Set(std::move(poNewRetDS));
     }
 
     return bOK;
 #else
-    (void)pfnProgress;
-    (void)pProgressData;
+    (void)ctxt;
     ReportError(CE_Failure, CPLE_NotSupported,
                 "This algorithm is only supported for builds against GEOS");
     return false;
 #endif
 }
+
+GDALVectorLayerAlgebraAlgorithmStandalone::
+    ~GDALVectorLayerAlgebraAlgorithmStandalone() = default;
 
 //! @endcond

@@ -34,7 +34,7 @@ def sozip_path():
 
 def test_sozip_list(sozip_path):
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         sozip_path + " --list ../gcore/data/zero_5GB_sozip_of_sozip.zip"
     )
     assert err is None or err == "", "got error/warning"
@@ -52,7 +52,7 @@ def test_sozip_create(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} -j --overwrite --enable-sozip=yes --sozip-chunk-size 128 --content-type=image/tiff {output_zip} ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -76,7 +76,7 @@ def test_sozip_create_recurse(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} -r --sozip-min-file-size 1000 --sozip-chunk-size 128 -j {output_zip} {tmp_path}"
     )
     assert err is None or err == "", "got error/warning"
@@ -92,12 +92,12 @@ def test_sozip_append(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} -j --enable-sozip=yes --sozip-chunk-size 128 {output_zip} ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} -j {output_zip} ../gcore/data/uint16.tif"
     )
     assert err is None or err == "", "got error/warning"
@@ -118,19 +118,17 @@ def test_sozip_validate(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} -j --enable-sozip=yes --sozip-chunk-size 128 {output_zip} ../gcore/data/byte.tif"
     )
     assert err is None or err == "", "got error/warning"
 
-    (out, err) = gdaltest.runexternal_out_and_err(
-        f"{sozip_path} --validate {output_zip}"
-    )
+    out, err = gdaltest.runexternal_out_and_err(f"{sozip_path} --validate {output_zip}")
     assert err is None or err == "", "got error/warning"
     assert "File byte.tif has a valid SOZip index, using chunk_size = 128" in out
     assert "sozip.zip is a valid .zip file, and contains 1 SOZip-enabled file(s)" in out
 
-    (out2, err) = gdaltest.runexternal_out_and_err(
+    out2, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} --validate --verbose {output_zip}"
     )
     assert len(out2) > len(out)
@@ -143,14 +141,12 @@ def test_sozip_optimize_from(sozip_path, tmp_path):
 
     output_zip = str(tmp_path / "sozip.zip")
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         f"{sozip_path} --optimize-from=../ogr/data/filegdb/test_spatial_index.gdb.zip {output_zip}"
     )
     assert err is None or err == "", "got error/warning"
 
-    (out, err) = gdaltest.runexternal_out_and_err(
-        f"{sozip_path} --validate {output_zip}"
-    )
+    out, err = gdaltest.runexternal_out_and_err(f"{sozip_path} --validate {output_zip}")
     assert err is None or err == "", "got error/warning"
     assert (
         "File test_spatial_index.gdb/a00000009.spx has a valid SOZip index, using chunk_size = 32768"

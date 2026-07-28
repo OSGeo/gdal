@@ -27,6 +27,17 @@ Code of Conduct
 
    code_of_conduct
 
+
+AI Tool Use Policy
+------------------
+
+See :ref:`ai_tool_policy`.
+
+.. toctree::
+   :hidden:
+
+   ai_tool_policy
+
 .. _mailing_list:
 
 Mailing List
@@ -79,11 +90,25 @@ Conferences
 Upcoming
 ++++++++
 
-.. image::   ../../images/community/foss4gnz2025.png
-   :alt:     FOSS4G 2025
-   :target:  https://2025.foss4g.org//
+* International event:
 
-`FOSS4G 2025 <https://2025.foss4g.org//>`__ is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+ .. image::   ../../images/community/foss4g2026.png
+    :alt:     FOSS4G 2026
+    :target:  https://2026.foss4g.org/
+
+ `FOSS4G 2026 <https://2026.foss4g.org/>`__, August 30 - September 5 2026, Hiroshima, Japan, is the Open Source Geospatial Foundation (OSGeo) annual FOSS4G event.
+
+* North-America event:
+
+ .. image::   ../../images/community/foss4gna2026.png
+    :alt:     FOSS4G North-America 2026
+    :target:  https://www.foss4gna.org/
+
+ `FOSS4G North-America 2026 <https://www.foss4gna.org/>`__, November 2-4 2026, Sacramento, CA, USA
+
+ .. spelling:word-list::
+        Sacramento
+        CA
 
 Previous
 ++++++++
@@ -91,6 +116,9 @@ Previous
 GDAL presentations have been given at FOSS4G, the leading annual conference for free and open source geospatial software.
 It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them.
 
++ `State of GDAL 3.12 & 3.13 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202026%29.pdf>`__
+  by Even Rouault, Spatialys, at `FOSS4G Europe 2026 <https://2026.europe.foss4g.org/>`_ in Timișoara, Romania.
++ `GDAL's New CLI <https://download.osgeo.org/gdal/presentations/FOSS4G-NA 2025.pdf>`__ by Dan Baston, ISciences LLC, at `FOSS4G NA 2025 <https://www.foss4gna.org/>`_ in Washington DC, USA.  `Recording <https://youtu.be/caprt4axc1U?t=18>`__.
 + `State of GDAL 3.10 & 3.11 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202025%29.pdf>`__
   by Even Rouault, Spatialys, at `FOSS4G Europe 2025 <https://2025.europe.foss4g.org/>`_ in Mostar, Bosnia-Herzegovina.
 + `State of GDAL 3.8 & 3.9 <https://download.osgeo.org/gdal/presentations/State%20of%20GDAL%20%28FOSS4G-E%202024%29.pdf>`__
@@ -105,10 +133,12 @@ It is the event for those interested in GDAL/OGR, other FOSS geospatial technolo
   by Even Rouault, Spatialys, at  `FOSS4G 2019 <https://2019.foss4g.org/>`_ in Bucharest, Romania. `Recording <https://av.tib.eu/media/43447>`__.
 
 .. spelling:word-list::
+    Timișoara
     Mostar
     Tartu
     Firenze
     Buenos
+    ISciences
 
 
 Governance and Community Participation

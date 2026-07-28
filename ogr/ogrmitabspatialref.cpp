@@ -2247,11 +2247,9 @@ int TABFileGetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
     const char *pszAuthorityName = nullptr;
     const char *pszAuthorityCode = nullptr;
     const char *pszExtension = nullptr;
-    if (((pszAuthorityName = poSpatialRef->GetAuthorityName(nullptr)) !=
-             nullptr &&
+    if (((pszAuthorityName = poSpatialRef->GetAuthorityName()) != nullptr &&
          EQUAL(pszAuthorityName, "EPSG") &&
-         (pszAuthorityCode = poSpatialRef->GetAuthorityCode(nullptr)) !=
-             nullptr &&
+         (pszAuthorityCode = poSpatialRef->GetAuthorityCode()) != nullptr &&
          atoi(pszAuthorityCode) == 3857) ||
         ((pszExtension = poSpatialRef->GetExtension(nullptr, "PROJ4")) !=
              nullptr &&

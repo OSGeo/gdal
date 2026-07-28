@@ -208,6 +208,9 @@ OGRGeometryH CPL_DLL OGR_G_Boundary(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_ConvexHull(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_ConcaveHull(OGRGeometryH, double dfRatio,
                                        bool bAllowHoles) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL
+OGR_G_ConcaveHullOfPolygons(OGRGeometryH, double dfLengthRatio, bool bIsTight,
+                            bool bAllowHoles) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_Buffer(OGRGeometryH, double dfDist,
                                   int nQuadSegs) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_BufferEx(OGRGeometryH, double dfDist,
@@ -242,7 +245,7 @@ OGRGeometryH CPL_DLL OGR_G_Value(OGRGeometryH,
 void CPL_DLL OGR_G_Empty(OGRGeometryH);
 int CPL_DLL OGR_G_IsEmpty(OGRGeometryH);
 int CPL_DLL OGR_G_IsValid(OGRGeometryH);
-/*char    CPL_DLL *OGR_G_IsValidReason( OGRGeometryH );*/
+char CPL_DLL *OGR_G_GetInvalidityReason(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_MakeValid(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_MakeValidEx(OGRGeometryH,
                                        CSLConstList) CPL_WARN_UNUSED_RESULT;
@@ -404,6 +407,8 @@ const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);
 OGRFieldSubType CPL_DLL OGR_GetFieldSubTypeByName(const char *);
 int CPL_DLL OGR_AreTypeSubTypeCompatible(OGRFieldType eType,
                                          OGRFieldSubType eSubType);
+bool CPL_DLL OGR_GetFieldTypeIsList(OGRFieldType);
+OGRFieldType CPL_DLL OGR_GetFieldTypeAsScalar(OGRFieldType);
 
 /* OGRGeomFieldDefnH */
 
@@ -652,6 +657,7 @@ void CPL_DLL OGR_L_SetSpatialFilterRectEx(OGRLayerH, int iGeomField,
                                           double dfMinX, double dfMinY,
                                           double dfMaxX, double dfMaxY);
 OGRErr CPL_DLL OGR_L_SetAttributeFilter(OGRLayerH, const char *);
+const char CPL_DLL *OGR_L_GetAttributeFilter(OGRLayerH);
 void CPL_DLL OGR_L_ResetReading(OGRLayerH);
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
 

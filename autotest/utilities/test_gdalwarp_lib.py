@@ -2497,7 +2497,7 @@ def test_gdalwarp_lib_ct():
         options='-r cubic -f MEM -t_srs EPSG:4326 -ct "proj=pipeline step inv proj=utm zone=11 ellps=clrk66 step proj=unitconvert xy_in=rad xy_out=deg step proj=axisswap order=2,1"',
     )
 
-    assert dstDS.GetRasterBand(1).Checksum() == 4705, "Bad checksum"
+    assert dstDS.GetRasterBand(1).Checksum() == 4772
 
 
 def test_gdalwarp_lib_ct_wkt():
@@ -2646,7 +2646,7 @@ def test_gdalwarp_lib_ct_wkt():
         coordinateOperation=wkt,
     )
 
-    assert dstDS.GetRasterBand(1).Checksum() == 4705, "Bad checksum"
+    assert dstDS.GetRasterBand(1).Checksum() == 4772
 
 
 ###############################################################################
@@ -2943,7 +2943,7 @@ def test_gdalwarp_lib_to_cog_reprojection_options_te_and_conflicting_t_srs(tmp_v
 
 
 ###############################################################################
-# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG
+# Test warping of multiple source, compatible with BuildVRT mosaicing, to COG
 
 
 def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog(tmp_vsimem):
@@ -2962,7 +2962,7 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog(tmp_vsimem):
 
 
 ###############################################################################
-# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG,
+# Test warping of multiple sources, compatible with BuildVRT mosaicing, to COG,
 # with reprojection options
 
 
@@ -2993,7 +2993,7 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_op
 
 
 ###############################################################################
-# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG
+# Test warping of multiple sources, incompatible with BuildVRT mosaicing, to COG
 
 
 def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog(tmp_vsimem):
@@ -3017,7 +3017,7 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog(tmp_vsimem):
 
 
 ###############################################################################
-# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG,
+# Test warping of multiple sources, incompatible with BuildVRT mosaicing, to COG,
 # with reprojection options
 
 
@@ -3540,7 +3540,7 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([-180, 0.033333333333330, 0, 90, 0, -0.033333333333330])
-    # Expension of ESRI:53037 (proj.db of old PROJ releases don't know it)
+    # Expansion of ESRI:53037 (proj.db of old PROJ releases don't know it)
     out_ds = gdal.Warp(
         "",
         src_ds,
@@ -4220,7 +4220,8 @@ def test_gdalwarp_lib_conflicting_source_metadata(tmp_vsimem):
 
 def test_target_extent_consistent_size():
     """Test issue GH #9467 where the output size is not consistent when using target extent
-    with different input datasets having the same resolution and CRS but different extent."""
+    with different input datasets having the same resolution and CRS but different extent.
+    """
 
     # Create a source dataset with CRS 32613
     src_ds_1 = gdal.GetDriverByName("MEM").Create("", 10980, 10980)
@@ -4552,9 +4553,7 @@ def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem, init_dest):
 
 def test_gdalwarp_lib_init_dest_nodata_invalid(tmp_vsimem):
 
-    # TODO: switch from warning to failure in GDAL 3.12
-    # with pytest.raises(Exception, match="NoData value was not defined"):
-    with gdaltest.error_raised(gdal.CE_Warning, "NoData value was not defined"):
+    with gdaltest.error_raised(gdal.CE_Failure, "NoData value was not defined"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
             "../gcore/data/byte.tif",
@@ -4756,8 +4755,7 @@ def test_gdalwarp_te_srs_check_extent():
 
 def test_gdalwarplib_on_huge_raster():
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="1073741766" rasterYSize="1070224430">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="1073741766" rasterYSize="1070224430">
   <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]</SRS>
   <GeoTransform> -2.0037507260426737e+07,  3.7322767705947384e-02,  0.0000000000000000e+00,  1.9971868903190855e+07,  0.0000000000000000e+00, -3.7322767705947384e-02</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
@@ -4766,8 +4764,7 @@ def test_gdalwarplib_on_huge_raster():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     out_ds = gdal.Warp(
         "",
@@ -4862,4 +4859,101 @@ def test_gdalwarp_lib_RESET_DEST_PIXELS(dstNodata):
     if dstNodata is None:
         assert out_ds.ReadRaster() == b"\x00\x00\x00\x00\x02\x03\x00\x00\x00"
     else:
-        assert out_ds.ReadRaster() == b"\xFF\xFF\xFF\xFF\x02\x03\xFF\xFF\xFF"
+        assert out_ds.ReadRaster() == b"\xff\xff\xff\xff\x02\x03\xff\xff\xff"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14503
+
+
+def test_gdalwarp_vshift_us_survey_foot_to_metre():
+
+    ds = gdal.Warp(
+        "",
+        "data/input_epsg_6259_plus_6360_us_survey_foot.tif",
+        options="-f MEM -s_srs EPSG:6529+6360 -t_srs EPSG:6319",
+    )
+    assert ds.GetRasterBand(1).GetUnitType() == ""
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14570
+
+
+def test_gdalwarp_lib_detect_border_geoloc_array(tmp_vsimem):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    # 45 degree rotation
+    cos_alpha = 0.5 * (2**0.5)
+    sin_alpha = 0.5 * (2**0.5)
+    width = 100
+    height = 100
+    X = np.arange(width, dtype=np.float32).reshape((1, width))
+    Y = np.arange(100, dtype=np.float32).reshape((height, 1))
+
+    with gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "longitude.tif", width, height, 1, gdal.GDT_Float32
+    ) as ds:
+        ds.WriteArray(0.1 * X * cos_alpha - 0.1 * Y * sin_alpha)
+
+    with gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "latitude.tif", width, height, 1, gdal.GDT_Float32
+    ) as ds:
+        ds.WriteArray(0.1 * X * sin_alpha + 0.1 * Y * sin_alpha)
+
+    ds = gdal.GetDriverByName("MEM").Create("", width, height)
+    ds.GetRasterBand(1).Fill(255)
+    ds.SetMetadata(
+        {
+            "LINE_OFFSET": "0",
+            "LINE_STEP": "1",
+            "PIXEL_OFFSET": "0",
+            "PIXEL_STEP": "1",
+            "X_BAND": "1",
+            "X_DATASET": str(tmp_vsimem / "longitude.tif"),
+            "Y_BAND": "1",
+            "Y_DATASET": str(tmp_vsimem / "latitude.tif"),
+        },
+        "GEOLOCATION",
+    )
+
+    out_ds = gdal.Warp(
+        "", ds, format="MEM", dstSRS="EPSG:4326", xRes=0.1414, yRes=0.1414
+    )
+    assert out_ds.RasterXSize == 100
+    assert out_ds.RasterYSize == 100
+    assert out_ds.GetGeoTransform() == pytest.approx(
+        (-7.071067810058594, 0.1414, 0.0, 14.14213752746582, 0.0, -0.1414)
+    )
+
+
+###############################################################################
+# Test parameter parsing error cases
+
+
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_invalid_source_extra(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "SOURCE_EXTRA must be a positive integer"
+    ):
+        # code path does not allow raising an exception
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            warpOptions={"SOURCE_EXTRA": "5.1"},
+        )
+
+
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_invalid_reset_dest_pixels(tmp_vsimem):
+
+    with pytest.raises(Exception, match="Invalid value of RESET_DEST_PIXELS"):
+        # code path does not allow raising an exception
+        gdal.Warp(
+            tmp_vsimem / "out.tif",
+            "../gcore/data/byte.tif",
+            warpOptions={"RESET_DEST_PIXELS": "POSSIBLY"},
+        )

@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_COLOR_MAP_INCLUDED
 #define GDALALG_RASTER_COLOR_MAP_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 #include <limits>
 

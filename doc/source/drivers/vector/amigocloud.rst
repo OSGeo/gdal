@@ -137,75 +137,82 @@ The following configuration options are available:
 Examples
 --------
 
-Different ways to provide AmigoCloud API token:
+.. example::
+   :title: Different ways to provide AmigoCloud API token
 
-.. code-block::
+   .. code-block:: bash
+   
+       ogrinfo --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+       ogrinfo -oo AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+       env AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw ogrinfo -al "AmigoCloud:1234 datasets=987"
+   
+   .. code-block::
+   
+       export AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw
+       ogrinfo -al "AmigoCloud:1234 datasets=987"
+   
+.. example::
+   :title: Show list of datasets
 
-    ogrinfo --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
-    ogrinfo -oo AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
-    env AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw ogrinfo -al "AmigoCloud:1234 datasets=987"
+   .. code-block:: console
+   
+       $ ogrinfo -ro "AmigoCloud:1234 datasets"
+       List of available datasets for project id: 1234
+       | id        | name
+       |-----------|-------------------
+       | 5551      | points
+       | 5552      | lines
 
-.. code-block::
+.. example:: 
+   :title: Accessing data from a list of datasets
 
-    export AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw
-    ogrinfo -al "AmigoCloud:1234 datasets=987"
+   .. code-block:: bash
+   
+       ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
 
-Show list of datasets.
+.. example::
+   :title: Creating and populating a table from a shapefile
 
-.. code-block::
+   .. code-block::
+   
+       ogr2ogr -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
 
-    $ ogrinfo -ro "AmigoCloud:1234 datasets"
-    List of available datasets for project id: 1234
-    | id        | name
-    |-----------|-------------------
-    | 5551      | points
-    | 5552      | lines
+.. example::
+   :title: Append the data to an existing table (dataset id: 12345) from a shapefile
 
-Accessing data from a list of datasets:
+   .. code-block:: bash
+   
+       ogr2ogr -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
+   
+   or
+   
+   .. code-block:: bash
+   
+       ogr2ogr -append -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
 
-.. code-block::
+.. example::
+   :title: Overwriting the data of an existing table (dataset id: 12345) with data from a shapefile
 
-    ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
+   .. code-block:: bash
+   
+       ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
 
-Creating and populating a table from a shapefile:
+.. example::
+   :title: Delete existing dataset (dataset id: 12345) and create a new one with data from a shapefile
 
-.. code-block::
+   .. code-block:: bash
+   
+       ogr2ogr -overwrite -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
 
-    ogr2ogr -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
-
-Append the data to an existing table (dataset id: 12345) from a shapefile:
-
-.. code-block::
-
-    ogr2ogr -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
-
-or
-
-.. code-block::
-
-    ogr2ogr -append -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
-
-Overwriting the data of an existing table (dataset id: 12345) with data from a
-shapefile:
-
-.. code-block::
-
-    ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
-
-Delete existing dataset (dataset id: 12345) and create a new one with data from
-a shapefile:
-
-.. code-block::
-
-    ogr2ogr -overwrite -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
-
-Overwriting the data of an existing table (dataset id: 12345) with data from a
-shapefile. Filter the only the records with values of the field "visited_on"
-after 2017-08-20
-
-.. code-block::
-
-    ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" -where "visited_on > '2017-08-20'" myshapefile.shp
+.. example::
+   :title: Overwriting the data of an existing table (dataset id: 12345) with data from a shapefile. 
+   
+   Filter the only the records with values of the field "visited_on"
+   after 2017-08-20
+   
+   .. code-block:: bash
+   
+       ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" -where "visited_on > '2017-08-20'" myshapefile.shp
 
 See Also
 --------

@@ -64,8 +64,9 @@ OGRGeometry CPL_DLL *OGRCreateFromMultiPatch(
     int nParts, const GInt32 *panPartStart, const GInt32 *panPartType,
     int nPoints, const double *padfX, const double *padfY, const double *padfZ);
 
-OGRErr CPL_DLL OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
-                                     int nBytes);
+OGRErr CPL_DLL
+OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom, int nBytes,
+                      const char *pszOrganizePolygonsMethod = "ONLY_CCW");
 
 OGRErr CPL_DLL OGRWriteToShapeBin(const OGRGeometry *poGeom, GByte **ppabyShape,
                                   int *pnBytes);

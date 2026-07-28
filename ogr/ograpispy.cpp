@@ -551,10 +551,10 @@ void OGRAPISpyOpen(const char *pszName, int bUpdate, int iSnapshot,
     if (*phDS != nullptr)
         fprintf(fpSpyFile, "%s = ", OGRAPISpyGetDSVar(*phDS).c_str());
     if (bUpdate)
-        fprintf(fpSpyFile, "gdal.OpenEx(%s, gdal.OF_VECTOR | gdal.OF_UPDATE)\n",
+        fprintf(fpSpyFile, "gdal.Open(%s, gdal.OF_VECTOR | gdal.OF_UPDATE)\n",
                 OGRAPISpyGetString(pszName).c_str());
     else
-        fprintf(fpSpyFile, "gdal.OpenEx(%s, gdal.OF_VECTOR)\n",
+        fprintf(fpSpyFile, "gdal.Open(%s, gdal.OF_VECTOR)\n",
                 OGRAPISpyGetString(pszName).c_str());
     OGRAPISpyFileClose();
 }

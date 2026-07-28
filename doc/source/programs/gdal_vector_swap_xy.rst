@@ -1,5 +1,7 @@
 .. _gdal_vector_swap_xy:
 
+.. program:: gdal_vector_swap_xy
+
 ================================================================================
 ``gdal vector swap-xy``
 ================================================================================
@@ -66,6 +68,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

@@ -246,6 +246,7 @@ class GTADataset final : public GDALPamDataset
     ~GTADataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -461,7 +462,7 @@ CPLErr GTARasterBand::SetCategoryNames(char **)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -539,7 +540,7 @@ CPLErr GTARasterBand::SetNoDataValue(double)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -573,7 +574,7 @@ CPLErr GTARasterBand::SetOffset(double)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -607,7 +608,7 @@ CPLErr GTARasterBand::SetScale(double)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -632,7 +633,7 @@ CPLErr GTARasterBand::SetUnitType(const char *)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -690,7 +691,7 @@ CPLErr GTARasterBand::SetColorInterpretation(GDALColorInterp)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -742,7 +743,7 @@ CPLErr GTARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (poGDS->oHeader.compression() != gta::none)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "The GTA driver cannot update compressed GTAs.\n");
+                 "The GTA driver cannot update compressed GTAs.");
         return CE_Failure;
     }
 
@@ -826,7 +827,7 @@ CPLErr GTADataset::ReadBlock(int nBlockXOff, int nBlockYOff)
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Cannot allocate buffer for the complete data set.\n"
                          "Try to uncompress the data set to allow block-wise "
-                         "reading.\n");
+                         "reading.");
                 return CE_Failure;
             }
 
@@ -934,7 +935,7 @@ CPLErr GTADataset::SetGeoTransform(const GDALGeoTransform &)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -961,7 +962,7 @@ CPLErr GTADataset::SetSpatialRef(const OGRSpatialReference *)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -1003,7 +1004,7 @@ CPLErr GTADataset::SetGCPs(int, const GDAL_GCP *, const OGRSpatialReference *)
 
 {
     CPLError(CE_Warning, CPLE_NotSupported,
-             "The GTA driver does not support metadata updates.\n");
+             "The GTA driver does not support metadata updates.");
     return CE_Failure;
 }
 
@@ -1012,6 +1013,11 @@ CPLErr GTADataset::SetGCPs(int, const GDAL_GCP *, const OGRSpatialReference *)
 /************************************************************************/
 
 GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *GTADataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (GTADriverIdentify(poOpenInfo) == GDAL_IDENTIFY_FALSE)
@@ -1025,7 +1031,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
     if (poDS->oGTAIO.open(poOpenInfo->pszFilename,
                           poOpenInfo->eAccess == GA_Update ? "r+" : "r") != 0)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file.\n");
+        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file.");
         delete poDS;
         return nullptr;
     }
@@ -1052,7 +1058,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The GTA driver does not support update access to compressed "
-                 "data sets.\nUncompress the data set first.\n");
+                 "data sets.\nUncompress the data set first.");
         delete poDS;
         return nullptr;
     }
@@ -1072,9 +1078,8 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
     if (poDS->oHeader.dimension_size(0) > INT_MAX ||
         poDS->oHeader.dimension_size(1) > INT_MAX)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "The GTA driver does not support the size of this data set.\n");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The GTA driver does not support the size of this data set.");
         delete poDS;
         return nullptr;
     }
@@ -1087,7 +1092,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The GTA driver does not support the number or size of bands "
-                 "in this data set.\n");
+                 "in this data set.");
         delete poDS;
         return nullptr;
     }
@@ -1109,7 +1114,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "The GTA driver does not support some of the data types "
-                     "used in this data set.\n");
+                     "used in this data set.");
             delete poDS;
             return nullptr;
         }
@@ -1228,32 +1233,45 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->nBands > 0)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     if (poDS->oHeader.compression() == gta::bzip2)
-        poDS->SetMetadataItem("COMPRESSION", "BZIP2", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "BZIP2",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::xz)
-        poDS->SetMetadataItem("COMPRESSION", "XZ", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "XZ",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib1)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB1", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB1",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib2)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB2", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB2",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib3)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB3", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB3",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib4)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB4", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB4",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib5)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB5", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB5",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib6)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB6", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB6",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib7)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB7", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB7",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib8)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB8", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB8",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else if (poDS->oHeader.compression() == gta::zlib9)
-        poDS->SetMetadataItem("COMPRESSION", "ZLIB9", "IMAGE_STRUCTURE");
+        poDS->SetMetadataItem(GDALMD_COMPRESSION, "ZLIB9",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
@@ -1343,7 +1361,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         if (poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "The GTA driver does not support color palettes.\n");
+                     "The GTA driver does not support color palettes.");
             VSIFree(peGTATypes);
             return nullptr;
         }
@@ -1352,8 +1370,8 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             case GDT_UInt8:
             {
-                const char *pszPixelType =
-                    poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                const char *pszPixelType = poSrcBand->GetMetadataItem(
+                    "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
                     peGTATypes[i] = gta::int8;
                 else
@@ -1388,7 +1406,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                              "The GTA driver does not support the CInt16 data "
                              "type.\n"
                              "(If no strict copy is required, the driver can "
-                             "use CFloat32 instead.)\n");
+                             "use CFloat32 instead.)");
                     VSIFree(peGTATypes);
                     return nullptr;
                 }
@@ -1401,7 +1419,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                              "The GTA driver does not support the CInt32 data "
                              "type.\n"
                              "(If no strict copy is required, the driver can "
-                             "use CFloat64 instead.)\n");
+                             "use CFloat64 instead.)");
                     VSIFree(peGTATypes);
                     return nullptr;
                 }
@@ -1417,7 +1435,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 CPLError(
                     CE_Failure, CPLE_NotSupported,
                     "The GTA driver does not support source data sets using "
-                    "unknown data types.\n");
+                    "unknown data types.");
                 VSIFree(peGTATypes);
                 return nullptr;
         }
@@ -1436,7 +1454,8 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             oHeader.global_taglist().set("DESCRIPTION", pszDescription);
         }
-        const char *papszMetadataDomains[] = {nullptr /* default */, "RPC"};
+        const char *papszMetadataDomains[] = {nullptr /* default */,
+                                              GDAL_MDD_RPC};
         size_t nMetadataDomains =
             sizeof(papszMetadataDomains) / sizeof(papszMetadataDomains[0]);
         for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)
@@ -1694,7 +1713,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 if (eErr != CE_None)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                             "Cannot read source data set.\n");
+                             "Cannot read source data set.");
                     VSIFree(pLine);
                     return nullptr;
                 }
@@ -1726,8 +1745,9 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Re-open dataset, and copy any auxiliary pam information.         */
     /* -------------------------------------------------------------------- */
 
-    GTADataset *poDS = (GTADataset *)GDALOpen(
+    GDALOpenInfo oOpenInfo(
         pszFilename, eGTACompression == gta::none ? GA_Update : GA_ReadOnly);
+    auto poDS = GTADataset::OpenPAM(&oOpenInfo);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

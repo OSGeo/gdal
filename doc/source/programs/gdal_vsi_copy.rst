@@ -1,5 +1,7 @@
 .. _gdal_vsi_copy:
 
+.. program:: gdal_vsi_copy
+
 ================================================================================
 ``gdal vsi copy``
 ================================================================================
@@ -37,6 +39,11 @@ Options
 .. option:: --skip-errors
 
     Skip errors that occur while while copying.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

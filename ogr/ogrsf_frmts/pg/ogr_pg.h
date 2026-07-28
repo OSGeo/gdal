@@ -574,9 +574,7 @@ class OGRPGDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
     OGRPGTableLayer *poLayerInCopyMode = nullptr;
 
@@ -604,6 +602,8 @@ class OGRPGDataSource final : public GDALDataset
     bool m_bHasWritePermissionsOnMetadataTableRun = false;
     bool m_bHasWritePermissionsOnMetadataTableSuccess = false;
 
+    bool m_bSpatialFilterIntersectionIsLocal = true;
+
     void LoadTables();
 
     CPLString osDebugLastTransactionCommand{};
@@ -630,7 +630,7 @@ class OGRPGDataSource final : public GDALDataset
 
     bool HavePostGIS() const
     {
-        return bHavePostGIS;
+        return CPL_TO_BOOL(bHavePostGIS);
     }
 
     int GetUndefinedSRID() const
@@ -653,7 +653,7 @@ class OGRPGDataSource final : public GDALDataset
     }
 
     int FetchSRSId(const OGRSpatialReference *poSRS);
-    const OGRSpatialReference *FetchSRS(int nSRSId);
+    OGRSpatialReferenceRefCountedPtr FetchSRS(int nSRSId);
     static OGRErr InitializeMetadataTables();
 
     int Open(const char *, int bUpdate, int bTestOpen,
@@ -714,6 +714,11 @@ class OGRPGDataSource final : public GDALDataset
     bool CreateMetadataTableIfNeeded();
     bool HasOgrSystemTablesMetadataTable();
     bool HasWritePermissionsOnMetadataTable();
+
+    bool IsSpatialFilterIntersectionLocal() const
+    {
+        return m_bSpatialFilterIntersectionIsLocal;
+    }
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */

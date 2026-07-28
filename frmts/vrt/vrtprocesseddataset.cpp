@@ -353,7 +353,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         const OGRSpatialReference *poSRS = m_poSrcDS->GetSpatialRef();
         if (poSRS)
         {
-            m_poSRS.reset(poSRS->Clone());
+            m_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
         }
     }
 
@@ -407,13 +407,13 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     {
         m_bGeoTransformSet = true;
         m_gt = poParentDS->m_gt;
-        m_gt[1] *=
+        m_gt.xscale *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_gt[2] *=
+        m_gt.xrot *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
-        m_gt[4] *=
+        m_gt.yrot *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_gt[5] *=
+        m_gt.yscale *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
     }
 
@@ -761,7 +761,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     }
 
     if (nBands > 1)
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     m_oXMLTree.reset(CPLCloneXMLTree(psTree));
 
@@ -1224,7 +1224,7 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
     auto &abyOutput = m_abyOutput;
 
     const char *pszInterleave =
-        m_poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        m_poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (nFirstBandCount > 1 && (!pszInterleave || EQUAL(pszInterleave, "BAND")))
     {
         // If there are several bands and the source dataset organization

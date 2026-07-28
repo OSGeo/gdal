@@ -35,8 +35,14 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
 {
     if (standaloneStep)
     {
+        AddProgressArg();
         AddVectorInputArgs(false);
     }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
+
     {
         auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 0,
                                 _("Input layer name"), &m_inputLayerNames)
@@ -45,8 +51,6 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
         if (inputArg)
             SetAutoCompleteFunctionForLayerName(layerArg, *inputArg);
     }
-
-    AddProgressArg();
 
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
@@ -92,11 +96,15 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (m_inputLayerNames.empty() && poSrcDS->GetLayerCount() == 1)
     {
-        m_inputLayerNames.push_back(poSrcDS->GetLayer(0)->GetName());
+        const auto poSrcLayer = poSrcDS->GetLayer(0);
+        if (poSrcLayer)
+            m_inputLayerNames.push_back(poSrcLayer->GetName());
     }
     if (m_outputLayerName.empty() && poDstDS->GetLayerCount() == 1)
     {
-        m_outputLayerName = poDstDS->GetLayer(0)->GetName();
+        const auto poDstLayer = poDstDS->GetLayer(0);
+        if (poDstLayer)
+            m_outputLayerName = poDstLayer->GetName();
     }
 
     if (m_inputLayerNames.empty())

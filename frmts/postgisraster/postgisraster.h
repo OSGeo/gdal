@@ -53,8 +53,8 @@
     (RASTER_BAND_HEADER_FIXED_SIZE + (nodatasize) + (datasize))
 
 #define GET_BAND_DATA(raster, nband, nodatasize, datasize)                     \
-    ((raster) + RASTER_HEADER_SIZE + (nband)*BAND_SIZE(nodatasize, datasize) - \
-     (datasize))
+    ((raster) + RASTER_HEADER_SIZE +                                           \
+     (nband) * BAND_SIZE(nodatasize, datasize) - (datasize))
 
 #define GEOTRSFRM_TOPLEFT_X 0
 #define GEOTRSFRM_WE_RES 1

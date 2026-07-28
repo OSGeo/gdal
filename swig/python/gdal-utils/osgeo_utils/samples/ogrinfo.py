@@ -42,7 +42,6 @@ def main(argv=None):
     global bVerbose
     global bSummaryOnly
     global nFetchFID
-    global papszOptions
 
     pszWHERE = None
     pszDataSource = None

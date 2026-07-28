@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_port.h"
 #include "hdf5dataset.h"
 #include "hdf5drivercore.h"
@@ -363,7 +367,8 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        poDS->GDALDataset::SetMetadata(aosSubDSList.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
+                                       GDAL_MDD_SUBDATASETS);
 
         // Setup/check for pam .aux.xml.
         poDS->SetDescription(osFilename.c_str());
@@ -497,7 +502,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_NAME", iSubDS),
                     CPLSPrintf("S111:\"%s\":%s", osFilename.c_str(),
                                osSubGroup.c_str()),
-                    "SUBDATASETS");
+                    GDAL_MDD_SUBDATASETS);
                 std::string osSubDSDesc = "Values for group ";
                 osSubDSDesc += osSubGroup;
                 const auto poTimePoint = poSubGroup->GetAttribute("timePoint");
@@ -512,7 +517,7 @@ GDALDataset *S111Dataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 poDS->GDALDataset::SetMetadataItem(
                     CPLSPrintf("SUBDATASET_%d_DESC", iSubDS),
-                    osSubDSDesc.c_str(), "SUBDATASETS");
+                    osSubDSDesc.c_str(), GDAL_MDD_SUBDATASETS);
                 ++iSubDS;
             }
         }
@@ -788,7 +793,8 @@ bool S111Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
     if (m_poSrcDS->GetRasterCount() == 0 && aosDatasets.empty())
     {
         // Deal with S111 -> S111 translation;
-        CSLConstList papszSubdatasets = m_poSrcDS->GetMetadata("SUBDATASETS");
+        CSLConstList papszSubdatasets =
+            m_poSrcDS->GetMetadata(GDAL_MDD_SUBDATASETS);
         if (papszSubdatasets)
         {
             int iSubDS = 0;
@@ -1739,7 +1745,7 @@ bool S111Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<float> afValues(static_cast<size_t>(nBlockYSize) * nBlockXSize *
                                 nComponents);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     constexpr std::array<float, 4> afNoDataValue{NODATA_SPEED, NODATA_DIR,
                                                  NODATA_UNCT, NODATA_UNCT};

@@ -274,7 +274,7 @@ static long Get_Latitude_Range(long letter, double *north, double *south)
 } /* Get_Latitude_Range */
 #endif
 
-#ifdef unusued
+#ifdef unused
 static long Get_Latitude_Letter(double latitude, int *letter)
 /*
  * The function Get_Latitude_Letter receives a latitude value

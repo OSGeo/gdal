@@ -30,7 +30,7 @@ Driver capabilities
 Multiple Image Handling (Subdatasets)
 -------------------------------------
 
-Network Command Data Form is a container for several different arrays
+Network Common Data Form is a container for several different arrays
 most used for storing scientific dataset. One NetCDF file may contain
 several datasets. They may differ in size, number of dimensions and may
 represent data for different regions.
@@ -228,48 +228,66 @@ accepting it, or ``netCDF`` as the only value of the ``papszAllowedDrivers`` of
 filename, when it is not using subdataset syntax (it can typically be used to
 force open a HDF5 file that would be nominally recognized by the HDF5 driver).
 
-Dimension
----------
+Dimension Ordering
+------------------
 
-The NetCDF driver assume that data follows the CF-1 convention from
-`UNIDATA <http://www.unidata.ucar.edu/software/netcdf/docs/conventions.html>`__
-The dimensions inside the NetCDF file use the following rules: (Z,Y,X).
+The NetCDF driver assume that dimensions are ordered as (Z/T,Y,X), according to the recommendations of the `CF Conventions <https://cfconventions.org>`__.
 If there are more than 3 dimensions, the driver will merge them into
-bands. For example if you have an 4 dimension arrays of the type (P, T,
-Y, X). The driver will multiply the last 2 dimensions (P*T). The driver
-will display the bands in the following order. It will first increment T
-and then P. Metadata will be displayed on each band with its
+bands. For example, if you have a 4-dimensional array with dimensions (P, T,
+Y, X), the driver will combine the last 2 dimensions (P*T) into bands.
+Bands will be ordered by first incrementing T and then P.
+Metadata will be displayed on each band with its
 corresponding T and P values.
 
-Georeference
-------------
+Georeferencing
+--------------
 
-There is no universal way of storing georeferencing in NetCDF files. The
-driver first tries to follow the CF-1 Convention from UNIDATA looking
-for the Metadata named "grid_mapping". If "grid_mapping" is not present,
-the driver will try to find an lat/lon grid array to set geotransform
-array. The NetCDF driver verifies that the Lat/Lon array is equally
-spaced.
+Spatial reference system
+++++++++++++++++++++++++
 
-.. versionadded:: 3.4 crs_wkt attribute support
+There are multiple ways of storing spatial reference systems in netCDF files.
+Under the CF conventions, each data variable may use a ``grid_mapping`` attribute
+to reference the name of a separate "grid mapping" variable, such as ``crs``, whose attributes
+in turn specify parameters of the spatial reference system. Because the 
+parameters recognized by the CF conventions (``semi_major_axis``, ``inverse_flattening``, ``standard_parallel``, etc.) may not be adequate to fully describe a spatial reference system, the
+grid mapping variable may also have a ``crs_wkt`` attribute that fully describes the 
+spatial reference system using an OGC WKT string. The attribute name ``crs_wkt`` was 
+not specified until version 1.7 of the CF conventions; before that time, GDAL used
+the attribute name ``spatial_ref`` for the same purpose.
 
-If those 2 methods fail, NetCDF driver will try to read the following
-metadata directly and set up georeferencing.
+When reading a variable from a netCDF file, GDAL first checks the ``grid_mapping`` attribute to find the name of the grid mapping variable. If this variable has a ``spatial_ref`` or ``crs_wkt`` attribute (checked in that order), it will be used to assign a spatial reference system. If not, the spatial reference system will be assigned using using projection parameter attributes (``semi_major_axis``, etc.) If these parameters are not present, GDAL will check the grid mapping variable for a (non-standard) ``srid`` attribute and attempt to interpret it if present.
 
--  spatial_ref (Well Known Text)
+If no ``grid_mapping`` attribute is present, GDAL will check the data variable for a (non-standard) ``crs`` attribute and read a WKT, EPSG, or PROJ.4 string from it.
 
--  GeoTransform (GeoTransform array)
+If GDAL cannot determine a spatial reference system using the above methods, it will be left undefined unless the dataset was opened with the :oo:`ASSUME_LONGLAT` option.
 
-or,
+Geotransform
+++++++++++++
 
--  Northernmost_Northing
--  Southernmost_Northing
--  Easternmost_Easting
--  Westernmost_Easting
+NetCDF files store locations for each pixel using coordinate variables
+such as ``latitude`` and ``longitude``. This differs from the GDAL :ref:`raster_data_model`, wherein pixel locations are defined relative to an origin point, with fixed resolutions along two axes. The GDAL model uses a six-parameter geotransform to store the origin point, resolutions, and axis
+rotations (:ref:`geotransforms_tut`). 
 
-See also the configuration options **GDAL_NETCDF_VERIFY_DIMS** and
-**GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS** which control this
+If the netCDF file represents a rectangular grid with equal cell sizes, GDAL can derive a geotransform for the dataset by reading the values of the coordinate variables and computing spacings between adjacent pixels. Because of floating-point errors, this geotransform may not match the resolution of the original dataset. To allow the geotransform to be stored exactly, GDAL writes it as an attribute of the grid mapping variable described above. However, this
+is a GDAL-specific extension and will not typically be present in files not written by GDAL. 
+
+If the grid is rectangular but the cell sizes are not equal, as in the case of Gaussian grids used for weather and climate modelling, GDAL will still report a geotransform if the cell sizes are equal within a 0.1-degree threshold. Whether or not a geotransform is reported, the exact values of the cell centers can be accessed via the ``Y_VALUES`` metadata item in the ``GEOLOCATION2`` domain.
+
+If the file does not represent a rectangular grid, GDAL will not report a geotransform. In this case, the ``GEOLOCATION`` metadata domain provides references to the datasets that can be used to read the coordinates associated with each pixel.
+
+When reading a netCDF, GDAL must first identify the coordinate variables associated with a data variable. The configuration options :config:`GDAL_NETCDF_VERIFY_DIMS` and
+:config:`GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS` control this
 behavior.
+If the coordinate variables are one-dimensional, indicating a possibly regular grid, GDAL will then check whether the coordinate variables values are equally-spaced and, if applicable, calculate a geotransform. Starting with GDAL 3.11,
+if the ``GeoTransform`` metadata is also present, the values of the 
+calculated and stored geotransforms will be compared and an warning 
+raised if they do not correspond. In such a case, preference will be 
+given to the calculated values in GDAL 3.12.3 and above, or the stored
+values in earlier versions. (A significant mismatch may arise if a file is
+created by GDAL, modified using another software package that ignores the
+``GeoTransform`` attribute, and then read in again by GDAL.)
+
+An alternative method of storing the geotransform relies on storing the spatial extent of the dataset using four attributes on the grid mapping variable: ``Northermost_Northing``, ``Southernmost_Northing``, ``Eastermost_Easting``, and ``Westernmost_Eastering``. If these attributes are present (and ``GeoTransform`` is not), they will be used instead of the computed values.
 
 Open options
 ------------
@@ -319,10 +337,10 @@ The following open options are available:
       :default: NO
       :since: 3.7
 
-      Whether a Geographic CRS should
+      Whether a Geographic CRS (OGC:CRS84) should
       be assumed and applied when, none has otherwise been found, a meaningful
       geotransform has been found, and that geotransform is within the bounds
-      -180,360 -90,90, if YES assume OGC:CRS84.
+      -180,360 -90,90.
 
 -  .. oo:: PRESERVE_AXIS_UNIT_IN_CRS
       :choices: YES, NO
@@ -620,10 +638,10 @@ Configuration Options
       :default: NO
       :since: 3.7
 
-      Whether a Geographic CRS should
-      be assumed and applied when, none has otherwise been found, a meaningful
+      Whether a Geographic CRS (OGC:CRS84) should
+      be assumed and applied when none has otherwise been found, a meaningful
       geotransform has been found, and that geotransform is within the bounds
-      -180,360 -90,90, if YES assume OGC:CRS84.
+      -180,360 -90,90. Equivalent to open option :oo:`ASSUME_LONGLAT`.
 
 -  .. config:: GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES
       :choices: YES, NO

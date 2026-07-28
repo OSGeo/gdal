@@ -23,6 +23,7 @@ from osgeo import gdal
 
 pytestmark = [pytest.mark.require_driver("WMTS"), pytest.mark.require_driver("WMS")]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -628,9 +629,7 @@ def test_wmts_14():
     f = gdal.VSIFOpenL("/vsimem/gdal_nominal.xml", "rb")
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-    assert (
-        data
-        == """<GDAL_WMTS>
+    assert data == """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
   <Layer>lyr1</Layer>
   <Style>style=auto</Style>
@@ -649,7 +648,6 @@ def test_wmts_14():
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
 </GDAL_WMTS>
 """
-    )
 
     ds = gdal.Open("/vsimem/gdal_nominal.xml")
     gdal.FileFromMemBuffer("/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt", "foo")
@@ -670,7 +668,7 @@ def test_wmts_14():
         ["URL=/vsimem/nominal.xml"],
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "TILEMATRIXSET=tms"],
     ]:
-        ds = gdal.OpenEx("WMTS:", open_options=open_options)
+        ds = gdal.Open("WMTS:", open_options=open_options)
         assert ds is not None
 
     for open_options in [
@@ -679,7 +677,7 @@ def test_wmts_14():
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "ZOOM_LEVEL=30"],
     ]:
         with gdal.quiet_errors():
-            ds = gdal.OpenEx("WMTS:", open_options=open_options)
+            ds = gdal.Open("WMTS:", open_options=open_options)
         assert ds is None
 
     ds = gdal.Open("WMTS:/vsimem/nominal.xml")
@@ -688,17 +686,14 @@ def test_wmts_14():
         '<?xml version="1.0" encoding="UTF-8"?><xml_content/>',
     )
     res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
-    assert (
-        res
-        == """<LocationInfo><xml_content />
+    assert res == """<LocationInfo><xml_content />
 </LocationInfo>"""
-    )
 
     ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0")
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["tilematrix=tm_0"])
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml", open_options=["tilematrix=tm_0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
@@ -706,7 +701,7 @@ def test_wmts_14():
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["zoom_level=0"])
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml", open_options=["zoom_level=0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
@@ -1291,7 +1286,7 @@ def test_wmts_20():
 </Capabilities>""",
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "WMTS:/vsimem/wmts_20.xml",
         open_options=["CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS=YES"],
     )
@@ -1968,7 +1963,7 @@ def test_wmts_force_opening_url(tmp_vsimem, webserver_port):
         open("data/wmts/WMTSCapabilities.xml", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMTS"])
+        gdal.Open(f"http://localhost:{webserver_port}", allowed_drivers=["WMTS"])
 
 
 ###############################################################################
@@ -2014,7 +2009,7 @@ def test_wmts_http_headers(tmp_vsimem, webserver_port, options):
         expected_headers={"Accept": "accept-val", "User-Agent": "my-user-agent"},
     )
     with gdaltest.config_options(options), webserver.install_http_handler(handler):
-        gdal.OpenEx(xmlfilename)
+        gdal.Open(xmlfilename)
 
 
 ###############################################################################
@@ -2033,9 +2028,9 @@ def test_wmts_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["WMTS"])
+    ds = gdal.Open(filename, allowed_drivers=["WMTS"])
     assert ds.GetDriver().GetDescription() == "WMTS"
 
 
@@ -2064,8 +2059,8 @@ def test_wmts_read_esri_code_disguised_as_epsg_and_wrong_axis_order():
             assert gdal.GetLastErrorMsg().startswith(
                 "Auto-correcting wrongly swapped TileMatrix.TopLeftCorner coordinates"
             )
-            assert ds.GetSpatialRef().GetAuthorityName(None) == "ESRI"
-            assert ds.GetSpatialRef().GetAuthorityCode(None) == "104905"
+            assert ds.GetSpatialRef().GetAuthorityName() == "ESRI"
+            assert ds.GetSpatialRef().GetAuthorityCode() == "104905"
             assert ds.GetGeoTransform() == pytest.approx(
                 (
                     -180.0,

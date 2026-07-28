@@ -495,7 +495,7 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
 %}
 
 %rename (MDArray) GDALMDArrayHS;
-
+%rename (GetRegularSpacing) GDALMDArrayIsRegularlySpaced;
 class GDALMDArrayHS {
 private:
   GDALMDArrayHS();
@@ -1289,6 +1289,52 @@ public:
   GDALMDArrayHS* GetOverview(int idx) {
     return GDALMDArrayGetOverview(self, idx);
   }
+
+%apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
+  CPLErr BuildOverviews( const char *resampling = "NEAREST",
+                         int overviewlist = 0, int *pOverviews = 0,
+                         GDALProgressFunc callback = NULL,
+                         void *callback_data = NULL,
+                         char **options = NULL ) {
+    return GDALMDArrayBuildOverviews( self, resampling,
+        overviewlist, pOverviews, callback, callback_data, options );
+  }
+%clear (int overviewlist, int *pOverviews);
+
+
+%apply (double argout[ANY]) {double padfGeoTransform[6]};
+#ifdef SWIGJAVA
+  int GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint, double padfGeoTransform[6]) {
+    return GDALMDArrayGuessGeoTransform(self, nDimX, nDimY, bPixelIsPoint, padfGeoTransform);
+  }
+#else
+  %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+  RETURN_NONE GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint, double padfGeoTransform[6]) {
+    return GDALMDArrayGuessGeoTransform(self, nDimX, nDimY, bPixelIsPoint, padfGeoTransform);
+  }
+  %clear (RETURN_NONE);
+#endif
+%clear (double padfGeoTransform[6]);
+
+#ifdef SWIGJAVA
+bool GetRegularSpacing(double argout[2]) {
+    return GDALMDArrayIsRegularlySpaced(self, &argout[0], &argout[1]);
+}
+#else
+%apply (IF_FALSE_RETURN_NONE) {(RETURN_NONE)};
+RETURN_NONE GetRegularSpacing(double argout[2]) {
+    return GDALMDArrayIsRegularlySpaced(self, &argout[0], &argout[1]);
+}
+%clear (RETURN_NONE);
+#endif
+
+  %apply Pointer NONNULL {GDALMDArrayHS* other};
+  %newobject BinaryOpArray;
+  GDALMDArrayHS* BinaryOpArray(GDALRasterAlgebraBinaryOperation op, GDALMDArrayHS* other)
+  {
+      return GDALMDArrayBinaryOperation(self, op, other);
+  }
+  %clear GDALMDArrayHS* other;
 
 } /* extend */
 }; /* GDALMDArrayH */

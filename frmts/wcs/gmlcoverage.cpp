@@ -143,18 +143,18 @@ CPLErr WCSParseGMLCoverage(CPLXMLNode *psXML, int *pnXSize, int *pnYSize,
     if (CSLCount(papszOffset1Tokens) >= 2 &&
         CSLCount(papszOffset2Tokens) >= 2 && poOriginGeometry != nullptr)
     {
-        gt[0] = poOriginGeometry->getX();
-        gt[1] = CPLAtof(papszOffset1Tokens[0]);
-        gt[2] = CPLAtof(papszOffset1Tokens[1]);
-        gt[3] = poOriginGeometry->getY();
-        gt[4] = CPLAtof(papszOffset2Tokens[0]);
-        gt[5] = CPLAtof(papszOffset2Tokens[1]);
+        gt.xorig = poOriginGeometry->getX();
+        gt.xscale = CPLAtof(papszOffset1Tokens[0]);
+        gt.xrot = CPLAtof(papszOffset1Tokens[1]);
+        gt.yorig = poOriginGeometry->getY();
+        gt.yrot = CPLAtof(papszOffset2Tokens[0]);
+        gt.yscale = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
-        gt[0] -= gt[1] * 0.5;
-        gt[0] -= gt[2] * 0.5;
-        gt[3] -= gt[4] * 0.5;
-        gt[3] -= gt[5] * 0.5;
+        gt.xorig -= gt.xscale * 0.5;
+        gt.xorig -= gt.xrot * 0.5;
+        gt.yorig -= gt.yrot * 0.5;
+        gt.yorig -= gt.yscale * 0.5;
 
         bSuccess = true;
     }

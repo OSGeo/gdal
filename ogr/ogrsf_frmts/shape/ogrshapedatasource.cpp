@@ -228,7 +228,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
 
     eAccess = poOpenInfo->eAccess;
 
-    m_bSingleFileDataSource = CPL_TO_BOOL(bForceSingleFileDataSource);
+    m_bSingleFileDataSource = bForceSingleFileDataSource;
 
     /* -------------------------------------------------------------------- */
     /*      If m_bSingleFileDataSource is TRUE we don't try to do anything  */
@@ -505,7 +505,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
         this, pszNewName, hSHP, hDBF,
         /* poSRS = */ nullptr,
         /* bSRSSet = */ false,
-        /* osPrjFilename = */ std::string(), bUpdate, wkbNone);
+        /* osPrjFilename = */ std::string(), bUpdate, wkbNone, false);
     poLayer->SetModificationDate(
         CSLFetchNameValue(papszOpenOptions, "DBF_DATE_LAST_UPDATE"));
     poLayer->SetAutoRepack(CPLFetchBool(papszOpenOptions, "AUTO_REPACK", true));
@@ -874,12 +874,11 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /*      Create the .prj file, if required.                              */
     /* -------------------------------------------------------------------- */
     std::string osPrjFilename;
-    OGRSpatialReference *poSRSClone = nullptr;
-    if (poSRS != nullptr)
+    auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
+    if (poSRSClone)
     {
         osPrjFilename =
             CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "prj");
-        poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
@@ -904,13 +903,9 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "shp");
 
     auto poLayer = std::make_unique<OGRShapeLayer>(
-        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone,
+        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone.get(),
         /* bSRSSet = */ true, osPrjFilename,
-        /* bUpdate = */ true, eType);
-    if (poSRSClone != nullptr)
-    {
-        poSRSClone->Release();
-    }
+        /* bUpdate = */ true, eType, true);
 
     poLayer->SetResizeAtClose(CPLFetchBool(papszOptions, "RESIZE", false));
     poLayer->CreateSpatialIndexAtClose(

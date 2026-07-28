@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_TILE_INCLUDED
 #define GDALALG_RASTER_TILE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 #include "cpl_string.h"
 
@@ -40,6 +40,7 @@ class GDALRasterTileAlgorithm /* non final */
     static constexpr const char *HELP_URL = "/programs/gdal_raster_tile.html";
 
     explicit GDALRasterTileAlgorithm(bool standaloneStep = false);
+    ~GDALRasterTileAlgorithm() override;
 
     bool CanBeLastStep() const override
     {
@@ -56,9 +57,15 @@ class GDALRasterTileAlgorithm /* non final */
         return true;
     }
 
+    int GetOutputType() const override
+    {
+        return 0;
+    }
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterTileAlgorithm)
 
+    std::string m_outputDir{};
     std::vector<std::string> m_metadata{};
     bool m_copySrcMetadata = false;
     std::string m_tilingScheme{};
@@ -67,6 +74,7 @@ class GDALRasterTileAlgorithm /* non final */
     std::string m_overviewResampling{};
     int m_minZoomLevel = -1;
     int m_maxZoomLevel = -1;
+    bool m_minZoomLevelSingleTile = false;
     bool m_noIntersectionIsOK = false;
     int m_minTileX = -1;
     int m_minTileY = -1;
@@ -105,6 +113,7 @@ class GDALRasterTileAlgorithm /* non final */
     std::string m_numThreadsStr{"ALL_CPUS"};
     std::map<std::string, std::string> m_mapTileMatrixIdentifierToScheme{};
     GDALDataset *m_poSrcDS = nullptr;
+    GDALDataset *m_poSrcOvrDS = nullptr;
     bool m_bIsNamedNonMemSrcDS = false;
     GDALDriver *m_poDstDriver = nullptr;
     std::string m_osGDALPath{};

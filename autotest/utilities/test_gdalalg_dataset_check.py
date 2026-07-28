@@ -101,7 +101,7 @@ def test_gdalalg_dataset_check(tmp_vsimem, driver, filename):
                 length = length - 100
                 f.write(open(filename, "rb").read(length))
 
-    assert gdal.OpenEx(tmp_file)
+    assert gdal.Open(tmp_file)
 
     with gdal.quiet_errors(), gdaltest.disable_exceptions():
         with pytest.raises(Exception, match=r"Algorithm.Run\(\) failed"):

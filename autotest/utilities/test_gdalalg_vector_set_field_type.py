@@ -281,11 +281,22 @@ def test_gdalalg_set_field_type_completion(tmp_path):
         f"{gdal_path} completion gdal vector set-field-type --input ../ogr/data/poly.shp --field-name"
     )
     assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" not in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --field-name "
     )
     assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer poly --field-name "
+    )
+    assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer invalid --field-name "
+    )
+    assert "EAS_ID" not in out
 
     # No completion when there is a tee operator as this can be a slow operation
     out = gdaltest.runexternal(
@@ -345,7 +356,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     assert alg.Run()
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 2
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert out_ds.GetLayer(1).GetFeatureCount() == 1
@@ -390,7 +401,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     src_ds = None
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 1
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert (
@@ -422,8 +433,8 @@ def test_gdalalg_set_field_type_src_field_type():
         "vector",
         "set-field-type",
         input=src_ds,
-        src_field_type="String",
-        dst_field_type="Integer",
+        input_field_type="String",
+        output_field_type="Integer",
         output_format="MEM",
     )
     ds = alg.Output()
