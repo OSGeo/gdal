@@ -977,8 +977,6 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
                          std::atomic<bool> *pbInterrupt)
 {
-    int repeats = 0;
-
     if (hEasyHandle)
         curl_multi_add_handle(hCurlMultiHandle, hEasyHandle);
 
@@ -1009,7 +1007,7 @@ void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
         } while (msg);
 #endif
 
-        CPLMultiPerformWait(hCurlMultiHandle, repeats);
+        CPLMultiPerformWait(hCurlMultiHandle);
 
         if (pbInterrupt && *pbInterrupt)
             break;
@@ -3960,8 +3958,6 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 }
             };
 
-            int repeats = 0;
-
             void *old_handler = CPLHTTPIgnoreSigPipe();
             while (true)
             {
@@ -3989,7 +3985,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                     }
                 } while (msg);
 
-                CPLMultiPerformWait(m_hCurlMultiHandleForAdviseRead, repeats);
+                CPLMultiPerformWait(m_hCurlMultiHandleForAdviseRead);
             }
             CPLHTTPRestoreSigPipeHandler(old_handler);
 
