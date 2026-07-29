@@ -376,6 +376,48 @@ def test_vsigs_specific_generation_signed_url(gs_test_config, webserver_port):
     assert pinned_url.replace("&generation=123456789", "") == unpinned_url
 
 
+def test_vsigs_specific_generation_no_sidecar_probing(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    with open("data/byte.tif", "rb") as f:
+        byte_tif = f.read()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/byte.tif?generation=123456789",
+        206,
+        {
+            "Content-type": "image/tiff",
+            "Content-Range": "bytes 0-%d/%d" % (len(byte_tif) - 1, len(byte_tif)),
+        },
+        byte_tif,
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GS_NO_SIGN_REQUEST": "YES",
+                # so that side-car files are probed with a Stat() call,
+                # instead of being looked up in a sibling file list
+                "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+            },
+            thread_local=False,
+        ):
+            gdal.ErrorReset()
+            ds = gdal.Open(
+                "/vsigs/?path=gs_fake_bucket_generation/byte.tif"
+                "&generation=123456789"
+            )
+            assert ds is not None
+            # triggers the lazy PAM (.aux.xml) and overview (.ovr) lookups
+            ds.GetGeoTransform()
+            ds.GetMetadata()
+            assert gdal.GetLastErrorMsg() == ""
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+
 ###############################################################################
 # Test with a fake Google Cloud Storage server
 

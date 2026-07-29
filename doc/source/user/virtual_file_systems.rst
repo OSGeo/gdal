@@ -929,6 +929,10 @@ carry a ``generation=<n>`` query parameter so a specific version of the object i
 read instead of the live one. Without this syntax, the live object is read. This
 uses the same query-string file-name convention as the /vsicurl/ file system.
 
+As for /vsicurl/ query-string file names, side-car files (``.aux.xml``, ``.ovr``,
+``.msk``, etc.) are not looked up for this syntax, since their suffix would be
+appended to the query string rather than to the object name.
+
 
 
 Several authentication methods are possible, and are attempted in the following order:
