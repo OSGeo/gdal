@@ -603,3 +603,72 @@ cellsize     1
             elev_values.append((f["ELEV_MIN"], f["ELEV_MAX"]))
 
         assert elev_values == expected_elev_values, (elev_values, expected_elev_values)
+
+
+def test_contour_polygonize_many_disjoint_rings():
+    """Many disjoint rings at one level, enclosed by a large late-closing ring:
+    the pattern that made polygon ring attachment quadratic (#1750, #2241). The
+    big ring closes after the small ones and must capture all of them as
+    interior rings; the small rings must survive as islands of the outer band."""
+
+    numpy = pytest.importorskip("numpy")
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.Create("", 512, 512, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([0, 1, 0, 512, 0, -1])
+
+    data = numpy.full((512, 512), 1.0, dtype=numpy.float32)
+    # large below-level region: ring perimeter ~1648 vertices
+    data[50:462, 50:462] = -1.0
+    # 36 above-level ponds inside it: 36 disjoint hole rings
+    for py in range(6):
+        for px in range(6):
+            y0 = 76 + py * 64
+            x0 = 76 + px * 64
+            data[y0 : y0 + 7, x0 : x0 + 7] = 1.0
+    ds.GetRasterBand(1).WriteArray(data)
+
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbMultiPolygon)
+    ogr_lyr.CreateField(ogr.FieldDefn("elevMin", ogr.OFTReal))
+    ogr_lyr.CreateField(ogr.FieldDefn("elevMax", ogr.OFTReal))
+
+    gdal.ContourGenerateEx(
+        ds.GetRasterBand(1),
+        ogr_lyr,
+        options=[
+            "FIXED_LEVELS=-2,0,2",
+            "ELEV_FIELD_MIN=0",
+            "ELEV_FIELD_MAX=1",
+            "POLYGONIZE=TRUE",
+        ],
+    )
+
+    assert ogr_lyr.GetFeatureCount() == 2
+
+    ogr_lyr.SetAttributeFilter("elevMin = -2")
+    below = ogr_lyr.GetNextFeature()
+    geom = below.GetGeometryRef()
+    assert geom.IsValid()
+    assert geom.GetGeometryCount() == 1  # one polygon: the big region
+    poly = geom.GetGeometryRef(0)
+    # exterior + the 36 captured pond holes
+    assert poly.GetGeometryCount() == 37
+
+    ogr_lyr.SetAttributeFilter("elevMax = 2")
+    above = ogr_lyr.GetNextFeature()
+    geom = above.GetGeometryRef()
+    assert geom.IsValid()
+    # the domain polygon (with the big region as hole) + 36 pond islands
+    assert geom.GetGeometryCount() == 37
+    ring_counts = sorted(
+        geom.GetGeometryRef(i).GetGeometryCount() for i in range(37)
+    )
+    assert ring_counts == [1] * 36 + [2]
+
+    # the two bands partition the domain
+    total = sum(
+        f.GetGeometryRef().GetArea()
+        for f in (below, above)
+    )
+    assert total == pytest.approx(512 * 512, rel=0.02)
