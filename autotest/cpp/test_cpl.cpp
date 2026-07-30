@@ -494,6 +494,19 @@ TEST_F(test_cpl, CSLTokenizeString2)
         auto oIteratorWrapper = cpl::IterateNameValue(papszList);
         EXPECT_TRUE(oIteratorWrapper.begin() == oIteratorWrapper.end());
     }
+
+    {
+        // Test colon separator within string tokens
+        CPLStringList aosList(CSLTokenizeString2(
+            R"(one:"two:two_and_half":three:"four:four_and_half":five)", ":",
+            CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES));
+        EXPECT_EQ(aosList.size(), 5);
+        EXPECT_STREQ(aosList[0], "one");
+        EXPECT_STREQ(aosList[1], "\"two:two_and_half\"");
+        EXPECT_STREQ(aosList[2], "three");
+        EXPECT_STREQ(aosList[3], "\"four:four_and_half\"");
+        EXPECT_STREQ(aosList[4], "five");
+    }
 }
 
 typedef struct

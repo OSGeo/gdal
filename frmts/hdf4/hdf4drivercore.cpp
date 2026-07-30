@@ -61,18 +61,9 @@ void HDF4DriverSubdatasetInfo::parseFileName()
         return;
     }
 
-    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    CPLStringList aosParts{CSLTokenizeString2(
+        m_fileName.c_str(), ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES)};
     const int iPartsCount{CSLCount(aosParts)};
-
-    auto unescapeDoubleQuotes = [](std::string &str)
-    {
-        size_t pos = 0;
-        while ((pos = str.find("\\\"", pos)) != std::string::npos)
-        {
-            str.replace(pos, 2, "\"");
-            pos += 1;
-        }
-    };
 
     if (iPartsCount >= 3)
     {
@@ -86,38 +77,6 @@ void HDF4DriverSubdatasetInfo::parseFileName()
 
         if (iPartsCount >= 4)
         {
-
-            std::string part2{aosParts[2]};
-            const bool pathIsDoubleQuoted{!part2.empty() && part2[0] == '"'};
-
-            if (pathIsDoubleQuoted)
-            {
-                // The path component is everything up to the next double quote.
-                if (part2.back() != '"')
-                {
-                    // If the path component is double quoted and there is no closing quote, then the path component
-                    // is everything up to the next part that ends with an unescaped double quote.
-                    // This is to handle cases where the path component contains colons.
-                    for (int i = 3; i < iPartsCount; ++i)
-                    {
-                        const size_t partLen = strlen(aosParts[i]);
-                        if (partLen > 0 && aosParts[i][partLen - 1] == '"' &&
-                            !(partLen > 1 && aosParts[i][partLen - 2] == '\\'))
-                        {
-                            part2.append(":");
-                            part2.append(std::string(aosParts[i]));
-                            subdatasetIndex = i + 1;
-                            break;
-                        }
-                        part2.append(":");
-                        part2.append(std::string(aosParts[i]));
-                    }
-                }
-                unescapeDoubleQuotes(part2);
-            }
-
-            m_pathComponent = part2;
-
             const bool hasDriveLetter{
                 (strlen(aosParts[3]) > 1 &&
                  (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
@@ -125,11 +84,16 @@ void HDF4DriverSubdatasetInfo::parseFileName()
                   std::isalpha(static_cast<unsigned char>(aosParts[2][1]))) ||
                  (strlen(aosParts[2]) == 1 &&
                   std::isalpha(static_cast<unsigned char>(aosParts[2][0]))))};
+            m_pathComponent = aosParts[2];
 
             const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=
                                    std::string::npos};
 
-            if (!pathIsDoubleQuoted && (hasDriveLetter || hasProtocol))
+            // If the patch component was double quoted, the drive or
+            // protocol will be part of the path component and we should not append it again
+
+            if ((m_pathComponent.size() > 0 && m_pathComponent[0] != '"') &&
+                (hasDriveLetter || hasProtocol))
             {
                 m_pathComponent.append(":");
                 m_pathComponent.append(aosParts[3]);
