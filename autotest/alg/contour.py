@@ -672,3 +672,64 @@ def test_contour_polygonize_many_disjoint_rings():
         for f in (below, above)
     )
     assert total == pytest.approx(512 * 512, rel=0.02)
+
+
+def test_contour_polygonize_sawtooth_ring():
+    """A comb-shaped region whose boundary ring is almost entirely vertical
+    segments. Bucketing such a ring's segments by y must not copy each segment
+    into a large fraction of the buckets, which made RingPIPIndex::build()
+    quadratic in memory. The ponds in the comb's base force the capture path
+    that builds the index."""
+
+    numpy = pytest.importorskip("numpy")
+
+    width, height = 16384, 16
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.Create("", width, height, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([0, 1, 0, height, 0, -1])
+
+    data = numpy.full((height, width), 1.0, dtype=numpy.float32)
+    # comb base: a solid below-level band
+    data[10:14, 2 : width - 2] = -1.0
+    # comb teeth: 1px-wide columns every 2px, nearly full height
+    data[1:10, 2 : width - 2 : 2] = -1.0
+    # ponds in the base: enough that the capture step builds the PIP index
+    data[12, 256 : width - 256 : 256] = 1.0
+    ds.GetRasterBand(1).WriteArray(data)
+    n_ponds = len(range(256, width - 256, 256))
+
+    ogr_ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbMultiPolygon)
+    ogr_lyr.CreateField(ogr.FieldDefn("elevMin", ogr.OFTReal))
+    ogr_lyr.CreateField(ogr.FieldDefn("elevMax", ogr.OFTReal))
+
+    gdal.ContourGenerateEx(
+        ds.GetRasterBand(1),
+        ogr_lyr,
+        options=[
+            "FIXED_LEVELS=-2,0,2",
+            "ELEV_FIELD_MIN=0",
+            "ELEV_FIELD_MAX=1",
+            "POLYGONIZE=TRUE",
+        ],
+    )
+
+    assert ogr_lyr.GetFeatureCount() == 2
+
+    ogr_lyr.SetAttributeFilter("elevMin = -2")
+    below = ogr_lyr.GetNextFeature()
+    geom = below.GetGeometryRef()
+    assert geom.IsValid()
+    assert geom.GetGeometryCount() == 1  # one polygon: the whole comb
+    poly = geom.GetGeometryRef(0)
+    assert poly.GetGeometryCount() == 1 + n_ponds  # exterior + pond holes
+
+    ogr_lyr.SetAttributeFilter("elevMax = 2")
+    above = ogr_lyr.GetNextFeature()
+    geom = above.GetGeometryRef()
+    assert geom.IsValid()
+    # the domain polygon (comb as hole) + one island per pond
+    assert geom.GetGeometryCount() == 1 + n_ponds
+
+    total = sum(f.GetGeometryRef().GetArea() for f in (below, above))
+    assert total == pytest.approx(width * height, rel=0.02)

@@ -19,6 +19,7 @@
 #include <cassert>
 #include <iterator>
 #include <cmath>
+#include <cstdint>
 #include <unordered_map>
 #include <functional>
 #include <algorithm>
@@ -190,8 +191,35 @@ template <typename PolygonWriter> class PolygonRingAppender
             yMin = r.bbYMin;
             yMax = r.bbYMax;
             const size_t nSeg = r.points.size();
-            const size_t nBuckets =
+            // A segment spanning dy is copied into about
+            // dy * nBuckets / (yMax - yMin) + 1 buckets, so the total stored
+            // copies is nSeg + sumSpan * nBuckets / (yMax - yMin). Cap
+            // nBuckets so that total stays O(nSeg): rings whose segments keep
+            // crossing most of the y-range (sawtooth or near-flat rings)
+            // would otherwise blow up quadratically.
+            double sumSpan = 0;
+            {
+                auto spanIt = r.points.begin();
+                auto prev = *spanIt;
+                for (++spanIt; spanIt != r.points.end(); ++spanIt)
+                {
+                    sumSpan += std::abs(spanIt->y - prev.y);
+                    prev = *spanIt;
+                }
+            }
+            size_t nBuckets =
                 std::max<size_t>(64, std::min<size_t>(nSeg / 32, 65536));
+            if (yMax > yMin && sumSpan > 0)
+            {
+                const double cap = 4.0 * nSeg * (yMax - yMin) / sumSpan;
+                if (cap < static_cast<double>(nBuckets))
+                    nBuckets = std::max<size_t>(1, static_cast<size_t>(cap));
+            }
+            else
+            {
+                // Degenerate flat ring: every segment would span all buckets.
+                nBuckets = 1;
+            }
             buckets.assign(nBuckets, {});
             inv = (yMax > yMin) ? nBuckets / (yMax - yMin) : 0;
             auto it = r.points.begin();
@@ -259,8 +287,12 @@ template <typename PolygonWriter> class PolygonRingAppender
         {
             size_t operator()(const std::pair<long long, long long> &c) const
             {
-                return std::hash<long long>()(
-                    c.first * 2654435761LL ^ (c.second << 21 | c.second >> 43));
+                // Unsigned arithmetic: cells can be negative, and signed
+                // overflow / shifting negative values is undefined behavior.
+                const auto x = static_cast<std::uint64_t>(c.first);
+                const auto y = static_cast<std::uint64_t>(c.second);
+                return std::hash<std::uint64_t>()(x * 2654435761ULL ^
+                                                  (y << 21 | y >> 43));
             }
         };
 
