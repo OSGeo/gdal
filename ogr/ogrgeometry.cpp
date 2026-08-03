@@ -7626,6 +7626,18 @@ int OGRPreparedGeometryIntersects(const OGRPreparedGeometryH hPreparedGeom,
         return FALSE;
     }
 
+#if GEOS_VERSION_MAJOR >= 3 ||                                                 \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
+    if (wkbFlatten(OGR_G_GetGeometryType(hOtherGeom)) == wkbPoint)
+    {
+        const OGRPoint *poPoint = cpl::down_cast<const OGRPoint *>(
+            OGRGeometry::FromHandle(hOtherGeom));
+        return 1 ==
+               GEOSPreparedIntersectsXY_r(hPreparedGeom->hGEOSCtxt,
+                                          hPreparedGeom->poPreparedGEOSGeom,
+                                          poPoint->getX(), poPoint->getY());
+    }
+#endif
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
     if (hGEOSOtherGeom == nullptr)
@@ -7664,6 +7676,17 @@ int OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
         return FALSE;
     }
 
+#if GEOS_VERSION_MAJOR >= 3 ||                                                 \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
+    if (wkbFlatten(OGR_G_GetGeometryType(hOtherGeom)) == wkbPoint)
+    {
+        const OGRPoint *poPoint = cpl::down_cast<const OGRPoint *>(
+            OGRGeometry::FromHandle(hOtherGeom));
+        return 1 == GEOSPreparedContainsXY_r(hPreparedGeom->hGEOSCtxt,
+                                             hPreparedGeom->poPreparedGEOSGeom,
+                                             poPoint->getX(), poPoint->getY());
+    }
+#endif
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
     if (hGEOSOtherGeom == nullptr)
