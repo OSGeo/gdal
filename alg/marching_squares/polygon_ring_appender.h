@@ -18,7 +18,6 @@
 #include <deque>
 #include <cassert>
 #include <iterator>
-#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <algorithm>
@@ -26,6 +25,7 @@
 #include "cpl_quad_tree.h"
 
 #include "point.h"
+#include "ogr_api.h"
 #include "ogr_geometry.h"
 
 namespace marching_squares
@@ -157,104 +157,37 @@ template <typename PolygonWriter> class PolygonRingAppender
     // level -> rings
     std::map<double, std::vector<Ring>> rings_;
 
-    // Point-in-polygon accelerator for one target ring. The capture step
-    // tests MANY points against the SAME ring (pathological case: a
-    // domain-spanning ring with millions of vertices capturing tens of
-    // thousands of earlier rings) — bucketing the ring's segments by y makes
-    // each test O(segments-in-bucket) instead of O(all vertices). GEOS has
-    // the natural structure for this (IndexedPointInAreaLocator), but GEOS
-    // is an optional dependency and contouring must work without it; GDAL
-    // core has no indexed point-in-polygon type.
-    struct RingPIPIndex
+    // Point-in-polygon accelerator for one target ring: an
+    // OGRPreparedGeometry (GEOS indexed point-in-area locator) over the
+    // ring, built lazily when a ring turns out to capture many candidates.
+    // The pathological case is a domain-spanning ring with millions of
+    // vertices capturing tens of thousands of earlier rings; testing each
+    // candidate against the raw ring is O(candidates * vertices). In builds
+    // without GEOS support the capture step falls back to the linear
+    // winding test.
+    struct PreparedRing
     {
-        double yMin = 0, yMax = 0, inv = 0;
-        std::vector<std::vector<std::pair<Point, Point>>> buckets;
+        OGRPolygon poly;
+        OGRPreparedGeometryUniquePtr prep;
 
-        void build(const Ring &r)
+        bool build(const Ring &r)
         {
-            yMin = r.bbox.MinY;
-            yMax = r.bbox.MaxY;
-            const size_t nSeg = r.points.size();
-            // A segment spanning dy is copied into about
-            // dy * nBuckets / (yMax - yMin) + 1 buckets, so the total stored
-            // copies is nSeg + sumSpan * nBuckets / (yMax - yMin). Cap
-            // nBuckets so that total stays O(nSeg): rings whose segments keep
-            // crossing most of the y-range (sawtooth or near-flat rings)
-            // would otherwise blow up quadratically.
-            double sumSpan = 0;
-            {
-                auto spanIt = r.points.begin();
-                auto prev = *spanIt;
-                for (++spanIt; spanIt != r.points.end(); ++spanIt)
-                {
-                    sumSpan += std::abs(spanIt->y - prev.y);
-                    prev = *spanIt;
-                }
-            }
-            size_t nBuckets =
-                std::max<size_t>(64, std::min<size_t>(nSeg / 32, 65536));
-            if (yMax > yMin && sumSpan > 0)
-            {
-                const double cap = 4.0 * nSeg * (yMax - yMin) / sumSpan;
-                if (cap < static_cast<double>(nBuckets))
-                    nBuckets = std::max<size_t>(1, static_cast<size_t>(cap));
-            }
-            else
-            {
-                // Degenerate flat ring: every segment would span all buckets.
-                nBuckets = 1;
-            }
-            buckets.assign(nBuckets, {});
-            inv = (yMax > yMin) ? nBuckets / (yMax - yMin) : 0;
-            auto it = r.points.begin();
-            auto p1 = *it;
-            for (++it; it != r.points.end(); ++it)
-            {
-                auto p2 = *it;
-                double lo = std::min(p1.y, p2.y), hi = std::max(p1.y, p2.y);
-                size_t b0 = bucketOf(lo), b1 = bucketOf(hi);
-                for (size_t b = b0; b <= b1; b++)
-                    buckets[b].emplace_back(p1, p2);
-                p1 = p2;
-            }
+            auto ring = std::make_unique<OGRLinearRing>();
+            ring->setNumPoints(static_cast<int>(r.points.size()));
+            int i = 0;
+            for (const auto &pt : r.points)
+                ring->setPoint(i++, pt.x, pt.y);
+            poly.addRingDirectly(ring.release());
+            poly.closeRings();
+            prep.reset(OGRCreatePreparedGeometry(OGRGeometry::ToHandle(&poly)));
+            return prep != nullptr;
         }
 
-        size_t bucketOf(double y) const
+        bool contains(const Point &p) const
         {
-            if (y <= yMin)
-                return 0;
-            if (y >= yMax)
-                return buckets.size() - 1;
-            size_t b = static_cast<size_t>((y - yMin) * inv);
-            return b >= buckets.size() ? buckets.size() - 1 : b;
-        }
-
-        // identical winding-number semantics to Ring::isIn
-        bool contains(const Point &checkPoint) const
-        {
-            int windingNum = 0;
-            for (const auto &seg : buckets[bucketOf(checkPoint.y)])
-            {
-                const auto &p1 = seg.first;
-                const auto &p2 = seg.second;
-                if (p1.y <= checkPoint.y)
-                {
-                    if (p2.y > checkPoint.y)
-                    {
-                        if (isLeft(p1, p2, checkPoint))
-                            ++windingNum;
-                    }
-                }
-                else
-                {
-                    if (p2.y <= checkPoint.y)
-                    {
-                        if (!isLeft(p1, p2, checkPoint))
-                            --windingNum;
-                    }
-                }
-            }
-            return windingNum != 0;
+            OGRPoint pt(p.x, p.y);
+            return CPL_TO_BOOL(OGRPreparedGeometryContains(
+                prep.get(), OGRGeometry::ToHandle(&pt)));
         }
     };
 
@@ -364,7 +297,8 @@ template <typename PolygonWriter> class PolygonRingAppender
             // index lazily so a huge ring capturing many candidates costs
             // O(V + R * V/B), not O(R * V).
             std::vector<std::size_t> captured;
-            RingPIPIndex pip;
+            PreparedRing pip;
+            bool pipTried = false;
             bool pipBuilt = false;
             std::size_t nCandidates = 0;
             {
@@ -381,11 +315,11 @@ template <typename PolygonWriter> class PolygonRingAppender
                     if (fp.x < newRing.bbox.MinX || fp.x > newRing.bbox.MaxX ||
                         fp.y < newRing.bbox.MinY || fp.y > newRing.bbox.MaxY)
                         continue;
-                    if (!pipBuilt && ++nCandidates > 16 &&
+                    if (!pipTried && ++nCandidates > 16 &&
                         newRing.points.size() > 512)
                     {
-                        pip.build(newRing);
-                        pipBuilt = true;
+                        pipTried = true;
+                        pipBuilt = pip.build(newRing);
                     }
                     const bool inside =
                         pipBuilt ? pip.contains(fp) : cand.isIn(newRing);
@@ -394,6 +328,8 @@ template <typename PolygonWriter> class PolygonRingAppender
                 }
                 CPLFree(hits);
             }
+            // Sorting by slot restores insertion order, so captured rings
+            // nest in the same order the original linear scan produced.
             std::sort(captured.begin(), captured.end());
             captured.erase(std::unique(captured.begin(), captured.end()),
                            captured.end());
