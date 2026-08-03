@@ -202,14 +202,14 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     };
 
     int m_useCount = 0;  // Count of users of the run thread.
-    std::atomic<bool> m_stop;
+    std::atomic<bool> m_stop(false);
     std::condition_variable m_runCv;
-    std::mutex m_handleMutex;
+    std::mutex m_handleMutex{};
     std::unique_ptr<std::thread> m_runThread;
     std::mutex m_runMutex;  // Protects data associated with the run thread.
-    std::vector<CURL *> m_readyHandles;
-    std::vector<CURL *> m_interruptedHandles;
-    std::vector<CURL *> m_doneHandles;
+    std::vector<CURL *> m_readyHandles{};
+    std::vector<CURL *> m_interruptedHandles{};
+    std::vector<CURL *> m_doneHandles{};
     CURLM *m_multi = nullptr;
     int m_runningCount = 0;  // Count of running easy handles
 

@@ -40,14 +40,17 @@ namespace cpl
 
 class VSICurlFilesystemHandlerBase;
 
-// RAII to start/stop run thread.
+/// RAII to start/stop run thread.
 class RunThreadUser
 {
   public:
+    /// Constructor
     RunThreadUser(VSICurlFilesystemHandlerBase &handler);
+    /// Destructor
     ~RunThreadUser();
 
   private:
+    /// Thread-owning handler.
     VSICurlFilesystemHandlerBase &m_handler;
 };
 }  // namespace cpl

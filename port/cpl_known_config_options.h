@@ -311,7 +311,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTP_MAX_RETRY", // from cpl_http.cpp
    "GDAL_HTTP_MAX_TOTAL_CONNECTIONS", // from cpl_vsil_curl.cpp
    "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", // from cpl_vsil_curl.cpp
-   "GDAL_HTTP_MULTIPLEX", // from cpl_vsil_curl.cpp
    "GDAL_HTTP_MULTIRANGE", // from cpl_vsil_curl.cpp
    "GDAL_HTTP_NETRC", // from cpl_http.cpp
    "GDAL_HTTP_NETRC_FILE", // from cpl_http.cpp
