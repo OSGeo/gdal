@@ -832,7 +832,12 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
 
             PolygonContourWriter w(&oCWI, dfMinimum);
             typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
-            RingAppender appender(w);
+            // Ring coordinates reach the appender in raster space (the
+            // writer applies the geotransform), so the spatial index's
+            // domain is the raster extent plus the border cells.
+            RingAppender appender(w, -1.0, -1.0,
+                                  GDALGetRasterBandXSize(hBand) + 1.0,
+                                  GDALGetRasterBandYSize(hBand) + 1.0);
 
             if (expBase > 0.0)
             {

@@ -20,9 +20,10 @@
 #include <iterator>
 #include <cmath>
 #include <cstdint>
-#include <unordered_map>
-#include <functional>
+#include <memory>
 #include <algorithm>
+
+#include "cpl_quad_tree.h"
 
 #include "point.h"
 #include "ogr_geometry.h"
@@ -54,29 +55,12 @@ template <typename PolygonWriter> class PolygonRingAppender
         // Bounding box, computed once when the ring is complete;
         // gives isIn() an O(1) reject so parent search stops being
         // O(rings * vertices) per insertion.
-        double bbXMin = 0, bbYMin = 0, bbXMax = 0, bbYMax = 0;
+        OGREnvelope bbox;
 
         void computeBBox()
         {
-            bool first = true;
             for (const auto &pt : points)
-            {
-                if (first)
-                {
-                    bbXMin = bbXMax = pt.x;
-                    bbYMin = bbYMax = pt.y;
-                    first = false;
-                    continue;
-                }
-                if (pt.x < bbXMin)
-                    bbXMin = pt.x;
-                if (pt.x > bbXMax)
-                    bbXMax = pt.x;
-                if (pt.y < bbYMin)
-                    bbYMin = pt.y;
-                if (pt.y > bbYMax)
-                    bbYMax = pt.y;
-            }
+                bbox.Merge(pt.x, pt.y);
         }
 
         mutable std::vector<Ring> interiorRings;
@@ -89,8 +73,10 @@ template <typename PolygonWriter> class PolygonRingAppender
             auto checkPoint = this->points.front();
             // A point outside the candidate ring's bounding box
             // cannot be inside the ring.
-            if (checkPoint.x < other.bbXMin || checkPoint.x > other.bbXMax ||
-                checkPoint.y < other.bbYMin || checkPoint.y > other.bbYMax)
+            if (checkPoint.x < other.bbox.MinX ||
+                checkPoint.x > other.bbox.MaxX ||
+                checkPoint.y < other.bbox.MinY ||
+                checkPoint.y > other.bbox.MaxY)
             {
                 return false;
             }
@@ -171,16 +157,14 @@ template <typename PolygonWriter> class PolygonRingAppender
     // level -> rings
     std::map<double, std::vector<Ring>> rings_;
 
-    // Per-level spatial index over TOP-LEVEL rings. Maps grid
-    // cell -> slot indices into the level's ring vector. Slots whose ring has
-    // been captured as an interior ring are tombstoned (empty points), never
-    // erased, so indices remain stable. Rings overlapping too many cells go
-    // to a small linear overflow list.
-    // Point-in-polygon accelerator for one target ring. The
-    // capture step tests MANY points against the SAME ring (pathological
-    // case: a domain-spanning ring with millions of vertices capturing tens
-    // of thousands of earlier rings) — bucketing the ring's segments by y
-    // makes each test O(segments-in-bucket) instead of O(all vertices).
+    // Point-in-polygon accelerator for one target ring. The capture step
+    // tests MANY points against the SAME ring (pathological case: a
+    // domain-spanning ring with millions of vertices capturing tens of
+    // thousands of earlier rings) — bucketing the ring's segments by y makes
+    // each test O(segments-in-bucket) instead of O(all vertices). GEOS has
+    // the natural structure for this (IndexedPointInAreaLocator), but GEOS
+    // is an optional dependency and contouring must work without it; GDAL
+    // core has no indexed point-in-polygon type.
     struct RingPIPIndex
     {
         double yMin = 0, yMax = 0, inv = 0;
@@ -188,8 +172,8 @@ template <typename PolygonWriter> class PolygonRingAppender
 
         void build(const Ring &r)
         {
-            yMin = r.bbYMin;
-            yMax = r.bbYMax;
+            yMin = r.bbox.MinY;
+            yMax = r.bbox.MaxY;
             const size_t nSeg = r.points.size();
             // A segment spanning dy is copied into about
             // dy * nBuckets / (yMax - yMin) + 1 buckets, so the total stored
@@ -274,112 +258,56 @@ template <typename PolygonWriter> class PolygonRingAppender
         }
     };
 
-    struct LevelIndex
+    // Per-level spatial index over TOP-LEVEL rings: a CPLQuadTree over ring
+    // bounding boxes. Stored features are slot indices into the level's ring
+    // vector (encoded in the pointer value, never dereferenced), so vector
+    // reallocation is harmless. Rings captured as interior rings of a later
+    // ring are removed from the tree and their slot tombstoned (points
+    // cleared) rather than erased, keeping the remaining indices stable.
+    struct QuadTreeDestroyer
     {
-        // Ring coordinates are raster pixel units here (the georeferencing
-        // transform is applied downstream by the writer), so a fixed cell a
-        // few tens of pixels wide keeps small rings in O(1) cells while the
-        // overflow list bounds domain-spanning rings.
-        static constexpr double cell = 32.0;
-        static constexpr size_t maxCells = 4096;
-
-        struct CellHash
+        void operator()(CPLQuadTree *t) const
         {
-            size_t operator()(const std::pair<long long, long long> &c) const
-            {
-                // Unsigned arithmetic: cells can be negative, and signed
-                // overflow / shifting negative values is undefined behavior.
-                const auto x = static_cast<std::uint64_t>(c.first);
-                const auto y = static_cast<std::uint64_t>(c.second);
-                return std::hash<std::uint64_t>()(x * 2654435761ULL ^
-                                                  (y << 21 | y >> 43));
-            }
-        };
-
-        std::unordered_map<std::pair<long long, long long>, std::vector<size_t>,
-                           CellHash>
-            cells;
-        std::vector<size_t> large;
-
-        static long long cellOf(double v)
-        {
-            return static_cast<long long>(std::floor(v / cell));
-        }
-
-        void insert(const Ring &r, size_t idx)
-        {
-            const long long x0 = cellOf(r.bbXMin), x1 = cellOf(r.bbXMax);
-            const long long y0 = cellOf(r.bbYMin), y1 = cellOf(r.bbYMax);
-            const size_t nCells = static_cast<size_t>(x1 - x0 + 1) *
-                                  static_cast<size_t>(y1 - y0 + 1);
-            if (nCells > maxCells)
-            {
-                large.push_back(idx);
-                return;
-            }
-            for (long long cx = x0; cx <= x1; cx++)
-                for (long long cy = y0; cy <= y1; cy++)
-                    cells[{cx, cy}].push_back(idx);
-        }
-
-        // Collect candidate slots whose bbox may contain point (px, py).
-        template <typename F> void forPoint(double px, double py, F f) const
-        {
-            auto it = cells.find({cellOf(px), cellOf(py)});
-            if (it != cells.end())
-                for (size_t idx : it->second)
-                    f(idx);
-            for (size_t idx : large)
-                f(idx);
-        }
-
-        // Collect candidate slots whose bbox may intersect the given bbox.
-        template <typename F>
-        void forBox(double xmin, double ymin, double xmax, double ymax,
-                    F f) const
-        {
-            const long long x0 = cellOf(xmin), x1 = cellOf(xmax);
-            const long long y0 = cellOf(ymin), y1 = cellOf(ymax);
-            if (static_cast<size_t>(x1 - x0 + 1) *
-                    static_cast<size_t>(y1 - y0 + 1) >
-                maxCells)
-            {
-                // huge query box: fall back to scanning every cell entry
-                for (const auto &kv : cells)
-                    for (size_t idx : kv.second)
-                        f(idx);
-            }
-            else
-            {
-                for (long long cx = x0; cx <= x1; cx++)
-                    for (long long cy = y0; cy <= y1; cy++)
-                    {
-                        auto it = cells.find({cx, cy});
-                        if (it != cells.end())
-                            for (size_t idx : it->second)
-                                f(idx);
-                    }
-            }
-            for (size_t idx : large)
-                f(idx);
+            CPLQuadTreeDestroy(t);
         }
     };
 
-    std::map<double, LevelIndex> index_;
+    std::map<double, std::unique_ptr<CPLQuadTree, QuadTreeDestroyer>> index_;
+    CPLRectObj domain_;
+
+    static void *slotFeature(std::size_t idx)
+    {
+        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(idx + 1));
+    }
+
+    static std::size_t featureSlot(void *f)
+    {
+        return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(f)) -
+               1;
+    }
+
+    static CPLRectObj ringRect(const Ring &r)
+    {
+        return CPLRectObj{r.bbox.MinX, r.bbox.MinY, r.bbox.MaxX, r.bbox.MaxY};
+    }
 
     PolygonWriter &writer_;
 
   public:
     const bool polygonize = true;
 
-    PolygonRingAppender(PolygonWriter &writer) : rings_(), writer_(writer)
+    PolygonRingAppender(PolygonWriter &writer, double minX, double minY,
+                        double maxX, double maxY)
+        : domain_{minX, minY, maxX, maxY}, writer_(writer)
     {
     }
 
     void addLine(double level, LineString &ls, bool)
     {
         auto &levelRings = rings_[level];
-        auto &levelIndex = index_[level];
+        auto &levelTree = index_[level];
+        if (!levelTree)
+            levelTree.reset(CPLQuadTreeCreate(&domain_, nullptr));
         if (ls.empty())
         {
             return;
@@ -388,21 +316,23 @@ template <typename PolygonWriter> class PolygonRingAppender
         Ring newRing;
         newRing.points.swap(ls);
         newRing.computeBBox();
-        // Find the top-level parent (if any) through the grid
-        // index instead of scanning every top-level ring, then descend the
-        // (short) nested sibling lists exactly as before.
+        // Find the top-level parent (if any) through the index instead of
+        // scanning every top-level ring, then descend the (short) nested
+        // sibling lists exactly as before.
         Ring *parentRing = nullptr;
         {
             Ring *top = nullptr;
-            levelIndex.forPoint(
-                newRing.points.front().x, newRing.points.front().y,
-                [&](size_t idx)
-                {
-                    Ring &cand = levelRings[idx];
-                    if (top == nullptr && !cand.points.empty() &&
-                        newRing.isIn(cand))
-                        top = &cand;
-                });
+            const auto &fp0 = newRing.points.front();
+            CPLRectObj aoi{fp0.x, fp0.y, fp0.x, fp0.y};
+            int nHits = 0;
+            void **hits = CPLQuadTreeSearch(levelTree.get(), &aoi, &nHits);
+            for (int h = 0; h < nHits && top == nullptr; h++)
+            {
+                Ring &cand = levelRings[featureSlot(hits[h])];
+                if (!cand.points.empty() && newRing.isIn(cand))
+                    top = &cand;
+            }
+            CPLFree(hits);
             if (top != nullptr)
             {
                 parentRing = top;
@@ -433,21 +363,24 @@ template <typename PolygonWriter> class PolygonRingAppender
             // inside the new ring, via the index. Build a per-target PIP
             // index lazily so a huge ring capturing many candidates costs
             // O(V + R * V/B), not O(R * V).
-            std::vector<size_t> captured;
+            std::vector<std::size_t> captured;
             RingPIPIndex pip;
             bool pipBuilt = false;
-            size_t nCandidates = 0;
-            levelIndex.forBox(
-                newRing.bbXMin, newRing.bbYMin, newRing.bbXMax, newRing.bbYMax,
-                [&](size_t idx)
+            std::size_t nCandidates = 0;
+            {
+                CPLRectObj aoi = ringRect(newRing);
+                int nHits = 0;
+                void **hits = CPLQuadTreeSearch(levelTree.get(), &aoi, &nHits);
+                for (int h = 0; h < nHits; h++)
                 {
+                    const std::size_t idx = featureSlot(hits[h]);
                     Ring &cand = levelRings[idx];
                     if (cand.points.empty())
-                        return;
+                        continue;
                     const auto &fp = cand.points.front();
-                    if (fp.x < newRing.bbXMin || fp.x > newRing.bbXMax ||
-                        fp.y < newRing.bbYMin || fp.y > newRing.bbYMax)
-                        return;
+                    if (fp.x < newRing.bbox.MinX || fp.x > newRing.bbox.MaxX ||
+                        fp.y < newRing.bbox.MinY || fp.y > newRing.bbox.MaxY)
+                        continue;
                     if (!pipBuilt && ++nCandidates > 16 &&
                         newRing.points.size() > 512)
                     {
@@ -458,17 +391,23 @@ template <typename PolygonWriter> class PolygonRingAppender
                         pipBuilt ? pip.contains(fp) : cand.isIn(newRing);
                     if (inside)
                         captured.push_back(idx);
-                });
+                }
+                CPLFree(hits);
+            }
             std::sort(captured.begin(), captured.end());
             captured.erase(std::unique(captured.begin(), captured.end()),
                            captured.end());
-            for (size_t idx : captured)
+            for (std::size_t idx : captured)
             {
+                CPLRectObj rb = ringRect(levelRings[idx]);
+                CPLQuadTreeRemove(levelTree.get(), slotFeature(idx), &rb);
                 newRing.interiorRings.push_back(std::move(levelRings[idx]));
                 levelRings[idx].points.clear();  // tombstone the slot
             }
             levelRings.push_back(std::move(newRing));
-            levelIndex.insert(levelRings.back(), levelRings.size() - 1);
+            CPLRectObj nb = ringRect(levelRings.back());
+            CPLQuadTreeInsertWithBounds(
+                levelTree.get(), slotFeature(levelRings.size() - 1), &nb);
         }
         else
         {
