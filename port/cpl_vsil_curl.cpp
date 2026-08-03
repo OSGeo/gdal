@@ -1097,17 +1097,19 @@ void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
     m_runCv.wait(l,
                  [&easyHandles, this]
                  {
-                     for (auto doneIt = m_doneHandles.begin();
-                          doneIt != m_doneHandles.end(); ++doneIt)
+                     auto doneIt = m_doneHandles.begin();
+                     while (doneIt != m_doneHandles.end())
                      {
                          CURL *done = *doneIt;
                          auto easyIt = std::find(easyHandles.begin(),
                                                  easyHandles.end(), done);
                          if (easyIt != easyHandles.end())
                          {
-                             m_doneHandles.erase(doneIt);
+                             doneIt = m_doneHandles.erase(doneIt);
                              easyHandles.erase(easyIt);
                          }
+                         else
+                             doneIt++;
                      }
                      return easyHandles.empty();
                  });

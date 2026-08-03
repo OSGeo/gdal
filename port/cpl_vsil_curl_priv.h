@@ -45,7 +45,7 @@ class RunThreadUser
 {
   public:
     /// Constructor
-    RunThreadUser(VSICurlFilesystemHandlerBase &handler);
+    explicit RunThreadUser(VSICurlFilesystemHandlerBase &handler);
     /// Destructor
     ~RunThreadUser();
 
