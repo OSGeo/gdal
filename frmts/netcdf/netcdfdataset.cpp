@@ -114,6 +114,9 @@ static CPLErr NCDFGetVarFullName(int nGroupId, int nVarId,
                                  bool bNC3Compat = true);
 static CPLErr NCDFGetRootGroup(int nStartGroupId, int *pnRootGroupId);
 
+static std::pair<int, int> ReadExtraDimDef(GDALDataset *poSrcDS,
+                                           const char *pszDimName);
+
 static CPLErr NCDFResolveVarFullName(int nStartGroupId, const char *pszVar,
                                      std::string &osFullName,
                                      bool bMandatory = false);
@@ -9631,15 +9634,42 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (!pfnProgress(0.0, nullptr, pProgressData))
         return nullptr;
 
+    // Check for extra dimensions.
+    int nDim = 2;
+    CPLStringList aosExtraDimNames =
+        NCDFTokenizeArray(poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA", ""));
+
     // Same as in Create().
     CPLStringList aosOptions(CSLDuplicate(papszOptions));
-    if (aosOptions.FetchNameValue("FORMAT") == nullptr &&
-        (eDT == GDT_UInt16 || eDT == GDT_UInt32 || eDT == GDT_UInt64 ||
-         eDT == GDT_Int64))
+    if (aosOptions.FetchNameValue("FORMAT") == nullptr)
     {
-        CPLDebug("netCDF", "Selecting FORMAT=NC4 due to data type");
-        aosOptions.SetNameValue("FORMAT", "NC4");
+        if (eDT == GDT_UInt16 || eDT == GDT_UInt32 || eDT == GDT_UInt64 ||
+            eDT == GDT_Int64)
+        {
+            CPLDebug("netCDF", "Selecting FORMAT=NC4 due to data type");
+            aosOptions.SetNameValue("FORMAT", "NC4");
+        }
+        else if (!aosExtraDimNames.empty())
+        {
+            for (const auto &pszDimName : aosExtraDimNames)
+            {
+                const auto [nDimSize, nDimType] =
+                    ReadExtraDimDef(poSrcDS, pszDimName);
+                {
+                    if (nDimType > NC_DOUBLE)
+                    {
+                        CPLDebug("netCDF",
+                                 "Selecting FORMAT=NC4 due to data type of "
+                                 "extra dimension '%s'",
+                                 pszDimName);
+                        aosOptions.SetNameValue("FORMAT", "NC4");
+                        break;
+                    }
+                }
+            }
+        }
     }
+
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename, nXSize, nYSize,
                                                   nBands, aosOptions.List());
     if (!poDS)
@@ -9659,11 +9689,6 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     pfnProgress(0.1, nullptr, pProgressData);
 
-    // Check for extra dimensions.
-    int nDim = 2;
-    CPLStringList aosExtraDimNames =
-        NCDFTokenizeArray(poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA", ""));
-
     if (!aosExtraDimNames.empty())
     {
         size_t nDimSizeTot = 1;
@@ -9671,12 +9696,8 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         // for( int i=0; i<CSLCount(papszExtraDimNames ); i++ ) {
         for (int i = aosExtraDimNames.size() - 1; i >= 0; i--)
         {
-            char szTemp[NC_MAX_NAME + 32 + 1];
-            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
-                     aosExtraDimNames[i]);
-            const CPLStringList aosExtraDimValues =
-                NCDFTokenizeArray(poSrcDS->GetMetadataItem(szTemp, ""));
-            const size_t nDimSize = atol(aosExtraDimValues[0]);
+            const auto [nDimSize, _] =
+                ReadExtraDimDef(poSrcDS, aosExtraDimNames[i]);
             nDimSizeTot *= nDimSize;
         }
         if (nDimSizeTot == (size_t)nBands)
@@ -12059,6 +12080,24 @@ static CPLErr NCDFGetRootGroup(int nStartGroupId, int *pnRootGroupId)
     }
 
     return CE_None;
+}
+
+// Read the size and type of an extra dimension
+static std::pair<int, int> ReadExtraDimDef(GDALDataset *poSrcDS,
+                                           const char *pszDimName)
+{
+    static char szTemp[NC_MAX_NAME + 32 + 1];
+    snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF", pszDimName);
+    const CPLStringList aosExtraDimValues =
+        NCDFTokenizeArray(poSrcDS->GetMetadataItem(szTemp, ""));
+    const int nDimSize =
+        aosExtraDimValues.empty() ? 0 : atoi(aosExtraDimValues[0]);
+
+    // nc_type is an enum in netcdf-3, needs casting.
+    const int nVarType = static_cast<nc_type>(
+        aosExtraDimValues.size() >= 2 ? atol(aosExtraDimValues[1]) : 0);
+
+    return {nDimSize, nVarType};
 }
 
 // Implementation of NCDFResolveVar/Att.

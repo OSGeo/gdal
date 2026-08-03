@@ -7063,3 +7063,17 @@ def test_netcdf_invalid_grid_mapping_attribute():
         "'tas' references grid mapping variable 'Polar Stereographic'",
     ):
         gdal.Open("data/netcdf/tas_broken_grid_mapping.nc")
+
+
+###############################################################################
+# Cf https://github.com/OSGeo/gdal/issues/14989
+
+
+def test_netcdf_auto_nc4_via_extra_dim(tmp_path):
+
+    gdal.Translate(tmp_path / "out.nc", "data/netcdf/era5_t2m.nc")
+
+    assert (
+        gdal.MultiDimInfo(tmp_path / "out.nc")["structural_info"]["NC_FORMAT"]
+        == "NETCDF4"
+    )
