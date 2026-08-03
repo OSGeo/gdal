@@ -22,6 +22,8 @@
 #include <numeric>
 #include <set>
 #include <string_view>
+//ABELL
+#include <iostream>
 
 #include "cpl_aws.h"
 #include "cpl_json.h"
@@ -131,6 +133,43 @@ void VSICurlAuthParametersChanged()
 // Use VSICURLGetDownloadChunkSize() and GetMaxRegions()
 static int N_MAX_REGIONS_DO_NOT_USE_DIRECTLY = 0;
 static int DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 0;
+
+// RAII to start/stop run thread.
+cpl::RunThreadUser::RunThreadUser(VSICurlFilesystemHandlerBase &handler)
+    : m_handler(handler)
+{
+    m_handler.IncUseCount();
+}
+
+cpl::RunThreadUser::~RunThreadUser()
+{
+    m_handler.DecUseCount();
+}
+
+/************************************************************************/
+/*                          VSICURLMultiInit()                          */
+/************************************************************************/
+
+static CURLM *VSICURLMultiInit()
+{
+    CURLM *hCurlMultiHandle = curl_multi_init();
+
+    if (const char *pszMAXCONNECTS =
+            CPLGetConfigOption("GDAL_HTTP_MAX_CACHED_CONNECTIONS", nullptr))
+    {
+        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAXCONNECTS,
+                          atoi(pszMAXCONNECTS));
+    }
+
+    if (const char *pszMAX_TOTAL_CONNECTIONS =
+            CPLGetConfigOption("GDAL_HTTP_MAX_TOTAL_CONNECTIONS", nullptr))
+    {
+        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                          atoi(pszMAX_TOTAL_CONNECTIONS));
+    }
+
+    return hCurlMultiHandle;
+}
 
 /************************************************************************/
 /*                   VSICURLReadGlobalEnvVariables()                    */
@@ -596,6 +635,8 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
       m_bUseHead(
           CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
 {
+    poFS->IncUseCount();
+
     if (pszURLIn)
     {
         m_pszURL = CPLStrdup(pszURLIn);
@@ -625,6 +666,8 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
 
 VSICurlHandle::~VSICurlHandle()
 {
+    poFS->DecUseCount();
+
     if (m_oThreadAdviseRead.joinable())
     {
         m_oThreadAdviseRead.join();
@@ -970,6 +1013,239 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
     return CPLYMDHMSToUnixTime(&brokendowntime) + nDelay;
 }
 
+namespace cpl
+{
+
+void VSICurlFilesystemHandlerBase::StartRunThread()
+{
+    if (m_runThread)
+        return;
+
+    m_stop = false;
+    m_runThread.reset(
+        new std::thread(&VSICurlFilesystemHandlerBase::Run, this));
+}
+
+void VSICurlFilesystemHandlerBase::StopRunThread()
+{
+    if (!m_runThread)
+        return;
+
+    // Tell the thread to stop.
+    m_stop = true;
+    curl_multi_wakeup(m_multi);
+
+    // Wait for run thread to stop.
+    m_runThread->join();
+    m_runThread.reset();
+}
+
+// Increment the handle count. If this is the first handle, start the run loop.
+void VSICurlFilesystemHandlerBase::IncUseCount()
+{
+    std::lock_guard l(m_handleMutex);
+
+    if (m_useCount == 0)
+        StartRunThread();
+    m_useCount++;
+}
+
+// Decrement the handle count. If this is the last handle, stop and join the run loop.
+void VSICurlFilesystemHandlerBase::DecUseCount()
+{
+    std::lock_guard l(m_handleMutex);
+
+    m_useCount--;
+    if (m_useCount == 0)
+        StopRunThread();
+}
+
+// Perform work on handle and wait for completion.
+void VSICurlFilesystemHandlerBase::Perform(CURL *easyHandle)
+{
+    std::unique_lock l(m_runMutex);
+
+    m_readyHandles.push_back(easyHandle);
+    curl_multi_wakeup(m_multi);
+
+    // Wait until the handle is on the done list.
+    m_runCv.wait(l,
+                 [easyHandle, this]
+                 {
+                     auto it = std::find(m_doneHandles.begin(),
+                                         m_doneHandles.end(), easyHandle);
+                     bool complete = (it != m_doneHandles.end());
+                     if (complete)
+                         m_doneHandles.erase(it);
+                     return complete;
+                 });
+}
+
+// Perform work on some handles and wait for them to complete.
+void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
+{
+    if (easyHandles.empty())
+        return;
+
+    std::unique_lock l(m_runMutex);
+
+    for (CURL *handle : easyHandles)
+        m_readyHandles.push_back(handle);
+    curl_multi_wakeup(m_multi);
+
+    // Wait until all the requests have completed.
+    m_runCv.wait(l,
+                 [&easyHandles, this]
+                 {
+                     for (auto doneIt = m_doneHandles.begin();
+                          doneIt != m_doneHandles.end(); ++doneIt)
+                     {
+                         CURL *done = *doneIt;
+                         auto easyIt = std::find(easyHandles.begin(),
+                                                 easyHandles.end(), done);
+                         if (easyIt != easyHandles.end())
+                         {
+                             m_doneHandles.erase(doneIt);
+                             easyHandles.erase(easyIt);
+                         }
+                     }
+                     return easyHandles.empty();
+                 });
+}
+
+//
+void VSICurlFilesystemHandlerBase::Interrupt(CURL *easyHandle)
+{
+    std::lock_guard l(m_runMutex);
+
+    m_interruptedHandles.push_back(easyHandle);
+    curl_multi_wakeup(m_multi);
+}
+
+// If we have any ready easy handles, add them to the multi handle and clear them from
+// the ready list.
+int VSICurlFilesystemHandlerBase::HandleReady()
+{
+    std::lock_guard l(m_runMutex);
+
+    for (CURL *easyHandle : m_readyHandles)
+    {
+        curl_multi_add_handle(m_multi, easyHandle);
+        m_runningCount++;
+    }
+    m_readyHandles.clear();
+    return m_runningCount;
+}
+
+// Handle any interrupted handles.
+bool VSICurlFilesystemHandlerBase::HandleInterrupted()
+{
+    std::lock_guard l(m_runMutex);
+
+    if (m_interruptedHandles.empty())
+        return false;
+
+    // The assumption here is that if you've interrupted a transfer, you don't really
+    // care about the result of the transfer, so just remove it and say we're done.
+    for (CURL *easyHandle : m_interruptedHandles)
+    {
+        curl_multi_remove_handle(m_multi, easyHandle);
+        m_doneHandles.push_back(easyHandle);
+        m_runningCount--;
+    }
+    m_interruptedHandles.clear();
+    return true;
+}
+
+// Handle any completed easy handles by removing them from the multi handle and
+// adding them to the done list.
+bool VSICurlFilesystemHandlerBase::HandleCompleted()
+{
+    bool notify = false;
+    while (true)
+    {
+        int msgCnt;
+        CURLMsg *m = curl_multi_info_read(m_multi, &msgCnt);
+        if (!m)
+            break;
+        if (m->msg != CURLMSG_DONE)
+            continue;
+
+        curl_multi_remove_handle(m_multi, m->easy_handle);
+
+        std::lock_guard l(m_runMutex);
+
+        m_runningCount--;
+        m_doneHandles.push_back(m->easy_handle);
+        // Need to do something with the return code.
+        long code;
+        curl_easy_getinfo(m->easy_handle, CURLINFO_RESPONSE_CODE, &code);
+        notify = true;
+    }
+    return notify;
+}
+
+// Abort all the running transfers as curl has failed internally. Remove the handle.
+bool VSICurlFilesystemHandlerBase::HandleFailure()
+{
+    CURL **easyHandles = curl_multi_get_handles(m_multi);
+
+    if (easyHandles)
+    {
+        std::lock_guard l(m_runMutex);
+
+        CURL **list = easyHandles;
+        for (CURL *easyHandle = *list++; easyHandle; easyHandle = *list++)
+        {
+            m_runningCount--;
+            m_doneHandles.push_back(easyHandle);
+            curl_multi_remove_handle(m_multi, easyHandle);
+        }
+        curl_free(easyHandles);
+    }
+
+    // Notify if we had any easy handles.
+    return static_cast<bool>(easyHandles);
+}
+
+// Loop to handle Curl requests.
+void VSICurlFilesystemHandlerBase::Run()
+{
+    m_multi = VSICURLMultiInit();
+    while (true)
+    {
+        if (m_stop)
+            break;
+
+        // Add ready transfers to the multi handle to run. If there is nothing to run
+        // (HandleReady() returns 0), wait for a second. However, the curl_multi_poll
+        // call will break before the 1 sec. timeout if a new handle is added.
+        if (HandleReady() == 0)
+        {
+            curl_multi_poll(m_multi, nullptr, 0, 1000, nullptr);
+            continue;
+        }
+
+        int stillRunning;
+        CURLMcode result = curl_multi_perform(m_multi, &stillRunning);
+        if (result == CURLM_OK && stillRunning)
+            result = curl_multi_poll(m_multi, nullptr, 0, 200, nullptr);
+
+        bool notify = HandleInterrupted();
+
+        if (result != CURLM_OK)
+            notify |= HandleFailure();
+        else
+            notify |= HandleCompleted();
+        if (notify)
+            m_runCv.notify_all();
+    }
+    VSICURLMultiCleanup(m_multi);
+    m_multi = nullptr;
+}
+
+}  // namespace cpl
+
 /************************************************************************/
 /*                        VSICURLMultiPerform()                         */
 /************************************************************************/
@@ -977,8 +1253,6 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
                          std::atomic<bool> *pbInterrupt)
 {
-    int repeats = 0;
-
     if (hEasyHandle)
         curl_multi_add_handle(hCurlMultiHandle, hEasyHandle);
 
@@ -1009,7 +1283,7 @@ void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
         } while (msg);
 #endif
 
-        CPLMultiPerformWait(hCurlMultiHandle, repeats);
+        CPLMultiPerformWait(hCurlMultiHandle);
 
         if (pbInterrupt && *pbInterrupt)
             break;
@@ -1246,7 +1520,8 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
 
     oFileProp.bHasComputedFileSize = true;
 
-    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
+    //ABELL
+    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
     UpdateQueryString();
 
@@ -1355,7 +1630,9 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
+    poFS->Perform(hCurlHandle);
+    //ABELL
+    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -2156,7 +2433,8 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
     }
 
 begin:
-    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
+    //ABELL
+    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
     UpdateQueryString();
 
@@ -2232,7 +2510,9 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
+    poFS->Perform(hCurlHandle);
+    //ABELL
+    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -2754,20 +3034,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                                                 panSizes);
     }
 
-    CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
-#ifdef CURLPIPE_MULTIPLEX
-    // Enable HTTP/2 multiplexing (ignored if an older version of HTTP is
-    // used)
-    // Not that this does not enable HTTP/1.1 pipeling, which is not
-    // recommended for example by Google Cloud Storage.
-    // For HTTP/1.1, parallel connections work better since you can get
-    // results out of order.
-    if (CPLTestBool(CPLGetConfigOption("GDAL_HTTP_MULTIPLEX", "YES")))
-    {
-        curl_multi_setopt(hMultiHandle, CURLMOPT_PIPELINING,
-                          CURLPIPE_MULTIPLEX);
-    }
-#endif
+    //ABELL
+    //    CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
 
     struct CurlErrBuffer
     {
@@ -2851,13 +3119,13 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
     {
         const size_t nRequests = asMergedRequests.size();
         std::vector<CURL *> aHandles(nRequests, nullptr);
+        std::vector<CURL *> performHandles;
         std::vector<WriteFuncStruct> asWriteFuncData(nRequests);
         std::vector<WriteFuncStruct> asWriteFuncHeaderData(nRequests);
         std::vector<char *> apszRanges(nRequests, nullptr);
         std::vector<struct curl_slist *> aHeaders(nRequests, nullptr);
         std::vector<CurlErrBuffer> asCurlErrors(nRequests);
 
-        bool bAnyHandle = false;
         for (size_t iReq = 0; iReq < nRequests; iReq++)
         {
             if (!asMergedRequests[iReq].bToRetry)
@@ -2865,8 +3133,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
             asMergedRequests[iReq].bToRetry = false;
 
             CURL *hCurlHandle = curl_easy_init();
+            performHandles.push_back(hCurlHandle);
             aHandles[iReq] = hCurlHandle;
-            bAnyHandle = true;
 
             struct curl_slist *headers = VSICurlSetOptions(
                 hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
@@ -2926,13 +3194,9 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
             aHeaders[iReq] = headers;
-            curl_multi_add_handle(hMultiHandle, hCurlHandle);
         }
 
-        if (bAnyHandle)
-        {
-            VSICURLMultiPerform(hMultiHandle);
-        }
+        poFS->Perform(performHandles);
 
         // Process results
         bool bRetry = false;
@@ -3024,7 +3288,6 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                 }
             }
 
-            curl_multi_remove_handle(hMultiHandle, aHandles[iReq]);
             VSICURLResetHeaderAndWriterFunctions(aHandles[iReq]);
             curl_easy_cleanup(aHandles[iReq]);
             CPLFree(apszRanges[iReq]);
@@ -3104,7 +3367,8 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                               panOffsets + nHalf, panSizes + nHalf);
     }
 
-    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
+    //ABELL
+    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
@@ -3153,7 +3417,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     headers = GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+    poFS->Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -3483,6 +3747,8 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     CPLStringList aosHTTPOptions(m_aosHTTPOptions);
     std::string osURL;
     {
+        //ABELL - Why this lock? Both UpdateQueryString() and GetRedirectURL...() are called
+        // other places without this lock.
         std::lock_guard<std::mutex> oLock(m_oMutex);
         UpdateQueryString();
         bool bHasExpired;
@@ -3542,14 +3808,19 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                                &szCurlErrBuf[0]);
 
     {
+        //ABELL - Why this lock?
         std::lock_guard<std::mutex> oLock(m_oMutex);
         headers =
             const_cast<VSICurlHandle *>(this)->GetCurlHeaders("GET", headers);
     }
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
+    //ABELL
+    /**
     CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
     VSICURLMultiPerform(hMultiHandle, hCurlHandle, &m_bInterrupt);
+    **/
+    poFS->Perform(hCurlHandle);
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
@@ -3616,31 +3887,6 @@ size_t VSICurlHandle::GetAdviseReadTotalBytesLimit() const
             CPLGetConfigOption("CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT",
                                "104857600"),
             nullptr, 10)));
-}
-
-/************************************************************************/
-/*                          VSICURLMultiInit()                          */
-/************************************************************************/
-
-static CURLM *VSICURLMultiInit()
-{
-    CURLM *hCurlMultiHandle = curl_multi_init();
-
-    if (const char *pszMAXCONNECTS =
-            CPLGetConfigOption("GDAL_HTTP_MAX_CACHED_CONNECTIONS", nullptr))
-    {
-        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAXCONNECTS,
-                          atoi(pszMAXCONNECTS));
-    }
-
-    if (const char *pszMAX_TOTAL_CONNECTIONS =
-            CPLGetConfigOption("GDAL_HTTP_MAX_TOTAL_CONNECTIONS", nullptr))
-    {
-        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS,
-                          atoi(pszMAX_TOTAL_CONNECTIONS));
-    }
-
-    return hCurlMultiHandle;
 }
 
 /************************************************************************/
@@ -3750,20 +3996,6 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
         NetworkStatisticsFile oContextFile(m_osFilename.c_str());
         NetworkStatisticsAction oContextAction("AdviseRead");
-
-#ifdef CURLPIPE_MULTIPLEX
-        // Enable HTTP/2 multiplexing (ignored if an older version of HTTP is
-        // used)
-        // Not that this does not enable HTTP/1.1 pipeling, which is not
-        // recommended for example by Google Cloud Storage.
-        // For HTTP/1.1, parallel connections work better since you can get
-        // results out of order.
-        if (CPLTestBool(CPLGetConfigOption("GDAL_HTTP_MULTIPLEX", "YES")))
-        {
-            curl_multi_setopt(m_hCurlMultiHandleForAdviseRead,
-                              CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
-        }
-#endif
 
         size_t nTotalDownloaded = 0;
 
@@ -3960,8 +4192,6 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 }
             };
 
-            int repeats = 0;
-
             void *old_handler = CPLHTTPIgnoreSigPipe();
             while (true)
             {
@@ -3989,7 +4219,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                     }
                 } while (msg);
 
-                CPLMultiPerformWait(m_hCurlMultiHandleForAdviseRead, repeats);
+                CPLMultiPerformWait(m_hCurlMultiHandleForAdviseRead);
             }
             CPLHTTPRestoreSigPipeHandler(old_handler);
 
@@ -4104,92 +4334,13 @@ VSICurlFilesystemHandlerBase::VSICurlFilesystemHandlerBase()
 }
 
 /************************************************************************/
-/*                           CachedConnection                           */
-/************************************************************************/
-
-namespace
-{
-struct CachedConnection
-{
-    CURLM *hCurlMultiHandle = nullptr;
-    void clear();
-
-    ~CachedConnection()
-    {
-        clear();
-    }
-};
-}  // namespace
-
-#ifdef _WIN32
-// Currently thread_local and C++ objects don't work well with DLL on Windows
-static void FreeCachedConnection(void *pData)
-{
-    delete static_cast<
-        std::map<VSICurlFilesystemHandlerBase *, CachedConnection> *>(pData);
-}
-
-// Per-thread and per-filesystem Curl connection cache.
-static std::map<VSICurlFilesystemHandlerBase *, CachedConnection> &
-GetConnectionCache()
-{
-    static std::map<VSICurlFilesystemHandlerBase *, CachedConnection>
-        dummyCache;
-    int bMemoryErrorOccurred = false;
-    void *pData =
-        CPLGetTLSEx(CTLS_VSICURL_CACHEDCONNECTION, &bMemoryErrorOccurred);
-    if (bMemoryErrorOccurred)
-    {
-        return dummyCache;
-    }
-    if (pData == nullptr)
-    {
-        auto cachedConnection =
-            new std::map<VSICurlFilesystemHandlerBase *, CachedConnection>();
-        CPLSetTLSWithFreeFuncEx(CTLS_VSICURL_CACHEDCONNECTION, cachedConnection,
-                                FreeCachedConnection, &bMemoryErrorOccurred);
-        if (bMemoryErrorOccurred)
-        {
-            delete cachedConnection;
-            return dummyCache;
-        }
-        return *cachedConnection;
-    }
-    return *static_cast<
-        std::map<VSICurlFilesystemHandlerBase *, CachedConnection> *>(pData);
-}
-#else
-static thread_local std::map<VSICurlFilesystemHandlerBase *, CachedConnection>
-    g_tls_connectionCache;
-
-static std::map<VSICurlFilesystemHandlerBase *, CachedConnection> &
-GetConnectionCache()
-{
-    return g_tls_connectionCache;
-}
-#endif
-
-/************************************************************************/
-/*                               clear()                                */
-/************************************************************************/
-
-void CachedConnection::clear()
-{
-    if (hCurlMultiHandle)
-    {
-        VSICURLMultiCleanup(hCurlMultiHandle);
-        hCurlMultiHandle = nullptr;
-    }
-}
-
-/************************************************************************/
 /*                   ~VSICurlFilesystemHandlerBase()                    */
 /************************************************************************/
 
 VSICurlFilesystemHandlerBase::~VSICurlFilesystemHandlerBase()
 {
+    StopRunThread();
     VSICurlFilesystemHandlerBase::ClearCache();
-    GetConnectionCache().erase(this);
 
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
@@ -4215,21 +4366,6 @@ bool VSICurlFilesystemHandlerBase::AllowCachedDataFor(const char *pszFilename)
     }
     CSLDestroy(papszTokens);
     return bCachedAllowed;
-}
-
-/************************************************************************/
-/*                       GetCurlMultiHandleFor()                        */
-/************************************************************************/
-
-CURLM *VSICurlFilesystemHandlerBase::GetCurlMultiHandleFor(
-    const std::string & /*osURL*/)
-{
-    auto &conn = GetConnectionCache()[this];
-    if (conn.hCurlMultiHandle == nullptr)
-    {
-        conn.hCurlMultiHandle = VSICURLMultiInit();
-    }
-    return conn.hCurlMultiHandle;
 }
 
 /************************************************************************/
@@ -4420,8 +4556,6 @@ void VSICurlFilesystemHandlerBase::ClearCache()
 
     oCacheDirList.clear();
     nCachedFilesInDirList = 0;
-
-    GetConnectionCache()[this].clear();
 }
 
 /************************************************************************/
@@ -5447,6 +5581,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     if (STARTS_WITH(osURL.c_str(), "ftp://"))
     {
+        // Start Run thread if necessary.
+        RunThreadUser threadUser(*this);
+
         WriteFuncStruct sWriteFuncData;
         sWriteFuncData.pBuffer = nullptr;
 
@@ -5455,7 +5592,8 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         char **papszFileList = nullptr;
 
-        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
+        //ABELL
+        //        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
         CURL *hCurlHandle = curl_easy_init();
 
         for (int iTry = 0; iTry < 2; iTry++)
@@ -5485,7 +5623,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+            Perform(hCurlHandle);
+            //ABELL
+            //            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
             curl_slist_free_all(headers);
 
@@ -5633,10 +5773,13 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     else if (STARTS_WITH(osURL.c_str(), "http://") ||
              STARTS_WITH(osURL.c_str(), "https://"))
     {
+        RunThreadUser threadUser(*this);
+
         std::string osDirname(std::move(osURL));
         osDirname += '/';
 
-        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
+        //ABELL
+        //        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
         CURL *hCurlHandle = curl_easy_init();
 
         struct curl_slist *headers =
@@ -5657,7 +5800,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+        //ABELL
+        //        VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+        Perform(hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -6186,8 +6331,11 @@ long CurlRequestHelper::perform(CURL *hCurlHandle, struct curl_slist *headers,
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
+    poFS->Perform(hCurlHandle);
+    /**
     VSICURLMultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                         hCurlHandle);
+    **/
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 

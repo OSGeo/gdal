@@ -238,7 +238,6 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
         m_nChunkedBufferOff = 0;
         m_nChunkedBufferSize = nBytesToWrite;
 
-        int repeats = 0;
         // cppcheck-suppress knownConditionTrueFalse
         while (m_nChunkedBufferOff < m_nChunkedBufferSize && !bRetry)
         {
@@ -246,13 +245,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
 
             memset(&m_osCurlErrBuf[0], 0, m_osCurlErrBuf.size());
 
-            while (curl_multi_perform(m_hCurlMulti, &still_running) ==
-                       CURLM_CALL_MULTI_PERFORM &&
-                   // cppcheck-suppress knownConditionTrueFalse
-                   m_nChunkedBufferOff < m_nChunkedBufferSize)
-            {
-                // loop
-            }
+            curl_multi_perform(m_hCurlMulti, &still_running);
             // cppcheck-suppress knownConditionTrueFalse
             if (!still_running || m_nChunkedBufferOff == m_nChunkedBufferSize)
                 break;
@@ -322,7 +315,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
                 }
             } while (msg);
 
-            CPLMultiPerformWait(m_hCurlMulti, repeats);
+            CPLMultiPerformWait(m_hCurlMulti);
         }
 
         m_nWrittenInPUT += nBytesToWrite;

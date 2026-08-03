@@ -201,7 +201,27 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         std::string osData{};
     };
 
-    std::mutex m_oMutex{};
+    int m_useCount = 0;  // Count of users of the run thread.
+    std::atomic<bool> m_stop;
+    std::condition_variable m_runCv;
+    std::mutex m_handleMutex;
+    std::unique_ptr<std::thread> m_runThread;
+    std::mutex m_runMutex;  // Protects data associated with the run thread.
+    std::vector<CURL *> m_readyHandles;
+    std::vector<CURL *> m_interruptedHandles;
+    std::vector<CURL *> m_doneHandles;
+    CURLM *m_multi = nullptr;
+    int m_runningCount = 0;  // Count of running easy handles
+
+    void Run();
+    void StartRunThread();
+    void StopRunThread();
+    int HandleReady();
+    bool HandleInterrupted();
+    bool HandleCompleted();
+    bool HandleFailure();
+
+    std::mutex m_oMutex{};  // Map region mutex.
     std::map<std::string, std::unique_ptr<RegionInDownload>>
         m_oMapRegionInDownload{};
 
@@ -298,7 +318,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     static void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void InvalidateCachedData(const char *pszURL);
 
-    CURLM *GetCurlMultiHandleFor(const std::string &osURL);
+    //    CURLM *GetCurlMultiHandleFor(const std::string &osURL);
 
     virtual void ClearCache();
     virtual void PartialClearCache(const char *pszFilename);
@@ -311,6 +331,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
+
+    void IncUseCount();
+    void DecUseCount();
+    void Interrupt(CURL *easyHandle);
+    void Perform(CURL *easyHandle);
+    void Perform(std::vector<CURL *> easyHandles);
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
 
@@ -389,8 +415,7 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
 
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
-
-    mutable std::atomic<bool> m_bInterrupt = false;
+    bool m_bInterrupt = false;
 
     // Specific to Planetary Computer signing:
     // https://planetarycomputer.microsoft.com/docs/concepts/sas/
@@ -496,6 +521,7 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
 
     void Interrupt() override
     {
+        poFS->Interrupt(this);
         m_bInterrupt = true;
     }
 

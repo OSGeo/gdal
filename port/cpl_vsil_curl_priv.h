@@ -35,4 +35,21 @@ int VSICurlUninstallReadCbk(VSILFILE *fp);
 
 void VSICurlAuthParametersChanged();
 
+namespace cpl
+{
+
+class VSICurlFilesystemHandlerBase;
+
+// RAII to start/stop run thread.
+class RunThreadUser
+{
+  public:
+    RunThreadUser(VSICurlFilesystemHandlerBase &handler);
+    ~RunThreadUser();
+
+  private:
+    VSICurlFilesystemHandlerBase &m_handler;
+};
+}  // namespace cpl
+
 #endif  // CPL_VSIL_CURL_PRIV_H_INCLUDED
