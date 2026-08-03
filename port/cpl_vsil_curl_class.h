@@ -202,7 +202,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     };
 
     int m_useCount = 0;  // Count of users of the run thread.
-    std::atomic<bool> m_stop(false);
+    std::atomic<bool> m_stop{false};
     std::condition_variable m_runCv;
     std::mutex m_handleMutex{};
     std::unique_ptr<std::thread> m_runThread;
