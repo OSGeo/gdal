@@ -145,6 +145,25 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBase)
 
+    enum class HandleState
+    {
+        Ready,
+        Running,
+        Interrupted,
+        Done
+    };
+
+    /// Handle/State pair.
+    struct Handle
+    {
+        Handle(CURL *curl) : m_curl(curl), m_state(HandleState::Ready)
+        {
+        }
+
+        CURL *m_curl{nullptr};
+        HandleState m_state{HandleState::Ready};
+    };
+
     struct FilenameOffsetPair
     {
         std::string filename_;
@@ -201,17 +220,14 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         std::string osData{};
     };
 
-    int m_useCount = 0;  // Count of users of the run thread.
+    std::mutex m_useMutex{};  // Protects the use count
+    int m_useCount = 0;       // Count of users of the run thread.
     std::atomic<bool> m_stop{false};
     std::condition_variable m_runCv{};
-    std::mutex m_handleMutex{};
     std::unique_ptr<std::thread> m_runThread{};
     std::mutex m_runMutex{};  // Protects data associated with the run thread.
-    std::vector<CURL *> m_readyHandles{};
-    std::vector<CURL *> m_interruptedHandles{};
-    std::vector<CURL *> m_doneHandles{};
+    std::vector<Handle> m_handles{};
     CURLM *m_multi = nullptr;
-    int m_runningCount = 0;  // Count of running easy handles
 
     void Run();
     void StartRunThread();
@@ -220,6 +236,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     bool HandleInterrupted();
     bool HandleCompleted();
     bool HandleFailure();
+    bool RemoveDoneHandle(CURL *easyHandle);
 
     std::mutex m_oMutex{};  // Map region mutex.
     std::map<std::string, std::unique_ptr<RegionInDownload>>

@@ -1043,7 +1043,7 @@ void VSICurlFilesystemHandlerBase::StopRunThread()
 // Increment the handle count. If this is the first handle, start the run loop.
 void VSICurlFilesystemHandlerBase::IncUseCount()
 {
-    std::lock_guard l(m_handleMutex);
+    std::lock_guard l(m_useMutex);
 
     if (m_useCount == 0)
         StartRunThread();
@@ -1053,11 +1053,31 @@ void VSICurlFilesystemHandlerBase::IncUseCount()
 // Decrement the handle count. If this is the last handle, stop and join the run loop.
 void VSICurlFilesystemHandlerBase::DecUseCount()
 {
-    std::lock_guard l(m_handleMutex);
+    std::lock_guard l(m_useMutex);
 
     m_useCount--;
     if (m_useCount == 0)
         StopRunThread();
+}
+
+// Must be called under lock.
+bool VSICurlFilesystemHandlerBase::RemoveDoneHandle(CURL *easyHandle)
+{
+    // Remove 'easyHandle' from the handle list if it's done.
+    for (auto it = m_handles.begin(); it != m_handles.end(); ++it)
+    {
+        Handle &handle = *it;
+        if (handle.m_curl == easyHandle)
+        {
+            if (handle.m_state == HandleState::Done)
+            {
+                m_handles.erase(it);
+                return true;
+            }
+            break;
+        }
+    }
+    return false;
 }
 
 // Perform work on handle and wait for completion.
@@ -1065,20 +1085,12 @@ void VSICurlFilesystemHandlerBase::Perform(CURL *easyHandle)
 {
     std::unique_lock l(m_runMutex);
 
-    m_readyHandles.push_back(easyHandle);
+    m_handles.push_back(Handle(easyHandle));
     curl_multi_wakeup(m_multi);
 
     // Wait until the handle is on the done list.
     m_runCv.wait(l,
-                 [easyHandle, this]
-                 {
-                     auto it = std::find(m_doneHandles.begin(),
-                                         m_doneHandles.end(), easyHandle);
-                     bool complete = (it != m_doneHandles.end());
-                     if (complete)
-                         m_doneHandles.erase(it);
-                     return complete;
-                 });
+                 [easyHandle, this] { return RemoveDoneHandle(easyHandle); });
 }
 
 // Perform work on some handles and wait for them to complete.
@@ -1089,29 +1101,18 @@ void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
 
     std::unique_lock l(m_runMutex);
 
-    for (CURL *handle : easyHandles)
-        m_readyHandles.push_back(handle);
+    for (CURL *easyHandle : easyHandles)
+        m_handles.push_back(Handle(easyHandle));
     curl_multi_wakeup(m_multi);
 
     // Wait until all the requests have completed.
     m_runCv.wait(l,
                  [&easyHandles, this]
                  {
-                     auto doneIt = m_doneHandles.begin();
-                     while (doneIt != m_doneHandles.end())
-                     {
-                         CURL *done = *doneIt;
-                         auto easyIt = std::find(easyHandles.begin(),
-                                                 easyHandles.end(), done);
-                         if (easyIt != easyHandles.end())
-                         {
-                             doneIt = m_doneHandles.erase(doneIt);
-                             easyHandles.erase(easyIt);
-                         }
-                         else
-                             doneIt++;
-                     }
-                     return easyHandles.empty();
+                     size_t cnt = 0;
+                     for (CURL *easyHandle : easyHandles)
+                         cnt += RemoveDoneHandle(easyHandle);
+                     return cnt == easyHandles.size();
                  });
 }
 
@@ -1120,8 +1121,13 @@ void VSICurlFilesystemHandlerBase::Interrupt(CURL *easyHandle)
 {
     std::lock_guard l(m_runMutex);
 
-    m_interruptedHandles.push_back(easyHandle);
-    curl_multi_wakeup(m_multi);
+    for (Handle &h : m_handles)
+        if (h.m_curl == easyHandle)
+        {
+            h.m_state = HandleState::Interrupted;
+            curl_multi_wakeup(m_multi);
+            return;
+        }
 }
 
 // If we have any ready easy handles, add them to the multi handle and clear them from
@@ -1130,33 +1136,40 @@ int VSICurlFilesystemHandlerBase::HandleReady()
 {
     std::lock_guard l(m_runMutex);
 
-    for (CURL *easyHandle : m_readyHandles)
+    for (Handle &handle : m_handles)
     {
-        curl_multi_add_handle(m_multi, easyHandle);
-        m_runningCount++;
+        if (handle.m_state == HandleState::Ready)
+        {
+            curl_multi_add_handle(m_multi, handle.m_curl);
+            handle.m_state = HandleState::Running;
+        }
     }
-    m_readyHandles.clear();
-    return m_runningCount;
+
+    int numRunning = 0;
+    for (Handle &handle : m_handles)
+        numRunning += (handle.m_state == HandleState::Running);
+    return numRunning;
 }
 
 // Handle any interrupted handles.
 bool VSICurlFilesystemHandlerBase::HandleInterrupted()
 {
+    bool notify = false;
     std::lock_guard l(m_runMutex);
-
-    if (m_interruptedHandles.empty())
-        return false;
 
     // The assumption here is that if you've interrupted a transfer, you don't really
     // care about the result of the transfer, so just remove it and say we're done.
-    for (CURL *easyHandle : m_interruptedHandles)
+    for (Handle &h : m_handles)
     {
-        curl_multi_remove_handle(m_multi, easyHandle);
-        m_doneHandles.push_back(easyHandle);
-        m_runningCount--;
+        if (h.m_state == HandleState::Interrupted)
+        {
+            curl_multi_remove_handle(m_multi, h.m_curl);
+            h.m_state = HandleState::Done;
+            notify = true;
+        }
     }
-    m_interruptedHandles.clear();
-    return true;
+
+    return notify;
 }
 
 // Handle any completed easy handles by removing them from the multi handle and
@@ -1177,11 +1190,13 @@ bool VSICurlFilesystemHandlerBase::HandleCompleted()
 
         std::lock_guard l(m_runMutex);
 
-        m_runningCount--;
-        m_doneHandles.push_back(m->easy_handle);
-        // Need to do something with the return code.
-        long code;
-        curl_easy_getinfo(m->easy_handle, CURLINFO_RESPONSE_CODE, &code);
+        for (Handle &h : m_handles)
+            if (h.m_curl == m->easy_handle)
+            {
+                h.m_state = HandleState::Done;
+                break;
+            }
+
         notify = true;
     }
     return notify;
@@ -1190,24 +1205,19 @@ bool VSICurlFilesystemHandlerBase::HandleCompleted()
 // Abort all the running transfers as curl has failed internally. Remove the handle.
 bool VSICurlFilesystemHandlerBase::HandleFailure()
 {
-    CURL **easyHandles = curl_multi_get_handles(m_multi);
+    bool notify = false;
 
-    if (easyHandles)
+    std::lock_guard l(m_runMutex);
+    for (Handle &h : m_handles)
     {
-        std::lock_guard l(m_runMutex);
-
-        CURL **list = easyHandles;
-        for (CURL *easyHandle = *list++; easyHandle; easyHandle = *list++)
+        if (h.m_state == HandleState::Running)
         {
-            m_runningCount--;
-            m_doneHandles.push_back(easyHandle);
-            curl_multi_remove_handle(m_multi, easyHandle);
+            h.m_state = HandleState::Done;
+            curl_multi_remove_handle(m_multi, h.m_curl);
+            notify = true;
         }
-        curl_free(easyHandles);
     }
-
-    // Notify if we had any easy handles.
-    return static_cast<bool>(easyHandles);
+    return notify;
 }
 
 // Loop to handle Curl requests.
