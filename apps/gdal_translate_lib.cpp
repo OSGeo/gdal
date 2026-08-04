@@ -2499,9 +2499,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
             if (bCannotBeExactlyRepresented)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Nodata value was not set to output band, "
-                         "as it cannot be represented on its data type.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "NoData value of %s was not set for output band %d, "
+                    "because it cannot be represented in its data type (%s).",
+                    psOptions->osNoData.c_str(), i + 1,
+                    GDALGetDataTypeName(poVRTBand->GetRasterDataType()));
             }
         }
 
@@ -3523,7 +3526,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asGCPs.empty() && psOptions->bNoGCP)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-nogcp and -gcp cannot be used as the same time");
+                     "-nogcp and -gcp cannot be used at the same time");
             return nullptr;
         }
 
@@ -3539,7 +3542,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-scale and -unscale cannot be used as the same time");
+                     "-scale and -unscale cannot be used at the same time");
             return nullptr;
         }
 
