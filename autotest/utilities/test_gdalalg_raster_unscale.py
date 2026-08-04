@@ -36,6 +36,8 @@ def test_gdalalg_raster_unscale_no_option():
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1 * 2 + 3, 1 * 2 + 3)
+    assert out_ds.GetRasterBand(1).GetScale() is None
+    assert out_ds.GetRasterBand(1).GetOffset() is None
     assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Float32
 
 
@@ -54,6 +56,8 @@ def test_gdalalg_raster_unscale_datatype():
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1 * 2.1 + 3, 1 * 2.1 + 3)
+    assert out_ds.GetRasterBand(1).GetScale() is None
+    assert out_ds.GetRasterBand(1).GetOffset() is None
     assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Float64
 
 
@@ -81,3 +85,11 @@ def test_gdalalg_raster_unscale_auto_datatype(input_dt, out_dt):
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).DataType == out_dt
+
+
+def test_gdalalg_raster_scale_unscale_round_trip_pipeline():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! scale --output-data-type Int16 ! unscale --output-data-type Byte ! compare ../gcore/data/byte.tif"
+    ) as alg:
+        assert "pixels differing" not in alg["output-string"]

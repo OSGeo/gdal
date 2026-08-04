@@ -2334,7 +2334,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 }
             }
 
-            if (!bExponentScaling)
+            if (!bExponentScaling || dfExponent == 1)
             {
                 dfScale = (dfScaleDstMax - dfScaleDstMin) /
                           (dfScaleSrcMax - dfScaleSrcMin);
@@ -2348,33 +2348,44 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             dfOffset = poSrcBand->GetOffset();
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Create a simple or complex data source depending on the */
-        /*      translation type required. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      Create a simple or complex data source depending on the       */
+        /*      translation type required.                                    */
+        /* ------------------------------------------------------------------ */
         std::unique_ptr<VRTSimpleSource> poSimpleSource;
         if (psOptions->bUnscale || bScale ||
             (psOptions->nRGBExpand != 0 && i < psOptions->nRGBExpand))
         {
             auto poComplexSource = std::make_unique<VRTComplexSource>();
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Set complex parameters. */
-            /* --------------------------------------------------------------------
-             */
+            /* -------------------------------------------------------------- */
+            /*      Set complex parameters.                                   */
+            /* -------------------------------------------------------------- */
 
-            if (dfOffset != 0.0 || dfScale != 1.0)
-            {
-                poComplexSource->SetLinearScaling(dfOffset, dfScale);
-            }
-            else if (bExponentScaling)
+            bool bSetBandScaleOffset = false;
+            if (bExponentScaling)
             {
                 poComplexSource->SetPowerScaling(
                     dfExponent, dfScaleSrcMin, dfScaleSrcMax, dfScaleDstMin,
                     dfScaleDstMax, !psOptions->bNoClip);
+                if (dfExponent == 1)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+            else if (dfOffset != 0.0 || dfScale != 1.0)
+            {
+                poComplexSource->SetLinearScaling(dfOffset, dfScale);
+                if (!psOptions->bUnscale)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+
+            if (bSetBandScaleOffset && dfScale != 0)
+            {
+                poVRTBand->SetScale(1 / dfScale);
+                poVRTBand->SetOffset(-dfOffset / dfScale);
             }
 
             poComplexSource->SetColorTableComponent(nComponent);
@@ -2421,17 +2432,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 static_cast<GDALColorInterp>(GCI_RedBand + i));
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      copy over some other information of interest. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      copy over some other information of interest.                 */
+        /* ------------------------------------------------------------------ */
         else
         {
+            const bool bCopyScale = !psOptions->bUnscale &&
+                                    !psOptions->bSetScale &&
+                                    !psOptions->bSetOffset && !bScale;
+
             CopyBandInfo(poSrcBand, poVRTBand,
                          !psOptions->bStats && !bFilterOutStatsMetadata,
-                         !psOptions->bUnscale && !psOptions->bSetScale &&
-                             !psOptions->bSetOffset,
+                         bCopyScale,
                          !psOptions->bSetNoData && !psOptions->bUnsetNoData,
                          !psOptions->bNoRAT, psOptions.get());
             if (psOptions->asScaleParams.empty() &&

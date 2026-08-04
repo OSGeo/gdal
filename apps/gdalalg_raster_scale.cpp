@@ -52,7 +52,7 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
            _("Exponent to apply non-linear scaling with a power function"),
            &m_exponent);
     AddArg("no-clip", 0,
-           _("Do not clip input values to [innput-min, input-max]"), &m_noClip);
+           _("Do not clip input values to [input-min, input-max]"), &m_noClip);
 }
 
 /************************************************************************/
