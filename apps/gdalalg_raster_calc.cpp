@@ -805,7 +805,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
             }
             else
             {
-                return nullptr;
+                return nullptr;  // error message emitted from UpdateSourceProperties
             }
         }
         else
@@ -833,7 +833,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
                 }
                 else
                 {
-                    return nullptr;
+                    return nullptr;  // error message emitted from UpdateSourceProperties
                 }
             }
         }
