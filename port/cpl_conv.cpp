@@ -1941,13 +1941,10 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
         VSICurlAuthParametersChanged();
     }
 
-    if (!gSetConfigOptionSubscribers.empty())
+    for (const auto &[pfnCallback, pUserData] : gSetConfigOptionSubscribers)
     {
-        for (const auto &iter : gSetConfigOptionSubscribers)
-        {
-            if (iter.first)
-                iter.first(pszKey, pszValue, bThreadLocal, iter.second);
-        }
+        if (pfnCallback)
+            pfnCallback(pszKey, pszValue, bThreadLocal, pUserData);
     }
 }
 
