@@ -7626,7 +7626,7 @@ int OGRPreparedGeometryIntersects(const OGRPreparedGeometryH hPreparedGeom,
         return FALSE;
     }
 
-#if GEOS_VERSION_MAJOR > 3 ||                                                 \
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
     if (wkbFlatten(OGR_G_GetGeometryType(hOtherGeom)) == wkbPoint)
     {
@@ -7676,7 +7676,7 @@ int OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
         return FALSE;
     }
 
-#if GEOS_VERSION_MAJOR > 3 ||                                                 \
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
     if (wkbFlatten(OGR_G_GetGeometryType(hOtherGeom)) == wkbPoint)
     {
