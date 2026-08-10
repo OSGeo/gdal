@@ -238,7 +238,6 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
         m_nChunkedBufferOff = 0;
         m_nChunkedBufferSize = nBytesToWrite;
 
-        int repeats = 0;
         // cppcheck-suppress knownConditionTrueFalse
         while (m_nChunkedBufferOff < m_nChunkedBufferSize && !bRetry)
         {
@@ -322,7 +321,7 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
                 }
             } while (msg);
 
-            CPLMultiPerformWait(m_hCurlMulti, repeats);
+            CPLMultiPerformWait(m_hCurlMulti);
         }
 
         m_nWrittenInPUT += nBytesToWrite;

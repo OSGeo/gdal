@@ -1724,7 +1724,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
 /*                        CPLMultiPerformWait()                         */
 /************************************************************************/
 
-bool CPLMultiPerformWait(void *hCurlMultiHandleIn, int & /*repeats*/)
+bool CPLMultiPerformWait(void *hCurlMultiHandleIn)
 {
     CURLM *hCurlMultiHandle = static_cast<CURLM *>(hCurlMultiHandleIn);
 
@@ -1940,7 +1940,6 @@ CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
         curl_multi_add_handle(hCurlMultiHandle, asHandles[iCurRequest]);
     }
 
-    int repeats = 0;
     void *old_handler = CPLHTTPIgnoreSigPipe();
     while (true)
     {
@@ -1977,7 +1976,7 @@ CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
         } while (msg);
 
         if (!bRequestsAdded)
-            CPLMultiPerformWait(hCurlMultiHandle, repeats);
+            CPLMultiPerformWait(hCurlMultiHandle);
     }
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
