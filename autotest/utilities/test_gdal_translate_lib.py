@@ -280,13 +280,14 @@ def test_gdal_translate_lib_nodata_uint64():
 def test_gdal_translate_lib_nodata_uint64_invalid(nodata):
 
     with gdaltest.error_raised(
-        gdal.CE_Warning, "Nodata value was not set to output band"
+        gdal.CE_Warning,
+        "was not set for output band 1, because it cannot be represented in its data type (UInt64)",
     ):
         ds = gdal.Translate(
             "",
             "../gcore/data/byte.tif",
             format="MEM",
-            outputType=gdal.GDT_Int64,
+            outputType=gdal.GDT_UInt64,
             noData=nodata,
         )
     assert ds is not None
@@ -313,7 +314,8 @@ def test_gdal_translate_lib_nodata_int64():
 def test_gdal_translate_lib_nodata_int64_invalid(nodata):
 
     with gdaltest.error_raised(
-        gdal.CE_Warning, "Nodata value was not set to output band"
+        gdal.CE_Warning,
+        "was not set for output band 1, because it cannot be represented in its data type (Int64)",
     ):
         ds = gdal.Translate(
             "",
@@ -1410,7 +1412,7 @@ def test_gdal_translate_lib_no_input_band(tmp_vsimem):
 def test_gdal_translate_lib_scale_and_unscale_incompatible():
 
     with pytest.raises(
-        Exception, match=r"-scale and -unscale cannot be used as the same time"
+        Exception, match=r"-scale and -unscale cannot be used at the same time"
     ):
         gdal.Translate(
             "",
@@ -1419,6 +1421,32 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
             scaleParams=[[0, 255, 0, 65535]],
             unscale=True,
             outputType=gdal.GDT_UInt16,
+        )
+
+
+###############################################################################
+# Test -gcp and -nogcp
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_gcp_and_nogcp_incompatible():
+
+    gcpList = [
+        gdal.GCP(440720.000, 3751320.000, 0, 0, 0),
+        gdal.GCP(441920.000, 3751320.000, 0, 20, 0),
+        gdal.GCP(441920.000, 3750120.000, 0, 20, 20),
+        gdal.GCP(440720.000, 3750120.000, 0, 0, 20),
+    ]
+
+    with pytest.raises(
+        Exception, match=r"-nogcp and -gcp cannot be used at the same time"
+    ):
+        gdal.Translate(
+            "",
+            gdal.Open("../gcore/data/byte.tif"),
+            format="MEM",
+            GCPs=gcpList,
+            nogcp=True,
         )
 
 
