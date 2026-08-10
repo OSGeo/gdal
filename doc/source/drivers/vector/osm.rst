@@ -229,6 +229,8 @@ And to combine the above steps :
    wget -O - http://www.example.com/some.osm.bz2 |
    bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
 
+.. _vector.osm.open_options:
+
 Open options
 ------------
 

@@ -18,6 +18,7 @@ GDAL
     User <user/index>
     api/index
     tutorials/index
+    CLI Workshop <workshop/src/index>
     community/index
     sponsors/index
     contributing/index

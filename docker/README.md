@@ -82,6 +82,9 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
 
+## Workshop
+
+This image is used by the :ref:`GDAL Workshop <gdal_workshop>` to provide a consistent environment for the participants.
 
 # Usage
 
