@@ -22,8 +22,6 @@
 #include <numeric>
 #include <set>
 #include <string_view>
-//ABELL
-#include <iostream>
 
 #include "cpl_aws.h"
 #include "cpl_json.h"
@@ -134,7 +132,8 @@ void VSICurlAuthParametersChanged()
 static int N_MAX_REGIONS_DO_NOT_USE_DIRECTLY = 0;
 static int DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 0;
 
-// RAII to start/stop run thread.
+// RAII to potentially start/stop run thread. The run thread needs to running
+// for Perform() to succeed.
 cpl::RunThreadUser::RunThreadUser(VSICurlFilesystemHandlerBase &handler)
     : m_handler(handler)
 {
@@ -1105,11 +1104,15 @@ void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
         m_handles.push_back(Handle(easyHandle));
     curl_multi_wakeup(m_multi);
 
+    // This seems kinda inefficient because we check easy handles for being done
+    // that we already know are done, but the numbers should be small so this is all
+    // pretty inconsequential and the penalty for removing the handles from the `easyHandles`
+    // list may be more than just re-checking.
+    size_t cnt = 0;
     // Wait until all the requests have completed.
     m_runCv.wait(l,
-                 [&easyHandles, this]
+                 [&easyHandles, &cnt, this]
                  {
-                     size_t cnt = 0;
                      for (CURL *easyHandle : easyHandles)
                          cnt += RemoveDoneHandle(easyHandle);
                      return cnt == easyHandles.size();
@@ -1252,6 +1255,7 @@ void VSICurlFilesystemHandlerBase::Run()
         if (notify)
             m_runCv.notify_all();
     }
+
     VSICURLMultiCleanup(m_multi);
     m_multi = nullptr;
 }
@@ -6327,6 +6331,8 @@ long CurlRequestHelper::perform(CURL *hCurlHandle, struct curl_slist *headers,
                                 VSICurlFilesystemHandlerBase *poFS,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper)
 {
+    RunThreadUser threadUser(*poFS);
+
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     poS3HandleHelper->ResetQueryParameters();

@@ -185,6 +185,7 @@ class VSIWebHDFSWriteHandle final : public VSIAppendWriteHandle
     std::string m_osUsernameParam{};
     std::string m_osDelegationParam{};
     CPLStringList m_aosHTTPOptions{};
+    RunThreadUser m_threadUser;
 
     bool Send(bool bIsLastBlock) override;
     bool CreateFile();
@@ -230,7 +231,8 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle(VSIWebHDFSFSHandler *poFS,
                            GetWebHDFSBufferSize()),
       m_osURL(pszFilename + poFS->GetFSPrefix().size()),
       m_osDataNodeHost(GetWebHDFSDataNodeHost(pszFilename)),
-      m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename))
+      m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
+      m_threadUser(*poFS)
 {
     // cppcheck-suppress useInitializationList
     m_osUsernameParam =
@@ -317,6 +319,7 @@ bool VSIWebHDFSWriteHandle::CreateFile()
 
     bool bInRedirect = false;
 
+    RunThreadUser runThreadUser(*m_poFS);
 retry:
     CURL *hCurlHandle = curl_easy_init();
 
@@ -395,6 +398,8 @@ retry:
 
 bool VSIWebHDFSWriteHandle::Append()
 {
+    RunThreadUser threadUser(*m_poFS);
+
     NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix().c_str());
     NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("Write");
