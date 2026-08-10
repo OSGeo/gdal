@@ -61,7 +61,8 @@ void HDF4DriverSubdatasetInfo::parseFileName()
         return;
     }
 
-    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    CPLStringList aosParts{CSLTokenizeString2(
+        m_fileName.c_str(), ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES)};
     const int iPartsCount{CSLCount(aosParts)};
 
     if (iPartsCount >= 3)
@@ -88,7 +89,11 @@ void HDF4DriverSubdatasetInfo::parseFileName()
             const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=
                                    std::string::npos};
 
-            if (hasDriveLetter || hasProtocol)
+            // If the patch component was double quoted, the drive or
+            // protocol will be part of the path component and we should not append it again
+
+            if ((m_pathComponent.size() > 0 && m_pathComponent[0] != '"') &&
+                (hasDriveLetter || hasProtocol))
             {
                 m_pathComponent.append(":");
                 m_pathComponent.append(aosParts[3]);
