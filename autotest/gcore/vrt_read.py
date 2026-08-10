@@ -2494,15 +2494,18 @@ def test_vrt_read_compute_statistics_mosaic_optimization_src_with_nodata(
 ):
 
     src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
-    src_ds1 = gdal.Translate(
-        "", src_ds, options="-of MEM -srcwin 0 0 8 20 -scale 0 255 10 10"
-    )
+    src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
+    src_ds1.GetRasterBand(1).Fill(10)
+
     src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
     vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
     if band_ndv:
         src_ds1.GetRasterBand(1).SetNoDataValue(band_ndv)
     if global_ndv:
         vrt_ds.GetRasterBand(1).SetNoDataValue(global_ndv)
+
+    assert vrt_ds.RasterXSize == src_ds.RasterXSize
+    assert vrt_ds.RasterYSize == src_ds.RasterYSize
 
     vrt_materialized = gdal.Translate("", vrt_ds, format="MEM")
 

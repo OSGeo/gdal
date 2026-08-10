@@ -568,6 +568,9 @@ def test_gdal_translate_lib_102():
     result = ds.GetRasterBand(1).ComputeRasterMinMax(False)
     assert result == (19018.0, 65535.0)
 
+    assert ds.GetRasterBand(1).GetScale() == 1 / 257
+    assert ds.GetRasterBand(1).GetOffset() is None
+
     approx_min, approx_max = ds.GetRasterBand(1).ComputeRasterMinMax(True)
     ds2 = gdal.Translate(
         "",
@@ -1400,7 +1403,7 @@ def test_gdal_translate_lib_no_input_band(tmp_vsimem):
 
 
 ###############################################################################
-# Test -scale and -unscape
+# Test -scale and -unscale
 
 
 @gdaltest.enable_exceptions()
@@ -1632,3 +1635,32 @@ def test_gdal_translate_lib_unset_NODATA_VALUES():
     )
     assert "NODATA_VALUES" not in out_ds.GetMetadata_Dict()
     assert out_ds.GetMetadataItem("FOO") == "BAR"
+
+
+###############################################################################
+
+
+def test_gdal_translate_lib_unscale():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2, eType=gdal.GDT_Int16)
+    src_ds.GetRasterBand(1).Fill(5)
+    src_ds.GetRasterBand(1).SetScale(0.5)
+    src_ds.GetRasterBand(1).SetOffset(-200)
+
+    src_ds.GetRasterBand(2).Fill(-802)
+    src_ds.GetRasterBand(2).SetScale(5)
+    src_ds.GetRasterBand(2).SetOffset(1002)
+
+    out_ds = gdal.Translate(
+        "", src_ds, format="VRT", unscale=True, outputType=gdal.GDT_Float32
+    )
+
+    assert struct.unpack("f", out_ds.GetRasterBand(1).ReadRaster()) == (5 * 0.5 - 200,)
+    assert out_ds.GetRasterBand(1).GetScale() == 1
+    assert out_ds.GetRasterBand(1).GetOffset() == 0
+
+    assert struct.unpack("f", out_ds.GetRasterBand(2).ReadRaster()) == (
+        -802 * 5 + 1002,
+    )
+    assert out_ds.GetRasterBand(2).GetScale() == 1
+    assert out_ds.GetRasterBand(2).GetOffset() == 0
