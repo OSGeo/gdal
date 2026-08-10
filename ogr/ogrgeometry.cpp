@@ -3430,7 +3430,7 @@ class GEOSWarningSilencer
  */
 static std::unique_ptr<OGRGeometry> repairForGEOS(const OGRGeometry *poGeom)
 {
-#if GEOS_VERSION_MAJOR >= 3 ||                                                 \
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MINOR == 3 && GEOS_VERSION_MINOR >= 10)
     static constexpr int MIN_RING_POINTS = 3;
 #else
