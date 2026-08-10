@@ -118,6 +118,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         CPLStringList aosOptions;
         aosOptions.AddString("-of");
         aosOptions.AddString("VRT");
+        aosOptions.AddString("--invoked-from-gdal-algorithm");
 
         aosOptions.AddString("-srcwin");
         aosOptions.AddString(CPLSPrintf("%d", m_window[0]));
@@ -185,6 +186,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
     aosOptions.AddString("VRT");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
 
     OGREnvelope env;
     poClipGeom->getEnvelope(&env);

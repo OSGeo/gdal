@@ -187,7 +187,10 @@ def test_gdalalg_raster_clip_bbox_outside_source(bbox_pos, allow_bbox_outside_so
         with gdaltest.error_raised(gdal.CE_None):
             assert alg.Run()
     else:
-        with pytest.raises(Exception, match=bbox_pos):
+        with pytest.raises(
+            Exception,
+            match=f"source window .* falls {bbox_pos} .* You can allow this by setting --allow-bbox-outside-source",
+        ):
             alg.Run()
 
 

@@ -309,6 +309,9 @@ struct GDALTranslateOptions
     /*! set to true to prevent overwriting existing dataset */
     bool bNoOverwrite = false;
 
+    /*! set to true to customize error messages when called from "new" (GDAL 3.11) CLI or Algorithm API */
+    bool bInvokedFromGdalAlgorithm = false;
+
     GDALTranslateOptions() = default;
     GDALTranslateOptions(const GDALTranslateOptions &) = default;
     GDALTranslateOptions &operator=(const GDALTranslateOptions &) = delete;
@@ -1052,7 +1055,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
                 psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                 bCompletelyOutside ? "completely" : "partially",
-                bIsError ? ""
+                bIsError ? (psOptions->bInvokedFromGdalAlgorithm
+                                ? " You can allow this by setting "
+                                  "--allow-bbox-outside-source."
+                                : "")
                          : " Pixels outside the source raster extent will be "
                            "set to the NoData value (if defined), or zero.");
         }
@@ -3200,6 +3206,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
     // Undocumented option used by gdal raster clip
     argParser->add_argument("--no-warn-about-outside-window")
         .store_into(psOptions->bNoWarnAboutOutsideWindow)
+        .hidden();
+
+    // Undocumented option used by gdal raster * algorithms
+    argParser->add_argument("--invoked-from-gdal-algorithm")
+        .store_into(psOptions->bInvokedFromGdalAlgorithm)
         .hidden();
 
     if (psOptionsForBinary)
