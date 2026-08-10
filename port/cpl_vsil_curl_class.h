@@ -335,8 +335,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     static void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void InvalidateCachedData(const char *pszURL);
 
-    //    CURLM *GetCurlMultiHandleFor(const std::string &osURL);
-
     virtual void ClearCache();
     virtual void PartialClearCache(const char *pszFilename);
 

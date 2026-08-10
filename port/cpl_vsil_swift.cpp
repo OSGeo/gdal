@@ -566,7 +566,6 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             poS3HandleHelper->ResetQueryParameters();
             std::string osBaseURL(poS3HandleHelper->GetURL());
 
-            //            CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
             CURL *hCurlHandle = curl_easy_init();
 
             if (!osBucket.empty())
@@ -611,7 +610,6 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            //            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
             Perform(hCurlHandle);
 
             VSICURLResetHeaderAndWriterFunctions(hCurlHandle);

@@ -343,7 +343,6 @@ retry:
                                VSICurlHandleWriteFunc);
 
     m_poFS->Perform(hCurlHandle);
-    //    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
 
@@ -422,7 +421,6 @@ bool VSIWebHDFSWriteHandle::Append()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlHandleWriteFunc);
 
-    //    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
     m_poFS->Perform(hCurlHandle);
 
     curl_slist_free_all(headers);
@@ -482,7 +480,6 @@ bool VSIWebHDFSWriteHandle::Append()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlHandleWriteFunc);
 
-    //    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
     m_poFS->Perform(hCurlHandle);
 
     curl_slist_free_all(headers);
@@ -587,8 +584,6 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
     if (!osBaseURL.empty() && osBaseURL.back() != '/')
         osBaseURL += '/';
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
     //RAII for CURL run thread.
     RunThreadUser threadUser(*this);
 
@@ -617,7 +612,6 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
     Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -703,8 +697,6 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
 
     std::string osBaseURL = GetURLFromFilename(pszFilename);
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
     RunThreadUser threadUser(*this);
 
     std::string osUsernameParam =
@@ -734,7 +726,6 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
     Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -825,8 +816,6 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
     std::string osBaseURL =
         GetURLFromFilename(osDirnameWithoutEndSlash.c_str());
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
     // RAII for CURL perform thread.
     RunThreadUser threadUser(*this);
 
@@ -862,7 +851,6 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
     Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -947,9 +935,6 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
 
     oFileProp.bHasComputedFileSize = true;
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
-
     std::string osURL(m_pszURL);
 
     if (osURL.size() > strlen("/webhdfs/v1") &&
@@ -979,7 +964,6 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
     poFS->Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -1063,9 +1047,6 @@ std::string VSIWebHDFSHandle::DownloadRegion(const vsi_l_offset startOffset,
     NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("Read");
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
-
     std::string osURL(m_pszURL);
 
     WriteFuncStruct sWriteFuncData;
@@ -1110,7 +1091,6 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
     poFS->Perform(hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);

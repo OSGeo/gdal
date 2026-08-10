@@ -114,8 +114,6 @@ int VSICurlUninstallReadCbk(VSILFILE * /* fp */)
 
 constexpr const char *const VSICURL_PREFIXES[] = {"/vsicurl/", "/vsicurl?"};
 
-extern "C" bool CPL_DLL GDALIsInGlobalDestructorFromDLLMain();
-
 /***********************************************************ù************/
 /*                    VSICurlAuthParametersChanged()                    */
 /************************************************************************/
@@ -1176,7 +1174,7 @@ bool VSICurlFilesystemHandlerBase::HandleInterrupted()
 }
 
 // Handle any completed easy handles by removing them from the multi handle and
-// adding them to the done list.
+// setting their state to Done.
 bool VSICurlFilesystemHandlerBase::HandleCompleted()
 {
     bool notify = false;
@@ -1536,9 +1534,6 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
 
     oFileProp.bHasComputedFileSize = true;
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
-
     UpdateQueryString();
 
     std::string osURL(m_pszURL + m_osQueryString);
@@ -1647,8 +1642,6 @@ retry:
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
     poFS->Perform(hCurlHandle);
-    //ABELL
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -2449,9 +2442,6 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
     }
 
 begin:
-    //ABELL
-    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
-
     UpdateQueryString();
 
     bool bHasExpired = false;
@@ -2527,8 +2517,6 @@ retry:
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
     poFS->Perform(hCurlHandle);
-    //ABELL
-    //    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -3050,9 +3038,6 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                                                 panSizes);
     }
 
-    //ABELL
-    //    CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
-
     struct CurlErrBuffer
     {
         std::array<char, CURL_ERROR_SIZE + 1> szCurlErrBuf;
@@ -3383,8 +3368,6 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                               panOffsets + nHalf, panSizes + nHalf);
     }
 
-    //ABELL
-    //    CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
@@ -3831,11 +3814,6 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     }
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    //ABELL
-    /**
-    CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
-    VSICURLMultiPerform(hMultiHandle, hCurlHandle, &m_bInterrupt);
-    **/
     poFS->Perform(hCurlHandle);
 
     {
@@ -5607,9 +5585,6 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
         osDirname += '/';
 
         char **papszFileList = nullptr;
-
-        //ABELL
-        //        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
         CURL *hCurlHandle = curl_easy_init();
 
         for (int iTry = 0; iTry < 2; iTry++)
@@ -5640,8 +5615,6 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
                                        headers);
 
             Perform(hCurlHandle);
-            //ABELL
-            //            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
             curl_slist_free_all(headers);
 
@@ -6350,10 +6323,6 @@ long CurlRequestHelper::perform(CURL *hCurlHandle, struct curl_slist *headers,
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
     poFS->Perform(hCurlHandle);
-    /**
-    VSICURLMultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                        hCurlHandle);
-    **/
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -6737,16 +6706,6 @@ void VSICURLDestroyCacheFileProp()
 
 void VSICURLMultiCleanup(CURLM *hCurlMultiHandle)
 {
-#if defined(CURL_AT_LEAST_VERSION) && defined(_WIN32)
-    // Since curl 8.20.0, auxiliary threads are used for DNS resolution
-    // Trying to join them when detaching the DLL results in a hang.
-    // See https://github.com/curl/curl/issues/21466#issuecomment-4372138595
-#if CURL_AT_LEAST_VERSION(8, 20, 0)
-    if (GDALIsInGlobalDestructorFromDLLMain())
-        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_QUICK_EXIT, 1L);
-#endif
-#endif
-
     void *old_handler = CPLHTTPIgnoreSigPipe();
     curl_multi_cleanup(hCurlMultiHandle);
     CPLHTTPRestoreSigPipeHandler(old_handler);
