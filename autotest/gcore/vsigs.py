@@ -281,6 +281,7 @@ def test_vsigs_unknown_key_warns(gs_test_config):
             )
         assert f is not None, "Unknown key should not impede file read"
         assert gdal.GetLastErrorMsg().find("Unsupported") >= 0
+        gdal.VSIFCloseL(f)
 
 
 def test_vsigs_missing_path_param_raises_error(gs_test_config):
