@@ -428,8 +428,9 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 const auto poLayerSRS = poSrcLayer->GetSpatialRef();
                 if (poLayerSRS && !oBBOX_SRS.IsEmpty())
                 {
-                    auto poCT = OGRCreateCoordinateTransformation(&oBBOX_SRS,
-                                                                  poLayerSRS);
+                    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(&oBBOX_SRS,
+                                                          poLayerSRS));
                     if (!poCT)
                         return false;
                     double xMinLayerSRS;
