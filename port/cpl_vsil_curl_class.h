@@ -156,7 +156,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     /// Handle/State pair.
     struct Handle
     {
-        Handle(CURL *curl) : m_curl(curl), m_state(HandleState::Ready)
+        explicit Handle(CURL *curl) : m_curl(curl), m_state(HandleState::Ready)
         {
         }
 
