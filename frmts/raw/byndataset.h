@@ -31,28 +31,37 @@ Table 1: Header description (80 bytes)
  4 East        East Boundary      long   4    16  (arcsec.)
  5 DLat        NS Spacing         long   2    18  (arcsec.)
  6 DLon        EW Spacing         short  2    20  (arcsec.)
- 7 Global      Global             short  2    22  0: Local/Regional/National
-grid 1: Global grid 8 Type        Type               short  2    24  See Table 2
- 9 Factor      Data factor        double 8    32  Transform data from integer to
-real 10 SizeOf      Data size in bytes short  2    34  2: short integer 4: long
-integer 11 VDatum      Vertical Datum     short  2    36  0: Unspecified 1:
-CGVD28 2: CGVD2013 3: NAVD 88 12             Spare                     6    40
-Always zero 13 Data        Data description   short  2    42  0: Data (e.g., N)
-                                                  1: Data error estimates (e.g.,
-.N) 2: Data velocity (e.g., N-dot) 3: Velocity error estimates (e.g., .N-dot) 14
-SubType     Sub-Type           short  2    44  See table 2 below 15 Datum 3-D
-Ref. Frame     short  2    46  0: ITRF / WGS84 1: NAD83(CSRS) 16 Ellipsoid
-Ellipsoid          short  2    48  See Table 3 17 ByteOrder   Byte Order short
-2    50  0: Big-endian (e.g., HP Unix) 1: Little-endian (e.g., PC, linux) 18
-Scale       Scale Boundaries   short  2    52  0: No scale applied to boundaries
-and spacing 1: Scale is applied (x1000) 19 Wo          Geopotential Wo    double
-8    60  2ms-2 (e.g., W = 62636856.88) 20 GM          GM                 double
-8    68  3ms-2 (e.g., GM = 3.986 E 14) 21 TideSystem  Tidal System       short
-2    70  0: Tide free 1: Mean tide 2: Zero tide 22 RefRealiz.  Realization (3D)
-short  2    72  Version number (e.g., 2005 for ITRF) 23 Epoch       Epoch float
-4    76  Decimal year (e.g., 2007.5) 24 PtType      Node               short  2
-78  0: Point 1: Mean 25 Spare                                 2    80  Always
-zero
+ 7 Global      Global             short  2    22  0: Local/Regional/National grid
+                                                  1: Global grid
+ 8 Type        Type               short  2    24  See Table 2
+ 9 Factor      Data factor        double 8    32  Transform data from integer to real
+10 SizeOf      Data size in bytes short  2    34  2: short integer
+                                                  4: long integer
+11 VDatum      Vertical Datum     short  2    36  0: Unspecified
+                                                  1: CGVD28
+                                                  2: CGVD2013
+                                                  3: NAVD 88
+12             Spare                     4    40  Always zero
+13 Data        Data description   short  2    42  0: Data (e.g., N)
+                                                  1: Data error estimates (e.g.,.N)
+                                                  2: Data velocity (e.g., N-dot)
+                                                  3: Velocity error estimates (e.g., .N-dot)
+14 SubType     Sub-Type           short  2    44  See table 2 below
+15 Datum       3-D Ref. Frame     short  2    46  0: ITRF / WGS84
+                                                  1: NAD83(CSRS)
+16 Ellipsoid   Ellipsoid          short  2    48  See Table 3
+17 ByteOrder   Byte Order         short  2    50  0: Big-endian (e.g., HP Unix)
+                                                  1: Little-endian (e.g., PC, linux)
+18 Scale       Scale Boundaries   short  2    52  0: No scale applied to boundaries and spacing
+                                                  1: Scale is applied (x1000)
+19 Wo          Geopotential Wo    double 8    60  2ms-2 (e.g., W = 62636856.88)
+20 GM          GM                 double 8    68  3ms-2 (e.g., GM = 3.986 E 14)
+21 TideSystem  Tidal System       short  2    70  0: Tide free 1: Mean tide 2: Zero tide
+22 RefRealiz.  Realization (3D)   short  2    72  Version number (e.g., 2005 for ITRF)
+23 Epoch       Epoch              float  4    76  Decimal year (e.g., 2007.5)
+24 PtType      Node               short  2    78  0: Point
+                                                  1: Mean
+25 Spare                                 2    80  Always zero
 --:-----------:------------------:------:----:---:---------------------------
 
 Items #18 to 22 must be defined if the grid is a geoid model.
@@ -87,8 +96,7 @@ Table 2: Sub-Type
 
 Table 3: Ellipsoids
 
-# Name    Semi-major (m)  Inverse flattening GM (m3s2)       Angular velocity
-(rads s**-1)
+# Name    Semi-major (m)  Inverse flattening GM (m3s2)       Angular velocity (rads s**-1)
 -:-------:---------------:-------------------:---------------:-----------------------------
 0 GRS80   6378137.0       298.257222101       3986005.0 E 8   7292115 E -11
 1 WGS84   6378137.0       298.257223564       3986004.418 E 8 7292115 E -11
@@ -165,7 +173,6 @@ struct BYNEllipsoids
 
 constexpr int BYN_DATUM_1_VDATUM_2 =
     6649;                          /* Compounded NAD83(CSRS) + CGVD2013 */
-constexpr int BYN_DATUM_0 = 4140;  /* ITRF2008 (GRS80 based WGS84) */
 constexpr int BYN_DATUM_1 = 4617;  /* NAD83(CSRS) */
 constexpr int BYN_VDATUM_1 = 5713; /* CGVD28 */
 constexpr int BYN_VDATUM_2 = 6647; /* CGVD2013 */

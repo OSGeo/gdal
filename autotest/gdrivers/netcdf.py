@@ -6526,6 +6526,23 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 
 @pytest.mark.parametrize(
     "filename",
+    ("/vsimem/DATA:TEST.nc", "/vsimem/DATA:TEST:DOUBLE.nc", '/vsimem/DATA:"TEST".nc'),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(
+        filename,
+        open("data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc", "rb").read(),
+    )
+    info = gdal.GetSubdatasetInfo(f'NETCDF:"{filename}":/navigation_data/latitude')
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "filename",
     (
         "NETCDF:",
         'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
@@ -7063,3 +7080,17 @@ def test_netcdf_invalid_grid_mapping_attribute():
         "'tas' references grid mapping variable 'Polar Stereographic'",
     ):
         gdal.Open("data/netcdf/tas_broken_grid_mapping.nc")
+
+
+###############################################################################
+# Cf https://github.com/OSGeo/gdal/issues/14989
+
+
+def test_netcdf_auto_nc4_via_extra_dim(tmp_path):
+
+    gdal.Translate(tmp_path / "out.nc", "data/netcdf/era5_t2m.nc")
+
+    assert (
+        gdal.MultiDimInfo(tmp_path / "out.nc")["structural_info"]["NC_FORMAT"]
+        == "NETCDF4"
+    )

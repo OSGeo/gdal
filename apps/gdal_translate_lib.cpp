@@ -309,6 +309,9 @@ struct GDALTranslateOptions
     /*! set to true to prevent overwriting existing dataset */
     bool bNoOverwrite = false;
 
+    /*! set to true to customize error messages when called from "new" (GDAL 3.11) CLI or Algorithm API */
+    bool bInvokedFromGdalAlgorithm = false;
+
     GDALTranslateOptions() = default;
     GDALTranslateOptions(const GDALTranslateOptions &) = default;
     GDALTranslateOptions &operator=(const GDALTranslateOptions &) = delete;
@@ -1052,7 +1055,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
                 psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
                 bCompletelyOutside ? "completely" : "partially",
-                bIsError ? ""
+                bIsError ? (psOptions->bInvokedFromGdalAlgorithm
+                                ? " You can allow this by setting "
+                                  "--allow-bbox-outside-source."
+                                : "")
                          : " Pixels outside the source raster extent will be "
                            "set to the NoData value (if defined), or zero.");
         }
@@ -2334,7 +2340,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 }
             }
 
-            if (!bExponentScaling)
+            if (!bExponentScaling || dfExponent == 1)
             {
                 dfScale = (dfScaleDstMax - dfScaleDstMin) /
                           (dfScaleSrcMax - dfScaleSrcMin);
@@ -2348,33 +2354,44 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             dfOffset = poSrcBand->GetOffset();
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Create a simple or complex data source depending on the */
-        /*      translation type required. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      Create a simple or complex data source depending on the       */
+        /*      translation type required.                                    */
+        /* ------------------------------------------------------------------ */
         std::unique_ptr<VRTSimpleSource> poSimpleSource;
         if (psOptions->bUnscale || bScale ||
             (psOptions->nRGBExpand != 0 && i < psOptions->nRGBExpand))
         {
             auto poComplexSource = std::make_unique<VRTComplexSource>();
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Set complex parameters. */
-            /* --------------------------------------------------------------------
-             */
+            /* -------------------------------------------------------------- */
+            /*      Set complex parameters.                                   */
+            /* -------------------------------------------------------------- */
 
-            if (dfOffset != 0.0 || dfScale != 1.0)
-            {
-                poComplexSource->SetLinearScaling(dfOffset, dfScale);
-            }
-            else if (bExponentScaling)
+            bool bSetBandScaleOffset = false;
+            if (bExponentScaling)
             {
                 poComplexSource->SetPowerScaling(
                     dfExponent, dfScaleSrcMin, dfScaleSrcMax, dfScaleDstMin,
                     dfScaleDstMax, !psOptions->bNoClip);
+                if (dfExponent == 1)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+            else if (dfOffset != 0.0 || dfScale != 1.0)
+            {
+                poComplexSource->SetLinearScaling(dfOffset, dfScale);
+                if (!psOptions->bUnscale)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+
+            if (bSetBandScaleOffset && dfScale != 0)
+            {
+                poVRTBand->SetScale(1 / dfScale);
+                poVRTBand->SetOffset(-dfOffset / dfScale);
             }
 
             poComplexSource->SetColorTableComponent(nComponent);
@@ -2421,17 +2438,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 static_cast<GDALColorInterp>(GCI_RedBand + i));
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      copy over some other information of interest. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      copy over some other information of interest.                 */
+        /* ------------------------------------------------------------------ */
         else
         {
+            const bool bCopyScale = !psOptions->bUnscale &&
+                                    !psOptions->bSetScale &&
+                                    !psOptions->bSetOffset && !bScale;
+
             CopyBandInfo(poSrcBand, poVRTBand,
                          !psOptions->bStats && !bFilterOutStatsMetadata,
-                         !psOptions->bUnscale && !psOptions->bSetScale &&
-                             !psOptions->bSetOffset,
+                         bCopyScale,
                          !psOptions->bSetNoData && !psOptions->bUnsetNoData,
                          !psOptions->bNoRAT, psOptions.get());
             if (psOptions->asScaleParams.empty() &&
@@ -2499,9 +2517,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
             if (bCannotBeExactlyRepresented)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Nodata value was not set to output band, "
-                         "as it cannot be represented on its data type.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "NoData value of %s was not set for output band %d, "
+                    "because it cannot be represented in its data type (%s).",
+                    psOptions->osNoData.c_str(), i + 1,
+                    GDALGetDataTypeName(poVRTBand->GetRasterDataType()));
             }
         }
 
@@ -3187,6 +3208,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
         .store_into(psOptions->bNoWarnAboutOutsideWindow)
         .hidden();
 
+    // Undocumented option used by gdal raster * algorithms
+    argParser->add_argument("--invoked-from-gdal-algorithm")
+        .store_into(psOptions->bInvokedFromGdalAlgorithm)
+        .hidden();
+
     if (psOptionsForBinary)
     {
         argParser->add_argument("input_file")
@@ -3523,7 +3549,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asGCPs.empty() && psOptions->bNoGCP)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-nogcp and -gcp cannot be used as the same time");
+                     "-nogcp and -gcp cannot be used at the same time");
             return nullptr;
         }
 
@@ -3539,7 +3565,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-scale and -unscale cannot be used as the same time");
+                     "-scale and -unscale cannot be used at the same time");
             return nullptr;
         }
 

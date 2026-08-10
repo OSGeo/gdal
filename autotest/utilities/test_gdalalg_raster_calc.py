@@ -1100,3 +1100,51 @@ def test_gdalalg_raster_calc_relative_to_vrt(calc, tmp_vsimem):
     with gdal.VSIFile(tmp_vsimem / "out.vrt", "rb") as f:
         vrt = f.read()
         assert b'<SourceFilename relativeToVRT="1">in.tif</SourceFilename>' in vrt
+
+
+def test_gdalalg_raster_calc_pipeline():
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    infile = "../gcore/data/byte.tif"
+
+    with gdal.alg.raster.pipeline(
+        pipeline=f'read {infile} ! set-type --output-data-type Float32 ! calc --calc "X + 2" ! write --format MEM out'
+    ) as alg:
+        actual_values = alg.Output().ReadAsArray()
+        expected_values = gdal.Open(infile).ReadAsArray().astype(np.int16) + 2
+
+        np.testing.assert_array_equal(actual_values, expected_values)
+
+
+def test_gdalalg_raster_calc_pipeline_flatten():
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    infile = "../gcore/data/rgbsmall.tif"
+
+    with gdal.alg.raster.pipeline(
+        pipeline=f"read {infile} ! calc --calc mean --dialect builtin --flatten ! write --format MEM out"
+    ) as alg:
+        actual_values = alg.Output().ReadAsArray()
+        expected_values = np.mean(
+            gdal.Open(infile).ReadAsArray().astype(np.float64), axis=0
+        )
+
+        np.testing.assert_allclose(actual_values, expected_values, atol=1e-8)
+
+
+def test_gdalalg_raster_calc_pipeline_additional_input():
+
+    infile = "../gcore/data/byte.tif"
+
+    # would be nice if this worked, but for now just make sure it doesn't crash
+    with pytest.raises(
+        Exception, match="does not use input dataset from previous step"
+    ):
+        gdal.alg.raster.pipeline(
+            pipeline=f'read {infile} ! set-type --output-data-type Float32 ! calc --input "Y=../gcore/data/byte.tif" --calc "X + 2 - Y" ! write --format MEM out'
+        )
+        pass

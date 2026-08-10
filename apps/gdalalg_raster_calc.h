@@ -35,6 +35,11 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
         return true;
     }
 
+    bool CanBeMiddleStep() const override
+    {
+        return true;
+    }
+
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;

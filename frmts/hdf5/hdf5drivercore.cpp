@@ -177,7 +177,8 @@ void HDF5DriverSubdatasetInfo::parseFileName()
         return;
     }
 
-    CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+    CPLStringList aosParts{CSLTokenizeString2(
+        m_fileName.c_str(), ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES)};
     const int iPartsCount{CSLCount(aosParts)};
 
     if (iPartsCount >= 3)
