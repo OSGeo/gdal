@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
+#include <unordered_map>
 
 // Specification at
 // https://www.nrcan.gc.ca/sites/www.nrcan.gc.ca/files/earthsciences/pdf/gpshgrid_e.pdf
@@ -37,6 +38,11 @@ const static BYNEllipsoids EllipsoidTable[] = {
     {"ALT2", 6378136.3, 298.257},
     {"ELLIP2", 6378136.0, 298.257},
     {"CLARKE 1866", 6378206.4, 294.9786982}};
+
+const static std::unordered_map<int, int> ItrfYearEpsgCodes{
+    {1988, 8988}, {1989, 8989}, {1990, 8990}, {1991, 8991}, {1992, 8992},
+    {1992, 8992}, {1993, 8993}, {1994, 8994}, {1996, 8995}, {1997, 8996},
+    {2000, 8997}, {2005, 8998}, {2008, 8999}, {2014, 9000}, {2020, 9990}};
 
 /************************************************************************/
 /*                           BYNRasterBand()                            */
@@ -392,7 +398,22 @@ const OGRSpatialReference *BYNDataset::GetSpatialRef() const
     bool bNoGeogCS = false;
 
     if (hHeader.nDatum == 0)
-        m_oSRS.importFromEPSG(BYN_DATUM_0);
+    {
+        const auto epsg_it = ItrfYearEpsgCodes.find(hHeader.nRealiz);
+        if (epsg_it != ItrfYearEpsgCodes.end())
+        {
+            m_oSRS.importFromEPSG(epsg_it->second);
+        }
+        else
+        {
+            m_oSRS.importFromEPSG(9990);  // ITRF2020
+            CPLError(CE_Warning, CPLE_FileIO,
+                     "BYN file with ITRF datum."
+                     "No EPSG code found for realization %d."
+                     "EPSG:9990 (ITRF2020) will be used instead",
+                     hHeader.nRealiz);
+        }
+    }
     else if (hHeader.nDatum == 1)
         m_oSRS.importFromEPSG(BYN_DATUM_1);
     else
