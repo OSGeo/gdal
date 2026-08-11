@@ -754,34 +754,23 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     // live one. See https://cloud.google.com/storage/docs/object-versioning
     if (pszURI[0] == '?')
     {
-        char **papszTokens = CSLTokenizeString2(pszURI + 1, "&", 0);
-        for (int i = 0; papszTokens[i] != nullptr; i++)
+        const CPLStringList aosTokens(CSLTokenizeString2(pszURI + 1, "&", 0));
+        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
         {
-            char *pszUnescaped =
-                CPLUnescapeString(papszTokens[i], nullptr, CPLES_URL);
-            CPLFree(papszTokens[i]);
-            papszTokens[i] = pszUnescaped;
-        }
-        for (int i = 0; papszTokens[i] != nullptr; i++)
-        {
-            char *pszKey = nullptr;
-            const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
-            if (pszKey && pszValue)
+            char *pszUnescapedValue =
+                CPLUnescapeString(pszValue, nullptr, CPLES_URL);
+            if (EQUAL(pszKey, "path"))
+                osBucketObject = pszUnescapedValue;
+            else if (EQUAL(pszKey, "generation"))
+                osGeneration = pszUnescapedValue;
+            else
             {
-                if (EQUAL(pszKey, "path"))
-                    osBucketObject = pszValue;
-                else if (EQUAL(pszKey, "generation"))
-                    osGeneration = pszValue;
-                else
-                {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "Unsupported option '%s' in /vsigs/ query string",
-                             pszKey);
-                }
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported option '%s' in /vsigs/ query string",
+                         pszKey);
             }
-            CPLFree(pszKey);
+            CPLFree(pszUnescapedValue);
         }
-        CSLDestroy(papszTokens);
         if (osBucketObject.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
