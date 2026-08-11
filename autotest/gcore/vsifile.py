@@ -1946,3 +1946,21 @@ def test_vsifile_mkdir_recursive_huge_filename(tmp_vsimem):
     filename += "a/" * ((4096 - len(filename)) // len("a/"))
     assert gdal.MkdirRecursive(filename, 0o755) == 0
     assert gdal.MkdirRecursive(filename + "a/", 0o755) < 0
+
+
+###############################################################################
+def test_vsifile_buffering_fix_14997(tmp_path):
+
+    filename = tmp_path / "test.bin"
+
+    buffer = bytearray(b"\xff" * 8192)
+    buffer[4096] = 0
+    with gdal.VSIFile(filename, "wb") as f:
+        f.write(buffer)
+    with gdal.VSIFile(filename, "rb") as f:
+        f.seek(0)
+        assert f.read(1) == buffer[0:1]
+        f.seek(0)
+        assert f.read(4096 + 4096) == buffer[0 : 4096 + 4096]
+        f.seek(4096)
+        assert f.read(1) == buffer[4096 : 4096 + 1]

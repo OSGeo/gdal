@@ -624,6 +624,8 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nBytes)
                 }
                 m_nFilePos += nBytesReadThisTime;
                 nBytesRead += nBytesReadThisTime;
+                m_nBufferCurPos = 0;
+                m_nBufferSize = 0;
             }
             else
             {
@@ -654,6 +656,9 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nBytes)
         nBytesRead += nToCopy;
         m_nBufferCurPos += nToCopy;
         m_nFilePos += nToCopy;
+
+        CPLAssert(m_nFilePos - m_nBufferCurPos + m_nBufferSize ==
+                  static_cast<uint64_t>(VSI_LSEEK64(fd, 0, SEEK_CUR)));
     }
 
 #ifdef VSI_DEBUG
