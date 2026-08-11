@@ -5767,8 +5767,6 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
         std::string osDirname(std::move(osURL));
         osDirname += '/';
 
-        //ABELL
-        //        CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
         CURL *hCurlHandle = curl_easy_init();
 
         struct curl_slist *headers =
@@ -5789,8 +5787,6 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        //ABELL
-        //        VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
         Perform(hCurlHandle);
 
         curl_slist_free_all(headers);
