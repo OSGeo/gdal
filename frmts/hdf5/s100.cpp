@@ -2004,9 +2004,9 @@ bool S100BaseWriter::WriteDataCodingFormat(hid_t hGroup, int nCode)
     {
         uint8_t val = 0;
         for (const char *pszEnumName :
-             {"Fixed Stations", "Regular Grid", "Ungeorectified Grid",
-              "Moving Platform", "Irregular Grid", "Variable cell size", "TIN",
-              "Fixed Stations (Stationwise)", "Feature oriented Regular Grid"})
+             {"fixedStations", "regularGrid", "ungeorectifiedGrid",
+              "movingPlatform", "irregularGrid", "variableCellSize", "TIN",
+              "stationwiseFixed", "featureOrientedRegularGrid"})
         {
             ++val;
             ret = ret &&
