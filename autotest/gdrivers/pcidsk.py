@@ -778,6 +778,7 @@ def test_pcidsk_web_mercator(tmp_path):
 # tile layer data type is rejected instead of overflowing the block buffer.
 
 
+@gdaltest.enable_exceptions()
 def test_pcidsk_tiled_type_mismatch(tmp_path):
 
     filename = str(tmp_path / "mismatch.pix")
@@ -798,6 +799,8 @@ def test_pcidsk_tiled_type_mismatch(tmp_path):
     data[pos : pos + 8] = b"8U      "
     open(filename, "wb").write(data)
 
-    with gdal.quiet_errors():
-        ds = gdal.Open(filename)
-    assert ds is None
+    with pytest.raises(
+        Exception,
+        match=r"Tiled channel .* data type .* does not match image header pixel type",
+    ):
+        gdal.Open(filename)
