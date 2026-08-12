@@ -247,8 +247,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %pragma(csharp) imclasscode=%{
   public class StringListMarshal : IDisposable {
     public readonly IntPtr[] _ar;
-    private readonly System.Runtime.InteropServices.GCHandle[] _handles;
-    private int _isDisposed;
+    private System.Runtime.InteropServices.GCHandle[] _handles;
     public StringListMarshal(string[] ar) {
       if (ar == null)
         return;
@@ -263,9 +262,11 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     }
     ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
-      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0 && _handles != null) {
-         for (int cx = 0; cx < _handles.Length; cx++) {
-           _handles[cx].Free();
+	  var handles = System.Threading.Interlocked.Exchange(ref _handles, null);
+      if (handles != null && _ar != null) {
+         for (int cx = 0; cx < handles.Length; cx++) {		   
+           if (handles[cx].IsAllocated)
+             handles[cx].Free();
            _ar[cx] = IntPtr.Zero;
         }
       }
