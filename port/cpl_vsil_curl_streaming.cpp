@@ -571,7 +571,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL *hLocalHandle = curl_easy_init();
 
-    struct curl_slist *headers = static_cast<struct curl_slist *>(CPLHTTPSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List()));
+    struct curl_slist *headers = static_cast<struct curl_slist *>(
+        CPLHTTPSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List()));
 
     VSICURLStreamingInitWriteFuncStructStreaming(&sWriteFuncHeaderData);
 

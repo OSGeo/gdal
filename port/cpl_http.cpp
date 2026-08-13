@@ -2093,7 +2093,8 @@ static int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
     {
         pszDebugKey = "CURL_INFO_HEADER_IN";
     }
-    else if (type == CURLINFO_DATA_IN && CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
+    else if (type == CURLINFO_DATA_IN &&
+             CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
     {
         pszDebugKey = "CURL_INFO_DATA_IN";
     }

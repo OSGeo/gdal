@@ -351,7 +351,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
     struct curl_slist *SetOptions(CURL *hCurlHandle, const char *pszURL,
-        const char *const *papszOptions);
+                                  const char *const *papszOptions);
 
     void Interrupt(CURL *easyHandle);
     void Perform(CURL *easyHandle);
@@ -359,8 +359,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
 
-    static int CurlDebugStatic(CURL *handle, curl_infotype type, char *data, size_t size,
-        void *userp);
+    static int CurlDebugStatic(CURL *handle, curl_infotype type, char *data,
+                               size_t size, void *userp);
     static const char *GetOptionsStatic();
 };
 

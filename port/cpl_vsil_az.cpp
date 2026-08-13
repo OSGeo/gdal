@@ -904,8 +904,9 @@ char **VSIAzureFSHandler::GetFileMetadata(const char *pszFilename,
         else
             poHandleHelper->AddQueryParameter("comp", "tags");
 
-        struct curl_slist *headers = SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+        struct curl_slist *headers =
+            SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                       aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("GET", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);

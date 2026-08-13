@@ -1016,7 +1016,8 @@ void VSICurlFilesystemHandlerBase::StartRunThread()
         return;
 
     m_stop = false;
-    m_runThread = std::make_unique<std::thread>(&VSICurlFilesystemHandlerBase::Run, this);
+    m_runThread =
+        std::make_unique<std::thread>(&VSICurlFilesystemHandlerBase::Run, this);
 }
 
 void VSICurlFilesystemHandlerBase::StopRunThread()
@@ -1063,7 +1064,7 @@ void VSICurlFilesystemHandlerBase::HandleDebug(CURL *easyHandle)
         if (handle.m_curl == easyHandle)
         {
             for (auto &debug : handle.m_debug)
-               CPLDebug(debug.first.c_str(), "%s", debug.second.c_str());
+                CPLDebug(debug.first.c_str(), "%s", debug.second.c_str());
             handle.m_debug.clear();
             break;
         }
@@ -1103,7 +1104,7 @@ void VSICurlFilesystemHandlerBase::Perform(CURL *easyHandle)
                  [easyHandle, this]
                  {
                      HandleDebug(easyHandle);
-                    return RemoveDoneHandle(easyHandle);
+                     return RemoveDoneHandle(easyHandle);
                  });
 }
 
@@ -1579,13 +1580,13 @@ retry:
                 continue;
             aosHTTPOptions.AddString(pszOption);
         }
-        headers = poFS->SetOptions(hCurlHandle, osURL.c_str(),
-                                    aosHTTPOptions.List());
+        headers =
+            poFS->SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
     }
     else
     {
         headers = poFS->SetOptions(hCurlHandle, osURL.c_str(),
-                                    m_aosHTTPOptions.List());
+                                   m_aosHTTPOptions.List());
     }
 
     WriteFuncStruct sWriteFuncHeaderData;
@@ -4724,21 +4725,23 @@ const char *VSICurlFilesystemHandlerBase::GetOptions()
 }
 
 /************************************************************************/
-/*                         SetOptions()                                 */
+/*                             SetOptions()                             */
 /************************************************************************/
 
-struct curl_slist *VSICurlFilesystemHandlerBase::SetOptions(CURL *hCurlHandle,
-    const char *pszURL, const char *const *papszOptions)
+struct curl_slist *
+VSICurlFilesystemHandlerBase::SetOptions(CURL *hCurlHandle, const char *pszURL,
+                                         const char *const *papszOptions)
 {
     struct curl_slist *headers = static_cast<struct curl_slist *>(
         CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
     // Override the debug output function.
     if (CPLTestConfigOption("CPL_CURL_VERBOSE") && CPLIsDebugEnabled())
     {
-        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_DEBUGFUNCTION,
+        unchecked_curl_easy_setopt(
+            hCurlHandle, CURLOPT_DEBUGFUNCTION,
             &VSICurlFilesystemHandlerBase::CurlDebugStatic);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_DEBUGDATA,
-            static_cast<void *>(this));
+                                   static_cast<void *>(this));
     }
 
     long option = CURLFTPMETHOD_SINGLECWD;
@@ -4751,8 +4754,10 @@ struct curl_slist *VSICurlFilesystemHandlerBase::SetOptions(CURL *hCurlHandle,
     return headers;
 }
 
-int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle, curl_infotype type,
-    char *data, size_t size, void *userp)
+int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle,
+                                                  curl_infotype type,
+                                                  char *data, size_t size,
+                                                  void *userp)
 {
     if (size && data[size - 1] == '\n')
         size--;
@@ -4764,7 +4769,7 @@ int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle, curl_infotype ty
 }
 
 void VSICurlFilesystemHandlerBase::CurlDebug(CURL *handle, curl_infotype type,
-    std::string_view msg)
+                                             std::string_view msg)
 {
     const char *pszDebugKey = nullptr;
     if (type == CURLINFO_TEXT)
@@ -4773,7 +4778,8 @@ void VSICurlFilesystemHandlerBase::CurlDebug(CURL *handle, curl_infotype type,
         pszDebugKey = "CURL_INFO_HEADER_OUT";
     else if (type == CURLINFO_HEADER_IN)
         pszDebugKey = "CURL_INFO_HEADER_IN";
-    else if (type == CURLINFO_DATA_IN && CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
+    else if (type == CURLINFO_DATA_IN &&
+             CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
         pszDebugKey = "CURL_INFO_DATA_IN";
     if (!pszDebugKey)
         return;
@@ -5674,7 +5680,8 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         for (int iTry = 0; iTry < 2; iTry++)
         {
-            struct curl_slist *headers = SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
+            struct curl_slist *headers =
+                SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
             // On the first pass, we want to try fetching all the possible
             // information (filename, file/directory, size). If that does not
@@ -5853,7 +5860,8 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         CURL *hCurlHandle = curl_easy_init();
 
-        struct curl_slist *headers = SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
+        struct curl_slist *headers =
+            SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
@@ -6428,8 +6436,10 @@ static void ShowNetworkStats()
 
 void NetworkStatisticsLogger::ReadEnabled()
 {
-    const bool bShowNetworkStats = CPLTestConfigOption("CPL_VSIL_SHOW_NETWORK_STATS");
-    gnEnabled = bShowNetworkStats || CPLTestConfigOption("CPL_VSIL_NETWORK_STATS_ENABLED");
+    const bool bShowNetworkStats =
+        CPLTestConfigOption("CPL_VSIL_SHOW_NETWORK_STATS");
+    gnEnabled = bShowNetworkStats ||
+                CPLTestConfigOption("CPL_VSIL_NETWORK_STATS_ENABLED");
     if (bShowNetworkStats)
     {
         static bool bRegistered = false;

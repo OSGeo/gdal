@@ -601,7 +601,8 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
 
     CURL *hCurlHandle = curl_easy_init();
 
-    struct curl_slist *headers = SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
+    struct curl_slist *headers =
+        SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -714,7 +715,8 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
-    struct curl_slist *headers = SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
+    struct curl_slist *headers =
+        SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -838,7 +840,8 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
-    struct curl_slist *headers = SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
+    struct curl_slist *headers =
+        SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -946,7 +949,8 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
 
     CURL *hCurlHandle = curl_easy_init();
 
-    struct curl_slist *headers = poFS->SetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+    struct curl_slist *headers =
+        poFS->SetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -1070,7 +1074,8 @@ retry:
         osURL += m_osUsernameParam + m_osDelegationParam;
     }
 
-    struct curl_slist *headers = poFS->SetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+    struct curl_slist *headers =
+        poFS->SetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     if (!m_osDataNodeHost.empty())
     {

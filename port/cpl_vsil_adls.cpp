@@ -828,8 +828,9 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
         poHandleHelper->AddQueryParameter("resource", "filesystem");
 
-        struct curl_slist *headers = SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+        struct curl_slist *headers =
+            SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                       aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -926,8 +927,9 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
                                                         ? "getStatus"
                                                         : "getAccessControl");
 
-        struct curl_slist *headers = SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+        struct curl_slist *headers =
+            SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                       aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
