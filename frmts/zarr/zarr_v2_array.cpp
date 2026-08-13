@@ -2032,10 +2032,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
                 return nullptr;
             }
-            if (!EQUAL(osFilterId.c_str(), "shuffle") &&
-                !EQUAL(osFilterId.c_str(), "quantize") &&
-                !EQUAL(osFilterId.c_str(), "fixedscaleoffset") &&
-                !EQUAL(osFilterId.c_str(), "bitround"))
+            if (osFilterId != "shuffle" && osFilterId != "quantize" &&
+                osFilterId != "fixedscaleoffset" && osFilterId != "bitround")
             {
                 const auto psFilterCompressor =
                     CPLGetCompressor(osFilterId.c_str());
