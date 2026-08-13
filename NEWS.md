@@ -1,3 +1,48 @@
+# GDAL/OGR 3.13.3 Release Notes
+
+GDAL 3.13.3 is a bugfix release.
+
+## GDAL 3.13.3
+
+### Port
+
+* Unix file read(): file 3.13.0 regression regarding buffering (#14997, #15005)
+
+### Raster core
+
+* GDALNoDataValuesMaskBand::IReadBlock(): fix memleak in error code path
+  (ossfuzz #539042122)
+
+### Raster drivers
+
+COG driver:
+ * fix multi-threaded multi-band BuildOverviews() (#15003)
+
+DOQ2 driver:
+ * prevent potential int overflow (ossfuzz #538762606)
+
+ENVI driver:
+ * fix 3.12.2 regression where multiband BSQ Create/Open fails when band
+   offset exceeds INT_MAX (#14968)
+
+GDALG driver:
+ * fix nullptr dereference on command_line with space only (ossfuzz #542869626)
+
+GIF driver:
+ * Internal libgif: apply security updates of libgif 5.2.2-1ubuntu1.2 of
+   Ubuntu 24.04
+
+netCDF driver:
+ * Fix subdataset name parsing with multiple colon in path (#14978)
+
+S102/S104/S111 drivers:
+ * writer and validator: fix names of dataCodingFormat enumeration (#14985,
+   #14998)
+
+ZARR driver:
+ * fix nullptr deref on filter id with 'bitround' not in lower case
+   (ossfuzz #544518837)
+
 # GDAL/OGR 3.13.2 Release Notes
 
 GDAL 3.13.2 is a bugfix release.
