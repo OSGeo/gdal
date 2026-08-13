@@ -157,8 +157,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
     /* -------------------------------------------------------------------- */
     const int nBands = poDS->GetRasterCount();
     const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
-    GByte *pabySrc = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
-        cpl::fits_on<int>(nBands * nWrkDTSize), nBlockXSize, nBlockYSize));
+    std::unique_ptr<GByte, VSIFreeReleaser> pabySrc(
+        static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+            cpl::fits_on<int>(nBands * nWrkDTSize), nBlockXSize, nBlockYSize)));
     if (pabySrc == nullptr)
     {
         return CE_Failure;
@@ -172,7 +173,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
     {
         // memset the whole buffer to avoid Valgrind warnings in case we can't
         // fetch a full block.
-        memset(pabySrc, 0,
+        memset(pabySrc.get(), 0,
                static_cast<size_t>(nBands) * nWrkDTSize * nBlockXSize *
                    nBlockYSize);
     }
@@ -184,8 +185,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
     {
         const CPLErr eErr = poDS->GetRasterBand(iBand + 1)->RasterIO(
             GF_Read, nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
-            nXSizeRequest, nYSizeRequest, pabySrc + iBand * nBandOffsetByte,
-            nXSizeRequest, nYSizeRequest, eWrkDT, 0,
+            nXSizeRequest, nYSizeRequest,
+            pabySrc.get() + iBand * nBandOffsetByte, nXSizeRequest,
+            nYSizeRequest, eWrkDT, 0,
             static_cast<GSpacing>(nBlockXSize) * nWrkDTSize, nullptr);
         if (eErr != CE_None)
             return eErr;
@@ -198,35 +200,35 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
     {
         case GDT_UInt8:
         {
-            FillOutBuffer<GByte>(nBlockOffsetPixels, nBands, pabySrc,
+            FillOutBuffer<GByte>(nBlockOffsetPixels, nBands, pabySrc.get(),
                                  padfNodataValues, pImage);
         }
         break;
 
         case GDT_UInt32:
         {
-            FillOutBuffer<GUInt32>(nBlockOffsetPixels, nBands, pabySrc,
+            FillOutBuffer<GUInt32>(nBlockOffsetPixels, nBands, pabySrc.get(),
                                    padfNodataValues, pImage);
         }
         break;
 
         case GDT_Int32:
         {
-            FillOutBuffer<GInt32>(nBlockOffsetPixels, nBands, pabySrc,
+            FillOutBuffer<GInt32>(nBlockOffsetPixels, nBands, pabySrc.get(),
                                   padfNodataValues, pImage);
         }
         break;
 
         case GDT_Float32:
         {
-            FillOutBuffer<float>(nBlockOffsetPixels, nBands, pabySrc,
+            FillOutBuffer<float>(nBlockOffsetPixels, nBands, pabySrc.get(),
                                  padfNodataValues, pImage);
         }
         break;
 
         case GDT_Float64:
         {
-            FillOutBuffer<double>(nBlockOffsetPixels, nBands, pabySrc,
+            FillOutBuffer<double>(nBlockOffsetPixels, nBands, pabySrc.get(),
                                   padfNodataValues, pImage);
         }
         break;
@@ -235,8 +237,6 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
             CPLAssert(false);
             break;
     }
-
-    CPLFree(pabySrc);
 
     return CE_None;
 }
