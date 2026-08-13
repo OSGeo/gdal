@@ -2240,6 +2240,47 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                      std::vector<double>, std::vector<GDALArgDatasetValue>>>
         inConstructionValues;
 
+    const auto ProcessInConstructionValues = [&inConstructionValues]()
+    {
+        for (auto &[arg, value] : inConstructionValues)
+        {
+            if (arg->GetType() == GAAT_STRING_LIST)
+            {
+                if (!arg->Set(std::get<std::vector<std::string>>(
+                        inConstructionValues[arg])))
+                {
+                    return false;
+                }
+            }
+            else if (arg->GetType() == GAAT_INTEGER_LIST)
+            {
+                if (!arg->Set(
+                        std::get<std::vector<int>>(inConstructionValues[arg])))
+                {
+                    return false;
+                }
+            }
+            else if (arg->GetType() == GAAT_REAL_LIST)
+            {
+                if (!arg->Set(std::get<std::vector<double>>(
+                        inConstructionValues[arg])))
+                {
+                    return false;
+                }
+            }
+            else if (arg->GetType() == GAAT_DATASET_LIST)
+            {
+                if (!arg->Set(
+                        std::move(std::get<std::vector<GDALArgDatasetValue>>(
+                            inConstructionValues[arg]))))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+
     std::vector<std::string> lArgs(args);
     bool helpValueRequested = false;
     for (size_t i = 0; i < lArgs.size(); /* incremented in loop */)
@@ -2366,13 +2407,14 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             }
         }
 
+        lArgs.erase(lArgs.begin() + i);
+
         if (!hasValue)
         {
-            if (i + 1 == lArgs.size())
+            if (i == lArgs.size())
             {
                 if (m_parseForAutoCompletion)
                 {
-                    lArgs.erase(lArgs.begin() + i);
                     break;
                 }
                 ReportError(
@@ -2381,61 +2423,41 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                     name.c_str());
                 return false;
             }
-            value = lArgs[i + 1];
-            lArgs.erase(lArgs.begin() + i + 1);
+            value = lArgs[i];
+            lArgs.erase(lArgs.begin() + i);
         }
 
         if (arg && !ParseArgument(arg, name, value, inConstructionValues))
+        {
             return false;
+        }
 
-        lArgs.erase(lArgs.begin() + i);
+        // Consume next strings if it is a positional argument, until finding
+        // a value starting with dash.
+        if (!hasValue && arg && GDALAlgorithmArgTypeIsList(arg->GetType()) &&
+            std::find(m_positionalArgs.begin(), m_positionalArgs.end(), arg) !=
+                m_positionalArgs.end())
+        {
+            int countVals = 1;
+            while (i < lArgs.size() && !lArgs[i].empty() && lArgs[i][0] != '-')
+            {
+                if (countVals == arg->GetMaxCount())
+                    break;
+                if (!ParseArgument(arg, name, lArgs[i], inConstructionValues))
+                {
+                    ProcessInConstructionValues();
+                    return false;
+                }
+                lArgs.erase(lArgs.begin() + i);
+                ++countVals;
+            }
+        }
     }
 
     if (m_specialActionRequested)
     {
         return true;
     }
-
-    const auto ProcessInConstructionValues = [&inConstructionValues]()
-    {
-        for (auto &[arg, value] : inConstructionValues)
-        {
-            if (arg->GetType() == GAAT_STRING_LIST)
-            {
-                if (!arg->Set(std::get<std::vector<std::string>>(
-                        inConstructionValues[arg])))
-                {
-                    return false;
-                }
-            }
-            else if (arg->GetType() == GAAT_INTEGER_LIST)
-            {
-                if (!arg->Set(
-                        std::get<std::vector<int>>(inConstructionValues[arg])))
-                {
-                    return false;
-                }
-            }
-            else if (arg->GetType() == GAAT_REAL_LIST)
-            {
-                if (!arg->Set(std::get<std::vector<double>>(
-                        inConstructionValues[arg])))
-                {
-                    return false;
-                }
-            }
-            else if (arg->GetType() == GAAT_DATASET_LIST)
-            {
-                if (!arg->Set(
-                        std::move(std::get<std::vector<GDALArgDatasetValue>>(
-                            inConstructionValues[arg]))))
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    };
 
     // Process positional arguments that have not been set through their
     // option name.
