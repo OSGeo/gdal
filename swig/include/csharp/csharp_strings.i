@@ -20,11 +20,11 @@
  * memory into a managed string and returns a new pinned GCHandle for that    *
  * string. A pointer to that GCHandle is returned. When the callback returns  *
  * to managed .NET, the managed string is retrieved from the GCHandle and the *
- * GCHandle is freed by calling StringFromPinnedGCHandle.                     *
+ * GCHandle is freed by calling StringFromGCHandle.                           *
  *                                                                            *
  * IMPORTANT:                                                                 *
  * Every call to SWIG_csharp_string_callback MUST be followed by exactly      *
- * one call to StringFromPinnedGCHandle() on the returned pointer.            *
+ * one call to StringFromGCHandle() on the returned pointer.                  *
  * Failure to do so will result in memory leaks or double frees.              *
  *****************************************************************************/
 
@@ -100,7 +100,7 @@ struct CsharpDummyObject{};
 
     public delegate System.IntPtr Utf8StringDelegate(System.IntPtr message);
 
-    static Utf8StringDelegate stringDelegate = new Utf8StringDelegate(DecodeStringToPinnedGCHandle);
+    static Utf8StringDelegate stringDelegate = new Utf8StringDelegate(DecodeStringToGCHandle);
 
     [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="RegisterUtf8StringCallback_$module")]
     public static extern void RegisterUtf8StringCallback_$module(Utf8StringDelegate stringDelegate);
@@ -109,12 +109,11 @@ struct CsharpDummyObject{};
       RegisterUtf8StringCallback_$module(stringDelegate);
     }
 
-    public static IntPtr DecodeStringToPinnedGCHandle(IntPtr pUtf8Bts) {
+    public static IntPtr DecodeStringToGCHandle(IntPtr pUtf8Bts) {
       string value = $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
       if (value == null)
         return IntPtr.Zero;
-      var handle = System.Runtime.InteropServices.GCHandle.Alloc(value,
-                     System.Runtime.InteropServices.GCHandleType.Pinned);
+      var handle = System.Runtime.InteropServices.GCHandle.Alloc(value);
       return System.Runtime.InteropServices.GCHandle.ToIntPtr(handle);
     }
   }
@@ -122,10 +121,10 @@ struct CsharpDummyObject{};
   /* Instantiate the helper class so that the static constructor executes */
   public static readonly Utf8StringHelper utf8StringHelper = new Utf8StringHelper();
 
-  internal static string StringFromPinnedGCHandle(IntPtr pinnedHandle){
-    if (pinnedHandle == IntPtr.Zero)
+  internal static string StringFromGCHandle(IntPtr gcHandle){
+    if (gcHandle == IntPtr.Zero)
       return null;
-    var handle = System.Runtime.InteropServices.GCHandle.FromIntPtr(pinnedHandle);
+    var handle = System.Runtime.InteropServices.GCHandle.FromIntPtr(gcHandle);
     string value = handle.Target as string;
     handle.Free();
     return value;
@@ -162,7 +161,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %define CS_RETURN_UTF8_STRING
 
   IntPtr cPtr = $imcall;
-  string ret = $modulePINVOKE.StringFromPinnedGCHandle(cPtr);
+  string ret = $modulePINVOKE.StringFromGCHandle(cPtr);
   $excode
   return ret;
 %enddef
@@ -207,7 +206,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(in) (char **argout), (char **username), (char **usrname), (char **type) %{ $1 = ($1_ltype)$input; %}
 %typemap(csin, cshin="out $csinput",
   pre="    IntPtr temp$csinput = IntPtr.Zero;",
-  post="    $csinput = $modulePINVOKE.StringFromPinnedGCHandle(temp$csinput);")
+  post="    $csinput = $modulePINVOKE.StringFromGCHandle(temp$csinput);")
   (char** argout), (char **username), (char **usrname), (char **type)
   "ref temp$csinput"
 
