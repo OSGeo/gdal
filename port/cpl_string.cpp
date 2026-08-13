@@ -1552,6 +1552,11 @@ bool CPLTestBool(const char *pszValue)
              EQUAL(pszValue, "OFF") || EQUAL(pszValue, "0"));
 }
 
+bool CPLTestConfigOption(const char *configVal)
+{
+    return CPLTestBool(CPLGetConfigOption(configVal, "NO"));
+}
+
 /************************************************************************/
 /*                           CSLTestBoolean()                           */
 /************************************************************************/

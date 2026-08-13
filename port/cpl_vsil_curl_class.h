@@ -49,9 +49,6 @@
 
 void VSICurlStreamingClearCache(void);  // from cpl_vsil_curl_streaming.cpp
 
-struct curl_slist *VSICurlSetOptions(CURL *hCurlHandle, const char *pszURL,
-                                     const char *const *papszOptions);
-
 struct curl_slist *VSICurlSetContentTypeFromExt(struct curl_slist *polist,
                                                 const char *pszPath);
 
@@ -154,7 +151,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         Done
     };
 
-    /// Handle/State pair.
+    /// Handle Information.
     struct Handle
     {
         explicit Handle(CURL *curl) : m_curl(curl), m_state(HandleState::Ready)
@@ -163,6 +160,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
         CURL *m_curl{nullptr};
         HandleState m_state{HandleState::Ready};
+        using DebugInfo = std::pair<std::string, std::string>;
+        std::vector<DebugInfo> m_debug{};
     };
 
     struct FilenameOffsetPair
@@ -237,9 +236,11 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     bool HandleInterrupted();
     bool HandleCompleted();
     bool HandleFailure();
+    void HandleDebug(CURL *easyHandle);
     bool RemoveDoneHandle(CURL *easyHandle);
     void IncUseCount();
     void DecUseCount();
+    void CurlDebug(CURL *handle, curl_infotype type, std::string_view msg);
 
     std::mutex m_oMutex{};  // Map region mutex.
     std::map<std::string, std::unique_ptr<RegionInDownload>>
@@ -349,6 +350,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
+    struct curl_slist *SetOptions(CURL *hCurlHandle, const char *pszURL,
+        const char *const *papszOptions);
 
     void Interrupt(CURL *easyHandle);
     void Perform(CURL *easyHandle);
@@ -356,6 +359,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
 
+    static int CurlDebugStatic(CURL *handle, curl_infotype type, char *data, size_t size,
+        void *userp);
     static const char *GetOptionsStatic();
 };
 

@@ -579,7 +579,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
                     poS3HandleHelper->AddQueryParameter("prefix", osPrefix);
             }
 
-            struct curl_slist *headers = VSICurlSetOptions(
+            struct curl_slist *headers = SetOptions(
                 hCurlHandle, poS3HandleHelper->GetURL().c_str(),
                 aosHTTPOptions.List());
             // Disable automatic redirection

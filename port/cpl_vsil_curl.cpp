@@ -1054,6 +1054,23 @@ void VSICurlFilesystemHandlerBase::DecUseCount()
 }
 
 // Must be called under lock.
+void VSICurlFilesystemHandlerBase::HandleDebug(CURL *easyHandle)
+{
+    // Remove 'easyHandle' from the handle list if it's done.
+    for (auto it = m_handles.begin(); it != m_handles.end(); ++it)
+    {
+        Handle &handle = *it;
+        if (handle.m_curl == easyHandle)
+        {
+            for (auto &debug : handle.m_debug)
+               CPLDebug(debug.first.c_str(), "%s", debug.second.c_str());
+            handle.m_debug.clear();
+            break;
+        }
+    }
+}
+
+// Must be called under lock.
 bool VSICurlFilesystemHandlerBase::RemoveDoneHandle(CURL *easyHandle)
 {
     // Remove 'easyHandle' from the handle list if it's done.
@@ -1083,7 +1100,11 @@ void VSICurlFilesystemHandlerBase::Perform(CURL *easyHandle)
 
     // Wait until the handle is on the done list.
     m_runCv.wait(l,
-                 [easyHandle, this] { return RemoveDoneHandle(easyHandle); });
+                 [easyHandle, this]
+                 {
+                     HandleDebug(easyHandle);
+                    return RemoveDoneHandle(easyHandle);
+                 });
 }
 
 // Perform work on some handles and wait for them to complete.
@@ -1107,6 +1128,8 @@ void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
     m_runCv.wait(l,
                  [&easyHandles, &cnt, this]
                  {
+                     for (CURL *easyHandle : easyHandles)
+                         HandleDebug(easyHandle);
                      for (CURL *easyHandle : easyHandles)
                          cnt += RemoveDoneHandle(easyHandle);
                      return cnt == easyHandles.size();
@@ -1556,12 +1579,12 @@ retry:
                 continue;
             aosHTTPOptions.AddString(pszOption);
         }
-        headers = VSICurlSetOptions(hCurlHandle, osURL.c_str(),
+        headers = poFS->SetOptions(hCurlHandle, osURL.c_str(),
                                     aosHTTPOptions.List());
     }
     else
     {
-        headers = VSICurlSetOptions(hCurlHandle, osURL.c_str(),
+        headers = poFS->SetOptions(hCurlHandle, osURL.c_str(),
                                     m_aosHTTPOptions.List());
     }
 
@@ -1692,8 +1715,7 @@ retry:
         bool bAlreadyLogged = false;
         if (response_code >= 400 && szCurlErrBuf[0] == '\0')
         {
-            const bool bLogResponse =
-                CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO"));
+            const bool bLogResponse = CPLTestConfigOption("CPL_CURL_VERBOSE");
             if (bLogResponse && sWriteFuncData.pBuffer)
             {
                 const char *pszErrorMsg =
@@ -2453,7 +2475,7 @@ begin:
 retry:
     CURL *hCurlHandle = curl_easy_init();
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
+        poFS->SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -3133,7 +3155,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
             performHandles.push_back(hCurlHandle);
             aHandles[iReq] = hCurlHandle;
 
-            struct curl_slist *headers = VSICurlSetOptions(
+            struct curl_slist *headers = poFS->SetOptions(
                 hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
             VSICURLInitWriteFuncStruct(&asWriteFuncData[iReq], this, pfnReadCbk,
@@ -3367,7 +3389,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
+        poFS->SetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
@@ -3752,7 +3774,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
+        poFS->SetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -4026,7 +4048,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 // need to wait as we already know if pipelining is possible
                 // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
-                struct curl_slist *headers = VSICurlSetOptions(
+                struct curl_slist *headers = poFS->SetOptions(
                     hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
                 VSICURLInitWriteFuncStruct(&asWriteFuncData[i], this,
@@ -4699,6 +4721,74 @@ const char *VSICurlFilesystemHandlerBase::GetOptions()
     static std::string osOptions(std::string("<Options>") + GetOptionsStatic() +
                                  "</Options>");
     return osOptions.c_str();
+}
+
+/************************************************************************/
+/*                         SetOptions()                                 */
+/************************************************************************/
+
+struct curl_slist *VSICurlFilesystemHandlerBase::SetOptions(CURL *hCurlHandle,
+    const char *pszURL, const char *const *papszOptions)
+{
+    struct curl_slist *headers = static_cast<struct curl_slist *>(
+        CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
+    // Override the debug output function.
+    if (CPLTestConfigOption("CPL_CURL_VERBOSE") && CPLIsDebugEnabled())
+    {
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_DEBUGFUNCTION,
+            &VSICurlFilesystemHandlerBase::CurlDebugStatic);
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_DEBUGDATA,
+            static_cast<void *>(this));
+    }
+
+    long option = CURLFTPMETHOD_SINGLECWD;
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
+
+    // ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/
+    // doesn't like EPSV command,
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
+
+    return headers;
+}
+
+int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle, curl_infotype type,
+    char *data, size_t size, void *userp)
+{
+    if (size && data[size - 1] == '\n')
+        size--;
+    std::string msg(data, size);
+
+    static_cast<VSICurlFilesystemHandlerBase *>(userp)->CurlDebug(
+        handle, type, std::string_view(data, size));
+    return 0;
+}
+
+void VSICurlFilesystemHandlerBase::CurlDebug(CURL *handle, curl_infotype type,
+    std::string_view msg)
+{
+    const char *pszDebugKey = nullptr;
+    if (type == CURLINFO_TEXT)
+        pszDebugKey = "CURL_INFO_TEXT";
+    else if (type == CURLINFO_HEADER_OUT)
+        pszDebugKey = "CURL_INFO_HEADER_OUT";
+    else if (type == CURLINFO_HEADER_IN)
+        pszDebugKey = "CURL_INFO_HEADER_IN";
+    else if (type == CURLINFO_DATA_IN && CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
+        pszDebugKey = "CURL_INFO_DATA_IN";
+    if (!pszDebugKey)
+        return;
+
+    std::lock_guard l(m_runMutex);
+
+    // If we still have the handle for which there is debug information, stick it on
+    // the handle info and notify.
+    for (Handle &h : m_handles)
+        if (h.m_curl == handle)
+        {
+            h.m_debug.emplace_back(std::string(pszDebugKey), msg);
+            m_runCv.notify_all();
+            break;
+        }
 }
 
 /************************************************************************/
@@ -5584,8 +5674,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         for (int iTry = 0; iTry < 2; iTry++)
         {
-            struct curl_slist *headers =
-                VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
+            struct curl_slist *headers = SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
             // On the first pass, we want to try fetching all the possible
             // information (filename, file/directory, size). If that does not
@@ -5764,8 +5853,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         CURL *hCurlHandle = curl_easy_init();
 
-        struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
+        struct curl_slist *headers = SetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
@@ -6340,13 +6428,8 @@ static void ShowNetworkStats()
 
 void NetworkStatisticsLogger::ReadEnabled()
 {
-    const bool bShowNetworkStats =
-        CPLTestBool(CPLGetConfigOption("CPL_VSIL_SHOW_NETWORK_STATS", "NO"));
-    gnEnabled =
-        (bShowNetworkStats || CPLTestBool(CPLGetConfigOption(
-                                  "CPL_VSIL_NETWORK_STATS_ENABLED", "NO")))
-            ? TRUE
-            : FALSE;
+    const bool bShowNetworkStats = CPLTestConfigOption("CPL_VSIL_SHOW_NETWORK_STATS");
+    gnEnabled = bShowNetworkStats || CPLTestConfigOption("CPL_VSIL_NETWORK_STATS_ENABLED");
     if (bShowNetworkStats)
     {
         static bool bRegistered = false;
@@ -6720,26 +6803,6 @@ int VSICurlInstallReadCbk(VSILFILE *fp, VSICurlReadCbkFunc pfnReadCbk,
 int VSICurlUninstallReadCbk(VSILFILE *fp)
 {
     return reinterpret_cast<cpl::VSICurlHandle *>(fp)->UninstallReadCbk();
-}
-
-/************************************************************************/
-/*                         VSICurlSetOptions()                          */
-/************************************************************************/
-
-struct curl_slist *VSICurlSetOptions(CURL *hCurlHandle, const char *pszURL,
-                                     const char *const *papszOptions)
-{
-    struct curl_slist *headers = static_cast<struct curl_slist *>(
-        CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
-
-    long option = CURLFTPMETHOD_SINGLECWD;
-    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
-
-    // ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/
-    // doesn't like EPSV command,
-    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
-
-    return headers;
 }
 
 /************************************************************************/

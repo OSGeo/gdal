@@ -417,7 +417,7 @@ bool VSIDIRAz::IssueListDir()
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(osFilename.c_str()));
 
-    struct curl_slist *headers = VSICurlSetOptions(
+    struct curl_slist *headers = poFS->SetOptions(
         hCurlHandle, poHandleHelper->GetURL().c_str(), aosHTTPOptions.List());
 
     headers = poHandleHelper->GetCurlHeaders("GET", headers);
@@ -904,8 +904,7 @@ char **VSIAzureFSHandler::GetFileMetadata(const char *pszFilename,
         else
             poHandleHelper->AddQueryParameter("comp", "tags");
 
-        struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+        struct curl_slist *headers = SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("GET", headers);
