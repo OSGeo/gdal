@@ -404,11 +404,12 @@ GDALDataset *DOQ2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < nBandCount; i++)
     {
-        auto poBand = RawRasterBand::Create(
-            poDS.get(), i + 1, poDS->fpImage, nSkipBytes + i, nBytesPerPixel,
-            nBytesPerLine, GDT_UInt8,
-            RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
-            RawRasterBand::OwnFP::NO);
+        auto poBand =
+            RawRasterBand::Create(poDS.get(), i + 1, poDS->fpImage,
+                                  static_cast<uint64_t>(nSkipBytes) + i,
+                                  nBytesPerPixel, nBytesPerLine, GDT_UInt8,
+                                  RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+                                  RawRasterBand::OwnFP::NO);
         if (!poBand)
             return nullptr;
         poDS->SetBand(i + 1, std::move(poBand));
