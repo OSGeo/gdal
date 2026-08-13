@@ -1016,8 +1016,7 @@ void VSICurlFilesystemHandlerBase::StartRunThread()
         return;
 
     m_stop = false;
-    m_runThread.reset(
-        new std::thread(&VSICurlFilesystemHandlerBase::Run, this));
+    m_runThread = std::make_unique<std::thread>(&VSICurlFilesystemHandlerBase::Run, this);
 }
 
 void VSICurlFilesystemHandlerBase::StopRunThread()
