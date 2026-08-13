@@ -824,15 +824,15 @@ class S102Checker:
 
         if "dataCodingFormat" in BathymetryCoverage.attrs:
             expected_values = {
-                1: "Fixed Stations",
-                2: "Regular Grid",
-                3: "Ungeorectified Grid",
-                4: "Moving Platform",
-                5: "Irregular Grid",
-                6: "Variable cell size",
+                1: "fixedStations",
+                2: "regularGrid",
+                3: "ungeorectifiedGrid",
+                4: "movingPlatform",
+                5: "irregularGrid",
+                6: "variableCellSize",
                 7: "TIN",
-                8: "Fixed Stations (Stationwise)",
-                9: "Feature oriented Regular Grid",
+                8: "stationwiseFixed",
+                9: "featureOrientedRegularGrid",
             }
             self._validate_enumeration(
                 BathymetryCoverage, "dataCodingFormat", expected_values
