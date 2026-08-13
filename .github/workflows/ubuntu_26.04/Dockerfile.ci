@@ -225,6 +225,7 @@ RUN curl -LO -fsS https://github.com/apache/arrow/archive/refs/heads/main.zip \
                 -DARROW_WITH_SNAPPY=ON \
                 -DARROW_WITH_ZLIB=ON \
                 -DARROW_WITH_ZSTD=ON \
+                -DARROW_JSON=ON \
     && make -j$(nproc) \
     && make install \
     && cd ../../.. \
