@@ -630,10 +630,9 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions),
       m_bUseHead(
-          CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
+          CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES"))),
+      m_runThreadUser(*poFSIn)
 {
-    poFS->IncUseCount();
-
     if (pszURLIn)
     {
         m_pszURL = CPLStrdup(pszURLIn);
@@ -663,8 +662,6 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
 
 VSICurlHandle::~VSICurlHandle()
 {
-    poFS->DecUseCount();
-
     if (m_oThreadAdviseRead.joinable())
     {
         m_oThreadAdviseRead.join();
@@ -3746,8 +3743,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     CPLStringList aosHTTPOptions(m_aosHTTPOptions);
     std::string osURL;
     {
-        //ABELL - Why this lock? Both UpdateQueryString() and GetRedirectURL...() are called
-        // other places without this lock.
+        //PRead can be called by multiple threads for the same VSICurlHandle.
         std::lock_guard<std::mutex> oLock(m_oMutex);
         UpdateQueryString();
         bool bHasExpired;
@@ -3807,7 +3803,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                                &szCurlErrBuf[0]);
 
     {
-        //ABELL - Why this lock?
+        //PRead can be called by multiple threads for the same VSICurlHandle.
         std::lock_guard<std::mutex> oLock(m_oMutex);
         headers =
             const_cast<VSICurlHandle *>(this)->GetCurlHeaders("GET", headers);

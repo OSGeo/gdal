@@ -145,6 +145,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBase)
 
+    friend class RunThreadUser;
     enum class HandleState
     {
         Ready,
@@ -237,6 +238,8 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     bool HandleCompleted();
     bool HandleFailure();
     bool RemoveDoneHandle(CURL *easyHandle);
+    void IncUseCount();
+    void DecUseCount();
 
     std::mutex m_oMutex{};  // Map region mutex.
     std::map<std::string, std::unique_ptr<RegionInDownload>>
@@ -347,8 +350,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
 
-    void IncUseCount();
-    void DecUseCount();
     void Interrupt(CURL *easyHandle);
     void Perform(CURL *easyHandle);
     void Perform(std::vector<CURL *> easyHandles);
@@ -431,6 +432,9 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
     bool m_bInterrupt = false;
+    // Makes sure the FilesystemHandler run thread is started on construction and
+    // torn down at last use.
+    RunThreadUser m_runThreadUser;
 
     // Specific to Planetary Computer signing:
     // https://planetarycomputer.microsoft.com/docs/concepts/sas/
