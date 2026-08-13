@@ -4754,6 +4754,8 @@ VSICurlFilesystemHandlerBase::SetOptions(CURL *hCurlHandle, const char *pszURL,
     return headers;
 }
 
+// Curl debug callback. Trim trailing newlines from the data and call the
+// FilesystemHandler-specific debug handler.
 int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle,
                                                   curl_infotype type,
                                                   char *data, size_t size,
@@ -4768,6 +4770,9 @@ int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle,
     return 0;
 }
 
+// Handle curl debug. Stick the debug information on our handle object if it exists
+// and notify so that a waiting thread will see the output. This makes the debug
+// appear on the thread associated with the invoking CURL handle.
 void VSICurlFilesystemHandlerBase::CurlDebug(CURL *handle, curl_infotype type,
                                              std::string_view msg)
 {
