@@ -1031,7 +1031,7 @@ bool OGRS101Reader::FillFeatureAttributes(const DDFRecordIndex &oIndex,
                 if (pszATVL[0])
                 {
                     const char *const last = pszATVL + sAttrDef.osVal.size();
-                    char *endptr = NULL;
+                    char *endptr = nullptr;
                     const auto nVal64 = std::strtoll(pszATVL, &endptr, 10);
                     if (nVal64 >= INT_MIN && nVal64 <= INT_MAX &&
                         endptr == last)
