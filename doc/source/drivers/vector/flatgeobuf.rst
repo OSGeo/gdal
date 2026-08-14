@@ -23,6 +23,12 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Limitations
+-----------
+
+- FlatGeobuf supports only one geometry column per layer.
+  Multiple geometry columns cannot be preserved when writing to FlatGeobuf.
+
 Multi layer support
 -------------------
 
@@ -121,6 +127,16 @@ Examples
    .. code-block:: bash
 
       ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
+
+.. example::
+   :title: Convert a SQLite dataset to a FlatGeobuf file
+
+   The SQLite dataset contains multiple geometry fields that contain some NULL geometries.
+   A pipeline is used to select a single geometry field and write it to a FlatGeobuf file without a spatial index.
+
+   .. code-block:: bash
+
+      gdal vector pipeline ! read example.sqlite ! sql --sql "SELECT new_geom,fid FROM example" ! write output.fgb --lco SPATIAL_INDEX=NO
 
 See Also
 --------
