@@ -1626,6 +1626,9 @@ DECLAREContigPutFunc(put8bitcmaptile)
 {
     uint32_t **PALmap = img->PALmap;
     int samplesperpixel = img->samplesperpixel;
+    /* Convert pixel skew to byte skew (8-bit samples) */
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * +(tmsize_t)samplesperpixel;
 
     (void)y;
     for (; h > 0; --h)
@@ -1636,7 +1639,7 @@ DECLAREContigPutFunc(put8bitcmaptile)
             pp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1704,6 +1707,9 @@ DECLAREContigPutFunc(putgreytile)
 {
     int samplesperpixel = img->samplesperpixel;
     uint32_t **BWmap = img->BWmap;
+    /* Convert pixel skew to byte skew (8-bit samples) */
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * +(tmsize_t)samplesperpixel;
 
     (void)y;
     for (; h > 0; --h)
@@ -1714,7 +1720,7 @@ DECLAREContigPutFunc(putgreytile)
             pp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1725,6 +1731,9 @@ DECLAREContigPutFunc(putagreytile)
 {
     int samplesperpixel = img->samplesperpixel;
     uint32_t **BWmap = img->BWmap;
+    /* Convert pixel skew to byte skew (8-bit samples) */
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * +(tmsize_t)samplesperpixel;
 
     (void)y;
     for (; h > 0; --h)
@@ -1735,7 +1744,7 @@ DECLAREContigPutFunc(putagreytile)
             pp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
