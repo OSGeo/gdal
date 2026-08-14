@@ -362,6 +362,9 @@ static bool CreateVRTDerivedBand(
     const int nXOut = poDS->GetRasterXSize();
     const int nYOut = poDS->GetRasterYSize();
 
+    CPLStringList papszBandArgs;
+    papszBandArgs.SetNameValue("subclass", "VRTDerivedRasterBand");
+
     int nOutBands = 1;  // By default, each expression produces a single output
                         // band. When processing the expression below, we may
                         // discover that the expression produces multiple bands,
@@ -374,8 +377,6 @@ static bool CreateVRTDerivedBand(
         // expression.
         std::string bandExpression = expression;
 
-        CPLStringList papszBandArgs;
-        papszBandArgs.SetNameValue("subclass", "VRTDerivedRasterBand");
         if (poDS->AddBand(bandType == GDT_Unknown ? GDT_Float64 : bandType,
                           papszBandArgs) != CE_None)
         {
