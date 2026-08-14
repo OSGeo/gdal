@@ -1552,6 +1552,9 @@ bool CPLTestBool(const char *pszValue)
              EQUAL(pszValue, "OFF") || EQUAL(pszValue, "0"));
 }
 
+/// Return true if the config option's value represents a boolean true.
+/// \param configVal  String name of config value.
+/// \return  Whether the config option's value represents true.
 bool CPLTestConfigOption(const char *configVal)
 {
     return CPLTestBool(CPLGetConfigOption(configVal, "NO"));

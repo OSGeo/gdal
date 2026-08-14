@@ -158,6 +158,9 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         {
         }
 
+        Handle(const Handle &) = default;
+        Handle &operator=(const Handle &) = default;
+
         CURL *m_curl{nullptr};
         HandleState m_state{HandleState::Ready};
         using DebugInfo = std::pair<std::string, std::string>;

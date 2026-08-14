@@ -103,9 +103,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_CREATE_ZIP64", // from cpl_minizip_zip.cpp
    "CPL_CURL_ENABLE_VSIMEM", // from cpl_http.cpp, gdalhttp.cpp, ogrwfsjoinlayer.cpp, ogrwfslayer.cpp
    "CPL_CURL_GZIP", // from cpl_http.cpp, cpl_vsil_curl_streaming.cpp
-   "CPL_CURL_IGNORE_ERROR", // from cpl_http.cpp
-   "CPL_CURL_VERBOSE", // from cpl_http.cpp, cpl_vsil_curl.cpp
-   "CPL_CURL_VERBOSE_DATA_IN", // from cpl_http.cpp
    "CPL_CURL_VSIMEM_PRINT_HEADERS", // from cpl_http.cpp
    "CPL_DEBUG", // from cpl_conv.cpp, cpl_error.cpp, e57driver.cpp, gdalinfo_bin.cpp, gdalsrsinfo.cpp, gdalwarp_bin.cpp, gmlutils.cpp
    "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", // from cpl_path.cpp
@@ -153,8 +150,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_DEFLATE_CHUNK_SIZE", // from cpl_minizip_zip.cpp, cpl_vsil_gzip.cpp
    "CPL_VSIL_GZIP_SAVE_INFO", // from cpl_vsil_gzip.cpp
    "CPL_VSIL_GZIP_WRITE_PROPERTIES", // from cpl_vsil_gzip.cpp
-   "CPL_VSIL_NETWORK_STATS_ENABLED", // from cpl_vsil_curl.cpp
-   "CPL_VSIL_SHOW_NETWORK_STATS", // from cpl_vsil_curl.cpp
    "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", // from cpl_vsil_s3.cpp, ogrgeopackagedatasource.cpp, ogrlibkmldatasource.cpp, ogrsqlitedatasource.cpp
    "CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", // from cpl_vsil_gzip.cpp
    "CPL_VSIS3_CREATE_DIR_OBJECT", // from cpl_vsil_s3.cpp

@@ -4763,7 +4763,6 @@ int VSICurlFilesystemHandlerBase::CurlDebugStatic(CURL *handle,
 {
     if (size && data[size - 1] == '\n')
         size--;
-    std::string msg(data, size);
 
     static_cast<VSICurlFilesystemHandlerBase *>(userp)->CurlDebug(
         handle, type, std::string_view(data, size));
