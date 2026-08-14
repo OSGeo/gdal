@@ -41,6 +41,12 @@ Program-Specific Options
 
 .. option:: --fields <FIELDS>
 
+    .. warning::
+
+        This argument is deprecated since GDAL 3.14 and will be removed in
+        GDAL 3.15. Use :option:`--field` and/or :option:`--geometry-field`
+        instead.
+
     Comma-separated list of fields from input layer to copy to the new layer
     (or to exclude if :option:`--exclude` is specified)
 
@@ -64,16 +70,49 @@ Program-Specific Options
 
     Specifying a non-existing source field name results in an error.
 
-
-.. option:: --geometry
-
-    Select the default geometry field, in addition to any fields specified in :option:`--fields`.
+.. option:: --field <FIELD>
 
     .. versionadded:: 3.14
 
+    Comma-separated list of attribute fields from input layer to copy to the new layer
+    (or to exclude if :option:`--exclude` is specified)
+
+    Field names with spaces, commas or double-quote
+    should be surrounded with a starting and ending double-quote character, and
+    double-quote characters in a field name should be escaped with backslash.
+
+    Depending on the shell used, this might require further quoting. For example,
+    to select ``regular_field``, ``a_field_with space, and comma`` and
+    ``a field with " double quote`` with a Unix shell:
+
+    .. code-block:: bash
+
+        --field "regular_field,\"a_field_with space, and comma\",\"a field with \\\" double quote\""
+
+    Specifying a non-existing source field name results in an error.
+
+.. option:: --geometry-field <GEOMETRY-FIELD>
+
+    .. versionadded:: 3.14
+
+    Comma-separated list of geometry fields from input layer to copy to the new layer
+    (or to exclude if :option:`--exclude` is specified)
+
+    Field names with spaces, commas or double-quote
+    should be surrounded with a starting and ending double-quote character, and
+    double-quote characters in a field name should be escaped with backslash.
+
+    Specifying a non-existing source field name results in an error.
+
+.. option:: --geometry
+
+    .. versionadded:: 3.14
+
+    Select the default geometry field, in addition to any fields specified in :option:`--field` and :option:`--geometry-field`.
+
 .. option:: --ignore-missing-fields
 
-    By default, if a field specified by :option:`--fields` does not exist in the input
+    By default, if a field specified by :option:`--field` or  :option:`--geometry-field` does not exist in the input
     layer(s), an error is emitted and the processing is stopped.
     When specifying :option:`--ignore-missing-fields`, only a warning is
     emitted and the non existing fields are just ignored.
@@ -126,7 +165,7 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector select in.shp out.gpkg "EAS_ID,_ogr_geometry_" --overwrite
+        $ gdal vector select in.shp out.gpkg --field "EAS_ID" --geometry --overwrite
 
 
 .. example::
@@ -134,4 +173,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector select in.shp out.gpkg --exclude "name,surname,address" --overwrite
+        $ gdal vector select in.shp out.gpkg --exclude --field "name,surname,address" --overwrite

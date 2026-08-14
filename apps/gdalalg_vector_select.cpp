@@ -42,10 +42,32 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
                               /* shortNameOutputLayerAllowed = */ false);
     }
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
-           &m_fields)
+           &m_fieldsDeprecated)
         .SetDuplicateValuesAllowed(false)
-        .SetPositional();
+        .SetPositional()
+        .SetHidden();
+
+    {
+        auto &arg =
+            AddArg("field", 0, _("Attribute fields(s) to select"), &m_fields)
+                .SetDuplicateValuesAllowed(false)
+                .SetMetaVar("FIELD");
+
+        SetAutoCompleteFunctionForFieldName(arg, nullptr, true, false,
+                                            m_inputDataset);
+    }
+
     AddArg("geometry", 0, _("Select default geometry field"), &m_defaultGeom);
+
+    {
+        auto &arg = AddArg("geometry-field", 0,
+                           _("Geometry field(s) to select"), &m_geomFields)
+                        .SetDuplicateValuesAllowed(false)
+                        .SetMetaVar("GEOMETRY-FIELD");
+        SetAutoCompleteFunctionForFieldName(arg, nullptr, false, true,
+                                            m_inputDataset);
+    }
+
     AddArg("exclude", 0, _("Exclude specified fields"), &m_exclude)
         .SetDuplicateValuesAllowed(false)
         .SetMutualExclusionGroup("exclude-ignore");
@@ -136,8 +158,8 @@ class GDALVectorSelectAlgorithmLayer final
         m_poFeatureDefn->SetGeomType(wkbNone);
     }
 
-    bool IncludeFields(const std::vector<std::string> &selectedFields,
-                       bool bStrict)
+    bool IncludeFieldsDeprecated(const std::vector<std::string> &selectedFields,
+                                 bool bStrict)
     {
         std::set<std::string> oSetSelFields;
         std::set<std::string> oSetSelFieldsUC;
@@ -218,7 +240,126 @@ class GDALVectorSelectAlgorithmLayer final
         return true;
     }
 
-    void ExcludeFields(const std::vector<std::string> &fields)
+    bool IncludeAttributeFields(const std::vector<std::string> &selectedFields,
+                                bool bStrict)
+    {
+        std::set<std::string> oSetSelFields;
+        std::set<std::string> oSetSelFieldsUC;
+        for (const std::string &osFieldName : selectedFields)
+        {
+            oSetSelFields.insert(osFieldName);
+            oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
+        }
+
+        std::set<std::string> oSetUsedSetFieldsUC;
+
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
+        for (const auto poSrcFieldDefn : poSrcLayerDefn->GetFields())
+        {
+            const auto oIter = oSetSelFieldsUC.find(
+                CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+            if (oIter != oSetSelFieldsUC.end())
+            {
+                m_anMapSrcFieldsToDstFields.push_back(
+                    m_poFeatureDefn->GetFieldCount());
+                OGRFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                m_poFeatureDefn->AddFieldDefn(&oDstFieldDefn);
+                oSetUsedSetFieldsUC.insert(*oIter);
+            }
+            else
+            {
+                m_anMapSrcFieldsToDstFields.push_back(-1);
+            }
+        }
+
+        if (oSetUsedSetFieldsUC.size() != oSetSelFields.size())
+        {
+            for (const std::string &osName : oSetSelFields)
+            {
+                if (!cpl::contains(oSetUsedSetFieldsUC,
+                                   CPLString(osName).toupper()))
+                {
+                    CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                             "Field '%s' does not exist in layer '%s'.%s",
+                             osName.c_str(), m_srcLayer.GetDescription(),
+                             bStrict ? " You may specify "
+                                       "--ignore-missing-fields to skip it"
+                                     : " It will be ignored");
+                    if (bStrict)
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool IncludeGeometryFields(const std::vector<std::string> &selectedFields,
+                               bool bStrict)
+    {
+        std::set<std::string> oSetSelFields;
+        std::set<std::string> oSetSelFieldsUC;
+        for (const std::string &osFieldName : selectedFields)
+        {
+            oSetSelFields.insert(osFieldName);
+            oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
+        }
+
+        std::set<std::string> oSetUsedSetFieldsUC;
+
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
+
+        const int nSrcGeomFieldCount = poSrcLayerDefn->GetGeomFieldCount();
+        for (int i = 0; i < nSrcGeomFieldCount; ++i)
+        {
+            const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(i);
+            const auto oIter = oSetSelFieldsUC.find(
+                CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+            if (oIter != oSetSelFieldsUC.end())
+            {
+                m_anMapDstGeomFieldsToSrcGeomFields.push_back(i);
+                OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
+                oSetUsedSetFieldsUC.insert(*oIter);
+            }
+        }
+
+        const auto oIter = oSetSelFieldsUC.find(
+            CPLString(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME).toupper());
+        if (m_poFeatureDefn->GetGeomFieldCount() == 0 &&
+            oIter != oSetSelFieldsUC.end() &&
+            poSrcLayerDefn->GetGeomFieldCount() == 1)
+        {
+            const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(0);
+            m_anMapDstGeomFieldsToSrcGeomFields.push_back(0);
+            OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+            m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
+            oSetUsedSetFieldsUC.insert(*oIter);
+        }
+
+        if (oSetUsedSetFieldsUC.size() != oSetSelFields.size())
+        {
+            for (const std::string &osName : oSetSelFields)
+            {
+                if (!cpl::contains(oSetUsedSetFieldsUC,
+                                   CPLString(osName).toupper()))
+                {
+                    CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                             "Field '%s' does not exist in layer '%s'.%s",
+                             osName.c_str(), m_srcLayer.GetDescription(),
+                             bStrict ? " You may specify "
+                                       "--ignore-missing-fields to skip it"
+                                     : " It will be ignored");
+                    if (bStrict)
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    void ExcludeFieldsDeprecated(const std::vector<std::string> &fields)
     {
         std::set<std::string> oSetSelFields;
         std::set<std::string> oSetSelFieldsUC;
@@ -245,6 +386,72 @@ class GDALVectorSelectAlgorithmLayer final
                 m_poFeatureDefn->AddFieldDefn(&oDstFieldDefn);
             }
         }
+
+        if (oSetSelFieldsUC.find(
+                CPLString(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME).toupper()) !=
+                oSetSelFieldsUC.end() &&
+            poSrcLayerDefn->GetGeomFieldCount() == 1)
+        {
+            // exclude default geometry field
+        }
+        else
+        {
+            const int nSrcGeomFieldCount = poSrcLayerDefn->GetGeomFieldCount();
+            for (int i = 0; i < nSrcGeomFieldCount; ++i)
+            {
+                const auto poSrcFieldDefn = poSrcLayerDefn->GetGeomFieldDefn(i);
+                const auto oIter = oSetSelFieldsUC.find(
+                    CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+                if (oIter == oSetSelFieldsUC.end())
+                {
+                    m_anMapDstGeomFieldsToSrcGeomFields.push_back(i);
+                    OGRGeomFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                    m_poFeatureDefn->AddGeomFieldDefn(&oDstFieldDefn);
+                }
+            }
+        }
+    }
+
+    void ExcludeAttributeFields(const std::vector<std::string> &fields)
+    {
+        std::set<std::string> oSetSelFields;
+        std::set<std::string> oSetSelFieldsUC;
+        for (const std::string &osFieldName : fields)
+        {
+            oSetSelFields.insert(osFieldName);
+            oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
+        }
+
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
+        for (const auto poSrcFieldDefn : poSrcLayerDefn->GetFields())
+        {
+            const auto oIter = oSetSelFieldsUC.find(
+                CPLString(poSrcFieldDefn->GetNameRef()).toupper());
+            if (oIter != oSetSelFieldsUC.end())
+            {
+                m_anMapSrcFieldsToDstFields.push_back(-1);
+            }
+            else
+            {
+                m_anMapSrcFieldsToDstFields.push_back(
+                    m_poFeatureDefn->GetFieldCount());
+                OGRFieldDefn oDstFieldDefn(*poSrcFieldDefn);
+                m_poFeatureDefn->AddFieldDefn(&oDstFieldDefn);
+            }
+        }
+    }
+
+    void ExcludeGeometryFields(const std::vector<std::string> &fields)
+    {
+        std::set<std::string> oSetSelFields;
+        std::set<std::string> oSetSelFieldsUC;
+        for (const std::string &osFieldName : fields)
+        {
+            oSetSelFields.insert(osFieldName);
+            oSetSelFieldsUC.insert(CPLString(osFieldName).toupper());
+        }
+
+        const auto poSrcLayerDefn = m_srcLayer.GetLayerDefn();
 
         if (oSetSelFieldsUC.find(
                 CPLString(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME).toupper()) !=
@@ -329,16 +536,43 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
-    if (m_defaultGeom &&
-        std::find(m_fields.begin(), m_fields.end(),
-                  OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) == m_fields.end())
+    if (!m_fieldsDeprecated.empty())
     {
-        m_fields.emplace_back(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
+        if (!m_fields.empty() || !m_geomFields.empty())
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Deprecated --fields argument cannot be used together "
+                        "with --field or --geometry-field");
+            return false;
+        }
+        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                     "--fields is deprecated and will be removed in GDAL 3.15, "
+                     "use --field and/or --geometry-field instead");
+
+        if (m_defaultGeom &&
+            std::find(m_fieldsDeprecated.begin(), m_fieldsDeprecated.end(),
+                      OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) ==
+                m_fieldsDeprecated.end())
+        {
+            m_fieldsDeprecated.emplace_back(
+                OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
+        }
     }
-    if (m_fields.empty())
+    else
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Must specify --fields and/or --geometry");
+        if (m_defaultGeom && std::find(m_geomFields.begin(), m_geomFields.end(),
+                                       OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME) ==
+                                 m_geomFields.end())
+        {
+            m_geomFields.emplace_back(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
+        }
+    }
+
+    if (m_fieldsDeprecated.empty() && m_fields.empty() &&
+        m_geomFields.empty() && !m_defaultGeom)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Must specify --field, --geometry-field and/or --geometry");
         return false;
     }
 
@@ -351,12 +585,33 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 *poSrcLayer, m_outputLayerName);
             if (m_exclude)
             {
-                poLayer->ExcludeFields(m_fields);
+                if (!m_fieldsDeprecated.empty())
+                {
+                    poLayer->ExcludeFieldsDeprecated(m_fieldsDeprecated);
+                }
+                else
+                {
+                    poLayer->ExcludeAttributeFields(m_fields);
+                    poLayer->ExcludeGeometryFields(m_geomFields);
+                }
             }
             else
             {
-                if (!poLayer->IncludeFields(m_fields, !m_ignoreMissingFields))
-                    return false;
+                if (!m_fieldsDeprecated.empty())
+                {
+                    if (!poLayer->IncludeFieldsDeprecated(
+                            m_fieldsDeprecated, !m_ignoreMissingFields))
+                        return false;
+                }
+                else
+                {
+                    if (!poLayer->IncludeAttributeFields(
+                            m_fields, !m_ignoreMissingFields))
+                        return false;
+                    if (!poLayer->IncludeGeometryFields(m_geomFields,
+                                                        !m_ignoreMissingFields))
+                        return false;
+                }
             }
             outDS->AddLayer(*poSrcLayer, std::move(poLayer));
         }
