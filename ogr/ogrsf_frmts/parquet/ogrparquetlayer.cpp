@@ -103,7 +103,8 @@ void OGRParquetLayerBase::LoadGeoMetadata(
                 if (osVersion != "0.1.0" && osVersion != "0.2.0" &&
                     osVersion != "0.3.0" && osVersion != "0.4.0" &&
                     osVersion != "1.0.0-beta.1" && osVersion != "1.0.0-rc.1" &&
-                    osVersion != "1.0.0" && osVersion != "1.1.0")
+                    osVersion != "1.0.0" && osVersion != "1.1.0" &&
+                    osVersion != "2.0.0")
                 {
                     CPLDebug(
                         "PARQUET",
@@ -248,6 +249,7 @@ bool OGRParquetLayerBase::DealWithArrow21GeometryGeographyNativeTypes(
             crs = static_cast<const parquet::GeometryLogicalType *>(
                       logicalType.get())
                       ->crs();
+            m_mapGeomFieldToParquetGeoCrs[field->name()] = crs;
             if (crs.empty())
                 crs = "EPSG:4326";
             CPLDebugOnly("PARQUET", "GeometryLogicalType crs=%s", crs.c_str());
@@ -258,6 +260,7 @@ bool OGRParquetLayerBase::DealWithArrow21GeometryGeographyNativeTypes(
                 static_cast<const parquet::GeographyLogicalType *>(
                     logicalType.get());
             crs = geographyType->crs();
+            m_mapGeomFieldToParquetGeoCrs[field->name()] = crs;
             if (crs.empty())
                 crs = "EPSG:4326";
 
@@ -485,7 +488,7 @@ bool OGRParquetLayerBase::DealWithArrow21GeometryGeographyNativeTypes(
     OGRGeomFieldDefn oField(field->name().c_str(), eGeomType);
     oField.SetNullable(field->nullable());
 
-    if (!crs.empty())
+    if (!crs.empty() && crs != "srid:0")
     {
         // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
         // "srid: Spatial reference identifier, identifier is the SRID itself.."
@@ -2865,6 +2868,13 @@ const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
             }
         }
         return nullptr;
+    }
+    if (pszDomain != nullptr && EQUAL(pszDomain, "_PARQUET_GEO_CRS_"))
+    {
+        const auto oIter = m_mapGeomFieldToParquetGeoCrs.find(pszName);
+        if (oIter == m_mapGeomFieldToParquetGeoCrs.end())
+            return nullptr;
+        return oIter->second.c_str();
     }
     return OGRLayer::GetMetadataItem(pszName, pszDomain);
 }

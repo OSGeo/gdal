@@ -777,6 +777,23 @@ void OGRParquetDriver::InitMetadata()
     CPLXMLTreeCloser oTree(
         CPLCreateXMLNode(nullptr, CXT_Element, "LayerCreationOptionList"));
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "GEOPARQUET_VERSION");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "GeoParquet specification version");
+        CPLAddXMLAttributeAndValue(psOption, "default", "1.1");
+        {
+            auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "1.1");
+        }
+        {
+            auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "2.0");
+        }
+    }
+
     std::vector<const char *> apszCompressionMethods;
     bool bHasSnappy = false;
     int minComprLevel = INT_MAX;
@@ -974,12 +991,13 @@ void OGRParquetDriver::InitMetadata()
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psOption, "name", "USE_PARQUET_GEO_TYPES");
-        CPLAddXMLAttributeAndValue(psOption, "default", "NO");
+        CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
         CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Whether to use Parquet Geometry/Geography "
                                    "logical types (introduced in libarrow 21), "
                                    "when using GEOMETRY_ENCODING=WKB encoding");
+        CPLCreateXMLElementAndValue(psOption, "Value", "AUTO");
         CPLCreateXMLElementAndValue(psOption, "Value", "YES");
         CPLCreateXMLElementAndValue(psOption, "Value", "NO");
         CPLCreateXMLElementAndValue(psOption, "Value", "ONLY");
