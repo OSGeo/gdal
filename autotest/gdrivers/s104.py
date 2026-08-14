@@ -1319,7 +1319,7 @@ def test_s104_write_large_file(tmp_path):
         )
 
     expected_warnings = [
-        f"File size of {filename} = 12988072, which exceeds 10 MB",
+        f"File size of {filename} = 12988064, which exceeds 10 MB",
     ]
     validate(filename, expected_warnings=expected_warnings)
 

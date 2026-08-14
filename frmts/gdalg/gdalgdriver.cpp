@@ -226,7 +226,8 @@ void GDALGRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand *) const
     }
 
     const std::string osCommandLine = oDoc.GetRoot().GetString("command_line");
-    if (osCommandLine.empty())
+    const CPLStringList aosArgs(CSLTokenizeString(osCommandLine.c_str()));
+    if (aosArgs.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "command_line missing");
         return nullptr;
@@ -245,8 +246,6 @@ void GDALGRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand *) const
                      osVersion.c_str(), GDALVersionInfo("VERSION_NUM"));
         }
     };
-
-    const CPLStringList aosArgs(CSLTokenizeString(osCommandLine.c_str()));
 
     auto alg = GDALGlobalAlgorithmRegistry::GetSingleton().Instantiate(
         GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);

@@ -15,7 +15,6 @@
 #include "ogrs101readerconstants.h"
 
 #include <algorithm>
-#include <charconv>
 #include <cfloat>
 #include <limits>
 #include <memory>
@@ -1032,10 +1031,12 @@ bool OGRS101Reader::FillFeatureAttributes(const DDFRecordIndex &oIndex,
                 if (pszATVL[0])
                 {
                     const char *const last = pszATVL + sAttrDef.osVal.size();
-                    int nVal = -1;
-                    auto [ptr, ec] = std::from_chars(pszATVL, last, nVal);
-                    if (ec == std::errc() && ptr == last)
+                    char *endptr = NULL;
+                    const auto nVal64 = std::strtoll(pszATVL, &endptr, 10);
+                    if (nVal64 >= INT_MIN && nVal64 <= INT_MAX &&
+                        endptr == last)
                     {
+                        const int nVal = static_cast<int>(nVal64);
                         if (eType == OFTInteger)
                             oFeature.SetField(iOGRFieldIdx, nVal);
                         else
