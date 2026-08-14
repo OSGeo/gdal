@@ -40,6 +40,10 @@ Program-Specific Options
    ``Z``, ``M`` or ``ZM`` suffixes can be appended to the above values to
    indicate the dimensionality.
 
+   If the geometry resulting from the operation cannot be converted to the
+   geometry type, the corresponding output feature is not written in the output
+   layer.
+
 .. option:: --input-layer <INPUT-LAYER>
 
     Name of the input vector layer.
