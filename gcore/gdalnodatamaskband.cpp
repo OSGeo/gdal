@@ -324,19 +324,20 @@ static CPLErr ParentBandIsNoData(void *poData, int nXOff, int nYOff, int nXSize,
 
     GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>(poData);
 
-    TransferType *pabySrc = static_cast<TransferType *>(
-        VSI_MALLOC3_VERBOSE(sizeof(TransferType), nXSize, nYSize));
-    if (!pabySrc)
+    std::unique_ptr<TransferType, decltype(&CPLFree)> pabySrc{
+        static_cast<TransferType *>(
+            VSI_MALLOC3_VERBOSE(sizeof(TransferType), nXSize, nYSize)),
+        CPLFree};
+    if (pabySrc == nullptr)
     {
         return CE_Failure;
     }
 
     const auto eErr = poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
-                                          pabySrc, nXSize, nYSize,
+                                          pabySrc.get(), nXSize, nYSize,
                                           GDALTransferDataType, 0, 0, nullptr);
     if (eErr != CE_None)
     {
-        CPLFree(pabySrc);
         return eErr;
     }
 
@@ -355,18 +356,16 @@ static CPLErr ParentBandIsNoData(void *poData, int nXOff, int nYOff, int nXSize,
     {
         if constexpr (std::is_floating_point_v<TransferType>)
         {
-            pabyDst[i] = (std::isnan(noData) && std::isnan(pabySrc[i])) ||
-                                 ARE_REAL_EQUAL(pabySrc[i], noData)
+            pabyDst[i] = (std::isnan(noData) && std::isnan(pabySrc.get()[i])) ||
+                                 ARE_REAL_EQUAL(pabySrc.get()[i], noData)
                              ? 0
                              : 255;
         }
         else
         {
-            pabyDst[i] = pabySrc[i] == noData ? 0 : 255;
+            pabyDst[i] = pabySrc.get()[i] == noData ? 0 : 255;
         }
     }
-
-    CPLFree(pabySrc);
 
     return CE_None;
 }
