@@ -16,6 +16,7 @@ env:
 jobs:
   safety_checks:
     runs-on: ubuntu-latest
+    if: github.repository == 'OSGeo/gdal'
     outputs:
         RC: ${{ steps.unpack_tag.outputs.RC }}
         BETA: ${{ steps.unpack_tag.outputs.BETA }}
