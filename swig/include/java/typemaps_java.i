@@ -2645,3 +2645,83 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (OGRCodedValue*) {
     return $jnicall;
   }
+
+
+/***************************************************
+ * Typemaps for SpatialReference.FindMatches()
+ *
+ * C signature (see osr.i):
+ *   OSRSpatialReferenceShadow** FindMatches(
+ *       char** options, int* nvalues, int** confidence_values)
+ *
+ * Resulting Java signature:
+ *   public SpatialReference[] FindMatches(Vector options, int[][] confidenceValuesOut)
+ *
+ * nvalues (arg position 3) is fully hidden from Java -- it only exists to
+ * carry the match count between the two output-producing typemaps below.
+ * confidence_values (arg position 4) is surfaced as an int[][] "out box":
+ * caller passes a 1-element int[][] and this typemap fills element [0]
+ * with a freshly allocated int[] parallel to the returned SpatialReference[].
+ *
+ * NOTE on the nMatches3 / panConfidence4 local variable names: SWIG
+ * appends the argument's position in the full parameter list (self=1,
+ * options=2, nvalues=3, confidence_values=4) to typemap-declared locals to
+ * avoid collisions. These names must match
+ * whatever the generated osr_wrap.cpp actually declares. If SWIG's output
+ * changes (e.g. after a signature edit), check osr_wrap.cpp and update
+ * the suffixes here to match.
+ ***************************************************/
+
+%typemap(in,numinputs=0) int* nvalues (int nMatches = 0)
+{
+  /* %typemap(in,numinputs=0) int* nvalues */
+  $1 = &nMatches;
+}
+
+%typemap(in) int** confidence_values (int* panConfidence = NULL)
+{
+  /* %typemap(in) int** confidence_values -- caller's array contents are
+     ignored; we only keep $input around so argout can write the real
+     result into element [0]. */
+  $1 = &panConfidence;
+}
+
+%typemap(argout) int** confidence_values
+{
+  /* %typemap(argout) int** confidence_values -- fills the caller's int[][] */
+  if ($input && jenv->GetArrayLength($input) >= 1) {
+    jintArray confArray = jenv->NewIntArray(nMatches3);
+    jenv->SetIntArrayRegion(confArray, 0, nMatches3, (jint*)panConfidence4);
+    jenv->SetObjectArrayElement($input, 0, confArray);
+    jenv->DeleteLocalRef(confArray);
+  }
+  CPLFree(panConfidence4);
+}
+
+%typemap(jni) int** confidence_values "jobjectArray"
+%typemap(jtype) int** confidence_values "int[][]"
+%typemap(jstype) int** confidence_values "int[][]"
+%typemap(javain) int** confidence_values "$javainput"
+
+%typemap(out) (OSRSpatialReferenceShadow**)
+{
+  /* %typemap(out) (OSRSpatialReferenceShadow**) -- builds the returned SpatialReference[] */
+  const jclass srsClass = jenv->FindClass("org/gdal/osr/SpatialReference");
+  const jmethodID srsCtor = jenv->GetMethodID(srsClass, "<init>", "(JZ)V");
+
+  jresult = jenv->NewObjectArray(nMatches3, srsClass, NULL);
+  for (int i = 0; i < nMatches3; i++) {
+    OSRReference(result[i]);
+    jobject srsObj = jenv->NewObject(srsClass, srsCtor, (jlong)result[i], (jboolean)true);
+    jenv->SetObjectArrayElement(jresult, i, srsObj);
+    jenv->DeleteLocalRef(srsObj);
+  }
+  OSRFreeSRSArray(result);
+}
+
+%typemap(jni) OSRSpatialReferenceShadow** "jobjectArray"
+%typemap(jtype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(jstype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(javaout) OSRSpatialReferenceShadow** {
+    return $jnicall;
+}

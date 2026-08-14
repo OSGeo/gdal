@@ -576,6 +576,13 @@ public:
   }
 #endif
 
+#ifdef SWIGJAVA
+  OSRSpatialReferenceShadow** FindMatches( char** options, int* nvalues, int** confidence_values )
+  {
+       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
+  }
+#endif
+
   OGRErr SetProjection( char const *arg ) {
     return OSRSetProjection( self, arg );
   }
