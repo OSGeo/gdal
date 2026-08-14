@@ -359,6 +359,7 @@ static int PredictorSetupEncode(TIFF *tif)
  * them in this per-sample hot path.  _TIFFmemcpy() is an out-of-line wrapper
  * in non-LTO builds.
  */
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void PredictorAccumulate16NativeUnaligned(uint8_t *current,
                                                  const uint8_t *previous)
 {
@@ -371,6 +372,7 @@ static void PredictorAccumulate16NativeUnaligned(uint8_t *current,
     memcpy(current, &thisval, sizeof(thisval));
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void PredictorAccumulate32NativeUnaligned(uint8_t *current,
                                                  const uint8_t *previous)
 {
@@ -382,6 +384,7 @@ static void PredictorAccumulate32NativeUnaligned(uint8_t *current,
     memcpy(current, &thisval, sizeof(thisval));
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void PredictorAccumulate64NativeUnaligned(uint8_t *current,
                                                  const uint8_t *previous)
 {
