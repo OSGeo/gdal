@@ -1911,7 +1911,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                     if ((samplesperclumpline & 1) != 0)
                         JPEGWritePacked12Sample(
                             (uint8_t *)buf, samplesperclumpline - 1,
-                            (J12SAMPLE)tmpbuf[samplesperclumpline - 1]);
+                            (TIFF_JSAMPLE)tmpbuf[samplesperclumpline - 1]);
                 }
             }
 #endif
