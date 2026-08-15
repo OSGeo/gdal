@@ -27,6 +27,11 @@ The command takes a vector input source and a method source and generates the
 output of the operation in the specified output file. The output fields depend on the
 operation and can be controlled with the field options.
 
+Z and M coordinates do not affect the result of algebraic operations, which
+are computed using X and Y coordinates. When present, Z and M coordinates
+are propagated to the output, with values interpolated from the input
+geometries.
+
 When operations result in mixed geometry types, for example, a ``union`` operation
 between a polygon layer and a point layer, the output data format must be able to
 support mixed geometry types, such as GeoPackage or GeoJSON.
@@ -67,6 +72,7 @@ Program-Specific Options
 
         A union is a set of features, which represent areas that are in either of the operand layers.
         The operation is symmetric, and input and method layers can be interchanged.
+        See also the :cpp:func:`Union <OGRLayer::Union>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_union.svg
 
@@ -74,6 +80,7 @@ Program-Specific Options
 
         An intersection is a set of features, which represent the common areas of two layers.
         The operation is symmetric, and input and method layers can be interchanged.
+        See also the :cpp:func:`Intersection <OGRLayer::Intersection>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_intersection.svg
 
@@ -81,6 +88,7 @@ Program-Specific Options
 
         A symmetric difference is a set of features, which represent areas that are in operand layers but which do not intersect.
         The operation is symmetric, and input and method layers can be interchanged.
+        See also the :cpp:func:`SymDifference <OGRLayer::SymDifference>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_sym_difference.svg
 
@@ -88,6 +96,7 @@ Program-Specific Options
 
         The identity method identifies features in the input layer with features in the method layer possibly splitting features into several features.
         By default the result layer has attributes from both operand layers.
+        See also the :cpp:func:`Identity <OGRLayer::Identity>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_identity.svg
 
@@ -95,6 +104,7 @@ Program-Specific Options
 
         The update method creates a layer, which add features into the input layer from the method layer possibly cutting features in the input layer.
         By default the result layer has attributes only from the input layer.
+        See also the :cpp:func:`Update <OGRLayer::Update>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_update.svg
 
@@ -102,6 +112,7 @@ Program-Specific Options
 
         The clip method creates a layer, which has features from the input layer clipped to the areas of the features in the method layer.
         By default the result layer has attributes of the input layer.
+        See also the :cpp:func:`Clip <OGRLayer::Clip>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_clip.svg
 
@@ -109,6 +120,7 @@ Program-Specific Options
 
         The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer.
         By default the result layer has attributes of the input layer.
+        See also the :cpp:func:`Erase <OGRLayer::Erase>` C++ API documentation.
 
         .. image:: ../../images/programs/gdal_vector_layer_algebra_erase.svg
 
