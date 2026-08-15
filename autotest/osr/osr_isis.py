@@ -123,7 +123,7 @@ End_Group""") == 0
 
 
 ###############################################################################
-# An unparseable ProjStr fails rather than crashing.
+# An unparsable ProjStr fails rather than crashing.
 
 
 def test_osr_isis_invalid():

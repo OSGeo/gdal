@@ -406,7 +406,7 @@ GDALComputedDataset::GDALComputedDataset(
 
     AddSources(poBand);
 
-    // Otherwise coverity scan suggets adding annoying std::move()s
+    // Otherwise coverity scan suggests adding annoying std::move()s
     CPL_IGNORE_RET_VAL(osFirstBand);
     CPL_IGNORE_RET_VAL(osSecondBand);
 }
