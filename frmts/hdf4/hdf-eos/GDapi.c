@@ -1203,7 +1203,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 -----------------------------------------------------------------------------*/
 intn
 GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
-	    int32 * numbertype, char *dimlist)
+	    int32 * numbertype, char dimlist[HDFE_DIMBUFSIZE+1])
 
 {
     intn            i;		    /* Loop index */
@@ -1355,7 +1355,19 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 
 			if (i > 0)
 			{
+			    if( strlen(dimlist) + 1 > HDFE_DIMBUFSIZE )
+			    {
+			        free(metabuf);
+			        free(utlstr);
+			        return -1;
+			    }
 			    strcat(dimlist, ",");
+			}
+			if( strlen(dimlist) + strlen(dimstr) > HDFE_DIMBUFSIZE )
+			{
+			    free(metabuf);
+			    free(utlstr);
+			    return -1;
 			}
 			strcat(dimlist, dimstr);
 		    }

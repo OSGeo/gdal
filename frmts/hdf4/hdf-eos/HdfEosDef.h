@@ -153,7 +153,7 @@ int32 GDattach(int32, const char *);
 int32 GDdiminfo(int32, const char *);
 intn GDgridinfo(int32, int32 *, int32 *, float64 [], float64 []);
 intn GDprojinfo(int32, int32 *, int32 *, int32 *, float64 []);
-intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
+intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char dimlist[HDFE_DIMBUFSIZE+1]);
 intn GDtileinfo(int32, const char *, int32 *, int32 *, int32 []);
 intn GDreadtile(int32, const char *, int32 [],  VOIDP);
 intn GDreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
