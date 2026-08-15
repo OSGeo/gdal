@@ -1665,7 +1665,7 @@ GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[
 -----------------------------------------------------------------------------*/
 intn
 GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
-	    int32 * numbertype, char *dimlist)
+	    int32 * numbertype, char dimlist[HDFE_DIMBUFSIZE+1])
 
 {
     intn            i;		    /* Loop index */
@@ -1817,7 +1817,19 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 
 			if (i > 0)
 			{
+			    if( strlen(dimlist) + 1 > HDFE_DIMBUFSIZE )
+			    {
+			        free(metabuf);
+			        free(utlstr);
+			        return -1;
+			    }
 			    strcat(dimlist, ",");
+			}
+			if( strlen(dimlist) + strlen(dimstr) > HDFE_DIMBUFSIZE )
+			{
+			    free(metabuf);
+			    free(utlstr);
+			    return -1;
 			}
 			strcat(dimlist, dimstr);
 		    }
@@ -4576,7 +4588,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 
     /* Allocate space for dimlist */
     /* --------------------------------- */
-    dimlist = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
+    dimlist = (char *) calloc(HDFE_DIMBUFSIZE+1, sizeof(char));
     if(dimlist == NULL)
     {
 	HEpush(DFE_NOSPACE,"GDgetpixvalues", __FILE__, __LINE__);

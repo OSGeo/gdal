@@ -161,7 +161,7 @@ intn GDprojinfo(int32, int32 *, int32 *, int32 *, float64 []);
 intn GDorigininfo(int32, int32 *);
 intn GDpixreginfo(int32, int32 *);
 intn GDcompinfo(int32, const char *, int32 *, intn []);
-intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
+intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char dimlist[HDFE_DIMBUFSIZE+1]);
 intn GDtileinfo(int32, const char *, int32 *, int32 *, int32 []);
 intn GDreadtile(int32, const char *, int32 [],  VOIDP);
 intn GDreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
