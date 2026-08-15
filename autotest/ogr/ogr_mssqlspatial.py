@@ -248,6 +248,31 @@ def test_ogr_mssqlspatial_4(mssql_ds, mssql_has_z_m):
 
 
 ###############################################################################
+# Test SetFeature() updating the geometry of an existing feature using the
+# native geometry format
+
+
+@pytest.mark.usefixtures("tpoly")
+def test_ogr_mssqlspatial_setfeature_native_geometry(mssql_ds):
+
+    mssqlspatial_lyr = mssql_ds.GetLayer("tpoly")
+
+    mssqlspatial_lyr.ResetReading()
+    feat = mssqlspatial_lyr.GetNextFeature()
+    assert feat is not None
+    fid = feat.GetFID()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 10,10 10,10 0,0 0))")
+    feat.SetGeometryDirectly(geom)
+    assert mssqlspatial_lyr.SetFeature(feat) == ogr.OGRERR_NONE
+
+    mssqlspatial_lyr.ResetReading()
+    feat_read = mssqlspatial_lyr.GetFeature(fid)
+    assert feat_read is not None
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
+
+
+###############################################################################
 # Run test_ogrsf
 
 
