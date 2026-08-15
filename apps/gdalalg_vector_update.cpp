@@ -304,7 +304,7 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             }
         }
 
-        poDstLayer->ResetReading();  // close any open SELECT cursor before updating
+        poDstLayer->ResetReading();
 
         if (poDstFeature)
         {
