@@ -1150,31 +1150,32 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
             GByte *pabyData = static_cast<GByte *>(CPLMalloc(nDataLen + 1));
             if (poWriter.WriteSqlGeometry(pabyData, nDataLen) == OGRERR_NONE)
             {
-                char *pszBytes = GByteArrayToHexString(pabyData, nDataLen);
-                SQLLEN nts = SQL_NTS;
+                SQLLEN nLen = nDataLen;
                 int nRetCode = SQLBindParameter(
                     oStmt.GetStatement(),
                     static_cast<SQLUSMALLINT>(bind_num + 1), SQL_PARAM_INPUT,
-                    SQL_C_CHAR, SQL_LONGVARCHAR, nDataLen, 0,
-                    static_cast<SQLPOINTER>(pszBytes), 0, &nts);
+                    SQL_C_BINARY, SQL_VARBINARY, SQL_SS_LENGTH_UNLIMITED, 0,
+                    static_cast<SQLPOINTER>(pabyData), nDataLen, &nLen);
                 if (nRetCode == SQL_SUCCESS ||
                     nRetCode == SQL_SUCCESS_WITH_INFO)
                 {
-                    oStmt.Append("?");
-                    bind_buffer[bind_num] = pszBytes;
+                    oStmt.Append(nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY
+                                     ? "CAST(? AS geography)"
+                                     : "CAST(? AS geometry)");
+                    bind_buffer[bind_num] = pabyData;
                     ++bind_num;
                 }
                 else
                 {
                     oStmt.Append("null");
-                    CPLFree(pszBytes);
+                    CPLFree(pabyData);
                 }
             }
             else
             {
                 oStmt.Append("null");
+                CPLFree(pabyData);
             }
-            CPLFree(pabyData);
         }
         else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
