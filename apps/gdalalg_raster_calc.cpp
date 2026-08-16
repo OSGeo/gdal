@@ -22,6 +22,8 @@
 #include "vrtdataset.h"
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <optional>
 
 //! @cond Doxygen_Suppress
@@ -297,7 +299,7 @@ UpdateSourceProperties(SourceProperties &out, GDALDataset *ds,
     if (source.nX > out.nX)
     {
         auto dx = CPLGreatestCommonDivisor(out.gt.xscale, source.gt.xscale);
-        if (dx == 0)
+        if (std::fabs(dx) < std::numeric_limits<double>::min())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to find common resolution for inputs.");
@@ -310,7 +312,7 @@ UpdateSourceProperties(SourceProperties &out, GDALDataset *ds,
     if (source.nY > out.nY)
     {
         auto dy = CPLGreatestCommonDivisor(out.gt.yscale, source.gt.yscale);
-        if (dy == 0)
+        if (std::fabs(dy) < std::numeric_limits<double>::min())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to find common resolution for inputs.");
