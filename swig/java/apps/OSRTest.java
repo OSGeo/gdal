@@ -71,7 +71,7 @@ public class OSRTest {
               throw new Exception("Found more than one match: "+matches.length);
 
           SpatialReference matched = matches[0];
-          if ( !"EPGS".equals(matched.GetAuthorityName(null)))
+          if ( !"EPSG".equals(matched.GetAuthorityName(null)))
               throw new Exception("Authority name not EPSG: "+matched.GetAuthorityName(null));
           if ( !"26911".equals(matched.GetAuthorityCode(null)))
               throw new Exception("Authority code not 26911 "+matched.GetAuthorityCode(null));
