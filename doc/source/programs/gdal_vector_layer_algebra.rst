@@ -218,7 +218,7 @@ Examples
    rather than the default name ``method_fid``. It will contain values from the
    ``fid`` field of the method layer.
 
-   ``--geometry-type`` is set to ``GEOMETRYCOLLECTION`` to allow the output layer to contain different
+   ``--geometry-type`` is set to ``GEOMETRY`` to allow the output layer to contain different
    geometry types.
 
    .. code-block:: bash
@@ -226,7 +226,7 @@ Examples
         $ gdal vector layer-algebra points.geojson polygon.geojson output.gpkg \
             --operation union --all-input-field \
             --method-field fid --method-prefix "analysis_" \
-            --geometry-type GEOMETRYCOLLECTION
+            --geometry-type GEOMETRY
 
 .. example::
    :title: Clip a line with a polygon.
