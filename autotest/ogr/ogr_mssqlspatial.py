@@ -39,13 +39,14 @@ def mssql_ds():
     val = gdal.GetConfigOption("OGR_MSSQL_CONNECTION_STRING", None)
     if val is None:
         # localhost doesn't work under chroot
-        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
+        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 18 for SQL Server;UID=SA;PWD=DummyPassw0rd;TrustServerCertificate=yes;"
     else:
         dsname = val
 
     ds = ogr.Open(dsname, update=1)
 
     if ds is None:
+        print(f"GDAL error: {gdal.GetLastErrorMsg()}")  # add this
         if val is None:
             pytest.skip(
                 f"OGR_MSSSQL_CONNECTION_STRING not specified; MS SQL is not available using default connection string {dsname}"
