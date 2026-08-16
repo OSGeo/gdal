@@ -68,22 +68,21 @@ public class OSRTest {
               throw new Exception("No match found where expected");
 
           if ( matches.length != 1)
-              throw new Exception("Found more than one match");
+              throw new Exception("Found more than one match: "+matches.length);
 
           SpatialReference matched = matches[0];
           if ( !"EPGS".equals(matched.GetAuthorityName(null)))
-              throw new Exception("Authority name not EPSG");
+              throw new Exception("Authority name not EPSG: "+matched.GetAuthorityName(null));
           if ( !"26911".equals(matched.GetAuthorityCode(null)))
-              throw new Exception("Authority code not 26911");
+              throw new Exception("Authority code not 26911 "+matched.GetAuthorityCode(null));
 
           if ( confidence.length != 1)
-              throw new Exception("Length of confidence array not 1");
+              throw new Exception("Length of confidence array not 1: "+confidence.length);
 
           int[] confidenceValues = confidence[0];
           if ( confidenceValues.length != matches.length)
-              throw new Exception("Length of confidenceValues array not the same as the matches array");
+              throw new Exception("Length of confidenceValues array not the same as the matches array: "+confidenceValues.length+" "+ matches.length);
           if ( confidenceValues[0] != 100)
-              throw new Exception("Confidence value not as expected");
-
+              throw new Exception("Confidence value not as expected "+confidenceValues[0]);
       }
 }
