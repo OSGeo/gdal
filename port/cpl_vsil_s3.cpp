@@ -576,8 +576,8 @@ bool VSIDIRS3::IssueListDir()
         }
 
         struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, l_poHandlerHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+            poFS->SetOptions(hCurlHandle, l_poHandlerHelper->GetURL().c_str(),
+                             aosHTTPOptions.List());
 
         headers = l_poHandlerHelper->GetCurlHeaders("GET", headers);
         // Disable automatic redirection
