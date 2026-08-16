@@ -112,6 +112,7 @@ int CPL_DLL CPLTestBoolean(const char *pszValue);
 bool CPL_DLL CPLTestBool(const char *pszValue);
 bool CPL_DLL CPLFetchBool(CSLConstList papszStrList, const char *pszKey,
                           bool bDefault);
+bool CPLTestConfigOption(const char *pszValue);
 #ifdef __cplusplus
 CPL_C_END
 
