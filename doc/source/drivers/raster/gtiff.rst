@@ -1366,7 +1366,7 @@ the default behavior of the GTiff driver.
       :default: TRUE
 
       Can be set to FALSE to avoid
-      all-in-one-strip files being presented as having.
+      all-in-one-strip files being presented as having a one-line block height.
 
 -  .. config:: GDAL_TIFF_OVR_BLOCKSIZE
 
