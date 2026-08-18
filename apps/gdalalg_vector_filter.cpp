@@ -33,10 +33,15 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
                                       standaloneStep)
 {
     auto &layerArg = AddActiveLayerArg(&m_activeLayer);
-    AddBBOXArg(&m_bbox);
+    AddBBOXArg(&m_bbox).SetMutualExclusionGroup("bbox-geometry");
     AddArg("bbox-crs", 0, _("CRS of bounding box filter"), &m_bboxCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("bbox_srs");
+    AddArg("geometry", 0, _("Filter geometry (WKT or GeoJSON)"), &m_geometry)
+        .SetMutualExclusionGroup("bbox-geometry");
+    AddArg("geometry-crs", 0, _("CRS of filter geometry"), &m_geometryCrs)
+        .SetIsCRSArg()
+        .AddHiddenAlias("geometry_srs");
     AddArg("where", 0,
            _("Attribute query in a restricted form of the queries used in the "
              "SQL WHERE statement"),
@@ -424,7 +429,6 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (poSrcLayer && (m_activeLayer.empty() ||
                                m_activeLayer == poSrcLayer->GetDescription()))
             {
-
                 const auto poLayerSRS = poSrcLayer->GetSpatialRef();
                 if (poLayerSRS && !oBBOX_SRS.IsEmpty())
                 {
@@ -451,6 +455,75 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 else
                 {
                     poSrcLayer->SetSpatialFilterRect(xmin, ymin, xmax, ymax);
+                }
+            }
+        }
+    }
+    else if (!m_geometry.empty())
+    {
+        std::unique_ptr<OGRGeometry> poGeom;
+        {
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+            auto [poGeomTmp, eErr] =
+                OGRGeometryFactory::createFromWkt(m_geometry.c_str());
+            if (eErr == OGRERR_NONE)
+            {
+                poGeom = std::move(poGeomTmp);
+            }
+            else
+            {
+                poGeom.reset(
+                    OGRGeometryFactory::createFromGeoJson(m_geometry.c_str()));
+                if (poGeom && poGeom->getSpatialReference() == nullptr)
+                {
+                    auto poSRS =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput("WGS84"));
+                    poGeom->assignSpatialReference(poSRS.get());
+                }
+            }
+        }
+        if (!poGeom)
+        {
+            CPLError(
+                CE_Failure, CPLE_IllegalArg,
+                "Filter geometry is neither a valid WKT or GeoJSON geometry");
+            return false;
+        }
+
+        if (!m_geometryCrs.empty())
+        {
+            auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            // Validity of CRS already checked by GDALAlgorithm
+            CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput(m_geometryCrs.c_str()));
+            poGeom->assignSpatialReference(poSRS.get());
+        }
+
+        for (int i = 0; i < nLayerCount; ++i)
+        {
+            auto poSrcLayer = poSrcDS->GetLayer(i);
+            ret = ret && (poSrcLayer != nullptr);
+            if (poSrcLayer && (m_activeLayer.empty() ||
+                               m_activeLayer == poSrcLayer->GetDescription()))
+            {
+                const auto poLayerSRS = poSrcLayer->GetSpatialRef();
+                if (poLayerSRS && poGeom->getSpatialReference() &&
+                    !poLayerSRS->IsSame(poGeom->getSpatialReference()))
+                {
+                    std::unique_ptr<OGRGeometry> poGeomClone(poGeom->clone());
+                    if (poGeomClone->transformTo(poLayerSRS) == OGRERR_FAILURE)
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Geometry reprojection failed");
+                        return false;
+                    }
+                    poSrcLayer->SetSpatialFilter(poGeomClone.get());
+                }
+                else
+                {
+                    poSrcLayer->SetSpatialFilter(poGeom.get());
                 }
             }
         }
