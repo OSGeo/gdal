@@ -1198,6 +1198,16 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 hLatLong = OSRNewSpatialReference(nullptr);
                 OSRSetWellKnownGeogCS(hLatLong, "WGS84");
             }
+            else if (eErr == OGRERR_NONE)
+            {
+                hLatLong = OSRCloneGeogCS(hProj);
+                if (hLatLong)
+                {
+                    // Override GEOGCS|UNIT child to be sure to output as degrees
+                    OSRSetAngularUnits(hLatLong, SRS_UA_DEGREE,
+                                       CPLAtof(SRS_UA_DEGREE_CONV));
+                }
+            }
         }
         else
         {
