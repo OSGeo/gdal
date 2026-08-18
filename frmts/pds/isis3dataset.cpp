@@ -48,6 +48,7 @@
 #include <map>
 #include <utility>  // pair
 #include <vector>
+#include <iostream>
 
 // Constants coming from ISIS3 source code
 // in isis/src/base/objs/SpecialPixel/SpecialPixel.h
@@ -86,6 +87,12 @@ const float LOW_REPR_SAT4 = -3.4028228579130005e+38f;    // 0xFF7FFFFC;
 const float LOW_INSTR_SAT4 = -3.4028230607370965e+38f;   // 0xFF7FFFFD;
 const float HIGH_INSTR_SAT4 = -3.4028232635611926e+38f;  // 0xFF7FFFFE;
 const float HIGH_REPR_SAT4 = -3.4028234663852886e+38f;   // 0xFF7FFFFF;
+
+const double ISIS3_NULL8 = -1.797693134862315e+308;      // 0xFFEFFFFFFFFFFFFB
+const double LOW_REPR_SAT8 = -1.7976931348623151e+308;   // 0xFFEFFFFFFFFFFFFC
+const double LOW_INSTR_SAT8 = -1.7976931348623153e+308;  // 0xFFEFFFFFFFFFFFFD
+const double HIGH_INSTR_SAT8 = -1.7976931348623155e+308; // 0xFFEFFFFFFFFFFFFE
+const double HIGH_REPR_SAT8 = -1.7976931348623157e+308;  // 0xFFEFFFFFFFFFFFFF
 
 // Must be large enough to hold an integer
 static const char *const pszSTARTBYTE_PLACEHOLDER = "!*^STARTBYTE^*!";
@@ -523,12 +530,19 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
                      static_cast<GInt16>(dfSrcNoData),
                      static_cast<GInt16>(dfDstNoData));
     }
-    else
+    else if (eDataType == GDT_Float32)
     {
         CPLAssert(eDataType == GDT_Float32);
         RemapNoDataT(reinterpret_cast<float *>(pBuffer), nItems,
                      static_cast<float>(dfSrcNoData),
                      static_cast<float>(dfDstNoData));
+    }
+    else 
+    {
+        CPLAssert(eDataType == GDT_Float64);
+        RemapNoDataT(reinterpret_cast<double *>(pBuffer), nItems,
+                     static_cast<double>(dfSrcNoData),
+                     static_cast<double>(dfDstNoData));
     }
 }
 
@@ -1237,12 +1251,19 @@ CPLErr ISISMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                          ISIS3_NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2,
                          HIGH_INSTR_SAT2, HIGH_REPR_SAT2);
     }
-    else
+    else if (eSrcDT == GDT_Float32)
     {
         CPLAssert(eSrcDT == GDT_Float32);
         FillMask<float>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                         ISIS3_NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4,
                         HIGH_INSTR_SAT4, HIGH_REPR_SAT4);
+    }
+    else 
+    {
+        CPLAssert(eSrcDT == GDT_Float64);
+        FillMask<double>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                        ISIS3_NULL8, LOW_REPR_SAT8, LOW_INSTR_SAT8,
+                        HIGH_INSTR_SAT8, HIGH_REPR_SAT8);
     }
 
     return CE_None;
@@ -1895,6 +1916,11 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     {
         eDataType = GDT_Float32;
         dfNoData = ISIS3_NULL4;
+    }
+    else if (EQUAL(itype, "Double"))
+    {
+        eDataType = GDT_Float64;
+        dfNoData = ISIS3_NULL8;
     }
     else
     {
@@ -2550,10 +2576,12 @@ void ISIS3Dataset::BuildLabel()
     CPLJSONObject oPixels = GetOrCreateJSONObject(oCore, "Pixels");
     oPixels.Set("_type", "group");
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
-    oPixels.Set("Type", (eDT == GDT_UInt8)    ? "UnsignedByte"
-                        : (eDT == GDT_UInt16) ? "UnsignedWord"
-                        : (eDT == GDT_Int16)  ? "SignedWord"
-                                              : "Real");
+    oPixels.Set("Type", (eDT == GDT_Byte)      ? "UnsignedByte"
+                        : (eDT == GDT_UInt16)  ? "UnsignedWord"
+                        : (eDT == GDT_Int16)   ? "SignedWord"
+                        : (eDT == GDT_Float32) ? "Real"
+                        : (eDT == GDT_Float64) ? "Double"
+                                               : "Real");
 
     oPixels.Set("ByteOrder", "Lsb");
     oPixels.Set("Base", GetRasterBand(1)->GetOffset());
@@ -3929,8 +3957,8 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
                                   CSLConstList papszOptions)
 {
-    if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Int16 &&
-        eType != GDT_Float32)
+    if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Int16 &&
+        eType != GDT_Float32 && eType != GDT_Float64)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
         return nullptr;
@@ -4092,12 +4120,12 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         poDS->m_osGDALHistory =
             CSLFetchNameValueDef(papszOptions, "GDAL_HISTORY", "");
     }
-    const double dfNoData = (eType == GDT_UInt8)    ? ISIS3_NULL1
-                            : (eType == GDT_UInt16) ? ISIS3_NULLU2
-                            : (eType == GDT_Int16)
-                                ? ISIS3_NULL2
-                                :
-                                /*(eType == GDT_Float32) ?*/ ISIS3_NULL4;
+    const double dfNoData = (eType == GDT_Byte)      ? ISIS3_NULL1
+                            : (eType == GDT_UInt16)  ? ISIS3_NULLU2
+                            : (eType == GDT_Int16)   ? ISIS3_NULL2
+                            : (eType == GDT_Float32) ? ISIS3_NULL4
+                            : (eType == GDT_Float64) ? ISIS3_NULL8
+                            : ISIS3_NULL4;
 
     for (int i = 0; i < nBandsIn; i++)
     {
