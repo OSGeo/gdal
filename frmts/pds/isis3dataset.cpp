@@ -88,11 +88,11 @@ const float LOW_INSTR_SAT4 = -3.4028230607370965e+38f;   // 0xFF7FFFFD;
 const float HIGH_INSTR_SAT4 = -3.4028232635611926e+38f;  // 0xFF7FFFFE;
 const float HIGH_REPR_SAT4 = -3.4028234663852886e+38f;   // 0xFF7FFFFF;
 
-const double ISIS3_NULL8 = -1.797693134862315e+308;      // 0xFFEFFFFFFFFFFFFB
-const double LOW_REPR_SAT8 = -1.7976931348623151e+308;   // 0xFFEFFFFFFFFFFFFC
-const double LOW_INSTR_SAT8 = -1.7976931348623153e+308;  // 0xFFEFFFFFFFFFFFFD
-const double HIGH_INSTR_SAT8 = -1.7976931348623155e+308; // 0xFFEFFFFFFFFFFFFE
-const double HIGH_REPR_SAT8 = -1.7976931348623157e+308;  // 0xFFEFFFFFFFFFFFFF
+const double ISIS3_NULL8 = -1.797693134862315e+308;       // 0xFFEFFFFFFFFFFFFB
+const double LOW_REPR_SAT8 = -1.7976931348623151e+308;    // 0xFFEFFFFFFFFFFFFC
+const double LOW_INSTR_SAT8 = -1.7976931348623153e+308;   // 0xFFEFFFFFFFFFFFFD
+const double HIGH_INSTR_SAT8 = -1.7976931348623155e+308;  // 0xFFEFFFFFFFFFFFFE
+const double HIGH_REPR_SAT8 = -1.7976931348623157e+308;   // 0xFFEFFFFFFFFFFFFF
 
 // Must be large enough to hold an integer
 static const char *const pszSTARTBYTE_PLACEHOLDER = "!*^STARTBYTE^*!";
@@ -537,7 +537,7 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
                      static_cast<float>(dfSrcNoData),
                      static_cast<float>(dfDstNoData));
     }
-    else 
+    else
     {
         CPLAssert(eDataType == GDT_Float64);
         RemapNoDataT(reinterpret_cast<double *>(pBuffer), nItems,
@@ -1258,12 +1258,12 @@ CPLErr ISISMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                         ISIS3_NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4,
                         HIGH_INSTR_SAT4, HIGH_REPR_SAT4);
     }
-    else 
+    else
     {
         CPLAssert(eSrcDT == GDT_Float64);
         FillMask<double>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        ISIS3_NULL8, LOW_REPR_SAT8, LOW_INSTR_SAT8,
-                        HIGH_INSTR_SAT8, HIGH_REPR_SAT8);
+                         ISIS3_NULL8, LOW_REPR_SAT8, LOW_INSTR_SAT8,
+                         HIGH_INSTR_SAT8, HIGH_REPR_SAT8);
     }
 
     return CE_None;
@@ -4125,7 +4125,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
                             : (eType == GDT_Int16)   ? ISIS3_NULL2
                             : (eType == GDT_Float32) ? ISIS3_NULL4
                             : (eType == GDT_Float64) ? ISIS3_NULL8
-                            : ISIS3_NULL4;
+                                                     : ISIS3_NULL4;
 
     for (int i = 0; i < nBandsIn; i++)
     {

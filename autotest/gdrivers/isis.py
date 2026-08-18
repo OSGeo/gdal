@@ -470,7 +470,7 @@ def test_isis_16():
                 [gdal.GDT_Int16, 65525, -32768, []],
                 [gdal.GDT_UInt16, 0, 0, []],
                 [gdal.GDT_Float32, 65534, -3.4028226550889045e38, []],
-                [gdal.GDT_Float64, 65534, -1.797693134862315e+308, []],
+                [gdal.GDT_Float64, 65534, -1.797693134862315e308, []],
             ]:
 
                 ds = gdal.GetDriverByName("ISIS3").Create(
