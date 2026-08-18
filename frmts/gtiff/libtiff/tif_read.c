@@ -1614,7 +1614,12 @@ static int TIFFStartTile(TIFF *tif, uint32_t tile)
         return 0;
     }
     tilemod = tile % howmany32;
-    if (tilemod == 0 || td->td_tilelength == 0)
+    if (td->td_tilelength == 0)
+    {
+        TIFFErrorExtR(tif, module, "Zero tilelength");
+        return 0;
+    }
+    if (tilemod == 0)
     {
         tif->tif_dir.td_row = 0;
     }
@@ -1632,7 +1637,7 @@ static int TIFFStartTile(TIFF *tif, uint32_t tile)
         return 0;
     }
     tilemod = tile % howmany32;
-    if (tilemod == 0 || td->td_tilewidth == 0)
+    if (tilemod == 0)
     {
         tif->tif_dir.td_col = 0;
     }
