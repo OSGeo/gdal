@@ -45,7 +45,6 @@ def mssql_ds():
     ds = ogr.Open(dsname, update=1)
 
     if ds is None:
-        print(f"GDAL error: {gdal.GetLastErrorMsg()}")  # add this
         if val is None:
             pytest.skip(
                 f"OGR_MSSSQL_CONNECTION_STRING not specified; MS SQL is not available using default connection string {dsname}"
@@ -97,6 +96,8 @@ def tpoly(mssql_ds):
     # Create Layer
     sql_lyr = mssql_ds.CreateLayer("tpoly", srs=shp_lyr.GetSpatialRef())
 
+    assert sql_lyr
+
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(
@@ -147,7 +148,7 @@ def tpoly(mssql_ds):
 
 
 @pytest.mark.usefixtures("tpoly")
-def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
+def test_ogr_mssqlspatial_3(mssql_ds, multipoly_feat):
 
     mssqlspatial_lyr = mssql_ds.GetLayerByName("tpoly")
     assert mssqlspatial_lyr.GetDataset().GetDescription() == mssql_ds.GetDescription()
@@ -165,8 +166,8 @@ def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
 
     mssqlspatial_lyr.ResetReading()
 
-    for i in range(len(poly_feat)):
-        orig_feat = poly_feat[i]
+    for i in range(len(multipoly_feat)):
+        orig_feat = multipoly_feat[i]
         read_feat = mssqlspatial_lyr.GetNextFeature()
 
         ogrtest.check_feature_geometry(
@@ -582,7 +583,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
             ds = gdal.VectorTranslate(
                 mssql_ds.GetDescription(),
                 "data/shp/testpoly.shp",
-                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY -makevalid",
             )
 
             lyr = ds.GetLayerByName("poly_vertex_order")
