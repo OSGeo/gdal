@@ -3,7 +3,7 @@
  * Name:     csharp_string_encoder.i
  * Project:  GDAL CSharp Interface
  * Purpose:  String encoder and decoder for C# marshalling
- * Author:  Michael Bucari-Tovo, mbucari1@gmail.com
+ * Author:   Michael Bucari-Tovo, mbucari1@gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2026, Michael Bucari-Tovo

@@ -17,9 +17,9 @@
  * The managed Utf8StringHelper registers a callback function with the native *
  * runtime which is used by the native runtime to create .NET strings. When   *
  * called by the native runtime, the .NET function decodes the unmanaged      *
- * memory into a managed string and returns a new pinned GCHandle for that    *
- * string. A pointer to that GCHandle is returned. When the callback returns  *
- * to managed .NET, the managed string is retrieved from the GCHandle and the *
+ * memory into a managed string and returns a new GCHandle for that string.   *
+ * A pointer to that GCHandle is returned. When the callback returns to       *
+ * managed .NET, the managed string is retrieved from the GCHandle and the    *
  * GCHandle is freed by calling StringFromGCHandle.                           *
  *                                                                            *
  * IMPORTANT:                                                                 *
