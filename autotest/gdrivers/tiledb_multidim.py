@@ -202,6 +202,45 @@ def test_tiledb_multidim_basic():
 ###############################################################################
 
 
+def test_tiledb_multidim_mixed_fixed_and_variable_sized_attributes(tmp_path):
+    """Variable-size attributes do not hide fixed-size raster attributes."""
+
+    tiledb = pytest.importorskip("tiledb")
+    np = pytest.importorskip("numpy")
+    filename = str(tmp_path / "mixed_attributes.tiledb")
+    domain = tiledb.Domain(
+        tiledb.Dim(name="X", domain=(0, 3), tile=4, dtype=np.uint64),
+        tiledb.Dim(name="Y", domain=(0, 3), tile=4, dtype=np.uint64),
+    )
+    schema = tiledb.ArraySchema(
+        domain=domain,
+        attrs=(
+            tiledb.Attr(name="Z", dtype=np.float64, var=True),
+            tiledb.Attr(name="m_Z_mean", dtype=np.float32, fill=-9999.0),
+        ),
+        sparse=False,
+    )
+    tiledb.DenseArray.create(filename, schema)
+    with tiledb.DenseArray(filename, "w") as array:
+        z = np.empty((4, 4), dtype=object)
+        for x in range(4):
+            for y in range(4):
+                z[x, y] = np.array([x * 10 + y], dtype=np.float64)
+        array[:] = {
+            "Z": z,
+            "m_Z_mean": np.arange(16, dtype=np.float32).reshape(4, 4),
+        }
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    root_group = ds.GetRootGroup()
+    assert root_group.GetMDArrayNames() == ["m_Z_mean"]
+    mean = root_group.OpenMDArray("m_Z_mean")
+    assert mean.GetDimensionsSize() == [4, 4]
+    assert mean.GetDataType().GetNumericDataType() == gdal.GDT_Float32
+
+
+###############################################################################
+
+
 @pytest.mark.parametrize(
     "gdal_data_type",
     [
