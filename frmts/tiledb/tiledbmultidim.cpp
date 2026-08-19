@@ -38,6 +38,7 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
     std::vector<std::shared_ptr<GDALMDArray>> apoArrays;
     if (nAttributes == 1)
     {
+        // Skip variable_sized attributes
         if (schema.attribute(0).variable_sized())
         {
             CPLDebug("TileDB",
@@ -58,19 +59,20 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
         for (uint32_t i = 0; i < nAttributes; ++i)
         {
             const auto &attr = schema.attribute(i);
-            // Variable-size attributes do not have a rectangular GDAL MDIM
-            // representation.  Do not let them hide fixed-size attributes in
-            // the same TileDB array.
+
+            auto osFullName = osBaseName + "." + attr.name();
+
+            // Skip variable_sized attributes
             if (attr.variable_sized())
             {
                 CPLDebug("TileDB",
                          "Skipping unsupported variable-size "
                          "attribute '%s'",
-                         attr.name().c_str());
+                         osFullName.c_str());
                 continue;
             }
             auto poArray = TileDBArray::OpenFromDisk(
-                poSharedResource, nullptr, "/", attr.name(), attr.name(),
+                poSharedResource, nullptr, "/", osFullName, attr.name(),
                 osArrayPath, nullptr);
             if (!poArray)
                 return nullptr;
