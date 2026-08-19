@@ -577,10 +577,12 @@ public:
 #endif
 
 #ifdef SWIGJAVA
+%apply (int* pnList, int** ppListOut) {(int* nvalues, int **confidence_values)};
   OSRSpatialReferenceShadow** FindMatches( char** options, int* nvalues, int** confidence_values )
   {
        return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
   }
+%clear (int* buckets_ret, int **ppanHistogram);
 #endif
 
   OGRErr SetProjection( char const *arg ) {
