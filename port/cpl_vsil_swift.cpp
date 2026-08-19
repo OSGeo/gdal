@@ -554,6 +554,8 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszDirname));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
+    // Make sure CURL run thread is started.
+    RunThreadUser threadUser(*this);
     while (true)
     {
         CPLHTTPRetryContext oRetryContext(oRetryParameters);
@@ -564,7 +566,6 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             poS3HandleHelper->ResetQueryParameters();
             std::string osBaseURL(poS3HandleHelper->GetURL());
 
-            CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
             CURL *hCurlHandle = curl_easy_init();
 
             if (!osBucket.empty())
@@ -578,9 +579,9 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
                     poS3HandleHelper->AddQueryParameter("prefix", osPrefix);
             }
 
-            struct curl_slist *headers = VSICurlSetOptions(
-                hCurlHandle, poS3HandleHelper->GetURL().c_str(),
-                aosHTTPOptions.List());
+            struct curl_slist *headers =
+                SetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
+                           aosHTTPOptions.List());
             // Disable automatic redirection
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
 
@@ -609,7 +610,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+            Perform(hCurlHandle);
 
             VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 

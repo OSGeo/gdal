@@ -179,6 +179,11 @@ struct logLuvState
 
 #define MINRUN 4 /* minimum run length */
 
+static void L16toL16(LogLuvState *sp, uint8_t *op, tmsize_t n);
+static void L16fromL16(LogLuvState *sp, uint8_t *op, tmsize_t n);
+static void LuvRawToRaw(LogLuvState *sp, uint8_t *op, tmsize_t n);
+static void LuvRawFromRaw(LogLuvState *sp, uint8_t *op, tmsize_t n);
+
 /*
  * Decode a string of 16-bit gray pixels.
  */
@@ -201,17 +206,12 @@ static int LogL16Decode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
     npixels = occ / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_16BIT)
-        tp = (int16_t *)op;
-    else
+    if (sp->tbuflen < npixels)
     {
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        tp = (int16_t *)sp->tbuf;
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    tp = (int16_t *)sp->tbuf;
     _TIFFmemset((void *)tp, 0, (tmsize_t)((size_t)npixels * sizeof(tp[0])));
 
     bp = (unsigned char *)tif->tif_rawcp;
@@ -249,7 +249,10 @@ static int LogL16Decode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             return (0);
         }
     }
-    (*sp->tfunc)(sp, op, npixels);
+    if (sp->user_datafmt == SGILOGDATAFMT_16BIT)
+        L16toL16(sp, op, npixels);
+    else
+        (*sp->tfunc)(sp, op, npixels);
     tif->tif_rawcp = (uint8_t *)bp;
     tif->tif_rawcc = cc;
     return (1);
@@ -274,17 +277,12 @@ static int LogLuvDecode24(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
     npixels = occ / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
-        tp = (uint32_t *)op;
-    else
+    if (sp->tbuflen < npixels)
     {
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        tp = (uint32_t *)sp->tbuf;
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    tp = (uint32_t *)sp->tbuf;
     /* copy to array of uint32_t */
     bp = (unsigned char *)tif->tif_rawcp;
     cc = tif->tif_rawcc;
@@ -304,7 +302,10 @@ static int LogLuvDecode24(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                       tif->tif_dir.td_row, npixels - i);
         return (0);
     }
-    (*sp->tfunc)(sp, op, npixels);
+    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
+        LuvRawToRaw(sp, op, npixels);
+    else
+        (*sp->tfunc)(sp, op, npixels);
     return (1);
 }
 
@@ -331,17 +332,12 @@ static int LogLuvDecode32(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
     npixels = occ / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
-        tp = (uint32_t *)op;
-    else
+    if (sp->tbuflen < npixels)
     {
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        tp = (uint32_t *)sp->tbuf;
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    tp = (uint32_t *)sp->tbuf;
     _TIFFmemset((void *)tp, 0, (tmsize_t)((size_t)npixels * sizeof(tp[0])));
 
     bp = (unsigned char *)tif->tif_rawcp;
@@ -379,7 +375,10 @@ static int LogLuvDecode32(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             return (0);
         }
     }
-    (*sp->tfunc)(sp, op, npixels);
+    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
+        LuvRawToRaw(sp, op, npixels);
+    else
+        (*sp->tfunc)(sp, op, npixels);
     tif->tif_rawcp = (uint8_t *)bp;
     tif->tif_rawcc = cc;
     return (1);
@@ -450,18 +449,16 @@ static int LogL16Encode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
     assert(sp != NULL);
     npixels = cc / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_16BIT)
-        tp = (int16_t *)bp;
-    else
+    tp = (int16_t *)sp->tbuf;
+    if (sp->tbuflen < npixels)
     {
-        tp = (int16_t *)sp->tbuf;
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        (*sp->tfunc)(sp, bp, npixels);
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    if (sp->user_datafmt == SGILOGDATAFMT_16BIT)
+        L16fromL16(sp, bp, npixels);
+    else
+        (*sp->tfunc)(sp, bp, npixels);
     /* compress each byte string */
     op = tif->tif_rawcp;
     occ = tif->tif_rawdatasize - tif->tif_rawcc;
@@ -558,18 +555,16 @@ static int LogLuvEncode24(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
     assert(sp != NULL);
     npixels = cc / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
-        tp = (uint32_t *)bp;
-    else
+    tp = (uint32_t *)sp->tbuf;
+    if (sp->tbuflen < npixels)
     {
-        tp = (uint32_t *)sp->tbuf;
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        (*sp->tfunc)(sp, bp, npixels);
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
+        LuvRawFromRaw(sp, bp, npixels);
+    else
+        (*sp->tfunc)(sp, bp, npixels);
     /* write out encoded pixels */
     op = tif->tif_rawcp;
     occ = tif->tif_rawdatasize - tif->tif_rawcc;
@@ -619,18 +614,16 @@ static int LogLuvEncode32(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 
     npixels = cc / sp->pixel_size;
 
-    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
-        tp = (uint32_t *)bp;
-    else
+    tp = (uint32_t *)sp->tbuf;
+    if (sp->tbuflen < npixels)
     {
-        tp = (uint32_t *)sp->tbuf;
-        if (sp->tbuflen < npixels)
-        {
-            TIFFErrorExtR(tif, module, "Translation buffer too short");
-            return (0);
-        }
-        (*sp->tfunc)(sp, bp, npixels);
+        TIFFErrorExtR(tif, module, "Translation buffer too short");
+        return (0);
     }
+    if (sp->user_datafmt == SGILOGDATAFMT_RAW)
+        LuvRawFromRaw(sp, bp, npixels);
+    else
+        (*sp->tfunc)(sp, bp, npixels);
     /* compress each byte string */
     op = tif->tif_rawcp;
     occ = tif->tif_rawdatasize - tif->tif_rawcc;
@@ -820,13 +813,103 @@ static
     return (0);
 }
 
+/*
+ * SGILOGDATAFMT_* buffers are application-facing user data buffers in native
+ * byte order.  The helpers below do not perform TIFF file byte-order
+ * conversion; they only avoid unaligned typed access to public byte buffers.
+ * Use fixed-size memcpy() calls directly so optimizing compilers can expand
+ * them in these per-pixel paths.  _TIFFmemcpy() is an out-of-line wrapper in
+ * non-LTO builds.
+ */
+static float LogLuvLoadFloatNativeUnaligned(const uint8_t *cp)
+{
+    float v;
+    memcpy(&v, cp, sizeof(v));
+    return v;
+}
+
+static void LogLuvStoreFloatNativeUnaligned(uint8_t *cp, float v)
+{
+    memcpy(cp, &v, sizeof(v));
+}
+
+static int16_t LogLuvLoad16NativeUnaligned(const uint8_t *cp)
+{
+    int16_t v;
+    memcpy(&v, cp, sizeof(v));
+    return v;
+}
+
+static void LogLuvStore16NativeUnaligned(uint8_t *cp, int16_t v)
+{
+    memcpy(cp, &v, sizeof(v));
+}
+
+static uint32_t LogLuvLoad32NativeUnaligned(const uint8_t *cp)
+{
+    uint32_t v;
+    memcpy(&v, cp, sizeof(v));
+    return v;
+}
+
+static void LogLuvStore32NativeUnaligned(uint8_t *cp, uint32_t v)
+{
+    memcpy(cp, &v, sizeof(v));
+}
+
+static void L16toL16(LogLuvState *sp, uint8_t *op, tmsize_t n)
+{
+    int16_t *l16 = (int16_t *)sp->tbuf;
+
+    while (n-- > 0)
+    {
+        LogLuvStore16NativeUnaligned(op, *l16++);
+        op += sizeof(int16_t);
+    }
+}
+
+static void L16fromL16(LogLuvState *sp, uint8_t *op, tmsize_t n)
+{
+    int16_t *l16 = (int16_t *)sp->tbuf;
+
+    while (n-- > 0)
+    {
+        *l16++ = LogLuvLoad16NativeUnaligned(op);
+        op += sizeof(int16_t);
+    }
+}
+
+static void LuvRawToRaw(LogLuvState *sp, uint8_t *op, tmsize_t n)
+{
+    uint32_t *luv = (uint32_t *)sp->tbuf;
+
+    while (n-- > 0)
+    {
+        LogLuvStore32NativeUnaligned(op, *luv++);
+        op += sizeof(uint32_t);
+    }
+}
+
+static void LuvRawFromRaw(LogLuvState *sp, uint8_t *op, tmsize_t n)
+{
+    uint32_t *luv = (uint32_t *)sp->tbuf;
+
+    while (n-- > 0)
+    {
+        *luv++ = LogLuvLoad32NativeUnaligned(op);
+        op += sizeof(uint32_t);
+    }
+}
+
 static void L16toY(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     int16_t *l16 = (int16_t *)sp->tbuf;
-    float *yp = (float *)op;
 
     while (n-- > 0)
-        *yp++ = (float)LogL16toY(*l16++);
+    {
+        LogLuvStoreFloatNativeUnaligned(op, (float)LogL16toY(*l16++));
+        op += sizeof(float);
+    }
 }
 
 static void L16toGry(LogLuvState *sp, uint8_t *op, tmsize_t n)
@@ -846,10 +929,13 @@ static void L16toGry(LogLuvState *sp, uint8_t *op, tmsize_t n)
 static void L16fromY(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     int16_t *l16 = (int16_t *)sp->tbuf;
-    float *yp = (float *)op;
 
     while (n-- > 0)
-        *l16++ = (int16_t)(LogL16fromY((double)*yp++, sp->encode_meth));
+    {
+        *l16++ = (int16_t)(LogL16fromY(
+            (double)LogLuvLoadFloatNativeUnaligned(op), sp->encode_meth));
+        op += sizeof(float);
+    }
 }
 
 #if !LOGLUV_PUBLIC
@@ -1082,12 +1168,15 @@ static
 static void Luv24toXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    float *xyz = (float *)op;
 
     while (n-- > 0)
     {
+        float xyz[3];
         LogLuv24toXYZ(*luv, xyz);
-        xyz += 3;
+        LogLuvStoreFloatNativeUnaligned(op, xyz[0]);
+        LogLuvStoreFloatNativeUnaligned(op + sizeof(float), xyz[1]);
+        LogLuvStoreFloatNativeUnaligned(op + 2 * sizeof(float), xyz[2]);
+        op += 3 * sizeof(float);
         luv++;
     }
 }
@@ -1095,20 +1184,26 @@ static void Luv24toXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
 static void Luv24toLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    int16_t *luv3 = (int16_t *)op;
 
     while (n-- > 0)
     {
         double u, v;
+        int16_t luv0;
+        int16_t luv1;
+        int16_t luv2;
 
-        *luv3++ = (int16_t)((*luv >> 12 & 0xffd) + 13314);
+        luv0 = (int16_t)((*luv >> 12 & 0xffd) + 13314);
         if (uv_decode(&u, &v, *luv & 0x3fff) < 0)
         {
             u = U_NEU;
             v = V_NEU;
         }
-        *luv3++ = (int16_t)(u * (1 << 15));
-        *luv3++ = (int16_t)(v * (1 << 15));
+        luv1 = (int16_t)(u * (1 << 15));
+        luv2 = (int16_t)(v * (1 << 15));
+        LogLuvStore16NativeUnaligned(op, luv0);
+        LogLuvStore16NativeUnaligned(op + sizeof(int16_t), luv1);
+        LogLuvStore16NativeUnaligned(op + 2 * sizeof(int16_t), luv2);
+        op += 3 * sizeof(int16_t);
         luv++;
     }
 }
@@ -1131,39 +1226,44 @@ static void Luv24toRGB(LogLuvState *sp, uint8_t *op, tmsize_t n)
 static void Luv24fromXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    float *xyz = (float *)op;
 
     while (n-- > 0)
     {
+        float xyz[3];
+        xyz[0] = LogLuvLoadFloatNativeUnaligned(op);
+        xyz[1] = LogLuvLoadFloatNativeUnaligned(op + sizeof(float));
+        xyz[2] = LogLuvLoadFloatNativeUnaligned(op + 2 * sizeof(float));
         *luv++ = LogLuv24fromXYZ(xyz, sp->encode_meth);
-        xyz += 3;
+        op += 3 * sizeof(float);
     }
 }
 
 static void Luv24fromLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    int16_t *luv3 = (int16_t *)op;
 
     while (n-- > 0)
     {
         int Le, Ce;
+        int16_t luv0 = LogLuvLoad16NativeUnaligned(op);
+        int16_t luv1 = LogLuvLoad16NativeUnaligned(op + sizeof(int16_t));
+        int16_t luv2 = LogLuvLoad16NativeUnaligned(op + 2 * sizeof(int16_t));
 
-        if (luv3[0] <= 0)
+        if (luv0 <= 0)
             Le = 0;
-        else if (luv3[0] >= (1 << 12) + 3314)
+        else if (luv0 >= (1 << 12) + 3314)
             Le = (1 << 10) - 1;
         else if (sp->encode_meth == SGILOGENCODE_NODITHER)
-            Le = (luv3[0] - 3314) >> 2;
+            Le = (luv0 - 3314) >> 2;
         else
-            Le = tiff_itrunc(.25 * (luv3[0] - 3314.), sp->encode_meth);
+            Le = tiff_itrunc(.25 * (luv0 - 3314.), sp->encode_meth);
 
-        Ce = uv_encode((luv3[1] + .5) / (1 << 15), (luv3[2] + .5) / (1 << 15),
+        Ce = uv_encode((luv1 + .5) / (1 << 15), (luv2 + .5) / (1 << 15),
                        sp->encode_meth);
         if (Ce < 0) /* never happens */
             Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);
         *luv++ = (uint32_t)Le << 14 | (uint32_t)Ce;
-        luv3 += 3;
+        op += 3 * sizeof(int16_t);
     }
 }
 
@@ -1232,29 +1332,37 @@ static
 static void Luv32toXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    float *xyz = (float *)op;
 
     while (n-- > 0)
     {
+        float xyz[3];
         LogLuv32toXYZ(*luv++, xyz);
-        xyz += 3;
+        LogLuvStoreFloatNativeUnaligned(op, xyz[0]);
+        LogLuvStoreFloatNativeUnaligned(op + sizeof(float), xyz[1]);
+        LogLuvStoreFloatNativeUnaligned(op + 2 * sizeof(float), xyz[2]);
+        op += 3 * sizeof(float);
     }
 }
 
 static void Luv32toLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    int16_t *luv3 = (int16_t *)op;
 
     while (n-- > 0)
     {
         double u, v;
+        int16_t luv0 = (int16_t)(*luv >> 16);
+        int16_t luv1;
+        int16_t luv2;
 
-        *luv3++ = (int16_t)(*luv >> 16);
         u = 1. / UVSCALE * ((*luv >> 8 & 0xff) + .5);
         v = 1. / UVSCALE * ((*luv & 0xff) + .5);
-        *luv3++ = (int16_t)(u * (1 << 15));
-        *luv3++ = (int16_t)(v * (1 << 15));
+        luv1 = (int16_t)(u * (1 << 15));
+        luv2 = (int16_t)(v * (1 << 15));
+        LogLuvStore16NativeUnaligned(op, luv0);
+        LogLuvStore16NativeUnaligned(op + sizeof(int16_t), luv1);
+        LogLuvStore16NativeUnaligned(op + 2 * sizeof(int16_t), luv2);
+        op += 3 * sizeof(int16_t);
         luv++;
     }
 }
@@ -1277,43 +1385,51 @@ static void Luv32toRGB(LogLuvState *sp, uint8_t *op, tmsize_t n)
 static void Luv32fromXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    float *xyz = (float *)op;
 
     while (n-- > 0)
     {
+        float xyz[3];
+        xyz[0] = LogLuvLoadFloatNativeUnaligned(op);
+        xyz[1] = LogLuvLoadFloatNativeUnaligned(op + sizeof(float));
+        xyz[2] = LogLuvLoadFloatNativeUnaligned(op + 2 * sizeof(float));
         *luv++ = LogLuv32fromXYZ(xyz, sp->encode_meth);
-        xyz += 3;
+        op += 3 * sizeof(float);
     }
 }
 
 static void Luv32fromLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
 {
     uint32_t *luv = (uint32_t *)sp->tbuf;
-    int16_t *luv3 = (int16_t *)op;
 
     if (sp->encode_meth == SGILOGENCODE_NODITHER)
     {
         while (n-- > 0)
         {
-            *luv++ =
-                (uint32_t)luv3[0] << 16 |
-                ((uint32_t)luv3[1] * (uint32_t)(UVSCALE + .5) >> 7 & 0xff00) |
-                ((uint32_t)luv3[2] * (uint32_t)(UVSCALE + .5) >> 15 & 0xff);
-            luv3 += 3;
+            int16_t luv0 = LogLuvLoad16NativeUnaligned(op);
+            int16_t luv1 = LogLuvLoad16NativeUnaligned(op + sizeof(int16_t));
+            int16_t luv2 =
+                LogLuvLoad16NativeUnaligned(op + 2 * sizeof(int16_t));
+            *luv++ = (uint32_t)luv0 << 16 |
+                     ((uint32_t)luv1 * (uint32_t)(UVSCALE + .5) >> 7 & 0xff00) |
+                     ((uint32_t)luv2 * (uint32_t)(UVSCALE + .5) >> 15 & 0xff);
+            op += 3 * sizeof(int16_t);
         }
         return;
     }
     while (n-- > 0)
     {
-        *luv++ = (uint32_t)luv3[0] << 16 |
-                 ((uint32_t)tiff_itrunc(luv3[1] * (UVSCALE / (1 << 15)),
+        int16_t luv0 = LogLuvLoad16NativeUnaligned(op);
+        int16_t luv1 = LogLuvLoad16NativeUnaligned(op + sizeof(int16_t));
+        int16_t luv2 = LogLuvLoad16NativeUnaligned(op + 2 * sizeof(int16_t));
+        *luv++ = (uint32_t)luv0 << 16 |
+                 ((uint32_t)tiff_itrunc(luv1 * (UVSCALE / (1 << 15)),
                                         sp->encode_meth)
                       << 8 &
                   0xff00) |
-                 ((uint32_t)tiff_itrunc(luv3[2] * (UVSCALE / (1 << 15)),
+                 ((uint32_t)tiff_itrunc(luv2 * (UVSCALE / (1 << 15)),
                                         sp->encode_meth) &
                   0xff);
-        luv3 += 3;
+        op += 3 * sizeof(int16_t);
     }
 }
 

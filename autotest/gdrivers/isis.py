@@ -2473,7 +2473,7 @@ def test_isis3_projstr_takes_precedence(tmp_vsimem):
 
 def test_isis3_projstr_invalid(tmp_vsimem):
 
-    # An unparseable ProjStr should warn and leave no spatial reference,
+    # An unparsable ProjStr should warn and leave no spatial reference,
     # rather than crash.
     with gdal.quiet_errors():
         ds = _open_isis3_projstr(

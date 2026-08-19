@@ -26,6 +26,8 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_typetraits.h"
+#include "vrtdataset.h"
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
@@ -307,6 +309,68 @@ static void SetZeroOr255(GByte *pabyDest, const T *panSrc, int nBufXSize,
 }
 
 /************************************************************************/
+/*                         ParentBandIsNoData()                         */
+/************************************************************************/
+
+/** Callback function for a VRT raster band. Transforms input band into
+ * a NoData mask, which can then be resampled.
+ */
+template <GDALDataType GDALTransferDataType>
+static CPLErr ParentBandIsNoData(void *poData, int nXOff, int nYOff, int nXSize,
+                                 int nYSize, void *pData)
+{
+    using TransferType =
+        typename gdal::GDALDataTypeTraits<GDALTransferDataType>::type;
+
+    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>(poData);
+
+    std::unique_ptr<TransferType, decltype(&CPLFree)> pabySrc{
+        static_cast<TransferType *>(
+            VSI_MALLOC3_VERBOSE(sizeof(TransferType), nXSize, nYSize)),
+        CPLFree};
+    if (pabySrc == nullptr)
+    {
+        return CE_Failure;
+    }
+
+    const auto eErr = poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                          pabySrc.get(), nXSize, nYSize,
+                                          GDALTransferDataType, 0, 0, nullptr);
+    if (eErr != CE_None)
+    {
+        return eErr;
+    }
+
+    const size_t nPixelCount = static_cast<size_t>(nXSize) * nYSize;
+    GByte *pabyDst = static_cast<GByte *>(pData);
+
+    const auto maybeNoData = poSrcBand->GetNoDataValue<TransferType>();
+    if (!maybeNoData.has_value())
+    {
+        std::fill(pabyDst, pabyDst + nPixelCount, 255);
+        return CE_None;
+    }
+    const TransferType noData = maybeNoData.value();
+
+    for (size_t i = 0; i < nPixelCount; i++)
+    {
+        if constexpr (std::is_floating_point_v<TransferType>)
+        {
+            pabyDst[i] = (std::isnan(noData) && std::isnan(pabySrc.get()[i])) ||
+                                 ARE_REAL_EQUAL(pabySrc.get()[i], noData)
+                             ? 0
+                             : 255;
+        }
+        else
+        {
+            pabyDst[i] = pabySrc.get()[i] == noData ? 0 : 255;
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -321,8 +385,66 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         return CE_Failure;
     }
+
     const auto eParentDT = m_poParent->GetRasterDataType();
     const GDALDataType eWrkDT = GetWorkDataType(eParentDT);
+
+    if (psExtraArg->eResampleAlg == GRIORA_Mode)
+    {
+        // For mode resampling, we have to read the parent band at full resolution
+        // and classify each pixel as valid / NoData.
+        auto poVRT = VRTDataset::CreateVRTDataset("", nXSize, nYSize, 0,
+                                                  GDT_UInt8, nullptr);
+        poVRT->AddBand(GDT_Byte, nullptr);
+        VRTSourcedRasterBand *poVRTBand =
+            cpl::down_cast<VRTSourcedRasterBand *>(poVRT->GetRasterBand(1));
+
+        switch (eWrkDT)
+        {
+            case GDT_UInt8:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_UInt8>,
+                                         m_poParent);
+                break;
+            case GDT_Int16:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_Int16>,
+                                         m_poParent);
+                break;
+            case GDT_UInt16:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_UInt16>,
+                                         m_poParent);
+                break;
+            case GDT_Int32:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_Int32>,
+                                         m_poParent);
+                break;
+            case GDT_UInt32:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_UInt32>,
+                                         m_poParent);
+                break;
+            case GDT_Float32:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_Float32>,
+                                         m_poParent);
+                break;
+            case GDT_Float64:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_Float64>,
+                                         m_poParent);
+                break;
+            case GDT_Int64:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_Int64>,
+                                         m_poParent);
+                break;
+            case GDT_UInt64:
+                poVRTBand->AddFuncSource(ParentBandIsNoData<GDT_UInt64>,
+                                         m_poParent);
+                break;
+            default:
+                CPLAssert(false);
+        }
+
+        return poVRTBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
+                                   nBufXSize, nBufYSize, eBufType, nPixelSpace,
+                                   nLineSpace, psExtraArg);
+    }
 
     // Optimization in common use case (#4488).
     // This avoids triggering the block cache on this band, which helps

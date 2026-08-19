@@ -1264,7 +1264,7 @@ def test_s102_write_large_file(tmp_path):
         )
 
     expected_warnings = [
-        f"File size of {filename} = 11548224, which exceeds 10 MB",
+        f"File size of {filename} = 11548216, which exceeds 10 MB",
         "Quality feature not used",
     ]
     validate(filename, expected_warnings=expected_warnings)

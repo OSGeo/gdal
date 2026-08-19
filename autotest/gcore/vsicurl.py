@@ -1207,7 +1207,7 @@ def test_vsicurl_test_CPL_CURL_VERBOSE(server):
 
     class MyHandler:
         def __init__(self):
-            self.found_CURL_INFO = False
+            self.found_CURL_INFO_TEXT = False
             self.found_CURL_INFO_HEADER_IN = False
             self.found_CURL_INFO_HEADER_OUT = False
 

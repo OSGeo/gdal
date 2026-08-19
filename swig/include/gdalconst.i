@@ -196,7 +196,7 @@
 // Extension to C valid open flags to be able to restore GDAL < 3.14
 // behavior of gdal.OpenEx() being silent by default on errors when
 // GDAL_OF_VERBOSE_ERROR isn't set when exceptions are disabled.
-// With GDAL 3.14, GDAL_OF_VERBOSE_ERROR is always implictly set, unless
+// With GDAL 3.14, GDAL_OF_VERBOSE_ERROR is always implicitly set, unless
 // GDAL_OF_SILENT_ERROR is set.
 %{
 #define GDAL_OF_SILENT_ERROR    (1ULL << 63)

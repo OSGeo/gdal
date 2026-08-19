@@ -1114,7 +1114,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Form the UPDATE command.                                        */
     /* -------------------------------------------------------------------- */
-    CPLODBCStatement oStmt(poDS->GetSession());
+    CPLODBCSession *poSession = poDS->GetSession();
+    CPLODBCStatement oStmt(poSession);
 
     oStmt.Appendf("UPDATE [%s].[%s] SET ", pszSchemaName, pszTableName);
 
@@ -1135,7 +1136,11 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
     void **bind_buffer =
-        static_cast<void **>(CPLMalloc(sizeof(void *) * nFieldCount));
+        static_cast<void **>(CPLMalloc(sizeof(void *) * (nFieldCount + 1)));
+#ifdef SQL_SS_UDT
+    SQLLEN *bind_datalen =
+        static_cast<SQLLEN *>(CPLMalloc(sizeof(SQLLEN) * (nFieldCount + 1)));
+#endif
 
     int bNeedComma = FALSE;
     SQLLEN nWKBLenBindParameter;
@@ -1145,36 +1150,58 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
 
         if (nUploadGeometryFormat == MSSQLGEOMETRY_NATIVE)
         {
+#ifdef SQL_SS_UDT
             OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
-            int nDataLen = poWriter.GetDataLen();
-            GByte *pabyData = static_cast<GByte *>(CPLMalloc(nDataLen + 1));
-            if (poWriter.WriteSqlGeometry(pabyData, nDataLen) == OGRERR_NONE)
+            bind_datalen[bind_num] = poWriter.GetDataLen();
+            GByte *pabyData =
+                static_cast<GByte *>(CPLMalloc(bind_datalen[bind_num] + 1));
+            if (poWriter.WriteSqlGeometry(
+                    pabyData, static_cast<int>(bind_datalen[bind_num])) ==
+                OGRERR_NONE)
             {
-                char *pszBytes = GByteArrayToHexString(pabyData, nDataLen);
-                SQLLEN nts = SQL_NTS;
-                int nRetCode = SQLBindParameter(
-                    oStmt.GetStatement(),
-                    static_cast<SQLUSMALLINT>(bind_num + 1), SQL_PARAM_INPUT,
-                    SQL_C_CHAR, SQL_LONGVARCHAR, nDataLen, 0,
-                    static_cast<SQLPOINTER>(pszBytes), 0, &nts);
-                if (nRetCode == SQL_SUCCESS ||
-                    nRetCode == SQL_SUCCESS_WITH_INFO)
+                SQLHANDLE ipd;
+                if ((!poSession->Failed(SQLBindParameter(
+                        oStmt.GetStatement(),
+                        static_cast<SQLUSMALLINT>(bind_num + 1),
+                        SQL_PARAM_INPUT, SQL_C_BINARY, SQL_SS_UDT,
+                        SQL_SS_LENGTH_UNLIMITED, 0,
+                        static_cast<SQLPOINTER>(pabyData),
+                        bind_datalen[bind_num],
+                        reinterpret_cast<SQLLEN *>(
+                            &bind_datalen[bind_num])))) &&
+                    (!poSession->Failed(SQLGetStmtAttr(oStmt.GetStatement(),
+                                                       SQL_ATTR_IMP_PARAM_DESC,
+                                                       &ipd, 0, nullptr))) &&
+                    (!poSession->Failed(SQLSetDescField(
+                        ipd, 1, SQL_CA_SS_UDT_TYPE_NAME,
+                        const_cast<char *>(nGeomColumnType ==
+                                                   MSSQLCOLTYPE_GEOGRAPHY
+                                               ? "geography"
+                                               : "geometry"),
+                        SQL_NTS))))
                 {
                     oStmt.Append("?");
-                    bind_buffer[bind_num] = pszBytes;
+                    bind_buffer[bind_num] = pabyData;
                     ++bind_num;
                 }
                 else
                 {
                     oStmt.Append("null");
-                    CPLFree(pszBytes);
+                    CPLFree(pabyData);
                 }
             }
             else
             {
                 oStmt.Append("null");
+                CPLFree(pabyData);
             }
-            CPLFree(pabyData);
+#else
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Native geometry upload is not supported");
+            CPLFree(bind_buffer);
+
+            return OGRERR_FAILURE;
+#endif
         }
         else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
@@ -1312,12 +1339,19 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature(OGRFeature *poFeature)
             CPLFree(bind_buffer[i]);
         CPLFree(bind_buffer);
 
+#ifdef SQL_SS_UDT
+        CPLFree(bind_datalen);
+#endif
         return OGRERR_FAILURE;
     }
 
     for (i = 0; i < bind_num; i++)
         CPLFree(bind_buffer[i]);
     CPLFree(bind_buffer);
+
+#ifdef SQL_SS_UDT
+    CPLFree(bind_datalen);
+#endif
 
     if (oStmt.GetRowCountAffected() < 1)
         return OGRERR_NON_EXISTING_FEATURE;
@@ -2124,7 +2158,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
             {
                 CPLError(
                     CE_Failure, CPLE_NotSupported,
-                    "Filed %s with type %s is not supported for bulk insert.",
+                    "Field %s with type %s is not supported for bulk insert.",
                     poFDefn->GetNameRef(),
                     OGRFieldDefn::GetFieldTypeName(poFDefn->GetType()));
 
