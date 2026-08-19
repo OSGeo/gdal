@@ -38,7 +38,8 @@ def mssql_ds():
 
     val = gdal.GetConfigOption("OGR_MSSQL_CONNECTION_STRING", None)
     if val is None:
-        dsname = "MSSQL:server=host.docker.internal;database=TestDB;driver=ODBC Driver 18 for SQL Server;UID=SA;PWD=DummyPassw0rd;TrustServerCertificate=yes;"
+        # localhost doesn't work under chroot
+        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 18 for SQL Server;UID=SA;PWD=DummyPassw0rd;TrustServerCertificate=yes;"
     else:
         dsname = val
 

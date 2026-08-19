@@ -25,6 +25,10 @@ from ogr.ogr_pg import (  # noqa
     use_postgis,
 )
 
+from ogr.ogr_mssqlspatial import (  # noqa
+    mssql_ds,
+)
+
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
 collect_ignore = [
