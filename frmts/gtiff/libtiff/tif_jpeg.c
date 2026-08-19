@@ -1671,18 +1671,15 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                             ((unsigned char *)buf) + iPair * 3;
                         TIFF_JSAMPLE *in_ptr = line_work_buf + iPair * 2;
 
-                        out_ptr[0] =
-                            (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+                        out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
                         out_ptr[1] =
                             (unsigned char)(((in_ptr[0] & 0xf) << 4) |
                                             ((in_ptr[1] & 0xf00) >> 8));
-                        out_ptr[2] =
-                            (unsigned char)(((in_ptr[1] & 0xff) >> 0));
+                        out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
                     }
                     if ((value_count & 1) != 0)
-                        JPEGWritePacked12Sample(
-                            (uint8_t *)buf, value_count - 1,
-                            line_work_buf[value_count - 1]);
+                        JPEGWritePacked12Sample((uint8_t *)buf, value_count - 1,
+                                                line_work_buf[value_count - 1]);
                 }
                 else if (sp->cinfo.d.data_precision == 8)
                 {
@@ -1905,18 +1902,16 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                         TIFF_JSAMPLE *in_ptr =
                             (TIFF_JSAMPLE *)(tmpbuf + iPair * 2);
 
-                        out_ptr[0] =
-                            (unsigned char)((in_ptr[0] & 0xff0) >> 4);
+                        out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
                         out_ptr[1] =
                             (unsigned char)(((in_ptr[0] & 0xf) << 4) |
                                             ((in_ptr[1] & 0xf00) >> 8));
-                        out_ptr[2] =
-                            (unsigned char)(((in_ptr[1] & 0xff) >> 0));
+                        out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
                     }
                     if ((samplesperclumpline & 1) != 0)
                         JPEGWritePacked12Sample(
                             (uint8_t *)buf, samplesperclumpline - 1,
-                            tmpbuf[samplesperclumpline - 1]);
+                            (TIFF_JSAMPLE)tmpbuf[samplesperclumpline - 1]);
                 }
             }
 #endif

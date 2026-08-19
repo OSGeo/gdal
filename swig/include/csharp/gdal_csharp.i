@@ -16,6 +16,7 @@
 %rename (GetMetadata) GetMetadata_List;
 %ignore GetMetadata_Dict;
 
+/* C# string encoder is located inside OSR (See csharp_string_encoder.i) */
 %include typemaps_csharp.i
 
 DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)

@@ -507,7 +507,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                 const_cast<GDALRasterBand *>(this)->GetNoDataValue(&bSuccess);
             if (!bSuccess)
                 return {};
-            return v;
+            return static_cast<T>(v);
         }
     }
 #endif

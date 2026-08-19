@@ -1677,8 +1677,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
                 psResult->nStatus = 0;
                 bSkipError = true;
             }
-            else if (CPLTestBool(
-                         CPLGetConfigOption("CPL_CURL_IGNORE_ERROR", "NO")))
+            else if (CPLTestConfigOption("CPL_CURL_IGNORE_ERROR"))
             {
                 psResult->nStatus = 0;
                 bSkipError = true;
@@ -2095,7 +2094,7 @@ static int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
         pszDebugKey = "CURL_INFO_HEADER_IN";
     }
     else if (type == CURLINFO_DATA_IN &&
-             CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE_DATA_IN", "NO")))
+             CPLTestConfigOption("CPL_CURL_VERBOSE_DATA_IN"))
     {
         pszDebugKey = "CURL_INFO_DATA_IN";
     }
@@ -2130,7 +2129,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
 
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
-    if (CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
+    if (CPLTestConfigOption("CPL_CURL_VERBOSE"))
     {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 

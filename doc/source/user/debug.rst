@@ -44,7 +44,7 @@ or the core GDAL runtime (``GDAL``).
        Shape: 19 features read on layer 'in'.
 
 Debug output can be filtered by passing a component prefix to the ``--debug`` option.
-For example, to display only messages beginning with ``Shape:`, use ``--debug Shape``.
+For example, to display only messages beginning with ``Shape:``, use ``--debug Shape``.
 Prefix matching is case-insensitive, but partial matches and wildcards are not supported.
 
 .. example::

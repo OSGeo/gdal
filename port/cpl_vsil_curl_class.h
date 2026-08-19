@@ -49,9 +49,6 @@
 
 void VSICurlStreamingClearCache(void);  // from cpl_vsil_curl_streaming.cpp
 
-struct curl_slist *VSICurlSetOptions(CURL *hCurlHandle, const char *pszURL,
-                                     const char *const *papszOptions);
-
 struct curl_slist *VSICurlSetContentTypeFromExt(struct curl_slist *polist,
                                                 const char *pszPath);
 
@@ -145,6 +142,31 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBase)
 
+    friend class RunThreadUser;
+    enum class HandleState
+    {
+        Ready,
+        Running,
+        Interrupted,
+        Done
+    };
+
+    /// Handle Information.
+    struct Handle
+    {
+        explicit Handle(CURL *curl) : m_curl(curl), m_state(HandleState::Ready)
+        {
+        }
+
+        Handle(const Handle &) = default;
+        Handle &operator=(const Handle &) = default;
+
+        CURL *m_curl{nullptr};
+        HandleState m_state{HandleState::Ready};
+        using DebugInfo = std::pair<std::string, std::string>;
+        std::vector<DebugInfo> m_debug{};
+    };
+
     struct FilenameOffsetPair
     {
         std::string filename_;
@@ -201,7 +223,29 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         std::string osData{};
     };
 
-    std::mutex m_oMutex{};
+    std::mutex m_useMutex{};  // Protects the use count
+    int m_useCount = 0;       // Count of users of the run thread.
+    std::atomic<bool> m_stop{false};
+    std::condition_variable m_runCv{};
+    std::unique_ptr<std::thread> m_runThread{};
+    std::mutex m_runMutex{};  // Protects data associated with the run thread.
+    std::vector<Handle> m_handles{};
+    CURLM *m_multi = nullptr;
+
+    void Run();
+    void StartRunThread();
+    void StopRunThread();
+    int HandleReady();
+    bool HandleInterrupted();
+    bool HandleCompleted();
+    bool HandleFailure();
+    void HandleDebug(CURL *easyHandle);
+    bool RemoveDoneHandle(CURL *easyHandle);
+    void IncUseCount();
+    void DecUseCount();
+    void CurlDebug(CURL *handle, curl_infotype type, std::string_view msg);
+
+    std::mutex m_oMutex{};  // Map region mutex.
     std::map<std::string, std::unique_ptr<RegionInDownload>>
         m_oMapRegionInDownload{};
 
@@ -298,8 +342,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     static void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void InvalidateCachedData(const char *pszURL);
 
-    CURLM *GetCurlMultiHandleFor(const std::string &osURL);
-
     virtual void ClearCache();
     virtual void PartialClearCache(const char *pszFilename);
 
@@ -311,9 +353,17 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
+    struct curl_slist *SetOptions(CURL *hCurlHandle, const char *pszURL,
+                                  const char *const *papszOptions);
+
+    void Interrupt(CURL *easyHandle);
+    void Perform(CURL *easyHandle);
+    void Perform(std::vector<CURL *> easyHandles);
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
 
+    static int CurlDebugStatic(CURL *handle, curl_infotype type, char *data,
+                               size_t size, void *userp);
     static const char *GetOptionsStatic();
 };
 
@@ -389,8 +439,10 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
 
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
-
-    mutable std::atomic<bool> m_bInterrupt = false;
+    bool m_bInterrupt = false;
+    // Makes sure the FilesystemHandler run thread is started on construction and
+    // torn down at last use.
+    RunThreadUser m_runThreadUser;
 
     // Specific to Planetary Computer signing:
     // https://planetarycomputer.microsoft.com/docs/concepts/sas/
@@ -496,6 +548,7 @@ class VSICurlHandle /* non final*/ : public VSIVirtualHandle
 
     void Interrupt() override
     {
+        poFS->Interrupt(this);
         m_bInterrupt = true;
     }
 

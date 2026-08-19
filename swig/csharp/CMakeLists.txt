@@ -163,7 +163,8 @@ list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
    ${PROJECT_SOURCE_DIR}/swig/include/csharp/osr_csharp.i
    ${PROJECT_SOURCE_DIR}/swig/include/csharp/swig_csharp_extensions.i
    ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
-   ${PROJECT_SOURCE_DIR}/swig/include/csharp/csharp_strings.i)
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/csharp_strings.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/csharp_string_encoder.i)
 
 # function for csharp wrapper build
 function (gdal_csharp_wrap)

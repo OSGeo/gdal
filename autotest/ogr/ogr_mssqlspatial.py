@@ -38,8 +38,7 @@ def mssql_ds():
 
     val = gdal.GetConfigOption("OGR_MSSQL_CONNECTION_STRING", None)
     if val is None:
-        # localhost doesn't work under chroot
-        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
+        dsname = "MSSQL:server=host.docker.internal;database=TestDB;driver=ODBC Driver 18 for SQL Server;UID=SA;PWD=DummyPassw0rd;TrustServerCertificate=yes;"
     else:
         dsname = val
 
@@ -97,6 +96,8 @@ def tpoly(mssql_ds):
     # Create Layer
     sql_lyr = mssql_ds.CreateLayer("tpoly", srs=shp_lyr.GetSpatialRef())
 
+    assert sql_lyr
+
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(
@@ -147,7 +148,7 @@ def tpoly(mssql_ds):
 
 
 @pytest.mark.usefixtures("tpoly")
-def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
+def test_ogr_mssqlspatial_3(mssql_ds, multipoly_feat):
 
     mssqlspatial_lyr = mssql_ds.GetLayerByName("tpoly")
     assert mssqlspatial_lyr.GetDataset().GetDescription() == mssql_ds.GetDescription()
@@ -165,8 +166,8 @@ def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
 
     mssqlspatial_lyr.ResetReading()
 
-    for i in range(len(poly_feat)):
-        orig_feat = poly_feat[i]
+    for i in range(len(multipoly_feat)):
+        orig_feat = multipoly_feat[i]
         read_feat = mssqlspatial_lyr.GetNextFeature()
 
         ogrtest.check_feature_geometry(
@@ -582,7 +583,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
             ds = gdal.VectorTranslate(
                 mssql_ds.GetDescription(),
                 "data/shp/testpoly.shp",
-                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY -makevalid",
             )
 
             lyr = ds.GetLayerByName("poly_vertex_order")
@@ -727,3 +728,28 @@ def test_geometry_column_identification(mssql_ds):
 
     finally:
         mssql_ds.ExecuteSQL("DROP TABLE poly_shape")
+
+
+###############################################################################
+# Test SetFeature() updating the geometry of an existing feature using the
+# native geometry format
+
+
+@pytest.mark.usefixtures("tpoly")
+def test_ogr_mssqlspatial_setfeature_native_geometry(mssql_ds):
+
+    mssqlspatial_lyr = mssql_ds.GetLayer("tpoly")
+
+    mssqlspatial_lyr.ResetReading()
+    feat = mssqlspatial_lyr.GetNextFeature()
+    assert feat is not None
+    fid = feat.GetFID()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 10,10 10,10 0,0 0))")
+    feat.SetGeometryDirectly(geom)
+    assert mssqlspatial_lyr.SetFeature(feat) == ogr.OGRERR_NONE
+
+    mssqlspatial_lyr.ResetReading()
+    feat_read = mssqlspatial_lyr.GetFeature(fid)
+    assert feat_read is not None
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)

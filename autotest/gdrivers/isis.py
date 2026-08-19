@@ -470,6 +470,7 @@ def test_isis_16():
                 [gdal.GDT_Int16, 65525, -32768, []],
                 [gdal.GDT_UInt16, 0, 0, []],
                 [gdal.GDT_Float32, 65534, -3.4028226550889045e38, []],
+                [gdal.GDT_Float64, 65534, -1.797693134862315e308, []],
             ]:
 
                 ds = gdal.GetDriverByName("ISIS3").Create(
@@ -913,7 +914,7 @@ def test_isis_23():
     ds = None
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/isis_tmp.lbl")
 
-    for dt in [gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Float32]:
+    for dt in [gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Float32, gdal.GDT_Float64]:
         mem_ds = gdal.Translate("", "data/byte.tif", format="MEM", outputType=dt)
         mem_ds.SetProjection("")
         mem_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
@@ -2473,7 +2474,7 @@ def test_isis3_projstr_takes_precedence(tmp_vsimem):
 
 def test_isis3_projstr_invalid(tmp_vsimem):
 
-    # An unparseable ProjStr should warn and leave no spatial reference,
+    # An unparsable ProjStr should warn and leave no spatial reference,
     # rather than crash.
     with gdal.quiet_errors():
         ds = _open_isis3_projstr(
