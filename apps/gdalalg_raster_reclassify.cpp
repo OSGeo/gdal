@@ -73,10 +73,18 @@ static std::unique_ptr<GDALDataset>
 GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
                                GDALDataType eDstType, bool keepColorTable)
 {
-    CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
-
     const auto nX = input.GetRasterXSize();
     const auto nY = input.GetRasterYSize();
+
+    auto poDS = VRTDataset::CreateVRTDataset("", nX, nY, 0, eDstType, nullptr);
+
+    GDALGeoTransform gt;
+    if (input.GetGeoTransform(gt) == CE_None)
+        poDS->SetGeoTransform(gt);
+    poDS->SetSpatialRef(input.GetSpatialRef());
+
+    CPLStringList papszBandArgs;
+    papszBandArgs.SetNameValue("subclass", "VRTDerivedRasterBand");
 
     for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
     {
@@ -86,68 +94,27 @@ GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
             eDstType == GDT_Unknown ? srcType : eDstType;
         const GDALDataType xferType = GDALDataTypeUnion(srcType, bandType);
 
-        CPLXMLNode *band =
-            CPLCreateXMLNode(root.get(), CXT_Element, "VRTRasterBand");
-        CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        CPLAddXMLAttributeAndValue(band, "dataType",
-                                   GDALGetDataTypeName(bandType));
-
-        CPLXMLNode *pixelFunctionType =
-            CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
-        CPLCreateXMLNode(pixelFunctionType, CXT_Text, "reclassify");
-        CPLXMLNode *arguments =
-            CPLCreateXMLNode(band, CXT_Element, "PixelFunctionArguments");
-        CPLAddXMLAttributeAndValue(arguments, "mapping", mappings.c_str());
-
-        CPLXMLNode *sourceTransferType =
-            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
-        CPLCreateXMLNode(sourceTransferType, CXT_Text,
-                         GDALGetDataTypeName(xferType));
-
-        if (const GDALColorTable *poTable =
-                keepColorTable ? poSrcBand->GetColorTable() : nullptr)
+        if (poDS->AddBand(bandType, papszBandArgs) != CE_None)
         {
-            CPLXMLNode *colorTable =
-                CPLCreateXMLNode(band, CXT_Element, "ColorTable");
-            for (int i = 0; i < poTable->GetColorEntryCount(); ++i)
-            {
-                const GDALColorEntry *poSrcEntry = poTable->GetColorEntry(i);
-
-                CPLXMLNode *entry =
-                    CPLCreateXMLNode(colorTable, CXT_Element, "Entry");
-                CPLAddXMLAttributeAndValue(
-                    entry, "c1", std::to_string(poSrcEntry->c1).c_str());
-                CPLAddXMLAttributeAndValue(
-                    entry, "c2", std::to_string(poSrcEntry->c2).c_str());
-                CPLAddXMLAttributeAndValue(
-                    entry, "c3", std::to_string(poSrcEntry->c3).c_str());
-                CPLAddXMLAttributeAndValue(
-                    entry, "c4", std::to_string(poSrcEntry->c4).c_str());
-            }
+            return nullptr;
         }
-    }
 
-    auto ds = std::make_unique<VRTDataset>(nX, nY);
-    if (ds->XMLInit(root.get(), "") != CE_None)
-    {
-        return nullptr;
-    };
+        VRTDerivedRasterBand *poDstBand =
+            cpl::down_cast<VRTDerivedRasterBand *>(poDS->GetRasterBand(iBand));
+        poDstBand->SetSourceTransferType(xferType);
+        poDstBand->SetPixelFunctionName("reclassify");
+        poDstBand->AddPixelFunctionArgument("mapping", mappings.c_str());
 
-    for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
-    {
-        auto poSrcBand = input.GetRasterBand(iBand);
-        auto poDstBand =
-            cpl::down_cast<VRTDerivedRasterBand *>(ds->GetRasterBand(iBand));
+        if (keepColorTable && poSrcBand->GetColorTable() != nullptr)
+        {
+            poDstBand->SetColorTable(poSrcBand->GetColorTable());
+        }
+
         GDALCopyNoDataValue(poDstBand, poSrcBand);
         poDstBand->AddSimpleSource(poSrcBand);
     }
 
-    GDALGeoTransform gt;
-    if (input.GetGeoTransform(gt) == CE_None)
-        ds->SetGeoTransform(gt);
-    ds->SetSpatialRef(input.GetSpatialRef());
-
-    return ds;
+    return poDS;
 }
 
 /************************************************************************/

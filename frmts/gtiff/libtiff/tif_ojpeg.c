@@ -1228,12 +1228,30 @@ static int OJPEGReadHeaderInfo(TIFF *tif)
                           "strip/tile length");
             return (0);
         }
-        sp->restart_interval =
-            (uint16_t)(((sp->strile_width + (uint32_t)sp->subsampling_hor * 8 -
-                         1) /
-                        ((uint32_t)sp->subsampling_hor * 8)) *
-                       (sp->strile_length /
-                        ((uint32_t)sp->subsampling_ver * 8)));
+        {
+            /* Values were validated above as 1, 2, or 4. */
+            uint32_t mcu_width = (uint32_t)sp->subsampling_hor * 8;
+            uint32_t mcu_height = (uint32_t)sp->subsampling_ver * 8;
+            uint32_t mcu_cols =
+                TIFFhowmany_32_maxuint_compat(sp->strile_width, mcu_width);
+            uint32_t mcu_rows = sp->strile_length / mcu_height;
+            if (mcu_cols == 0 || mcu_rows == 0)
+            {
+                sp->restart_interval = 0;
+            }
+            else
+            {
+                uint32_t restart_interval =
+                    _TIFFMultiply32(tif, mcu_cols, mcu_rows, module);
+                if (restart_interval == 0 || restart_interval > UINT16_MAX)
+                {
+                    TIFFErrorExtR(tif, module,
+                                  "Integer overflow in restart interval");
+                    return (0);
+                }
+                sp->restart_interval = (uint16_t)restart_interval;
+            }
+        }
     }
     if (OJPEGReadHeaderInfoSec(tif) == 0)
         return (0);
