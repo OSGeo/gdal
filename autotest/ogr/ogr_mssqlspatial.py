@@ -43,7 +43,10 @@ def mssql_ds():
     else:
         dsname = val
 
-    ds = ogr.Open(dsname, update=1)
+    try:
+        ds = ogr.Open(dsname, update=1)
+    except RuntimeError:
+        ds = None
 
     if ds is None:
         if val is None:
