@@ -624,21 +624,31 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         else
         {
             nDataStartOffset = 1024;
-
-            // Some files use 1025 byte records ending with a newline character.
-            // See https://github.com/OSGeo/gdal/issues/5007
-            CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 1024, 0));
-            char c;
-            if (VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\n' &&
-                VSIFSeekL(InDem, 1024 + 1024 + 1, 0) == 0 &&
-                VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\n')
-            {
-                nDataStartOffset = 1025;
-            }
         }
     }
     else
         nDataStartOffset = 864;
+
+    CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, nDataStartOffset, 0));
+    char c;
+    if (VSIFReadL(&c, 1, 1, InDem) == 1)
+    {
+        if (c == '\n' && VSIFSeekL(InDem, 2 * nDataStartOffset + 1, 0) == 0 &&
+            VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\n')
+        {
+            // Some files use 1025 byte records ending with a newline
+            // character.
+            // See https://github.com/OSGeo/gdal/issues/5007
+            nDataStartOffset++;
+        }
+        else if (c == '\r' && VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\n' &&
+                 VSIFSeekL(InDem, 2 * nDataStartOffset + 2, 0) == 0 &&
+                 VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\r' &&
+                 VSIFReadL(&c, 1, 1, InDem) == 1 && c == '\n')
+        {
+            nDataStartOffset += 2;
+        }
+    }
 
     CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 156, 0));
     const int nCoordSystem = ReadInt(InDem);
