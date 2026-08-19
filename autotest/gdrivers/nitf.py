@@ -16,6 +16,7 @@
 import array
 import base64
 import copy
+import hashlib
 import os
 import shutil
 import struct
@@ -2051,6 +2052,13 @@ def test_nitf_52(tmp_path):
         ],
     )
     ds = None
+
+    hash = hashlib.sha256()
+    hash.update(open(tmp_path / "nitf52.ntf", "rb").read())
+    assert (
+        hash.hexdigest()
+        == "a89d1001c1655e1cbfe27b8699ccad3042a98be2df1112d4bdeb3b5185790201"
+    )
 
     ds = gdal.Open(tmp_path / "nitf52.ntf")
     wkt = ds.GetProjectionRef()
