@@ -17,6 +17,7 @@ import math
 import os
 import shutil
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -230,11 +231,26 @@ def test_tiledb_multidim_mixed_fixed_and_variable_sized_attributes(tmp_path):
             "Z": z,
             "m_Z_mean": np.arange(16, dtype=np.float32).reshape(4, 4),
         }
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    skipped_name = os.path.basename(filename) + ".Z"
+    debug_messages = []
+
+    def error_handler(error_class, error_number, message):
+        if error_class == gdal.CE_Debug:
+            debug_messages.append(message)
+
+    with gdal.config_option("CPL_DEBUG", "TileDB"), gdaltest.error_handler(
+        error_handler
+    ):
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
+
     root_group = ds.GetRootGroup()
-    assert root_group.GetMDArrayNames() == ["m_Z_mean"]
-    mean = root_group.OpenMDArray("m_Z_mean")
-    assert mean.GetDimensionsSize() == [4, 4]
+    mean_name = os.path.basename(filename) + ".m_Z_mean"
+    assert root_group.GetMDArrayNames() == [mean_name]
+    assert debug_messages == [
+        f"TileDB: Skipping unsupported variable-size attribute '{skipped_name}'"
+    ]
+    mean = root_group.OpenMDArray(mean_name)
+    assert [dim.GetSize() for dim in mean.GetDimensions()] == [4, 4]
     assert mean.GetDataType().GetNumericDataType() == gdal.GDT_Float32
 
 
