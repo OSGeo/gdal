@@ -17,7 +17,6 @@
 
 #if defined(SWIGCSHARP)
 %module GdalConst
-%include csharp_strings.i
 #else
 %module gdalconst
 #endif

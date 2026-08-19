@@ -19,6 +19,7 @@
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
+/* C# string encoder is located inside OSR (See csharp_string_encoder.i) */
 %include typemaps_csharp.i
 
 DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)
@@ -71,7 +72,7 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
      return new $csclassname(wkbGeometryType.wkbUnknown, null, 0, IntPtr.Zero, gml);
   }
 
-  public Geometry(wkbGeometryType type) : this(OgrPINVOKE.new_Geometry((int)type, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero), true, null) {
+  public Geometry(wkbGeometryType type) : this(OgrPINVOKE.new_Geometry((int)type, null, 0, IntPtr.Zero, null), true, null) {
     if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
   }
 }
