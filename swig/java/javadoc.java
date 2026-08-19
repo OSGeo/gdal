@@ -11664,6 +11664,44 @@ public class CoordinateTransformation:public int TransformPointWithErrorCode(dou
  */
 public class CoordinateTransformation:public int[] TransformPointsWithErrorCodes(double[][] pointArray)
 
+/**
+ * Inverse transformation object.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetInverse
+ *
+ * @return a copy of the inverse transformation or NULL on error
+ *
+ * @since GDAL 3.4
+ */
+public class CoordinateTransformation:public CoordinateTransformation GetInverse()
+
+/**
+ * Transformation's source coordinate system reference.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetSourceCS
+ *
+ * @return a copy of the transformation's source coordinate system or NULL if not
+ * present.
+ *
+ * @since GDAL 3.4
+ */
+ public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetSource()
+
+/**
+ * Transformation's target coordinate system reference.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetTargetCS
+ *
+ * @return a copy of the transformation's target coordinate system or NULL if not
+ * present.
+ *
+ * @since GDAL 3.4
+ */
+ public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetTarget()
+
 
 /**
  * Class of error codes typically related to coordinate operation initialization,
