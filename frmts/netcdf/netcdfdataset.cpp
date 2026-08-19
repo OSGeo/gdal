@@ -2822,7 +2822,7 @@ netCDFDataset::netCDFDataset()
       cdfid(-1), nSubDatasets(0), papszSubDatasets(nullptr),
       papszMetadata(nullptr), bBottomUp(true), eFormat(NCDF_FORMAT_NONE),
       bIsGdalFile(false), bIsGdalCfFile(false), pszCFProjection(nullptr),
-      pszCFCoordinates(nullptr), nCFVersion(1.6), bSGSupport(false),
+      pszCFCoordinates(nullptr), bSGSupport(false),
       eMultipleLayerBehavior(SINGLE_LAYER), logCount(0), vcdf(this, cdfid),
       GeometryScribe(vcdf, this->generateLogName()),
       FieldScribe(vcdf, this->generateLogName()),
@@ -5364,7 +5364,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
-    if (nCFVersion >= 1.8)
+    if (nCFVersionMajor > 1 || (nCFVersionMajor == 1 && nCFVersionMinor >= 8))
         return CE_None;  // do nothing
 
     bool bWriteGridMapping = false;
@@ -8426,9 +8426,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Figure out whether or not the listed dataset has support for simple
     // geometries (CF-1.8)
-    poDS->nCFVersion = nccfdriver::getCFVersion(cdfid);
+    nccfdriver::getCFVersion(cdfid, poDS->nCFVersionMajor,
+                             poDS->nCFVersionMinor);
     bool bHasSimpleGeometries = false;  // but not necessarily valid
-    if (poDS->nCFVersion >= 1.8)
+    if (poDS->nCFVersionMajor > 1 ||
+        (poDS->nCFVersionMajor == 1 && poDS->nCFVersionMinor >= 8))
     {
         bHasSimpleGeometries = poDS->DetectAndFillSGLayers(cdfid);
         if (bHasSimpleGeometries)
