@@ -40,8 +40,9 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
     {
         if (schema.attribute(0).variable_sized())
         {
-            CPLDebug("TileDB", "Skipping unsupported variable-size "
-                              "attribute '%s'",
+            CPLDebug("TileDB",
+                     "Skipping unsupported variable-size "
+                     "attribute '%s'",
                      schema.attribute(0).name().c_str());
             return std::make_shared<TileDBArrayGroup>(apoArrays);
         }
@@ -62,8 +63,9 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
             // the same TileDB array.
             if (attr.variable_sized())
             {
-                CPLDebug("TileDB", "Skipping unsupported variable-size "
-                                  "attribute '%s'",
+                CPLDebug("TileDB",
+                         "Skipping unsupported variable-size "
+                         "attribute '%s'",
                          attr.name().c_str());
                 continue;
             }
