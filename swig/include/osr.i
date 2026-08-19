@@ -582,7 +582,7 @@ public:
   {
        return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
   }
-%clear (int* buckets_ret, int **ppanHistogram);
+%clear (int* nvalues, int **confidence_values);
 #endif
 
   OGRErr SetProjection( char const *arg ) {
