@@ -11687,7 +11687,7 @@ public class CoordinateTransformation:public CoordinateTransformation GetInverse
  *
  * @since GDAL 3.4
  */
- public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetSource()
+ public class CoordinateTransformation:public SpatialReference GetSource()
 
 /**
  * Transformation's target coordinate system reference.
@@ -11700,7 +11700,7 @@ public class CoordinateTransformation:public CoordinateTransformation GetInverse
  *
  * @since GDAL 3.4
  */
- public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetTarget()
+ public class CoordinateTransformation:public SpatialReference GetTarget()
 
 
 /**
