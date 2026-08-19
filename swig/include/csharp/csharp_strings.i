@@ -34,62 +34,14 @@ typedef char * (SWIGSTDCALL* CSharpUtf8StringHelperCallback)(const char *);
 static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 %}
 
-/*
- * Define a dummy type so that we can extend it to add custom types
- * inside the module namespace using the csimports typemap
- */
-%{
-typedef struct {} CsharpDummyObject;
-%}
-%typemap(csclassmodifiers) CsharpDummyObject "internal class";
-%typemap(csimports) CsharpDummyObject %{
-  using System;
-  using System.Text;
-  using System.Runtime.InteropServices;
-
-  /* Interface for encoding/decoding string to/from Gdal unmanaged strings. */
-  public interface I$moduleStringEncoder {
-    /* Encode a string to a null-terminated array of bytes to be sent to Gdal unmanaged */
-    byte[] ToNullTerminated(string str);
-    /* Decode an unmanaged, null-terminated string from Gdal to a managed string */
-    string FromNullTerminated(IntPtr pStr);
-  }
-  
-  public class Default$moduleStringEncoder : I$moduleStringEncoder {
-    public virtual string FromNullTerminated(IntPtr pStr) {
-#if NETCOREAPP1_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-      return Marshal.PtrToStringUTF8(pStr);
-#else
-      if (pStr == IntPtr.Zero) return null;
-      unsafe {
-        byte* pBytes = (byte*)pStr.ToPointer();
-        int len = 0;
-        checked {
-          while (pBytes[len] != 0) len++;
-        }
-        return Encoding.UTF8.GetString(pBytes, len);
-      }
-#endif
-    }
-    public virtual byte[] ToNullTerminated(string str) {
-      if (str == null) return null;
-      int byteCount = Encoding.UTF8.GetByteCount(str);
-      var bts = new byte[byteCount + 1];
-      Encoding.UTF8.GetBytes(str, 0, str.Length, bts, 0);
-      return bts;
-    }
-  }
-%}
-struct CsharpDummyObject{};
-
 %pragma(csharp) modulecode=%{
-  private static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
+  private static readonly OSR.IStringEncoder s_DefaultStringEncoder = new OSR.DefaultStringEncoder();
   [System.ThreadStatic]
-  private static I$moduleStringEncoder s_ThreadLocalStringEncoder;
-  public static I$moduleStringEncoder StringEncoder
+  private static OSR.IStringEncoder s_ThreadLocalStringEncoder;
+  public static OSR.IStringEncoder StringEncoder
     => ThreadLocalStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
-  public static I$moduleStringEncoder GlobalStringEncoder { get; set; }
-  public static I$moduleStringEncoder ThreadLocalStringEncoder {    
+  public static OSR.IStringEncoder GlobalStringEncoder { get; set; }
+  public static OSR.IStringEncoder ThreadLocalStringEncoder {    
     get => s_ThreadLocalStringEncoder;
     set => s_ThreadLocalStringEncoder = value;
   }
