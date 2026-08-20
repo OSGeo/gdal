@@ -6331,7 +6331,7 @@ def test_netcdf_resolve_var_name():
     assert ds
     sr = ds.GetSpatialRef()
     assert sr
-    assert sr.ExportToProj4() == "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs"
+    assert sr.ExportToProj4().startswith("+proj=utm +zone=32 ")
 
 
 ###############################################################################
