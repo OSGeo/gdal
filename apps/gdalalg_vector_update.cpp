@@ -304,6 +304,8 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             }
         }
 
+        poDstLayer->ResetReading();
+
         if (poDstFeature)
         {
             if (m_mode != MODE_APPEND_ONLY)

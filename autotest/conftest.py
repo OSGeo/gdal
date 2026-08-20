@@ -16,6 +16,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 # put the autotest dir on the path too. This lets us import all test modules
 sys.path.insert(1, os.path.dirname(__file__))
 
+from ogr.ogr_mssqlspatial import (  # noqa
+    mssql_ds,
+)
+
 # import fixtures that need to be used outside the test module where they were defined
 from ogr.ogr_pg import (  # noqa
     pg_autotest_ds,
