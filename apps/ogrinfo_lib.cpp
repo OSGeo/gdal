@@ -1127,8 +1127,17 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
         }
         else if (psOptions->bGeomType)
         {
-            Concat(osRet, psOptions->bStdoutOutput, "Geometry: %s\n",
-                   OGRGeometryTypeToName(poLayer->GetGeomType()));
+            const auto eGeomType = poLayer->GetGeomType();
+            Concat(osRet, psOptions->bStdoutOutput, "Geometry: %s",
+                   OGRGeometryTypeToName(eGeomType));
+            if (eGeomType != wkbNone)
+            {
+                Concat(osRet, psOptions->bStdoutOutput, " (%s)",
+                       OGRToOGCGeomType(eGeomType,
+                                        /* camelCase = */ false,
+                                        /* includeZM = */ true));
+            }
+            Concat(osRet, psOptions->bStdoutOutput, "\n");
         }
 
         if (psOptions->bFeatureCount)

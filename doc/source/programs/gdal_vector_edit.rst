@@ -57,6 +57,11 @@ Program-Specific Options
    ``SURFACE``, ``CURVEPOLYGON``, ``MULTICURVE``, ``MULTISURFACE``, ``POLYHEDRALSURFACE`` or ``TIN``.
    ``Z``, ``M`` or ``ZM`` suffixes can be appended to the above values to
    indicate the dimensionality.
+
+   That value can be found in existing datasets by looking at lines like
+   ``Geometry: 3D Multi Polygon (MULTIPOLYGONZ)`` in the output of
+   :program:`gdal vector info`.
+
    Note that feature geometries themselves are not modified. Thus this option
    can be used to fix an inappropriate geometry type at the layer level.
 
