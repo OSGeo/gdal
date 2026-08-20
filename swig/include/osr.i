@@ -1267,6 +1267,20 @@ public:
     OCTDestroyCoordinateTransformation( self );
   }
 
+#ifdef SWIGJAVA 
+   %newobject GetSource;
+   OSRSpatialReferenceShadow* GetSource() {
+    OGRSpatialReferenceH srs = OCTGetSourceCS(self);
+    return (OSRSpatialReferenceShadow*) (srs ? OSRClone(srs) : NULL);
+  }
+
+   %newobject GetTarget;
+   OSRSpatialReferenceShadow* GetTarget() {
+    OGRSpatialReferenceH srs = OCTGetTargetCS(self);
+    return (OSRSpatialReferenceShadow*) (srs ? OSRClone(srs) : NULL);
+  }
+#endif
+
   %newobject GetInverse;
   OSRCoordinateTransformationShadow* GetInverse() {
     return (OSRCoordinateTransformationShadow*) OCTGetInverse(self);
