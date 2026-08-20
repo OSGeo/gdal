@@ -53,3 +53,18 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
 }
 %}
 
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+%typemap(cscode, noblock="1") OSRSpatialReferenceShadow {
+  [Obsolete("Use ExportToPCI(out string proj, out string units, out double[] params_) instead.")]
+  public int ExportToPCI(out string proj, out string units)
+    => ExportToPCI(out proj, out units, out _);
+  [Obsolete("Use ExportToUSGS(out int code, out int zone, out double[] params_, out int datum) instead.")]
+  public int ExportToUSGS(out int code, out int zone, out int datum)
+    => ExportToUSGS(out code, out zone, out _, out datum);
+  [Obsolete("Use SetDataAxisToSRSAxisMapping(int[] nList) instead.")]
+  public int SetDataAxisToSRSAxisMapping(int nList, int[] pList)
+    => SetDataAxisToSRSAxisMapping(pList);
+}

@@ -123,6 +123,18 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 /*! Thirty two bit signed integer */ %rasterio_functions(DataType.GDT_Int32,int)
 /*! Thirty two bit floating point */ %rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %rasterio_functions(DataType.GDT_Float64,double)
+
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+[Obsolete("Use Feature MaximumOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MaximumOfNBands(int band_count, Band[] bands) => MaximumOfNBands(bands);
+[Obsolete("Use Feature MeanOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MeanOfNBands(int band_count, Band[] bands) => MeanOfNBands(bands);
+[Obsolete("Use Feature MinimumOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => MinimumOfNBands(bands);
 }
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
@@ -212,6 +224,26 @@ public int BuildOverviews( string resampling, int[] overviewlist) {
 public GCP[] GetGCPs() {
     GetGCPs(out GCP[] gcps);
     return gcps;
+  }
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+  [Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int[] band_list, string[] options) instead.")]
+  public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int band_list, int[] pband_list, string[] options)
+    => AdviseRead(xoff, yoff, xsize, ysize, ref buf_xsize, ref buf_ysize, ref buf_type, pband_list, options);
+  
+  [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.", error: true)]
+  public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use GetNextFeature(out Layer ppoBelongingLayer, out double pdfProgressPct, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public Feature GetNextFeature(ref IntPtr ppoBelongingLayer, ref double pdfProgressPct, Gdal.GDALProgressFuncDelegate callback, string callback_data) {
+    Feature feature = GetNextFeature(out Layer belongingLayer, out double progressPct, callback, callback_data);
+    ppoBelongingLayer = Layer.getCPtr(belongingLayer).Handle;
+    pdfProgressPct = progressPct;
+    return feature;
   }
 }
 
@@ -373,4 +405,70 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   void TestSwigSetArgumentException(int code, const char *message, const char *param_name) {
     SWIG_CSharpSetPendingExceptionArgument(static_cast<SWIG_CSharpExceptionArgumentCodes>(code), message, param_name);
   }
+%}
+
+
+%typemap(cscode, noblock="1") GDALGroupHS {
+  [Obsolete("Use CreateAttribute(string name, ulong[] dimensions, ExtendedDataType data_type, string[] options) instead.", error: true)]
+  public Attribute CreateAttribute(string name, int dimensions, uint[] sizes, ExtendedDataType data_type, string[] options)
+    => throw new NotSupportedException();
+}
+
+%typemap(cscode, noblock="1") GDALAlgorithmArgHS {
+  [Obsolete("Use SetAsIntegerList(int[] nList) instead.")]
+  public bool SetAsIntegerList(int nList, int[] pList) => SetAsIntegerList(pList);
+  [Obsolete("Use SetAsDoubleList(double[] nList) instead.")]
+  public bool SetAsDoubleList(int nList, double[] pList) => SetAsDoubleList(pList);
+}
+
+%typemap(cscode, noblock="1") GDALTransformerInfoShadow {
+  [Obsolete("Use TransformPoints(int bDstToSrc, int nCount, double[] x, double[] y, double[] z, int[] panSuccess) instead.", error: true)]
+  public int TransformPoints(int bDstToSrc, int nCount, double[] x, double[] y, double[] z, double[] panSuccess)
+    => throw new NotSupportedException();
+}
+
+%typemap(cscode, noblock="1") GDALMDArrayHS {
+  [Obsolete("Use CreateAttribute(string name, ulong[] dimensions, ExtendedDataType data_type, string[] options) instead.", error: true)]
+  public Attribute CreateAttribute(string name, int dimensions, uint[] sizes, ExtendedDataType data_type, string[] options)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use Resize(ulong[] newDimensions, string[] options) instead.", error: true)]
+  public CPLErr Resize(int newDimensions, uint[] newSizes, string[] options) => throw new NotSupportedException();
+
+  [Obsolete("Use Transpose(int[] axisMap) instead.")]
+  public MDArray Transpose(int axisMap, int[] mapInts) => Transpose(mapInts);
+}
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+%pragma(csharp) modulecode=%{
+  [Obsolete("Use GCPsToHomography(GCP[] nGCPs, double[] argout) instead.", error: true)]
+  public static int GCPsToHomography(int nGCPs, IntPtr pGCPs, double[] argout)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use RasterizeLayer(Dataset dataset, int[] bands, Layer layer, IntPtr pfnTransformer, IntPtr pTransformArg, double[] burn_values, string[] options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int RasterizeLayer(Dataset dataset, int bands, int[] band_list, OSGeo.OGR.Layer layer, IntPtr pfnTransformer, IntPtr pTransformArg, int burn_values, double[] burn_values_list, string[] options, GDALProgressFuncDelegate callback, string callback_data)
+    => RasterizeLayer(dataset, band_list, layer, pfnTransformer, pTransformArg, burn_values_list, options, callback, callback_data);
+
+  [Obsolete("Use RegenerateOverviews(Band srcBand, Band[] overviewBandCount, string resampling, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int RegenerateOverviews(Band srcBand, int overviewBandCount, Band[] overviewBands, string resampling, GDALProgressFuncDelegate callback, string callback_data)
+    => RegenerateOverviews(srcBand, overviewBands, resampling, callback, callback_data);
+
+  [Obsolete("Use ContourGenerate(Band srcBand, double contourInterval, double contourBase, double[] fixedLevelCount, bool useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, double[] fixedLevels, int useNoData, double noDataValue, OSGeo.OGR.Layer dstLayer, int idField, int elevField, GDALProgressFuncDelegate callback, string callback_data)
+    => ContourGenerate(srcBand, contourInterval, contourBase, fixedLevels, useNoData != 0, noDataValue, dstLayer, idField, elevField, callback, callback_data);
+
+  [Obsolete("Use CreatePansharpenedVRT(string pszXML, Band panchroBand, Band[] nInputSpectralBands) instead.")]
+  public static Dataset CreatePansharpenedVRT(string pszXML, Band panchroBand, int nInputSpectralBands, Band[] ahInputSpectralBands)
+    => CreatePansharpenedVRT(pszXML, panchroBand, ahInputSpectralBands);
+
+  [Obsolete("Use BuildVRT(string dest, Dataset[] object_list_count, GDALBuildVRTOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.", error: true)]
+  public static Dataset wrapper_GDALBuildVRT_objects(string dest, int object_list_count, IntPtr poObjects, GDALBuildVRTOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use MultiDimTranslate(string dest, Dataset[] object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data) instead.", error: true)]
+  public static Dataset wrapper_GDALMultiDimTranslateDestName(string dest, int object_list_count, IntPtr poObjects, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data)
+    => throw new NotSupportedException();
 %}

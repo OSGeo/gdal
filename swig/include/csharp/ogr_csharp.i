@@ -76,3 +76,28 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
   }
 }
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+%typemap(cscode, noblock="1") OGRFeatureShadow {
+  [Obsolete("Use SetFieldDoubleList(int id, double[] nList) instead.")]
+  public void SetFieldDoubleList(int id, int nList, double[] pList)
+    => SetFieldDoubleList(id, pList);
+  [Obsolete("Use SetFieldIntegerList(int id, int[] nList) instead.")]
+  public void SetFieldIntegerList(int id, int nList, int[] pList)
+    => SetFieldIntegerList(id, pList);
+  [Obsolete("Use SetFromWithMap(Feature other, int forgiving, int[] nList) instead.")]
+  public int SetFromWithMap(Feature other, int forgiving, int nList, int[] pList)
+    => SetFromWithMap(other, forgiving, pList);
+}
+
+%typemap(cscode, noblock="1") OGRLayerShadow {
+  [Obsolete("Use ReorderFields(int[] nList) instead.")]
+  public int ReorderFields(int nList, int[] pList)
+    => ReorderFields(pList);
+  [Obsolete("Use UpdateFeature(Feature feature, int[] nUpdatedFieldsCount, int[] nUpdatedGeomFieldsCount, bool bUpdateStyleString) instead.")]
+  public int UpdateFeature(Feature feature, int nUpdatedFieldsCount, int[] panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount, int[] panUpdatedGeomFieldsIdx, bool bUpdateStyleString)
+    => UpdateFeature(feature, panUpdatedFieldsIdx, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+}
