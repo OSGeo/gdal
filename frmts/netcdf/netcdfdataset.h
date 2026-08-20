@@ -371,7 +371,8 @@ class netCDFDataset final : public GDALPamDataset
                            driver? */
     char *pszCFProjection;
     const char *pszCFCoordinates;
-    double nCFVersion;
+    int nCFVersionMajor = 1;
+    int nCFVersionMinor = 6;
     bool bSGSupport;
     MultipleLayerBehavior eMultipleLayerBehavior;
     std::vector<netCDFDataset *> apoVectorDatasets;

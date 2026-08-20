@@ -377,10 +377,8 @@ class SG_Exception_Value_Required final : public SG_Exception
 // otherwise mentioned, ncid, refers to its use in netcdf.h
 
 /* Retrieves the version from the value Conventions global attr
- * Returns: a double precision decimal corresponding to the conventions value
- *    if not CF-x.y then return negative value, -1
  */
-double getCFVersion(int ncid);
+bool getCFVersion(int ncid, int &major, int &minor);
 
 /* Given a geometry_container varID, searches that variable for a geometry_type
  * attribute Returns: the equivalent geometry type
