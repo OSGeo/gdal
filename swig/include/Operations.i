@@ -373,11 +373,7 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 #ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverviews;
 #endif /* SWIGJAVA */
-#ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
-#else
-%apply GDALRasterBandShadow OBJPTRS_STATIC[] {GDALRasterBandShadow** overviewBands}
-#endif /* SWIGCSHARP */
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *resampling};
 #endif /* SWIGJAVA */
@@ -485,8 +481,10 @@ int wrapper_GridCreate( char* algorithmOptions,
 /*                          ContourGenerate()                           */
 /************************************************************************/
 
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
 %feature( "kwargs" ) ContourGenerate;
+#elif defined(SWIGCSHARP)
+%apply bool {int useNoData};
 #endif
 %apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow* dstLayer};
 %apply (int nList, double *pList ) { (int fixedLevelCount, double *fixedLevels ) };
@@ -687,11 +685,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 /************************************************************************/
 
 %newobject CreatePansharpenedVRT;
-#ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int nInputSpectralBands, GDALRasterBandShadow **ahInputSpectralBands)};
-#else
-%apply GDALRasterBandShadow OBJPTRS_STATIC[] {GDALRasterBandShadow** ahInputSpectralBands}
-#endif /* SWIGCSHARP */
 %apply Pointer NONNULL { GDALRasterBandShadow* panchroBand };
 
 %inline %{
@@ -774,7 +768,7 @@ public:
 
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};
-  %apply (double *inout) {(int*)};
+  %apply (int *argout) {(int*)};
 #endif
   int TransformPoints( int bDstToSrc,
                        int nCount, double *x, double *y, double *z,

@@ -404,7 +404,6 @@ public:
 
 
 #if defined(SWIGCSHARP)
-  %feature( "kwargs" ) GetExtent;
   CPLErr GetExtent(OGREnvelope* extent, OSRSpatialReferenceShadow* srs = NULL) {
     return GDALGetExtent(self, extent, srs);
   }
@@ -423,7 +422,6 @@ public:
 
 
 #if defined(SWIGCSHARP)
-  %feature( "kwargs" ) GetExtentWGS84LongLat;
   CPLErr GetExtentWGS84LongLat(OGREnvelope* extent) {
     return GDALGetExtentWGS84LongLat(self, extent);
   }
@@ -443,14 +441,10 @@ public:
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
-#ifndef SWIGCSHARP
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
 %feature("kwargs") BuildOverviews;
 #endif
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
-#else
-%apply (void *buffer_ptr) {int *pOverviews};
-#endif
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char* resampling};
   int BuildOverviews( const char *resampling,
@@ -475,11 +469,7 @@ public:
                                 callback_data,
                                 options);
   }
-#ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);
-#else
-%clear (int *pOverviews);
-#endif
 #ifdef SWIGJAVA
 %clear (const char *resampling);
 #endif
@@ -492,7 +482,6 @@ public:
     return GDALGetGCPProjection( self );
   }
 
-#ifndef SWIGCSHARP
   %newobject GetGCPSpatialRef;
   OSRSpatialReferenceShadow *GetGCPSpatialRef() {
     OGRSpatialReferenceH ref = GDALGetGCPSpatialRef(self);
@@ -500,9 +489,7 @@ public:
        ref = OSRClone( ref );
     return (OSRSpatialReferenceShadow*) ref;
   }
-#endif
 
-#ifndef SWIGCSHARP
   void GetGCPs( int *nGCPs, GDAL_GCP const **pGCPs ) {
     *nGCPs = GDALGetGCPCount( self );
     *pGCPs = GDALGetGCPs( self );
@@ -515,8 +502,6 @@ public:
   CPLErr SetGCPs2( int nGCPs, GDAL_GCP const *pGCPs, OSRSpatialReferenceShadow* hSRS ) {
     return GDALSetGCPs2( self, nGCPs, pGCPs, (OGRSpatialReferenceH)hSRS );
   }
-
-#endif
 
   CPLErr FlushCache() {
     return GDALFlushCache( self );
@@ -606,11 +591,7 @@ public:
 %feature("kwargs") AdviseRead;
 #endif
 %apply (int *optional_int) { (GDALDataType *buf_type) };
-#if defined(SWIGCSHARP)
-%apply int PINNED[] {int *pband_list};
-#else
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
-#endif
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
@@ -635,11 +616,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                  band_list, pband_list, options);
 }
 %clear (GDALDataType *buf_type);
-#if defined(SWIGCSHARP)
-%clear int *pband_list;
-#else
 %clear (int band_list, int *pband_list );
-#endif
 
 /* NEEDED */
 /* GetSubDatasets */
@@ -912,10 +889,8 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* PYTHON */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
-
   /* Note that datasources own their layers */
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
   %feature( "kwargs" ) CreateLayer;
 #endif
   OGRLayerShadow *CreateLayer(const char* name,
@@ -931,7 +906,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
   /* Note that datasources own their layers */
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
   %feature( "kwargs" ) CreateLayer;
 #endif
   OGRLayerShadow *CreateLayerFromGeomFieldDefn(const char* name,
@@ -944,7 +919,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
   %feature( "kwargs" ) CopyLayer;
 #endif
 %apply Pointer NONNULL {OGRLayerShadow *src_layer};
@@ -966,11 +941,8 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetIsLayerPrivate(self, index);
   }
 
-
-
-
-#ifdef SWIGPYTHON
 %newobject GetNextFeature;
+#ifdef SWIGPYTHON
 %feature( "kwargs" ) GetNextFeature;
   OGRFeatureShadow* GetNextFeature( bool include_layer = true,
                                     bool include_pct = false,
@@ -985,20 +957,33 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
     return feat;
   }
-#else
+#elif defined(SWIGJAVA)
     // FIXME: return layer
-%newobject GetNextFeature;
   OGRFeatureShadow* GetNextFeature()
   {
     return (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, NULL, NULL, NULL, NULL );
   }
+#else
+  %apply double* OUTPUT {double* pdfProgressPct};
+  OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer = NULL,
+                                    double* pdfProgressPct = NULL,
+                                    GDALProgressFunc callback = NULL,
+                                    void* callback_data=NULL )
+  {
+    OGRLayerH hLayer = NULL;
+    OGRFeatureShadow* feat = (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, &hLayer, pdfProgressPct,
+                                      callback, callback_data );
+    *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
+    return feat;
+  }
+  %clear double* pdfProgressPct;
 #endif
 
   bool TestCapability(const char * cap) {
     return (GDALDatasetTestCapability(self, cap) > 0);
   }
 
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
   %feature( "kwargs" ) ExecuteSQL;
 #endif
   %apply Pointer NONNULL {const char * statement};
@@ -1027,9 +1012,6 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
         GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
-
 #ifdef SWIGJAVA
   OGRLayerShadow *GetLayerByIndex( int index ) {
 #elif SWIGPYTHON
@@ -1055,29 +1037,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetGetLayerCount(self);
   }
 
-#ifdef SWIGCSHARP
-
-  %newobject GetNextFeature;
-  OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer = NULL,
-                                    double* pdfProgressPct = NULL,
-                                    GDALProgressFunc callback = NULL,
-                                    void* callback_data=NULL )
-  {
-    OGRLayerH hLayer = NULL;
-    OGRFeatureShadow* feat = (OGRFeatureShadow*)GDALDatasetGetNextFeature( self, &hLayer, pdfProgressPct,
-                                      callback, callback_data );
-    *ppoBelongingLayer = (OGRLayerShadow*)hLayer;
-    return feat;
-  }
-
-
-#endif
-
 OGRErr AbortSQL() {
     return GDALDatasetAbortSQL(self);
 }
 
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
   %feature( "kwargs" ) StartTransaction;
 #endif
   OGRErr StartTransaction(int force = FALSE)

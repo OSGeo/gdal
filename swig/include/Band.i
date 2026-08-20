@@ -421,7 +421,7 @@ public:
 #else
 #ifndef SWIGJAVA
 #if defined(SWIGCSHARP)
-%apply (int inout[ANY]) {int *panHistogram};
+%apply (int *inout) {int *panHistogram};
 #endif
 %feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double min=-0.5,
@@ -766,20 +766,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
   %newobject MaximumOfNBands;
-#ifdef SWIGCSHARP
-  %apply GDALRasterBandShadow OBJPTRS_STATIC[] {GDALRasterBandShadow **bands};
-#else
   %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
-#endif
   static GDALComputedRasterBandShadow* MaximumOfNBands(int band_count, GDALRasterBandShadow** bands)
   {
      return GDALMaximumOfNBands(band_count, bands);
   }
-#ifdef SWIGCSHARP
-  %clear GDALRasterBandShadow **bands;
-#else
   %clear (int band_count, GDALRasterBandShadow **bands);
-#endif
 
   %newobject MaxConstant;
   GDALComputedRasterBandShadow* MaxConstant(double constant)
@@ -788,20 +780,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
   %newobject MinimumOfNBands;
-#ifdef SWIGCSHARP
-  %apply GDALRasterBandShadow OBJPTRS_STATIC[] {GDALRasterBandShadow **bands};
-#else
   %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
-#endif
   static GDALComputedRasterBandShadow* MinimumOfNBands(int band_count, GDALRasterBandShadow** bands)
   {
      return GDALMinimumOfNBands(band_count, bands);
   }
-#ifdef SWIGCSHARP
-  %clear GDALRasterBandShadow **bands;
-#else
   %clear (int band_count, GDALRasterBandShadow **bands);
-#endif
 
   %newobject MinConstant;
   GDALComputedRasterBandShadow* MinConstant(double constant)
@@ -810,20 +794,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
   %newobject MeanOfNBands;
-#ifdef SWIGCSHARP
-  %apply GDALRasterBandShadow OBJPTRS_STATIC[] {GDALRasterBandShadow **bands};
-#else
   %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int band_count, GDALRasterBandShadow **bands)};
-#endif
   static GDALComputedRasterBandShadow* MeanOfNBands(int band_count, GDALRasterBandShadow** bands)
   {
      return GDALMeanOfNBands(band_count, bands);
   }
-#ifdef SWIGCSHARP
-  %clear GDALRasterBandShadow **bands;
-#else
   %clear (int band_count, GDALRasterBandShadow **bands);
-#endif
 
 } /* %extend */
 

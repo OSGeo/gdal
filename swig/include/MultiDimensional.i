@@ -222,11 +222,7 @@ public:
   }
 
 %newobject CreateAttribute;
-#if defined(SWIGCSHARP)
-%apply GUIntBig PINNED[] {GUIntBig *sizes};
-#else
 %apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
-#endif
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
                                     GUIntBig *sizes,
@@ -569,11 +565,7 @@ public:
   }
 %clear char **;
 
-#if defined(SWIGCSHARP)
-%apply GUIntBig PINNED[] {GUIntBig* newSizes};
-#else
 %apply (int nList, GUIntBig* pList) {(int newDimensions, GUIntBig* newSizes)};
-#endif
   CPLErr Resize( int newDimensions, GUIntBig* newSizes, char** options = NULL ) {
     if( static_cast<size_t>(newDimensions) != GDALMDArrayGetDimensionCount(self) )
     {
@@ -583,11 +575,7 @@ public:
     }
     return GDALMDArrayResize( self, newSizes, options ) ? CE_None : CE_Failure;
   }
-#if defined(SWIGCSHARP)
-%clear GUIntBig* newSizes;
-#else
 %clear (int newDimensions, GUIntBig* newSizes);
-#endif
 
 #if defined(SWIGPYTHON)
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
@@ -932,11 +920,7 @@ public:
 #endif
 
 %newobject CreateAttribute;
-#if defined(SWIGCSHARP)
-%apply GUIntBig PINNED[] {GUIntBig *sizes};
-#else
 %apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
-#endif
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
                                     GUIntBig *sizes,
@@ -1131,11 +1115,7 @@ public:
   }
 
 %newobject Transpose;
-#if defined(SWIGCSHARP)
-%apply int PINNED[] {int* mapInts};
-#else
 %apply (int nList, int* pList) { (int axisMap, int* mapInts) };
-#endif
   GDALMDArrayHS* Transpose(int axisMap, int* mapInts)
   {
     return GDALMDArrayTranspose(self, axisMap, mapInts);
@@ -1647,7 +1627,7 @@ public:
     return GDALExtendedDataTypeCreateStringEx(nMaxStringLength, eSubType);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 %newobject CreateCompound;
 %apply (int object_list_count, GDALEDTComponentHS **poObjects) {(int nComps, GDALEDTComponentHS **comps)};
   static GDALExtendedDataTypeHS* CreateCompound(const char* name,

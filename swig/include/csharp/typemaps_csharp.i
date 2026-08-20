@@ -180,9 +180,13 @@ OPTIONAL_POD(int, int);
  * Typemap for PINNED arrays
  */
 
-CSHARP_ARRAYS_PINNED(GUIntBig, uint)
-CSHARP_ARRAYS_PINNED(int, int)
-CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
+PRIMITIVE_ARRAYS_INOUT(GIntBig, long)
+PRIMITIVE_ARRAYS_INOUT(GUIntBig, ulong)
+PRIMITIVE_ARRAYS_INOUT(int, int)
+PRIMITIVE_ARRAYS_INOUT(double, double)
+OBJECT_LIST_INOUT(GDALDatasetShadow, Dataset)
+OBJECT_LIST_INOUT(GDALRasterBandShadow, Band)
+OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
 
 %typemap(imtype, out="IntPtr") int *intList "int[]"
 %typemap(cstype) int *intList %{int[]%}
@@ -215,95 +219,50 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 }
 
 /*
- * Typemap for double argout[ANY].
+ * Macro for generating CTYPE typemaps for *argout[ANY], argout[ANY],
+ * argin[ANY], and inout[ANY]
  */
-%typemap(imtype) (double argout[ANY]) "double[]"
-%typemap(cstype) (double argout[ANY]) "double[]"
-%typemap(csin) (double argout[ANY]) "$csinput"
+ 
+%define %ArrayInAndOutTypemaps(CTYPE, CSTYPE)
 
-%typemap(in) (double argout[ANY])
-{
-  /* %typemap(in) (double argout[ANY]) */
+%typemap(ctype)   (CTYPE *argout[ANY]) "CTYPE*"
+%typemap(imtype)  (CTYPE *argout[ANY]) "CSTYPE[]"
+%typemap(cstype)  (CTYPE *argout[ANY]) "out CSTYPE[]"
+%typemap(csin, pre="$csinput = new CSTYPE[$1_dim0];") (CTYPE *argout[ANY]) "$csinput"
+%typemap(in)      (CTYPE *argout[ANY]) {
+  /* %typemap(in) (CTYPE *argout[ANY]) */
+  $*1_ltype tmp$1_name = NULL;  
+  $1 = ($1_ltype)&tmp$1_name;
+}
+%typemap(argout)  (CTYPE *argout[ANY]) {
+  /* %typemap(argout) (CTYPE *argout[ANY]) */
+  memcpy($input, *$1, $1_dim0 * sizeof(CTYPE));
+}
+%typemap(freearg) (CTYPE *argout[ANY]) {
+  /* %typemap(freearg) (CTYPE *argout[ANY]) */
+  CPLFree(*$1);
+}
+
+%typemap(ctype)  CTYPE inout[ANY], CTYPE *inout "CTYPE*"
+%typemap(imtype) CTYPE inout[ANY], CTYPE *inout "CSTYPE[]"
+%typemap(cstype) CTYPE inout[ANY], CTYPE *inout "CSTYPE[]"
+%typemap(in)     CTYPE inout[ANY], CTYPE *inout {
+  /* %typemap(in) CTYPE argin[ANY], CTYPE argout[ANY], CTYPE inout[ANY] */
   $1 = ($1_ltype)$input;
 }
+%typemap(csin)   CTYPE *inout "$csinput"
+%typemap(csin, pre="
+    if($csinput is null) throw new ArgumentNullException(\"$csinput\");
+    if($csinput.Length < $1_dim0) throw new ArgumentException(\"Array must be at least $1_dim0 elements long.\", \"$csinput\");"
+) CTYPE inout[ANY] "$csinput"
 
-%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout[$dim0])
-{
-  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
-  $1 = (double**)&argout;
-}
-%typemap(argout) ( double *argout[ANY])
-{
-  /* %typemap(argout) (double *argout[ANY]) */
+%apply CTYPE inout [ANY] {CTYPE argin [ANY], CTYPE argout[ANY]};
+%apply CTYPE *inout {CTYPE *argin, CTYPE *argout, CTYPE *pList};
+%enddef // %ArrayInAndOutTypemaps
+ 
+%ArrayInAndOutTypemaps(int, int);
+%ArrayInAndOutTypemaps(double, double);
 
-}
-%typemap(freearg) (double *argout[ANY])
-{
-  /* %typemap(freearg) (double *argout[ANY]) */
-
-}
-
-%apply double argout[ANY] {double *inout}
-
-/*
- * Typemap for double argin[ANY].
- */
-
-%typemap(imtype) (double argin[ANY])  "double[]"
-%typemap(cstype) (double argin[ANY]) "double[]"
-%typemap(csin) (double argin[ANY])  "$csinput"
-
-%typemap(in) (double argin[ANY])
-{
-  /* %typemap(in) (double argin[ANY]) */
-  $1 = ($1_ltype)$input;
-}
-
-/*
- * Typemap for int argin[ANY].
- */
-
-%typemap(imtype) (int argin[ANY])  "int[]"
-%typemap(cstype) (int argin[ANY]) "int[]"
-%typemap(csin) (int argin[ANY])  "$csinput"
-
-%typemap(in) (int argin[ANY])
-{
-  /* %typemap(in) (int argin[ANY]) */
-  $1 = ($1_ltype)$input;
-}
-
-/*
- * Typemap for double inout[ANY].
- */
-
-%typemap(imtype) (double inout[ANY])  "double[]"
-%typemap(cstype) (double inout[ANY]) "double[]"
-%typemap(csin) (double inout[ANY])  "$csinput"
-
-%typemap(in) (double inout[ANY])
-{
-  /* %typemap(in) (double inout[ANY]) */
-  $1 = ($1_ltype)$input;
-}
-
-%apply (double inout[ANY]) {double *pList};
-
-/*
- * Typemap for int inout[ANY].
- */
-
-%typemap(imtype) (int inout[ANY])  "int[]"
-%typemap(cstype) (int inout[ANY]) "int[]"
-%typemap(csin) (int inout[ANY])  "$csinput"
-
-%typemap(in) (int inout[ANY])
-{
-  /* %typemap(in) (int inout[ANY]) */
-  $1 = ($1_ltype)$input;
-}
-
-%apply (int inout[ANY]) {int *pList};
 
 /*
  * Typemap for double *defaultval.
@@ -434,18 +393,22 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
  *****************************************************************************/
 %pragma(csharp) modulecode="public delegate int GDALProgressFuncDelegate(double Complete, IntPtr Message, IntPtr Data);"
 
-%typemap(imtype) (GDALProgressFunc callback)  "$module.GDALProgressFuncDelegate"
+%typemap(ctype)  (GDALProgressFunc callback) "GDALProgressFunc"
+%typemap(imtype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
 %typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
-%typemap(csin) (GDALProgressFunc callback)  "$csinput"
+%typemap(csin)   (GDALProgressFunc callback) "$csinput"
+%typemap(in)     (GDALProgressFunc callback) %{ $1 = $input; %}
+%typemap(out)    (GDALProgressFunc callback) %{ $result = $1; %}
 %typemap(csvarout, excode=SWIGEXCODE2) (GDALProgressFunc callback)   %{
     get {
-      Gdal.GDALProgressFuncDelegate ret = $imcall;$excode
+      $module.GDALProgressFuncDelegate ret = $imcall;$excode
       return ret;
     } %}
-%typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
+%typemap(csout, excode=SWIGEXCODE) (GDALProgressFunc callback)   %{
+    $module.GDALProgressFuncDelegate ret = $imcall;$excode
+    return ret;
+%}
 %apply (char*) {(void* callback_data)};
-
-%ignore SWIGTYPE_p_GDALProgressFunc;
 
 /******************************************************************************
  * GDALGetNextFeature typemaps                                                *
@@ -453,9 +416,12 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 
 %apply (double *defaultval) {double* pdfProgressPct};
 
-%typemap(imtype) (OGRLayerShadow **ppoBelongingLayer)  "ref IntPtr"
-%typemap(cstype) (OGRLayerShadow **ppoBelongingLayer) "ref IntPtr"
-%typemap(csin) (OGRLayerShadow **ppoBelongingLayer)  "ref $csinput"
+%typemap(imtype) (OGRLayerShadow **ppoBelongingLayer) "ref IntPtr"
+%typemap(cstype) (OGRLayerShadow **ppoBelongingLayer) "out OSGeo.OGR.Layer"
+%typemap(csin,
+  pre="    IntPtr p$csinput = IntPtr.Zero;",
+  post="      $csinput = p$csinput == IntPtr.Zero ? null : new OSGeo.OGR.Layer(p$csinput, false, ThisOwn_false());"
+) (OGRLayerShadow **ppoBelongingLayer) "ref p$csinput"
 
 /******************************************************************************
  * Band.AdviseRead and Dataset.AdviseRead typemaps                            *

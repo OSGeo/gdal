@@ -49,7 +49,7 @@
 %extend GDALDatasetShadow
 {
 	%apply (void *buffer_ptr) {void *buffer};
-	%apply (int argin[ANY]) {int *bandMap};
+	%apply (int *argin) {int *bandMap};
 	CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace) {
@@ -82,20 +82,4 @@
     }
     %clear void *buffer;
     %clear int* bandMap;
-
-    %apply (void *buffer_ptr) {const GDAL_GCP* __GetGCPs};
-    const GDAL_GCP* __GetGCPs( ) {
-      return GDALGetGCPs( self );
-    }
-    %clear const GDAL_GCP* __GetGCPs;
-
-    CPLErr __SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
-        return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
-    }
-    IMPLEMENT_ARRAY_MARSHALER(GDAL_GCP)
 }
-
-IMPLEMENT_ARRAY_MARSHALER_STATIC(GDAL_GCP)
-
-
-

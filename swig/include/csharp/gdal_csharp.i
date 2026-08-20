@@ -31,46 +31,39 @@ DEFINE_EXTERNAL_CLASS(GDALSubdatasetInfoShadow, OSGeo.GDAL.SubdatasetInfo)
 %apply (int **pList) {int **ppanHistogram};
 %apply (void *buffer_ptr) {void *pfnTransformer, void *pTransformArg};
 
-%apply (void *buffer_ptr) {GDAL_GCP const *pGCPs};
-%csmethodmodifiers __SetGCPs "private";
-%csmethodmodifiers __GetGCPs "private";
-%csmethodmodifiers GDALGCPsToGeoTransform "private";
-
-%apply (void *buffer_ptr) {GDALDatasetShadow** poObjects};
-%csmethodmodifiers wrapper_GDALWarpDestDS "private";
-%csmethodmodifiers wrapper_GDALWarpDestName "private";
+VALUE_LIST_INOUT(GDAL_GCP, GCP)
+%apply (int nList, GDAL_GCP *pList)  { (int nGCPs, GDAL_GCP const *pGCPs) };
+%apply (int* nList, GDAL_GCP **pList)  { (int *nGCPs, GDAL_GCP const **pGCPs) };
 
 %apply (GDALProgressFunc callback) {GDALProgressFunc pfnProgress};
 %apply (void *buffer_ptr) {void *pProgressData};
 
+%typemap(cscode, noblock=1) GDALRasterIOExtraArg %{
+  private $module.GDALProgressFuncDelegate pfnProgressManaged;
+  public void SetProgressDelegate(Func<double, string, IntPtr, bool> progressFunc, IntPtr progressData = default(IntPtr)) {
+    pProgressData = progressData;
+    pfnProgress = pfnProgressManaged = progressFunc == null ? default($module.GDALProgressFuncDelegate)
+      : (p, m, d) => progressFunc(p, $module.StringEncoder?.FromNullTerminated(m), d) ? 1 : 0;
+  }
+  public void SetProgressDelegate<TData>(Func<double, string, TData, bool> progressFunc, TData progressData) {
+    pfnProgress = pfnProgressManaged = progressFunc == null ? default($module.GDALProgressFuncDelegate)
+      : (p, m, _) => progressFunc(p, $module.StringEncoder?.FromNullTerminated(m), progressData) ? 1 : 0;
+  }
+%}
 %rename (RasterIOExtraArg) GDALRasterIOExtraArg;
-typedef struct
+struct GDALRasterIOExtraArg
 {
-    /*! Version of structure (to allow future extensions of the structure) */
-    int                    nVersion;
-
-    /*! Resampling algorithm */
-    GDALRIOResampleAlg     eResampleAlg;
-
-    /*! Progress callback */
-    GDALProgressFunc pfnProgress;
-    /*! Progress callback user data */
-    void *pProgressData;
-
-    /*! Indicate if dfXOff, dfYOff, dfXSize and dfYSize are set.
-        Mostly reserved from the VRT driver to communicate a more precise
-        source window. Must be such that dfXOff - nXOff < 1.0 and
-        dfYOff - nYOff < 1.0 and nXSize - dfXSize < 1.0 and nYSize - dfYSize < 1.0 */
-    int bFloatingPointWindowValidity;
-    /*! Pixel offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfXOff;
-    /*! Line offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfYOff;
-    /*! Width in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfXSize;
-    /*! Height in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfYSize;
-} GDALRasterIOExtraArg;
+  %mutable;
+    int                 nVersion;
+    GDALRIOResampleAlg  eResampleAlg;
+    GDALProgressFunc    pfnProgress;
+    void               *pProgressData;
+    int                 bFloatingPointWindowValidity;
+    double              dfXOff;
+    double              dfYOff;
+    double              dfXSize;
+    double              dfYSize;
+};
 
 DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
 DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
@@ -195,6 +188,12 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 
 %enddef
 
+%csmethodmodifiers GetGCPs "private";
+%typemap(csimports) GDALDatasetShadow %{
+  using System;
+  using System.Runtime.InteropServices;
+  using OSGeo.OGR;
+%}
 %typemap(cscode, noblock="1") GDALDatasetShadow {
 /*! Eight bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,byte)
 /*! Sixteen bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int16,short)
@@ -202,24 +201,8 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
 
-public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
-      int retval;
-      if (overviewlist.Length <= 0)
-        throw new ArgumentException("overviewlist size is small (BuildOverviews)");
-
-      IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
-      try {
-          Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
-          retval = BuildOverviews(resampling, overviewlist.Length, ptr, callback, callback_data, options);
-      } finally {
-          Marshal.FreeHGlobal(ptr);
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-
 public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return BuildOverviews( resampling, overviewlist, null, null, null);
+      return BuildOverviews( resampling, overviewlist, callback, callback_data, null);
   }
 
 public int BuildOverviews( string resampling, int[] overviewlist) {
@@ -227,41 +210,8 @@ public int BuildOverviews( string resampling, int[] overviewlist) {
   }
 
 public GCP[] GetGCPs() {
-      /*hello*/
-      IntPtr cPtr = __GetGCPs();
-      int length = GetGCPCount();
-      GCP[] ret = null;
-      if (cPtr != IntPtr.Zero && length > 0)
-      {
-          ret = new GCP[length];
-          for (int i=0; i < length; i++)
-              ret[i] = __ReadCArrayItem_GDAL_GCP(cPtr, i);
-      }
-      GC.KeepAlive(this);
-      return ret;
-  }
-
-public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
-     CPLErr ret = 0;
-     if (pGCPs != null && pGCPs.Length > 0)
-     {
-         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
-         if (cPtr == IntPtr.Zero)
-            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
-
-         try {
-             for (int i=0; i < pGCPs.Length; i++)
-                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
-
-             ret = __SetGCPs(pGCPs.Length, cPtr, pszGCPProjection);
-         }
-         finally
-         {
-            __FreeCArray_GDAL_GCP(cPtr);
-         }
-     }
-     GC.KeepAlive(this);
-     return ret;
+    GetGCPs(out GCP[] gcps);
+    return gcps;
   }
 }
 
@@ -273,27 +223,6 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 /*! Complex Float64 */ //%ds_rasterio_functions(DataType.GDT_CFloat64,int)
 
 %pragma(csharp) modulecode=%{
-  public static int GCPsToGeoTransform(GCP[] pGCPs, double[] argout, int bApproxOK) {
-    int ret = 0;
-    if (pGCPs != null && pGCPs.Length > 0)
-     {
-         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
-         if (cPtr == IntPtr.Zero)
-            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
-
-         try {
-             for (int i=0; i < pGCPs.Length; i++)
-                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
-
-             ret = GCPsToGeoTransform(pGCPs.Length, cPtr, argout, bApproxOK);
-         }
-         finally
-         {
-            __FreeCArray_GDAL_GCP(cPtr);
-         }
-     }
-     return ret;
-   }
 
   /*
    *  Keep this seemingly redundant overload to maintain
@@ -375,82 +304,6 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     }
   }
 
-  public static int Warp(Dataset dstDS, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      int retval = 0;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALWarpDestDS(dstDS, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset Warp(string dest, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALWarpDestName(dest, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return wrapper_GDALBuildVRT_names(dest, poObjects, buildVrtAppOptions, callback, callback_data);
-   }
-
-   public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (BuildVRT)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALBuildVRT_objects(dest, poObjects.Length, nativeArray, buildVrtAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset MultiDimTranslate(string dest, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestName)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALMultiDimTranslateDestName(dest, poObjects.Length, nativeArray, multiDimAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
   public static bool VSIFSeekL(IntPtr fp, long offset, System.IO.SeekOrigin origin) {
     return VSIFSeekL(fp, offset, (int)origin) == 0;
   }
@@ -486,6 +339,10 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     } finally {
       handle.Free();
     }
+  }
+  public static Dataset[] GetOpenDatasets() {
+    wrapper_GetOpenDatasets(out Dataset[] datasets);
+    return datasets;
   }
 %}
 
