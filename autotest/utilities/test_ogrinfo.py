@@ -73,7 +73,7 @@ def test_ogrinfo_3(ogrinfo_path):
 
     ret = gdaltest.runexternal(ogrinfo_path + " -al ../ogr/data/poly.shp")
     assert ret.find("Layer name: poly") != -1
-    assert "Geometry: Multi Polygon" in ret
+    assert "Geometry: Multi Polygon (MULTIPOLYGON)" in ret
     assert ret.find("Feature Count: 10") != -1
     assert ret.find("Extent: (478315") != -1
     assert ret.find('PROJCRS["OSGB') != -1
@@ -109,8 +109,8 @@ def test_ogrinfo_5(ogrinfo_path):
 def test_ogrinfo_6(ogrinfo_path):
 
     ret = gdaltest.runexternal(ogrinfo_path + " ../ogr/data/poly.shp poly -geom=no")
-    assert ret.find("Feature Count: 10") != -1
-    assert ret.find("POLYGON") == -1
+    assert "Feature Count: 10" in ret
+    assert "POLYGON ((" not in ret
 
 
 ###############################################################################
