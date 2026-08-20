@@ -74,8 +74,9 @@ Program-Specific Options
 
     .. versionadded:: 3.14
 
-    Comma-separated list of attribute fields from input layer to copy to the new layer
-    (or to exclude if :option:`--exclude` is specified)
+    Attribute field(s) from input layer to copy to the new layer
+    (or to exclude if :option:`--exclude` is specified).
+    To select multiple fields, argument :option:`--field` can be specified for each field, or a comma-separated list of field names can be provided to :option:`--field`.
 
     Field names with spaces, commas or double-quote
     should be surrounded with a starting and ending double-quote character, and
