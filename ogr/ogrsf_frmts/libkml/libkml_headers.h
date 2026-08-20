@@ -25,7 +25,9 @@
                                  */
 #endif
 
-#if defined(__clang_major__) && __clang_major__ >= 21 && __cplusplus >= 202302L
+#if (defined(__clang_major__) && __clang_major__ >= 21 &&                      \
+     __cplusplus >= 202302L) ||                                                \
+    (__GNUC__ >= 15 && __cplusplus >= 202002L)
 // Since Boost 1.90, in particular https://github.com/boostorg/smart_ptr/commit/d08d035bdf4d5d1b9d5c6b798e0b7da8fa9bb325
 // methods of Boost intrusive_ptr class are prefixed with a BOOST_SP_CXX20_CONSTEXPR macro
 // defined in a ‎include/boost/smart_ptr/detail/sp_cxx20_constexpr.hpp‎ header
