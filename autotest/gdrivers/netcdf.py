@@ -6327,6 +6327,12 @@ def test_netcdf_resolve_var_name():
         == "+proj=geos +lon_0=0 +h=35786400 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
     )
 
+    ds = gdal.Open("NETCDF:data/netcdf/resolve_var_name_vector.nc:/point_field")
+    assert ds
+    sr = ds.GetSpatialRef()
+    assert sr
+    assert sr.ExportToProj4() == "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs"
+
 
 ###############################################################################
 # test opening a L2 NASA ocean colour variable and check we get a geolocation
