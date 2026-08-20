@@ -503,6 +503,144 @@ def test_gdal_vector_layer_algebra(tmp_path, operation):
     )
 
 
+@pytest.mark.parametrize(
+    "operation",
+    ("identity", "sym-difference"),
+)
+def test_gdal_vector_layer_algebra_lines(tmp_path, operation):
+
+    line1_fname = DATA_DIR / "line1.geojson"
+    line2_fname = DATA_DIR / "line2.geojson"
+    result_fname = tmp_path / "out.geojson"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=line1_fname,
+        method=line2_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    line1 = gpd.read_file(line1_fname)
+    line2 = gpd.read_file(line2_fname)
+
+    line1.plot(ax=ax, color="blue", linewidth=3, alpha=0.6)
+    line2.plot(ax=ax, color="red", linewidth=3, alpha=0.6)
+
+    op = gpd.read_file(result_fname)
+    op.plot(ax=ax2, color="#e67e22", linewidth=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_lines_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "operation",
+    ("clip",),
+)
+def test_gdal_vector_layer_algebra_line_polygon(tmp_path, operation):
+
+    line_fname = DATA_DIR / "line3.geojson"
+    polygon_fname = DATA_DIR / "polygon.geojson"
+    result_fname = tmp_path / "out.geojson"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=line_fname,
+        method=polygon_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    line = gpd.read_file(line_fname)
+    polygon = gpd.read_file(polygon_fname)
+
+    polygon.plot(ax=ax, facecolor="blue", alpha=0.5, edgecolor="black")
+    line.plot(ax=ax, color="red", linewidth=3)
+
+    op = gpd.read_file(result_fname)
+    if op.empty:
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+    elif (op.geom_type.isin(["Polygon", "MultiPolygon"])).any():
+        op.plot(ax=ax2, facecolor="yellow", edgecolor="black", alpha=0.3)
+    else:
+        op.plot(ax=ax2, color="#e67e22", linewidth=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_line_polygon_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "operation",
+    ("erase",),
+)
+def test_gdal_vector_layer_algebra_points_polygon(tmp_path, operation):
+
+    points_fname = DATA_DIR / "points.geojson"
+    polygon_fname = DATA_DIR / "polygon.geojson"
+    result_fname = tmp_path / "out.gpkg"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=points_fname,
+        method=polygon_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    points = gpd.read_file(points_fname)
+    polygon = gpd.read_file(polygon_fname)
+
+    polygon.plot(ax=ax, facecolor="blue", alpha=0.5, edgecolor="black")
+    points.plot(ax=ax, color="red", markersize=60, zorder=3)
+
+    op = gpd.read_file(result_fname)
+    if op.empty:
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+    elif (op.geom_type.isin(["Polygon", "MultiPolygon"])).any():
+        op.plot(ax=ax2, facecolor="yellow", edgecolor="black", alpha=0.3)
+    else:
+        op.plot(ax=ax2, color="#e67e22", markersize=60, zorder=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_points_polygon_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 def test_gdal_vector_simplify(tmp_path):
 
     src_fname = DATA_DIR / "wells.geojson"
