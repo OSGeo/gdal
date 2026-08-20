@@ -38,6 +38,15 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
     std::vector<std::shared_ptr<GDALMDArray>> apoArrays;
     if (nAttributes == 1)
     {
+        // Skip variable_sized attributes
+        if (schema.attribute(0).variable_sized())
+        {
+            CPLDebug("TileDB",
+                     "Skipping unsupported variable-size "
+                     "attribute '%s'",
+                     schema.attribute(0).name().c_str());
+            return std::make_shared<TileDBArrayGroup>(apoArrays);
+        }
         auto poArray = TileDBArray::OpenFromDisk(poSharedResource, nullptr, "/",
                                                  osBaseName, std::string(),
                                                  osArrayPath, nullptr);
@@ -49,10 +58,22 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
     {
         for (uint32_t i = 0; i < nAttributes; ++i)
         {
+            const auto &attr = schema.attribute(i);
+
+            auto osFullName = osBaseName + "." + attr.name();
+
+            // Skip variable_sized attributes
+            if (attr.variable_sized())
+            {
+                CPLDebug("TileDB",
+                         "Skipping unsupported variable-size "
+                         "attribute '%s'",
+                         osFullName.c_str());
+                continue;
+            }
             auto poArray = TileDBArray::OpenFromDisk(
-                poSharedResource, nullptr, "/",
-                osBaseName + "." + schema.attribute(i).name(),
-                schema.attribute(i).name(), osArrayPath, nullptr);
+                poSharedResource, nullptr, "/", osFullName, attr.name(),
+                osArrayPath, nullptr);
             if (!poArray)
                 return nullptr;
             apoArrays.emplace_back(poArray);

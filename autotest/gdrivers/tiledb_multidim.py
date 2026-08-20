@@ -17,6 +17,7 @@ import math
 import os
 import shutil
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -197,6 +198,60 @@ def test_tiledb_multidim_basic():
     finally:
         if os.path.exists(filename):
             shutil.rmtree(filename)
+
+
+###############################################################################
+
+
+def test_tiledb_multidim_mixed_fixed_and_variable_sized_attributes(tmp_path):
+    """Variable-size attributes do not hide fixed-size raster attributes."""
+
+    tiledb = pytest.importorskip("tiledb")
+    np = pytest.importorskip("numpy")
+    filename = str(tmp_path / "mixed_attributes.tiledb")
+    domain = tiledb.Domain(
+        tiledb.Dim(name="X", domain=(0, 3), tile=4, dtype=np.uint64),
+        tiledb.Dim(name="Y", domain=(0, 3), tile=4, dtype=np.uint64),
+    )
+    schema = tiledb.ArraySchema(
+        domain=domain,
+        attrs=(
+            tiledb.Attr(name="Z", dtype=np.float64, var=True),
+            tiledb.Attr(name="m_Z_mean", dtype=np.float32, fill=-9999.0),
+        ),
+        sparse=False,
+    )
+    tiledb.DenseArray.create(filename, schema)
+    with tiledb.DenseArray(filename, "w") as array:
+        z = np.empty((4, 4), dtype=object)
+        for x in range(4):
+            for y in range(4):
+                z[x, y] = np.array([x * 10 + y], dtype=np.float64)
+        array[:] = {
+            "Z": z,
+            "m_Z_mean": np.arange(16, dtype=np.float32).reshape(4, 4),
+        }
+    skipped_name = os.path.basename(filename) + ".Z"
+    debug_messages = []
+
+    def error_handler(error_class, error_number, message):
+        if error_class == gdal.CE_Debug:
+            debug_messages.append(message)
+
+    with gdal.config_option("CPL_DEBUG", "TileDB"), gdaltest.error_handler(
+        error_handler
+    ):
+        ds = gdal.Open(filename, gdal.OF_MULTIDIM_RASTER)
+
+    root_group = ds.GetRootGroup()
+    mean_name = os.path.basename(filename) + ".m_Z_mean"
+    assert root_group.GetMDArrayNames() == [mean_name]
+    assert debug_messages == [
+        f"TileDB: Skipping unsupported variable-size attribute '{skipped_name}'"
+    ]
+    mean = root_group.OpenMDArray(mean_name)
+    assert [dim.GetSize() for dim in mean.GetDimensions()] == [4, 4]
+    assert mean.GetDataType().GetNumericDataType() == gdal.GDT_Float32
 
 
 ###############################################################################
