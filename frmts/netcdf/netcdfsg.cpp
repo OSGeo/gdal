@@ -841,24 +841,32 @@ SG_Exception::~SG_Exception()
 
 // Helpers
 // following is a short hand for a clean up and exit, since goto isn't allowed
-double getCFVersion(int ncid)
+bool getCFVersion(int ncid, int &major, int &minor)
 {
-    double ver = -1.0;
     std::string attrVal;
+    major = 0;
+    minor = 0;
 
     // Fetch the CF attribute
     if (NCDFGetAttr(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal) != CE_None ||
         attrVal.empty())
     {
-        return ver;
+        return false;
     }
 
-    if (sscanf(attrVal.c_str(), "CF-%lf", &ver) != 1)
+    if (STARTS_WITH(attrVal.c_str(), "CF-"))
     {
-        return -1.0;
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(attrVal.c_str() + strlen("CF-"), ".", 0));
+        if (aosTokens.size() == 2)
+        {
+            major = atoi(aosTokens[0]);
+            minor = atoi(aosTokens[1]);
+            return true;
+        }
     }
 
-    return ver;
+    return false;
 }
 
 geom_t getGeometryType(int ncid, int varid)
