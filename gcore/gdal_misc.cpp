@@ -4098,12 +4098,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (!bHasOptfile)
             {
                 char **papszArgvOptfileBefore = papszArgvOptfile;
-                if (GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                                &papszArgvOptfile,
-                                                nOptions) < 0)
+                const int nRetOptfile = GDALGeneralCmdLineProcessor(
+                    CSLCount(papszArgvOptfile), &papszArgvOptfile, nOptions);
+                // A <= 0 return means papszArgvOptfile has not been replaced.
+                // Propagate the request to terminate (0) or error out (-1).
+                if (nRetOptfile <= 0)
                 {
                     CSLDestroy(papszArgvOptfile);
-                    return -1;
+                    return nRetOptfile;
                 }
                 CSLDestroy(papszArgvOptfileBefore);
             }
