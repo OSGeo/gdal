@@ -4098,14 +4098,23 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (!bHasOptfile)
             {
                 char **papszArgvOptfileBefore = papszArgvOptfile;
-                if (GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                                &papszArgvOptfile,
-                                                nOptions) < 0)
+                const int nRet = GDALGeneralCmdLineProcessor(
+                    CSLCount(papszArgvOptfile), &papszArgvOptfile, nOptions);
+                if (nRet < 0)
                 {
                     CSLDestroy(papszArgvOptfile);
                     return -1;
                 }
-                CSLDestroy(papszArgvOptfileBefore);
+                else if (nRet == 0 &&
+                         papszArgvOptfileBefore == papszArgvOptfile)
+                {
+                    CSLDestroy(papszArgvOptfile);
+                    return nRet;
+                }
+                else
+                {
+                    CSLDestroy(papszArgvOptfileBefore);
+                }
             }
 
             char **papszIter = papszArgvOptfile + 1;
