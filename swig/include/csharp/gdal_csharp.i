@@ -519,4 +519,61 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   [Obsolete("Use TileIndex(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
   public static Dataset wrapper_TileIndex_names(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data)
     => TileIndex(dest, source_filenames, options, callback, callback_data);
+
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static double GDAL_GCP_GCPX_get(GCP gcp) => gcp.GCPX;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static void GDAL_GCP_GCPX_set(GCP gcp, double dfGCPX) => gcp.GCPX = dfGCPX;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static double GDAL_GCP_GCPY_get(GCP gcp) => gcp.GCPY;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static void GDAL_GCP_GCPY_set(GCP gcp, double dfGCPY) => gcp.GCPY = dfGCPY;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static double GDAL_GCP_GCPZ_get(GCP gcp) => gcp.GCPZ;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static void GDAL_GCP_GCPZ_set(GCP gcp, double dfGCPZ) => gcp.GCPZ = dfGCPZ;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static double GDAL_GCP_GCPPixel_get(GCP gcp) => gcp.GCPPixel;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static void GDAL_GCP_GCPPixel_set(GCP gcp, double dfGCPPixel) => gcp.GCPPixel = dfGCPPixel;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static double GDAL_GCP_GCPLine_get(GCP gcp) => gcp.GCPLine;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static void GDAL_GCP_GCPLine_set(GCP gcp, double dfGCPLine) => gcp.GCPLine = dfGCPLine;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static string GDAL_GCP_Info_get(GCP gcp) => gcp.Info;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static void GDAL_GCP_Info_set(GCP gcp, string pszInfo) => gcp.Info = pszInfo;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static string GDAL_GCP_Id_get(GCP gcp) => gcp.Id;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static void GDAL_GCP_Id_set(GCP gcp, string pszId) => gcp.Id = pszId;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static double GDAL_GCP_get_GCPX(GCP gcp) => gcp.GCPX;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static void GDAL_GCP_set_GCPX(GCP gcp, double dfGCPX) => gcp.GCPX = dfGCPX;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static double GDAL_GCP_get_GCPY(GCP gcp) => gcp.GCPY;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static void GDAL_GCP_set_GCPY(GCP gcp, double dfGCPY) => gcp.GCPY = dfGCPY;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static double GDAL_GCP_get_GCPZ(GCP gcp) => gcp.GCPZ;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static void GDAL_GCP_set_GCPZ(GCP gcp, double dfGCPZ) => gcp.GCPZ = dfGCPZ;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static double GDAL_GCP_get_GCPPixel(GCP gcp) => gcp.GCPPixel;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static void GDAL_GCP_set_GCPPixel(GCP gcp, double dfGCPPixel) => gcp.GCPPixel = dfGCPPixel;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static double GDAL_GCP_get_GCPLine(GCP gcp) => gcp.GCPLine;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static void GDAL_GCP_set_GCPLine(GCP gcp, double dfGCPLine) => gcp.GCPLine = dfGCPLine;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static string GDAL_GCP_get_Info(GCP gcp) => gcp.Info;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static void GDAL_GCP_set_Info(GCP gcp, string pszInfo) => gcp.Info = pszInfo;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static string GDAL_GCP_get_Id(GCP gcp) => gcp.Id;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static void GDAL_GCP_set_Id(GCP gcp, string pszId) => gcp.Id = pszId;
 %}

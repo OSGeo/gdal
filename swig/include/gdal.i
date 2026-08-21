@@ -492,6 +492,8 @@ struct GDAL_GCP {
 }; /* GDAL_GCP */
 
 %apply Pointer NONNULL {GDAL_GCP *gcp};
+
+#if !defined(SWIGCSHARP)
 %inline %{
 
 double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
@@ -541,60 +543,60 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
   gcp->pszId = CPLStrdup(pszId);
 }
 %} //%inline
-
-#if defined(SWIGCSHARP)
-%inline %{
-/* Duplicate, but transposed names for C# because
-*  the C# module outputs backwards names
-*/
-double GDAL_GCP_get_GCPX( GDAL_GCP *gcp ) {
+#else
+/*
+ * SWIG does not need these functions to be inlined to use
+ * them from C# properties.
+ */
+%{
+double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPX;
 }
-void GDAL_GCP_set_GCPX( GDAL_GCP *gcp, double dfGCPX ) {
+void GDAL_GCP_GCPX_set( GDAL_GCP *gcp, double dfGCPX ) {
   gcp->dfGCPX = dfGCPX;
 }
-double GDAL_GCP_get_GCPY( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPY_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPY;
 }
-void GDAL_GCP_set_GCPY( GDAL_GCP *gcp, double dfGCPY ) {
+void GDAL_GCP_GCPY_set( GDAL_GCP *gcp, double dfGCPY ) {
   gcp->dfGCPY = dfGCPY;
 }
-double GDAL_GCP_get_GCPZ( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPZ_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPZ;
 }
-void GDAL_GCP_set_GCPZ( GDAL_GCP *gcp, double dfGCPZ ) {
+void GDAL_GCP_GCPZ_set( GDAL_GCP *gcp, double dfGCPZ ) {
   gcp->dfGCPZ = dfGCPZ;
 }
-double GDAL_GCP_get_GCPPixel( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPPixel_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPPixel;
 }
-void GDAL_GCP_set_GCPPixel( GDAL_GCP *gcp, double dfGCPPixel ) {
+void GDAL_GCP_GCPPixel_set( GDAL_GCP *gcp, double dfGCPPixel ) {
   gcp->dfGCPPixel = dfGCPPixel;
 }
-double GDAL_GCP_get_GCPLine( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPLine_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPLine;
 }
-void GDAL_GCP_set_GCPLine( GDAL_GCP *gcp, double dfGCPLine ) {
+void GDAL_GCP_GCPLine_set( GDAL_GCP *gcp, double dfGCPLine ) {
   gcp->dfGCPLine = dfGCPLine;
 }
-const char * GDAL_GCP_get_Info( GDAL_GCP *gcp ) {
+const char * GDAL_GCP_Info_get( GDAL_GCP *gcp ) {
   return gcp->pszInfo;
 }
-void GDAL_GCP_set_Info( GDAL_GCP *gcp, const char * pszInfo ) {
+void GDAL_GCP_Info_set( GDAL_GCP *gcp, const char * pszInfo ) {
   if ( gcp->pszInfo )
     CPLFree( gcp->pszInfo );
   gcp->pszInfo = CPLStrdup(pszInfo);
 }
-const char * GDAL_GCP_get_Id( GDAL_GCP *gcp ) {
+const char * GDAL_GCP_Id_get( GDAL_GCP *gcp ) {
   return gcp->pszId;
 }
-void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
+void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
   if ( gcp->pszId )
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-%} //%inline
-#endif //if defined(SWIGCSHARP)
+%}
+#endif
 
 %clear GDAL_GCP *gcp;
 
