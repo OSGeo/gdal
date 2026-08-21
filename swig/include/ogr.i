@@ -2178,6 +2178,15 @@ public:
   const int *GetFieldAsIntegerList(int id, int *count) {
       return OGR_F_GetFieldAsIntegerList(self, id, count);
   }
+  const int *GetFieldAsIntegerList(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsIntegerList(self, id, count);
+  }
   %clear (const int *);
   %clear (int *count);
 #else
@@ -2198,6 +2207,23 @@ public:
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
+#elif defined(SWIGCSHARP)
+  %apply (GIntBig *longList) {const GIntBig *};
+  %apply (int *hasval) {int *count};
+  const GIntBig *GetFieldAsInteger64List(int id, int *count) {
+      return OGR_F_GetFieldAsInteger64List(self, id, count);
+  }
+  const GIntBig *GetFieldAsInteger64List(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsInteger64List(self, id, count);
+  }
+  %clear (const GIntBig *);
+  %clear (int *count); 
 #endif
 
 #if defined(SWIGJAVA)
@@ -2210,6 +2236,15 @@ public:
   %apply (int *hasval) {int *count};
   const double *GetFieldAsDoubleList(int id, int *count) {
       return OGR_F_GetFieldAsDoubleList(self, id, count);
+  }
+  const double *GetFieldAsDoubleList(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsDoubleList(self, id, count);
   }
   %clear (const double *);
   %clear (int *count);
@@ -2237,6 +2272,16 @@ public:
   %apply (char **options) {char **};
   char **GetFieldAsStringList(int id) {
       return OGR_F_GetFieldAsStringList(self, id);
+  }
+
+  char **GetFieldAsStringList(const char* field_name) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsStringList(self, id);
   }
   %clear (char **);
 #else
@@ -2478,7 +2523,7 @@ public:
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
@@ -2493,6 +2538,45 @@ public:
   void SetFieldStringList(int id, char **pList) {
       OGR_F_SetFieldStringList(self, id, pList);
   }
+
+#if defined(SWIGCSHARP)
+  void SetFieldInteger64(const char* field_name, GIntBig value) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+          OGR_F_SetFieldInteger64(self, id, value);
+  }
+  void SetFieldStringList(const char* field_name, char **pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldStringList(self, id, pList);
+  }
+  void SetFieldIntegerList(const char* field_name, int nList, int *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldIntegerList(self, id, nList, pList);
+  }
+  void SetFieldInteger64List(const char* field_name, int nList, GIntBig *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldInteger64List(self, id, nList, pList);
+  }
+  void SetFieldDoubleList(const char* field_name, int nList, double *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldDoubleList(self, id, nList, pList);
+  }
+#endif
+
 %clear char**pList;
 
 #if defined(SWIGPYTHON)

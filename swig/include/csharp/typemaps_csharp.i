@@ -148,35 +148,27 @@ OBJECT_LIST_INOUT(GDALDatasetShadow, Dataset)
 OBJECT_LIST_INOUT(GDALRasterBandShadow, Band)
 OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
 
-%typemap(imtype, out="IntPtr") int *intList "int[]"
-%typemap(cstype) int *intList %{int[]%}
-%typemap(in) int *intList %{ $1 = ($1_ltype)$input; %}
-%typemap(out) int *intList %{ $result = $1; %}
-%typemap(csout, excode=SWIGEXCODE) int *intList {
-        /* %typemap(csout) int *intList */
-        IntPtr cPtr = $imcall;
-        int[] ret = new int[count];
-        if (count > 0) {
-	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
-        }
-        $excode
-        return ret;
-}
+%define %NUMBER_VALUE_LIST(CTYPE, VARIABLE_NAME, CSTYPE)
 
-%typemap(imtype, out="IntPtr") double *doubleList "double[]"
-%typemap(cstype) double *doubleList %{double[]%}
-%typemap(in) double *doubleList %{ $1 = ($1_ltype)$input; %}
-%typemap(out) double *doubleList %{ $result = $1; %}
-%typemap(csout, excode=SWIGEXCODE) double *doubleList {
-        /* %typemap(csout) int *intList */
+%typemap(imtype, out="IntPtr")     CTYPE *VARIABLE_NAME "CSTYPE[]"
+%typemap(cstype)                   CTYPE *VARIABLE_NAME %{CSTYPE[]%}
+%typemap(in)                       CTYPE *VARIABLE_NAME %{ $1 = ($1_ltype)$input; %}
+%typemap(out)                      CTYPE *VARIABLE_NAME %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) CTYPE *VARIABLE_NAME {
+        /* %typemap(csout) CTYPE *VARIABLE_NAME */
         IntPtr cPtr = $imcall;
-        double[] ret = new double[count];
+        CSTYPE[] ret = new CSTYPE[count];
         if (count > 0) {
 	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
         }
         $excode
         return ret;
 }
+%enddef
+
+%NUMBER_VALUE_LIST(int, intList, int);          // (int     *intList)
+%NUMBER_VALUE_LIST(GIntBig, longList, long);    // (GIntBig *longList)
+%NUMBER_VALUE_LIST(double, doubleList, double); // (double  *doubleList)
 
 /*
  * Macro for generating CTYPE typemaps for *argout[ANY], argout[ANY],
