@@ -348,3 +348,35 @@ def test_gdalalg_vector_select_pipeline_layer_interleaved(tmp_vsimem):
         f = lyr.GetNextFeature()
         assert f["osm_id"] == "1"
         assert f["highway"] == "motorway"
+
+
+def test_gdalalg_vector_select_multiple_geometries():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_a"))
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_b"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["geom_a"] = ogr.CreateGeometryFromWkt("POINT (0 1)")
+    f["geom_b"] = ogr.CreateGeometryFromWkt("POINT (2 3)")
+    src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.select(
+        input=src_ds, output="", output_format="MEM", fields="geom_b"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "geom_b"
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 3)"
+
+    with gdal.alg.vector.select(
+        input=src_ds, output="", output_format="MEM", fields="geom_a", exclude=True
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "geom_b"
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 3)"
