@@ -60,7 +60,7 @@ The driver supports opening by:
 
 
 When the driver opens a collection, for raster, it will look if tiles or maps
-API are advertized for it. It will use tiles API by default, and fallback to maps
+API are advertised for it. It will use tiles API by default, and fallback to maps
 API when not available. It will also look at the image formats, and will prefer
 PNG When available.
 

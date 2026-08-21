@@ -255,7 +255,7 @@ spatial reference system using an OGC WKT string. The attribute name ``crs_wkt``
 not specified until version 1.7 of the CF conventions; before that time, GDAL used
 the attribute name ``spatial_ref`` for the same purpose.
 
-When reading a variable from a netCDF file, GDAL first checks the ``grid_mapping`` attribute to find the name of the grid mapping variable. If this variable has a ``spatial_ref`` or ``crs_wkt`` attribute (checked in that order), it will be used to assign a spatial reference system. If not, the spatial reference system will be assigned using using projection parameter attributes (``semi_major_axis``, etc.) If these parameters are not present, GDAL will check the grid mapping variable for a (non-standard) ``srid`` attribute and attempt to interpret it if present.
+When reading a variable from a netCDF file, GDAL first checks the ``grid_mapping`` attribute to find the name of the grid mapping variable. If this variable has a ``spatial_ref`` or ``crs_wkt`` attribute (checked in that order), it will be used to assign a spatial reference system. If not, the spatial reference system will be assigned using projection parameter attributes (``semi_major_axis``, etc.) If these parameters are not present, GDAL will check the grid mapping variable for a (non-standard) ``srid`` attribute and attempt to interpret it if present.
 
 If no ``grid_mapping`` attribute is present, GDAL will check the data variable for a (non-standard) ``crs`` attribute and read a WKT, EPSG, or PROJ.4 string from it.
 
@@ -557,7 +557,7 @@ The following creation options are available:
 Creation of multidimensional files with CreateCopy() 2D raster API
 ------------------------------------------------------------------
 
-Starting with GDAL 3.1, the preferred way of creating > 2D files is to use the
+Starting with GDAL 3.1, the preferred way of creating > 2D files is to use
 the :ref:`multidim_raster_data_model` API. However it is possible to create
 such files with the 2D raster API using the CreateCopy() method (note that at
 time of writing, this is not supported using the Create() method).
@@ -630,7 +630,7 @@ Configuration Options
       :default: NO
 
       Whether X/Y dimensions
-      should be always considered as geospatial axis, even if the lack
+      should be always considered as geospatial axis, even if they lack
       conventional attributes confirming it.
 
 -  .. config:: GDAL_NETCDF_ASSUME_LONGLAT
@@ -757,7 +757,7 @@ The :cpp:func:`GDALGroup::OpenMDArray` method supports the following options:
 
 For RAW_DATA_CHUNK_CACHE_SIZE, CHUNK_SLOTS and PREEMPTION, consult
 `nc_set_var_chunk_cache <https://docs.unidata.ucar.edu/netcdf-c/current/group__variables.html#ga2788cbfc6880ec70c304292af2bc7546>`__ and
-`documentation about netCDF chunk cacke <https://docs.unidata.ucar.edu/nug/current/netcdf_perf_chunking.html>`__
+`documentation about netCDF chunk cache <https://docs.unidata.ucar.edu/nug/current/netcdf_perf_chunking.html>`__
 
 The :cpp:func:`GDALGroup::CreateMDArray` method supports the following options:
 

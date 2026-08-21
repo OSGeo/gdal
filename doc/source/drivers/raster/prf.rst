@@ -13,7 +13,7 @@ large images.
 
 This format was developed to store images larger than 4 GB. As a basis
 for storing data used TIFF or JPEG2000 format. Raster is split into
-fragments (tiles) such that each fragment does not exceeded a predefined
+fragments (tiles) such that each fragment does not exceed a predefined
 size (e.g., less than 1 GB). An overview file also added to process
 raster data on a small scales.
 
@@ -28,7 +28,7 @@ Image format has the following structure:
 -  files \*.tif/*.jp2/*.demtif inside folder 'image_name', containing
    raster fragments and the overview image
 
-The driver support the data type among Byte, UInt16, UInt32, Float32 or
+The driver supports the data type among Byte, UInt16, UInt32, Float32 or
 Float64.
 
 Driver capabilities

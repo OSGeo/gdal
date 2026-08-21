@@ -1727,7 +1727,7 @@ A :cpp:type:`GDALDerivedPixelFuncWithArgs` is defined with a signature similar t
    :param nLineSpace: The byte offset from the start of one scanline in
     pData to the start of the next.
 
-   :param papszArgs: An optional string list of named function arguments (e.g. ``y=4``)
+   :param papszArgs: An optional string list of named function arguments (e.g., ``y=4``)
 
 
 It is also possible to register a :cpp:type:`GDALDerivedPixelFunc` (which omits the final :cpp:type:`CSLConstList` argument) using :cpp:func:`GDALAddDerivedBandPixelFunc`.
@@ -2045,7 +2045,7 @@ Currently only CPython 3 is supported. The GDAL shared object
 is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
-interpreter itself, or if another program, e.g. QGIS, has already loaded the
+interpreter itself, or if another program, e.g., QGIS, has already loaded the
 CPython library). Otherwise it will look if the :config:`PYTHONSO` configuration option is
 defined. This option can be set to point to the name of the Python library to
 use, either as a shortname like "libpython3.10.so" if it is accessible through
@@ -2298,7 +2298,7 @@ projection and geotransform from the panchromatic band will be reused for the VR
 dataset.
 
 It is possible to create more explicit and declarative pansharpened VRT, allowing
-for example to only output part of the input spectral bands (e.g. only RGB when
+for example to only output part of the input spectral bands (e.g., only RGB when
 the input multispectral dataset is RGBNir). It is also possible to add "classic"
 VRTRasterBands, in addition to the pansharpened bands.
 
@@ -2309,7 +2309,7 @@ the PansharpeningOptions element may have the following children elements :
 - **AlgorithmOptions**: to specify the options of the pansharpening algorithm. With WeightedBrovey algorithm, the only supported option is a **Weights** child element whose content must be a comma separated list of real values assigning the weight of each of the declared input spectral bands. There must be as many values as declared input spectral bands.
 - **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average, Near, CubicSpline, Bilinear, Lanczos.
 - **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the :config:`GDAL_NUM_THREADS` configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
-- **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
+- **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g., 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
 - **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents. None will not proceed to any adjustment at all, but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
 
@@ -2528,7 +2528,7 @@ The effect of the ``a_gt`` option (added in GDAL 3.8) is to override/assign the 
 the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 
 The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
-consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
+consists of string key value pairs with multiple pairs separated by commas, e.g., ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
 The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accommodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
 

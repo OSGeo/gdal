@@ -9,7 +9,7 @@ WMTS -- OGC Web Map Tile Service
 .. build_dependencies:: libcurl
 
 Access to WMTS layers is possible with the GDAL WMTS
-client driver (needs Curl support). It support both RESTful and KVP
+client driver (needs Curl support). It supports both RESTful and KVP
 protocols.
 
 Driver capabilities
@@ -89,7 +89,7 @@ The following open options are available:
 -  .. oo:: URL
 
       URL (or filename for local files) to GetCapabilities response document.
-      Required if not specified in the connection string (e.g if using "WMTS:" only)
+      Required if not specified in the connection string (e.g., if using "WMTS:" only)
 
 -  .. oo:: LAYER
 
@@ -212,7 +212,7 @@ It is important that there be no spaces or other content before the
                                                                            Byte)
 <ExtendBeyondDateLine>false</ExtendBeyondDateLine>                         Whether to make the extent go over dateline and warp tile requests. Only appropriate when the 2 following
                                                                            conditions are met (optional, defaults to false): for a geodetic SRS or EPSG:3857, with tile matrix sets such
-                                                                           as the whole [-180,180] range of longitude is entirely covered by an integral number of tiles (e.g.
+                                                                           as the whole [-180,180] range of longitude is entirely covered by an integral number of tiles (e.g.,
                                                                            GoogleMapsCompatible). AND when the layer BoundingBox in the SRS of the tile matrix set covers the whole
                                                                            [-180,180] range of longitude, and that there is another BoundingBox in another SRS that is centered around
                                                                            longitude 180. If such alternate BoundingBox is not present in the GetCapabilities document, DataWindow must be

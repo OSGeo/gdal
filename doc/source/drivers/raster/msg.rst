@@ -11,7 +11,7 @@ MSG -- Meteosat Second Generation
 This driver implements reading support for Meteosat Second Generation
 files. These are files with names like
 ``H-000-MSG1\_\_-MSG1\_\_\_\_\_\_\_\_-HRV\_\_\_\_\_\_-000007\_\_\_-200405311115-C\_``, commonly
-distributed into a folder structure with dates (e.g. ``2004\05\31`` for the
+distributed into a folder structure with dates (e.g., ``2004\05\31`` for the
 file mentioned).
 
 The MSG files are wavelet-compressed. A decompression library licensed
@@ -61,7 +61,7 @@ files:
    -  source_folder: a path to a folder structure that contains the
       files
    -  timestamp: 12 digits representing a date/time that identifies the
-      114 files of the 12 images of that time, e.g. 200501181200
+      114 files of the 12 images of that time, e.g., 200501181200
    -  channel: a number between 1 and 12, representing each of the 12
       available channels. When only specifying one channel, the brackets
       are optional.
@@ -86,7 +86,7 @@ files:
       cycles to be included in the same file (time series). These are
       appended as additional bands.
    -  step: a number that indicates what is the stepsize when multiple
-      cycles are chosen. E.g. every 15 minutes: step = 1, every 30
+      cycles are chosen. E.g., every 15 minutes: step = 1, every 30
       minutes: step = 2 etc. Note that the cycles are exactly 15 minutes
       apart, so you can not get images from times in-between (the step
       is an integer).

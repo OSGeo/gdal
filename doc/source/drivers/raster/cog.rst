@@ -498,7 +498,7 @@ Reprojection related creation options
      Starting with GDAL 3.2, the value of :co:`TILING_SCHEME` can also be the filename
      of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
      a URL to such file, the radical of a definition file in the GDAL data directory
-     (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
+     (e.g., ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
      The list of available tiling schemes can be obtained by looking at values of
      the TILING_SCHEME option reported by ``gdalinfo --format COG``.
 

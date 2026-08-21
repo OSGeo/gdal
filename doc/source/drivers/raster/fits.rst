@@ -351,7 +351,7 @@ Linux
 ^^^^^
 From source
 """""""""""
-Install CFITSIO headers from your distribution (eg, cfitsio-devel on Fedora; libcfitsio-dev on Debian-Ubuntu), then compile GDAL as usual. CFITSIO will be automatically detected and linked.
+Install CFITSIO headers from your distribution (e.g., cfitsio-devel on Fedora; libcfitsio-dev on Debian-Ubuntu), then compile GDAL as usual. CFITSIO will be automatically detected and linked.
 
 From distributions
 """"""""""""""""""

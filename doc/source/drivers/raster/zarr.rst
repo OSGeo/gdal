@@ -15,7 +15,7 @@ Zarr is a format for the storage of chunked, compressed, N-dimensional arrays.
 This format is supported for read and write access, and using the traditional
 2D raster API or the multidimensional API
 
-The driver supports the Zarr V2 an V3 specifications. It also supports Kerchunk reference
+The driver supports the Zarr V2 and V3 specifications. It also supports Kerchunk reference
 files since GDAL 3.11. See also :ref:`raster.icechunk`.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
@@ -53,7 +53,7 @@ a directory that contains a :file:`zarr.json` file (root of the dataset).
 For datasets on file systems where file listing is not reliable, as often with
 /vsicurl/, it is also possible to prefix the directory name with ``ZARR:``,
 and it is necessary to surround the /vsicurl/-prefixed URL with double quotes.
-e.g `ZARR:"/vsicurl/https://example.org/foo.zarr"`. Note that when passing such
+e.g., `ZARR:"/vsicurl/https://example.org/foo.zarr"`. Note that when passing such
 string in a command line shell, extra quoting might be necessary to preserve the
 double-quoting.
 
@@ -203,14 +203,14 @@ and decompressors with :cpp:func:`CPLRegisterCompressor` and :cpp:func:`CPLRegis
 XArray _ARRAY_DIMENSIONS
 ------------------------
 
-The driver support the ``_ARRAY_DIMENSIONS`` special attribute used by
+The driver supports the ``_ARRAY_DIMENSIONS`` special attribute used by
 `XArray <http://xarray.pydata.org/en/stable/generated/xarray.open_zarr.html>`__
 to store the dimension names of an array.
 
 NCZarr extensions
 -----------------
 
-The driver support the
+The driver supports the
 `NCZarr v2 <https://www.unidata.ucar.edu/software/netcdf/documentation/NUG/nczarr_head.html>`__
 extensions of storing the dimension names of an array (read-only)
 
@@ -617,7 +617,7 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
       Default to decimal point for ZarrV2 and slash for ZarrV3.
 
 -  .. co:: BLOSC_CNAME
-      :choices: bloclz, lz4, lz4hc, snappy, zlib, zstd
+      :choices: blosclz, lz4, lz4hc, snappy, zlib, zstd
       :default: lz4
 
       Blosc compressor name. Only used when :co:`COMPRESS=BLOSC`.

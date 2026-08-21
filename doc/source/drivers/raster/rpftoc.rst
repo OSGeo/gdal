@@ -120,7 +120,7 @@ Program-Specific Options
 
 .. option:: --scale <SCALE>
 
-   (Reciprocal) scale (e.g. 1000000). If not specified, it will be guessed from
+   (Reciprocal) scale (e.g., 1000000). If not specified, it will be guessed from
    the content of CADRG frames (except for those where this cannot be inferred
    automatically)
 

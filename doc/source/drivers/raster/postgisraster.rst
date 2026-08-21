@@ -42,7 +42,7 @@ unnecessary fields (like password, in some cases).
 -  **schema** - name of PostgreSQL schema where requested raster table
    is stored.
 -  **table** - name of PostGIS Raster table. The table was created by
-   the raster loader (eg. raster2pgsql utility).
+   the raster loader (e.g., raster2pgsql utility).
 -  **column** - name of raster column in raster table
 -  **where** - option is used to filter the results of the raster table.
    Any SQL-WHERE expression is valid.
@@ -67,7 +67,7 @@ unnecessary fields (like password, in some cases).
       the server.
    -  **client_side**: The outDB raster filenames will be returned to
       the GDAL PostGISRaster client, which will open it on the client
-      side. This implies that the filename stored on te server can be
+      side. This implies that the filename stored on the server can be
       accessed by the client.
    -  **client_side_if_possible**: The outDB raster filenames will be
       returned to the GDAL PostGISRaster client, which will check if it

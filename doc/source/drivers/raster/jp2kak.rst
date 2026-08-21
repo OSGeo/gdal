@@ -279,7 +279,7 @@ to version 7.9.
 kdu_get_num_processors always returns 0 for some platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On non-windows / non-mac installs (e.g. Linux), Kakadu SDK might not include
+On non-windows / non-mac installs (e.g., Linux), Kakadu SDK might not include
 unistd.h in kdu_arch.cpp. This means that \_SC_NPROCESSORS_ONLN and
 \_SC_NPROCESSORS_CONF are not defined and kdu_get_num_processors will
 always return 0. Therefore the jp2kak driver might not default to
@@ -315,7 +315,7 @@ See Also
 
 -  Implemented as :source_file:`frmts/jp2kak/jp2kakdataset.cpp`.
 -  If you're using a Kakadu SDK release before v7.5, configure & compile
-   GDAL with eg.
+   GDAL with e.g.,
    `CXXFLAGS="-DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2"`
    for Kakadu SDK version 7.3.2.
 -  Alternate :ref:`raster.jp2openjpeg` driver.
