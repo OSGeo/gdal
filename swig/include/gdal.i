@@ -1351,7 +1351,7 @@ struct GDALTranslateOptions {
 
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Translate) wrapper_GDALTranslate;
 #endif
 %newobject wrapper_GDALTranslate;
@@ -1526,7 +1526,7 @@ struct GDALVectorTranslateOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestDS;
 #endif
 
@@ -1568,7 +1568,7 @@ int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestName;
 #endif
 %newobject wrapper_GDALVectorTranslateDestName;
@@ -1632,7 +1632,7 @@ struct GDALDEMProcessingOptions {
 
 #ifdef SWIGPYTHON
 %rename (DEMProcessingInternal) wrapper_GDALDEMProcessing;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (DEMProcessing) wrapper_GDALDEMProcessing;
 #endif
 %newobject wrapper_GDALDEMProcessing;
@@ -1699,7 +1699,7 @@ struct GDALNearblackOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Nearblack) wrapper_GDALNearblackDestDS;
 #endif
 %inline %{
@@ -1740,7 +1740,7 @@ int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Nearblack) wrapper_GDALNearblackDestName;
 #endif
 %newobject wrapper_GDALNearblackDestName;
@@ -1804,7 +1804,7 @@ struct GDALGridOptions {
 
 #ifdef SWIGPYTHON
 %rename (GridInternal) wrapper_GDALGrid;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Grid) wrapper_GDALGrid;
 #endif
 %newobject wrapper_GDALGrid;
@@ -1869,7 +1869,7 @@ struct GDALContourOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Contour) wrapper_GDALContourDestDS;
 #endif
 %inline %{
@@ -1917,7 +1917,7 @@ int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Contour) wrapper_GDALContourDestName;
 #endif
 %newobject wrapper_GDALContourDestName;
@@ -1995,7 +1995,7 @@ struct GDALRasterizeOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Rasterize) wrapper_GDALRasterizeDestDS;
 #endif
 %inline %{
@@ -2036,7 +2036,7 @@ int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Rasterize) wrapper_GDALRasterizeDestName;
 #endif
 %newobject wrapper_GDALRasterizeDestName;
@@ -2100,7 +2100,7 @@ struct GDALFootprintOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Footprint) wrapper_GDALFootprintDestDS;
 #endif
 %inline %{
@@ -2141,7 +2141,7 @@ int wrapper_GDALFootprintDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Footprint) wrapper_GDALFootprintDestName;
 #endif
 %newobject wrapper_GDALFootprintDestName;
@@ -2318,7 +2318,7 @@ struct GDALTileIndexOptions {
 
 #ifdef SWIGPYTHON
 %rename (TileIndexInternalNames) wrapper_TileIndex_names;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (TileIndex) wrapper_TileIndex_names;
 #endif
 %newobject wrapper_TileIndex_names;

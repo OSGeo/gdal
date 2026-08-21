@@ -463,4 +463,60 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   [Obsolete("Use MultiDimTranslate(string dest, Dataset[] object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data) instead.", error: true)]
   public static Dataset wrapper_GDALMultiDimTranslateDestName(string dest, int object_list_count, IntPtr poObjects, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data)
     => throw new NotSupportedException();
+
+  [Obsolete("Use Contour(Dataset dstDS, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALContourDestDS(Dataset dstDS, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Contour(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Contour(string dest, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALContourDestName(string dest, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Contour(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use DEMProcessing(string dest, Dataset dataset, string pszProcessing, string pszColorFilename, GDALDEMProcessingOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALDEMProcessing(string dest, Dataset dataset, string pszProcessing, string pszColorFilename, GDALDEMProcessingOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => DEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, callback, callback_data);
+
+  [Obsolete("Use Footprint(Dataset dstDS, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALFootprintDestDS(Dataset dstDS, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Footprint(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Footprint(string dest, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALFootprintDestName(string dest, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Footprint(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Grid(string dest, Dataset dataset, GDALGridOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALGrid(string dest, Dataset dataset, GDALGridOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Grid(dest, dataset, options, callback, callback_data);
+
+  [Obsolete("Use Nearblack(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Nearblack(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Nearblack(string dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALNearblackDestName(string dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Nearblack(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Rasterize(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Rasterize(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Rasterize(string dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALRasterizeDestName(string dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Rasterize(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Translate(string dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALTranslate(string dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFuncDelegate callback, string callback_data)
+    => Translate(dest, dataset, translateOptions, callback, callback_data);
+
+  [Obsolete("Use VectorTranslate(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => VectorTranslate(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use VectorTranslate(string dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALVectorTranslateDestName(string dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => VectorTranslate(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use TileIndex(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_TileIndex_names(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => TileIndex(dest, source_filenames, options, callback, callback_data);
 %}
