@@ -92,7 +92,6 @@ field
 field-name
 field-strategy
 field-type
-fields
 filename
 filename-compatible
 filename-filter

@@ -44,6 +44,7 @@ GDALVectorExplodeAlgorithm::GDALVectorExplodeAlgorithm(bool standaloneStep)
     {
         auto &arg =
             AddArg("field", 0, _("Attribute fields(s) to explode"), &m_fields)
+                .SetDuplicateValuesAllowed(false)
                 .SetMetaVar("FIELD");
 
         SetAutoCompleteFunctionForFieldName(
@@ -57,6 +58,7 @@ GDALVectorExplodeAlgorithm::GDALVectorExplodeAlgorithm(bool standaloneStep)
     {
         auto &arg = AddArg("geometry-field", 0,
                            _("Geometry field(s) to explode"), &m_geomFields)
+                        .SetDuplicateValuesAllowed(false)
                         .SetMetaVar("GEOMETRY-FIELD");
         SetAutoCompleteFunctionForFieldName(arg, nullptr, false, true,
                                             m_inputDataset, {"ALL"});

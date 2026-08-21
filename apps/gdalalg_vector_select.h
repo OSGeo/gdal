@@ -36,7 +36,9 @@ class GDALVectorSelectAlgorithm /* non final */
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
+    std::vector<std::string> m_fieldsDeprecated{};
     std::vector<std::string> m_fields{};
+    std::vector<std::string> m_geomFields{};
     bool m_defaultGeom = false;
     bool m_ignoreMissingFields = false;
     bool m_exclude = false;
