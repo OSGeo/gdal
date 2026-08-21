@@ -179,9 +179,9 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 
 %apply Pointer NONNULL {GDALDatasetShadow *dataset, OGRLayerShadow *layer};
 
-#ifdef SWIGJAVA
 %apply (int nList, int *pList ) { (int bands, int *band_list ) };
 %apply (int nList, double *pList ) { (int burn_values, double *burn_values_list ) };
+#ifdef SWIGJAVA
 %inline %{
 int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,
@@ -222,9 +222,9 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
 }
 %}
 #else
+/* ignore overload which splits multi-argument typemap*/
+%ignore RasterizeLayer(GDALDatasetShadow *,int,int *,OGRLayerShadow *,void *,void *,int);
 %feature( "kwargs" ) RasterizeLayer;
-%apply (int nList, int *pList ) { (int bands, int *band_list ) };
-%apply (int nList, double *pList ) { (int burn_values, double *burn_values_list ) };
 %inline %{
 int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,

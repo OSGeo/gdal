@@ -1270,6 +1270,8 @@ public:
     return GDALMDArrayGetOverview(self, idx);
   }
 
+/* ignore overload which splits multi-argument typemap*/
+%ignore BuildOverviews(char const *,int);
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
   CPLErr BuildOverviews( const char *resampling = "NEAREST",
                          int overviewlist = 0, int *pOverviews = 0,

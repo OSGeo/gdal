@@ -441,6 +441,9 @@ public:
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
+
+/* ignore overload which splits multi-argument typemap*/
+%ignore BuildOverviews(const char *,int);
 #ifdef SWIGPYTHON
 %feature("kwargs") BuildOverviews;
 #endif
@@ -587,6 +590,8 @@ public:
 %clear (GIntBig buf_len, char *buf_string);
 #endif
 
+/* ignore overload which splits multi-argument typemap*/
+%ignore AdviseRead(int,int,int,int,int *,int *,GDALDataType *,int);
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
 #endif

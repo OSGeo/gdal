@@ -25,7 +25,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature ("compactdefaultargs");
 #endif
 
@@ -733,18 +733,22 @@ RETURN_NONE GDALInvHomography( double h_in[9], double h_out[9] );
 %clear (double *h_in);
 %clear (double *h_out);
 
+#ifdef SWIGPYTHON
+const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
+#else
+%rename (VersionInfo) wrapper_GDALVersionInfo;
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
-%rename (VersionInfo) wrapper_GDALVersionInfo;
+#endif
 %inline {
 const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
 {
     return GDALVersionInfo(request ? request : "VERSION_NUM");
 }
 }
+#ifdef SWIGJAVA
 %clear (const char* request);
-#else
-const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
+#endif
 #endif
 
 void GDALAllRegister();
@@ -825,9 +829,13 @@ GDALColorInterp GDALGetColorInterpretationByName( const char* pszColorInterpName
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
+#ifdef SWIGPYTHON
+const char *GDALDecToDMS( double, const char *, int nPrecision = 2 );
+#else
+%rename (DecToDMS) wrapper_GDALDecToDMS;
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
-%rename (DecToDMS) wrapper_GDALDecToDMS;
+#endif
 %inline {
 const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
                                   int nPrecision = 2 )
@@ -835,9 +843,9 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
     return GDALDecToDMS(dfAngle, pszAxis, nPrecision);
 }
 }
+#ifdef SWIGJAVA
 %clear (const char* request);
-#else
-const char *GDALDecToDMS( double, const char *, int = 2 );
+#endif
 #endif
 
 double GDALPackedDMSToDec( double dfPacked );

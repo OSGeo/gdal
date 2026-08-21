@@ -45,7 +45,7 @@ typedef const char StringAsByteArray;
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature("compactdefaultargs");
 #endif
 
@@ -3419,6 +3419,8 @@ OGRGeometryShadow* ForceTo( OGRGeometryShadow *geom_in, OGRwkbGeometryType eTarg
 /*                             OGRGeometry                              */
 /************************************************************************/
 
+/* ignore overload which splits multi-argument typemap*/
+%ignore OGRGeometryShadow::OGRGeometryShadow(OGRwkbGeometryType,char *,int wkb);
 %rename (Geometry) OGRGeometryShadow;
 class OGRGeometryShadow {
   OGRGeometryShadow();
@@ -4750,7 +4752,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
   }
 %}
 
-#if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
+#if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP)))
 
 #ifdef SWIGPYTHON
 %thread;
@@ -4790,11 +4792,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 #ifdef SWIGPYTHON
 %thread;
-#endif
-%newobject OpenShared;
-#ifndef SWIGJAVA
 %feature( "kwargs" ) OpenShared;
 #endif
+%newobject OpenShared;
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *utf8_string, int update =0 ) {
     CPLErrorReset();
@@ -4821,7 +4821,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %nothread;
 #endif
 
-#endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
+#endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP))) */
 
 #ifndef FROM_GDAL_I
 

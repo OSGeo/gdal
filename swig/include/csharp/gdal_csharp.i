@@ -213,14 +213,6 @@ public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => Mini
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
 
-public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return BuildOverviews( resampling, overviewlist, callback, callback_data, null);
-  }
-
-public int BuildOverviews( string resampling, int[] overviewlist) {
-      return BuildOverviews( resampling, overviewlist, null, null);
-  }
-
 public GCP[] GetGCPs() {
     GetGCPs(out GCP[] gcps);
     return gcps;
