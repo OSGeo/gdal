@@ -3431,7 +3431,7 @@ public:
 
 #ifndef SWIGJAVA
 #ifdef SWIGCSHARP
-%apply (void *buffer_ptr) {char *wkb_buf};
+%apply (int nList, char *pList) {(int wkb, char *wkb_buf)};
 #else
 %apply (int nLen, char *pBuf) {(int wkb, char *wkb_buf)};
 #endif
@@ -3443,7 +3443,7 @@ public:
     else if ( wkt != 0 ) {
       return CreateGeometryFromWkt( &wkt );
     }
-    else if ( wkb != 0 ) {
+    else if ( wkb != 0 && wkb_buf) {
       return CreateGeometryFromWkb( wkb, wkb_buf );
     }
     else if ( gml != 0 ) {
@@ -3455,12 +3455,8 @@ public:
         return NULL;}
 
   }
-#ifdef SWIGCSHARP
-%clear (char *wkb_buf);
-#else
 %clear (int wkb, char *wkb_buf);
-#endif
-#endif
+#endif //SWIGJAVA
 
   OGRErr ExportToWkt( char** argout ) {
     return OGR_G_ExportToWkt(self, argout);

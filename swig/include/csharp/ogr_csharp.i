@@ -51,29 +51,30 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
   }
 
   public static $csclassname CreateFromWkb(byte[] wkb){
-     if (wkb.Length == 0)
-        throw new ArgumentException("Buffer size is small (CreateFromWkb)");
-     $csclassname retval;
-     IntPtr ptr = Marshal.AllocHGlobal(wkb.Length * Marshal.SizeOf(wkb[0]));
-     try {
-         Marshal.Copy(wkb, 0, ptr, wkb.Length);
-         retval =  new $csclassname(wkbGeometryType.wkbUnknown, null, wkb.Length, ptr, null);
-      } finally {
-          Marshal.FreeHGlobal(ptr);
-      }
-      return retval;
+    return wkb.Length > 0 ? new Geometry(wkbGeometryType.wkbUnknown, null, wkb, null)
+           : throw new ArgumentException("Buffer size is small (CreateFromWkb)");
   }
 
   public static $csclassname CreateFromWkt(string wkt){
-     return new $csclassname(wkbGeometryType.wkbUnknown, wkt, 0, IntPtr.Zero, null);
+     return new $csclassname(wkbGeometryType.wkbUnknown, wkt, null, null);
   }
 
   public static $csclassname CreateFromGML(string gml){
-     return new $csclassname(wkbGeometryType.wkbUnknown, null, 0, IntPtr.Zero, gml);
+     return new $csclassname(wkbGeometryType.wkbUnknown, null, null, gml);
   }
 
-  public Geometry(wkbGeometryType type) : this(OgrPINVOKE.new_Geometry((int)type, null, 0, IntPtr.Zero, null), true, null) {
-    if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
+/*
+ * Overload to maintain backwards compatibility with multi-argument typemaps
+ */
+  [Obsolete("Use $csclassname(wkbGeometryType type, string wkt, byte[] wkb, string gml) instead.")]
+  public $csclassname(wkbGeometryType type, string wkt, int wkb, IntPtr wkb_buf, string gml)
+    : this(type, wkt, PtrToByteArray(wkb, wkb_buf), gml) { }  
+
+  private static byte[] PtrToByteArray(int size, IntPtr ptr) {
+    if (size <= 0 || ptr == IntPtr.Zero) return null;
+    byte[] ret = new byte[size];
+    Marshal.Copy(ptr, ret, 0, size);
+    return ret;
   }
 }
 
