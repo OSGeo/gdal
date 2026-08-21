@@ -1430,6 +1430,7 @@ class COGProxyRasterBand final : public GDALProxyRasterBand
     explicit COGProxyRasterBand(GDALRasterBand *poUnderlyingRasterBand)
         : m_poUnderlyingBand(poUnderlyingRasterBand)
     {
+        eDataType = poUnderlyingRasterBand->GetRasterDataType();
         poUnderlyingRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 

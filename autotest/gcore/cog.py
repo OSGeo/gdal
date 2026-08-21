@@ -2291,3 +2291,22 @@ def test_cog_build_overviews(tmp_vsimem):
                 255,
                 255,
             )
+
+
+###############################################################################
+
+
+def test_cog_create_float32(tmp_vsimem):
+    with gdal.GetDriverByName("COG").Create(
+        tmp_vsimem / "tmp.tif",
+        1,
+        1,
+        1,
+        gdal.GDT_Float32,
+        dict(OVERVIEWS="NONE"),
+    ) as ds:
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack("f", 1.5))
+    ds = gdal.Open(tmp_vsimem / "tmp.tif")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (1.5, 1.5)
