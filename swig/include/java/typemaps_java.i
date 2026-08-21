@@ -2645,3 +2645,50 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (OGRCodedValue*) {
     return $jnicall;
   }
+
+
+/***************************************************
+ * Typemaps for SpatialReference.FindMatches()
+ *
+ * C signature (see osr.i):
+ *   OSRSpatialReferenceShadow** FindMatches(
+ *       char** options, int* nvalues, int** confidence_values)
+ *
+ * Resulting Java signature:
+ *   public SpatialReference[] FindMatches(Vector options, int[][] confidenceValuesOut)
+ *
+ * nvalues (arg position 3) is fully hidden from Java -- it only exists to
+ * carry the match count between the two output-producing typemaps.
+ * confidence_values (arg position 4) is surfaced as an int[][] "out box":
+ * caller passes a 1-element int[][] and this typemap fills element [0]
+ * with a freshly allocated int[] parallel to the returned SpatialReference[].
+
+ ***************************************************/
+
+%typemap(out) (OSRSpatialReferenceShadow**)
+{
+  /* %typemap(out) (OSRSpatialReferenceShadow**) -- builds the returned SpatialReference[] */
+  /* nLen3 is hardcoded, $argnum is not useful in out typemaps.
+     nLen was declared under the separate typemap (argument
+     position 3). If FindMatches's parameter order ever
+     changes, re-check the generated osr_wrap.cpp and update this suffix
+     to match. */
+  const jclass srsClass = jenv->FindClass("org/gdal/osr/SpatialReference");
+  const jmethodID srsCtor = jenv->GetMethodID(srsClass, "<init>", "(JZ)V");
+
+  jresult = jenv->NewObjectArray(nLen3, srsClass, NULL);
+  for (int i = 0; i < nLen3; i++) {
+    OSRReference(result[i]);
+    jobject srsObj = jenv->NewObject(srsClass, srsCtor, (jlong)result[i], (jboolean)true);
+    jenv->SetObjectArrayElement(jresult, i, srsObj);
+    jenv->DeleteLocalRef(srsObj);
+  }
+  OSRFreeSRSArray(result);
+}
+
+%typemap(jni) OSRSpatialReferenceShadow** "jobjectArray"
+%typemap(jtype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(jstype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(javaout) OSRSpatialReferenceShadow** {
+    return $jnicall;
+}
