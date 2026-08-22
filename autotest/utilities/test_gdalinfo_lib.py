@@ -394,3 +394,54 @@ def test_gdalinfo_lib_wkt_format(wkt_format, expected):
     ds = gdal.Open("../gcore/data/byte.tif")
     ret = gdal.Info(ds, options="-json -wkt_format " + wkt_format)
     assert ret["coordinateSystem"]["wkt"].startswith(expected)
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/15046
+
+
+def test_gdalinfo_lib_json_non_earth_crs():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCRS["Equirectangular Moon",
+    BASEGEOGCRS["GCS_Moon",
+        DATUM["D_Moon",
+            ELLIPSOID["Moon_localRadius",1737400,0,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]],
+        PRIMEM["Reference_Meridian",0,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    CONVERSION["Equidistant Cylindrical",
+        METHOD["Equidistant Cylindrical",
+            ID["EPSG",1028]],
+        PARAMETER["Latitude of 1st standard parallel",-3,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8823]],
+        PARAMETER["Longitude of natural origin",180,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["False easting",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["easting",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["northing",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]""")
+    ds.SetSpatialRef(srs)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+    ret = gdal.Info(ds, format="json")
+    assert "coordinateSystem" in ret
+    assert "cornerCoordinates" in ret
+    assert "wgs84Extent" not in ret
+    assert "extent" in ret
+    assert len(ret["extent"]["coordinates"][0]) == 5
