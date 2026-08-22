@@ -2838,6 +2838,15 @@ TEST_F(test_gdal_algorithm, unlimited_input_single_output)
         EXPECT_EQ(alg.m_input_values, expected);
         EXPECT_STREQ(alg.m_output_value.c_str(), "my_output");
     }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments(
+            {"-i", "input1", "input2", "-o", "my_output"}));
+        auto expected = std::vector<std::string>{"input1", "input2"};
+        EXPECT_EQ(alg.m_input_values, expected);
+        EXPECT_STREQ(alg.m_output_value.c_str(), "my_output");
+    }
 }
 
 TEST_F(test_gdal_algorithm, single_input_unlimited_outputs)
