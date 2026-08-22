@@ -43,9 +43,9 @@ Creation Options:
       :choices: REPLACE, ADD
 
       Force adding ".hdr" suffix to supplied
-      filename, e.g. if user selects "file.bin" name for output dataset,
+      filename, e.g., if user selects "file.bin" name for output dataset,
       "file.bin.hdr" header file will be created. By default header file
-      suffix replaces the binary file suffix, e.g. for "file.bin" name
+      suffix replaces the binary file suffix, e.g., for "file.bin" name
       "file.hdr" header file will be created.
 
 NOTE: Implemented as :source_file:`frmts/raw/envidataset.cpp`.

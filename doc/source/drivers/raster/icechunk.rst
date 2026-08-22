@@ -80,7 +80,7 @@ When opening an Icechunk dataset, the Icechunk driver essentially prepends
 name to the Zarr driver.
 
 It is possible to directly use ``/vsiicechunk/`` filenames for low-level inspection
-of an Icechunk repository, e.g. with :ref:`gdal_vsi_list`.
+of an Icechunk repository, e.g., with :ref:`gdal_vsi_list`.
 
 ::
 

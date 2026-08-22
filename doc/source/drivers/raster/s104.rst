@@ -199,7 +199,7 @@ The following creation options are available:
 -  .. co:: TREND_INTERVAL
       :choices: <number>
 
-      Interval, in minutes, over which trend at a a particular time is calculated
+      Interval, in minutes, over which trend at a particular time is calculated
 
 -  .. co:: DATASET_DELIVERY_INTERVAL
       :choices: <string>

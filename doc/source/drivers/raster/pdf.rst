@@ -318,7 +318,7 @@ The following creation options are available:
 -  .. co:: LAYER_NAME
 
       Name for layer where the raster is placed. If
-      specified, the raster will be be placed into a layer that can be
+      specified, the raster will be placed into a layer that can be
       toggled/un-toggled in the "Layer tree" of the PDF reader.
 
 -  .. co:: EXTRA_RASTERS
@@ -335,7 +335,7 @@ The following creation options are available:
 
       Comma separated list of
       name for each raster specified in EXTRA_RASTERS. If specified, each
-      extra raster will be be placed into a layer, named with the specified
+      extra raster will be placed into a layer, named with the specified
       value, that can be toggled/un-toggled in the "Layer tree" of the PDF
       reader. If not specified, all the extra rasters will be placed in the
       default layer.
@@ -364,7 +364,7 @@ The following creation options are available:
 
       Name for layer where the extra content
       specified with EXTRA_STREAM or EXTRA_IMAGES is placed. If specified,
-      the extra content will be be placed into a layer that can be
+      the extra content will be placed into a layer that can be
       toggled/un-toggled in the "Layer tree" of the PDF reader.
 
 -  .. co:: MARGIN
@@ -430,7 +430,7 @@ The following creation options are available:
 -  .. co:: CREATION_DATE
 
       Create date metadata to write into the PDF Info block. The format of
-      the value must be D:YYYYMMDDHHmmSSOHH'mm' (e.g.
+      the value must be D:YYYYMMDDHHmmSSOHH'mm' (e.g.,
       D:20121122132447+02'00' for 22 nov 2012 13:24:47 GMT+02) (see `PDF
       Reference, version
       1.7 <http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf>`__,

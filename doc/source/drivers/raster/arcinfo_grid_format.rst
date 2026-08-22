@@ -427,7 +427,7 @@ just two bytes (zeros) for the RTileSize for that tile.
 Raster Size
 ~~~~~~~~~~~
 
-The size of a the grid isn't as easy to deduce as one might expect. The
+The size of the grid isn't as easy to deduce as one might expect. The
 hdr.adf file contains the HTilesPerRow, HTilesPerColumn, HTileXSize, and
 HTileYSize fields which imply a particular raster space. However, it
 seems that this is created much larger than necessary to hold the users

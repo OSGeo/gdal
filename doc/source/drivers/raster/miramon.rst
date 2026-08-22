@@ -151,7 +151,7 @@ Open examples
        gdal_translate -oo RAT_OR_CT=RAT datasetI.rel output_only_with_rat.tiff (only RAT will be translated, without the color table)
        gdal_translate -oo RAT_OR_CT=CT datasetI.rel output_only_with_ct.tiff (only color table will be translated, without the attribute table)
 
--  A MiraMon dataset can be translated preserving it's own metadata, by using the SRC_MDD creation option:
+-  A MiraMon dataset can be translated preserving its own metadata, by using the SRC_MDD creation option:
    .. code-block::
 
        gdal_translate -oo SRC_MDD=MIRAMON datasetI.rel output_with_miramon_metadata.vrt

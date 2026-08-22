@@ -287,11 +287,11 @@ The below tables list the EXIF and GPS tags that can be written.
 
    -  ASCII is for text values that are NUL-terminated (for a fixed
       length tag, the length includes this NUL-terminating characters).
-      e.g EXIF_Make=the_make
+      e.g., EXIF_Make=the_make
    -  BYTE/UNDEFINED is for values that can be made of any byte value.
       The value of the corresponding GDAL metadata item must be a string
-      of hexadecimal formatted values, e.g EXIF_GPSVersionID=0x02 0x00
-      0x00 0x00. GDAL also accepts an ASCII string: e.g.
+      of hexadecimal formatted values, e.g., EXIF_GPSVersionID=0x02 0x00
+      0x00 0x00. GDAL also accepts an ASCII string: e.g.,
       EXIF_ExifVersion=0231
    -  SHORT is for unsigned integer values in the range [0,65535]. Some
       tags may accept multiple values, in which case they must be
@@ -301,7 +301,7 @@ The below tables list the EXIF and GPS tags that can be written.
       separated by space.
    -  RATIONAL is for positive floating-point values. Some tags may
       accept multiple values, in which case they must be separated by
-      space. e.g EXIF_GPSLatitude=49 2 3.5
+      space. e.g., EXIF_GPSLatitude=49 2 3.5
    -  SRATIONAL is for positive or negative floating-point values. Some
       tags may accept multiple values, in which case they must be
       separated by space.

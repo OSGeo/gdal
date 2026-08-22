@@ -259,7 +259,7 @@ The following creation options are available:
       :choices: <tre-name=tre-contents>
 
       One or more TRE (Tagged Record Extension) creation options may
-      be used provided to write arbitrary user defined TREs to the image
+      be provided to write arbitrary user defined TREs to the image
       header. The tre-name should be at most six characters, and the
       tre-contents should be "backslash escaped" if it contains backslashes
       or zero bytes. The argument is the same format as returned in the TRE
@@ -557,7 +557,7 @@ The following options are only valid for PRODUCT_TYPE=CADRG.
       :since: 3.13
 
       Short title for the identification of a group of products usually having
-      the same scale and/or cartographic specification (e.g. JOG 1501A).
+      the same scale and/or cartographic specification (e.g., JOG 1501A).
       Up to 10 characters. Derived from SERIES_CODE and SCALE when not specified.
       Only used when PRODUCT_TYPE=CADRG.
 
@@ -565,7 +565,7 @@ The following options are only valid for PRODUCT_TYPE=CADRG.
       :choices: <string>
       :since: 3.13
 
-      Designation, within the data series, of the hard-copy source (e.g. G18 if
+      Designation, within the data series, of the hard-copy source (e.g., G18 if
       the hard-copy source is ONC G18).
       Up to 8 characters.
       Only used when PRODUCT_TYPE=CADRG.

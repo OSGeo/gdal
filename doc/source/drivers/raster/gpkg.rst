@@ -219,7 +219,7 @@ reproducibility, the timestamp can be forced to a specific value by setting the
 :config:`OGR_CURRENT_DATE` global configuration option.
 When setting the option, take care to meet the specific time format
 requirement of the GeoPackage standard,
-e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
+e.g., `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
 
 .. _raster.gpkg.tile_formats:
@@ -326,7 +326,7 @@ schemes are :
    `global-mercator <http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-mercator>`__
    profile of OSGeo TMS (Tile Map Service) specification. That tiling
    schemes consists of four 256x256 tiles at its zoom level 0, in
-   EPSG:3857 CRS, with extent extent in easting and northing in the
+   EPSG:3857 CRS, with extent in easting and northing in the
    range [-20037508.34,20037508.34]. The same remark as with
    PseudoTMS_GlobalGeodetic applies regarding interoperability with TMS.
 -  *GoogleCRS84Quad*, as described in `OGC 07-057r7 WMTS
@@ -431,7 +431,7 @@ The following creation options are available:
 
 -  .. co:: RASTER_IDENTIFIER
 
-      Human-readable identifier (e.g. short
+      Human-readable identifier (e.g., short
       name), put in the *identifier* column of the *gpkg_contents* table.
 
 -  .. co:: RASTER_DESCRIPTION
@@ -493,7 +493,7 @@ The following creation options are available:
       Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
       of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
       a URL to such file, the radical of a definition file in the GDAL data directory
-      (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
+      (e.g., ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
       Note: the TILING_SCHEME option with a non-CUSTOM value is best used
       with the gdal_translate utility / CreateCopy() API operation. If used
       with gdalwarp, it requires setting the -tr switch to the exact value

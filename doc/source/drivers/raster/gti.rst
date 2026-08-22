@@ -193,7 +193,7 @@ PostGIS, ...), the following layer metadata items may be set:
 
   .. note::
      For on-the-fly reprojection of the whole GTI mosaic output, wrapping
-     the GTI file in a warped VRT (e.g. via ``gdal raster reproject``) is
+     the GTI file in a warped VRT (e.g., via ``gdal raster reproject``) is
      an alternative that does not require ``SRS_BEHAVIOR``.
 
 * ``LOCATION_FIELD=<string>``: name of the field where the tile location is
@@ -571,7 +571,7 @@ also defined as layer metadata items or in the .gti XML file
 
       Set the amount of memory that the warp API is allowed to use for caching
       when on-the-fly reprojection occurs.
-      The value can be specified either as a fixed amount of memory (e.g.
+      The value can be specified either as a fixed amount of memory (e.g.,
       ``200MB``, ``1G``) or as a percentage of usable RAM (``10%``).
       Note that, in case of multi-threaded optimizations described in the
       paragraph below, the value applies for each warped source.
@@ -729,7 +729,7 @@ an integer index (starting at 0 since GDAL 3.9.2, starting at 1 in previous vers
   Sub-sampling factor, greater or equal to 1 (1 accepted only since GDAL 3.13)
 
   Before GDAL 3.13, was only taken into account if ``OVERVIEW_<idx>_DATASET=<string>``
-  was not not specified, or pointed to a GTI dataset. Since GDAL 3.13,
+  was not specified, or pointed to a GTI dataset. Since GDAL 3.13,
   ``OVERVIEW_<idx>_FACTOR`` is also accepted on any valid ``OVERVIEW_<idx>_DATASET``.
 
   If ``OVERVIEW_<idx>_DATASET`` and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full

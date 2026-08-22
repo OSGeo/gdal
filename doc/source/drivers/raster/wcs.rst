@@ -113,11 +113,11 @@ is meant to be modified by using options.
 -  **HttpAuth**: May be BASIC, NTLM or ANY to control the authentication
    scheme to be used.
 -  **GetCoverageExtra**: An additional set of keywords to add to
-   GetCoverage requests in URL encoded form. e.g.
+   GetCoverage requests in URL encoded form, e.g.,
    ``&RESAMPLE=BILINEAR&Band=1``. Note that the extra parameters should
    not be known parameters (see below).
 -  **DescribeCoverageExtra**: An additional set of keywords to add to
-   DescribeCoverage requests in URL encoded form. e.g. ``&CustNo=775``
+   DescribeCoverage requests in URL encoded form, e.g., ``&CustNo=775``
 
    **Elements that may be needed to deal with server quirks (GDAL 2.3):**
 
