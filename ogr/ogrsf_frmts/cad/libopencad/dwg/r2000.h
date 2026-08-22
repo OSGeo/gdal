@@ -16,7 +16,7 @@
 #define DWG_R2000_H_H
 
 #include "cadfile.h"
-#include "io.h"
+#include "dwg_io.h"
 
 struct SectionLocatorRecord
 {

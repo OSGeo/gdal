@@ -17,7 +17,7 @@
 #include "cpl_safemaths.hpp"
 #include "cadheader.h"
 #include "opencad_api.h"
-#include "dwg/io.h"
+#include "dwg/dwg_io.h"
 
 #include <cstring>
 #include <iostream>
