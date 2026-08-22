@@ -6595,4 +6595,53 @@ TEST_F(test_gdal, GDALLoadEsriCLRAsRAT)
     ASSERT_EQ(poRAT->GetValueAsInt(24, 3), 47);
 }
 
+TEST_F(test_gdal, GDALMDArrayRead_31_dims)
+{
+    GDALDatasetH ds = GDALCreateMultiDimensional(GDALGetDriverByName("MEM"), "",
+                                                 nullptr, nullptr);
+    GDALGroupH root = GDALDatasetGetRootGroup(ds);
+
+    constexpr int N = 31;
+    GDALDimensionH dims[N];
+    GUInt64 start[N] = {0};
+    size_t count[N];
+    GInt64 step[N];
+    GPtrDiff_t stride[N];
+    char name[16];
+
+    for (int i = 0; i < N; ++i)
+    {
+        snprintf(name, sizeof(name), "d%d", i);
+        dims[i] = GDALGroupCreateDimension(root, name, "", "", i == 0 ? 2 : 1,
+                                           nullptr);
+        count[i] = i == 0 ? 2 : 1;
+        step[i] = 1;
+        stride[i] = i == 0 ? -1 : 1;
+    }
+
+    GDALExtendedDataTypeH type = GDALExtendedDataTypeCreate(GDT_Byte);
+    GDALMDArrayH array =
+        GDALGroupCreateMDArray(root, "array", N, dims, type, nullptr);
+    for (int i = 0; i < N; ++i)
+    {
+        GDALDimensionRelease(dims[i]);
+    }
+
+    unsigned char storage[2] = {17, 23};
+    unsigned char *buffer = storage + 1;
+
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        EXPECT_FALSE(GDALMDArrayRead(array, start, count, step, stride, type,
+                                     buffer, storage + 1, 1));
+        EXPECT_FALSE(GDALMDArrayWrite(array, start, count, step, stride, type,
+                                      buffer, storage + 1, 1));
+    }
+
+    GDALMDArrayRelease(array);
+    GDALExtendedDataTypeRelease(type);
+    GDALGroupRelease(root);
+    GDALReleaseDataset(ds);
+}
+
 }  // namespace
