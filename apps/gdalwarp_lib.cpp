@@ -2580,15 +2580,15 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         }
         // Also do the same for GCP TPS warping, e.g. to solve use case of
         // https://github.com/OSGeo/gdal/issues/12736
-        else if (iSrc == 0 &&
-                 (GDALGetGCPCount(hSrcDS) > 0 &&
-                  (pszMethod == nullptr || EQUAL(pszMethod, "TPS"))))
+        else if (iSrc == 0 && (GDALGetGCPCount(hSrcDS) > 0 && pszMethod &&
+                               EQUAL(pszMethod, "TPS")))
         {
             if (!psOptions->aosWarpOptions.FetchNameValue("SOURCE_EXTRA"))
             {
                 CPLDebug(
                     "WARP",
                     "Set SOURCE_EXTRA=5 warping options due to TPS warping");
+                psOptions->aosWarpOptions.SetNameValue("SOURCE_EXTRA", "5");
             }
         }
 
