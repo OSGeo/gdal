@@ -52,6 +52,10 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
         m_geoStatsWithBBOXAvailable{};  // key is index of OGR geometry column
 #endif
 
+    //! Only for testing/validation purposes, with Arrow >= 21, value of 'crs'
+    // field from GeometryLogicalType/GeographyLogicalType
+    std::map<std::string, std::string> m_mapGeomFieldToParquetGeoCrs{};
+
     void LoadGeoMetadata(
         const std::shared_ptr<const arrow::KeyValueMetadata> &kv_metadata);
     bool DealWithGeometryColumn(
@@ -333,6 +337,16 @@ class OGRParquetDataset final : public OGRArrowDataset
 };
 
 /************************************************************************/
+/*                         OGRGeoParquetVersion                         */
+/************************************************************************/
+
+enum class OGRGeoParquetVersion
+{
+    VERSION_1_1,
+    VERSION_2_0,
+};
+
+/************************************************************************/
 /*                        OGRParquetWriterLayer                         */
 /************************************************************************/
 
@@ -358,6 +372,9 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     //! Whether to write "geo" footer metadata;
     bool m_bWriteGeoMetadata = true;
+
+    OGRGeoParquetVersion m_nGeoParquetVersion =
+        OGRGeoParquetVersion::VERSION_1_1;
 
     bool IsFileWriterCreated() const override
     {
