@@ -99,7 +99,7 @@ struct GDALRATDateTime {
     GDALRATDateTime *self = (GDALRATDateTime*) CPLMalloc( sizeof( GDALRATDateTime ) );
     self->nYear = self->nMonth = self->nDay = self->nHour = self->nMinute = self->nTimeZoneHour = self->nTimeZoneMinute = 0;
 	self->fSecond = 0.0;
-    self->bPositiveTimeZone = self->bIsValid = TRUE;	  
+    self->bPositiveTimeZone = self->bIsValid = FALSE;	  
     return self;
   }
 
