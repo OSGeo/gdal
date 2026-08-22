@@ -431,6 +431,27 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   public MDArray Transpose(int axisMap, int[] mapInts) => Transpose(mapInts);
 }
 
+
+%typemap(cscode, noblock="1") GDALRATDateTime {
+
+  public static implicit operator RATDateTime(DateTimeOffset value) => FromDateTimeOffset(value);
+  public static implicit operator DateTimeOffset(RATDateTime value) => value.ToDateTimeOffset();
+  public DateTimeOffset ToDateTimeOffset() {
+    var sec = (int)fSecond;
+    var ms = (int)Math.Round((fSecond - sec) * 1000);
+	var offsetMins = nTimeZoneHour * 60 + nTimeZoneMinute;
+	if (!bPositiveTimeZone)
+	  offsetMins *= -1;
+    var offset = TimeSpan.FromMinutes(offsetMins);
+    return new DateTimeOffset(nYear, nMonth, nDay, nHour, nMinute, sec, ms, offset);
+  }
+  public static RATDateTime FromDateTimeOffset(DateTimeOffset value) => new RATDateTime(
+    value.Year, value.Month, value.Day,
+    value.Hour, value.Minute, value.Second + value.Millisecond / 1000f,
+    Math.Abs(value.Offset.Hours), Math.Abs(value.Offset.Minutes), value.Offset.Ticks >= 0
+  );
+}
+
 /*
  * Overloads to maintain backwards compatibility with multi-argument typemaps
  */

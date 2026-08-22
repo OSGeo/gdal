@@ -83,6 +83,40 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
  */
 
 %typemap(cscode, noblock="1") OGRFeatureShadow {
+
+  public DateTime GetFieldAsDateTime(int id) {
+    GetFieldAsDateTime(id, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
+    return DateTimeFromParts(year, month, day, hour, minute, second, tz);
+  }
+  public DateTime GetFieldAsDateTime(string field_name) {
+    GetFieldAsDateTime(field_name, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
+    return DateTimeFromParts(year, month, day, hour, minute, second, tz);
+  }
+  public void SetField(int id, DateTime dateTime) {
+    DateTimeToParts(dateTime, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
+    SetField(id, year, month, day, hour, minute, second, tz);
+  }   
+  public void SetField(string field_name, DateTime dateTime) {
+    DateTimeToParts(dateTime, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
+    SetField(field_name, year, month, day, hour, minute, second, tz);
+  }
+
+  private static DateTime DateTimeFromParts(int year, int month, int day, int hour, int minute, float second, int tz) {
+    var sec = (int)second;
+    var ms = (int)Math.Round((second - sec) * 1000);
+    DateTimeKind kind = tz == 100 ? DateTimeKind.Utc : tz == 1 ? DateTimeKind.Local : DateTimeKind.Unspecified;
+    return new DateTime(year, month, day, hour, minute, sec, ms, kind);
+  }
+  private static void DateTimeToParts(DateTime dateTime, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz) {
+    year = dateTime.Year;
+    month = dateTime.Month;
+    day = dateTime.Day;
+    hour = dateTime.Hour;
+    minute = dateTime.Minute;
+    second = dateTime.Second + dateTime.Millisecond / 1000f;
+    tz = dateTime.Kind == DateTimeKind.Utc ? 100 : dateTime.Kind == DateTimeKind.Local ? 1 : 0;
+  }
+
   [Obsolete("Use SetFieldDoubleList(int id, double[] nList) instead.")]
   public void SetFieldDoubleList(int id, int nList, double[] pList)
     => SetFieldDoubleList(id, pList);
