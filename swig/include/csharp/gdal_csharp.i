@@ -70,29 +70,8 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 
 
 %define %rasterio_functions(GDALTYPE,CSTYPE)
- public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+    long pixelSpace = 0, long lineSpace = 0, RasterIOExtraArg extraArg = null) {
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -103,7 +82,8 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
       GC.KeepAlive(this);
       return retval;
   }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+    long pixelSpace = 0, long lineSpace = 0, RasterIOExtraArg extraArg = null) {
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -118,11 +98,16 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 %enddef
 
 %typemap(cscode, noblock="1") GDALRasterBandShadow {
-/*! Eight bit unsigned integer */ %rasterio_functions(DataType.GDT_Byte,byte)
-/*! Sixteen bit signed integer */ %rasterio_functions(DataType.GDT_Int16,short)
-/*! Thirty two bit signed integer */ %rasterio_functions(DataType.GDT_Int32,int)
-/*! Thirty two bit floating point */ %rasterio_functions(DataType.GDT_Float32,float)
-/*! Sixty four bit floating point */ %rasterio_functions(DataType.GDT_Float64,double)
+/*!  8-bit unsigned integer */ %rasterio_functions(DataType.GDT_Byte,    byte)
+/*! 16-bit signed integer   */ %rasterio_functions(DataType.GDT_Int16,   short)
+/*! 32-bit signed integer   */ %rasterio_functions(DataType.GDT_Int32,   int)
+/*! 64-bit signed integer   */ %rasterio_functions(DataType.GDT_Int64,   long)
+/*! 32-bit floating point   */ %rasterio_functions(DataType.GDT_Float32, float)
+/*! 64-bit floating point   */ %rasterio_functions(DataType.GDT_Float64, double)
+/*! 16-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt16,  ushort)
+/*! 32-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt32,  uint)
+/*! 64-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt64,  ulong)
+/*!  8-bit signed integer   */ %rasterio_functions(DataType.GDT_Int8,    sbyte)
 
 
 /*
@@ -145,34 +130,10 @@ public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => Mini
 /*! Complex Float64 */ //%rasterio_functions(DataType.GDT_CFloat64,int)
 
 %define %ds_rasterio_functions(GDALTYPE,CSTYPE)
- public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
-                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
-                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
   public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+     int bandCount, int[] bandMap = null, long pixelSpace = 0, long lineSpace = 0, long bandSpace = 0, RasterIOExtraArg extraArg = null) {
+      if (bandMap != null && bandMap.Length < bandCount)
+        throw new ArgumentException("Array bandMap must be at least bandCount elements long.");
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -185,7 +146,9 @@ public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => Mini
       return retval;
   }
   public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+     int bandCount, int[] bandMap = null, long pixelSpace = 0, long lineSpace = 0, long bandSpace = 0, RasterIOExtraArg extraArg = null) {
+      if (bandMap != null && bandMap.Length < bandCount)
+        throw new ArgumentException("Array bandMap must be at least bandCount elements long.");
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -207,11 +170,16 @@ public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => Mini
   using OSGeo.OGR;
 %}
 %typemap(cscode, noblock="1") GDALDatasetShadow {
-/*! Eight bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,byte)
-/*! Sixteen bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int16,short)
-/*! Thirty two bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int32,int)
-/*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
-/*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
+/*!  8-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,    byte)
+/*! 16-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int16,   short)
+/*! 32-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int32,   int)
+/*! 64-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int64,   long)
+/*! 32-bit floating point   */ %ds_rasterio_functions(DataType.GDT_Float32, float)
+/*! 64-bit floating point   */ %ds_rasterio_functions(DataType.GDT_Float64, double)
+/*! 16-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt16,  ushort)
+/*! 32-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt32,  uint)
+/*! 64-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt64,  ulong)
+/*!  8-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int8,    sbyte)
 
 public GCP[] GetGCPs() {
     GetGCPs(out GCP[] gcps);

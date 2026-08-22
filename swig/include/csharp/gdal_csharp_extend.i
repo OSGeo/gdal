@@ -19,27 +19,15 @@
 %extend GDALRasterBandShadow
 {
 	%apply (void *buffer_ptr) {void *buffer};
-	CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int pixelSpace, int lineSpace) {
-       return GDALRasterIO( self, GF_Read, xOff, yOff, xSize, ySize,
-		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace );
-    }
-    CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int pixelSpace, int lineSpace) {
-       return GDALRasterIO( self, GF_Write, xOff, yOff, xSize, ySize,
-		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace );
-    }
     CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int pixelSpace, int lineSpace, GDALRasterIOExtraArg* extraArg) {
+                          GIntBig  pixelSpace, GIntBig lineSpace, GDALRasterIOExtraArg* extraArg = NULL) {
        return GDALRasterIOEx( self, GF_Read, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace, extraArg );
     }
     CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int pixelSpace, int lineSpace, GDALRasterIOExtraArg* extraArg) {
+                          GIntBig pixelSpace, GIntBig lineSpace, GDALRasterIOExtraArg* extraArg = NULL) {
        return GDALRasterIOEx( self, GF_Write, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, pixelSpace, lineSpace, extraArg );
     }
@@ -50,32 +38,18 @@
 {
 	%apply (void *buffer_ptr) {void *buffer};
 	%apply (int *argin) {int *bandMap};
-	CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-       return GDALDatasetRasterIO( self, GF_Read, xOff, yOff, xSize, ySize,
-		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
-		        bandMap, pixelSpace, lineSpace, bandSpace);
-    }
-    CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
-                          int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-       return GDALDatasetRasterIO( self, GF_Write, xOff, yOff, xSize, ySize,
-		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
-		        bandMap, pixelSpace, lineSpace, bandSpace);
-    }
     CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace,
-						  GDALRasterIOExtraArg* extraArg) {
+                          int bandCount, int* bandMap, GIntBig pixelSpace, GIntBig lineSpace, GIntBig bandSpace,
+						  GDALRasterIOExtraArg* extraArg = NULL) {
        return GDALDatasetRasterIOEx( self, GF_Read, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
 		        bandMap, pixelSpace, lineSpace, bandSpace, extraArg);
     }
     CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
-                          int bandCount, int* bandMap, int pixelSpace, int lineSpace, int bandSpace,
-						  GDALRasterIOExtraArg* extraArg) {
+                          int bandCount, int* bandMap, GIntBig pixelSpace, GIntBig lineSpace, GIntBig bandSpace,
+						  GDALRasterIOExtraArg* extraArg = NULL) {
        return GDALDatasetRasterIOEx( self, GF_Write, xOff, yOff, xSize, ySize,
 		        buffer, buf_xSize, buf_ySize, buf_type, bandCount,
 		        bandMap, pixelSpace, lineSpace, bandSpace, extraArg);
