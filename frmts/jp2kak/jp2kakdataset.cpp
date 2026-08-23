@@ -2594,7 +2594,50 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         }
         else
         {
-            colour.init(JP2_sLUM_SPACE);
+            int nRedIndex = -1;
+            int nGreenIndex = -1;
+            int nBlueIndex = -1;
+            int nGrayIndex = -1;
+
+            for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
+            {
+                const GDALColorInterp eBandColor =
+                    poSrcDS->GetRasterBand(i + 1)->GetColorInterpretation();
+                if (eBandColor == GCI_RedBand)
+                {
+                    nRedIndex = i;
+                }
+                else if (eBandColor == GCI_GreenBand)
+                {
+                    nGreenIndex = i;
+                }
+                else if (eBandColor == GCI_BlueBand)
+                {
+                    nBlueIndex = i;
+                }
+                else if (eBandColor == GCI_GrayIndex)
+                {
+                    nGrayIndex = i;
+                }
+            }
+
+            if (nRedIndex != -1 && nGreenIndex != -1 && nBlueIndex != -1)
+            {
+                colour.init(JP2_sRGB_SPACE);
+                jp2_out.access_channels().init(3);
+                jp2_out.access_channels().set_colour_mapping(0, nRedIndex);
+                jp2_out.access_channels().set_colour_mapping(1, nGreenIndex);
+                jp2_out.access_channels().set_colour_mapping(2, nBlueIndex);
+            }
+            else
+            {
+                colour.init(JP2_sLUM_SPACE);
+                if (nGrayIndex != -1)
+                {
+                    jp2_out.access_channels().init(1);
+                    jp2_out.access_channels().set_colour_mapping(0, nGrayIndex);
+                }
+            }
         }
 
         // Resolution.
