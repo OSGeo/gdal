@@ -4380,11 +4380,9 @@ public:
     OGR_FldDomain_SetMergePolicy(self, policy);
   }
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
   const OGRCodedValue* GetEnumeration() {
     return OGR_CodedFldDomain_GetEnumeration(self);
   }
-#endif
 
   double GetMinAsDouble() {
       const OGRField* psVal = OGR_RangeFldDomain_GetMin(self, NULL);
@@ -4484,7 +4482,6 @@ public:
 
 }; /* class OGRFieldDomainShadow */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %newobject CreateCodedFieldDomain;
 %apply Pointer NONNULL {const char* name};
 %inline %{
@@ -4502,7 +4499,6 @@ OGRFieldDomainShadow* CreateCodedFieldDomain( const char *name,
 }
 %}
 %clear const char* name;
-#endif
 
 %newobject CreateRangeFieldDomain;
 %apply Pointer NONNULL {const char* name};

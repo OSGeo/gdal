@@ -423,3 +423,31 @@ OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
         $excode
         return ret;
 }
+
+/***************************************************
+ * Typemaps converts a OGRCodedValue to/from a     *
+ * KeyValuePair<string,string> collection          * 
+ ***************************************************/
+ 
+%typemap(ctype)  const OGRCodedValue* "OGRCodedValue*"
+%typemap(imtype, out="IntPtr") const OGRCodedValue* "IntPtr[]"
+%typemap(in)     const OGRCodedValue* %{ $1 = $input; %}
+%typemap(out)    const OGRCodedValue* %{ $result = $1; %}
+%typemap(cstype) const OGRCodedValue* "System.Collections.Generic.Dictionary<string,string>"
+%typemap(csin, cshin="$csinput",
+  pre="    using (var temp$csinput = new $modulePINVOKE.StringListMarshal($csinput)) { ",
+  terminator="    }")
+  const OGRCodedValue*
+  "temp$csinput._ar"
+
+%typemap(csout, excode=SWIGEXCODE) const OGRCodedValue*
+{
+  /* %typemap(csout) const OGRCodedValue* */
+  IntPtr pEnum = $imcall;
+  $excode
+  var kvps = $modulePINVOKE.StringListMarshal.DecodeKeyValuePairArray(pEnum);
+  var dict = new System.Collections.Generic.Dictionary<string,string>(kvps.Length);
+  foreach (var kvp in kvps)
+    dict.Add(kvp.Key, kvp.Value);
+  return dict;
+}

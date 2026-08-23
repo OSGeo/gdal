@@ -211,6 +211,20 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       }
       _ar[ar.Length] = IntPtr.Zero;
     }
+    public StringListMarshal(System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, string>> kvps)
+	  : this(KvpCollectionToStringArray(kvps)) {}
+	  
+    private static string[] KvpCollectionToStringArray(System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, string>> kvps) {
+      string[] array = new string[2 * kvps.Count];
+      int i = 0;
+      foreach (var kvp in kvps) {
+        array[2 * i] = kvp.Key;
+        array[2 * i + 1] = kvp.Value;
+        i++;
+      }
+      return array;
+    }
+	
     ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
 	  var handles = System.Threading.Interlocked.Exchange(ref _handles, null);
@@ -233,6 +247,22 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       for(int cx = 0; cx < count; cx++) {
         IntPtr objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, cx * IntPtr.Size);
         ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
+      }
+      return ret;
+    }
+    public static System.Collections.Generic.KeyValuePair<string,string>[] DecodeKeyValuePairArray(IntPtr pKvp) {
+      int count = 0;
+      if (pKvp != IntPtr.Zero) checked {
+        while (System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, 2 * count * IntPtr.Size) != IntPtr.Zero)
+          count++;
+      }
+      var ret = new System.Collections.Generic.KeyValuePair<string,string>[count];
+      for(int cx = 0; cx < count; cx++) {
+        IntPtr pKey = System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, 2 * cx * IntPtr.Size);
+        IntPtr pValue = System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, (2 * cx + 1) * IntPtr.Size);		
+        string key = $module.StringEncoder?.FromNullTerminated(pKey);
+        string value = $module.StringEncoder?.FromNullTerminated(pValue);
+		ret[cx] = new System.Collections.Generic.KeyValuePair<string,string>(key, value);
       }
       return ret;
     }
