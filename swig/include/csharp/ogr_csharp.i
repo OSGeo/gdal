@@ -28,26 +28,10 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 
 
 %typemap(cscode, noblock="1") OGRGeometryShadow {
-  public int ExportToWkb( byte[] buffer, wkbByteOrder byte_order ) {
-      int retval;
-      long size = WkbSize();
-      if (size > Int32.MaxValue)
-        throw new ArgumentException("Too big geometry (ExportToWkb)");
-      if (buffer.Length < size)
-        throw new ArgumentException("Buffer size is small (ExportToWkb)");
-
-      IntPtr ptr = Marshal.AllocHGlobal((int)size * Marshal.SizeOf(buffer[0]));
-      try {
-          retval = ExportToWkb((int)size, ptr, byte_order);
-          Marshal.Copy(ptr, buffer, 0, (int)size);
-      } finally {
-          Marshal.FreeHGlobal(ptr);
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public int ExportToWkb( byte[] buffer ) {
-      return ExportToWkb( buffer, wkbByteOrder.wkbXDR);
+  public byte[] ExportToWkb(wkbByteOrder byte_order = wkbByteOrder.wkbXDR) {
+    byte[] buffer = new byte[WkbSize()];
+	ExportToWkb(buffer, byte_order);
+	return buffer;
   }
 
   public static $csclassname CreateFromWkb(byte[] wkb){
@@ -66,6 +50,11 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 /*
  * Overload to maintain backwards compatibility with multi-argument typemaps
  */
+ 
+  [Obsolete("Use ExportToWkb(byte[] buffer, wkbByteOrder byte_order) instead.", error: true)]
+  public int ExportToWkb(int bufLen, IntPtr buffer, wkbByteOrder byte_order)
+    => throw new NotSupportedException();
+	
   [Obsolete("Use $csclassname(wkbGeometryType type, string wkt, byte[] wkb, string gml) instead.")]
   public $csclassname(wkbGeometryType type, string wkt, int wkb, IntPtr wkb_buf, string gml)
     : this(type, wkt, PtrToByteArray(wkb, wkb_buf), gml) { }  
@@ -77,10 +66,6 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     return ret;
   }
 }
-
-/*
- * Overloads to maintain backwards compatibility with multi-argument typemaps
- */
 
 %typemap(cscode, noblock="1") OGRFeatureShadow {
 
@@ -117,6 +102,9 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     tz = dateTime.Kind == DateTimeKind.Utc ? 100 : dateTime.Kind == DateTimeKind.Local ? 1 : 0;
   }
 
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
   [Obsolete("Use SetFieldDoubleList(int id, double[] nList) instead.")]
   public void SetFieldDoubleList(int id, int nList, double[] pList)
     => SetFieldDoubleList(id, pList);
@@ -136,3 +124,9 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
   public int UpdateFeature(Feature feature, int nUpdatedFieldsCount, int[] panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount, int[] panUpdatedGeomFieldsIdx, bool bUpdateStyleString)
     => UpdateFeature(feature, panUpdatedFieldsIdx, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
+
+%pragma(csharp) modulecode=%{
+  [Obsolete("Use CreateGeometryFromWkb(byte[] len, SpatialReference reference) instead.", error: true)]
+  public static Geometry CreateGeometryFromWkb(uint len, IntPtr bin_string, OSR.SpatialReference reference)
+    => throw new NotSupportedException();
+%}

@@ -79,6 +79,7 @@ public static class GDALVector
 		CreateFieldDefn(dLayer, "int64_list_field", FieldType.OFTInteger64List);
 		CreateFieldDefn(dLayer, "double_list_field", FieldType.OFTRealList);
 		CreateFieldDefn(dLayer, "string_list_field", FieldType.OFTStringList);
+		CreateFieldDefn(dLayer, "binary_field", FieldType.OFTBinary);
 
 		using var dFeatureDef = dLayer.GetLayerDefn();
 		using var feature = new Feature(dFeatureDef);
@@ -146,6 +147,13 @@ public static class GDALVector
 			Enumerable.Range(0, 50).Select(_ => Random.Shared.Next().ToString()).ToArray(),
 			feature.SetFieldStringList,
 			feature.GetFieldAsStringList,
+			(a, b) => a.SequenceEqual(b));
+
+		TestField(
+			"binary_field",
+			Enumerable.Range(0, 50).Select(_ => (byte)Random.Shared.Next(0, 256)).ToArray(),
+			feature.SetFieldBinary,
+			n => feature.GetFieldAsBinary(n, out var _),
 			(a, b) => a.SequenceEqual(b));
 	}
 	private static void CreateFieldDefn(Layer dLayer, string fieldName, FieldType type)

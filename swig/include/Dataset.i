@@ -1017,7 +1017,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
         GDALDatasetSetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   OGRLayerShadow *GetLayerByIndex( int index ) {
 #elif SWIGPYTHON
   OGRLayerShadow *GetLayerByIndex( int index=0) {

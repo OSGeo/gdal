@@ -566,3 +566,20 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   [Obsolete("Use the GCP.Id property instead.")]
   public static void GDAL_GCP_set_Id(GCP gcp, string pszId) => gcp.Id = pszId;
 %}
+
+/*
+ * C# extension method class
+ */
+%{
+typedef struct {} GdalExtensions;
+%}
+%typemap(csclassmodifiers) GdalExtensions "public static class";
+%typemap(csinterfaces)     GdalExtensions "";
+%typemap(csdisposing)      GdalExtensions "";
+%typemap(csdispose)        GdalExtensions "";
+%typemap(csbody)           GdalExtensions %{
+  public static Dataset GetDataset(this OGR.Layer layer) => Gdal.GetDatasetFromLayer(layer);
+%}
+
+%ignore GdalExtensions::GdalExtensions();
+struct  GdalExtensions{};

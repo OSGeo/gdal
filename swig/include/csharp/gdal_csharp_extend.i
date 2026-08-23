@@ -57,3 +57,10 @@
     %clear void *buffer;
     %clear int* bandMap;
 }
+
+%inline
+{	
+  static GDALDatasetShadow* GetDatasetFromLayer(OGRLayerShadow *layer) {
+    return OGR_L_GetDataset(layer);
+  }
+}

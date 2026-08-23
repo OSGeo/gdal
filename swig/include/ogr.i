@@ -1334,15 +1334,9 @@ public:
     return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (char* filter_string) };
-#endif
   OGRErr SetAttributeFilter(char* filter_string) {
     return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
   }
-#ifdef SWIGCSHARP
-  %clear (char* filter_string);
-#endif
 
   const char * GetAttributeFilter() {
     return OGR_L_GetAttributeFilter(self);
@@ -1456,7 +1450,6 @@ public:
   }
 
 #if defined(SWIGCSHARP)
-  %feature( "kwargs" ) GetExtent;
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
     return OGR_L_GetExtent(self, extent, force);
   }
@@ -2298,7 +2291,6 @@ public:
   }
 #endif
 
-#ifndef SWIGCSHARP
 #ifdef SWIGJAVA
 %apply (GByte* outBytes) {GByte*};
   GByte* GetFieldAsBinary(int id, int *nLen, char **pBuf) {
@@ -2324,7 +2316,7 @@ public:
       }
   }
 %clear GByte*;
-#else
+#elif defined(SWIGPYTHON)
   OGRErr GetFieldAsBinary( int id, int *nLen, char **pBuf) {
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
     *pBuf = (char*)VSIMalloc(*nLen);
@@ -2347,8 +2339,23 @@ public:
         return OGRERR_NONE;
       }
   }
-#endif /* SWIGJAVA */
-
+#else /* SWIGPYTHON */
+  %apply (GByte *byteList) {const GByte *};
+  %apply (int *hasval) {int *count};
+  const GByte *GetFieldAsBinary(int id, int *count) {
+    return OGR_F_GetFieldAsBinary(self, id, count);
+  }
+  const GByte *GetFieldAsBinary(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsBinary(self, id, count);
+  }
+  %clear (const GByte *);
+  %clear (int *count);
 #endif /* SWIGCSHARP */
 
   /* ---- IsFieldSet --------------------------- */
@@ -2583,6 +2590,19 @@ public:
   void _SetFieldBinary(int id, int nLen, char *pBuf) {
       OGR_F_SetFieldBinary(self, id, nLen, pBuf);
   }
+#elif defined(SWIGCSHARP)
+  %apply (int nList, char *pList) {(int bytes, char *pBuf)};
+  void SetFieldBinary(int id, int bytes, char *pBuf) {
+      OGR_F_SetFieldBinary(self, id, bytes, pBuf);
+  }  
+  void SetFieldBinary(const char* field_name, int bytes, char *pBuf) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldBinary(self, id, bytes, pBuf);
+  }
+  %clear (int bytes, char *pBuf);
 #endif
 
   void SetFieldBinaryFromHexString(int id, const char* pszValue)
@@ -2965,9 +2985,6 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (const char* name_null_ok) };
-#endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed",
                       OGRFieldType field_type=OFTString) {
     if (ValidateOGRFieldType(field_type))
@@ -2975,19 +2992,10 @@ public:
     else
         return NULL;
   }
-#ifdef SWIGCSHARP
-  %clear (const char* name_null_ok );
-#endif
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { const char * GetName };
-#endif
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
   }
-#ifdef SWIGCSHARP
-  %clear (const char * GetName );
-#endif
 
 #ifdef SWIGJAVA
   StringAsByteArray* GetNameAsByteArray() {
@@ -2999,17 +3007,9 @@ public:
     return OGR_Fld_GetNameRef(self);
   }
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (const char* name) };
-#endif
-
   void SetName( const char* name) {
     OGR_Fld_SetName(self, name);
   }
-
-#ifdef SWIGCSHARP
-  %clear (const char* name );
-#endif
 
   const char * GetAlternativeName() {
     return OGR_Fld_GetAlternativeNameRef(self);
@@ -3285,7 +3285,7 @@ public:
 #ifndef SWIGCSHARP
 %apply (size_t nLen, char *pBuf ) { (size_t len, char *bin_string)};
 #else
-%apply (void *buffer_ptr) {char *bin_string};
+%apply (int nList, char *pList)   { (size_t len, char *bin_string)};
 #endif
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
@@ -3303,11 +3303,7 @@ public:
   }
 
 %}
-#endif
-#ifndef SWIGCSHARP
 %clear (size_t len, char *bin_string);
-#else
-%clear (char *bin_string);
 #endif
 
 #ifdef SWIGJAVA
@@ -3375,7 +3371,6 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 
 %}
 
-#ifndef SWIGCSHARP
 %newobject CreateGeometryFromEnvelope;
 %inline %{
   OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin,
@@ -3387,7 +3382,6 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
     return geom;
   }
 %}
-#endif
 
 %newobject BuildPolygonFromEdges;
 #ifndef SWIGJAVA

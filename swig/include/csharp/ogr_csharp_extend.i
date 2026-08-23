@@ -18,11 +18,13 @@
 
 %extend OGRGeometryShadow
 {
-    %apply (void *buffer_ptr) {char *buffer};
-    OGRErr ExportToWkb( int bufLen, char *buffer, OGRwkbByteOrder byte_order ) {
-      if (bufLen < OGR_G_WkbSize( self ))
+    %apply (int nList, char *pList) {(int buffer, char *pBuffer)};
+    OGRErr ExportToWkb( int buffer, char *pBuffer, OGRwkbByteOrder byte_order = wkbXDR ) {
+      if (buffer < OGR_G_WkbSize( self )) {
         CPLError(CE_Failure, 1, "Array size is small (ExportToWkb).");
-      return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) buffer );
+        return CE_Failure;
+      }
+      return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) pBuffer );
     }
-    %clear char *buffer;
+    %clear (int buffer, char *pBuffer);
 }

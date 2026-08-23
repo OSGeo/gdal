@@ -166,6 +166,7 @@ OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
 }
 %enddef
 
+%NUMBER_VALUE_LIST(GByte, byteList, byte);      // (GByte   *byteList)
 %NUMBER_VALUE_LIST(int, intList, int);          // (int     *intList)
 %NUMBER_VALUE_LIST(GIntBig, longList, long);    // (GIntBig *longList)
 %NUMBER_VALUE_LIST(double, doubleList, double); // (double  *doubleList)
