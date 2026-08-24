@@ -147,6 +147,7 @@ PRIMITIVE_ARRAYS_INOUT(double, double)
 OBJECT_LIST_INOUT(GDALDatasetShadow, Dataset)
 OBJECT_LIST_INOUT(GDALRasterBandShadow, Band)
 OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
+OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
 
 %define %NUMBER_VALUE_LIST(CTYPE, VARIABLE_NAME, CSTYPE)
 
@@ -367,6 +368,27 @@ post="
 %typemap(cstype) (CPLErrorHandler) "$module.GDALErrorHandlerDelegate"
 %typemap(csin) (CPLErrorHandler)  "$csinput"
 %typemap(in) (CPLErrorHandler) %{ $1 = ($1_ltype)$input; %}
+
+/******************************************************************************
+ * GDALTransformerFunc typemaps                                                  *
+ *****************************************************************************/
+%pragma(csharp) modulecode="public delegate bool GDALTransformerFuncDelegate(IntPtr pTransformerArg, int bDstToSrc, int nPointCount, IntPtr x, IntPtr y, IntPtr z, IntPtr panSuccess);"
+
+%typemap(ctype)  (GDALTransformerFunc) "GDALTransformerFunc"
+%typemap(imtype) (GDALTransformerFunc) "$module.GDALTransformerFuncDelegate"
+%typemap(cstype) (GDALTransformerFunc) "$module.GDALTransformerFuncDelegate"
+%typemap(csin)   (GDALTransformerFunc) "$csinput"
+%typemap(in)     (GDALTransformerFunc) %{ $1 = $input; %}
+%typemap(out)    (GDALTransformerFunc) %{ $result = $1; %}
+%typemap(csvarout, excode=SWIGEXCODE2) (GDALTransformerFunc)   %{
+    get {
+      $module.GDALTransformerFuncDelegate ret = $imcall;$excode
+      return ret;
+    } %}
+%typemap(csout, excode=SWIGEXCODE) (GDALTransformerFunc)   %{
+    $module.GDALTransformerFuncDelegate ret = $imcall;$excode
+    return ret;
+%}
 
 /******************************************************************************
  * GDALProgressFunc typemaps                                                  *

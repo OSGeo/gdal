@@ -221,9 +221,50 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
     return eErr;
 }
 %}
-#else
+#elif defined(SWIGCSHARP)
 /* ignore overload which splits multi-argument typemap*/
-%ignore RasterizeLayer(GDALDatasetShadow *,int,int *,OGRLayerShadow *,void *,void *,int);
+%ignore RasterizeLayers(GDALDatasetShadow *,int,int *, int, OGRLayerShadow **,GDALTransformerFunc,void *,int);
+%apply (int object_list_count, OGRLayerShadow **poObjects)  { (int layers, OGRLayerShadow **pLayers) };
+%inline %{
+int  RasterizeLayers( GDALDatasetShadow *dataset,
+                 int bands, int *band_list,
+                 int layers, OGRLayerShadow **pLayers,
+                 GDALTransformerFunc pfnTransformer = NULL,
+                 void *pTransformArg = NULL,
+		         int burn_values = 0, double *burn_values_list = NULL,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErr eErr;
+
+    CPLErrorReset();
+    
+	int req_butn_values = bands * layers;	
+    if( burn_values == 0 )
+    {
+        burn_values_list = (double *) CPLMalloc(sizeof(double)*req_butn_values);
+        for( int i = 0; i < req_butn_values; i++ )
+            burn_values_list[i] = 255.0;
+    }
+	else if( burn_values < req_butn_values )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Did not get the expected number of burn values in RasterizeLayer()" );
+        return CE_Failure;
+    }
+	
+	eErr = GDALRasterizeLayers( dataset, bands, band_list,
+                                layers, (OGRLayerH*)pLayers,
+                                pfnTransformer, pTransformArg,
+                                burn_values_list, options,
+                                callback, callback_data );
+    if( burn_values == 0 )
+        CPLFree( burn_values_list );
+
+    return eErr;
+} %}
+#else
 %feature( "kwargs" ) RasterizeLayer;
 %inline %{
 int  RasterizeLayer( GDALDatasetShadow *dataset,

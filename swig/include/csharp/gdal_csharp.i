@@ -428,9 +428,9 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   public static int GCPsToHomography(int nGCPs, IntPtr pGCPs, double[] argout)
     => throw new NotSupportedException();
 
-  [Obsolete("Use RasterizeLayer(Dataset dataset, int[] bands, Layer layer, IntPtr pfnTransformer, IntPtr pTransformArg, double[] burn_values, string[] options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  [Obsolete("Use RasterizeLayers(Dataset dataset, int[] bands, Layer[] layers, GDALTransformerFuncDelegate pfnTransformer, IntPtr pTransformArg, double[] burn_values, string[] options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
   public static int RasterizeLayer(Dataset dataset, int bands, int[] band_list, OSGeo.OGR.Layer layer, IntPtr pfnTransformer, IntPtr pTransformArg, int burn_values, double[] burn_values_list, string[] options, GDALProgressFuncDelegate callback, string callback_data)
-    => RasterizeLayer(dataset, band_list, layer, pfnTransformer, pTransformArg, burn_values_list, options, callback, callback_data);
+    => RasterizeLayers(dataset, band_list, new OSGeo.OGR.Layer[]{ layer }, Marshal.GetDelegateForFunctionPointer<Gdal.GDALTransformerFuncDelegate>(pfnTransformer), pTransformArg, burn_values_list, options, callback, callback_data);
 
   [Obsolete("Use RegenerateOverviews(Band srcBand, Band[] overviewBandCount, string resampling, GDALProgressFuncDelegate callback, string callback_data) instead.")]
   public static int RegenerateOverviews(Band srcBand, int overviewBandCount, Band[] overviewBands, string resampling, GDALProgressFuncDelegate callback, string callback_data)
