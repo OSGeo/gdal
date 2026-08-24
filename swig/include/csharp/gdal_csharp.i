@@ -582,3 +582,151 @@ typedef struct {} GdalExtensions;
 
 %ignore GdalExtensions::GdalExtensions();
 struct  GdalExtensions{};
+
+/*****************************************************************************
+ * Enable C# default arguments all GDAL methods                              *
+ * Apply fixes to specific methods to translate C++ default values to C#     *
+ ****************************************************************************/
+ 
+#if SWIG_VERSION >= 0x040200
+%feature("cs:defaultargs");
+
+%feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDatasetShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateVector;
+%feature("cs:defaultargs", root_group_options="null", options="null") GDALDatasetShadow::CreateMultiDimensional;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") GDALDatasetShadow::CreateCopy;
+
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALAlgorithmHS::Run;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALAlgorithmHS::ParseRunAndFinalize;
+
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetMDArrayNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenMDArrayFromFullname;
+%feature("cs:defaultargs", options="null") GDALGroupHS::ResolveMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetGroupNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenGroupFromFullname;
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetVectorLayerNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenVectorLayer;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateDimension;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteAttribute;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateAttribute;
+%feature("cs:defaultargs", options="null") GDALGroupHS::SubsetDimensionFromSelection;
+%feature("cs:defaultargs", groupOptions="null", arrayOptions="null") GDALGroupHS::GetMDArrayFullNamesRecursive;
+
+%feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::ReadRaster;
+%feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::WriteRaster;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALRasterBandShadow::ComputeStatistics;
+%feature("cs:defaultargs", panHistogram="null", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogram;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogram;
+%feature("cs:defaultargs", buf_type="DataType.GDT_Byte", options="null") GDALRasterBandShadow::AdviseRead;
+%feature("cs:defaultargs", transformerOptions="null") GDALRasterBandShadow::InterpolateAtGeolocation;
+
+%feature("cs:defaultargs", buf_type="DataType.GDT_Byte", band_list="null", options="null") GDALDatasetShadow::AdviseRead;
+%feature("cs:defaultargs", overviewlist="null") GDALDatasetShadow::BuildOverviews;
+%feature("cs:defaultargs", srs="null") GDALDatasetShadow::GetExtent;
+%feature("cs:defaultargs", srs="null", geom_type="wkbGeometryType.wkbUnknown", options="null") GDALDatasetShadow::CreateLayer;
+%feature("cs:defaultargs", datatype="DataType.GDT_Byte") GDALDatasetShadow::AddBand;
+%feature("cs:defaultargs", spatialFilter="null") GDALDatasetShadow::ExecuteSQL;
+%feature("cs:defaultargs", force=0) GDALDatasetShadow::StartTransaction;
+%feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::ReadRaster;
+%feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::WriteRaster;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALDatasetShadow::BuildOverviews;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::GetNextFeature;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::Close;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::AddBand;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateLayerFromGeomFieldDefn;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CopyLayer;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::GetFieldDomainNames;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::GetRelationshipNames;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::AsMDArray;
+
+%feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDriverShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDriverShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDriverShadow::CreateVector;
+%feature("cs:defaultargs", root_group_options="null", options="null") GDALDriverShadow::CreateMultiDimensional;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") GDALDriverShadow::CreateCopy;
+
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALTransformerInfoShadow::TransformGeolocations;
+
+%feature("cs:defaultargs", eSubType="ExtendedDataTypeSubType.GEDTST_NONE") GDALExtendedDataTypeHS::CreateString;
+
+%feature("cs:defaultargs", palette="PaletteInterp.GPI_RGB") GDALColorTableShadow::GDALColorTableShadow;
+
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::Resize;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::CreateAttribute;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::DeleteAttribute;
+%feature("cs:defaultargs", storageType="DataType.GDT_Unknown") GDALMDArrayHS::SetOffset;
+%feature("cs:defaultargs", storageType="DataType.GDT_Unknown") GDALMDArrayHS::SetScale;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::GetMask;
+%feature("cs:defaultargs", xArray="null", yArray="null", options="null") GDALMDArrayHS::GetGridded;
+%feature("cs:defaultargs", hRootGroup="null", options="null") GDALMDArrayHS::AsClassicDataset;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::Cache;
+%feature("cs:defaultargs", overviewlist="null", callback="null", callback_data="null", options="null") GDALMDArrayHS::BuildOverviews;
+
+%feature("cs:defaultargs", pfnTransformer="null", pTransformArg="default(IntPtr)", burn_values="null", options="null", callback="null", callback_data="null") RasterizeLayers;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverviews;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverview;
+%feature("cs:defaultargs", pfnErrorHandler="null", user_data="default(IntPtr)") SetErrorHandler;
+%feature("cs:defaultargs", pszCallbackName="null") PushErrorHandler;
+%feature("cs:defaultargs", msg_class="CPLErr.CE_Failure") Error;
+%feature("cs:defaultargs", scheme=3) EscapeString; //CPLES_SQL
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetGlobalConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetThreadLocalConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_VSIGetCredential;
+%feature("cs:defaultargs", pszDefault="null") wrapper_VSIGetPathSpecificOption;
+%feature("cs:defaultargs", pszPathPrefix="null") wrapper_VSIClearCredentials;
+%feature("cs:defaultargs", pszPathPrefix="null") wrapper_VSIClearPathSpecificOptions;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") wrapper_VSIMove;
+%feature("cs:defaultargs", fpSource="default(IntPtr)", options="null", callback="null", callback_data="null") wrapper_VSICopyFile;
+%feature("cs:defaultargs", options="null") wrapper_VSIGetSignedURL;
+%feature("cs:defaultargs", options="null") wrapper_VSIGetFileMetadata;
+%feature("cs:defaultargs", options="null") wrapper_VSISetFileMetadata;
+%feature("cs:defaultargs", options="null") wrapper_VSINetworkStatsGetAsSerializedJSON;
+%feature("cs:defaultargs", bSetError=0, options="null") wrapper_VSIFOpenExL;
+%feature("cs:defaultargs", callback="null", callback_data="null") ComputeMedianCutPCT;
+%feature("cs:defaultargs", callback="null", callback_data="null") DitherRGB2PCT;
+%feature("cs:defaultargs", src_wkt="null", dst_wkt="null", eResampleAlg="ResampleAlg.GRA_NearestNeighbour", callback="null", callback_data="null", options="null") ReprojectImage;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") Polygonize;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") FPolygonize;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") FillNodata;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") SieveFilter;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverview;
+%feature("cs:defaultargs", callback="null", callback_data="null") ContourGenerate;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") ContourGenerateEx;
+%feature("cs:defaultargs", heightMode="ViewshedOutputType.GVOT_NORMAL", callback="null", callback_data="null", options="null") ViewshedGenerate;
+%feature("cs:defaultargs", options="null") IsLineOfSightVisible;
+%feature("cs:defaultargs", options="null") ApplyVerticalShiftGrid;
+%feature("cs:defaultargs", src_wkt="null", dst_wkt="null", eResampleAlg="ResampleAlg.GRA_NearestNeighbour") AutoCreateWarpedVRT;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") ComputeProximity;
+%feature("cs:defaultargs", options="null") GetJPEG2000StructureAsString;
+%feature("cs:defaultargs", eAccess="Access.GA_ReadOnly") Open;
+%feature("cs:defaultargs", eAccess="Access.GA_ReadOnly") OpenShared;
+%feature("cs:defaultargs", allowed_drivers="null", open_options="null", sibling_files="null") OpenEx;
+%feature("cs:defaultargs", papszSiblings="null") IdentifyDriver;
+%feature("cs:defaultargs", allowed_drivers="null", sibling_files="null") IdentifyDriverEx;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALTranslate;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALWarpDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALWarpDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALVectorTranslateDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALVectorTranslateDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALDEMProcessing;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALNearblackDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALNearblackDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALGrid;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALContourDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALContourDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALRasterizeDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALRasterizeDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALFootprintDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALFootprintDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALBuildVRT_objects;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALBuildVRT_names;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_TileIndex_names;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALMultiDimTranslateDestName;
+
+#endif //SWIG_VERSION >= 0x040200

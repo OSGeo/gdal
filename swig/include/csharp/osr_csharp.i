@@ -68,3 +68,32 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
   public int SetDataAxisToSRSAxisMapping(int nList, int[] pList)
     => SetDataAxisToSRSAxisMapping(pList);
 }
+
+/*****************************************************************************
+ * Enable C# default arguments all OSR methods                               *
+ * Apply fixes to specific methods to translate C++ default values to C#     *
+ ****************************************************************************/
+ 
+#if SWIG_VERSION >= 0x040200 && !defined(FROM_GDAL_I)
+%feature("cs:defaultargs");
+
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::IsSame;
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToWkt;
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToCF1;
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToCF1Units;
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToPROJJSON;
+%feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ConvertToOtherProjection;
+
+%feature("cs:defaultargs", target_key="null") OSRSpatialReferenceShadow::GetAuthorityName;
+%feature("cs:defaultargs", target_key="null") OSRSpatialReferenceShadow::GetAuthorityCode;
+
+%feature("cs:defaultargs", name="null")       OSRSpatialReferenceShadow::PromoteTo3D;
+%feature("cs:defaultargs", name="null")       OSRSpatialReferenceShadow::DemoteTo2D;
+%feature("cs:defaultargs", units="null")      OSRSpatialReferenceShadow::ImportFromCF1;
+
+%feature("cs:defaultargs", argin="null")      OSRSpatialReferenceShadow::ImportFromPCI;
+%feature("cs:defaultargs", argin="null")      OSRSpatialReferenceShadow::ImportFromUSGS;
+
+%feature("cs:defaultargs", options="null")    CreateCoordinateTransformation;
+
+#endif //SWIG_VERSION >= 0x040200 && !defined(FROM_GDAL_I)

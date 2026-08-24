@@ -985,8 +985,8 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 #else
   %apply double* OUTPUT {double* pdfProgressPct};
-  OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer = NULL,
-                                    double* pdfProgressPct = NULL,
+  OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer,
+                                    double* pdfProgressPct,
                                     GDALProgressFunc callback = NULL,
                                     void* callback_data=NULL )
   {

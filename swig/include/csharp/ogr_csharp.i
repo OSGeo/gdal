@@ -130,3 +130,62 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
   public static Geometry CreateGeometryFromWkb(uint len, IntPtr bin_string, OSR.SpatialReference reference)
     => throw new NotSupportedException();
 %}
+
+/*****************************************************************************
+ * Enable C# default arguments all OGR methods                               *
+ * Apply fixes to specific methods to translate C++ default values to C#     *
+ ****************************************************************************/
+
+#if SWIG_VERSION >= 0x040200 && !defined(FROM_GDAL_I)
+%feature("cs:defaultargs");
+
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Intersection;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Union;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::SymDifference;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Identity;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Update;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Clip;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Erase;
+
+%feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;
+%feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;
+%feature("cs:defaultargs", options="null") OGRFeatureShadow::DumpReadableAsString;
+%feature("cs:defaultargs", flags=0x7FFFFFEF, bEmitError=1) OGRFeatureShadow::Validate; //0x7FFFFFEF = OGR_F_VAL_ALL
+%feature("cs:defaultargs", bNotNullableOnly=0, options="null") OGRFeatureShadow::FillUnsetWithDefault;
+
+%feature("cs:defaultargs", type="wkbGeometryType.wkbUnknown", wkt="null", wkb="null", gml="null") OGRGeometryShadow::OGRGeometryShadow;
+%feature("cs:defaultargs", byte_order="wkbByteOrder.wkbXDR") OGRGeometryShadow::ExportToWkb;
+%feature("cs:defaultargs", altitude_mode="null") OGRGeometryShadow::ExportToKML;
+%feature("cs:defaultargs", options="null") OGRGeometryShadow::ExportToJson;
+%feature("cs:defaultargs", options="null") OGRGeometryShadow::MakeValid;
+%feature("cs:defaultargs", options="null") OGRGeometryShadow::GetLinearGeometry;
+%feature("cs:defaultargs", options="null") OGRGeometryShadow::GetCurveGeometry;
+%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPoint;
+%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPointZM;
+%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPoint_2D;
+%feature("cs:defaultargs", bOnlyEdges=0) OGRGeometryShadow::DelaunayTriangulation;
+%feature("cs:defaultargs", bLookForCircular=0) OGRGeometryShadow::HasCurveGeometry;
+
+%feature("cs:defaultargs", field_type="FieldType.OFTString") OGRFieldDefnShadow::OGRFieldDefnShadow;
+
+%feature("cs:defaultargs", srs="null", geom_type="wkbGeometryType.wkbUnknown", options="null") OGRDataSourceShadow::CreateLayer;
+%feature("cs:defaultargs", options="null") OGRDataSourceShadow::CopyLayer;
+%feature("cs:defaultargs", spatialFilter="null") OGRDataSourceShadow::ExecuteSQL;
+%feature("cs:defaultargs", force=0) OGRDataSourceShadow::StartTransaction;
+
+%feature("cs:defaultargs", options="null") OGRDriverShadow::CreateDataSource;
+%feature("cs:defaultargs", options="null") OGRDriverShadow::CopyDataSource;
+
+%feature("cs:defaultargs", field_type="wkbGeometryType.wkbUnknown") OGRGeomFieldDefnShadow::OGRGeomFieldDefnShadow;
+
+%feature("cs:defaultargs", name_null_ok="null") OGRFeatureDefnShadow::OGRFeatureDefnShadow;
+
+%feature("cs:defaultargs", options="null") OGRGeomTransformerShadow::OGRGeomTransformerShadow;
+
+%feature("cs:defaultargs", reference="null") CreateGeometryFromWkb;
+%feature("cs:defaultargs", reference="null") CreateGeometryFromWkt;
+%feature("cs:defaultargs", reference="null") CreateGeometryFromEnvelope;
+%feature("cs:defaultargs", options="null") ForceTo;
+%feature("cs:defaultargs", bSetM=0) GT_SetModifier;
+
+#endif //SWIG_VERSION >= 0x040200 && !defined(FROM_GDAL_I)
