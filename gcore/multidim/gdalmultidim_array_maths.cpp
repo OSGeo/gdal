@@ -561,8 +561,11 @@ bool GDALMathOperationMDArray::IRead(const GUInt64 *arrayStartIdx,
             bRowMajorBufferStride = false;
             break;
         }
-        nExpectedStrideValue = static_cast<GPtrDiff_t>(nExpectedStrideValue *
-                                                       apoDims[i]->GetSize());
+        // The expected stride derives from the requested count, not
+        // from the size of the array dimensions, which are only equal when
+        // the whole array is requested.
+        nExpectedStrideValue =
+            static_cast<GPtrDiff_t>(nExpectedStrideValue * count[i]);
     }
 
     size_t nElts = 1;
