@@ -2924,8 +2924,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     {
         eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SYCC);
     }
-    else if ((nBands == 3 || nBands == 4) && nRedBandIndex >= 0 &&
-             nGreenBandIndex >= 0 && nBlueBandIndex >= 0)
+    else if (nBands >= 3 && nRedBandIndex >= 0 && nGreenBandIndex >= 0 &&
+             nBlueBandIndex >= 0)
     {
         eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SRGB);
     }
