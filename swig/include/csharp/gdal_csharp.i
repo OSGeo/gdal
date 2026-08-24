@@ -28,7 +28,6 @@ DEFINE_EXTERNAL_CLASS(GDALSubdatasetInfoShadow, OSGeo.GDAL.SubdatasetInfo)
 %apply (double *OUTPUT) {double *min_ret, double *max_ret};
 %apply (int *nLen) {int *buckets_ret};
 %apply (double *pList) {double *burn_values_list, double *fixedLevels};
-%apply (int **pList) {int **ppanHistogram};
 %apply (void *buffer_ptr) {void *pfnTransformer, void *pTransformArg};
 
 VALUE_LIST_INOUT(GDAL_GCP, GCP)
@@ -192,7 +191,7 @@ public GCP[] GetGCPs() {
 
   [Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int[] band_list, string[] options) instead.")]
   public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int band_list, int[] pband_list, string[] options)
-    => AdviseRead(xoff, yoff, xsize, ysize, ref buf_xsize, ref buf_ysize, ref buf_type, pband_list, options);
+    => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, pband_list, options);
   
   [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.", error: true)]
   public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options)

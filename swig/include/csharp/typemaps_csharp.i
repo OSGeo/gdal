@@ -216,6 +216,33 @@ OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
 %ArrayInAndOutTypemaps(int, int);
 %ArrayInAndOutTypemaps(double, double);
 
+/*
+ * Macro for generating CTYPE typemaps for **array_argout_free
+ * Use unsafe because Marshal.Copy does not support ulong[]
+ */
+ 
+%define %ArrayOutAndFreeTypemaps(CTYPE, CSTYPE)
+
+%typemap(ctype)  CTYPE **array_argout_free "CTYPE**"
+%typemap(imtype) CTYPE **array_argout_free "ref IntPtr"
+%typemap(cstype) CTYPE **array_argout_free "out CSTYPE[]"
+%typemap(in)     CTYPE **array_argout_free %{ $1 = $input; %}
+%typemap(out)    CTYPE **array_argout_free %{ $result = $1; %}
+%typemap(csin,
+pre="  count = 0;
+  var temp$csinput = IntPtr.Zero;",
+post="
+  $csinput = new CSTYPE[count];
+  if (count > 0) unsafe {
+    fixed (CSTYPE* p$csinput = $csinput)
+      Buffer.MemoryCopy(temp$csinput.ToPointer(), p$csinput, (long)count * sizeof(CSTYPE), (long)count * sizeof(CSTYPE));
+  }
+  $module.CPLMemDestroy(temp$csinput);")
+(CTYPE **array_argout_free) "ref temp$csinput"
+%enddef // %ArrayOutAndFreeTypemaps
+
+%ArrayOutAndFreeTypemaps(int, int);
+%ArrayOutAndFreeTypemaps(GUIntBig, ulong);
 
 /*
  * Typemap for double *defaultval.

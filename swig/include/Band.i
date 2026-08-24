@@ -281,6 +281,12 @@ public:
   int Checksum( int xoff, int yoff, int xsize, int ysize) {
     return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
   }
+#elif defined(SWIGCSHARP)
+  int Checksum( int xoff = 0, int yoff = 0, int xsize = 0, int ysize = 0) {
+    if (xsize == 0) xsize = GDALGetRasterBandXSize( self );
+    if (ysize == 0) xsize = GDALGetRasterBandYSize( self );
+    return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
+  }
 #else
 %apply (int *optional_int) {(int*)};
 %feature ("kwargs") Checksum;
@@ -454,18 +460,29 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
                                     ppanHistogram, force,
                                     callback, callback_data );
 }
-#else
-#ifndef SWIGJAVA
-%feature ("kwargs") GetDefaultHistogram;
-CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL,
-                            int **ppanHistogram = NULL, int force = 1,
+#elif defined(SWIGCSHARP)
+%apply (int *hasval) {int *count};
+%apply (GUIntBig **array_argout_free) {GUIntBig **ppanHistogram};
+CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *count,
+                            GUIntBig **ppanHistogram, int force = 1,
 			    GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
-    return GDALGetDefaultHistogram( self, min_ret, max_ret, buckets_ret,
+    return GDALGetDefaultHistogramEx( self, min_ret, max_ret, count,
                                     ppanHistogram, force,
                                     callback, callback_data );
 }
-#endif
+%clear GUIntBig **ppanHistogram;
+%apply (int **array_argout_free) {int **ppanHistogram};
+CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *count,
+                            int **ppanHistogram, int force = 1,
+			    GDALProgressFunc callback = NULL,
+                            void* callback_data=NULL ) {
+    return GDALGetDefaultHistogram( self, min_ret, max_ret, count,
+                                    ppanHistogram, force,
+                                    callback, callback_data );
+}
+%clear int **ppanHistogram;
+%clear int *count;
 #endif
 
 #if defined(SWIGPYTHON)
@@ -628,6 +645,18 @@ CPLErr SetDefaultHistogram( double min, double max,
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
 #endif
+#ifdef SWIGCSHARP
+CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
+                    int buf_xsize = 0, int buf_ysize = 0,
+                    GDALDataType buf_type = GDT_Byte,
+                    char** options = NULL ){
+
+    if (buf_xsize == 0) buf_xsize = xsize;
+    if (buf_ysize == 0) buf_ysize = ysize;
+    return GDALRasterAdviseRead(self, xoff, yoff, xsize, ysize,
+                                buf_xsize, buf_ysize, buf_type, options);
+}
+#else
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                     int *buf_xsize = 0, int *buf_ysize = 0,
@@ -645,6 +674,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALRasterAdviseRead(self, xoff, yoff, xsize, ysize,
                                 nxsize, nysize, ntype, options);
 }
+#endif
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 

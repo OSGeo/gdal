@@ -590,13 +590,27 @@ public:
 %clear (GIntBig buf_len, char *buf_string);
 #endif
 
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+#ifdef SWIGCSHARP
 /* ignore overload which splits multi-argument typemap*/
-%ignore AdviseRead(int,int,int,int,int *,int *,GDALDataType *,int);
+%ignore AdviseRead(int,int,int,int,int,int,GDALDataType,int);
+CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
+                    int buf_xsize = 0, int buf_ysize = 0,
+                    GDALDataType buf_type = GDT_Byte,
+                    int band_list = 0, int *pband_list = 0,
+                    char** options = NULL ){
+
+    if (buf_xsize == 0) buf_xsize = xsize;
+    if (buf_ysize == 0) buf_ysize = ysize;
+    return GDALDatasetAdviseRead(self, xoff, yoff, xsize, ysize,
+                                 buf_xsize, buf_ysize, buf_type,
+                                 band_list, pband_list, options);
+}
+#else
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
 #endif
-%apply (int *optional_int) { (GDALDataType *buf_type) };
-%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
@@ -620,6 +634,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                  nxsize, nysize, ntype,
                                  band_list, pband_list, options);
 }
+#endif
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 
