@@ -424,6 +424,39 @@ public:
                                          callback, callback_data );
     return err;
   }
+#elif defined(SWIGCSHARP)
+/* ignore overload which splits multi-argument typemap*/
+%ignore GetHistogram(double,double,int);
+%apply (int nList, int *pList) {(int histogram, int *panHistogram)};
+  CPLErr GetHistogram( double min = -0.5, double max = 255.5,
+                       int histogram=0, int *panHistogram = NULL,
+                       bool include_out_of_range = FALSE,
+                       bool approx_ok = TRUE,
+                       GDALProgressFunc callback = NULL,
+                       void* callback_data=NULL ) {
+    CPLErrorReset();
+    CPLErr err = GDALGetRasterHistogram( self, min, max, histogram, panHistogram,
+                                         static_cast<int>(include_out_of_range), static_cast<int>(approx_ok),
+                                         callback, callback_data );
+    return err;
+  }
+%clear (int histogram, int *panHistogram);
+/* ignore overload which splits multi-argument typemap*/
+%ignore GetHistogramEx(double,double,int);
+%apply (int nList, GUIntBig *pList) {(int histogram, GUIntBig *panHistogram)};
+  CPLErr GetHistogramEx( double min = -0.5, double max = 255.5,
+                         int histogram=0, GUIntBig *panHistogram = NULL,
+                         bool include_out_of_range = FALSE,
+                         bool approx_ok = TRUE,
+                         GDALProgressFunc callback = NULL,
+                         void* callback_data=NULL ) {
+    CPLErrorReset();
+    CPLErr err = GDALGetRasterHistogramEx( self, min, max, histogram, panHistogram,
+                                         static_cast<int>(include_out_of_range), static_cast<int>(approx_ok),
+                                         callback, callback_data );
+    return err;
+  }
+%clear (int histogram, GUIntBig *panHistogram);
 #else
 #ifndef SWIGJAVA
 #if defined(SWIGCSHARP)

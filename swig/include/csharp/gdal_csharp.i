@@ -119,6 +119,9 @@ public static ComputedBand MaximumOfNBands(int band_count, Band[] bands) => Maxi
 public static ComputedBand MeanOfNBands(int band_count, Band[] bands) => MeanOfNBands(bands);
 [Obsolete("Use Feature MinimumOfNBands(Band[] band_count) instead.")]
 public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => MinimumOfNBands(bands);
+[Obsolete("Use Feature GetHistogram(double min, double max, int[] histogram, bool include_out_of_range, bool approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
+public CPLErr GetHistogram(double min, double max, int buckets, int[] panHistogram, int include_out_of_range, int approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data)
+  => GetHistogram(min, max, panHistogram, include_out_of_range != 0, approx_ok != 0, callback, callback_data);
 }
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
@@ -620,7 +623,8 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::ReadRaster;
 %feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::WriteRaster;
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALRasterBandShadow::ComputeStatistics;
-%feature("cs:defaultargs", panHistogram="null", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogram;
+%feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogram;
+%feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogramEx;
 %feature("cs:defaultargs", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogram;
 %feature("cs:defaultargs", buf_type="DataType.GDT_Byte", options="null") GDALRasterBandShadow::AdviseRead;
 %feature("cs:defaultargs", transformerOptions="null") GDALRasterBandShadow::InterpolateAtGeolocation;
