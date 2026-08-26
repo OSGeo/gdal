@@ -54,6 +54,10 @@ Program-Specific Options
     Starting with GDAL 3.13, <BAND> can also be a color interpretation such
     as "red", "green", "blue", "alpha", "nir", etc.
 
+    Starting with GDAL 3.14, <BAND> can be a range of bands expressed as
+    ``FIRST:LAST`` or ``FIRST:LAST:STEP``. Values of ``FIRST`` and ``LAST``
+    may be negative; for example, ``-2`` would select the second-to-last band.
+
 .. option:: --mask <BAND>
 
     Select one input band to create output dataset mask band.. Bands are numbered from 1.
