@@ -52,6 +52,17 @@ def test_gdalalg_raster_select(tmp_vsimem):
         ]
 
 
+def test_gdalalg_raster_select_negative(tmp_vsimem):
+
+    with gdal.alg.raster.select(
+        input="../gcore/data/rgbsmall.tif", output="", output_format="MEM", band=[-1, 1]
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 2
+        assert ds.GetRasterBand(1).Checksum() == 21349
+        assert ds.GetRasterBand(2).Checksum() == 21212
+
+
 def test_gdalalg_raster_select_mask():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)

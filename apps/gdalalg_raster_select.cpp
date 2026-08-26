@@ -201,8 +201,7 @@ GDALRasterSelectAlgorithm::GDALRasterSelectAlgorithm(bool standaloneStep)
                 {
                     if (!STARTS_WITH(v.c_str(), "mask") &&
                         v.find(":") == std::string::npos &&
-                        !(CPLGetValueType(v.c_str()) == CPL_VALUE_INTEGER &&
-                          atoi(v.c_str()) >= 1) &&
+                        CPLGetValueType(v.c_str()) != CPL_VALUE_INTEGER &&
                         !cpl::contains(oSetValidColorInterp,
                                        CPLString(v).tolower()))
                     {
@@ -341,10 +340,36 @@ bool GDALRasterSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
                     aosOptions.AddString(std::to_string(iBand));
                 }
             }
-            else
+            else if (cpl::equals_ci(v, "mask"))
             {
                 aosOptions.AddString("-b");
-                aosOptions.AddString(CPLString(v).replaceAll(':', ',').c_str());
+                aosOptions.AddString(v);
+            }
+            else
+            {
+                const auto maybeBand = cpl::strict_parse<int>(v);
+                if (!maybeBand)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "Invalid band: %s",
+                             v.c_str());
+                    return false;
+                }
+                const int nBands = poSrcDS->GetRasterCount();
+                int iBand = maybeBand.value();
+                if (iBand < 0)
+                {
+                    iBand += nBands + 1;
+                }
+
+                if (iBand > nBands || iBand < 1)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg, "Invalid band: %s",
+                             v.c_str());
+                    return false;
+                }
+
+                aosOptions.AddString("-b");
+                aosOptions.AddString(std::to_string(iBand));
             }
         }
     }
