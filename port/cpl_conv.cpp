@@ -4150,6 +4150,10 @@ std::optional<T> CPL_DLL strict_parse(std::string_view str)
                     }
                 }
             }
+            else
+            {
+                return std::nullopt;
+            }
         }
         else
         {
