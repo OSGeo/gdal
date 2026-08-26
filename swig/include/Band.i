@@ -284,7 +284,7 @@ public:
 #elif defined(SWIGCSHARP)
   int Checksum( int xoff = 0, int yoff = 0, int xsize = 0, int ysize = 0) {
     if (xsize == 0) xsize = GDALGetRasterBandXSize( self );
-    if (ysize == 0) xsize = GDALGetRasterBandYSize( self );
+    if (ysize == 0) ysize = GDALGetRasterBandYSize( self );
     return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
   }
 #else

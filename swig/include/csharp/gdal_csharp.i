@@ -113,15 +113,20 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
  * Overloads to maintain backwards compatibility with multi-argument typemaps
  */
 
-[Obsolete("Use Feature MaximumOfNBands(Band[] band_count) instead.")]
+[Obsolete("Use MaximumOfNBands(Band[] band_count) instead.")]
 public static ComputedBand MaximumOfNBands(int band_count, Band[] bands) => MaximumOfNBands(bands);
-[Obsolete("Use Feature MeanOfNBands(Band[] band_count) instead.")]
+[Obsolete("Use MeanOfNBands(Band[] band_count) instead.")]
 public static ComputedBand MeanOfNBands(int band_count, Band[] bands) => MeanOfNBands(bands);
-[Obsolete("Use Feature MinimumOfNBands(Band[] band_count) instead.")]
+[Obsolete("Use MinimumOfNBands(Band[] band_count) instead.")]
 public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => MinimumOfNBands(bands);
-[Obsolete("Use Feature GetHistogram(double min, double max, int[] histogram, bool include_out_of_range, bool approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
+[Obsolete("Use GetHistogram(double min, double max, int[] histogram, bool include_out_of_range, bool approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
 public CPLErr GetHistogram(double min, double max, int buckets, int[] panHistogram, int include_out_of_range, int approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data)
   => GetHistogram(min, max, panHistogram, include_out_of_range != 0, approx_ok != 0, callback, callback_data);
+[Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, DataType buf_type, string[] options) instead.")]
+public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, string[] options)
+  => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, options);
+[Obsolete("Use public int Checksum(int xoff, int yoff, int xsize, int ysize) instead.")]
+public int Checksum(int xoff, int yoff, ref int xsize, ref int ysize) => Checksum(xoff, yoff, xsize, ysize);
 }
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
