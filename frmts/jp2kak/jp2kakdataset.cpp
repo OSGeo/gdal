@@ -233,6 +233,16 @@ JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
     {
         eInterp = GCI_GrayIndex;
     }
+
+    // If the file declares a luminance/grayscale colour space, treat every
+    // band that is not explicitly an alpha or palette channel as a grayscale
+    // intensity band. Kakadu may expand the channel definition box with
+    // default RGB associations for extra components, so we override those.
+    if (poBaseDS->m_eColourSpace == JP2_sLUM_SPACE &&
+        eInterp != GCI_AlphaBand && eInterp != GCI_PaletteIndex)
+    {
+        eInterp = GCI_GrayIndex;
+    }
 }
 
 /************************************************************************/
@@ -774,6 +784,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
     kdu_client *jpip_client = nullptr;
     jp2_palette oJP2Palette;
     jp2_channels oJP2Channels;
+    jp2_colour_space eColourSpace = JP2_sRGB_SPACE;
 
     jp2_family_src *family = nullptr;
 
@@ -864,12 +875,14 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
             oJP2Channels = jp2_src->access_channels();
 
             jp2_colour oColors = jp2_src->access_colour();
-            if (oColors.get_space() != JP2_sRGB_SPACE &&
-                oColors.get_space() != JP2_sLUM_SPACE)
+            eColourSpace = oColors.get_space();
+
+            if (eColourSpace != JP2_sRGB_SPACE &&
+                eColourSpace != JP2_sLUM_SPACE)
             {
                 CPLDebug("JP2KAK",
                          "Unusual ColorSpace=%d, not further interpreted.",
-                         static_cast<int>(oColors.get_space()));
+                         static_cast<int>(eColourSpace));
             }
         }
         else if (poRawInput == nullptr)
@@ -897,6 +910,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
     try
     {
         poDS = new JP2KAKDataset();
+        poDS->m_eColourSpace = eColourSpace;
 
         poDS->poInput = poInput;
         poDS->poRawInput = poRawInput;
@@ -2567,7 +2581,31 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         // Set colour space information (mandatory).
         jp2_colour colour = jp2_out.access_colour();
 
-        if (bHaveCT || poSrcDS->GetRasterCount() == 3)
+        int redIndex = -1;
+        int greenIndex = -1;
+        int blueIndex = -1;
+        int grayIndex = -1;
+
+        for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
+        {
+            const GDALColorInterp bandColor =
+                poSrcDS->GetRasterBand(i + 1)->GetColorInterpretation();
+
+            if (bandColor == GCI_RedBand)
+                redIndex = i;
+            else if (bandColor == GCI_GreenBand)
+                greenIndex = i;
+            else if (bandColor == GCI_BlueBand)
+                blueIndex = i;
+            else if (bandColor == GCI_GrayIndex)
+                grayIndex = i;
+        }
+
+        const bool bExplicitRGB =
+            redIndex != -1 && greenIndex != -1 && blueIndex != -1;
+        const bool bExplicitGray = grayIndex != -1;
+
+        if (bHaveCT)
         {
             colour.init(JP2_sRGB_SPACE);
         }
@@ -2593,52 +2631,35 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
             jp2_out.access_channels().set_colour_mapping(0, 0);
             jp2_out.access_channels().set_opacity_mapping(0, 1);
         }
-        else
+        else if (bExplicitRGB ||
+                 (poSrcDS->GetRasterCount() == 3 && !bExplicitGray))
         {
-            int nRedIndex = -1;
-            int nGreenIndex = -1;
-            int nBlueIndex = -1;
-            int nGrayIndex = -1;
-
-            for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
+            // Treat as RGB either when explicitly marked as such, or when
+            // there are three bands with no explicit grayscale intent.
+            colour.init(JP2_sRGB_SPACE);
+            jp2_out.access_channels().init(3);
+            if (bExplicitRGB)
             {
-                const GDALColorInterp eBandColor =
-                    poSrcDS->GetRasterBand(i + 1)->GetColorInterpretation();
-                if (eBandColor == GCI_RedBand)
-                {
-                    nRedIndex = i;
-                }
-                else if (eBandColor == GCI_GreenBand)
-                {
-                    nGreenIndex = i;
-                }
-                else if (eBandColor == GCI_BlueBand)
-                {
-                    nBlueIndex = i;
-                }
-                else if (eBandColor == GCI_GrayIndex)
-                {
-                    nGrayIndex = i;
-                }
-            }
-
-            if (nRedIndex != -1 && nGreenIndex != -1 && nBlueIndex != -1)
-            {
-                colour.init(JP2_sRGB_SPACE);
-                jp2_out.access_channels().init(3);
-                jp2_out.access_channels().set_colour_mapping(0, nRedIndex);
-                jp2_out.access_channels().set_colour_mapping(1, nGreenIndex);
-                jp2_out.access_channels().set_colour_mapping(2, nBlueIndex);
+                jp2_out.access_channels().set_colour_mapping(0, redIndex);
+                jp2_out.access_channels().set_colour_mapping(1, greenIndex);
+                jp2_out.access_channels().set_colour_mapping(2, blueIndex);
             }
             else
             {
-                colour.init(JP2_sLUM_SPACE);
-                if (nGrayIndex != -1)
-                {
-                    jp2_out.access_channels().init(1);
-                    jp2_out.access_channels().set_colour_mapping(0, nGrayIndex);
-                }
+                jp2_out.access_channels().set_colour_mapping(0, 0);
+                jp2_out.access_channels().set_colour_mapping(1, 1);
+                jp2_out.access_channels().set_colour_mapping(2, 2);
             }
+        }
+        else if (bExplicitGray)
+        {
+            colour.init(JP2_sLUM_SPACE);
+            jp2_out.access_channels().init(1);
+            jp2_out.access_channels().set_colour_mapping(0, grayIndex);
+        }
+        else
+        {
+            colour.init(JP2_sLUM_SPACE);
         }
 
         // Resolution.
