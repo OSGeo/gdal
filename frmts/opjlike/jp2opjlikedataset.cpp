@@ -825,8 +825,7 @@ GDALColorInterp JP2OPJLikeRasterBand<CODEC, BASE>::GetColorInterpretation()
     if (nBand == poGDS->nAlphaIndex + 1)
         return GCI_AlphaBand;
 
-    if (poGDS->nBands <= 2 &&
-        poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
+    if (poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
         return GCI_GrayIndex;
     else if (poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SRGB) ||
              poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SYCC))
