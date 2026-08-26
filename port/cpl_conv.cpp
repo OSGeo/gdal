@@ -4140,19 +4140,47 @@ std::optional<T> CPL_DLL strict_parse(std::string_view str)
         {
             constexpr char DIGIT_ZERO = '0';
 
-            if (*ptr++ == '.')
+            if (*ptr == '.')
             {
-                while (ptr != end)
+                ptr++;
+                while (ptr != end && *ptr == DIGIT_ZERO)
                 {
-                    if (*ptr++ != DIGIT_ZERO)
+                    ptr++;
+                }
+            }
+
+            if (ptr != end)
+            {
+                if (*ptr == 'e' || *ptr == 'E')
+                {
+                    ptr++;
+                    T exp_result;
+                    auto [exp_ptr, exp_ec] =
+                        std::from_chars(ptr, end, exp_result);
+
+                    if (exp_ec != std::errc())
                     {
                         return std::nullopt;
                     }
+
+                    if (exp_ptr != end)
+                    {
+                        return std::nullopt;
+                    }
+
+                    for (T pow = 0; pow < exp_result; pow++)
+                    {
+                        if (result > std::numeric_limits<T>::max() / 10)
+                        {
+                            return std::nullopt;
+                        }
+                        result *= 10;
+                    }
                 }
-            }
-            else
-            {
-                return std::nullopt;
+                else
+                {
+                    return std::nullopt;
+                }
             }
         }
         else
