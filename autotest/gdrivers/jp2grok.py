@@ -746,7 +746,7 @@ def test_jp2grok_25():
     del out_ds
     src_ds = None
     ds = gdal.Open("/vsimem/jp2grok_25.jp2")
-    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     ds = None
     assert gdal.VSIStatL("/vsimem/jp2grok_25.jp2.aux.xml") is None
 
