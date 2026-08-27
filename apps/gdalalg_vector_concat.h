@@ -16,7 +16,6 @@
 #include "gdalvectorpipelinestepalgorithm.h"
 
 #include "ogrsf_frmts.h"
-#include "ogrlayerpool.h"
 
 //! @cond Doxygen_Suppress
 
@@ -51,9 +50,6 @@ class GDALVectorConcatAlgorithm /* non final */
     std::string m_fieldStrategy = "union";
     std::string m_srsCrs{};
     std::string m_dstCrs{};
-
-    std::unique_ptr<OGRLayerPool> m_poLayerPool{};
-    std::vector<std::unique_ptr<OGRLayer>> m_tempLayersKeeper{};
 };
 
 /************************************************************************/
