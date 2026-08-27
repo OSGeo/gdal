@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import struct
+
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -48,6 +50,17 @@ def test_gdalalg_raster_select(tmp_vsimem):
             21212,
             30658,
         ]
+
+
+def test_gdalalg_raster_select_negative(tmp_vsimem):
+
+    with gdal.alg.raster.select(
+        input="../gcore/data/rgbsmall.tif", output="", output_format="MEM", band=[-1, 1]
+    ) as alg:
+        ds = alg.Output()
+        assert ds.RasterCount == 2
+        assert ds.GetRasterBand(1).Checksum() == 21349
+        assert ds.GetRasterBand(2).Checksum() == 21212
 
 
 def test_gdalalg_raster_select_mask():
@@ -184,6 +197,60 @@ def test_gdalalg_raster_select_by_band_color():
             output_format="MEM",
             band="undefined",
         )
+
+
+@pytest.mark.parametrize(
+    "bands,expected",
+    (
+        ["17:", (17, 18, 19, 20)],
+        [":3", (1, 2, 3)],
+        ["13:15", (13, 14, 15)],
+        ["17::3", (17, 20)],
+        [":4:3", (1, 4)],
+        ["4:16:4", (4, 8, 12, 16)],
+        ["::5", (1, 6, 11, 16)],
+        ["-4:", (17, 18, 19, 20)],
+        ["-4:-6", (17, 16, 15)],
+        ["-4:-6:-2", (17, 15)],
+        [["1:3:2", "2:4:2"], (1, 3, 2, 4)],
+        ["2::100", (2,)],
+        [":", tuple(range(1, 21))],
+        [" : ", tuple(range(1, 21))],
+        ["21:", "Invalid band: 21"],
+        ["-21:", "Invalid band: -21"],
+        ["0:15", "Invalid band: 0"],
+        ["1:3:0", "Step value must be positive"],
+        ["1:3:-1", "Step value must be positive"],
+        ["3:1:0", "Step value must be negative"],
+        ["3:1:1", "Step value must be negative"],
+        ["1:3:5:7", "Invalid value for --band"],
+        ["2.2:3", "Failed to parse start value of --band range"],
+        ["2:3.2", "Failed to parse stop value of --band range"],
+        ["2:3:0.1", "Failed to parse step value of --band range"],
+    ),
+)
+def test_gdalalg_raster_select_range(bands, expected):
+
+    nBands = 20
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, nBands)
+    for i in range(nBands):
+        src_ds.GetRasterBand(i + 1).Fill(i + 1)
+
+    alg = gdal.Algorithm("raster", "select")
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["band"] = bands
+
+    if type(expected) is tuple:
+        assert alg.Run()
+        dst_ds = alg.Output()
+        assert dst_ds.RasterCount == len(expected)
+        dat = struct.unpack("B" * len(expected), dst_ds.ReadRaster())
+        assert dat == expected
+    else:
+        with pytest.raises(Exception, match=expected):
+            alg.Run()
 
 
 def test_gdalalg_raster_select_autocomplete():
