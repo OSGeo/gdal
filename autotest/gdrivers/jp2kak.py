@@ -1052,3 +1052,20 @@ def test_jp2kak_non_persistent_read_overview():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
     assert cs == 29642
+
+
+def test_jp2kak_rgbundefined(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_Undefined)
+
+    gdal.GetDriverByName("JP2KAK").CreateCopy(tmp_vsimem / "out.jp2", src_ds)
+
+    ds = gdal.Open(tmp_vsimem / "out.jp2")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined
