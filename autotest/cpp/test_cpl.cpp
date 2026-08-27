@@ -726,9 +726,12 @@ TEST_F(test_cpl, CSLRemoveStrings_last_strings)
         ASSERT_EQ(CSLCount(papszList), 2);
         EXPECT_STREQ(papszList[0], "aaaa");
         EXPECT_STREQ(papszList[1], "bbbb");
-        ASSERT_EQ(CSLCount(papszRemoved), 2);
-        EXPECT_STREQ(papszRemoved[0], "cccc");
-        EXPECT_STREQ(papszRemoved[1], "dddd");
+        EXPECT_EQ(CSLCount(papszRemoved), 2);
+        if (CSLCount(papszRemoved) == 2)
+        {
+            EXPECT_STREQ(papszRemoved[0], "cccc");
+            EXPECT_STREQ(papszRemoved[1], "dddd");
+        }
         CSLDestroy(papszRemoved);
         CSLDestroy(papszList);
     }
@@ -737,9 +740,12 @@ TEST_F(test_cpl, CSLRemoveStrings_last_strings)
     {
         char **papszList = MakeList();
         papszList = CSLRemoveStrings(papszList, 100, 2, nullptr);
-        ASSERT_EQ(CSLCount(papszList), 2);
-        EXPECT_STREQ(papszList[0], "aaaa");
-        EXPECT_STREQ(papszList[1], "bbbb");
+        EXPECT_EQ(CSLCount(papszList), 2);
+        if (CSLCount(papszList) == 2)
+        {
+            EXPECT_STREQ(papszList[0], "aaaa");
+            EXPECT_STREQ(papszList[1], "bbbb");
+        }
         CSLDestroy(papszList);
     }
 
@@ -748,9 +754,12 @@ TEST_F(test_cpl, CSLRemoveStrings_last_strings)
     {
         char **papszList = MakeList();
         papszList = CSLRemoveStrings(papszList, 4, 1, nullptr);
-        ASSERT_EQ(CSLCount(papszList), 3);
-        EXPECT_STREQ(papszList[0], "aaaa");
-        EXPECT_STREQ(papszList[2], "cccc");
+        EXPECT_EQ(CSLCount(papszList), 3);
+        if (CSLCount(papszList) == 3)
+        {
+            EXPECT_STREQ(papszList[0], "aaaa");
+            EXPECT_STREQ(papszList[2], "cccc");
+        }
         CSLDestroy(papszList);
     }
 
@@ -759,9 +768,12 @@ TEST_F(test_cpl, CSLRemoveStrings_last_strings)
     {
         char **papszList = MakeList();
         papszList = CSLRemoveStrings(papszList, 3, 2, nullptr);
-        ASSERT_EQ(CSLCount(papszList), 2);
-        EXPECT_STREQ(papszList[0], "aaaa");
-        EXPECT_STREQ(papszList[1], "bbbb");
+        EXPECT_EQ(CSLCount(papszList), 2);
+        if (CSLCount(papszList) == 2)
+        {
+            EXPECT_STREQ(papszList[0], "aaaa");
+            EXPECT_STREQ(papszList[1], "bbbb");
+        }
         CSLDestroy(papszList);
     }
 
@@ -770,9 +782,12 @@ TEST_F(test_cpl, CSLRemoveStrings_last_strings)
     {
         char **papszList = MakeList();
         papszList = CSLRemoveStrings(papszList, 1, 2, nullptr);
-        ASSERT_EQ(CSLCount(papszList), 2);
-        EXPECT_STREQ(papszList[0], "aaaa");
-        EXPECT_STREQ(papszList[1], "dddd");
+        EXPECT_EQ(CSLCount(papszList), 2);
+        if (CSLCount(papszList) == 2)
+        {
+            EXPECT_STREQ(papszList[0], "aaaa");
+            EXPECT_STREQ(papszList[1], "dddd");
+        }
         CSLDestroy(papszList);
     }
 

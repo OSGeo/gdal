@@ -358,7 +358,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     void Interrupt(CURL *easyHandle);
     void Perform(CURL *easyHandle);
-    void Perform(std::vector<CURL *> easyHandles);
+    void Perform(const std::vector<CURL *> &easyHandles);
 
     static std::set<std::string> GetS3IgnoredStorageClasses();
 

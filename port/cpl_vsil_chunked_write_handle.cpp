@@ -241,11 +241,12 @@ size_t VSIChunkedWriteHandle::Write(const void *pBuffer, size_t nBytes)
         // cppcheck-suppress knownConditionTrueFalse
         while (m_nChunkedBufferOff < m_nChunkedBufferSize && !bRetry)
         {
-            int still_running;
+            int still_running = FALSE;
 
             memset(&m_osCurlErrBuf[0], 0, m_osCurlErrBuf.size());
 
-            curl_multi_perform(m_hCurlMulti, &still_running);
+            CPL_IGNORE_RET_VAL(
+                curl_multi_perform(m_hCurlMulti, &still_running));
             // cppcheck-suppress knownConditionTrueFalse
             if (!still_running || m_nChunkedBufferOff == m_nChunkedBufferSize)
                 break;

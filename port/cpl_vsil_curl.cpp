@@ -1109,7 +1109,8 @@ void VSICurlFilesystemHandlerBase::Perform(CURL *easyHandle)
 }
 
 // Perform work on some handles and wait for them to complete.
-void VSICurlFilesystemHandlerBase::Perform(std::vector<CURL *> easyHandles)
+void VSICurlFilesystemHandlerBase::Perform(
+    const std::vector<CURL *> &easyHandles)
 {
     if (easyHandles.empty())
         return;
