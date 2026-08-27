@@ -5649,7 +5649,7 @@ OGRGeometryH OGR_G_UnionCascaded(OGRGeometryH hThis)
  */
 
 OGRGeometry *
-OGRGeometry::UnaryUnion(GDALProgressFunc pfnProgress,
+OGRGeometry::UnaryUnion(UNUSED_IF_NO_GEOS GDALProgressFunc pfnProgress,
                         UNUSED_IF_NO_GEOS void *pProgressData) const
 
 {
