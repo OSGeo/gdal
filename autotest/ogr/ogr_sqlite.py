@@ -3970,6 +3970,11 @@ def test_ogr_sql_sql_first_geom_null(require_spatialite):
     with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1), * FROM test") as sql_lyr:
         assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
 
+    ds = ogr.Open("data/sqlite/first_geometry_null.db")
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_raised(gdal.CE_None):
+        lyr.GetNextFeature()
+
 
 ###############################################################################
 # Test our overloaded LIKE operator
