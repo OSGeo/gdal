@@ -118,13 +118,17 @@ static GDALDataset *OGRXLSXDriverOpen(GDALOpenInfo *poOpenInfo)
     if (fpContent == nullptr)
         return nullptr;
 
-    char szBuffer[2048];
-    int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
-    szBuffer[nRead] = 0;
+    std::string osBuffer;
+    // Content_Types.xml produced by PlanMaker 2026 is 2160 bytes large
+    // cf https://github.com/OSGeo/gdal/issues/15087
+    osBuffer.resize(10 * 1024);
+    const size_t nRead =
+        VSIFReadL(osBuffer.data(), 1, osBuffer.size(), fpContent);
+    osBuffer.resize(nRead);
 
     VSIFCloseL(fpContent);
 
-    if (strstr(szBuffer, XLSX_MIMETYPE) == nullptr)
+    if (osBuffer.find(XLSX_MIMETYPE) == std::string::npos)
         return nullptr;
 
     osTmpFilename =
