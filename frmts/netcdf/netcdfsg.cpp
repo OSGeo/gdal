@@ -56,8 +56,8 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
         !gm_name_s.empty())
     {
         const char *gm_name = gm_name_s.c_str();
-        int gmVID;
-        if (nc_inq_varid(ncId, gm_name, &gmVID) == NC_NOERR)
+        int gmGID, gmVID;
+        if (NCDFResolveVar(ncId, gm_name, &gmGID, &gmVID) == CE_None)
         {
             this->gm_varId = gmVID;
         }
