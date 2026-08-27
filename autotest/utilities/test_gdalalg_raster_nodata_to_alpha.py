@@ -117,3 +117,23 @@ def test_gdalalg_raster_nodata_override_nodata_several_values():
             output_format="MEM",
             nodata=[3, 2],
         )
+
+
+def test_gdalalg_raster_nodata_to_alpha_temp_ds_take_ref():
+
+    def build():
+        src_ds = gdal.GetDriverByName("MEM").Create("", 1, 3)
+        src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 3, b"\x00\x01\x02")
+        return gdal.Run(
+            "raster",
+            "nodata-to-alpha",
+            input=src_ds,
+            nodata=[0],
+            output_format="stream",
+            output="",
+        ).Output()
+
+    out_ds = build()
+    assert out_ds.RasterCount == 2
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\x01\x02"
+    assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xff\xff"
