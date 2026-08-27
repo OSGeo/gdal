@@ -291,3 +291,25 @@ def test_gdalalg_as_features_empty_row_at_end_of_block(alg, tmp_vsimem):
     lyr = ds.GetLayer(0)
 
     assert lyr.GetFeatureCount() == 1
+
+
+def test_gdalalg_raster_as_features_ds_take_ref():
+
+    def build():
+        # src_ds and alg are both released when this returns; only the
+        # streamed output dataset survives.
+        src_ds = gdal.GetDriverByName("MEM").Create("", 2, 3)
+        src_ds.GetRasterBand(1).Fill(5)
+        return gdal.Run(
+            "raster",
+            "as-features",
+            input=src_ds,
+            output_format="stream",
+            output="",
+        ).Output()
+
+    ds = build()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 6
+    assert sum(1 for _ in lyr) == 6
+    assert lyr.GetNextFeature() is None
