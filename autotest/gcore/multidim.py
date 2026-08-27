@@ -2583,3 +2583,25 @@ def test_multidim_array_arithmetic_coordinate_variables():
     assert coordinates.WriteString("varX varY") == 0
 
     assert len((ar + ar).GetCoordinateVariables()) == 2
+
+
+def test_multidim_array_arithmetic_read_with_buffer_stride():
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("")
+    rg = mem_ds.GetRootGroup()
+    dimY = rg.CreateDimension("Y", None, None, 2)
+    dimX = rg.CreateDimension("X", None, None, 2)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    ar.Write(struct.pack("d" * 4, 1, 2, 3, 4))
+
+    # Reading the first column into a buffer shaped like the whole array
+    # puts the two values at offsets 0 and 2.
+    kwargs = {"count": [2, 1], "buffer_stride": [2, 1]}
+    assert struct.unpack("d" * 3, ar.Read(**kwargs)) == (1, 0, 3)
+    assert struct.unpack("d" * 3, (ar + ar).Read(**kwargs)) == (2, 0, 6)
+    assert struct.unpack("d" * 3, (ar * ar).Read(**kwargs)) == (1, 0, 9)
+    assert struct.unpack("d" * 3, (ar / ar).Read(**kwargs)) == (1, 0, 1)
+
+    assert struct.unpack("d" * 4, (ar + ar).Read()) == (2, 4, 6, 8)
