@@ -40,7 +40,9 @@ class GDALRasterNoDataToAlphaAlgorithm /* non final */
     std::vector<double> m_nodata{};
 
     // Work variables
-    std::unique_ptr<GDALDataset> m_tempDS{};
+    // Reference-counting releaser: the output VRT references it and
+    // outlives this algorithm.
+    std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> m_tempDS{};
 };
 
 /************************************************************************/
