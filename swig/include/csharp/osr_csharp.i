@@ -67,6 +67,21 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
   [Obsolete("Use SetDataAxisToSRSAxisMapping(int[] nList) instead.")]
   public int SetDataAxisToSRSAxisMapping(int nList, int[] pList)
     => SetDataAxisToSRSAxisMapping(pList);
+  [Obsolete("Use FindMatches(string[] options, out int[] confidence_values) instead.")]
+  public SpatialReference[] FindMatches(string[] options, out int nvalues, out int[] confidence_values) {
+    var ret = FindMatches(options, out confidence_values);
+	nvalues = confidence_values.Length;
+	return ret;
+  }
+}
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+%typemap(cscode, noblock="1") OSRCoordinateTransformationShadow {
+  [Obsolete("Use TransformPoints(double[] x, double[] y, double[] z, double[] t, int[] success) instead.")]
+  public void TransformPoints(int nCount, double[] x, double[] y, double[] z)
+    => TransformPoints(x, y, z);
 }
 
 /*****************************************************************************
@@ -83,16 +98,16 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
 %feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToCF1Units;
 %feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ExportToPROJJSON;
 %feature("cs:defaultargs", options="null")    OSRSpatialReferenceShadow::ConvertToOtherProjection;
-
 %feature("cs:defaultargs", target_key="null") OSRSpatialReferenceShadow::GetAuthorityName;
 %feature("cs:defaultargs", target_key="null") OSRSpatialReferenceShadow::GetAuthorityCode;
-
 %feature("cs:defaultargs", name="null")       OSRSpatialReferenceShadow::PromoteTo3D;
 %feature("cs:defaultargs", name="null")       OSRSpatialReferenceShadow::DemoteTo2D;
 %feature("cs:defaultargs", units="null")      OSRSpatialReferenceShadow::ImportFromCF1;
-
 %feature("cs:defaultargs", argin="null")      OSRSpatialReferenceShadow::ImportFromPCI;
 %feature("cs:defaultargs", argin="null")      OSRSpatialReferenceShadow::ImportFromUSGS;
+
+%feature("cs:defaultargs", z="null", t="null", success="null")    OSRCoordinateTransformationShadow::TransformPoints;
+%feature("cs:defaultargs", z="null", t="null", errorCodes="null") OSRCoordinateTransformationShadow::TransformPointsWithErrorCodes;
 
 %feature("cs:defaultargs", options="null")    CreateCoordinateTransformation;
 

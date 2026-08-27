@@ -18,13 +18,33 @@
 
 %extend OGRGeometryShadow
 {
-    %apply (int nList, char *pList) {(int buffer, char *pBuffer)};
-    OGRErr ExportToWkb( int buffer, char *pBuffer, OGRwkbByteOrder byte_order = wkbXDR ) {
-      if (buffer < OGR_G_WkbSize( self )) {
+%immutable;
+    long long          WkbLongSize;
+	OGRwkbGeometryType GeometryType;
+
+%apply (size_t native_size) {(size_t length)};
+    OGRErr ExportToWkb( size_t length, void *buffer_ptr, OGRwkbByteOrder byte_order = wkbNDR ) {
+      if (length < OGR_G_WkbSizeEx( self )) {
         CPLError(CE_Failure, 1, "Array size is small (ExportToWkb).");
         return CE_Failure;
       }
-      return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) pBuffer );
+      return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) buffer_ptr );
     }
-    %clear (int buffer, char *pBuffer);
+    OGRErr ExportToIsoWkb( size_t length, void *buffer_ptr, OGRwkbByteOrder byte_order = wkbNDR ) {
+      if (length < OGR_G_WkbSizeEx( self )) {
+        CPLError(CE_Failure, 1, "Array size is small (ExportToIsoWkb).");
+        return CE_Failure;
+      }
+      return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) buffer_ptr );
+    }
+%clear (size_t length);
 }
+
+%{
+  long long OGRGeometryShadow_WkbLongSize_get(OGRGeometryShadow *self) {
+    return static_cast<long long>(OGR_G_WkbSizeEx(self));
+  }
+  OGRwkbGeometryType OGRGeometryShadow_GeometryType_get(OGRGeometryShadow *self) {
+    return OGR_G_GetGeometryType(self);
+  }
+%}

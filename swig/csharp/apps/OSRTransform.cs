@@ -37,16 +37,15 @@ class OSRTransform
             /* -------------------------------------------------------------------- */
             /*      Initialize srs                                                  */
             /* -------------------------------------------------------------------- */
-            int nvalues;
             int[] confidence_values;
             using (SpatialReference src = new SpatialReference(""))
             using (SpatialReference dst = new SpatialReference(""))
             {
                 src.ImportFromProj4("+proj=latlong +datum=WGS84 +no_defs");
-                var srName = src.FindMatches(new string[] { "", null }, out nvalues, out confidence_values).FirstOrDefault()?.GetName() ?? "NotFound";
+                var srName = src.FindMatches(new string[] { "", null }, out confidence_values).FirstOrDefault()?.GetName() ?? "NotFound";
                 Console.WriteLine($"SOURCE Name:'{srName}' IsGeographic:{src.IsGeographic()}      IsProjected:{src.IsProjected()}");
                 dst.ImportFromProj4("+proj=somerc +lat_0=47.14439372222222 +lon_0=19.04857177777778 +x_0=650000 +y_0=200000 +ellps=GRS67 +units=m +no_defs");
-                srName = dst.FindMatches(new string[] { "", null }, out nvalues, out confidence_values).FirstOrDefault()?.GetName() ?? "NotFound";
+                srName = dst.FindMatches(new string[] { "", null }, out confidence_values).FirstOrDefault()?.GetName() ?? "NotFound";
                 Console.WriteLine($"DEST Name:'{srName}' IsGeographic:{dst.IsGeographic()} IsProjected:{dst.IsProjected()}");
                 /* -------------------------------------------------------------------- */
                 /*      making the transform                                            */

@@ -808,9 +808,26 @@ public:
   }
 
 #ifdef SWIGCSHARP
-  %apply (double *inout) {(double*)};
-  %apply (int *argout) {(int*)};
-#endif
+%apply (int nList, double *pList) { (int x, double *pX), (int y, double *pY), (int z, double *pZ) };
+%apply (int nList, int *pList) { (int success, int *panSuccess) };
+  bool TransformPoints( int bDstToSrc,
+                       int x, double *pX, int y, double *pY, int z, double *pZ,
+                       int success, int *panSuccess ) {
+    CPLErrorReset();
+    if (!pX || !pY || !pZ || !panSuccess) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be non-null.");
+      return 0;	
+    }
+    else if (x != y || x != z || x != success) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be the same size.");
+      return 0;
+    }
+
+    return GDALUseTransformer( self, bDstToSrc, x, pX, pY, pZ, panSuccess );
+  }
+%clear (int x, double *pX), (int y, double *pY), (int z, double *pZ);
+%clear (int success, int *panSuccess);
+#else
   int TransformPoints( int bDstToSrc,
                        int nCount, double *x, double *y, double *z,
                        int *panSuccess ) {
@@ -820,9 +837,6 @@ public:
 
     return nRet;
   }
-#ifdef SWIGCSHARP
-  %clear (double*);
-  %clear (int*);
 #endif
 
 /************************************************************************/

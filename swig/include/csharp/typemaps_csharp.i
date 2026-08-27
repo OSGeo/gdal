@@ -59,22 +59,12 @@ OGRErrMessages( int rc ) {
 
 }
 
-%typemap(in) (tostring argin) (string str)
-{
-  /* %typemap(in) (tostring argin) */
-  $1 = ($1_ltype)$input;
-}
-
 /* GDAL Typemaps */
 
-%typemap(out) IF_FALSE_RETURN_NONE %{ $result = $1; %}
-%typemap(ctype) IF_FALSE_RETURN_NONE "int"
-%typemap(imtype) IF_FALSE_RETURN_NONE "int"
-%typemap(cstype) IF_FALSE_RETURN_NONE "int"
-%typemap(csout, excode=SWIGEXCODE) IF_FALSE_RETURN_NONE {
-    int res = $imcall;$excode
-    return res;
-}
+%apply (char*) {(tostring argin)};
+%apply (long) {(IF_FALSE_RETURN_NONE)};
+%apply (long long) {GIntBig};
+%apply (unsigned long long) {GUIntBig};
 
 %typemap(out) IF_ERROR_RETURN_NONE %{ $result = $1; %}
 
@@ -88,39 +78,9 @@ OGRErrMessages( int rc ) {
   /* %typemap(in) (type *optional_##CTYPE) */
   $1 = ($1_type)$input;
 }
-%enddef
+%enddef //OPTIONAL_POD
 
 OPTIONAL_POD(int, int);
-
-/*
- * Typemap for GIntBig (int64)
- */
-
-%typemap(ctype, out="GIntBig") GIntBig  %{GIntBig%}
-%typemap(imtype, out="long") GIntBig "long"
-%typemap(cstype) GIntBig %{long%}
-%typemap(in) GIntBig %{ $1 = $input; %}
-%typemap(out) GIntBig %{ $result = $1; %}
-%typemap(csin) GIntBig "$csinput"
-%typemap(csout, excode=SWIGEXCODE) GIntBig {
-    long res = $imcall;$excode
-    return res;
-}
-
-/*
- * Typemap for GUIntBig (uint64)
- */
-
-%typemap(ctype, out="GUIntBig") GUIntBig  %{GUIntBig%}
-%typemap(imtype, out="ulong") GUIntBig "ulong"
-%typemap(cstype) GUIntBig %{ulong%}
-%typemap(in) GUIntBig %{ $1 = $input; %}
-%typemap(out) GUIntBig %{ $result = $1; %}
-%typemap(csin) GUIntBig "$csinput"
-%typemap(csout, excode=SWIGEXCODE) GUIntBig {
-    ulong res = $imcall;$excode
-    return res;
-}
 
 /*
  * Typemap for size_t native_size
@@ -149,35 +109,35 @@ OBJECT_LIST_INOUT(GDALRasterBandShadow, Band)
 OBJECT_LIST_INOUT(GDALEDTComponentHS, EDTComponent)
 OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
 
-%define %NUMBER_VALUE_LIST(CTYPE, VARIABLE_NAME, CSTYPE)
+%define %NUMBER_VALUE_LIST(CTYPE, CSTYPE)
 
-%typemap(imtype, out="IntPtr")     CTYPE *VARIABLE_NAME "CSTYPE[]"
-%typemap(cstype)                   CTYPE *VARIABLE_NAME %{CSTYPE[]%}
-%typemap(in)                       CTYPE *VARIABLE_NAME %{ $1 = ($1_ltype)$input; %}
-%typemap(out)                      CTYPE *VARIABLE_NAME %{ $result = $1; %}
-%typemap(csout, excode=SWIGEXCODE) CTYPE *VARIABLE_NAME {
-        /* %typemap(csout) CTYPE *VARIABLE_NAME */
+%typemap(imtype, out="IntPtr")     CTYPE *CSTYPE##List "CSTYPE[]"
+%typemap(cstype)                   CTYPE *CSTYPE##List %{CSTYPE[]%}
+%typemap(in)                       CTYPE *CSTYPE##List %{ $1 = ($1_ltype)$input; %}
+%typemap(out)                      CTYPE *CSTYPE##List %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) CTYPE *CSTYPE##List {
+        /* %typemap(csout) CTYPE *CSTYPE##List */
         IntPtr cPtr = $imcall;
         CSTYPE[] ret = new CSTYPE[count];
         if (count > 0) {
-	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
+            System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, count);
         }
         $excode
         return ret;
 }
-%enddef
+%enddef //%NUMBER_VALUE_LIST
 
-%NUMBER_VALUE_LIST(GByte, byteList, byte);      // (GByte   *byteList)
-%NUMBER_VALUE_LIST(int, intList, int);          // (int     *intList)
-%NUMBER_VALUE_LIST(GIntBig, longList, long);    // (GIntBig *longList)
-%NUMBER_VALUE_LIST(double, doubleList, double); // (double  *doubleList)
+%NUMBER_VALUE_LIST(GByte, byte);    // (GByte   *byteList)
+%NUMBER_VALUE_LIST(int, int);       // (int     *intList)
+%NUMBER_VALUE_LIST(GIntBig, long);  // (GIntBig *longList)
+%NUMBER_VALUE_LIST(double, double); // (double  *doubleList)
 
 /*
  * Macro for generating CTYPE typemaps for *argout[ANY], argout[ANY],
  * argin[ANY], and inout[ANY]
  */
- 
-%define %ArrayInAndOutTypemaps(CTYPE, CSTYPE)
+
+%define %FIXED_SIZE_ARRAYS(CTYPE, CSTYPE)
 
 %typemap(ctype)   (CTYPE *argout[ANY]) "CTYPE*"
 %typemap(imtype)  (CTYPE *argout[ANY]) "CSTYPE[]"
@@ -185,7 +145,7 @@ OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
 %typemap(csin, pre="$csinput = new CSTYPE[$1_dim0];") (CTYPE *argout[ANY]) "$csinput"
 %typemap(in)      (CTYPE *argout[ANY]) {
   /* %typemap(in) (CTYPE *argout[ANY]) */
-  $*1_ltype tmp$1_name = NULL;  
+  $*1_ltype tmp$1_name = NULL;
   $1 = ($1_ltype)&tmp$1_name;
 }
 %typemap(argout)  (CTYPE *argout[ANY]) {
@@ -197,160 +157,40 @@ OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
   CPLFree(*$1);
 }
 
-%typemap(ctype)  CTYPE inout[ANY], CTYPE *inout "CTYPE*"
-%typemap(imtype) CTYPE inout[ANY], CTYPE *inout "CSTYPE[]"
-%typemap(cstype) CTYPE inout[ANY], CTYPE *inout "CSTYPE[]"
-%typemap(in)     CTYPE inout[ANY], CTYPE *inout {
-  /* %typemap(in) CTYPE argin[ANY], CTYPE argout[ANY], CTYPE inout[ANY] */
+%typemap(ctype)  CTYPE inout[ANY] "CTYPE*"
+%typemap(imtype) CTYPE inout[ANY] "CSTYPE[]"
+%typemap(cstype) CTYPE inout[ANY] "CSTYPE[]"
+%typemap(in)     CTYPE inout[ANY] {
+  /* %typemap(in) CTYPE inout[ANY] */
   $1 = ($1_ltype)$input;
 }
-%typemap(csin)   CTYPE *inout "$csinput"
 %typemap(csin, pre="
     if($csinput is null) throw new ArgumentNullException(\"$csinput\");
     if($csinput.Length < $1_dim0) throw new ArgumentException(\"Array must be at least $1_dim0 elements long.\", \"$csinput\");"
 ) CTYPE inout[ANY] "$csinput"
 
 %apply CTYPE inout [ANY] {CTYPE argin [ANY], CTYPE argout[ANY]};
-%apply CTYPE *inout {CTYPE *argin, CTYPE *argout, CTYPE *pList};
-%enddef // %ArrayInAndOutTypemaps
- 
-%ArrayInAndOutTypemaps(int, int);
-%ArrayInAndOutTypemaps(double, double);
+%enddef // %FIXED_SIZE_ARRAYS
+
+%FIXED_SIZE_ARRAYS(int, int);
+%FIXED_SIZE_ARRAYS(double, double);
 
 /*
- * Macro for generating CTYPE typemaps for **array_argout_free
- * Use unsafe because Marshal.Copy does not support ulong[]
+ * Typemap for 'out double'.
  */
- 
-%define %ArrayOutAndFreeTypemaps(CTYPE, CSTYPE)
-
-%typemap(ctype)  CTYPE **array_argout_free "CTYPE**"
-%typemap(imtype) CTYPE **array_argout_free "ref IntPtr"
-%typemap(cstype) CTYPE **array_argout_free "out CSTYPE[]"
-%typemap(in)     CTYPE **array_argout_free %{ $1 = $input; %}
-%typemap(out)    CTYPE **array_argout_free %{ $result = $1; %}
-%typemap(csin,
-pre="  count = 0;
-  var temp$csinput = IntPtr.Zero;",
-post="
-  $csinput = new CSTYPE[count];
-  if (count > 0) unsafe {
-    fixed (CSTYPE* p$csinput = $csinput)
-      Buffer.MemoryCopy(temp$csinput.ToPointer(), p$csinput, (long)count * sizeof(CSTYPE), (long)count * sizeof(CSTYPE));
-  }
-  $module.CPLMemDestroy(temp$csinput);")
-(CTYPE **array_argout_free) "ref temp$csinput"
-%enddef // %ArrayOutAndFreeTypemaps
-
-%ArrayOutAndFreeTypemaps(int, int);
-%ArrayOutAndFreeTypemaps(GUIntBig, ulong);
-
-/*
- * Typemap for double *defaultval.
- */
-
-%typemap(imtype) (double *defaultval)  "ref double"
-%typemap(cstype) (double *defaultval) "ref double"
-%typemap(csin) (double *defaultval)  "ref $csinput"
-
-%typemap(in) (double *defaultval)
-{
-  /* %typemap(in) (double inout[ANY]) */
-  $1 = ($1_ltype)$input;
-}
-
-/*
- * Typemap for out double.
- */
-
-%typemap(imtype) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
-%typemap(cstype) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
-%typemap(csin) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out $csinput"
-
-%typemap(in) (double *OUTPUT), (double *val), (double *min), (double *max), (double *mean), (double *stddev)
-{
-  /* %typemap(in) (double *val) */
-  $1 = ($1_ltype)$input;
-}
+%apply (double *OUTPUT) {(double *val), (double *min), (double *max), (double *mean), (double *stddev)};
 
 /*
  * Typemap for 'out int'.
  */
-
-%typemap(imtype) (int *hasval)  "out int"
-%typemap(cstype) (int *hasval) "out int"
-%typemap(csin) (int *hasval)  "out $csinput"
-
-%typemap(in) (int *hasval)
-{
-  /* %typemap(in) (int *hasval) */
-  $1 = ($1_ltype)$input;
-}
-
-%apply (int *hasval) {int *nLen};
-%apply (int *hasval) {int *pnBytes};
-
-/*
- * Typemap for int **array_argout.
- */
-
-%typemap(imtype) (int **array_argout)  "out int[]"
-%typemap(cstype) (int **array_argout) "out int[]"
-%typemap(csin) (int **array_argout)  "out $csinput"
-
-%typemap(in) (int **array_argout)
-{
-  /* %typemap(in) (int **array_argout) */
-  $1 = ($1_ltype)$input;
-}
-
-%apply (int **array_argout) {int **pList};
-
-/*
- * Typemap for double **array_argout.
- */
-
-%typemap(imtype) (double **array_argout)  "out double[]"
-%typemap(cstype) (double **array_argout) "out double[]"
-%typemap(csin) (double **array_argout)  "out $csinput"
-
-%typemap(in) (double **array_argout)
-{
-  /* %typemap(in) (double **array_argout) */
-  $1 = ($1_ltype)$input;
-}
-
-%apply (double **array_argout) {double **pList};
+%apply (int *OUTPUT) {int *hasval, int *nLen, int *pnBytes};
 
 /*
  * Typemap for void* user_data for SetErrorHandler.
  * Note: The user should implement marshaling their own data to IntPtr.
  */
 
-%typemap(imtype) (void* user_data) "IntPtr"
-%typemap(cstype) (void* user_data) "IntPtr"
-%typemap(csin) (void* user_data)  "$csinput"
-
-/******************************************************************************
- * GDAL raster R/W support                                                    *
- *****************************************************************************/
-
-%typemap(imtype, out="IntPtr") void *buffer_ptr "IntPtr"
-%typemap(cstype) void *buffer_ptr %{IntPtr%}
-%typemap(in) void *buffer_ptr %{ $1 = ($1_ltype)$input; %}
-%typemap(out) void *buffer_ptr %{ $result = $1; %}
-%typemap(csin) void *buffer_ptr "$csinput"
-%typemap(csout, excode=SWIGEXCODE) void *buffer_ptr {
-      IntPtr ret = $imcall;$excode
-      return ret;
-}
-%typemap(csvarout, excode=SWIGEXCODE2) (void *buffer_ptr)   %{
-    get {
-      IntPtr ret = $imcall;$excode
-      return ret;
-    } %}
-
-%apply (void *buffer_ptr) {GByte*, VSILFILE*};
+%apply (void *VOID_INT_PTR) {void* user_data, void *buffer_ptr, GByte*, VSILFILE*};
 
 %csmethodmodifiers CPLMemDestroy "internal";
 %inline %{
@@ -360,63 +200,48 @@ post="
     }
 %}
 
+%define %DELEGATE_TYPEMAP(CTYPE, CSTYPE)
+
+%typemap(ctype)  (CTYPE) "CTYPE"
+%typemap(imtype) (CTYPE) "CSTYPE"
+%typemap(cstype) (CTYPE) "CSTYPE"
+%typemap(csin)   (CTYPE) "$csinput"
+%typemap(in)     (CTYPE) %{ $1 = $input; %}
+%typemap(out)    (CTYPE) %{ $result = $1; %}
+%typemap(csvarout, excode=SWIGEXCODE2) (CTYPE)   %{
+    get {
+      CSTYPE ret = $imcall;$excode
+      return ret;
+    } %}
+%typemap(csout, excode=SWIGEXCODE) (CTYPE)   %{
+    CSTYPE ret = $imcall;$excode
+    return ret;
+%}
+%enddef //DELEGATE_TYPEMAP
+
 /******************************************************************************
- * ErrorHandler callback support                                              *
+ * CPLErrorHandler callback support                                           *
  *****************************************************************************/
 %pragma(csharp) modulecode="public delegate void GDALErrorHandlerDelegate(int eclass, int code, IntPtr msg);"
-%typemap(imtype) (CPLErrorHandler)  "$module.GDALErrorHandlerDelegate"
-%typemap(cstype) (CPLErrorHandler) "$module.GDALErrorHandlerDelegate"
-%typemap(csin) (CPLErrorHandler)  "$csinput"
-%typemap(in) (CPLErrorHandler) %{ $1 = ($1_ltype)$input; %}
+%DELEGATE_TYPEMAP(CPLErrorHandler, $module.GDALErrorHandlerDelegate);
 
 /******************************************************************************
  * GDALTransformerFunc typemaps                                                  *
  *****************************************************************************/
 %pragma(csharp) modulecode="public delegate bool GDALTransformerFuncDelegate(IntPtr pTransformerArg, int bDstToSrc, int nPointCount, IntPtr x, IntPtr y, IntPtr z, IntPtr panSuccess);"
-
-%typemap(ctype)  (GDALTransformerFunc) "GDALTransformerFunc"
-%typemap(imtype) (GDALTransformerFunc) "$module.GDALTransformerFuncDelegate"
-%typemap(cstype) (GDALTransformerFunc) "$module.GDALTransformerFuncDelegate"
-%typemap(csin)   (GDALTransformerFunc) "$csinput"
-%typemap(in)     (GDALTransformerFunc) %{ $1 = $input; %}
-%typemap(out)    (GDALTransformerFunc) %{ $result = $1; %}
-%typemap(csvarout, excode=SWIGEXCODE2) (GDALTransformerFunc)   %{
-    get {
-      $module.GDALTransformerFuncDelegate ret = $imcall;$excode
-      return ret;
-    } %}
-%typemap(csout, excode=SWIGEXCODE) (GDALTransformerFunc)   %{
-    $module.GDALTransformerFuncDelegate ret = $imcall;$excode
-    return ret;
-%}
+%DELEGATE_TYPEMAP(GDALTransformerFunc, $module.GDALTransformerFuncDelegate);
 
 /******************************************************************************
  * GDALProgressFunc typemaps                                                  *
  *****************************************************************************/
 %pragma(csharp) modulecode="public delegate int GDALProgressFuncDelegate(double Complete, IntPtr Message, IntPtr Data);"
+%DELEGATE_TYPEMAP(GDALProgressFunc, $module.GDALProgressFuncDelegate);
 
-%typemap(ctype)  (GDALProgressFunc callback) "GDALProgressFunc"
-%typemap(imtype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
-%typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
-%typemap(csin)   (GDALProgressFunc callback) "$csinput"
-%typemap(in)     (GDALProgressFunc callback) %{ $1 = $input; %}
-%typemap(out)    (GDALProgressFunc callback) %{ $result = $1; %}
-%typemap(csvarout, excode=SWIGEXCODE2) (GDALProgressFunc callback)   %{
-    get {
-      $module.GDALProgressFuncDelegate ret = $imcall;$excode
-      return ret;
-    } %}
-%typemap(csout, excode=SWIGEXCODE) (GDALProgressFunc callback)   %{
-    $module.GDALProgressFuncDelegate ret = $imcall;$excode
-    return ret;
-%}
 %apply (char*) {(void* callback_data)};
 
 /******************************************************************************
  * GDALGetNextFeature typemaps                                                *
  *****************************************************************************/
-
-%apply (double *defaultval) {double* pdfProgressPct};
 
 %typemap(imtype) (OGRLayerShadow **ppoBelongingLayer) "ref IntPtr"
 %typemap(cstype) (OGRLayerShadow **ppoBelongingLayer) "out OSGeo.OGR.Layer"
@@ -426,58 +251,28 @@ post="
 ) (OGRLayerShadow **ppoBelongingLayer) "ref p$csinput"
 
 /******************************************************************************
- * Band.AdviseRead and Dataset.AdviseRead typemaps                            *
- *****************************************************************************/
-%apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
-
-/******************************************************************************
  * SpatialReference.FindMatches                                               *
  *****************************************************************************/
-%apply (int *hasval) {int *nvalues};
+%apply (int *nLen, int **pList_free) {(int* confidence_values, int** ppanMatchConfidence )};
 %typemap(imtype, out="IntPtr") OSRSpatialReferenceShadow** FindMatches "SpatialReference[]"
 %typemap(cstype) OSRSpatialReferenceShadow** FindMatches %{SpatialReference[]%}
-%typemap(imtype) int** confidence_values "out IntPtr"
-%typemap(cstype) int** confidence_values %{out int[]%}
-%typemap(csin) int** confidence_values "out confValPtr"
-%typemap(in) (int** confidence_values)
-{
-  /* %typemap(in) (int** confidence_values) */
-  $1 = ($1_ltype)$input;
-}
 %typemap(csout, excode=SWIGEXCODE) OSRSpatialReferenceShadow** FindMatches {
         /* %typemap(csout) OSRSpatialReferenceShadow** FindMatches */
-        IntPtr confValPtr;
         IntPtr cPtr = $imcall;
-        IntPtr objPtr;
-        SpatialReference[] ret = new SpatialReference[nvalues];
-        confidence_values = (confValPtr == IntPtr.Zero) ? null : new int[nvalues];
-        if (nvalues > 0) {
-	        for(int cx = 0; cx < nvalues; cx++) {
-                objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-                /* SpatialReference will take ownership of the unmanaged memory and will call OSRRelease() when the object is disposed.
-                   Therefore, OSRFreeSRSArray() is not called; only CPLFree() is used to release the array itself. */
-                ret[cx]= (objPtr == IntPtr.Zero) ? null : new SpatialReference(objPtr, true, null);
-                if (confValPtr != IntPtr.Zero) {
-                    confidence_values[cx] = System.Runtime.InteropServices.Marshal.ReadInt32(confValPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(Int32)));
-                }
-
-            }
-        }
+        $excode
+        var srsArray = new $modulePINVOKE.ArrayWithSize(tempconfidence_values.Count, IntPtr.Size, cPtr);
+        SpatialReference[] ret = srsArray.ToReferenceArray<SpatialReference>(p => new SpatialReference(p, true, ThisOwn_true()));
         if (cPtr != IntPtr.Zero) {
             $modulePINVOKE.CPLMemDestroy(cPtr);
         }
-        if (confValPtr != IntPtr.Zero) {
-            $modulePINVOKE.CPLMemDestroy(confValPtr);
-        }
-        $excode
         return ret;
 }
 
 /***************************************************
  * Typemaps converts a OGRCodedValue to/from a     *
- * KeyValuePair<string,string> collection          * 
+ * Dictionary<string, string>                      *
  ***************************************************/
- 
+
 %typemap(ctype)  const OGRCodedValue* "OGRCodedValue*"
 %typemap(imtype, out="IntPtr") const OGRCodedValue* "IntPtr[]"
 %typemap(in)     const OGRCodedValue* %{ $1 = $input; %}

@@ -34,7 +34,6 @@ VALUE_LIST_INOUT(GDAL_GCP, GCP)
 %apply (int nList, GDAL_GCP *pList)  { (int nGCPs, GDAL_GCP const *pGCPs) };
 %apply (int* nList, GDAL_GCP **pList)  { (int *nGCPs, GDAL_GCP const **pGCPs) };
 
-%apply (GDALProgressFunc callback) {GDALProgressFunc pfnProgress};
 %apply (void *buffer_ptr) {void *pProgressData};
 
 %typemap(cscode, noblock=1) GDALRasterIOExtraArg %{
@@ -127,6 +126,15 @@ public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_x
   => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, options);
 [Obsolete("Use public int Checksum(int xoff, int yoff, int xsize, int ysize) instead.")]
 public int Checksum(int xoff, int yoff, ref int xsize, ref int ysize) => Checksum(xoff, yoff, xsize, ysize);
+[Obsolete("Use SetDefaultHistogram(double min, double max, int[] buckets_in) instead.")]
+public CPLErr SetDefaultHistogram(double min, double max, int buckets_in, int[] panHistogram_in)
+  => SetDefaultHistogram(min, max, panHistogram_in);
+[Obsolete("Use GetDefaultHistogram(out double min_ret, out double max_ret, out int[] histogram, bool force, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
+public CPLErr GetDefaultHistogram(out double min_ret, out double max_ret, out int buckets_ret, out int[] ppanHistogram, int force, Gdal.GDALProgressFuncDelegate callback, string callback_data) {
+   var ret = GetDefaultHistogram(out min_ret, out max_ret, out ppanHistogram, force != 0, callback, callback_data);
+   buckets_ret = ppanHistogram.Length;
+   return ret;
+}
 }
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
@@ -201,9 +209,12 @@ public GCP[] GetGCPs() {
   public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int band_list, int[] pband_list, string[] options)
     => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, pband_list, options);
   
-  [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.", error: true)]
-  public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options)
-    => throw new NotSupportedException();
+  [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.")]
+  public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
+    var managedList = new int[overviewlist];
+	Marshal.Copy(pOverviews, managedList, overviewlist, overviewlist);
+	return BuildOverviews(resampling, managedList, callback, callback_data, options);
+  }
 
   [Obsolete("Use GetNextFeature(out Layer ppoBelongingLayer, out double pdfProgressPct, GDALProgressFuncDelegate callback, string callback_data) instead.")]
   public Feature GetNextFeature(ref IntPtr ppoBelongingLayer, ref double pdfProgressPct, Gdal.GDALProgressFuncDelegate callback, string callback_data) {
@@ -389,7 +400,7 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
 }
 
 %typemap(cscode, noblock="1") GDALTransformerInfoShadow {
-  [Obsolete("Use TransformPoints(int bDstToSrc, int nCount, double[] x, double[] y, double[] z, int[] panSuccess) instead.", error: true)]
+  [Obsolete("Use TransformPoints(int bDstToSrc, double[] x, double[] y, double[] z, int[] success) instead.", error: true)]
   public int TransformPoints(int bDstToSrc, int nCount, double[] x, double[] y, double[] z, double[] panSuccess)
     => throw new NotSupportedException();
 }
@@ -630,7 +641,8 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALRasterBandShadow::ComputeStatistics;
 %feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogram;
 %feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogramEx;
-%feature("cs:defaultargs", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogram;
+%feature("cs:defaultargs", force="true", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogram;
+%feature("cs:defaultargs", force="true", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogramEx;
 %feature("cs:defaultargs", buf_type="DataType.GDT_Byte", options="null") GDALRasterBandShadow::AdviseRead;
 %feature("cs:defaultargs", transformerOptions="null") GDALRasterBandShadow::InterpolateAtGeolocation;
 

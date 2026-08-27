@@ -28,10 +28,37 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 
 
 %typemap(cscode, noblock="1") OGRGeometryShadow {
-  public byte[] ExportToWkb(wkbByteOrder byte_order = wkbByteOrder.wkbXDR) {
-    byte[] buffer = new byte[WkbSize()];
-	ExportToWkb(buffer, byte_order);
+  public byte[] ExportToWkb(wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
+    if (WkbLongSize > int.MaxValue)
+	  throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
+    var buffer = new byte[WkbLongSize];
+	if (ExportToWkb(buffer, byte_order) != 0)
+	  throw new ApplicationException("ExportToWkb return code did not indicate success.");
 	return buffer;
+  }
+  public int ExportToWkb(byte[] buffer, wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
+	var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+	try {
+	  return ExportToWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
+	} finally {
+	  handle.Free();
+	}
+  }
+  public byte[] ExportToIsoWkb(wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
+    if (WkbLongSize > int.MaxValue)
+	  throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
+    var buffer = new byte[WkbLongSize];
+	if (ExportToIsoWkb(buffer, byte_order) != 0)
+	  throw new ApplicationException("ExportToIsoWkb return code did not indicate success.");
+	return buffer;
+  }
+  public int ExportToIsoWkb(byte[] buffer, wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
+	var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+	try {
+	  return ExportToIsoWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
+	} finally {
+	  handle.Free();
+	}
   }
 
   public static $csclassname CreateFromWkb(byte[] wkb){
@@ -51,9 +78,9 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
  * Overload to maintain backwards compatibility with multi-argument typemaps
  */
  
-  [Obsolete("Use ExportToWkb(byte[] buffer, wkbByteOrder byte_order) instead.", error: true)]
+  [Obsolete("Use ExportToWkb(IntPtr length, IntPtr buffer_ptr, wkbByteOrder byte_order) instead.")]
   public int ExportToWkb(int bufLen, IntPtr buffer, wkbByteOrder byte_order)
-    => throw new NotSupportedException();
+    => ExportToWkb(new IntPtr(bufLen), buffer, byte_order);
 	
   [Obsolete("Use $csclassname(wkbGeometryType type, string wkt, byte[] wkb, string gml) instead.")]
   public $csclassname(wkbGeometryType type, string wkt, int wkb, IntPtr wkb_buf, string gml)
@@ -125,10 +152,19 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     => UpdateFeature(feature, panUpdatedFieldsIdx, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
 
-%pragma(csharp) modulecode=%{
-  [Obsolete("Use CreateGeometryFromWkb(byte[] len, SpatialReference reference) instead.", error: true)]
+%pragma(csharp) modulecode=%{    
+  public static Geometry CreateGeometryFromWkb(byte[] buffer, OSR.SpatialReference reference = null) {
+    var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+	try {
+	  return CreateGeometryFromWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), reference);
+	} finally {
+	  handle.Free();
+	}
+  }
+  
+  [Obsolete("Use CreateGeometryFromWkb(IntPtr len, IntPtr bin_string, SpatialReference reference) instead.")]
   public static Geometry CreateGeometryFromWkb(uint len, IntPtr bin_string, OSR.SpatialReference reference)
-    => throw new NotSupportedException();
+    => CreateGeometryFromWkb(new IntPtr(len), bin_string, reference);
 %}
 
 /*****************************************************************************
@@ -154,7 +190,8 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %feature("cs:defaultargs", bNotNullableOnly=0, options="null") OGRFeatureShadow::FillUnsetWithDefault;
 
 %feature("cs:defaultargs", type="wkbGeometryType.wkbUnknown", wkt="null", wkb="null", gml="null") OGRGeometryShadow::OGRGeometryShadow;
-%feature("cs:defaultargs", byte_order="wkbByteOrder.wkbXDR") OGRGeometryShadow::ExportToWkb;
+%feature("cs:defaultargs", byte_order="wkbByteOrder.wkbNDR") OGRGeometryShadow::ExportToWkb;
+%feature("cs:defaultargs", byte_order="wkbByteOrder.wkbNDR") OGRGeometryShadow::ExportToIsoWkb;
 %feature("cs:defaultargs", altitude_mode="null") OGRGeometryShadow::ExportToKML;
 %feature("cs:defaultargs", options="null") OGRGeometryShadow::ExportToJson;
 %feature("cs:defaultargs", options="null") OGRGeometryShadow::MakeValid;

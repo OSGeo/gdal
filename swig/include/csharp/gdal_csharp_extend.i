@@ -37,7 +37,7 @@
 %extend GDALDatasetShadow
 {
 	%apply (void *buffer_ptr) {void *buffer};
-	%apply (int *argin) {int *bandMap};
+	%apply (int INPUT[]) {int *bandMap};
     CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, void* buffer,
                           int buf_xSize, int buf_ySize, GDALDataType buf_type,
                           int bandCount, int* bandMap, GIntBig pixelSpace, GIntBig lineSpace, GIntBig bandSpace,

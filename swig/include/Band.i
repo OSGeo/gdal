@@ -459,9 +459,6 @@ public:
 %clear (int histogram, GUIntBig *panHistogram);
 #else
 #ifndef SWIGJAVA
-#if defined(SWIGCSHARP)
-%apply (int *inout) {int *panHistogram};
-#endif
 %feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double min=-0.5,
                      double max=255.5,
@@ -477,9 +474,6 @@ public:
                                          callback, callback_data );
     return err;
   }
-#if defined(SWIGCSHARP)
-%clear int *panHistogram;
-#endif
 #endif
 #endif
 
@@ -494,27 +488,31 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
                                     callback, callback_data );
 }
 #elif defined(SWIGCSHARP)
+/* ignore overload which splits multi-argument typemap*/
+%ignore GetDefaultHistogramEx(double*,double*,int*);
 %apply (int *hasval) {int *count};
-%apply (GUIntBig **array_argout_free) {GUIntBig **ppanHistogram};
-CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *count,
-                            GUIntBig **ppanHistogram, int force = 1,
+%apply (int *nLen, GUIntBig **pList_free) {(int *histogram, GUIntBig **ppanHistogram)};
+CPLErr GetDefaultHistogramEx( double *min_ret, double *max_ret, int *histogram,
+                            GUIntBig **ppanHistogram, bool force = TRUE,
 			    GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
-    return GDALGetDefaultHistogramEx( self, min_ret, max_ret, count,
+    return GDALGetDefaultHistogramEx( self, min_ret, max_ret, histogram,
                                     ppanHistogram, force,
                                     callback, callback_data );
 }
-%clear GUIntBig **ppanHistogram;
-%apply (int **array_argout_free) {int **ppanHistogram};
-CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *count,
-                            int **ppanHistogram, int force = 1,
+%clear (int *count, GUIntBig **ppanHistogram);
+/* ignore overload which splits multi-argument typemap*/
+%ignore GetDefaultHistogram(double*,double*,int*);
+%apply (int *nLen, int **pList_free) {(int *histogram, int **ppanHistogram)};
+CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *histogram,
+                            int **ppanHistogram, bool force = TRUE,
 			    GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
-    return GDALGetDefaultHistogram( self, min_ret, max_ret, count,
+    return GDALGetDefaultHistogram( self, min_ret, max_ret, histogram,
                                     ppanHistogram, force,
                                     callback, callback_data );
 }
-%clear int **ppanHistogram;
+%clear (int *histogram, int **ppanHistogram);
 %clear int *count;
 #endif
 
@@ -527,17 +525,23 @@ CPLErr SetDefaultHistogram( double min, double max,
 }
 %clear (int buckets_in, GUIntBig *panHistogram_in);
 #else
-#if defined(SWIGJAVA)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
-#endif
 CPLErr SetDefaultHistogram( double min, double max,
        			    int buckets_in, int *panHistogram_in ) {
     return GDALSetDefaultHistogram( self, min, max,
     	   			    buckets_in, panHistogram_in );
 }
-#if defined(SWIGJAVA)
 %clear (int buckets_in, int *panHistogram_in);
 #endif
+
+#if defined(SWIGCSHARP)
+%apply (int nList, GUIntBig* pList) {(int buckets_in, GUIntBig *panHistogram_in)}
+CPLErr SetDefaultHistogramEx( double min, double max,
+                            int buckets_in, GUIntBig *panHistogram_in ) {
+    return GDALSetDefaultHistogramEx( self, min, max,
+                                    buckets_in, panHistogram_in );
+}
+%clear (int buckets_in, GUIntBig *panHistogram_in);
 #endif
 
   bool HasArbitraryOverviews() {

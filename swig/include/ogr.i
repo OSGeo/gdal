@@ -2457,11 +2457,7 @@ public:
   }
 
   /* ---- SetField ----------------------------- */
-#ifndef SWIGCSHARP
-  %apply ( tostring argin ) { (const char* value) };
-#else
   %apply ( const char *utf8_string ) { (const char* value) };
-#endif
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
   }
@@ -3285,7 +3281,8 @@ public:
 #ifndef SWIGCSHARP
 %apply (size_t nLen, char *pBuf ) { (size_t len, char *bin_string)};
 #else
-%apply (int nList, char *pList)   { (size_t len, char *bin_string)};
+%apply (size_t native_size) {(size_t len)};
+%apply (void *buffer_ptr)   {(char * bin_string)};
 #endif
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
@@ -3303,7 +3300,11 @@ public:
   }
 
 %}
+#ifndef SWIGCSHARP
 %clear (size_t len, char *bin_string);
+#else
+%clear (size_t len), (char * bin_string);
+#endif
 #endif
 
 #ifdef SWIGJAVA

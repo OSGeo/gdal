@@ -209,7 +209,7 @@ typedef struct {
 %typemap(imtype) (int nList, CTYPE *pList) "in $modulePINVOKE.ArrayWithSize"
 %typemap(cstype) (int nList, CTYPE *pList) "CSTYPE[]"
 %typemap(in)     (int nList, CTYPE *pList) %{
-  $1 = ($1_ltype)$input->Count;
+  $1 = static_cast<$1_ltype>($input->Count);
   $2 = ($2_ltype)$input->pArray;
 %}
 %typemap(csin,
@@ -218,18 +218,31 @@ typedef struct {
   post="      h$csinput.Free();"
 ) (int nList, CTYPE *pList) "temp$csinput"
 /* list of primitives out - list not freed */
-%typemap(ctype)  (int *nLen, CTYPE **pList), (int *nLen, const CTYPE **pList) "ArrayWithSize*"
-%typemap(imtype) (int *nLen, CTYPE **pList), (int *nLen, const CTYPE **pList) "ref $modulePINVOKE.ArrayWithSize"
-%typemap(cstype) (int *nLen, CTYPE **pList), (int *nLen, const CTYPE **pList) "out CSTYPE[]"
-%typemap(in)     (int *nLen, CTYPE **pList), (int *nLen, const CTYPE **pList) %{
+%typemap(ctype)  (int *nLen, CTYPE **pList) "ArrayWithSize*"
+%typemap(imtype) (int *nLen, CTYPE **pList) "ref $modulePINVOKE.ArrayWithSize"
+%typemap(cstype) (int *nLen, CTYPE **pList) "out CSTYPE[]"
+%typemap(in)     (int *nLen, CTYPE **pList) %{
   $input->ItemSize = static_cast<int>(sizeof(CTYPE));
-  $1 = ($1_ltype)&$input->Count;
+  $*1_ltype count$input = static_cast<$*1_ltype>($input->Count);
+  $1 = &count$input;
   $2 = ($2_ltype)&$input->pArray;
 %}
+%typemap(argout) (int *nLen, CTYPE **pList) %{
+  $input->Count = static_cast<int64_t>(count$input);
+%}
+%apply (int *nLen, CTYPE **pList)    {(int *nLen, CTYPE **pList_free)};
 %typemap(csin,
   pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
   terminator="    $csinput = temp$csinput.ToPrimitiveArray<CSTYPE>();"
-) (int *nLen, CTYPE **pList), (int *nLen, const CTYPE **pList) "ref temp$csinput"
+) (int *nLen, CTYPE **pList) "ref temp$csinput"
+/* list of primitives out - list freed */
+%typemap(csin,
+  pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
+  post="    $csinput = temp$csinput.ToPrimitiveArray<CSTYPE>();
+    $module.CPLMemDestroy(temp$csinput.pArray);"
+) (int *nLen, CTYPE **pList_free) "ref temp$csinput"
+%apply (int *nLen, const CTYPE **pList) {(int *nLen, const CTYPE **pList)};
+%apply (int *nLen, const CTYPE **pList_free) {(int *nLen, const CTYPE **pList_free)};
 %enddef //PRIMITIVE_ARRAYS_INOUT
 
 %define VALUE_LIST_INOUT(CTYPE, CSTYPE)
@@ -237,7 +250,7 @@ typedef struct {
 %typemap(imtype) (int nList, CTYPE *pList) "in $modulePINVOKE.ArrayWithSize"
 %typemap(cstype) (int nList, CTYPE *pList) "CSTYPE[]"
 %typemap(in)     (int nList, CTYPE *pList) %{
-  $1 = ($1_ltype)$input->Count;
+  $1 = static_cast<$1_ltype>($input->Count);
   $2 = ($2_ltype)$input->pArray;
 %}
 %typemap(csin,
@@ -255,8 +268,12 @@ typedef struct {
 %typemap(cstype) (int *nList, CTYPE **pList) "out CSTYPE[]"
 %typemap(in)     (int *nList, CTYPE **pList) %{
   $input->ItemSize = static_cast<int>(sizeof(CTYPE));
-  $1 = ($1_ltype)&$input->Count;
+  $*1_ltype count$input = static_cast<$*1_ltype>($input->Count);
+  $1 = &count$input;
   $2 = ($2_ltype)&$input->pArray;
+%}
+%typemap(argout) (int *nList, CTYPE **pList) %{
+  $input->Count = static_cast<int64_t>(count$input);
 %}
 %typemap(csin,
   pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
@@ -269,7 +286,7 @@ typedef struct {
 %typemap(imtype) (int object_list_count, CTYPE **poObjects) "in $modulePINVOKE.ArrayWithSize"
 %typemap(cstype) (int object_list_count, CTYPE **poObjects) "CSTYPE[]"
 %typemap(in)     (int object_list_count, CTYPE **poObjects) %{
-  $1 = ($1_ltype)$input->Count;
+  $1 = static_cast<$1_ltype>($input->Count);
   $2 = ($2_ltype)$input->pArray;
 %}
 %typemap(csin,
@@ -282,8 +299,12 @@ typedef struct {
 %typemap(cstype) (int *object_list_count, CTYPE **poObjects) "out CSTYPE[]"
 %typemap(in)     (int *object_list_count, CTYPE **poObjects) %{
   $input->ItemSize = static_cast<int>(sizeof(void*));
-  $1 = ($1_ltype)&$input->Count;
+  $*1_ltype count$input = static_cast<$*1_ltype>($input->Count);
+  $1 = &count$input;
   $2 = ($2_ltype)&$input->pArray;
+%}
+%typemap(argout) (int *object_list_count, CTYPE **poObjects) %{
+  $input->Count = static_cast<int64_t>(count$input);
 %}
 %typemap(csin,
   pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
@@ -304,7 +325,7 @@ internal readonly ref struct ArrayWithSize {
   }
 
   public unsafe TVal[] ToPrimitiveArray<TVal>() where TVal : unmanaged {
-    if (pArray == IntPtr.Zero || Count <= 0 || ItemSize != sizeof(TVal)) return null;
+    if (pArray == IntPtr.Zero || Count <= 0 || ItemSize != sizeof(TVal)) return new TVal[0];
     TVal[] result = new TVal[Count];
     long toCopy = (long)Count * ItemSize;
     fixed (TVal* pResult = result)
@@ -319,7 +340,7 @@ internal readonly ref struct ArrayWithSize {
     => FromUnmanaged(objectCreator, byValue: false);
 
   private T[] FromUnmanaged<T>(Func<IntPtr, T> objectCreator, bool byValue) {
-    if (pArray == IntPtr.Zero || Count <= 0 || ItemSize <= 0) return null;
+    if (pArray == IntPtr.Zero || Count <= 0 || ItemSize <= 0) return new T[0];
     T[] result = new T[Count];
     IntPtr pItem = pArray;
     for (int i = 0; i < Count; i++, pItem = IntPtr.Add(pItem, ItemSize)) {
@@ -341,7 +362,7 @@ internal class ArrayHelper<T> : IDisposable {
     Objects = array;
     if (Objects == null || Objects.Length == 0) return;
     Count = Objects.Length;
-    IntPtr memSize = IntPtr.Size == 4 ? new IntPtr(checked(Count * ItemSize)) : new IntPtr((long)Count * ItemSize);
+    IntPtr memSize = new IntPtr(checked((long)Count * ItemSize));
     m_ArrayHandle = Marshal.AllocHGlobal(memSize);
   }
 
