@@ -6269,8 +6269,16 @@ TEST_F(test_cpl, strict_parse)
     EXPECT_EQ(cpl::strict_parse<int>("789.0"), 789);
     EXPECT_EQ(cpl::strict_parse<int>("789.0.0"), std::nullopt);
     EXPECT_EQ(cpl::strict_parse<int>("789.1"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("789e3"), 789000);
+    EXPECT_EQ(cpl::strict_parse<int>("789.e3"), 789000);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0e3"), 789000);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0e3f"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0e3.2"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("789.0e30"), std::nullopt);
     EXPECT_EQ(cpl::strict_parse<int>("50000000000000000"), std::nullopt);
     EXPECT_EQ(cpl::strict_parse<int>(""), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("123c"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<int>("Q"), std::nullopt);
 
     EXPECT_EQ(cpl::strict_parse<double>("3.141569"), 3.141569);
     EXPECT_EQ(cpl::strict_parse<double>("3,141569"), std::nullopt);
@@ -6282,6 +6290,8 @@ TEST_F(test_cpl, strict_parse)
     EXPECT_EQ(cpl::strict_parse<double>(""), std::nullopt);
     EXPECT_EQ(cpl::strict_parse<double>("  "), std::nullopt);
     EXPECT_EQ(cpl::strict_parse<double>(" -"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<double>("123.2e"), std::nullopt);
+    EXPECT_EQ(cpl::strict_parse<double>("q"), std::nullopt);
 
     EXPECT_EQ(cpl::strict_parse<double>("inf"),
               std::numeric_limits<double>::infinity());
