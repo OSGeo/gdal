@@ -2132,12 +2132,7 @@ HDF4EOSGridSubGroup::OpenMDArray(const std::string &osName, CSLConstList) const
     std::vector<int32> aiDimSizes(H4_MAX_VAR_DIMS);
     std::string dimNames;
 
-    int32 nStrBufSize = 0;
-    GDnentries(m_poGDHandle->m_handle, HDFE_NENTDIM, &nStrBufSize);
-    if (nStrBufSize <= 0)
-        dimNames.resize(HDFE_DIMBUFSIZE);
-    else
-        dimNames.resize(nStrBufSize);
+    dimNames.resize(HDFE_DIMBUFSIZE);
     if (GDfieldinfo(m_poGDHandle->m_handle, osName.c_str(), &iRank,
                     &aiDimSizes[0], &iNumType, &dimNames[0]) < 0)
     {
