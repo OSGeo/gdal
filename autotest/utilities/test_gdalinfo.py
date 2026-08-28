@@ -322,6 +322,24 @@ def test_gdalinfo_19(gdalinfo_path, tmp_path):
 
 
 ###############################################################################
+# Test --optfile with --versin in the optfile
+
+
+def test_gdalinfo_optfile_version(gdalinfo_path, tmp_path):
+
+    optfile_txt = str(tmp_path / "optfile.txt")
+
+    f = open(optfile_txt, "wt")
+    f.write("--version\n")
+    f.close()
+    ret = gdaltest.runexternal(
+        gdalinfo_path + f" --optfile {optfile_txt}",
+        check_memleak=False,
+    )
+    assert ret.startswith("GDAL ")
+
+
+###############################################################################
 # Test --formats
 
 
