@@ -624,7 +624,7 @@ import org.gdal.gdalconst.gdalconstConstants;
         GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
         eDataType = GDALGetRasterDataType(self);
         int nDataTypeSize = GDALGetDataTypeSizeBytes( eDataType );
-        if (nBlockXSize > (INT_MAX / nDataTypeSize) / nBlockYSize)
+        if ((size_t)nBlockXSize > (SIZE_MAX / nDataTypeSize) / nBlockYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return CE_Failure;
@@ -679,16 +679,10 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof_ctype > 1 );
 
-  if (nMinBufferSizeInBytes > 0x7fffffff)
-  {
-     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
-     nMinBufferSizeInBytes = 0;
-  }
-
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
 
-  if (nRegularArraySize < nMinBufferSizeInBytes)
+  if ((uint64_t)nRegularArraySize < (uint64_t)nMinBufferSizeInBytes)
   {
       CPLError(CE_Failure, CPLE_AppDefined,
               "Buffer is too small");
@@ -844,14 +838,9 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSizeBytes(buf_type),
                             nPixelSpace, nLineSpace, sizeof_ctype > 1 );
-    if (nMinBufferSizeInBytes > 0x7fffffff)
-    {
-       CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
-       nMinBufferSizeInBytes = 0;
-    }
     if (nMinBufferSizeInBytes == 0)
         return CE_Failure;
-    if (nRegularArraySizeOut < nMinBufferSizeInBytes)
+    if ((uint64_t)nRegularArraySizeOut < (uint64_t)nMinBufferSizeInBytes)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Buffer is too small");
@@ -1182,7 +1171,7 @@ import org.gdal.osr.SpatialReference;
    {
        long buf_size = buf_xsize * buf_ysize * gdal.GetDataTypeSizeBytes(buf_type);
        if ((int)buf_size != buf_size)
-               throw new OutOfMemoryError();
+               throw new OutOfMemoryError("More than 2GB needed. Use non _Direct method");
        java.nio.ByteBuffer nioBuffer = java.nio.ByteBuffer.allocateDirect((int)buf_size);
        int ret = ReadRaster_Direct(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, buf_type, nioBuffer);
        if (ret == gdalconstConstants.CE_None)
