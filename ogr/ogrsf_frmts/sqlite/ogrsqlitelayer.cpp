@@ -957,7 +957,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 poFeature->SetGeomFieldDirectly(iField, poGeometry);
             }
         }
-        else if (!(nSQLite3Type == SQLITE_TEXT || nSQLite3Type == SQLITE_BLOB))
+        else if (!(nSQLite3Type == SQLITE_TEXT || nSQLite3Type == SQLITE_BLOB ||
+                   nSQLite3Type == SQLITE_NULL))
         {
             bUnexpectedType = true;
         }
