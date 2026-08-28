@@ -294,7 +294,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     size_t buffer_alloc_size, std::vector<GInt64> &tmp_arrayStep,
     std::vector<GPtrDiff_t> &tmp_bufferStride) const
 {
-    const auto lamda_error = []()
+    const auto lambda_error = []()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not all elements pointed by buffer will fit in "
@@ -317,7 +317,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
             if (paby_buffer < paby_buffer_alloc_start ||
                 paby_buffer + elementSize > paby_buffer_alloc_end)
             {
-                lamda_error();
+                lambda_error();
                 return false;
             }
         }
@@ -339,7 +339,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
             return false;
         }
     }
-    bool bufferStride_all_positive = true;
+
     if (bufferStride == nullptr)
     {
         GPtrDiff_t stride = 1;
@@ -374,17 +374,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
         std::reverse(tmp_bufferStride.begin(), tmp_bufferStride.end());
         bufferStride = tmp_bufferStride.data();
     }
-    else
-    {
-        for (size_t i = 0; i < dims.size(); i++)
-        {
-            if (bufferStride[i] < 0)
-            {
-                bufferStride_all_positive = false;
-                break;
-            }
-        }
-    }
+
     for (size_t i = 0; i < dims.size(); i++)
     {
         assert(arrayStartIdx);
@@ -459,66 +449,58 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
             static_cast<const GByte *>(buffer_alloc_start);
         const GByte *paby_buffer_alloc_end =
             paby_buffer_alloc_start + buffer_alloc_size;
-        if (bufferStride_all_positive)
+
+        GUInt64 nOffsetMaxNeg = 0;
+        GUInt64 nOffsetMax = elementSize;
+        for (size_t i = 0; i < dims.size(); i++)
         {
-            if (paby_buffer < paby_buffer_alloc_start)
-            {
-                lamda_error();
-                return false;
-            }
-            GUInt64 nOffset = elementSize;
-            for (size_t i = 0; i < dims.size(); i++)
+            if (count[i] > 1)
             {
                 try
                 {
-                    nOffset = (CPLSM(static_cast<uint64_t>(nOffset)) +
-                               CPLSM(static_cast<uint64_t>(bufferStride[i])) *
-                                   CPLSM(static_cast<uint64_t>(count[i] - 1)) *
-                                   CPLSM(static_cast<uint64_t>(elementSize)))
-                                  .v();
+                    if (bufferStride[i] >= 0)
+                    {
+                        nOffsetMax =
+                            (CPLSM(static_cast<uint64_t>(nOffsetMax)) +
+                             CPLSM(static_cast<uint64_t>(bufferStride[i])) *
+                                 CPLSM(static_cast<uint64_t>(count[i] - 1)) *
+                                 CPLSM(static_cast<uint64_t>(elementSize)))
+                                .v();
+                    }
+                    else
+                    {
+                        nOffsetMaxNeg =
+                            (CPLSM(static_cast<uint64_t>(nOffsetMaxNeg)) +
+                             CPLSM(static_cast<uint64_t>(-bufferStride[i])) *
+                                 CPLSM(static_cast<uint64_t>(count[i] - 1)) *
+                                 CPLSM(static_cast<uint64_t>(elementSize)))
+                                .v();
+                    }
                 }
                 catch (...)
                 {
-                    lamda_error();
+                    lambda_error();
                     return false;
                 }
-            }
-#if SIZEOF_VOIDP == 4
-            if (static_cast<size_t>(nOffset) != nOffset)
-            {
-                lamda_error();
-                return false;
-            }
-#endif
-            if (paby_buffer + nOffset > paby_buffer_alloc_end)
-            {
-                lamda_error();
-                return false;
             }
         }
-        else if (dims.size() < 31)
+#if SIZEOF_VOIDP == 4
+        if (static_cast<size_t>(nOffsetMax) != nOffsetMax ||
+            static_cast<size_t>(nOffsetMaxNeg) != nOffsetMaxNeg)
         {
-            // Check all corners of the hypercube
-            const unsigned nLoops = 1U << static_cast<unsigned>(dims.size());
-            for (unsigned iCornerCode = 0; iCornerCode < nLoops; iCornerCode++)
-            {
-                const GByte *paby = paby_buffer;
-                for (unsigned i = 0; i < static_cast<unsigned>(dims.size());
-                     i++)
-                {
-                    if (iCornerCode & (1U << i))
-                    {
-                        // We should check for integer overflows
-                        paby += bufferStride[i] * (count[i] - 1) * elementSize;
-                    }
-                }
-                if (paby < paby_buffer_alloc_start ||
-                    paby + elementSize > paby_buffer_alloc_end)
-                {
-                    lamda_error();
-                    return false;
-                }
-            }
+            lambda_error();
+            return false;
+        }
+#endif
+        if (paby_buffer - nOffsetMaxNeg < paby_buffer_alloc_start)
+        {
+            lambda_error();
+            return false;
+        }
+        if (paby_buffer + nOffsetMax > paby_buffer_alloc_end)
+        {
+            lambda_error();
+            return false;
         }
     }
 
