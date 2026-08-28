@@ -35,6 +35,13 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
+
 def test_netcdf_multidim_invalid_file():
 
     ds = gdal.Open("data/netcdf/byte_truncated.nc", gdal.OF_MULTIDIM_RASTER)
@@ -4124,10 +4131,15 @@ def test_netcdf_multidim_chunk_cache_options():
 ###############################################################################
 
 
-def test_netcdf_multidim_as_classic_dataset_metadata():
+def test_netcdf_multidim_as_classic_dataset_metadata(tmp_path):
+
+    gdal.CopyFile(
+        "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc", tmp_path / "tmp.nc"
+    )
+
     def set_metadata():
         ds = gdal.Open(
-            "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc",
+            tmp_path / "tmp.nc",
             gdal.OF_MULTIDIM_RASTER,
         )
         rg = ds.GetRootGroup()
@@ -4141,7 +4153,7 @@ def test_netcdf_multidim_as_classic_dataset_metadata():
 
     def check_metadata():
         ds = gdal.Open(
-            "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc",
+            tmp_path / "tmp.nc",
             gdal.OF_MULTIDIM_RASTER,
         )
         rg = ds.GetRootGroup()
@@ -4153,7 +4165,7 @@ def test_netcdf_multidim_as_classic_dataset_metadata():
         classic_ds = ar.AsClassicDataset(1, 0)
         assert classic_ds.GetMetadataItem("foo") == "bar"
 
-    pam_filename = "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc.aux.xml"
+    pam_filename = tmp_path / "tmp.nc.aux.xml"
     if os.path.exists(pam_filename):
         os.unlink(pam_filename)
 

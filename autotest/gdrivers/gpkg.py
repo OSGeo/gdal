@@ -3618,35 +3618,46 @@ def test_gpkg_47():
 # subdatasets on Windows)
 
 
-def test_gpkg_48():
+def test_gpkg_48(tmp_path):
 
-    if sys.platform == "win32":
-        filename = os.path.join(os.getcwd(), "tmp", "byte.gpkg")
-    else:
-        # Test Windows code path in a weird way...
-        filename = "C:\\byte.gpkg"
+    gdal.CopyFile("data/byte.tif", tmp_path / "byte.tif")
 
-    gdal.Translate(
-        filename, "data/byte.tif", format="GPKG", creationOptions=["RASTER_TABLE=foo"]
-    )
-    gdal.Translate(
-        filename,
-        "data/byte.tif",
-        format="GPKG",
-        creationOptions=["APPEND_SUBDATASET=YES", "RASTER_TABLE=bar"],
-    )
-    ds = gdal.Open("GPKG:" + filename + ":foo")
-    if ds is None:
+    old_pwd = os.getcwd()
+    try:
+        if sys.platform == "win32":
+            filename = os.path.join(os.getcwd(), "tmp", "byte.gpkg")
+        else:
+            # Test Windows code path in a weird way...
+            os.chdir(os.path.join(old_pwd, "tmp"))
+            filename = "C:\\byte.gpkg"
+
+        gdal.Translate(
+            filename,
+            tmp_path / "byte.tif",
+            format="GPKG",
+            creationOptions=["RASTER_TABLE=foo"],
+        )
+        gdal.Translate(
+            filename,
+            tmp_path / "byte.tif",
+            format="GPKG",
+            creationOptions=["APPEND_SUBDATASET=YES", "RASTER_TABLE=bar"],
+        )
+        ds = gdal.Open("GPKG:" + filename + ":foo")
+        if ds is None:
+            gdal.Unlink(filename)
+            pytest.fail()
+        ds = None
+        ds = gdal.Open("GPKG:" + filename + ":bar")
+        if ds is None:
+            gdal.Unlink(filename)
+            pytest.fail()
+        ds = None
+
         gdal.Unlink(filename)
-        pytest.fail()
-    ds = None
-    ds = gdal.Open("GPKG:" + filename + ":bar")
-    if ds is None:
-        gdal.Unlink(filename)
-        pytest.fail()
-    ds = None
 
-    gdal.Unlink(filename)
+    finally:
+        os.chdir(old_pwd)
 
 
 ###############################################################################

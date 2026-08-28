@@ -67,17 +67,27 @@ def test_isce_2():
 # Verify this can be exported losslessly.
 
 
-def test_isce_3():
+def test_isce_3(tmp_path):
 
-    tst = gdaltest.GDALTest("isce", "isce/isce.slc", 1, 350)
-    tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc")
+    gdal.CopyFile("data/isce/isce.slc", tmp_path / "isce.slc")
+    gdal.CopyFile("data/isce/isce.slc.xml", tmp_path / "isce.slc.xml")
+
+    tst = gdaltest.GDALTest(
+        "isce", tmp_path / "isce.slc", 1, 350, filename_absolute=True
+    )
+    tst.testCreateCopy(check_gt=0, new_filename=tmp_path / "isce.tst.slc")
 
 
 ###############################################################################
 # Verify VSIF*L capacity
 
 
-def test_isce_4():
+def test_isce_4(tmp_path):
 
-    tst = gdaltest.GDALTest("isce", "isce/isce.slc", 1, 350)
-    tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc", vsimem=1)
+    gdal.CopyFile("data/isce/isce.slc", tmp_path / "isce.slc")
+    gdal.CopyFile("data/isce/isce.slc.xml", tmp_path / "isce.slc.xml")
+
+    tst = gdaltest.GDALTest(
+        "isce", tmp_path / "isce.slc", 1, 350, filename_absolute=True
+    )
+    tst.testCreateCopy(check_gt=0, new_filename=tmp_path / "isce.tst.slc", vsimem=1)

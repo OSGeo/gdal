@@ -40,6 +40,13 @@ def fail_on_warnings():
         yield
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
+
 ###############################################################################
 # Netcdf Functions
 ###############################################################################
@@ -3186,11 +3193,18 @@ def test_netcdf_79():
 # Test creating and opening with accent
 
 
-def test_netcdf_80():
+def test_netcdf_80(tmp_path):
 
-    test = gdaltest.GDALTest("NETCDF", "../data/byte.tif", 1, 4672)
+    gdal.CopyFile("data/byte.tif", tmp_path / "byte.tif")
+
+    test = gdaltest.GDALTest(
+        "NETCDF", tmp_path / "byte.tif", 1, 4672, filename_absolute=1
+    )
     test.testCreateCopy(
-        new_filename="test\xc3\xa9.nc", check_gt=0, check_srs=0, check_minmax=0
+        new_filename=tmp_path / "test\xc3\xa9.nc",
+        check_gt=0,
+        check_srs=0,
+        check_minmax=0,
     )
 
 
@@ -3733,7 +3747,7 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
         ("corrupted_polygon_ir", "interior_ring values must be 0 or 1"),
     ),
 )
-def test_bad_cf1_8(fname, expected_warning):
+def test_netcdf_bad_cf1_8(fname, expected_warning):
 
     # basic resilience test, make sure it can exit "gracefully"
     fpath = f"data/netcdf-sg/{fname}.nc"

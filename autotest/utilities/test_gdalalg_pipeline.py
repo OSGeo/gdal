@@ -22,6 +22,13 @@ import test_cli_utilities
 from osgeo import gdal, ogr
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
+
 def get_pipeline_alg():
     return gdal.GetGlobalAlgorithmRegistry()["pipeline"]
 

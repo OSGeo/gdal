@@ -13,11 +13,12 @@
 ###############################################################################
 
 import math
+import os
 
 import gdaltest
 import pytest
 
-from osgeo import ogr, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("Selafin")
 
@@ -26,6 +27,13 @@ pytestmark = pytest.mark.require_driver("Selafin")
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
     with gdaltest.disable_exceptions():
+        yield
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
         yield
 
 

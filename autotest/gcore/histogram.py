@@ -343,9 +343,11 @@ def test_histogram_2(utmsmall_tif):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_histogram_3():
+def test_histogram_3(tmp_vsimem):
 
-    ds = gdal.Open("data/int32_withneg.grd")
+    gdal.CopyFile("data/int32_withneg.grd", tmp_vsimem / "test.grd")
+
+    ds = gdal.Open(tmp_vsimem / "test.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
         buckets=21, max=100, min=-100, include_out_of_range=1, approx_ok=0
     )
@@ -360,9 +362,11 @@ def test_histogram_3():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_histogram_4():
+def test_histogram_4(tmp_vsimem):
 
-    ds = gdal.Open("data/int32_withneg.grd")
+    gdal.CopyFile("data/int32_withneg.grd", tmp_vsimem / "test.grd")
+
+    ds = gdal.Open(tmp_vsimem / "test.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
         buckets=21, max=100, min=-100, include_out_of_range=0, approx_ok=0
     )
@@ -372,8 +376,6 @@ def test_histogram_4():
     assert hist == exp_hist, "did not get expected histogram."
 
     ds = None
-
-    gdal.Unlink("data/int32_withneg.grd.aux.xml")
 
 
 ###############################################################################

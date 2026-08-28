@@ -12,7 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-
+import os
 import struct
 from collections import defaultdict
 
@@ -20,6 +20,14 @@ import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.

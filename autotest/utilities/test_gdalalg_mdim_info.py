@@ -36,9 +36,10 @@ def get_mdim_info_alg():
     return gdal.GetGlobalAlgorithmRegistry()["mdim"]["info"]
 
 
-def test_gdalalg_mdim_info():
+def test_gdalalg_mdim_info(tmp_path):
     info = get_mdim_info_alg()
-    assert info.ParseRunAndFinalize(["../gdrivers/data/netcdf/byte.nc"])
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
+    assert info.ParseRunAndFinalize([tmp_path / "byte.nc"])
     output_string = info["output-string"]
     j = json.loads(output_string)
     del j["arrays"]["Band1"]["srs"]["wkt"]
@@ -107,11 +108,12 @@ def test_gdalalg_mdim_info():
     }
 
 
-def test_gdalalg_mdim_info_all_options():
+def test_gdalalg_mdim_info_all_options(tmp_path):
     info = get_mdim_info_alg()
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     assert info.ParseRunAndFinalize(
         [
-            "../gdrivers/data/netcdf/byte.nc",
+            tmp_path / "byte.nc",
             "--detailed",
             "--stats",
             "--limit=5",
@@ -151,10 +153,11 @@ def test_gdalalg_mdim_info_all_options():
     }
 
 
-def test_gdalalg_mdim_info_binary_json(gdal_path):
+def test_gdalalg_mdim_info_binary_json(tmp_path, gdal_path):
 
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     out = gdaltest.runexternal(
-        f"{gdal_path} mdim info ../gdrivers/data/netcdf/byte.nc --format json"
+        f"{gdal_path} mdim info {tmp_path}/byte.nc --format json"
     )
     assert json.loads(out) == {
         "type": "group",
@@ -224,11 +227,10 @@ def test_gdalalg_mdim_info_binary_json(gdal_path):
     }
 
 
-def test_gdalalg_mdim_info_text():
+def test_gdalalg_mdim_info_text(tmp_path):
 
-    with gdal.alg.mdim.info(
-        input="../gdrivers/data/netcdf/byte.nc", format="text"
-    ) as alg:
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
+    with gdal.alg.mdim.info(input=tmp_path / "byte.nc", format="text") as alg:
         out = alg.Output()
 
     out = "\n".join([x.rstrip() for x in out.replace("\r\n", "\n").split("\n")])
@@ -310,10 +312,11 @@ Arrays:
 """, out
 
 
-def test_gdalalg_mdim_info_text_summary():
+def test_gdalalg_mdim_info_text_summary(tmp_path):
 
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     with gdal.alg.mdim.info(
-        input="../gdrivers/data/netcdf/byte.nc", summary=True, format="text"
+        input=tmp_path / "byte.nc", summary=True, format="text"
     ) as alg:
         out = alg.Output()
 
@@ -344,10 +347,11 @@ Data variables:
 """, out
 
 
-def test_gdalalg_mdim_info_text_array_detailed_stats():
+def test_gdalalg_mdim_info_text_array_detailed_stats(tmp_path):
 
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     with gdal.alg.mdim.info(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         detailed=True,
         stats=True,
         array="/Band1",
@@ -503,9 +507,10 @@ Arrays:
 """
 
 
-def test_gdalalg_mdim_info_binary_text(gdal_path):
+def test_gdalalg_mdim_info_binary_text(tmp_path, gdal_path):
 
-    out = gdaltest.runexternal(f"{gdal_path} mdim info ../gdrivers/data/netcdf/byte.nc")
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
+    out = gdaltest.runexternal(f"{gdal_path} mdim info {tmp_path}/byte.nc")
     out = "\n".join([x.rstrip() for x in out.replace("\r\n", "\n").split("\n")])
     assert out == """Driver: netCDF
 
@@ -585,10 +590,11 @@ Arrays:
 """, out
 
 
-def test_gdalalg_mdim_info_binary_text_array_and_detailed(gdal_path):
+def test_gdalalg_mdim_info_binary_text_array_and_detailed(tmp_path, gdal_path):
 
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     out = gdaltest.runexternal(
-        f"{gdal_path} mdim info --array Band1 --detailed ../gdrivers/data/netcdf/byte.nc"
+        f"{gdal_path} mdim info --array Band1 --detailed {tmp_path}/byte.nc"
     )
     assert (
         "\n".join([x.rstrip() for x in out.replace("\r\n", "\n").split("\n")])
@@ -671,8 +677,10 @@ def test_gdalalg_mdim_info_completion_array_option(gdal_path):
     assert "USE_DEFAULT_FILL_AS_NODATA=" in out
 
 
-def test_gdalalg_mdim_info_summary():
-    info = gdal.alg.mdim.info(input="../gdrivers/data/netcdf/byte.nc", summary=True)
+def test_gdalalg_mdim_info_summary(tmp_path):
+
+    gdal.CopyFile("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
+    info = gdal.alg.mdim.info(input=tmp_path / "byte.nc", summary=True)
     output_string = info["output-string"]
     j = json.loads(output_string)
     assert j == {

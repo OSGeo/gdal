@@ -13,6 +13,7 @@
 ###############################################################################
 
 import array
+import os
 import random
 import struct
 
@@ -20,6 +21,14 @@ import gdaltest
 import pytest
 
 from osgeo import gdal, osr
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
 
 ###############################################################################
 # Verify warped result.

@@ -12,6 +12,7 @@
 ###############################################################################
 
 import json
+import os
 
 import gdaltest
 import ogrtest
@@ -26,6 +27,13 @@ pytestmark = pytest.mark.require_driver("MVT")
 @pytest.fixture(scope="module", autouse=True)
 def init():
     with gdaltest.config_option("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "YES"):
+        yield
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
         yield
 
 

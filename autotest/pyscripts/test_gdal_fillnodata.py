@@ -69,7 +69,8 @@ def test_gdal_fillnodata_1(script_path, tmp_path):
     _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
-        test_py_scripts.get_data_path("gcore") + f"byte.tif {result_tif}",
+        test_py_scripts.get_data_path("gcore")
+        + f"byte.tif {result_tif} --config CPL_TMPDIR tmp",
         return_stderr=True,
     )
     assert "UseExceptions" not in err
@@ -93,7 +94,7 @@ def test_gdal_fillnodata_2(script_path, tmp_path):
         "gdal_fillnodata",
         "-si 0 "
         + test_py_scripts.get_data_path("gcore")
-        + f"nodata_byte.tif {result_tif}",
+        + f"nodata_byte.tif {result_tif} --config CPL_TMPDIR tmp",
     )
 
     ds = gdal.Open(result_tif)
@@ -123,7 +124,7 @@ def test_gdal_fillnodata_smoothing(script_path, tmp_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
-        f"-md 1 -si 1 {input_tif} {result_tif}",
+        f"-md 1 -si 1 {input_tif} {result_tif} --config CPL_TMPDIR tmp",
     )
 
     expected_data = (20, 30, 40, 50, 30, 40, 50, 60, 40, 50, 60, 70, 50, 60, 70, 80)
@@ -153,7 +154,7 @@ def test_gdal_fillnodata_nearest(script_path, tmp_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
-        f"-interp nearest {input_tif} {result_tif}",
+        f"-interp nearest {input_tif} {result_tif} --config CPL_TMPDIR tmp",
     )
 
     expected_data = (20, 30, 40, 50, 30, 60, 70, 80, 90)

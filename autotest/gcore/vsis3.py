@@ -4932,15 +4932,16 @@ def test_vsis3_no_useless_requests(aws_test_config, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write(aws_test_config, webserver_port):
+def test_vsis3_random_write(tmp_vsimem, aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
     with gdal.quiet_errors():
         assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b") is None
 
-    with gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
     assert f
@@ -4960,12 +4961,13 @@ def test_vsis3_random_write(aws_test_config, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
+def test_vsis3_random_write_failure_1(tmp_vsimem, aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
     assert f
@@ -4981,12 +4983,13 @@ def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
+def test_vsis3_random_write_failure_2(tmp_vsimem, aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         with gdaltest.config_option("VSIS3_CHUNK_SIZE_BYTES", "1"):
             f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b")
@@ -5004,7 +5007,9 @@ def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
+def test_vsis3_random_write_gtiff_create_copy(
+    tmp_vsimem, aws_test_config, webserver_port
+):
 
     gdal.VSICurlClearCache()
 
@@ -5052,8 +5057,9 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
     )
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         with webserver.install_http_handler(handler):
             ds = gdal.GetDriverByName("GTiff").CreateCopy(
@@ -5071,7 +5077,9 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
 # Test r+ access
 
 
-def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
+def test_vsis3_random_write_on_existing_file(
+    tmp_vsimem, aws_test_config, webserver_port
+):
 
     gdal.VSICurlClearCache()
 
@@ -5097,8 +5105,9 @@ def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
     )
     handler.add("GET", "/random_write/test.bin", 200, {}, "f")
     handler.add("PUT", "/random_write/test.bin", 200, {}, expected_body=b"foo")
-    with webserver.install_http_handler(handler), gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with webserver.install_http_handler(handler), gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
         assert f
@@ -5112,7 +5121,7 @@ def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
 
 
 def test_vsis3_random_write_on_existing_file_that_does_not_exist(
-    aws_test_config, webserver_port
+    tmp_vsimem, aws_test_config, webserver_port
 ):
 
     gdal.VSICurlClearCache()
@@ -5130,8 +5139,9 @@ def test_vsis3_random_write_on_existing_file_that_does_not_exist(
             </ListBucketResult>
             """,
     )
-    with webserver.install_http_handler(handler), gdaltest.config_option(
-        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    with webserver.install_http_handler(handler), gdaltest.config_options(
+        {"CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE": "YES", "CPL_TMPDIR": tmp_vsimem},
+        thread_local=False,
     ):
         f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
         assert f is None

@@ -26,11 +26,11 @@ from osgeo import gdal
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
 
 
-def test_rasterio_1():
+def test_rasterio_1(tmp_path):
     data = "A".encode("ascii")
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.Create("tmp/rasterio1.tif", 10, 6, 1)
+    ds = drv.Create(tmp_path / "rasterio1.tif", 10, 6, 1)
 
     ds.GetRasterBand(1).Fill(65)
     checksum = ds.GetRasterBand(1).Checksum()
@@ -53,18 +53,17 @@ def test_rasterio_1():
     assert data2 == data, "Didn't get expected buffer "
 
     ds = None
-    drv.Delete("tmp/rasterio1.tif")
 
 
 ###############################################################################
 # Test writing a 5x4 buffer to a 10x6 raster and read it back
 
 
-def test_rasterio_2():
+def test_rasterio_2(tmp_path):
     data = "AAAAAAAAAAAAAAAAAAAA".encode("ascii")
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.Create("tmp/rasterio2.tif", 10, 6, 1)
+    ds = drv.Create(tmp_path / "rasterio2.tif", 10, 6, 1)
 
     ds.GetRasterBand(1).Fill(65)
     checksum = ds.GetRasterBand(1).Checksum()
@@ -87,14 +86,13 @@ def test_rasterio_2():
     assert data2 == data, "Didn't get expected buffer "
 
     ds = None
-    drv.Delete("tmp/rasterio2.tif")
 
 
 ###############################################################################
 # Test extensive read & writes into a non tiled raster
 
 
-def test_rasterio_3():
+def test_rasterio_3(tmp_path):
 
     data = [["" for i in range(4)] for i in range(5)]
     for xsize in range(5):
@@ -104,7 +102,7 @@ def test_rasterio_3():
             data[xsize][ysize] = data[xsize][ysize].encode("ascii")
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.Create("tmp/rasterio3.tif", 10, 6, 1)
+    ds = drv.Create(tmp_path / "rasterio3.tif", 10, 6, 1)
 
     i = 0
     while i < ds.RasterXSize:
@@ -139,14 +137,13 @@ def test_rasterio_3():
         i = i + 1
 
     ds = None
-    drv.Delete("tmp/rasterio3.tif")
 
 
 ###############################################################################
 # Test extensive read & writes into a tiled raster
 
 
-def test_rasterio_4():
+def test_rasterio_4(tmp_path):
 
     data = ["" for i in range(5 * 4)]
     for size in range(5 * 4):
@@ -156,7 +153,7 @@ def test_rasterio_4():
 
     drv = gdal.GetDriverByName("GTiff")
     ds = drv.Create(
-        "tmp/rasterio4.tif",
+        tmp_path / "rasterio4.tif",
         20,
         20,
         1,
@@ -202,7 +199,6 @@ def test_rasterio_4():
             i = i + 3
 
     ds = None
-    drv.Delete("tmp/rasterio4.tif")
 
 
 ###############################################################################
@@ -709,12 +705,12 @@ def test_rasterio_9():
 # Test resampled reading from an overview level (#8794)
 
 
-def test_rasterio_overview_subpixel_resampling():
+def test_rasterio_overview_subpixel_resampling(tmp_vsimem):
 
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
-    temp_path = "/vsimem/rasterio_ovr.tif"
+    temp_path = tmp_vsimem / "rasterio_ovr.tif"
     ds = gdal.GetDriverByName("GTiff").Create(temp_path, 8, 8, 1, gdal.GDT_UInt8)
     ds.GetRasterBand(1).WriteArray(
         numpy.array(
@@ -746,7 +742,6 @@ def test_rasterio_overview_subpixel_resampling():
     )
 
     ds = None
-    gdal.Unlink("/vsimem/rasterio_ovr.tif")
 
 
 ###############################################################################
@@ -1032,10 +1027,10 @@ def test_rasterio_nearest_or_mode(dt, resample_alg, use_nan):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_rasterio_14():
+def test_rasterio_14(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/rasterio_14.asc",
+        tmp_vsimem / "rasterio_14.asc",
         """ncols        6
 nrows        6
 xllcorner    0
@@ -1050,15 +1045,15 @@ cellsize     0
     )
 
     ds = gdal.Translate(
-        "/vsimem/rasterio_14_out.asc",
-        "/vsimem/rasterio_14.asc",
+        tmp_vsimem / "rasterio_14_out.asc",
+        tmp_vsimem / "rasterio_14.asc",
         options="-of AAIGRID -r average -outsize 50% 50%",
     )
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 110, ds.ReadAsArray()
 
-    gdal.Unlink("/vsimem/rasterio_14.asc")
-    gdal.Unlink("/vsimem/rasterio_14_out.asc")
+    gdal.Unlink(tmp_vsimem / "rasterio_14.asc")
+    gdal.Unlink(tmp_vsimem / "rasterio_14_out.asc")
 
     ds = gdal.GetDriverByName("MEM").Create("", 1000000, 1)
     ds.GetRasterBand(1).WriteRaster(
@@ -1110,10 +1105,10 @@ cellsize     0
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_rasterio_average_4by4_to_3by3():
+def test_rasterio_average_4by4_to_3by3(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/test_rasterio_average_4by4_to_3by3.asc",
+        tmp_vsimem / "test.asc",
         """ncols        4
 nrows        4
 xllcorner    0
@@ -1127,7 +1122,7 @@ cellsize     1
 
     ds = gdal.Translate(
         "",
-        "/vsimem/test_rasterio_average_4by4_to_3by3.asc",
+        tmp_vsimem / "test.asc",
         options="-ot Float32 -f MEM -r average -outsize 3 3",
     )
     data = ds.GetRasterBand(1).ReadRaster()
@@ -1142,8 +1137,6 @@ cellsize     1
         9.75,
         14.75,
     )
-
-    gdal.Unlink("/vsimem/test_rasterio_average_4by4_to_3by3.asc")
 
 
 ###############################################################################

@@ -12,11 +12,19 @@
 ###############################################################################
 
 import array
+import os
 import struct
 
 import pytest
 
 from osgeo import gdal
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
 
 
 def test_fillnodata_1x1_no_nodata():

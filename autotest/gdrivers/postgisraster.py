@@ -172,10 +172,12 @@ def test_postgisraster_compare_small_world():
 #
 
 
-def test_postgisraster_test_utm_open():
+def test_postgisraster_test_utm_open(tmp_path):
+
+    gdal.CopyFile("data/utm.tif", tmp_path / "utm.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/utm.tif")
+    src_ds = gdal.Open(tmp_path / "utm.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -202,10 +204,12 @@ def test_postgisraster_test_utm_open():
 #
 
 
-def test_postgisraster_test_small_world_open_b1():
+def test_postgisraster_test_small_world_open_b1(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -234,10 +238,12 @@ def test_postgisraster_test_small_world_open_b1():
 #
 
 
-def test_postgisraster_test_small_world_open_b2():
+def test_postgisraster_test_small_world_open_b2(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -266,10 +272,12 @@ def test_postgisraster_test_small_world_open_b2():
 #
 
 
-def test_postgisraster_test_small_world_open_b3():
+def test_postgisraster_test_small_world_open_b3(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 

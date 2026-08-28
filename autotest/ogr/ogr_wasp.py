@@ -30,9 +30,9 @@ pytestmark = pytest.mark.require_driver("WAsP")
 def test_ogr_wasp_create_ds():
 
     wasp_drv = ogr.GetDriverByName("WAsP")
-    wasp_drv.DeleteDataSource("tmp.map")
+    wasp_drv.DeleteDataSource("tmp/tmp.map")
 
-    gdaltest.wasp_ds = wasp_drv.CreateDataSource("tmp.map")
+    gdaltest.wasp_ds = wasp_drv.CreateDataSource("tmp/tmp.map")
 
     if gdaltest.wasp_ds is not None:
         return
@@ -71,7 +71,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -133,7 +133,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -184,7 +184,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -233,7 +233,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -290,7 +290,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -356,7 +356,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -420,7 +420,7 @@ def test_ogr_wasp_merge():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp.map")
+    f = open("tmp/tmp.map")
     for i in range(4):
         f.readline()
     i = 0
@@ -453,7 +453,7 @@ def test_ogr_wasp_reading():
 
     gdaltest.wasp_ds = None
 
-    ds = ogr.Open("tmp.map")
+    ds = ogr.Open("tmp/tmp.map")
 
     assert ds is not None and ds.GetLayerCount() == 1
 
@@ -475,4 +475,4 @@ def test_ogr_wasp_reading():
 def test_ogr_wasp_cleanup():
 
     wasp_drv = ogr.GetDriverByName("WAsP")
-    wasp_drv.DeleteDataSource("tmp.map")
+    wasp_drv.DeleteDataSource("tmp/tmp.map")

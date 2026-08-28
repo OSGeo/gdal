@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
@@ -22,6 +24,13 @@ np = pytest.importorskip("numpy")
 
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["proximity"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
 
 
 # Helper function to create a GTiff raster from a numpy array

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import random
 
 import gdaltest
@@ -23,6 +24,13 @@ from osgeo import gdal, ogr
 @pytest.fixture()
 def alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["sort"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
 
 
 @pytest.fixture(params=("hilbert", "strtree"))

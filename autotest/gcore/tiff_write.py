@@ -8463,10 +8463,12 @@ def test_tiff_write_webp(writeImageStructureMetadata):
 @pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
 @pytest.mark.require_creation_option("GTiff", "WEBP")
 @pytest.mark.require_creation_option("GTiff", "WEBP_LOSSLESS")
-def test_tiff_write_tiled_webp(writeImageStructureMetadata):
+def test_tiff_write_tiled_webp(writeImageStructureMetadata, tmp_vsimem):
 
-    filename = "/vsimem/tiff_write_tiled_webp.tif"
-    src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
+    gdal.CopyFile("data/md_ge_rgb_0010000.tif", tmp_vsimem / "src.tif")
+
+    filename = tmp_vsimem / "tiff_write_tiled_webp.tif"
+    src_ds = gdal.Open(tmp_vsimem / "src.tif")
     with gdaltest.config_option(
         "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
         "YES" if writeImageStructureMetadata else "NO",
@@ -8498,19 +8500,18 @@ def test_tiff_write_tiled_webp(writeImageStructureMetadata):
         )
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
-    gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
-
 
 ###############################################################################
 # Test WEBP compression with huge single strip
 
 
 @pytest.mark.require_creation_option("GTiff", "WEBP")
-def test_tiff_write_webp_huge_single_strip():
+def test_tiff_write_webp_huge_single_strip(tmp_vsimem):
 
-    filename = "/vsimem/tif_webp_huge_single_strip.tif"
-    src_ds = gdal.Open("data/tif_webp_huge_single_strip.tif")
+    gdal.CopyFile("data/tif_webp_huge_single_strip.tif", tmp_vsimem / "src.tif")
+
+    filename = tmp_vsimem / "out.tif"
+    src_ds = gdal.Open(tmp_vsimem / "src.tif")
     gdaltest.tiff_drv.CreateCopy(
         filename, src_ds, options=["COMPRESS=WEBP", "BLOCKYSIZE=2001"]
     )
@@ -8527,9 +8528,6 @@ def test_tiff_write_webp_huge_single_strip():
             assert original_stats[i][j] == pytest.approx(
                 got_stats[i][j], abs=1e-1 * abs(original_stats[i][j])
             ), "did not get expected statistics"
-
-    gdaltest.tiff_drv.Delete(filename)
-    gdal.Unlink("data/tif_webp_huge_single_strip.tif.aux.xml")
 
 
 ###############################################################################

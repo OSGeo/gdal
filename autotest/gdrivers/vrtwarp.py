@@ -348,22 +348,22 @@ def test_vrtwarp_9(tmp_vsimem):
     ds.BuildOverviews("NEAR", overviewlist=[2])
     ds = None
 
-    ds = gdal.Warp("", tmp_vsimem / "sstgeo.vrt", options="-of MEM -geoloc")
-    expected_cs_main = ds.GetRasterBand(1).Checksum()
-    ds = None
-
-    vrtwarp_ds = gdal.Warp(
-        tmp_vsimem / "vrtwarp_9.vrt",
-        tmp_vsimem / "sstgeo.vrt",
-        options="-overwrite -of VRT -geoloc",
-    )
-    assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
-    assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == 62489, (
-        vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize,
-        vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize,
-    )
-    vrtwarp_ds = None
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        ds = gdal.Warp("", tmp_vsimem / "sstgeo.vrt", options="-of MEM -geoloc")
+        expected_cs_main = ds.GetRasterBand(1).Checksum()
+        ds = None
+        vrtwarp_ds = gdal.Warp(
+            tmp_vsimem / "vrtwarp_9.vrt",
+            tmp_vsimem / "sstgeo.vrt",
+            options="-overwrite -of VRT -geoloc",
+        )
+        assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == 62489, (
+            vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize,
+            vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize,
+        )
+        vrtwarp_ds = None
 
 
 ###############################################################################

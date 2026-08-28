@@ -250,7 +250,9 @@ def test_ogr_pdf_5():
 @pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_bezier_curve_and_polygon_holes():
 
-    with gdaltest.config_option("OGR_PDF_READ_NON_STRUCTURED", "YES"):
+    with gdaltest.config_options(
+        {"OGR_PDF_READ_NON_STRUCTURED": "YES", "GDAL_PAM_ENABLED": "NO"}
+    ):
         ds = ogr.Open("data/pdf/bezier_curve_and_polygon_holes.pdf")
     assert ds is not None
 

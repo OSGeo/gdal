@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
@@ -22,6 +24,13 @@ gdaltest.importorskip_gdal_array()
 
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["fill-nodata"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
 
 
 def test_gdalalg_raster_fill_nodata_cannot_open_file():

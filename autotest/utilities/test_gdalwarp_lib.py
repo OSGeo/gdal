@@ -16,6 +16,7 @@
 import array
 import collections
 import json
+import os
 import shutil
 import struct
 
@@ -24,6 +25,14 @@ import ogrtest
 import pytest
 
 from osgeo import gdal, ogr, osr
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
+
 
 ###############################################################################
 # Simple test

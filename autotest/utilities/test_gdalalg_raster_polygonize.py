@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import pytest
 
 from osgeo import gdal, ogr
@@ -18,6 +20,13 @@ from osgeo import gdal, ogr
 
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["polygonize"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _set_cpl_tmpdir():
+
+    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
+        yield
 
 
 def test_gdalalg_raster_polygonize():

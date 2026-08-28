@@ -360,21 +360,12 @@ def test_jpeg_10(jpeg_version):
     if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
         pytest.skip("12bit jpeg not available")
 
-    try:
-        os.remove("data/jpeg/12bit_rose_extract.jpg.aux.xml")
-    except OSError:
-        pass
-
-    ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 3613 and stats[2] <= 3614
     ds = None
-
-    try:
-        os.remove("data/jpeg/12bit_rose_extract.jpg.aux.xml")
-    except OSError:
-        pass
 
 
 ###############################################################################

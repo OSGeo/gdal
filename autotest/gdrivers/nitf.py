@@ -1652,15 +1652,11 @@ def test_nitf_41(not_jpeg_9b):
     if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
         pytest.skip("12bit jpeg not available")
 
-    gdal.Unlink("data/nitf/U_4017A.NTF.aux.xml")
-
-    ds = gdal.Open("data/nitf/U_4017A.NTF")
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
-    assert stats[2] >= 2385 and stats[2] <= 2386
-    ds = None
-
-    gdal.Unlink("data/nitf/U_4017A.NTF.aux.xml")
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdal.Open("data/nitf/U_4017A.NTF")
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        assert stats[2] >= 2385 and stats[2] <= 2386
 
 
 ###############################################################################
