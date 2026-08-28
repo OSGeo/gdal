@@ -507,6 +507,10 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 
                         oMetadataDoc.GetRoot().Add("crs", oCRSRoot);
                     }
+                    else
+                    {
+                        oMetadataDoc.GetRoot().Add("crs", "srid:0");
+                    }
 
                     if (m_bEdgesSpherical)
                     {

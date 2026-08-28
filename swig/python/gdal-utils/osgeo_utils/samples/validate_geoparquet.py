@@ -189,7 +189,12 @@ class GeoParquetValidator:
         if self.local_schema:
             schema_j = json.loads(open(self.local_schema, "rb").read())
         else:
-            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
+            # TODO: remove this when v2.0.0 is published
+            if version == "2.0.0":
+                schema_url_version = "2.0.0-rc.1"
+            else:
+                schema_url_version = version
+            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{schema_url_version}/schema.json"
 
             if schema_url not in geoparquet_schemas:
                 import urllib.request
@@ -245,15 +250,16 @@ class GeoParquetValidator:
                     f'geo["columns"] lists a {column_name} column which is not found in the Parquet fields'
                 )
 
-            self._check_column_metadata(column_name, column_def)
+            self._check_column_metadata(lyr, version, column_name, column_def)
 
         if self.check_data:
             self._check_data(lyr, columns)
 
-    def _check_column_metadata(self, column_name, column_def):
+    def _check_column_metadata(self, lyr, version, column_name, column_def):
         srs = None
         if "crs" in column_def:
             crs = column_def["crs"]
+
             if crs and (
                 osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() >= 602
             ):
@@ -265,7 +271,37 @@ class GeoParquetValidator:
                         srs.SetFromUserInput(crs)
                 except Exception as e:
                     self._error(f"crs {crs} cannot be parsed: %s" % str(e))
+
+            if version == "2.0.0":
+                parquet_crs = lyr.GetMetadataItem(column_name, "_PARQUET_GEO_CRS_")
+                if crs is None:
+                    if parquet_crs != "srid:0":
+                        self._error(
+                            f"For column {column_name}, GeoParquet CRS is null, but parquet_crs = '{parquet_crs}' (different from srid:0)"
+                        )
+                else:
+                    if parquet_crs.startswith("{") and parquet_crs.endswith("}"):
+                        # PROJJSON
+                        pass
+                    elif parquet_crs.count(":") == 1:
+                        # {auth_name}:{code}
+                        pass
+                    elif srs and srs.GetName() in ("WGS 84", "WGS 84 (CRS84)"):
+                        pass
+                    else:
+                        self._error(
+                            f"For column {column_name}, GeoParquet CRS is not null, but parquet_crs = '{parquet_crs}' and crs = {crs}"
+                        )
+
         else:
+
+            if version == "2.0.0":
+                parquet_crs = lyr.GetMetadataItem(column_name, "_PARQUET_GEO_CRS_")
+                if parquet_crs != "":
+                    self._error(
+                        f"For column {column_name}, GeoParquet CRS is null, but parquet_crs = '{parquet_crs}'"
+                    )
+
             srs = osr.SpatialReference()
             srs.ImportFromEPSG(4326)
 
