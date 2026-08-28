@@ -824,8 +824,7 @@ GDALColorInterp JP2OPJLikeRasterBand<CODEC, BASE>::GetColorInterpretation()
     if (nBand == poGDS->nAlphaIndex + 1)
         return GCI_AlphaBand;
 
-    if (poGDS->nBands <= 2 &&
-        poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
+    if (poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
         return GCI_GrayIndex;
     else if (poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SRGB) ||
              poGDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SYCC))
@@ -2923,8 +2922,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     {
         eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SYCC);
     }
-    else if ((nBands == 3 || nBands == 4) && nRedBandIndex >= 0 &&
-             nGreenBandIndex >= 0 && nBlueBandIndex >= 0)
+    else if (nBands >= 3 && nRedBandIndex >= 0 && nGreenBandIndex >= 0 &&
+             nBlueBandIndex >= 0)
     {
         eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SRGB);
     }

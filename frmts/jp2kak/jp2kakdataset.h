@@ -68,6 +68,8 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 
     bool bPromoteTo8Bit = false;
 
+    jp2_colour_space m_eColourSpace = JP2_sRGB_SPACE;
+
     bool TestUseBlockIO(int, int, int, int, GDALDataType, int, const int *);
     CPLErr DirectRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                           GDALDataType, int, const int *, GSpacing nPixelSpace,
