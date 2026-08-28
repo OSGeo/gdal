@@ -231,13 +231,29 @@ bool GDALGeosNonStreamingAlgorithmLayer::Process(GDALProgressFunc pfnProgress,
 {
     Cleanup();
 
-    if (!ConvertInputsToGeos(m_srcLayer, m_geomFieldIndex, pfnProgress,
-                             pProgressData))
+    using ScaledProgressData =
+        std::unique_ptr<void, decltype(&GDALDestroyScaledProgress)>;
+
+    constexpr double CONVERSION_WORK_FRACTION = 0.1;
+
+    ScaledProgressData convertProgress(
+        GDALCreateScaledProgress(0, CONVERSION_WORK_FRACTION, pfnProgress,
+                                 pProgressData),
+        GDALDestroyScaledProgress);
+    if (!ConvertInputsToGeos(m_srcLayer, m_geomFieldIndex,
+                             convertProgress ? GDALScaledProgress : nullptr,
+                             convertProgress.get()))
     {
         return false;
     }
 
-    if (!ProcessGeos() || m_poGeosResultAsCollection == nullptr)
+    ScaledProgressData processProgress(
+        GDALCreateScaledProgress(CONVERSION_WORK_FRACTION, 1.0, pfnProgress,
+                                 pProgressData),
+        GDALDestroyScaledProgress);
+    if (!ProcessGeos(processProgress ? GDALScaledProgress : nullptr,
+                     processProgress.get()) ||
+        m_poGeosResultAsCollection == nullptr)
     {
         return false;
     }

@@ -17,6 +17,7 @@
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
 #include "ogr_recordbatch.h"
 #include "ogrlayerarrow.h"
+#include "ogr_geos.h"
 
 #include <string>
 #include <algorithm>
@@ -4769,6 +4770,71 @@ TEST_F(test_ogr, OGRGeometryCollection_addComponents)
               "POINT ZM (6 4 8 0)");
     EXPECT_EQ(gc1->getGeometryRef(3)->exportToWkt(wktOptions),
               "POLYGON ZM ((0 0 0 0,1 1 0 0,0 1 0 0,0 0 0 0))");
+}
+
+struct ProgressData
+{
+    std::vector<double> adfRatios;
+    bool bInterrupt{false};
+};
+
+int CPL_STDCALL MyProgress(double dfComplete, const char *, void *userData)
+{
+    auto *progressData = static_cast<ProgressData *>(userData);
+    progressData->adfRatios.push_back(dfComplete);
+    return !progressData->bInterrupt;
+}
+
+TEST_F(test_ogr, GEOSProgress)
+{
+    auto coll = std::make_unique<OGRGeometryCollection>();
+
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            std::unique_ptr<OGRGeometry> g(OGRGeometry::FromHandle(
+                OGR_G_CreateFromEnvelope(i, j, i + 1, j + 1, nullptr)));
+            coll->addGeometry(std::move(g));
+        }
+    }
+
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 15)
+    // Run to completion
+    {
+        ProgressData progressData;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(MyProgress, &progressData));
+
+        ASSERT_TRUE(progressData.adfRatios.size() > 3);
+        EXPECT_TRUE(std::is_sorted(progressData.adfRatios.begin(),
+                                   progressData.adfRatios.end()));
+        EXPECT_EQ(progressData.adfRatios.back(), 1);
+    }
+
+    // Interrupt GEOS
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+        ProgressData progressData;
+        progressData.bInterrupt = true;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(MyProgress, &progressData));
+
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(cpl::starts_with(CPLGetLastErrorMsg(), "Interrupted"));
+        EXPECT_EQ(result, nullptr);
+    }
+#else
+    // Run to completion
+    {
+        ProgressData progressData;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(&MyProgress, &progressData));
+        EXPECT_TRUE(progressData.adfRatios.empty());
+    }
+#endif
 }
 
 }  // namespace

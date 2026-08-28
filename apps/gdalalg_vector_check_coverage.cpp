@@ -86,7 +86,7 @@ class GDALVectorCheckCoverageOutputLayer final
         return !m_includeValid;
     }
 
-    bool ProcessGeos() override
+    bool ProcessGeos(GDALProgressFunc, void *) override
     {
         // Perform coverage checking
         GEOSGeometry *coll = GEOSGeom_createCollection_r(

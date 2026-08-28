@@ -96,7 +96,7 @@ class GDALVectorSimplifyCoverageOutputLayer final
         return false;
     }
 
-    bool ProcessGeos() override
+    bool ProcessGeos(GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         // Perform coverage simplification
         GEOSGeometry *coll = GEOSGeom_createCollection_r(
@@ -109,6 +109,9 @@ class GDALVectorSimplifyCoverageOutputLayer final
         }
 
         m_apoGeosInputs.clear();
+
+        GDALGEOSProgressReporter oReporter(m_poGeosContext, pfnProgress,
+                                           pProgressData);
 
         m_poGeosResultAsCollection = GEOSCoverageSimplifyVW_r(
             m_poGeosContext, coll, m_opts.tolerance, m_opts.preserveBoundary);
