@@ -446,3 +446,28 @@ def test_gdalalg_vector_concat_pipeline_nested():
         ds = alg.Output()
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 20
+
+
+@pytest.mark.parametrize("GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS", ["1", None])
+def test_gdalalg_vector_concat_ds_take_ref(GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS):
+
+    def build():
+        # alg, and the input datasets it opened, are released when this
+        # returns; only the streamed output dataset survives.
+        return gdal.Run(
+            "vector",
+            "concat",
+            input=["../ogr/data/poly.shp", "../ogr/data/poly.shp"],
+            output_format="stream",
+            output="",
+        ).Output()
+
+    with gdal.config_option(
+        "GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS",
+        GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS,
+    ):
+        ds = build()
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 20
+    assert sum(1 for _ in lyr) == 20
