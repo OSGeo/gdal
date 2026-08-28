@@ -165,6 +165,16 @@ def test_usgsdem_record_1025_bytes_ending_with_linefeed():
 
 
 ###############################################################################
+# Test dataset with 1026 byte records ending with CRLF (#15050)
+
+
+def test_usgsdem_record_1026_bytes_ending_with_crlf():
+
+    tst = gdaltest.GDALTest("USGSDEM", "usgsdem/crlf.dem", 1, 14172)
+    tst.testOpen()
+
+
+###############################################################################
 # Cleanup
 
 
