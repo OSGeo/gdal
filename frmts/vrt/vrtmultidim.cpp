@@ -250,35 +250,10 @@ bool VRTGroup::Serialize() const
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpVRT = VSIFOpenL(m_osFilename.c_str(), "w");
-    if (fpVRT == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to write .vrt file in Serialize().");
-        return false;
-    }
-
     CPLXMLNode *psDSTree = SerializeToXML(m_osVRTPath.c_str());
-    char *pszXML = CPLSerializeXMLTree(psDSTree);
-
+    const bool bOK =
+        CPL_TO_BOOL(CPLSerializeXMLTreeToFile(psDSTree, m_osFilename.c_str()));
     CPLDestroyXMLNode(psDSTree);
-
-    bool bOK = true;
-    if (pszXML)
-    {
-        /* ------------------------------------------------------------------ */
-        /*      Write to disk.                                                */
-        /* ------------------------------------------------------------------ */
-        bOK &= VSIFWriteL(pszXML, 1, strlen(pszXML), fpVRT) == strlen(pszXML);
-        CPLFree(pszXML);
-    }
-    if (VSIFCloseL(fpVRT) != 0)
-        bOK = false;
-    if (!bOK)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to write .vrt file in Serialize().");
-    }
     return bOK;
 }
 

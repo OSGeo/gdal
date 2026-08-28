@@ -1241,7 +1241,7 @@ def test_vrtmultidim_createcopy():
     attr.Write("bar")
     attr = None
 
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="Failed to open /i_do/not_exist to write"):
         gdal.GetDriverByName("VRT").CreateCopy("/i_do/not_exist", src_ds)
 
     tmpfile = "/vsimem/test.vrt"
