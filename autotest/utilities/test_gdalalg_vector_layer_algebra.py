@@ -11,10 +11,11 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_geos
 
@@ -49,39 +50,40 @@ def test_gdal_vector_layer_algebra_union():
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     method_lyr.CreateFeature(f)
 
-    with gdal.Run(
-        "vector",
-        "layer-algebra",
-        operation="union",
-        input=input_ds,
-        method=method_ds,
-        output_format="MEM",
-        geometry_type="MULTIPOINT",
-        input_field=["a", "non_existing"],
-        method_field=["b", "non_existing"],
-    ) as alg:
-        out_ds = alg.Output()
-        out_lyr = out_ds.GetLayer(0)
-        assert out_lyr.GetName() == "output"
-        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
-        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
-        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
-        assert out_lyr.GetFeatureCount() == 3
+    with gdaltest.error_raised(gdal.CE_Warning, match="non_existing"):
+        with gdal.Run(
+            "vector",
+            "layer-algebra",
+            operation="union",
+            input=input_ds,
+            method=method_ds,
+            output_format="MEM",
+            geometry_type="MULTIPOINT",
+            input_field=["a", "non_existing"],
+            method_field=["b", "non_existing"],
+        ) as alg:
+            out_ds = alg.Output()
+            out_lyr = out_ds.GetLayer(0)
+            assert out_lyr.GetName() == "output"
+            assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+            assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+            assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+            assert out_lyr.GetFeatureCount() == 3
 
-        f = out_lyr.GetNextFeature()
-        assert f["input_a"] == "foo"
-        assert not f.IsFieldSet("method_b")
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((1 2))"
+            f = out_lyr.GetNextFeature()
+            assert f["input_a"] == "foo"
+            assert not f.IsFieldSet("method_b")
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((1 2))"
 
-        f = out_lyr.GetNextFeature()
-        assert f["input_a"] == "foo2"
-        assert f["method_b"] == "bar2"
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((3 4))"
+            f = out_lyr.GetNextFeature()
+            assert f["input_a"] == "foo2"
+            assert f["method_b"] == "bar2"
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((3 4))"
 
-        f = out_lyr.GetNextFeature()
-        assert f["method_b"] == "bar"
-        assert not f.IsFieldSet("input_a")
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((5 6))"
+            f = out_lyr.GetNextFeature()
+            assert f["method_b"] == "bar"
+            assert not f.IsFieldSet("input_a")
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((5 6))"
 
 
 def test_gdal_vector_layer_algebra_input_and_method_same():
@@ -535,10 +537,10 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         )
 
 
-def get_input_method_datasets():
+def get_input_method_datasets(input_crs=None, method_crs=None):
 
     input_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    input_lyr = input_ds.CreateLayer("input")
+    input_lyr = input_ds.CreateLayer("input", srs=input_crs)
     input_lyr.CreateField(ogr.FieldDefn("a"))
     f = ogr.Feature(input_lyr.GetLayerDefn())
     f["a"] = "foo"
@@ -551,7 +553,7 @@ def get_input_method_datasets():
     input_lyr.CreateFeature(f)
 
     method_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    method_lyr = method_ds.CreateLayer("method")
+    method_lyr = method_ds.CreateLayer("method", srs=method_crs)
     method_lyr.CreateField(ogr.FieldDefn("b"))
     f = ogr.Feature(method_lyr.GetLayerDefn())
     f["b"] = "bar"
@@ -820,3 +822,79 @@ def test_gdal_vector_layer_algebra_pipeline(tmp_vsimem):
     )
     with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
         check_out_ds(out_ds)
+
+
+@pytest.mark.parametrize(
+    "input_crs,method_crs,warning",
+    [
+        (
+            None,
+            "EPSG:4326",
+            "Method layer has a CRS, but input layer has none. Assuming geometries of input layer to be expressed in method layer CRS",
+        ),
+        (
+            "EPSG:4326",
+            None,
+            "Input layer has a CRS, but method layer has none. Assuming geometries of method layer to be expressed in input layer CRS",
+        ),
+        (
+            "EPSG:4326",
+            "EPSG:4258",
+            "Input and method layer have non-equivalent CRS. No on-the-fly reprojection is performed, and thus results may be incorrect",
+        ),
+    ],
+)
+def test_gdal_vector_layer_algebra_inconsistent_crs(
+    tmp_vsimem, input_crs, method_crs, warning
+):
+
+    if input_crs:
+        crs = osr.SpatialReference()
+        crs.SetFromUserInput(input_crs)
+        input_crs = crs
+
+    if method_crs:
+        crs = osr.SpatialReference()
+        crs.SetFromUserInput(method_crs)
+        method_crs = crs
+
+    input_ds, method_ds = get_input_method_datasets(
+        input_crs=input_crs, method_crs=method_crs
+    )
+
+    with gdaltest.error_raised(gdal.CE_Warning, match=warning):
+        gdal.alg.vector.layer_algebra(
+            input=input_ds,
+            method=method_ds,
+            output_format="MEM",
+            output="",
+            operation="intersection",
+        )
+
+
+def test_gdal_vector_layer_algebra_geometry_type():
+
+    input_ds, method_ds = get_input_method_datasets()
+    with gdal.Run(
+        "vector",
+        "layer-algebra",
+        operation="intersection",
+        input=input_ds,
+        method=method_ds,
+        output_format="MEM",
+        geometry_type="MULTIPOLYGON",
+    ) as alg:
+        out_ds = alg.Output()
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetName() == "output"
+        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+        assert out_lyr.GetFeatureCount() == 1
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo"
+        assert f["method_b"] == "bar"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "MULTIPOLYGON (((5 0,5 10,10 10,10 0,5 0)))"
+        )

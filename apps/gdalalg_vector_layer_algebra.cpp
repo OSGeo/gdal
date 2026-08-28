@@ -209,6 +209,30 @@ bool GDALVectorLayerAlgebraAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
+    const auto poInputSRS = poInputLayer->GetSpatialRef();
+    const auto poMethodSRS = poMethodLayer->GetSpatialRef();
+    if (poInputSRS && !poMethodSRS)
+    {
+        ReportError(
+            CE_Warning, CPLE_AppDefined,
+            "Input layer has a CRS, but method layer has none. Assuming "
+            "geometries of method layer to be expressed in input layer CRS.");
+    }
+    else if (!poInputSRS && poMethodSRS)
+    {
+        ReportError(
+            CE_Warning, CPLE_AppDefined,
+            "Method layer has a CRS, but input layer has none. Assuming "
+            "geometries of input layer to be expressed in method layer CRS.");
+    }
+    else if (poInputSRS && poMethodSRS && !poInputSRS->IsSame(poMethodSRS))
+    {
+        ReportError(
+            CE_Warning, CPLE_AppDefined,
+            "Input and method layer have non-equivalent CRS. No on-the-fly "
+            "reprojection is performed, and thus results may be incorrect.");
+    }
+
     if (!poDstLayer)
     {
         const CPLStringList aosLayerCreationOptions(
@@ -273,6 +297,14 @@ bool GDALVectorLayerAlgebraAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     }
                 }
             }
+            for (const auto &name : srcFields)
+            {
+                if (poFDefn->GetFieldIndex(name.c_str()) < 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined, "Unknown field '%s'",
+                             name.c_str());
+                }
+            }
             return true;
         };
 
@@ -308,10 +340,9 @@ bool GDALVectorLayerAlgebraAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
-    if (OGR_GT_IsSubClassOf(poDstLayer->GetGeomType(), wkbGeometryCollection))
-    {
-        aosOptions.SetNameValue("PROMOTE_TO_MULTI", "YES");
-    }
+    aosOptions.SetNameValue(
+        "OUTPUT_GEOMETRY_TYPE",
+        OGRToOGCGeomType(poDstLayer->GetGeomType(), false, true));
 
     const std::map<std::string, decltype(&OGRLayer::Union)>
         mapOperationToMethod = {
