@@ -127,7 +127,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_SOZIP_ENABLED", // from cpl_minizip_zip.cpp
    "CPL_SOZIP_MIN_FILE_SIZE", // from cpl_minizip_zip.cpp
    "CPL_TIMESTAMP", // from cpl_error.cpp
-   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
+   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrvdvdatasource.cpp, wcsutils.cpp
    "CPL_VSI_MEM_MTIME", // from cpl_vsi_mem.cpp
    "CPL_VSIAZ_UNLINK_BATCH_SIZE", // from cpl_vsil_az.cpp
    "CPL_VSIGS_UNLINK_BATCH_SIZE", // from cpl_vsil_gs.cpp
