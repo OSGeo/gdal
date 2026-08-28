@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <cassert>
 
+PDS4TableLayerInterface::~PDS4TableLayerInterface() = default;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                        PDS4TableBaseLayer                            */
@@ -25,8 +27,9 @@
 /************************************************************************/
 
 PDS4TableBaseLayer::PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
-                                       const char *pszFilename)
-    : m_poDS(poDS), m_poRawFeatureDefn(new OGRFeatureDefn(pszName)),
+                                       const char *pszFilename, bool bUpdate)
+    : m_bUpdate(bUpdate), m_poDS(poDS),
+      m_poRawFeatureDefn(new OGRFeatureDefn(pszName)),
       m_poFeatureDefn(new OGRFeatureDefn(pszName)), m_osFilename(pszFilename)
 {
     m_poRawFeatureDefn->SetGeomType(wkbNone);
@@ -37,6 +40,18 @@ PDS4TableBaseLayer::PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
 
     m_bKeepGeomColmuns =
         CPLFetchBool(m_poDS->GetOpenOptions(), "KEEP_GEOM_COLUMNS", false);
+}
+
+/************************************************************************/
+/*                           SetSpatialRef()                            */
+/************************************************************************/
+
+void PDS4TableBaseLayer::SetSpatialRef(OGRSpatialReference *poSRS)
+{
+    if (GetGeomType() != wkbNone)
+    {
+        GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    }
 }
 
 /************************************************************************/
@@ -476,8 +491,8 @@ GDALDataset *PDS4TableBaseLayer::GetDataset()
 /************************************************************************/
 
 PDS4FixedWidthTable::PDS4FixedWidthTable(PDS4Dataset *poDS, const char *pszName,
-                                         const char *pszFilename)
-    : PDS4TableBaseLayer(poDS, pszName, pszFilename)
+                                         const char *pszFilename, bool bUpdate)
+    : PDS4TableBaseLayer(poDS, pszName, pszFilename, bUpdate)
 {
 }
 
@@ -798,6 +813,13 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
 
 OGRErr PDS4FixedWidthTable::ICreateFeature(OGRFeature *poFeature)
 {
+    if (!m_bUpdate)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on read-only layer");
+        return OGRERR_FAILURE;
+    }
+
     m_nFeatureCount++;
     poFeature->SetFID(m_nFeatureCount);
     OGRErr eErr = ISetFeature(poFeature);
@@ -1596,8 +1618,8 @@ bool PDS4FixedWidthTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
 /************************************************************************/
 
 PDS4TableCharacter::PDS4TableCharacter(PDS4Dataset *poDS, const char *pszName,
-                                       const char *pszFilename)
-    : PDS4FixedWidthTable(poDS, pszName, pszFilename)
+                                       const char *pszFilename, bool bUpdate)
+    : PDS4FixedWidthTable(poDS, pszName, pszFilename, bUpdate)
 {
 }
 
@@ -1690,8 +1712,8 @@ bool PDS4TableCharacter::CreateFieldInternal(OGRFieldType eType,
 /************************************************************************/
 
 PDS4TableBinary::PDS4TableBinary(PDS4Dataset *poDS, const char *pszName,
-                                 const char *pszFilename)
-    : PDS4FixedWidthTable(poDS, pszName, pszFilename)
+                                 const char *pszFilename, bool bUpdate)
+    : PDS4FixedWidthTable(poDS, pszName, pszFilename, bUpdate)
 {
 }
 
@@ -1767,8 +1789,8 @@ bool PDS4TableBinary::CreateFieldInternal(OGRFieldType eType,
 /************************************************************************/
 
 PDS4DelimitedTable::PDS4DelimitedTable(PDS4Dataset *poDS, const char *pszName,
-                                       const char *pszFilename)
-    : PDS4TableBaseLayer(poDS, pszName, pszFilename)
+                                       const char *pszFilename, bool bUpdate)
+    : PDS4TableBaseLayer(poDS, pszName, pszFilename, bUpdate)
 {
 }
 
@@ -2037,6 +2059,13 @@ CPLString PDS4DelimitedTable::QuoteIfNeeded(const char *pszVal)
 
 OGRErr PDS4DelimitedTable::ICreateFeature(OGRFeature *poFeature)
 {
+    if (!m_bUpdate)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on read-only layer");
+        return OGRERR_FAILURE;
+    }
+
     if (m_bAddWKTColumnPending)
     {
         OGRFieldDefn oFieldDefn(

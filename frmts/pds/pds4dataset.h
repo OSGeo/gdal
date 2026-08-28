@@ -24,15 +24,41 @@
 
 class PDS4Dataset;
 
+class PDS4TableLayerInterface CPL_NON_FINAL
+{
+  public:
+    virtual ~PDS4TableLayerInterface();
+
+    virtual const char *GetFileName() const = 0;
+
+    virtual bool IsDirtyHeader() const = 0;
+
+    virtual int GetRawFieldCount() const = 0;
+
+    virtual char **GetFileList() const = 0;
+
+    virtual void RefreshFileAreaObservational(CPLXMLNode *psFAO) = 0;
+
+    virtual GIntBig GetFeatureCount(int bForce) = 0;
+
+    virtual void SetSpatialRef(OGRSpatialReference *poSRS) = 0;
+
+    virtual const char *GetName() const = 0;
+
+    virtual OGRwkbGeometryType GetGeomType() const = 0;
+};
+
 /************************************************************************/
 /* ==================================================================== */
 /*                        PDS4TableBaseLayer                            */
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
+class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer,
+                                         public PDS4TableLayerInterface
 {
   protected:
+    bool m_bUpdate = false;
     PDS4Dataset *m_poDS = nullptr;
     OGRFeatureDefn *m_poRawFeatureDefn = nullptr;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
@@ -63,10 +89,15 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
 
   public:
     PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
-                       const char *pszFilename);
+                       const char *pszFilename, bool bUpdate);
     ~PDS4TableBaseLayer() override;
 
     using OGRLayer::GetLayerDefn;
+
+    const char *GetName() const override
+    {
+        return GetDescription();
+    }
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -75,25 +106,30 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override;
 
-    const char *GetFileName() const
+    const char *GetFileName() const override
     {
         return m_osFilename.c_str();
     }
 
-    bool IsDirtyHeader() const
+    bool IsDirtyHeader() const override
     {
         return m_bDirtyHeader;
     }
 
-    int GetRawFieldCount() const
+    int GetRawFieldCount() const override
     {
         return m_poRawFeatureDefn->GetFieldCount();
     }
 
-    bool RenameFileTo(const char *pszNewName);
-    virtual char **GetFileList() const;
+    OGRwkbGeometryType GetGeomType() const override
+    {
+        return OGRLayer::GetGeomType();
+    }
 
-    virtual void RefreshFileAreaObservational(CPLXMLNode *psFAO) = 0;
+    void SetSpatialRef(OGRSpatialReference *poSRS) override;
+
+    bool RenameFileTo(const char *pszNewName);
+    char **GetFileList() const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -137,7 +173,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
 
   public:
     PDS4FixedWidthTable(PDS4Dataset *poDS, const char *pszName,
-                        const char *pszFilename);
+                        const char *pszFilename, bool bUpdate);
 
     void ResetReading() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
@@ -178,12 +214,12 @@ class PDS4TableCharacter final : public PDS4FixedWidthTable
 
   public:
     PDS4TableCharacter(PDS4Dataset *poDS, const char *pszName,
-                       const char *pszFilename);
+                       const char *pszFilename, bool bUpdate);
 
     PDS4FixedWidthTable *NewLayer(PDS4Dataset *poDS, const char *pszName,
                                   const char *pszFilename) override
     {
-        return new PDS4TableCharacter(poDS, pszName, pszFilename);
+        return new PDS4TableCharacter(poDS, pszName, pszFilename, true);
     }
 };
 
@@ -205,12 +241,12 @@ class PDS4TableBinary final : public PDS4FixedWidthTable
 
   public:
     PDS4TableBinary(PDS4Dataset *poDS, const char *pszName,
-                    const char *pszFilename);
+                    const char *pszFilename, bool bUpdate);
 
     PDS4FixedWidthTable *NewLayer(PDS4Dataset *poDS, const char *pszName,
                                   const char *pszFilename) override
     {
-        return new PDS4TableBinary(poDS, pszName, pszFilename);
+        return new PDS4TableBinary(poDS, pszName, pszFilename, true);
     }
 };
 
@@ -249,7 +285,7 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
 
   public:
     PDS4DelimitedTable(PDS4Dataset *poDS, const char *pszName,
-                       const char *pszFilename);
+                       const char *pszFilename, bool bUpdate);
     ~PDS4DelimitedTable() override;
 
     void ResetReading() override;
@@ -270,7 +306,7 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
     PDS4DelimitedTable *NewLayer(PDS4Dataset *poDS, const char *pszName,
                                  const char *pszFilename)
     {
-        return new PDS4DelimitedTable(poDS, pszName, pszFilename);
+        return new PDS4DelimitedTable(poDS, pszName, pszFilename, true);
     }
 };
 
@@ -280,7 +316,8 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4EditableLayer final : public OGREditableLayer
+class PDS4EditableLayer final : public OGREditableLayer,
+                                public PDS4TableLayerInterface
 {
     PDS4TableBaseLayer *GetBaseLayer() const;
 
@@ -290,31 +327,46 @@ class PDS4EditableLayer final : public OGREditableLayer
     explicit PDS4EditableLayer(std::unique_ptr<PDS4DelimitedTable> poBaseLayer);
     ~PDS4EditableLayer() override;
 
-    void RefreshFileAreaObservational(CPLXMLNode *psFAO)
+    void RefreshFileAreaObservational(CPLXMLNode *psFAO) override
     {
         GetBaseLayer()->RefreshFileAreaObservational(psFAO);
     }
 
-    const char *GetFileName() const
+    const char *GetFileName() const override
     {
         return GetBaseLayer()->GetFileName();
     }
 
-    bool IsDirtyHeader() const
+    bool IsDirtyHeader() const override
     {
         return GetBaseLayer()->IsDirtyHeader();
     }
 
-    int GetRawFieldCount() const
+    int GetRawFieldCount() const override
     {
         return GetBaseLayer()->GetRawFieldCount();
     }
 
-    void SetSpatialRef(OGRSpatialReference *poSRS);
+    void SetSpatialRef(OGRSpatialReference *poSRS) override;
 
-    char **GetFileList() const
+    char **GetFileList() const override
     {
         return GetBaseLayer()->GetFileList();
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        return OGREditableLayer::GetFeatureCount(bForce);
+    }
+
+    const char *GetName() const override
+    {
+        return GetBaseLayer()->GetName();
+    }
+
+    OGRwkbGeometryType GetGeomType() const override
+    {
+        return GetBaseLayer()->GetGeomType();
     }
 };
 
@@ -338,7 +390,7 @@ class PDS4Dataset final : public RawDataset
     CPLString m_osUnits{};
     bool m_bCreatedFromExistingBinaryFile = false;
 
-    std::vector<std::unique_ptr<PDS4EditableLayer>> m_apoLayers{};
+    std::vector<std::unique_ptr<PDS4TableLayerInterface>> m_apoLayers{};
 
     // Write dedicated parameters
     bool m_bMustInitImageFile = false;
