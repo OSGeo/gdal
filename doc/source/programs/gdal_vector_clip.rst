@@ -72,7 +72,7 @@ Program-Specific Options
 
     CRS in which the coordinates values of :option:`--geometry`
     are expressed. If not specified, it is assumed to be the CRS of the input
-    dataset.
+    dataset, or WGS84 if the input geometry is GeoJSON.
     Note that specifying --geometry-crs does not involve doing vector reprojection.
     Instead, the bounds are reprojected from the geometry-crs to the CRS of the
     input dataset.

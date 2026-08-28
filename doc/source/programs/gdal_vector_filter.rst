@@ -43,6 +43,7 @@ Program-Specific Options
     The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
     and Y is latitude or northing.
     Note that filtering does not clip geometries to the bounding box.
+    Mutually exclusive with :option:`--geometry`.
 
 .. option:: --bbox-crs <CRS>
 
@@ -53,6 +54,30 @@ Program-Specific Options
     layer. Note that in the general case, the reprojected bounding box will
     generally cover a larger area than the one specified in the bounding box CRS,
     since a rectangle does not generally reproject to a rectangle.
+
+.. option:: --geometry <WKT_or_GeoJSON>
+
+    .. versionadded:: 3.14
+
+    Geometry as a WKT or GeoJSON string used to filter the dataset. All features intersecting the provided geometry will be retained.
+    If the input geometry is GeoJSON, its CRS is assumed to be WGS84, unless there is
+    a CRS defined in the GeoJSON geometry or :option:`--geometry-crs` is specified.
+    If the input geometry is WKT, its CRS is assumed to be the one of the input dataset,
+    unless :option:`--geometry-crs` is specified.
+    The X and Y axis are the "GIS friendly ones", that is X is longitude or easting,
+    and Y is latitude or northing.
+    Mutually exclusive with :option:`--bbox`.
+
+.. option:: --geometry-crs <CRS>
+
+    .. versionadded:: 3.14
+
+    CRS in which the coordinates values of :option:`--geometry`
+    are expressed. If not specified, it is assumed to be the CRS of the input
+    dataset, or WGS84 if the input geometry is GeoJSON.
+    Note that specifying :option:`--geometry-crs` does not cause vector reprojection
+    of the output features. Instead, the vertices of the filter geometry provided by :option:`--geometry` are reprojected
+    from the geometry-crs to the CRS of each layer of the input dataset.
 
 .. option:: --update-extent
 
