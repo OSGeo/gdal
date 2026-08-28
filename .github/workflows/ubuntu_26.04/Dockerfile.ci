@@ -86,7 +86,7 @@ RUN git clone --depth 1 https://gitlab.freedesktop.org/poppler/poppler.git poppl
     cd poppler && \
     mkdir build && \
     cd build && \
-    cmake -DENABLE_UNSTABLE_API_ABI_HEADERS=ON -DENABLE_NSS3=OFF -DENABLE_GPGME=OFF -DENABLE_QT5=OFF -DENABLE_QT6=OFF .. && \
+    cmake -DENABLE_UNSTABLE_API_ABI_HEADERS=ON -DENABLE_NSS3=OFF -DENABLE_GPGME=OFF -DENABLE_HARFBUZZ=OFF -DENABLE_QT5=OFF -DENABLE_QT6=OFF .. && \
     make -j$(nproc) && \
     make install
 
