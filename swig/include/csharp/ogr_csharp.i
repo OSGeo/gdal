@@ -152,7 +152,10 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     => UpdateFeature(feature, panUpdatedFieldsIdx, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
 
-%pragma(csharp) modulecode=%{    
+%pragma(csharp) modulecode=%{
+  public static Geometry CreateGeometryFromEnvelope(Envelope envelope, OSR.SpatialReference reference = null)
+    => CreateGeometryFromEnvelope(envelope.MinX, envelope.MinY, envelope.MaxX, envelope.MaxY, reference);
+
   public static Geometry CreateGeometryFromWkb(byte[] buffer, OSR.SpatialReference reference = null) {
     var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
 	try {

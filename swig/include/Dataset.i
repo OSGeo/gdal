@@ -498,11 +498,11 @@ public:
     *pGCPs = GDALGetGCPs( self );
   }
 
-  CPLErr SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection ) {
+  CPLErr SetGCPs( int nGCPs, GDAL_GCP const *pGCPs, const char *pszGCPProjection = "") {
     return GDALSetGCPs( self, nGCPs, pGCPs, pszGCPProjection );
   }
 
-  CPLErr SetGCPs2( int nGCPs, GDAL_GCP const *pGCPs, OSRSpatialReferenceShadow* hSRS ) {
+  CPLErr SetGCPs2( int nGCPs, GDAL_GCP const *pGCPs, OSRSpatialReferenceShadow* hSRS = NULL) {
     return GDALSetGCPs2( self, nGCPs, pGCPs, (OGRSpatialReferenceH)hSRS );
   }
 

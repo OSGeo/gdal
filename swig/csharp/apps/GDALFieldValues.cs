@@ -1,7 +1,22 @@
-﻿using OSGeo.GDAL;
+/******************************************************************************
+ *
+ * Name:     GDALFieldValues.cs
+ * Project:  GDAL CSharp Interface
+ * Purpose:  A sample app to demonstrate getting and setting field values of
+ *           different types of field values.
+ * Author:   Michael Bucari-Tovo, mbucari1@gmail.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2026, Michael Bucari-Tovo
+ *
+ * SPDX-License-Identifier: MIT
+ *****************************************************************************/
+
+using OSGeo.GDAL;
 using OSGeo.OGR;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -144,7 +159,7 @@ public static class GDALVector
 
 		TestField(
 			"string_list_field",
-			Enumerable.Range(0, 50).Select(_ => Random.Shared.Next().ToString()).ToArray(),
+			Enumerable.Range(0, 50).Select(_ => Random.Shared.Next().ToString(CultureInfo.InvariantCulture)).ToArray(),
 			feature.SetFieldStringList,
 			feature.GetFieldAsStringList,
 			(a, b) => a.SequenceEqual(b));

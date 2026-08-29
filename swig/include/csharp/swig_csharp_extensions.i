@@ -241,8 +241,8 @@ typedef struct {
   post="    $csinput = temp$csinput.ToPrimitiveArray<CSTYPE>();
     $module.CPLMemDestroy(temp$csinput.pArray);"
 ) (int *nLen, CTYPE **pList_free) "ref temp$csinput"
-%apply (int *nLen, const CTYPE **pList) {(int *nLen, const CTYPE **pList)};
-%apply (int *nLen, const CTYPE **pList_free) {(int *nLen, const CTYPE **pList_free)};
+%apply (int *nLen, CTYPE **pList) {(int *nLen, const CTYPE **pList)};
+%apply (int *nLen, CTYPE **pList_free) {(int *nLen, const CTYPE **pList_free)};
 %enddef //PRIMITIVE_ARRAYS_INOUT
 
 %define VALUE_LIST_INOUT(CTYPE, CSTYPE)

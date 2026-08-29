@@ -664,6 +664,7 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::GetFieldDomainNames;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::GetRelationshipNames;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::AsMDArray;
+%feature("cs:defaultargs", hSRS="null") GDALDatasetShadow::SetGCPs2;
 
 %feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDriverShadow::Create;
 %feature("cs:defaultargs", options="null") GDALDriverShadow::Create;

@@ -507,8 +507,8 @@ if (CSHARP_BUILD_SAMPLES)
         OSGeo.GDAL)
 
     gdal_build_csharp_sample(
-      OUTPUT GDALVector.exe
-      SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALVector.cs
+      OUTPUT GDALFieldValues.exe
+      SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALFieldValues.cs
       DEPENDS
         gdal_csharp
       SYSTEM_DEPENDS
@@ -669,7 +669,7 @@ if (CSHARP_BUILD_SAMPLES)
               OSGeo.GDAL.Samples.GDALAdjustContrast
               OSGeo.GDAL.Samples.GDALDatasetRasterIO
               OSGeo.GDAL.Samples.GDALWrite
-              OSGeo.GDAL.Samples.GDALVector
+              OSGeo.GDAL.Samples.GDALFieldValues
               OSGeo.GDAL.Samples.GDALDatasetWrite
               OSGeo.GDAL.Samples.GDALColorTable
               OSGeo.GDAL.Samples.WKT2WKB
@@ -717,10 +717,10 @@ if (CSHARP_RUN_TESTS)
     set_property(TEST csharp_gdalwrite PROPERTY ENVIRONMENT "${TEST_ENV}")
     set_property(TEST csharp_gdalwrite PROPERTY DEPENDS csharp_createdata)
     add_test(
-      NAME csharp_gdalvector
+      NAME csharp_gdalfieldvalues
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_CURRENT_BINARY_DIR}/GDALVector/GDALVector)
-    set_property(TEST csharp_gdalvector PROPERTY ENVIRONMENT "${TEST_ENV}")
+      COMMAND ${CMAKE_CURRENT_BINARY_DIR}/GDALFieldValues/GDALFieldValues)
+    set_property(TEST csharp_gdalfieldvalues PROPERTY ENVIRONMENT "${TEST_ENV}")
     add_test(
       NAME csharp_gdaldatasetwrite
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
