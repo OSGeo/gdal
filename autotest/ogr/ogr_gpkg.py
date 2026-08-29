@@ -3915,6 +3915,60 @@ def test_ogr_gpkg_36_alter_comment_after_alternative_name(tmp_vsimem, tmp_path):
 
 
 ###############################################################################
+# Test AlterFieldDefn()
+
+
+def test_ogr_gpkg_alter_nullable_state(tmp_vsimem, tmp_path):
+
+    dbname = tmp_vsimem / "test.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+    field = ogr.FieldDefn("foo", ogr.OFTString)
+    lyr.CreateField(field)
+
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    lyr = ds.GetLayer(0)
+    field = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert field.IsNullable() == 1
+
+    new_field_defn = ogr.FieldDefn("foo", ogr.OFTString)
+    new_field_defn.SetNullable(False)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    lyr = ds.GetLayer(0)
+    field = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert field.IsNullable() == 0
+
+    new_field_defn = ogr.FieldDefn("foo", ogr.OFTString)
+    new_field_defn.SetNullable(True)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    lyr = ds.GetLayer(0)
+    field = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert field.IsNullable() == 1
+
+    new_field_defn = ogr.FieldDefn("bar", ogr.OFTString)
+    new_field_defn.SetNullable(False)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    ds = None
+
+    ds = ogr.Open(dbname, update=1)
+    lyr = ds.GetLayer(0)
+    field = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert field.GetName() == "bar"
+    assert field.IsNullable() == 0
+
+
+###############################################################################
 # Test ReorderFields()
 
 
