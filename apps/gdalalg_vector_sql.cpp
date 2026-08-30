@@ -267,7 +267,8 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
             {
                 ReportError(CE_Warning, CPLE_AppDefined,
                             "Execution of the SQL statement '%s' returned a "
-                            "result set. It will be ignored. You may silence "
+                            "result set, but no output dataset was specified. "
+                            "The result set will be ignored. You may silence "
                             "this warning with the 'quiet' argument.",
                             sql.c_str());
             }
