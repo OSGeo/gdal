@@ -5087,38 +5087,63 @@ def test_ogr_parquet_read_gh_15119(tmp_vsimem):
             geom_type=ogr.wkbPoint,
             options=["ROW_GROUP_SIZE=5"],
         )
+        lyr.CreateField(ogr.FieldDefn("MY_ID", ogr.OFTInteger))
         f = ogr.Feature(lyr.GetLayerDefn())
+
+        my_id = 0
 
         # Row group 0: x in [0, 4] -> FIDs 0..4
         for i in range(5):
             f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
             lyr.CreateFeature(f)
 
         # Row group 1: x in [100, 104] -> FIDs 5..9
         for i in range(5):
             f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({100 + i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
             lyr.CreateFeature(f)
 
         # Row group 2: x in [0, 4] -> FIDs 10..14
         for i in range(5):
             f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
             lyr.CreateFeature(f)
 
     with ogr.Open(filename) as ds:
         lyr = ds.GetLayer(0)
-        # Filter that selects row groups 0 and 2, but skips row group 1
+        # Spatial filter selects row groups 0 and 2 (x in [0, 4]), and skips
+        # row group 1 (x in [100, 104]). The attribute filter only rejects
+        # part of row group 2 (FIDs 13, 14), so it cannot be resolved purely
+        # from row-group statistics and requires row-level post-filtering,
+        # which is what exercises the fixed FID computation.
         lyr.SetSpatialFilterRect(-1, -1, 5, 1)
-        lyr.SetAttributeFilter("FID >= 10")
+        lyr.SetAttributeFilter("FID <= 12")
 
-        # GetNextFeature() returns 5 features with FIDs 10..14
-        features = [f.GetFID() for f in lyr]
-        assert features == [10, 11, 12, 13, 14]
+        # GetNextFeature() returns features with FIDs 0..4 and 10..12
+        features = [(f.GetFID(), f["MY_ID"]) for f in lyr]
+        assert features == [
+            (0, 0),
+            (1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 4),
+            (10, 10),
+            (11, 11),
+            (12, 12),
+        ]
 
-        # GetArrowStream() with post-filtering must also return the matching features with correct FIDs
+        # GetArrowStream() with post-filtering across the skipped row group
+        # must return the same set of features. Without the fix, the FID
+        # used to evaluate the attribute filter is desynchronized once the
+        # remapping jump occurs within a single Arrow batch, which wrongly
+        # keeps FIDs 13 and 14.
         lyr.ResetReading()
         stream = lyr.GetArrowStreamAsNumPy()
-        fids = []
+        my_ids = []
         for batch in stream:
-            fids.extend(batch["OGC_FID"].tolist())
-        assert fids == [10, 11, 12, 13, 14]
-
+            my_ids.extend(batch["MY_ID"].tolist())
+        assert my_ids == [0, 1, 2, 3, 4, 10, 11, 12]
