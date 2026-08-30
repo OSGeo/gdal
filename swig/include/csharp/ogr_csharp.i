@@ -185,6 +185,8 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Update;
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Clip;
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Erase;
+%feature("cs:defaultargs", force="true") OGRLayerShadow::GetExtent(int, OGREnvelope*, bool);
+%feature("cs:defaultargs", force="true") OGRLayerShadow::GetExtent3D;
 
 %feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;
 %feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;

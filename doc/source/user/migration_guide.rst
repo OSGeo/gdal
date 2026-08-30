@@ -59,9 +59,9 @@ From GDAL 3.13 to GDAL 3.14
 
   * Several call sites have been removed from from the C# bindings due to corrected and improved type mapping
 
-    + The overloads of ``OSGeo.GDAL.Group.CreateAttribute``, ``OSGeo.GDAL.MDArray.CreateAttribute``, and ``OSGeo.GDAL.MDArray.Resize`` which accepted ``uint[]`` are no longer available due to that parameter being incorrectly typedmapped to ``uint[]`` instead of ``ulong[]``.
+    + The overloads of ``OSGeo.GDAL.Group.CreateAttribute``, ``OSGeo.GDAL.MDArray.CreateAttribute``, and ``OSGeo.GDAL.MDArray.Resize`` which accepted ``uint[]`` are no longer available due to that parameter being incorrectly type mapped to ``uint[]`` instead of ``ulong[]``.
 
-    + The overload of ``OSGeo.GDAL.Transformer.TransformPoints`` which has parameter ``double[] panSuccess`` has been removed due to that parameter being incorrectly typedmapped to ``double[]`` instead of ``int[]``.
+    + The overload of ``OSGeo.GDAL.Transformer.TransformPoints`` which has parameter ``double[] panSuccess`` has been removed due to that parameter being incorrectly type mapped to ``double[]`` instead of ``int[]``.
 
     + ``Gdal.GCPsToHomography(int nGCPs, IntPtr pGCPs, double[] argout)`` has been removed due to the difficulty of requiring users to marshal their own ``GCP`` value arrays. It has been replaced with ``GCPsToHomography(GCP[] nGCPs, double[] argout)``.
 

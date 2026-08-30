@@ -1453,6 +1453,12 @@ public:
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
     return OGR_L_GetExtent(self, extent, force);
   }
+  bool GetExtent(int geom_field, OGREnvelope* extent,  bool force=TRUE) {
+    return OGR_L_GetExtentEx(self, geom_field, extent, force) == OGRERR_NONE;
+  }
+  bool GetExtent3D(int geom_field, OGREnvelope3D* extent,  bool force=TRUE) {
+    return OGR_L_GetExtent3D(self, geom_field, extent, force) == OGRERR_NONE;
+  }
 #elif defined(SWIGPYTHON)
   %feature( "kwargs" ) GetExtent;
   void GetExtent(double argout[4], int* isvalid = NULL, int force = 1, int can_return_null = 0, int geom_field = 0 ) {
@@ -3836,7 +3842,7 @@ public:
     return OGR_G_GetM(self, point);
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPoint(int iPoint, double argout[3]) {
 #else
   void GetPoint(int iPoint = 0, double argout[3] = NULL) {
@@ -3844,7 +3850,7 @@ public:
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPointZM(int iPoint, double argout[4]) {
 #else
   void GetPointZM(int iPoint = 0, double argout[4] = NULL) {
@@ -3852,13 +3858,27 @@ public:
       OGR_G_GetPointZM( self, iPoint, argout+0, argout+1, argout+2, argout+3 );
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPoint_2D(int iPoint, double argout[2]) {
 #else
   void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
 #endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
   }
+
+#if defined(SWIGCSHARP)
+%apply (double *OUTPUT) {double *x, double *y, double *z, double *m};
+  void GetPoint(int iPoint, double *x, double *y) {
+    OGR_G_GetPoint( self, iPoint, x, y, NULL );
+  }
+  void GetPoint(int iPoint, double *x, double *y, double *z) {
+    OGR_G_GetPoint( self, iPoint, x, y, z );
+  }
+  void GetPoint(int iPoint, double *x, double *y, double *z, double *m) {
+    OGR_G_GetPointZM( self, iPoint, x, y, z, m );
+  }
+%clear double *x, double *y, double *z, double *m;
+#endif
 
   int GetGeometryCount() {
     return OGR_G_GetGeometryCount(self);
