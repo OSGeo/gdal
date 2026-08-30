@@ -725,6 +725,9 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nBytes)
                 write(fd, pabySrc + nBytesWritten, nRemaining);
             if (nWritten < 0)
             {
+                // TODO if there is not sufficient space on the
+                // target device, remove all files from the temporary directory,
+                // except the ones containing GDAL in their name.
                 bError = true;
                 break;
             }
