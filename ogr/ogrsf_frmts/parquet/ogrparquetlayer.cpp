@@ -1830,6 +1830,7 @@ OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
 
 void OGRParquetLayer::ResetReading()
 {
+    m_poPendingBatch.reset();
     OGRParquetLayerBase::ResetReading();
     m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
     m_nFeatureIdxSelected = 0;
@@ -2423,30 +2424,52 @@ bool OGRParquetLayer::ReadNextBatch()
 
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
 
-    do
+    if (m_poPendingBatch != nullptr)
     {
-        ++m_iRecordBatch;
-        poNextBatch.reset();
-        auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-        if (!status.ok())
+        poNextBatch = std::move(m_poPendingBatch);
+        m_poPendingBatch.reset();
+    }
+    else
+    {
+        do
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
-                     status.message().c_str());
+            ++m_iRecordBatch;
             poNextBatch.reset();
-        }
-        if (poNextBatch == nullptr)
-        {
-            if (m_iRecordBatch == 1 && m_poBatch && m_poAttrQuery == nullptr &&
-                m_poFilterGeom == nullptr)
+            auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
+            if (!status.ok())
             {
-                m_iRecordBatch = 0;
-                m_bSingleBatch = true;
+                CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
+                         status.message().c_str());
+                poNextBatch.reset();
             }
-            else
-                m_poBatch.reset();
-            return false;
+            if (poNextBatch == nullptr)
+            {
+                if (m_iRecordBatch == 1 && m_poBatch && m_poAttrQuery == nullptr &&
+                    m_poFilterGeom == nullptr)
+                {
+                    m_iRecordBatch = 0;
+                    m_bSingleBatch = true;
+                }
+                else
+                    m_poBatch.reset();
+                return false;
+            }
+        } while (poNextBatch->num_rows() == 0);
+    }
+
+    if (m_iFIDArrowColumn < 0 && !m_asFeatureIdxRemapping.empty() &&
+        m_oFeatureIdxRemappingIter != m_asFeatureIdxRemapping.end())
+    {
+        const int64_t nNextJumpSelected = m_oFeatureIdxRemappingIter->first;
+        if (m_nFeatureIdxSelected < nNextJumpSelected &&
+            m_nFeatureIdxSelected + poNextBatch->num_rows() > nNextJumpSelected)
+        {
+            const int64_t nRowsToTake =
+                nNextJumpSelected - m_nFeatureIdxSelected;
+            m_poPendingBatch = poNextBatch->Slice(nRowsToTake);
+            poNextBatch = poNextBatch->Slice(0, nRowsToTake);
         }
-    } while (poNextBatch->num_rows() == 0);
+    }
 
     SetBatch(poNextBatch);
 
@@ -2459,6 +2482,7 @@ bool OGRParquetLayer::ReadNextBatch()
 
 void OGRParquetLayer::InvalidateCachedBatches()
 {
+    m_poPendingBatch.reset();
     m_bSingleBatch = false;
     OGRParquetLayerBase::InvalidateCachedBatches();
 }

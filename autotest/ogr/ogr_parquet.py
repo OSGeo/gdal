@@ -5067,3 +5067,58 @@ def test_ogr_parquet_read_gh_14610():
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["OGR_GEOMETRY"])
     assert lyr.GetNextFeature()
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/15119
+# Case where non-consecutive row groups are selected and Arrow stream is read
+# with post-filtering on FID
+
+
+def test_ogr_parquet_read_gh_15119(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_parquet_read_gh_15119.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        lyr = ds.CreateLayer(
+            "test",
+            srs=srs,
+            geom_type=ogr.wkbPoint,
+            options=["ROW_GROUP_SIZE=5"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+
+        # Row group 0: x in [0, 4] -> FIDs 0..4
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            lyr.CreateFeature(f)
+
+        # Row group 1: x in [100, 104] -> FIDs 5..9
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({100 + i} 0)"))
+            lyr.CreateFeature(f)
+
+        # Row group 2: x in [0, 4] -> FIDs 10..14
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        # Filter that selects row groups 0 and 2, but skips row group 1
+        lyr.SetSpatialFilterRect(-1, -1, 5, 1)
+        lyr.SetAttributeFilter("FID >= 10")
+
+        # GetNextFeature() returns 5 features with FIDs 10..14
+        features = [f.GetFID() for f in lyr]
+        assert features == [10, 11, 12, 13, 14]
+
+        # GetArrowStream() with post-filtering must also return the matching features with correct FIDs
+        lyr.ResetReading()
+        stream = lyr.GetArrowStreamAsNumPy()
+        fids = []
+        for batch in stream:
+            fids.extend(batch["OGC_FID"].tolist())
+        assert fids == [10, 11, 12, 13, 14]
+
