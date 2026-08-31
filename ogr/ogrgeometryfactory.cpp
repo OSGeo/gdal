@@ -5488,6 +5488,11 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
         if (eType == wkbLineString)
             poGeom.reset(
                 OGRCurve::CastToLineString(poGeom.release()->toCurve()));
+        else if (eType == wkbTriangle)
+        {
+            // A Triangle is not an acceptable member of a MultiPolygon
+            poGeom.reset(OGRTriangle::CastToPolygon(poGeom.release()));
+        }
         poRet->toGeometryCollection()->addGeometry(std::move(poGeom));
         poRet->set3D(CPL_TO_BOOL(OGR_GT_HasZ(eTargetType)));
         poRet->setMeasured(CPL_TO_BOOL(OGR_GT_HasM(eTargetType)));
