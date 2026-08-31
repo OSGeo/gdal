@@ -439,8 +439,24 @@ class GDALVectorCombineOutputLayer final
 
                     if (m_keepNested || !bSrcIsCollection)
                     {
-                        if (poDstGeom->addGeometry(std::move(poSrcGeom)) !=
-                            OGRERR_NONE)
+                        // A Triangle is not an acceptable MultiPolygon
+                        // member. addGeometryDirectly() leaves us its
+                        // ownership then, and we convert it.
+                        OGRErr eErr =
+                            poDstGeom->addGeometryDirectly(poSrcGeom.get());
+                        if (eErr == OGRERR_NONE)
+                        {
+                            CPL_IGNORE_RET_VAL(poSrcGeom.release());
+                        }
+                        else
+                        {
+                            eErr = poDstGeom->addGeometry(
+                                OGRGeometryFactory::forceTo(
+                                    std::move(poSrcGeom),
+                                    OGR_GT_GetSingle(
+                                        poDstGeom->getGeometryType())));
+                        }
+                        if (eErr != OGRERR_NONE)
                         {
                             CPLError(
                                 CE_Failure, CPLE_AppDefined,

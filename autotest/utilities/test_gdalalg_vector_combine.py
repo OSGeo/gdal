@@ -517,3 +517,75 @@ def test_gdalalg_vector_combine_completion(tmp_path):
         f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --layer invalid --group-by"
     )
     assert "EAS_ID" not in out
+
+
+@pytest.mark.parametrize(
+    "geom_type,wkts,expected",
+    [
+        (
+            ogr.wkbTriangle,
+            ["TRIANGLE ((0 0,0 1,1 1,0 0))", "TRIANGLE ((0 0,0 2,2 2,0 0))"],
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((0 0,0 2,2 2,0 0)))",
+        ),
+        (
+            ogr.wkbTriangleZ,
+            ["TRIANGLE Z ((0 0 1,0 1 1,1 1 1,0 0 1))"],
+            "MULTIPOLYGON Z (((0 0 1,0 1 1,1 1 1,0 0 1)))",
+        ),
+        (
+            ogr.wkbTriangleM,
+            ["TRIANGLE M ((0 0 1,0 1 1,1 1 1,0 0 1))"],
+            "MULTIPOLYGON M (((0 0 1,0 1 1,1 1 1,0 0 1)))",
+        ),
+    ],
+)
+def test_gdalalg_vector_combine_triangle(alg, geom_type, wkts, expected):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("layer", geom_type=geom_type)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    for wkt in wkts:
+        f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        src_lyr.CreateFeature(f)
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer()
+
+    # A Triangle cannot be a member of a MultiPolygon, so it is converted to
+    # a Polygon rather than dropped.
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == expected
+
+
+def test_gdalalg_vector_combine_curve(alg):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbCircularString)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    for wkt in ["CIRCULARSTRING (0 0,1 1,2 0)", "CIRCULARSTRING (0 0,1 -1,2 0)"]:
+        f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        src_lyr.CreateFeature(f)
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer()
+
+    # A MultiCurve accepts a CircularString as such: it must not be turned
+    # into a CompoundCurve.
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == (
+        "MULTICURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (0 0,1 -1,2 0))"
+    )
