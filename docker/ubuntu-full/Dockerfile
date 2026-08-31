@@ -532,7 +532,8 @@ ARG TARGET_ARCH=
 # Update distro
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    export DEBIAN_FRONTEND=noninteractive \
+    rm -f /usr/bin/pebble && rm -rf /var/lib/pebble \
+    && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
     && apt-get upgrade -y \
     # PROJ dependencies
