@@ -324,8 +324,9 @@ static CPLErr ProcessLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
             poSrcLayer->GetLayerDefn()->GetFieldIndex(osBurnAttribute.c_str());
         if (iBurnField == -1)
         {
-            printf("Failed to find field %s on layer %s, skipping.\n",
-                   osBurnAttribute.c_str(), poSrcLayer->GetName());
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to find field %s on layer %s.",
+                     osBurnAttribute.c_str(), poSrcLayer->GetName());
             return CE_Failure;
         }
     }
@@ -360,8 +361,9 @@ static CPLErr ProcessLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
 
     if (oVisitor.adfX.empty())
     {
-        printf("No point geometry found on layer %s, skipping.\n",
-               poSrcLayer->GetName());
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "No point geometry found on layer %s, skipping.",
+                 poSrcLayer->GetName());
         return CE_None;
     }
 
