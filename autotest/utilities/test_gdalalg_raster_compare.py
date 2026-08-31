@@ -114,7 +114,7 @@ def test_gdalalg_raster_compare_same_content_but_not_same_binary(tmp_vsimem):
         ret = alg["output-string"].split("\n")[:-1]
         assert len(ret) == 1
         assert ret[0].startswith(
-            "Reference file has size 736 bytes, whereas input file has size"
+            "Reference file '../gcore/data/byte.tif' has size 736 bytes, whereas input file has size"
         )
 
     with gdal.Run(
@@ -123,7 +123,7 @@ def test_gdalalg_raster_compare_same_content_but_not_same_binary(tmp_vsimem):
         pipeline=f"read {tmp_vsimem}/tmp.tif ! compare --reference=../gcore/data/byte.tif",
     ) as alg:
         assert alg["output-string"].startswith(
-            "Reference file has size 736 bytes, whereas input file has size"
+            "Reference file '../gcore/data/byte.tif' has size 736 bytes, whereas input file has size"
         )
 
     with gdal.Run(
@@ -1538,3 +1538,80 @@ Band 1: PSNR (dB): 3.0103
 """
 
     assert tab_pct[0] == 1.0
+
+
+@pytest.mark.require_driver("Zarr")
+def test_gdalalg_raster_compare_zarr(tmp_vsimem):
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test2.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert alg["output-string"] == ""
+
+    with gdaltest.tempfile(
+        tmp_vsimem / "test.zarr" / "foo", ""
+    ), gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert (
+            alg["output-string"]
+            == "Input file foo does not exist in reference directory\n"
+        )
+
+    with gdaltest.tempfile(
+        tmp_vsimem / "test2.zarr" / "bar", ""
+    ), gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert (
+            alg["output-string"]
+            == f"Input file {tmp_vsimem}/test.zarr/bar does not exist\n"
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "rb") as f:
+        data = f.read()
+    with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "wb") as f:
+        f.write(data + b" ")
+
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        len_data = len(data)
+        len_data_p1 = len(data) + 1
+        assert (
+            alg["output-string"]
+            == f"Reference file '{tmp_vsimem}/test2.zarr/zarr.json' has size {len_data} bytes, whereas input file has size {len_data_p1} bytes.\n"
+        )
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+    gdal.RmdirRecursive(tmp_vsimem / "test.zarr" / "test" / "c")
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr" / "test" / "c", "")
+    gdal.RmdirRecursive(tmp_vsimem / "test2.zarr" / "test" / "c")
+    gdal.Mkdir(tmp_vsimem / "test2.zarr" / "test" / "c", 0o755)
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert alg["output-string"].startswith(
+            f"Reference file {tmp_vsimem}/test2.zarr/test/c is a directory, but input file {tmp_vsimem}/test.zarr/test/c is not\n"
+        )
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test2.zarr", reference=tmp_vsimem / "test.zarr"
+    ) as alg:
+        assert alg["output-string"].startswith(
+            f"Reference file {tmp_vsimem}/test.zarr/test/c is not a directory, but input file {tmp_vsimem}/test2.zarr/test/c is\n"
+        )
