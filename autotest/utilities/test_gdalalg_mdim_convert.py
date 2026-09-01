@@ -105,6 +105,21 @@ def test_gdalalg_mdim_convert_multidim_to_classic(tmp_vsimem):
 ###############################################################################
 
 
+def test_gdalalg_mdim_convert_multidim_to_classic_explicit_format(tmp_vsimem):
+
+    tmpfile = tmp_vsimem / "out.tif"
+
+    alg = get_mdim_convert_alg()
+    alg["input"] = "data/mdim.vrt"
+    alg["output"] = tmpfile
+    alg["output-format"] = "GTiff"
+    alg["array"] = ["/my_subgroup/array_in_subgroup"]
+    assert alg.Run()
+
+
+###############################################################################
+
+
 def test_gdalalg_mdim_convert_group(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"

@@ -397,7 +397,7 @@ void GDALPipelineStepAlgorithm::AddMdimOutputArgs(bool hiddenForCLI)
         &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
                              /* bGDALGAllowed = */ true)
               .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                               {GDAL_DCAP_CREATE_MULTIDIMENSIONAL})
+                               {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY})
               .SetHiddenForCLI(hiddenForCLI))
              .SetAvailableInPipelineStep(false);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER,
