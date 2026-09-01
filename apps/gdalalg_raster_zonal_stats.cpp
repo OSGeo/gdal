@@ -65,11 +65,11 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
         .SetRequired()
         .SetMinValueIncluded(1)
         .SetChoices("center_x", "center_y", "count", "coverage", "frac", "max",
-                    "max_center_x", "max_center_y", "mean", "median", "min",
-                    "minority", "min_center_x", "min_center_y", "mode", "stdev",
-                    "sum", "unique", "values", "variance", "variety",
-                    "weighted_mean", "weighted_stdev", "weighted_sum",
-                    "weighted_variance", "weights");
+                    "max_center_x", "max_center_y", "mean", "min", "minority",
+                    "min_center_x", "min_center_y", "mode", "stdev", "sum",
+                    "unique", "values", "variance", "variety", "weighted_mean",
+                    "weighted_stdev", "weighted_sum", "weighted_variance",
+                    "weights");
     AddArg("include-field", 0,
            _("Fields from polygon zones to include in output"),
            &m_includeFields);
