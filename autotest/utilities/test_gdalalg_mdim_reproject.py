@@ -164,7 +164,7 @@ def test_gdalalg_mdim_reproject():
 @pytest.mark.require_driver("netCDF")
 def test_gdalalg_mdim_reproject_vrt_not_possible(tmp_vsimem):
 
-    with pytest.raises(Exception, match="Cannot guess driver"):
+    with pytest.raises(Exception, match="Dataset is not compatible of VRT output"):
         gdal.alg.mdim.reproject(
             input="../gdrivers/data/netcdf/byte.nc",
             output_crs="EPSG:4326",
