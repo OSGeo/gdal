@@ -27,6 +27,7 @@
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_write.h"
 
+#include "gdalalg_mdim_info.h"
 #include "gdalalg_mdim_read.h"
 #include "gdalalg_mdim_write.h"
 
@@ -456,7 +457,10 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         else if (GetOutputType() == GDAL_OF_MULTIDIM_RASTER)
         {
-            writeAlg = std::make_unique<GDALMdimWriteAlgorithm>();
+            if (GetName() == GDALMdimInfoAlgorithm::NAME)
+                writeAlg = std::make_unique<GDALMdimInfoAlgorithm>();
+            else
+                writeAlg = std::make_unique<GDALMdimWriteAlgorithm>();
         }
         else
         {
