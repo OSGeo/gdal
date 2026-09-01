@@ -27,6 +27,9 @@
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_write.h"
 
+#include "gdalalg_mdim_read.h"
+#include "gdalalg_mdim_write.h"
+
 #include "gdalalg_raster_as_features.h"
 #include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_contour.h"
@@ -426,6 +429,8 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         std::unique_ptr<GDALPipelineStepAlgorithm> readAlg;
         if (GetInputType() == GDAL_OF_RASTER)
             readAlg = std::make_unique<GDALRasterReadAlgorithm>();
+        else if (GetInputType() == GDAL_OF_MULTIDIM_RASTER)
+            readAlg = std::make_unique<GDALMdimReadAlgorithm>();
         else
             readAlg = std::make_unique<GDALVectorReadAlgorithm>();
         for (auto &arg : readAlg->GetArgs())
@@ -448,6 +453,10 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 writeAlg = std::make_unique<GDALRasterCompareAlgorithm>();
             else
                 writeAlg = std::make_unique<GDALRasterWriteAlgorithm>();
+        }
+        else if (GetOutputType() == GDAL_OF_MULTIDIM_RASTER)
+        {
+            writeAlg = std::make_unique<GDALMdimWriteAlgorithm>();
         }
         else
         {
