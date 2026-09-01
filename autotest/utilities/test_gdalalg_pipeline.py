@@ -114,23 +114,6 @@ def test_gdalalg_pipeline_read_and_write_raster_from_object():
         assert alg.Output().GetRasterBand(1).Checksum() == 4672
 
 
-@pytest.mark.require_driver("netCDF")
-@pytest.mark.require_driver("Zarr")
-def test_gdalalg_pipeline_standalone_mdim_step(tmp_path):
-
-    out_filename = str(tmp_path / "out.zarr")
-    gdal.alg.mdim.reproject(
-        input="../gdrivers/data/netcdf/byte.nc",
-        dst_crs="EPSG:3857",
-        output_format="Zarr",
-        output=out_filename,
-    )
-
-    with gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER) as ds:
-        ar = ds.GetRootGroup().OpenMDArray("Band1")
-        assert ar.GetSpatialRef().GetAuthorityCode(None) == "3857"
-
-
 def test_gdalalg_pipeline_read_vector_write_raster():
 
     with gdal.Run(

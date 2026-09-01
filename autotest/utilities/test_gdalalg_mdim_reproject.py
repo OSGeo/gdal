@@ -162,6 +162,23 @@ def test_gdalalg_mdim_reproject():
 
 
 @pytest.mark.require_driver("netCDF")
+@pytest.mark.require_driver("Zarr")
+def test_gdalalg_mdim_reproject_to_multidim_only_driver(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.zarr")
+    gdal.alg.mdim.reproject(
+        input="../gdrivers/data/netcdf/byte.nc",
+        output_crs="EPSG:3857",
+        output_format="Zarr",
+        output=out_filename,
+    )
+
+    with gdal.OpenEx(out_filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        ar = ds.GetRootGroup().OpenMDArray("Band1")
+        assert ar.GetSpatialRef().GetAuthorityCode(None) == "3857"
+
+
+@pytest.mark.require_driver("netCDF")
 def test_gdalalg_mdim_reproject_vrt_not_possible(tmp_vsimem):
 
     with pytest.raises(Exception, match="Dataset is not compatible of VRT output"):
