@@ -20,6 +20,7 @@ this permission notice appear in supporting documentation.
 #include <limits.h>
 #include "mfhdf.h"
 #include "HdfEosDef.h"
+#include "hfile.h"
 
 /* Set maximum number of HDF-EOS files to HDF limit (MAX_FILE) */
 #define NEOSHDF MAX_FILE
@@ -2039,8 +2040,12 @@ EHinquire(const char *filename, const char *type, char *objectlist, int32 * strb
 	/* ------------------------------ */
 	vGrpID = Vattach(HDFfid, vgRef, "r");
 	VgetnameSafe(vGrpID, name, sizeof(name));
+#if LIBVER_MAJOR == 4 && LIBVER_MINOR >= 4
+    size_t sz = sizeof(class);
+    Vgetclass(vGrpID, class, &sz);
+#else
 	Vgetclass(vGrpID, class);
-
+#endif
 
 	/* If object of desired type (SWATH, POINT, GRID) ... */
 	/* -------------------------------------------------- */
