@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import math
 import os
 import struct
@@ -5651,6 +5652,70 @@ def test_ogr_gpkg_json(tmp_vsimem, tmp_path):
     assert fc == 1
 
     ds = None
+
+
+###############################################################################
+# Test JSON field conversion issues
+
+
+def test_json_field_convert_issues(tmp_path):
+
+    # Create SQLite database
+    gpkg_db = tmp_path / "test_ogr_gpkg_json_field_convert_issues.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(str(gpkg_db))
+    lyr = ds.CreateLayer("test")
+    f_def = ogr.FieldDefn("json", ogr.OFTString)
+    f_def.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(f_def)
+
+    # Insert some data
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", 123.456)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", 123)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    # Not a valid JSON, convert to string
+    feat.SetField("json", 'sca quot" lar')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", '{"foo": "bar"}')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", '["foo", "bar"]')
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    ds = ogr.Open(str(gpkg_db), update=1)
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 123.456
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 123
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 'sca quot" lar'
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == {"foo": "bar"}
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == ["foo", "bar"]
+
+    # Append invalid JSON with SQL
+
+    ds.ExecuteSQL("INSERT INTO test (json) VALUES ('sca quot\" lar 2')")
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 'sca quot" lar 2'
 
 
 ###############################################################################

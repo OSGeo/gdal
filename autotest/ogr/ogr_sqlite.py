@@ -4805,3 +4805,59 @@ def test_ogr_sqlite_error_msg():
             == """In ExecuteSQL(): sqlite3_prepare_v2(): near "FROM": syntax error
   SELECT (1 FROM x)"""
         )
+
+
+###############################################################################
+
+
+def test_json_field_convert_issues(tmp_path):
+
+    # Create SQLite database
+    sqlite_db = tmp_path / "test_ogr_sqlite_json_field_convert_issues.db"
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(str(sqlite_db))
+    lyr = ds.CreateLayer("test")
+    f_def = ogr.FieldDefn("json", ogr.OFTString)
+    f_def.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(f_def)
+
+    # Insert some data
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", 123.456)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", 123)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    # Not a valid JSON, convert to string
+    feat.SetField("json", 'sca quot" lar')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", '{"foo": "bar"}')
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("json", '["foo", "bar"]')
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    ds = ogr.Open(str(sqlite_db), update=1)
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 123.456
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 123
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == 'sca quot" lar'
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == {"foo": "bar"}
+
+    feat = lyr.GetNextFeature()
+    assert json.loads(feat.GetField("json")) == ["foo", "bar"]

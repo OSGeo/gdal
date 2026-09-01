@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogrlayerarrow.h"
+#include "ogrlibjsonutils.h"
 #include "ogrsqliteutility.h"
 #include "cpl_md5.h"
 #include "cpl_multiproc.h"  // CPLSleep()
@@ -316,6 +317,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         const OGRFieldDefn *poFieldDefn =
             poFeatureDefn->GetFieldDefnUnsafe(iField);
         int err = SQLITE_OK;
+        bool bBound = false;
 
         if (!poFeature->IsFieldNullUnsafe(iField))
         {
@@ -520,14 +522,64 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                         {
                             destructorType = SQLITE_STATIC;
                         }
+
+                        // If the field subtype is JSON and the current value cannot
+                        // be parsed as a valid JSON, encode it as a JSON string.
+                        if (poFieldDefn->GetSubType() == OFSTJSON)
+                        {
+                            json_object *poObjProp = nullptr;
+                            std::string osValue(pszVal);
+                            if (!OGRJSonParse(osValue.c_str(), &poObjProp))
+                            {
+                                // Try adding a semi-colon at the end to see if that helps
+                                std::string oszValueWithSemiColon(osValue);
+                                oszValueWithSemiColon += ";";
+                                if (!OGRJSonParse(oszValueWithSemiColon.c_str(),
+                                                  &poObjProp))
+                                {
+                                    // Emit warning once
+                                    CPLErrorOnce(
+                                        CE_Warning, CPLE_AppDefined,
+                                        "Field %s is declared as JSON but the "
+                                        "value is not a valid JSON. Storing as "
+                                        "string.",
+                                        poFieldDefn->GetNameRef());
+                                    // Escape any double quote and quote
+                                    osValue = pszVal;
+                                    osValue.replace(osValue.find("\""), 1,
+                                                    "\\\"");
+                                    osValue.insert(0, "\"");
+                                    osValue.append("\"");
+                                    if (nValLengthBytes > 0)
+                                    {
+                                        nValLengthBytes +=
+                                            static_cast<int>(osValue.length()) -
+                                            static_cast<int>(strlen(pszVal));
+                                    }
+                                }
+                                else
+                                {
+                                    osValue =
+                                        json_object_to_json_string(poObjProp);
+                                }
+                            }
+                            err = sqlite3_bind_text(
+                                poStmt, nColCount++, osValue.c_str(),
+                                nValLengthBytes, SQLITE_TRANSIENT);
+                            bBound = true;
+                        }
                     }
                     else
                     {
                         pszVal = poFeature->GetFieldAsString(iField);
                     }
 
-                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal,
-                                            nValLengthBytes, destructorType);
+                    if (!bBound)
+                    {
+                        err =
+                            sqlite3_bind_text(poStmt, nColCount++, pszVal,
+                                              nValLengthBytes, destructorType);
+                    }
                     break;
                 }
             }
