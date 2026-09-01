@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import re
+
 import gdaltest
 import pytest
 
@@ -272,6 +274,37 @@ def test_gdalalg_raster_reclassify_empty_mapping(reclassify, tmp_vsimem):
 
     with pytest.raises(
         RuntimeError, match="Encountered value .* with no specified mapping"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_no_mapping_matches_input_pixel(
+    reclassify, tmp_vsimem
+):
+
+    reclassify["input"] = "../gcore/data/byte.tif"
+    reclassify["output"] = tmp_vsimem / "out.tif"
+    reclassify["mapping"] = "[0, 128]=1;[156, 255]=2"
+
+    with pytest.raises(
+        RuntimeError, match="Encountered value 132 with no specified mapping"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_multiple_mappings_match_input_pixel(
+    reclassify, tmp_vsimem
+):
+
+    reclassify["input"] = "../gcore/data/byte.tif"
+    reclassify["output"] = tmp_vsimem / "out.tif"
+    reclassify["mapping"] = "[0, 132]=1;[132, 255]=2"
+
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "Interval from 0 to 132 (mapped to 1) overlaps with interval from 132 to 255 (mapped to 2)"
+        ),
     ):
         reclassify.Run()
 
