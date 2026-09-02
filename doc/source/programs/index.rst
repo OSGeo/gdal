@@ -121,8 +121,9 @@ Raster commands
    gdal_raster_scale
    gdal_raster_select
    gdal_raster_set_type
-   gdal_raster_slope
+   gdal_raster_shift_longitude
    gdal_raster_sieve
+   gdal_raster_slope
    gdal_raster_stack
    gdal_raster_tile
    gdal_raster_tpi
@@ -175,6 +176,7 @@ Raster commands
     - :ref:`gdal_raster_scale`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select`: Select a subset of bands from a raster dataset.
     - :ref:`gdal_raster_set_type`: Modify the data type of bands of a raster dataset
+    - :ref:`gdal_raster_shift_longitude`: Shift the longitude values of a raster dataset.
     - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.

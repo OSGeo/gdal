@@ -811,6 +811,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_shift_longitude",
+        "gdal-shift-longitude",
+        "Shift the longitude values of a raster dataset",
+        [author_dbaston],
+        1,
+    ),
+    (
         "programs/gdal_raster_sieve",
         "gdal-raster-sieve",
         "Remove small raster polygons",

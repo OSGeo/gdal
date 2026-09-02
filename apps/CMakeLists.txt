@@ -90,6 +90,7 @@ target_sources(appslib PRIVATE
   gdalalg_raster_scale.cpp
   gdalalg_raster_select.cpp
   gdalalg_raster_set_type.cpp
+  gdalalg_raster_shift_longitude.cpp
   gdalalg_raster_sieve.cpp
   gdalalg_raster_slope.cpp
   gdalalg_raster_stack.cpp
