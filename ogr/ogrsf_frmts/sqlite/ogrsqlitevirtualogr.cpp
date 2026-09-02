@@ -383,27 +383,31 @@ typedef struct
 /*                        OGR2SQLITE_vtab_cursor                        */
 /************************************************************************/
 
-typedef struct
+struct OGR2SQLITE_vtab_cursor
 {
+    OGR2SQLITE_vtab_cursor() = default;
+
     /* Mandatory fields by sqlite3: don't change or reorder them ! */
-    OGR2SQLITE_vtab *pVTab;
+    OGR2SQLITE_vtab *pVTab = nullptr;
 
     /* Extension fields */
-    GDALDataset *poDupDataSource;
-    OGRLayer *poLayer;
-    OGRFeature *poFeature;
+    std::unique_ptr<GDALDataset> poDupDataSource{};
+    OGRLayer *poLayer = nullptr;
+    std::unique_ptr<OGRFeature> poFeature{};
 
     /* nFeatureCount >= 0 if the layer has a feast feature count capability. */
     /* In which case nNextWishedIndex and nCurFeatureIndex */
     /* will be used to avoid useless GetNextFeature() */
     /* Helps in SELECT COUNT(*) FROM xxxx scenarios */
-    GIntBig nFeatureCount;
-    GIntBig nNextWishedIndex;
-    GIntBig nCurFeatureIndex;
+    GIntBig nFeatureCount = -1;
+    GIntBig nNextWishedIndex = -1;
+    GIntBig nCurFeatureIndex = 0;
 
-    GByte *pabyGeomBLOB;
-    int nGeomBLOBLen;
-} OGR2SQLITE_vtab_cursor;
+    GByte *pabyGeomBLOB = nullptr;
+    int nGeomBLOBLen = -1;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGR2SQLITE_vtab_cursor)
+};
 
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
@@ -1050,51 +1054,93 @@ static int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
     CPLDebug("OGR2SQLITE", "Open(%s, %s)", pMyVTab->poDS->GetDescription(),
              pMyVTab->poLayer->GetDescription());
 #endif
-
-    GDALDataset *poDupDataSource = nullptr;
-    OGRLayer *poLayer = nullptr;
-
-    if (pMyVTab->nMyRef == 0)
-    {
-        poLayer = pMyVTab->poLayer;
-    }
-    else
-    {
-        poDupDataSource = GDALDataset::FromHandle(
-            OGROpen(pMyVTab->poDS->GetDescription(), FALSE, nullptr));
-        if (poDupDataSource == nullptr)
-            return SQLITE_ERROR;
-        poLayer = poDupDataSource->GetLayerByName(pMyVTab->poLayer->GetName());
-        if (poLayer == nullptr)
-        {
-            delete poDupDataSource;
-            return SQLITE_ERROR;
-        }
-        if (!poLayer->GetLayerDefn()->IsSame(pMyVTab->poLayer->GetLayerDefn()))
-        {
-            delete poDupDataSource;
-            return SQLITE_ERROR;
-        }
-    }
     pMyVTab->nMyRef++;
 
-    OGR2SQLITE_vtab_cursor *pCursor = static_cast<OGR2SQLITE_vtab_cursor *>(
-        CPLCalloc(1, sizeof(OGR2SQLITE_vtab_cursor)));
+    OGR2SQLITE_vtab_cursor *pCursor = new OGR2SQLITE_vtab_cursor();
     // We do not need to fill the non-extended fields.
     *ppCursor = reinterpret_cast<sqlite3_vtab_cursor *>(pCursor);
 
-    pCursor->poDupDataSource = poDupDataSource;
-    pCursor->poLayer = poLayer;
-    pCursor->poLayer->ResetReading();
-    pCursor->poFeature = nullptr;
-    pCursor->nNextWishedIndex = 0;
-    pCursor->nCurFeatureIndex = -1;
-    pCursor->nFeatureCount = -1;
-
-    pCursor->pabyGeomBLOB = nullptr;
-    pCursor->nGeomBLOBLen = -1;
-
     return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                         OpenLayerIfNeeded()                          */
+/************************************************************************/
+
+// We defer setting pMyCursor->poLayer until it is strictly needed to avoid
+// re-opening a dataset when not needed. With some SQL requests such as in
+// https://github.com/OSGeo/gdal/issues/15122 with SQLite 3.45.1, we can have
+// call sequences like:
+// OGR2SQLITE_Open() on some vtab
+// .... do things
+// OGR2SQLITE_Close() on above vtab
+// OGR2SQLITE_Open() on above vtab
+// .... do things
+// OGR2SQLITE_Close() on above vtab
+// In such circumstance, we don't need to re-open the dataset.
+
+static bool OpenLayerIfNeeded(OGR2SQLITE_vtab_cursor *pMyCursor)
+{
+    if (!pMyCursor->poLayer)
+    {
+        OGR2SQLITE_vtab *pMyVTab = pMyCursor->pVTab;
+        GDALDriver *poDriver;
+        if (pMyVTab->nMyRef == 1)
+        {
+            pMyCursor->poLayer = pMyVTab->poLayer;
+            pMyCursor->poLayer->ResetReading();
+        }
+        else if (strcmp(pMyVTab->poDS->GetDescription(), "") == 0 ||
+                 ((poDriver = pMyVTab->poDS->GetDriver()) &&
+                  EQUAL(poDriver->GetDescription(), "MEM")))
+        {
+            // emitting a verbose error would cause failures in
+            // autotest/ogr/ogr_sql_sqlite.py::test_ogr_sql_sqlite_like_utf8
+            // or autotest/ogr/ogr_sql_test.py::test_ogr_sql_on_null
+            CPLDebug("OGR2SQLITE",
+                     "Failed to re-open datasource '%s' for virtual table '%s'",
+                     pMyVTab->poDS->GetDescription(), pMyVTab->pszVTableName);
+            return false;
+        }
+        else
+        {
+            auto poDupDataSource = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(pMyVTab->poDS->GetDescription(),
+                                  GDAL_OF_VECTOR | GDAL_OF_READONLY));
+            if (!poDupDataSource)
+            {
+                // emitting a verbose error would cause failures in
+                // autotest/ogr/ogr_sql_sqlite.py::test_ogr_sql_sqlite_like_utf8
+                // or autotest/ogr/ogr_sql_test.py::test_ogr_sql_on_null
+                CPLDebug(
+                    "OGR2SQLITE",
+                    "Failed to re-open datasource '%s' for virtual table '%s'",
+                    pMyVTab->poDS->GetDescription(), pMyVTab->pszVTableName);
+                return false;
+            }
+            auto poLayer =
+                poDupDataSource->GetLayerByName(pMyVTab->poLayer->GetName());
+            if (!poLayer)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find layer %s in reopened dataset",
+                         pMyVTab->poLayer->GetName());
+                return false;
+            }
+            if (!poLayer->GetLayerDefn()->IsSame(
+                    pMyVTab->poLayer->GetLayerDefn()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Layer %s in reopened dataset does not have the same "
+                         "definition as in initial dataset",
+                         pMyVTab->poLayer->GetName());
+                return false;
+            }
+            pMyCursor->poDupDataSource = std::move(poDupDataSource);
+            pMyCursor->poLayer = poLayer;
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -1108,16 +1154,13 @@ static int OGR2SQLITE_Close(sqlite3_vtab_cursor *pCursor)
     OGR2SQLITE_vtab *pMyVTab = pMyCursor->pVTab;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Close(%s, %s)", pMyVTab->poDS->GetDescription(),
-             pMyVTab->poLayer->GetDescription());
+             pMyVTab->poLayer ? "" : pMyVTab->poLayer->GetDescription());
 #endif
     pMyVTab->nMyRef--;
 
-    delete pMyCursor->poFeature;
-    delete pMyCursor->poDupDataSource;
-
     CPLFree(pMyCursor->pabyGeomBLOB);
 
-    CPLFree(pCursor);
+    delete pMyCursor;
 
     return SQLITE_OK;
 }
@@ -1132,6 +1175,8 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
 {
     OGR2SQLITE_vtab_cursor *pMyCursor =
         reinterpret_cast<OGR2SQLITE_vtab_cursor *>(pCursor);
+    if (!OpenLayerIfNeeded(pMyCursor))
+        return SQLITE_ERROR;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Filter");
 #endif
@@ -1323,7 +1368,7 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
 
     if (pMyCursor->nFeatureCount < 0)
     {
-        pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+        pMyCursor->poFeature.reset(pMyCursor->poLayer->GetNextFeature());
 #ifdef DEBUG_OGR2SQLITE
         CPLDebug("OGR2SQLITE", "GetNextFeature() --> " CPL_FRMT_GIB,
                  pMyCursor->poFeature ? pMyCursor->poFeature->GetFID() : -1);
@@ -1344,6 +1389,8 @@ static int OGR2SQLITE_Next(sqlite3_vtab_cursor *pCursor)
 {
     OGR2SQLITE_vtab_cursor *pMyCursor =
         reinterpret_cast<OGR2SQLITE_vtab_cursor *>(pCursor);
+    if (!OpenLayerIfNeeded(pMyCursor))
+        return SQLITE_ERROR;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Next");
 #endif
@@ -1351,8 +1398,7 @@ static int OGR2SQLITE_Next(sqlite3_vtab_cursor *pCursor)
     pMyCursor->nNextWishedIndex++;
     if (pMyCursor->nFeatureCount < 0)
     {
-        delete pMyCursor->poFeature;
-        pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+        pMyCursor->poFeature.reset(pMyCursor->poLayer->GetNextFeature());
 
         CPLFree(pMyCursor->pabyGeomBLOB);
         pMyCursor->pabyGeomBLOB = nullptr;
@@ -1374,6 +1420,8 @@ static int OGR2SQLITE_Eof(sqlite3_vtab_cursor *pCursor)
 {
     OGR2SQLITE_vtab_cursor *pMyCursor =
         reinterpret_cast<OGR2SQLITE_vtab_cursor *>(pCursor);
+    if (!OpenLayerIfNeeded(pMyCursor))
+        return SQLITE_ERROR;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Eof");
 #endif
@@ -1402,8 +1450,8 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor *pMyCursor)
             {
                 pMyCursor->nCurFeatureIndex++;
 
-                delete pMyCursor->poFeature;
-                pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+                pMyCursor->poFeature.reset(
+                    pMyCursor->poLayer->GetNextFeature());
 #ifdef DEBUG_OGR2SQLITE
                 CPLDebug("OGR2SQLITE", "GetNextFeature() --> " CPL_FRMT_GIB,
                          pMyCursor->poFeature ? pMyCursor->poFeature->GetFID()
@@ -1422,7 +1470,7 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor *pMyCursor)
 /*                     OGR2SQLITE_ExportGeometry()                      */
 /************************************************************************/
 
-static void OGR2SQLITE_ExportGeometry(OGRGeometry *poGeom, int nSRSId,
+static void OGR2SQLITE_ExportGeometry(const OGRGeometry *poGeom, int nSRSId,
                                       GByte *&pabyGeomBLOB, int &nGeomBLOBLen)
 {
     if (OGRSQLiteLayer::ExportSpatiaLiteGeometry(poGeom, nSRSId, wkbNDR, FALSE,
@@ -1466,10 +1514,12 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
 
     OGR2SQLITE_vtab_cursor *pMyCursor =
         reinterpret_cast<OGR2SQLITE_vtab_cursor *>(pCursor);
+    if (!OpenLayerIfNeeded(pMyCursor))
+        return SQLITE_ERROR;
 
     OGR2SQLITE_GoToWishedIndex(pMyCursor);
 
-    OGRFeature *poFeature = pMyCursor->poFeature;
+    const OGRFeature *poFeature = pMyCursor->poFeature.get();
     if (poFeature == nullptr)
         return SQLITE_ERROR;
 
@@ -1483,7 +1533,7 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
         --nCol;
     }
 
-    OGRFeatureDefn *poFDefn = pMyCursor->poLayer->GetLayerDefn();
+    const OGRFeatureDefn *poFDefn = pMyCursor->poLayer->GetLayerDefn();
     int nFieldCount = poFDefn->GetFieldCount();
 
     if (nCol == nFieldCount)
@@ -1496,7 +1546,7 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
     {
         if (pMyCursor->nGeomBLOBLen < 0)
         {
-            OGRGeometry *poGeom = poFeature->GetGeometryRef();
+            const OGRGeometry *poGeom = poFeature->GetGeometryRef();
             if (poGeom == nullptr)
             {
                 pMyCursor->nGeomBLOBLen = 0;
@@ -1534,7 +1584,7 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
     else if (nCol > (nFieldCount + 1) &&
              nCol - (nFieldCount + 1) < poFDefn->GetGeomFieldCount())
     {
-        OGRGeometry *poGeom =
+        const OGRGeometry *poGeom =
             poFeature->GetGeomFieldRef(nCol - (nFieldCount + 1));
         if (poGeom == nullptr)
         {
@@ -1667,6 +1717,9 @@ static int OGR2SQLITE_Rowid(sqlite3_vtab_cursor *pCursor, sqlite3_int64 *pRowid)
 {
     OGR2SQLITE_vtab_cursor *pMyCursor =
         reinterpret_cast<OGR2SQLITE_vtab_cursor *>(pCursor);
+    if (!OpenLayerIfNeeded(pMyCursor))
+        return SQLITE_ERROR;
+
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Rowid");
 #endif

@@ -2528,3 +2528,23 @@ def test_ogr_sql_sqlite_null_geometry_in_first_row():
 
             f = sql_lyr.GetNextFeature()
             assert f.GetGeometryRef() is not None
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/15122
+
+
+@pytest.mark.require_driver("SQLite")
+def test_ogr_sql_sqlite_gh_15122(tmp_vsimem):
+
+    if ogrtest.has_spatialite is False:
+        pytest.skip("Spatialite not available")
+
+    with gdal.alg.vector.pipeline(
+        pipeline=f'concat data/sql_sqlite/test_gh_15122/polys.shp data/sql_sqlite/test_gh_15122/points.shp --mode stack ! sql --sql "SELECT * FROM polys WHERE EXISTS (SELECT 1 FROM points WHERE ST_Intersects(polys.geometry, points.geometry))" --dialect sqlite ! write {tmp_vsimem}/polys_filtered.shp'
+    ):
+        pass
+
+    with gdal.Open(tmp_vsimem / "polys_filtered.shp") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
