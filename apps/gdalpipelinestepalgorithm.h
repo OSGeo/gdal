@@ -124,6 +124,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         std::string inputDatasetMetaVar = "INPUT";
         std::string outputDatasetHelpMsg{};
         std::string outputFormatCreateCapability = GDAL_DCAP_CREATECOPY;
+        bool mdimOutputAcceptsClassicRaster = false;  // only for mdim output
 
         inline ConstructorOptions &SetStandaloneStep(bool b)
         {
@@ -207,6 +208,15 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         SetOutputFormatCreateCapability(const std::string &capability)
         {
             outputFormatCreateCapability = capability;
+            return *this;
+        }
+
+        /** Whether the output format of a multidimensional algorithm may also
+         * be a classic raster driver, which is the case of algorithms whose
+         * output is written by GDALMultiDimTranslate(). */
+        inline ConstructorOptions &SetMdimOutputAcceptsClassicRaster(bool b)
+        {
+            mdimOutputAcceptsClassicRaster = b;
             return *this;
         }
 

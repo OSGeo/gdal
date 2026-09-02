@@ -393,11 +393,24 @@ void GDALPipelineStepAlgorithm::AddMdimInputArgs(bool openForMixedMdimVector,
 
 void GDALPipelineStepAlgorithm::AddMdimOutputArgs(bool hiddenForCLI)
 {
+    // Same requirements as the ones checked by GDALMultiDimTranslate(), which
+    // writes to a classic raster driver when the driver has no
+    // multidimensional creation capability.
+    const std::vector<std::string> requiredCapabilities =
+        m_constructorOptions.mdimOutputAcceptsClassicRaster
+            ? std::vector<
+                  std::string>{GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER,
+                               GDAL_DCAP_CREATE
+                               "|" GDAL_DCAP_CREATECOPY
+                               "|" GDAL_DCAP_CREATE_MULTIDIMENSIONAL
+                               "|" GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL}
+            : std::vector<std::string>{GDAL_DCAP_CREATE_MULTIDIMENSIONAL};
+
     m_outputFormatArg =
         &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
                              /* bGDALGAllowed = */ true)
               .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                               {GDAL_DCAP_RASTER, GDAL_DCAP_CREATECOPY})
+                               requiredCapabilities)
               .SetHiddenForCLI(hiddenForCLI))
              .SetAvailableInPipelineStep(false);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER,

@@ -120,6 +120,44 @@ def test_gdalalg_mdim_convert_multidim_to_classic_explicit_format(tmp_vsimem):
 ###############################################################################
 
 
+def test_gdalalg_mdim_convert_classic_to_classic_explicit_formats(tmp_vsimem):
+
+    tmpfile = tmp_vsimem / "out.tif"
+
+    alg = get_mdim_convert_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["input-format"] = ["GTiff"]
+    alg["output"] = tmpfile
+    alg["output-format"] = "GTiff"
+    assert alg.Run()
+    assert alg.Finalize()
+
+    with gdal.Open(tmpfile) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_gdalalg_mdim_convert_output_format_without_raster_support(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="Driver 'ESRI Shapefile' does not expose the required "
+        "'DCAP_RASTER or DCAP_MULTIDIM_RASTER' capability",
+    ):
+        gdal.Run(
+            "mdim",
+            "convert",
+            input="data/mdim.vrt",
+            output=tmp_vsimem / "out.shp",
+            output_format="ESRI Shapefile",
+        )
+
+
+###############################################################################
+
+
 def test_gdalalg_mdim_convert_group(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
