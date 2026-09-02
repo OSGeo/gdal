@@ -422,10 +422,11 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
                                        : DS_SHPOpen(pszNewName, "r");
     CPLPopErrorHandler();
 
+    const bool bTryOpenDBF =
+        EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf");
     const bool bRestoreSHX =
         CPLTestBool(CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE"));
-    if (bRestoreSHX && EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") &&
-        CPLGetLastErrorMsg()[0] != '\0')
+    if (bRestoreSHX && bTryOpenDBF && CPLGetLastErrorMsg()[0] != '\0')
     {
         CPLString osMsg = CPLGetLastErrorMsg();
 
@@ -434,8 +435,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     else
     {
         if (hSHP == nullptr &&
-            (!EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") ||
-             strstr(CPLGetLastErrorMsg(), ".shp") == nullptr))
+            (!bTryOpenDBF || strstr(CPLGetLastErrorMsg(), ".shp") == nullptr))
         {
             CPLString osMsg = CPLGetLastErrorMsg();
 
@@ -452,8 +452,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     /*      file or has to refer to the actual .dbf file.                   */
     /* -------------------------------------------------------------------- */
     DBFHandle hDBF = nullptr;
-    if (hSHP != nullptr ||
-        EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf"))
+    if (hSHP != nullptr || bTryOpenDBF)
     {
         if (bRealUpdateAccess)
         {
@@ -488,6 +487,31 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
         else
         {
             hDBF = DS_DBFOpen(pszNewName, "r");
+            if (!hDBF)
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    const std::string osDBFName = CPLResetExtensionSafe(
+                        pszNewName, (i == 0) ? "dbf" : "DBF");
+                    VSILFILE *fp = VSIFOpenL(osDBFName.c_str(), "r");
+                    if (fp)
+                    {
+                        VSIFCloseL(fp);
+                        CPLError(bTryOpenDBF ? CE_Failure : CE_Warning,
+                                 CPLE_OpenFailed,
+                                 "%s exists, "
+                                 "but cannot be opened. File likely corrupted",
+                                 osDBFName.c_str());
+                        if (bTryOpenDBF)
+                        {
+                            if (hSHP)
+                                SHPClose(hSHP);
+                            return false;
+                        }
+                        break;
+                    }
+                }
+            }
         }
     }
     else

@@ -6262,3 +6262,22 @@ def test_ogr_shape_inconsistent_record_count(tmp_vsimem):
     assert lyr.GetFeatureCount() == 2
     lyr.GetNextFeature()
     lyr.GetNextFeature()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_dbf_invalid(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="exists, but cannot be opened. File likely corrupted"
+    ):
+        assert ogr.Open("data/shp/dbf-invalid.shp")
+
+    gdal.CopyFile("data/shp/dbf-invalid.dbf", tmp_vsimem / "dbf-invalid.dbf")
+
+    with pytest.raises(
+        Exception, match="exists, but cannot be opened. File likely corrupted"
+    ):
+        assert ogr.Open(tmp_vsimem / "dbf-invalid.dbf")
