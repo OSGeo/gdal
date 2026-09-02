@@ -483,28 +483,22 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                         json_object *poObjProp = nullptr;
                         if (!OGRJSonParse(osValue.c_str(), &poObjProp))
                         {
-                            // Add a space terminator at the end to make the parser happy
-                            std::string oszValueWithTerminator(osValue);
-                            oszValueWithTerminator += " ";
-                            if (!OGRJSonParse(oszValueWithTerminator.c_str(),
-                                              &poObjProp))
-                            {
-                                // Emit warning once
-                                CPLErrorOnce(
-                                    CE_Warning, CPLE_AppDefined,
-                                    "Field %s is declared as JSON but the "
-                                    "value is not a valid JSON. Converting to "
-                                    "string.",
-                                    poFieldDefn->GetNameRef());
-                                // Escape and quote
-                                osValue = CPLJSONObject(osValue).Format(
-                                    CPLJSONObject::PrettyFormat::Plain);
-                            }
-                            else
-                            {
-                                osValue = json_object_to_json_string(poObjProp);
-                            }
+                            // Emit warning once
+                            CPLErrorOnce(
+                                CE_Warning, CPLE_AppDefined,
+                                "Field %s is declared as JSON but the "
+                                "value is not a valid JSON. Converting to "
+                                "string.",
+                                poFieldDefn->GetNameRef());
+                            // Escape and quote
+                            osValue = CPLJSONObject(osValue).Format(
+                                CPLJSONObject::PrettyFormat::Plain);
                         }
+                        else
+                        {
+                            osValue = json_object_to_json_string(poObjProp);
+                        }
+
                         json_object_put(poObjProp);
                     }
 

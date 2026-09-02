@@ -21,7 +21,8 @@ bool OGRJSonParse(const char *pszText, json_object **ppoObj, bool bVerboseError)
     if (ppoObj == nullptr)
         return false;
     json_tokener *jstok = json_tokener_new();
-    const int nLen = pszText == nullptr ? 0 : static_cast<int>(strlen(pszText));
+    const int nLen =
+        pszText == nullptr ? 0 : static_cast<int>(strlen(pszText) + 1);
     *ppoObj = json_tokener_parse_ex(jstok, pszText, nLen);
     if (jstok->err != json_tokener_success)
     {

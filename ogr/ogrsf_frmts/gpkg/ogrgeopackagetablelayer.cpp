@@ -531,35 +531,25 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                             std::string osValue(pszVal);
                             if (!OGRJSonParse(osValue.c_str(), &poObjProp))
                             {
-                                // Add a space terminator at the end to make the parser happy
-                                std::string oszValueWithTerminator(osValue);
-                                oszValueWithTerminator += " ";
-                                if (!OGRJSonParse(
-                                        oszValueWithTerminator.c_str(),
-                                        &poObjProp))
+                                CPLErrorOnce(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Field %s is declared as JSON but the "
+                                    "value is not a valid JSON. Storing as "
+                                    "string.",
+                                    poFieldDefn->GetNameRef());
+                                // Escape and quote
+                                osValue = CPLJSONObject(pszVal).Format(
+                                    CPLJSONObject::PrettyFormat::Plain);
+                                if (nValLengthBytes > 0)
                                 {
-                                    // Emit warning once
-                                    CPLErrorOnce(
-                                        CE_Warning, CPLE_AppDefined,
-                                        "Field %s is declared as JSON but the "
-                                        "value is not a valid JSON. Storing as "
-                                        "string.",
-                                        poFieldDefn->GetNameRef());
-                                    // Escape and quote
-                                    osValue = CPLJSONObject(pszVal).Format(
-                                        CPLJSONObject::PrettyFormat::Plain);
-                                    if (nValLengthBytes > 0)
-                                    {
-                                        nValLengthBytes +=
-                                            static_cast<int>(osValue.length()) -
-                                            static_cast<int>(strlen(pszVal));
-                                    }
+                                    nValLengthBytes +=
+                                        static_cast<int>(osValue.length()) -
+                                        static_cast<int>(strlen(pszVal));
                                 }
-                                else
-                                {
-                                    osValue =
-                                        json_object_to_json_string(poObjProp);
-                                }
+                            }
+                            else
+                            {
+                                osValue = json_object_to_json_string(poObjProp);
                             }
                             err = sqlite3_bind_text(
                                 poStmt, nColCount++, osValue.c_str(),
