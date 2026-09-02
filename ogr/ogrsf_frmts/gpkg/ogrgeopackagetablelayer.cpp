@@ -6809,7 +6809,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsNullable() != poNewFieldDefn->IsNullable())
     {
         nActualFlags |= ALTER_NULLABLE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (!poNewFieldDefn->IsNullable())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
     }
     if ((nFlagsIn & ALTER_DEFAULT_FLAG) != 0 &&
@@ -6827,7 +6828,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsUnique() != poNewFieldDefn->IsUnique())
     {
         nActualFlags |= ALTER_UNIQUE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (poNewFieldDefn->IsUnique())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
     if ((nFlagsIn & ALTER_DOMAIN_FLAG) != 0 &&
@@ -6878,7 +6880,13 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    const bool bUseRenameColumn =
+        (nActualFlags == ALTER_NAME_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG));
+#else
     const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
+#endif
     if (bUseRenameColumn)
         bUseRewriteSchemaMethod = false;
 
@@ -6919,6 +6927,26 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         }
     }
 
+    bool bUseRecreateTableMethod =
+        !bUseRenameColumn && !bUseRewriteSchemaMethod;
+
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    if (eErr == OGRERR_NONE &&
+        (nActualFlags == ALTER_NULLABLE_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG)))
+    {
+        eErr =
+            SQLCommand(m_poDS->GetDB(),
+                       CPLString().Printf(
+                           "ALTER TABLE \"%s\" ALTER COLUMN \"%s\" %s NOT NULL",
+                           SQLEscapeName(m_pszTableName).c_str(),
+                           SQLEscapeName(osOldColName).c_str(),
+                           poNewFieldDefn->IsNullable() ? "DROP" : "SET"));
+        bUseRecreateTableMethod = false;
+        bUseRewriteSchemaMethod = false;
+    }
+#endif
+
     if (bUseRenameColumn)
     {
         if (eErr == OGRERR_NONE)
@@ -6934,7 +6962,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                     .c_str());
         }
     }
-    else if (!bUseRewriteSchemaMethod)
+    else if (bUseRecreateTableMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -6950,7 +6978,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
         }
     }
-    else
+    else if (bUseRewriteSchemaMethod)
     {
         /* --------------------------------------------------------------------
          */

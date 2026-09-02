@@ -2277,7 +2277,27 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
 
-    if (nActualFlags == ALTER_NAME_FLAG)
+    int nActualFlagsToApplyWithSQL = nActualFlags;
+
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    if ((nActualFlagsToApplyWithSQL & ALTER_NULLABLE_FLAG) != 0)
+    {
+        OGRErr eErr =
+            SQLCommand(m_poDS->GetDB(),
+                       CPLString().Printf(
+                           "ALTER TABLE \"%s\" ALTER COLUMN \"%s\" %s NOT NULL",
+                           SQLEscapeName(m_pszTableName).c_str(),
+                           SQLEscapeName(osOldColName).c_str(),
+                           poNewFieldDefn->IsNullable() ? "DROP" : "SET"));
+
+        if (eErr != OGRERR_NONE)
+            return eErr;
+
+        nActualFlagsToApplyWithSQL &= ~ALTER_NULLABLE_FLAG;
+    }
+#endif
+
+    if (nActualFlagsToApplyWithSQL == ALTER_NAME_FLAG)
     {
         CPLDebug("SQLite", "Running ALTER TABLE RENAME COLUMN");
         OGRErr eErr = SQLCommand(
@@ -2292,7 +2312,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         if (eErr != OGRERR_NONE)
             return eErr;
     }
-    else
+    else if (nActualFlagsToApplyWithSQL != 0)
     {
         /* --------------------------------------------------------------------
          */
