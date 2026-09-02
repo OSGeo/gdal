@@ -2509,7 +2509,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
                 nOvrMinTileX * ovrTileMatrix.mTileWidth * ovrTileMatrix.mResX,
             0.0,
             -ovrTileMatrix.mResY,
-            ovrTileMatrix.mTopLeftY +
+            ovrTileMatrix.mTopLeftY -
                 nOvrMinTileY * ovrTileMatrix.mTileHeight * ovrTileMatrix.mResY,
             0.0,
             0.0,
