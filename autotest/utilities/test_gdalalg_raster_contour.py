@@ -17,6 +17,11 @@ import pytest
 from osgeo import gdal, ogr
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_contour")
+
+
 def get_contour_alg():
     reg = gdal.GetGlobalAlgorithmRegistry()
     raster = reg.InstantiateAlg("raster")

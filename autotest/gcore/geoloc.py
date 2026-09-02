@@ -21,6 +21,12 @@ import pytest
 
 from osgeo import gdal, osr
 
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "geoloc")
+
+
 ###############################################################################
 # Verify warped result.
 

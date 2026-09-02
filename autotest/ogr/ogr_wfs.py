@@ -799,17 +799,12 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 # The following test should issue 0 WFS http request
 
 
-def test_ogr_wfs_getcapabilitiesfile():
+def test_ogr_wfs_getcapabilitiesfile(tmp_path):
 
-    ds = ogr.Open("data/wfs/getcapabilities_wfs.xml")
+    gdal.CopyFile("data/wfs/getcapabilities_wfs.xml", tmp_path / "tmp.xml")
 
-    if ds is None:
-        gdal.Unlink("data/wfs/getcapabilities_wfs.gfs")
-        pytest.fail()
-
-    ds = None
-
-    gdal.Unlink("data/wfs/getcapabilities_wfs.gfs")
+    ds = ogr.Open(tmp_path / "tmp.xml")
+    assert ds
 
 
 ###############################################################################

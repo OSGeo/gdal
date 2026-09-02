@@ -24,6 +24,11 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["fill-nodata"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_fill_nodata")
+
+
 def test_gdalalg_raster_fill_nodata_cannot_open_file():
 
     alg = get_alg()

@@ -14,9 +14,15 @@
 import array
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "fillnodata")
 
 
 def test_fillnodata_1x1_no_nodata():

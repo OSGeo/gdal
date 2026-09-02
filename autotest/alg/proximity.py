@@ -11,10 +11,16 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-
+import gdaltest
 import pytest
 
 from osgeo import gdal
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "proximity")
+
 
 ###############################################################################
 # Test a fairly default case.

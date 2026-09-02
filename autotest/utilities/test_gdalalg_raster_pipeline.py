@@ -24,6 +24,11 @@ def get_pipeline_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_pipeline")
+
+
 def test_gdalalg_raster_pipeline_read_and_write(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")

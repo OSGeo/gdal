@@ -30,12 +30,7 @@ def startup_and_cleanup():
         yield
 
     try:
-        os.chmod("tmpdirreadonly", stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        shutil.rmtree("tmpdirreadonly")
-    except OSError:
-        pass
-    try:
-        shutil.rmtree("tmppamproxydir")
+        shutil.rmtree("tmp/tmppamproxydir")
     except OSError:
         pass
 
@@ -327,24 +322,20 @@ def test_pam_10():
 # Test PamProxyDb mechanism
 
 
-def test_pam_11():
+def test_pam_11(tmp_path):
 
     # Create a read-only directory
-    try:
-        os.chmod("tmpdirreadonly", stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        shutil.rmtree("tmpdirreadonly")
-    except OSError:
-        pass
-    os.mkdir("tmpdirreadonly")
-    shutil.copy("data/byte.tif", "tmpdirreadonly/byte.tif")
+    tmpdirreadonly = tmp_path / "tmpdirreadonly"
+    os.mkdir(tmpdirreadonly)
+    shutil.copy("data/byte.tif", tmpdirreadonly / "byte.tif")
 
     # FIXME: how do we create a read-only dir on windows ?
     # The following has no effect
-    os.chmod("tmpdirreadonly", stat.S_IRUSR | stat.S_IXUSR)
+    os.chmod(tmpdirreadonly, stat.S_IRUSR | stat.S_IXUSR)
 
     # Test that the directory is really read-only
     try:
-        f = open("tmpdirreadonly/test", "w")
+        f = open(tmpdirreadonly / "test", "w")
         if f is not None:
             f.close()
             pytest.skip()
@@ -352,7 +343,7 @@ def test_pam_11():
         pass
 
     # Compute statistics --> the saving as .aux.xml should fail
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(tmpdirreadonly / "byte.tif")
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     assert stats[0] == 74, "did not get expected minimum"
     gdal.ErrorReset()
@@ -364,7 +355,7 @@ def test_pam_11():
     ), "warning was expected at that point"
 
     # Check that we actually have no saved statistics
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(tmpdirreadonly / "byte.tif")
     stats = ds.GetRasterBand(1).GetStatistics(False, False)
     assert stats is None
     ds = None
@@ -373,12 +364,16 @@ def test_pam_11():
     # at the beginning of the process
     import test_py_scripts
 
-    ret = test_py_scripts.run_py_script_as_external_script(".", "pamproxydb", "-test1")
-    assert ret.find("success") != -1, "pamproxydb.py -test1 failed %s" % ret
+    ret = test_py_scripts.run_py_script_as_external_script(
+        ".", "pamproxydb", " ".join(["-test1", str(tmpdirreadonly)])
+    )
+    assert "success" in ret, "pamproxydb.py -test1 failed %s" % ret
 
     # Test loading an existing proxydb
-    ret = test_py_scripts.run_py_script_as_external_script(".", "pamproxydb", "-test2")
-    assert ret.find("success") != -1, "pamproxydb.py -test2 failed %s" % ret
+    ret = test_py_scripts.run_py_script_as_external_script(
+        ".", "pamproxydb", " ".join(["-test2", str(tmpdirreadonly)])
+    )
+    assert "success" in ret, "pamproxydb.py -test2 failed %s" % ret
 
 
 ###############################################################################

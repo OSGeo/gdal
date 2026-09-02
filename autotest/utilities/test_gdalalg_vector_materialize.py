@@ -238,16 +238,18 @@ def test_gdalalg_vector_materialize_temp_output_parquet(tmp_path):
 
 @pytest.mark.require_driver("GDALG")
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_materialize_read_from_gdalg():
-    with ogr.Open(
-        json.dumps(
-            {
-                "type": "gdal_streamed_alg",
-                "command_line": "gdal pipeline read ../ogr/data/poly.shp ! materialize",
-            }
-        )
-    ) as ds:
-        assert ds.GetLayer(0).GetFeatureCount() == 10
+def test_gdalalg_vector_materialize_read_from_gdalg(tmp_vsimem):
+
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        with ogr.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal pipeline read ../ogr/data/poly.shp ! materialize",
+                }
+            )
+        ) as ds:
+            assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
 @pytest.mark.require_driver("GDALG")

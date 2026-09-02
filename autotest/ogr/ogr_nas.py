@@ -163,15 +163,12 @@ def test_ogr_nas_3():
 #
 
 
-def test_ogr_nas_4():
+def test_ogr_nas_4(tmp_vsimem):
 
-    try:
-        os.remove("data/nas/delete_nas.gfs")
-    except OSError:
-        pass
+    gdal.CopyFile("data/nas/delete_nas.xml", tmp_vsimem / "delete_nas.xml")
 
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
-        ds = ogr.Open("data/nas/delete_nas.xml")
+        ds = ogr.Open(tmp_vsimem / "delete_nas.xml")
 
     assert ds.GetLayerCount() == 1, "did not get expected layer count"
 
@@ -195,10 +192,7 @@ def test_ogr_nas_4():
     del_lyr = None
     ds = None
 
-    try:
-        os.remove("data/nas/delete_nas.gfs")
-    except OSError:
-        pass
+    gdal.Unlink(tmp_vsimem / "delete_nas.gfs")
 
 
 ###############################################################################
@@ -206,15 +200,12 @@ def test_ogr_nas_4():
 #
 
 
-def test_ogr_nas_5():
+def test_ogr_nas_5(tmp_vsimem):
 
-    try:
-        os.remove("data/nas/replace_nas.gfs")
-    except OSError:
-        pass
+    gdal.CopyFile("data/nas/replace_nas.xml", tmp_vsimem / "replace_nas.xml")
 
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
-        ds = ogr.Open("data/nas/replace_nas.xml")
+        ds = ogr.Open(tmp_vsimem / "replace_nas.xml")
 
     assert ds.GetLayerCount() == 2, "did not get expected layer count"
 
@@ -262,10 +253,7 @@ def test_ogr_nas_5():
 
     ds = None
 
-    try:
-        os.remove("data/nas/replace_nas.gfs")
-    except OSError:
-        pass
+    gdal.Unlink(tmp_vsimem / "replace_nas.gfs")
 
 
 ###############################################################################

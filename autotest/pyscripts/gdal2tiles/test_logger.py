@@ -12,6 +12,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
@@ -24,22 +26,29 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_gdal2tiles_logger():
+def test_gdal2tiles_logger(tmp_path):
 
     if gdal.GetDriverByName("PNG") is None:
         pytest.skip("PNG driver is missing")
 
-    gdal2tiles.main(
-        argv=[
-            "gdal2tiles",
-            "--verbose",
-            "--legacy",
-            "-z",
-            "13-14",
-            "../../gcore/data/byte.tif",
-            "/vsimem/gdal2tiles",
-        ]
-    )
+    gdal.CopyFile("../../gcore/data/byte.tif", tmp_path / "byte.tif")
+
+    old_pwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        gdal2tiles.main(
+            argv=[
+                "gdal2tiles",
+                "--verbose",
+                "--legacy",
+                "-z",
+                "13-14",
+                tmp_path / "byte.tif",
+                "/vsimem/gdal2tiles",
+            ]
+        )
+    finally:
+        os.chdir(old_pwd)
 
     assert set(gdal.ReadDirRecursive("/vsimem/gdal2tiles")) == set(
         [

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 import test_cli_utilities
 
@@ -19,6 +20,11 @@ from osgeo import gdal
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_gdal_path() is None, reason="gdal binary not available"
 )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_external")
 
 
 def test_gdalalg_external_pipeline_simple_raster(tmp_vsimem, tmp_path):

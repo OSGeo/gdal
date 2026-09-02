@@ -596,15 +596,16 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
 @pytest.mark.parametrize(
     "options", [[], ["SPATIAL_INDEX=NO"]], ids=["spatial_index", "no_spatial_index"]
 )
-def test_ogr_flatgeobuf_write_to_vsizip(options):
+def test_ogr_flatgeobuf_write_to_vsizip(options, tmp_vsimem):
 
     srcDS = gdal.Open("data/poly.shp")
-    destDS = gdal.VectorTranslate(
-        "/vsizip//vsimem/test.fgb.zip/test.fgb",
-        srcDS=srcDS,
-        format="FlatGeobuf",
-        layerCreationOptions=options,
-    )
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        destDS = gdal.VectorTranslate(
+            "/vsizip//vsimem/test.fgb.zip/test.fgb",
+            srcDS=srcDS,
+            format="FlatGeobuf",
+            layerCreationOptions=options,
+        )
     assert destDS is not None
     destDS = None
     destDS = ogr.Open("/vsizip//vsimem/test.fgb.zip/test.fgb")
@@ -1686,13 +1687,14 @@ def test_ogr_flatgeobuf_write_check_temporary_file_vsizip(tmp_path):
     with gdal.VSIFile(tmp_path / "out_temp.fgb", "wb") as f:
         f.write(b"foo")
 
-    with gdal.GetDriverByName("FlatGeobuf").CreateVector(
-        "/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")
-    ) as ds:
-        lyr = ds.CreateLayer("test")
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
-        lyr.CreateFeature(f)
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        with gdal.GetDriverByName("FlatGeobuf").CreateVector(
+            "/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")
+        ) as ds:
+            lyr = ds.CreateLayer("test")
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+            lyr.CreateFeature(f)
 
     with ogr.Open("/vsizip/" + str(tmp_path / "out.fgb.zip" / "out.fgb")) as ds:
         lyr = ds.GetLayer(0)

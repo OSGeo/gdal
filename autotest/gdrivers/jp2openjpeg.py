@@ -210,17 +210,17 @@ def test_jp2openjpeg_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def test_jp2openjpeg_7():
+def test_jp2openjpeg_7(tmp_path):
 
+    gdal.CopyFile("data/jpeg2000/byte.jp2.gz", tmp_path / "byte.jp2.gz")
     tst = gdaltest.GDALTest(
-        "JP2OpenJPEG",
-        "/vsigzip/data/jpeg2000/byte.jp2.gz",
+        "JP2Grok",
+        f"/vsigzip/{tmp_path}/byte.jp2.gz",
         1,
         50054,
         filename_absolute=1,
     )
     tst.testOpen()
-    gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
 
 
 ###############################################################################

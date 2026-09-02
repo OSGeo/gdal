@@ -25,6 +25,11 @@ def alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["sort"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_vector_sort")
+
+
 @pytest.fixture(params=("hilbert", "strtree"))
 def method(request):
 

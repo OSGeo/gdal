@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -18,6 +19,11 @@ from osgeo import gdal
 
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["clean-collar"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_clean_collar")
 
 
 def test_gdalalg_raster_clean_collar():

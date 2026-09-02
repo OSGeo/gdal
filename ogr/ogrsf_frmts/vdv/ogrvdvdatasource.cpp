@@ -180,7 +180,9 @@ std::pair<GDALDataset *, bool> OGRIDFDataSource::Parse() const
         if (poGPKGDriver)
         {
             CPLString osTmpFilename(m_osFilename + "_tmp.gpkg");
-            VSILFILE *fp = VSIFOpenL(osTmpFilename, "wb");
+            VSILFILE *fp = CPLGetConfigOption("CPL_TMPDIR", nullptr)
+                               ? nullptr
+                               : VSIFOpenL(osTmpFilename, "wb");
             if (fp)
             {
                 VSIFCloseL(fp);

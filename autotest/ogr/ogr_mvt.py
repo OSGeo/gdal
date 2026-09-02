@@ -29,6 +29,11 @@ def init():
         yield
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "ogr_mvt")
+
+
 ###############################################################################
 
 

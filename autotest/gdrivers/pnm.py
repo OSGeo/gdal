@@ -64,12 +64,11 @@ def test_pnm_4():
 
 @pytest.mark.parametrize("nbands", [1, 3])
 @gdaltest.disable_exceptions()
-def test_pnm_write_non_standard_extension(nbands):
+def test_pnm_write_non_standard_extension(tmp_path, nbands):
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        gdal.GetDriverByName("PNM").Create("foo.foo", 1, 1, nbands)
+        gdal.GetDriverByName("PNM").Create(tmp_path / "foo.foo", 1, 1, nbands)
     assert gdal.GetLastErrorType() != 0
-    gdal.Unlink("foo.foo")
 
 
 @gdaltest.disable_exceptions()

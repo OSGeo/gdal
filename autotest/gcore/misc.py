@@ -452,7 +452,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
     ds = None
 
 
-def test_misc_6():
+def test_misc_6(tmp_path):
 
     with gdal.quiet_errors():
 
@@ -473,7 +473,9 @@ def test_misc_6():
         # This is to speed-up the runtime of tests on EXT4 filesystems
         # Do not use this for production environment if you care about data safety
         # w.r.t system/OS crashes, unless you know what you are doing.
-        with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
+        with gdal.config_options(
+            {"OGR_SQLITE_SYNCHRONOUS": "OFF", "CPL_TMPDIR": tmp_path}
+        ):
 
             datatype = gdal.GDT_UInt8
             setDriversDone = set()
@@ -640,14 +642,11 @@ def test_misc_9():
 # Test VSIBufferedReaderHandle (fix done in r21358)
 
 
-def test_misc_10():
+def test_misc_10(tmp_path):
 
-    try:
-        os.remove("data/byte.tif.gz.properties")
-    except OSError:
-        pass
+    gdal.CopyFile("data/byte.tif.gz", tmp_path / "byte.tif.gz")
 
-    f = gdal.VSIFOpenL("/vsigzip/./data/byte.tif.gz", "rb")
+    f = gdal.VSIFOpenL("/vsigzip/" + str(tmp_path / "byte.tif.gz"), "rb")
     gdal.VSIFReadL(1, 1, f)
     gdal.VSIFSeekL(f, 0, 2)
     gdal.VSIFSeekL(f, 0, 0)
@@ -658,11 +657,6 @@ def test_misc_10():
 
     ar = struct.unpack("B" * 4, data)
     assert ar == (73, 73, 42, 0)
-
-    try:
-        os.remove("data/byte.tif.gz.properties")
-    except OSError:
-        pass
 
 
 ###############################################################################
@@ -698,16 +692,21 @@ def test_misc_11():
 @pytest.mark.skipif(
     gdaltest.is_travis_branch("build-windows-conda"), reason="fails for unknown reason"
 )
-def test_misc_12():
+@pytest.mark.parametrize(
+    "driver_name", [gdal.GetDriver(i).ShortName for i in range(gdal.GetDriverCount())]
+)
+def test_misc_12(driver_name, tmp_vsimem):
 
-    import test_cli_utilities
+    drv = gdal.GetDriverByName(driver_name)
+    md = drv.GetMetadata()
 
-    gdal_translate_path = test_cli_utilities.get_gdal_translate_path()
+    config_options = dict()
+    if driver_name == "COG":
+        config_options["CPL_TMPDIR"] = tmp_vsimem
 
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        md = drv.GetMetadata()
-        if ("DCAP_CREATECOPY" in md or "DCAP_CREATE" in md) and "DCAP_RASTER" in md:
+    if ("DCAP_CREATECOPY" in md or "DCAP_CREATE" in md) and "DCAP_RASTER" in md:
+
+        with gdal.config_options(config_options):
 
             nbands = 1
             if drv.ShortName == "WEBP" or drv.ShortName == "ADRG":
@@ -728,7 +727,7 @@ def test_misc_12():
                 size = 128
 
             src_ds = gdal.GetDriverByName("GTiff").Create(
-                "/vsimem/misc_12_src.tif", size, size, nbands, datatype
+                tmp_vsimem / "misc_12_src.tif", size, size, nbands, datatype
             )
             set_gt = (2, 1.0 / size, 0, 49, 0, -1.0 / size)
             src_ds.SetGeoTransform(set_gt)
@@ -740,44 +739,10 @@ def test_misc_12():
             with gdal.quiet_errors():
                 ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
             if ds is None and gdal.GetLastErrorMsg() == "":
-                gdal.Unlink("/vsimem/misc_12_src.tif")
                 pytest.fail(
                     "CreateCopy() into non existing dir fails without error message for driver %s"
                     % drv.ShortName
                 )
-            ds = None
-
-            if gdal_translate_path is not None:
-                # Test to detect memleaks
-                ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/misc_12.vrt", src_ds)
-                out, _ = gdaltest.runexternal_out_and_err(
-                    gdal_translate_path
-                    + " -of "
-                    + drv.ShortName
-                    + " tmp/misc_12.vrt /nonexistingpath/"
-                    + get_filename(drv, ""),
-                    check_memleak=False,
-                )
-                del ds
-                gdal.Unlink("tmp/misc_12.vrt")
-
-                # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
-                # to catch some memory leaks
-                if (
-                    out.find("VSIMalloc + VSICalloc - VSIFree") != -1
-                    and out.find("VSIMalloc + VSICalloc - VSIFree : 0") == -1
-                ):
-                    if (
-                        drv.ShortName == "Rasterlite"
-                        and out.find("VSIMalloc + VSICalloc - VSIFree : 1") != -1
-                    ):
-                        pass
-                    else:
-                        print("memleak detected for driver %s" % drv.ShortName)
-
-            src_ds = None
-
-            gdal.Unlink("/vsimem/misc_12_src.tif")
 
 
 ###############################################################################

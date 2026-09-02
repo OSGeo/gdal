@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import shutil
+
 import pytest
 
 from osgeo import gdal
@@ -18,19 +20,21 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("netCDF")
 
 
-def test_gdalalg_mdim_compare_same_file():
+def test_gdalalg_mdim_compare_same_file(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     with gdal.alg.mdim.compare(
-        input="../gdrivers/data/netcdf/byte.nc",
-        reference="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
+        reference=tmp_path / "byte.nc",
     ) as alg:
         assert alg["output-string"] == ""
 
 
 def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     gdal.alg.raster.scale(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         output=tmp_path / "out.nc",
         input_min=0,
         input_max=255,
@@ -39,7 +43,7 @@ def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere(tmp_path):
     )
 
     with gdal.alg.mdim.compare(
-        reference="../gdrivers/data/netcdf/byte.nc",
+        reference=tmp_path / "byte.nc",
         input=tmp_path / "out.nc",
         skip_binary=True,
     ) as alg:
@@ -52,8 +56,9 @@ Array /Band1: pixels differing: 399
 
 def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_no_metric(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     gdal.alg.raster.scale(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         output=tmp_path / "out.nc",
         input_min=0,
         input_max=255,
@@ -62,7 +67,7 @@ def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_no_metric(tmp_path):
     )
 
     with gdal.alg.mdim.compare(
-        reference="../gdrivers/data/netcdf/byte.nc",
+        reference=tmp_path / "byte.nc",
         input=tmp_path / "out.nc",
         skip_binary=True,
         metric="none",
@@ -72,14 +77,15 @@ def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_no_metric(tmp_path):
 
 def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_psnr_float(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     tmp_filename = tmp_path / "out.nc"
     with gdal.alg.raster.pipeline(
-        pipeline=f"read ../gdrivers/data/netcdf/byte.nc ! set-type --output-data-type Float32 ! scale --input-min=0 --input-max=255 --output-min=1 --output-max=256 ! write {tmp_filename}"
+        pipeline=f"read {tmp_path}/byte.nc ! set-type --output-data-type Float32 ! scale --input-min=0 --input-max=255 --output-min=1 --output-max=256 ! write {tmp_filename}"
     ) as _:
         pass
 
     with gdal.alg.mdim.compare(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         reference=tmp_filename,
         skip_binary=True,
         metric="PSNR",
@@ -94,8 +100,9 @@ Array /Band1: PSNR (dB): 45.1536
 
 def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_all_metrics(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     gdal.alg.raster.scale(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         output=tmp_path / "out.nc",
         input_min=0,
         input_max=255,
@@ -111,7 +118,7 @@ def test_gdalalg_mdim_compare_diff_by_one_pixel_everywhere_all_metrics(tmp_path)
         return True
 
     with gdal.alg.mdim.compare(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         reference=tmp_path / "out.nc",
         metric="all",
         skip_binary=True,
@@ -128,14 +135,15 @@ Array /Band1: PSNR (dB): 48.1417
     assert tab_pct[0] == 1
 
 
-def test_gdalalg_mdim_compare_errors():
+def test_gdalalg_mdim_compare_errors(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     with pytest.raises(
         Exception, match="Array '/i/do/not/exist' does not exist in reference dataset"
     ):
         gdal.alg.mdim.compare(
-            input="../gdrivers/data/netcdf/byte.nc",
-            reference="../gdrivers/data/netcdf/byte.nc",
+            input=tmp_path / "byte.nc",
+            reference=tmp_path / "byte.nc",
             array="/i/do/not/exist",
             skip_binary=True,
         )
@@ -147,14 +155,14 @@ def test_gdalalg_mdim_compare_errors():
     ):
         gdal.alg.mdim.compare(
             input=src_ds,
-            reference="../gdrivers/data/netcdf/byte.nc",
+            reference=tmp_path / "byte.nc",
             array="/Band1",
             skip_binary=True,
         )
 
     with gdal.alg.mdim.compare(
         input=src_ds,
-        reference="../gdrivers/data/netcdf/byte.nc",
+        reference=tmp_path / "byte.nc",
         skip_binary=True,
     ) as alg:
         assert (
@@ -164,7 +172,7 @@ def test_gdalalg_mdim_compare_errors():
 
     with gdal.alg.mdim.compare(
         reference=src_ds,
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         skip_binary=True,
     ) as alg:
         assert (
@@ -175,9 +183,10 @@ def test_gdalalg_mdim_compare_errors():
 
 def test_gdalalg_mdim_compare_in_pipeline(tmp_path):
 
+    shutil.copy("../gdrivers/data/netcdf/byte.nc", tmp_path / "byte.nc")
     tmp_filename = tmp_path / "out.nc"
     gdal.alg.raster.scale(
-        input="../gdrivers/data/netcdf/byte.nc",
+        input=tmp_path / "byte.nc",
         output=tmp_filename,
         input_min=0,
         input_max=255,
@@ -186,7 +195,7 @@ def test_gdalalg_mdim_compare_in_pipeline(tmp_path):
     )
 
     with gdal.alg.mdim.pipeline(
-        pipeline=f"read {tmp_filename} ! compare ../gdrivers/data/netcdf/byte.nc --skip-binary --array Band1"
+        pipeline=f"read {tmp_filename} ! compare {tmp_path}/byte.nc --skip-binary --array Band1"
     ) as alg:
         assert (
             alg["output-string"] == """Array /Band1: maximum pixel value difference: 1

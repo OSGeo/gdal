@@ -19,6 +19,11 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("KTX2")
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "ktx2")
+
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

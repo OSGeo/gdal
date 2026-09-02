@@ -206,17 +206,17 @@ def test_jp2grok_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def test_jp2grok_7():
+def test_jp2grok_7(tmp_path):
 
+    gdal.CopyFile("data/jpeg2000/byte.jp2.gz", tmp_path / "byte.jp2.gz")
     tst = gdaltest.GDALTest(
         "JP2Grok",
-        "/vsigzip/data/jpeg2000/byte.jp2.gz",
+        f"/vsigzip/{tmp_path}/byte.jp2.gz",
         1,
         50054,
         filename_absolute=1,
     )
     tst.testOpen()
-    gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
 
 
 ###############################################################################
@@ -1633,17 +1633,18 @@ def test_jp2grok_vrt_read_no_advise():
     assert arr[:128].max() > 0 and arr[128:].max() > 0
 
 
-def test_jp2grok_translate_scale_multi_tile_row():
+def test_jp2grok_translate_scale_multi_tile_row(tmp_path):
     # gdal_translate -scale wraps source in a VRT and
     # reads it without AdviseRead. Identity scale preserves pixels, so the
     # output must match source below first tile row.
     np = pytest.importorskip("numpy")
     truth = _truth(SYNC_SRC)
-    src_ds = gdal.Open(SYNC_SRC)
+    gdal.CopyFile(SYNC_SRC, tmp_path / "in.jp2")
+    src_ds = gdal.Open(tmp_path / "in.jp2")
     smin, smax, _, _ = src_ds.GetRasterBand(1).GetStatistics(False, True)
     out = "/vsimem/jp2grok_scale.tif"
     ds = gdal.Translate(
-        out, SYNC_SRC, format="GTiff", scaleParams=[[smin, smax, smin, smax]]
+        out, tmp_path / "in.jp2", format="GTiff", scaleParams=[[smin, smax, smin, smax]]
     )
     assert ds.RasterYSize == 513
     assert np.array_equal(ds.GetRasterBand(1).ReadAsArray(), truth)

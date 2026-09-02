@@ -1218,9 +1218,13 @@ def test_vsifile_vsizip_error():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/5225
 
 
-def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes():
+def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes(tmp_path):
 
-    f = gdal.VSIFOpenL("/vsitar/data/tar_of_65536_bytes.tar.gz/zero.bin", "rb")
+    gdal.CopyFile(
+        "data/tar_of_65536_bytes.tar.gz", tmp_path / "tar_of_65536_bytes.tar.gz"
+    )
+
+    f = gdal.VSIFOpenL(f"/vsitar/{tmp_path}/tar_of_65536_bytes.tar.gz/zero.bin", "rb")
     assert f is not None
     read_bytes = gdal.VSIFReadL(1, 65024, f)
     assert gdal.VSIFEofL(f) == 0
@@ -1230,7 +1234,6 @@ def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes():
     assert gdal.VSIFErrorL(f) == 0
     gdal.VSIFCloseL(f)
     assert read_bytes == b"\x00" * 65024
-    gdal.Unlink("data/tar_of_65536_bytes.tar.gz.properties")
 
 
 ###############################################################################

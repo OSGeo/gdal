@@ -12,8 +12,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import shutil
-
 import gdaltest
 import pytest
 
@@ -47,60 +45,57 @@ def test_ogr_sosi_1():
 # test using no appendFieldsMap
 
 
-def test_ogr_sosi_2():
+def test_ogr_sosi_2(tmp_path):
 
-    try:
-        ds = gdal.Open("data/sosi/test_duplicate_fields.sos", open_options=[])
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 17
-        lyr = ds.GetLayer(1)
-        assert lyr.GetFeatureCount() == 1
-        f = lyr.GetNextFeature()
-        assert f["REINBEITEBRUKERID"] == "YD"
-        ds.Close()
-    finally:
-        shutil.rmtree("data/sosi/test_duplicate_fields")
+    gdal.CopyFile("data/sosi/test_duplicate_fields.sos", tmp_path / "test.sos")
+
+    ds = gdal.Open(tmp_path / "test.sos", open_options=[])
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 17
+    lyr = ds.GetLayer(1)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["REINBEITEBRUKERID"] == "YD"
+    ds.Close()
 
 
 ###############################################################################
 # test using simple open_options appendFieldsMap
 
 
-def test_ogr_sosi_3():
+def test_ogr_sosi_3(tmp_path):
 
-    try:
-        ds = gdal.Open(
-            "data/sosi/test_duplicate_fields.sos",
-            open_options=["appendFieldsMap=BEITEBRUKERID&OPPHAV"],
-        )
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 17
-        lyr = ds.GetLayer(1)
-        assert lyr.GetFeatureCount() == 1
-        f = lyr.GetNextFeature()
-        assert f["REINBEITEBRUKERID"] == "YD,YG"
-        ds.Close()
-    finally:
-        shutil.rmtree("data/sosi/test_duplicate_fields")
+    gdal.CopyFile("data/sosi/test_duplicate_fields.sos", tmp_path / "test.sos")
+
+    ds = gdal.Open(
+        tmp_path / "test.sos",
+        open_options=["appendFieldsMap=BEITEBRUKERID&OPPHAV"],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 17
+    lyr = ds.GetLayer(1)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["REINBEITEBRUKERID"] == "YD,YG"
+    ds.Close()
 
 
 ###############################################################################
 # test using simple open_options appendFieldsMap with semicolumns
 
 
-def test_ogr_sosi_4():
+def test_ogr_sosi_4(tmp_path):
 
-    try:
-        ds = gdal.Open(
-            "data/sosi/test_duplicate_fields.sos",
-            open_options=["appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;"],
-        )
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 17
-        lyr = ds.GetLayer(1)
-        assert lyr.GetFeatureCount() == 1
-        f = lyr.GetNextFeature()
-        assert f["REINBEITEBRUKERID"] == "YD;YG"
-        ds.Close()
-    finally:
-        shutil.rmtree("data/sosi/test_duplicate_fields")
+    gdal.CopyFile("data/sosi/test_duplicate_fields.sos", tmp_path / "test.sos")
+
+    ds = gdal.Open(
+        tmp_path / "test.sos",
+        open_options=["appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;"],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 17
+    lyr = ds.GetLayer(1)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["REINBEITEBRUKERID"] == "YD;YG"
+    ds.Close()

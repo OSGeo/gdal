@@ -134,25 +134,26 @@ def test_gif_6():
 # Confirm reading with the BIGGIF driver.
 
 
-def test_gif_7():
+def test_gif_7(tmp_path):
 
-    # Move the GIF driver after the BIGGIF driver.
-    try:
-        drv = gdal.GetDriverByName("GIF")
-        drv.Deregister()
-        drv.Register()
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        # Move the GIF driver after the BIGGIF driver.
+        try:
+            drv = gdal.GetDriverByName("GIF")
+            drv.Deregister()
+            drv.Register()
 
-        tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
-        tst.testOpen()
+            tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
+            tst.testOpen()
 
-        ds = gdal.Open("data/gif/bug407.gif")
-        assert ds is not None
+            ds = gdal.Open("data/gif/bug407.gif")
+            assert ds is not None
 
-        assert ds.GetDriver().ShortName == "BIGGIF"
-    finally:
-        drv = gdal.GetDriverByName("BIGGIF")
-        drv.Deregister()
-        drv.Register()
+            assert ds.GetDriver().ShortName == "BIGGIF"
+        finally:
+            drv = gdal.GetDriverByName("BIGGIF")
+            drv.Deregister()
+            drv.Register()
 
 
 ###############################################################################

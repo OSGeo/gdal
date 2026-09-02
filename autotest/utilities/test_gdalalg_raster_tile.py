@@ -2326,9 +2326,10 @@ def test_gdalalg_raster_tile_pipeline_materialize_explicit_filename_cog(tmp_vsim
 
 def test_gdalalg_raster_tile_pipeline_materialize_no_explicit_filename(tmp_vsimem):
 
-    gdal.alg.pipeline(
-        pipeline=f"read ../gdrivers/data/small_world.tif ! materialize ! tile {tmp_vsimem}"
-    )
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        gdal.alg.pipeline(
+            pipeline=f"read ../gdrivers/data/small_world.tif ! materialize ! tile {tmp_vsimem}"
+        )
 
     ds = gdal.Open(tmp_vsimem / "0/0/0.png")
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 255)

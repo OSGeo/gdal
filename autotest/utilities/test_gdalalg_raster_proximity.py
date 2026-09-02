@@ -24,6 +24,11 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["proximity"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_proximity")
+
+
 # Helper function to create a GTiff raster from a numpy array
 def create_gtiff_from_array(
     filename,

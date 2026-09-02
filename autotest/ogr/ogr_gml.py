@@ -409,24 +409,31 @@ def test_ogr_gml_10(tmp_path):
 # Test reading a geometry element specified with <GeometryElementPath>
 
 
-def test_ogr_gml_11():
+def test_ogr_gml_11(tmp_path):
+
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gml", tmp_path / "testgeometryelementpath.gml"
+    )
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gfs", tmp_path / "testgeometryelementpath.gfs"
+    )
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testgeometryelementpath.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testgeometryelementpath.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testgeometryelementpath.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testgeometryelementpath.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testgeometryelementpath.gfs", "rb+")
+        f = open(tmp_path / "testgeometryelementpath.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testgeometryelementpath.gml")
+    ds = ogr.Open(tmp_path / "testgeometryelementpath.gml")
     lyr = ds.GetLayer(0)
     assert (
         lyr.GetGeometryColumn() == "location1container|location1"
@@ -2360,24 +2367,27 @@ def test_ogr_gml_58c(tmp_path):
 # Test GFS conditions
 
 
-def test_ogr_gml_59():
+def test_ogr_gml_59(tmp_path):
+
+    gdal.CopyFile("data/gml/testcondition.gml", tmp_path / "testcondition.gml")
+    gdal.CopyFile("data/gml/testcondition.gfs", tmp_path / "testcondition.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testcondition.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testcondition.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testcondition.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testcondition.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testcondition.gfs", "rb+")
+        f = open(tmp_path / "testcondition.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testcondition.gml")
+    ds = ogr.Open(tmp_path / "testcondition.gml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     expected = [
@@ -2419,24 +2429,27 @@ def test_ogr_gml_60(tmp_path):
 # Test reading a element specified with a full path in <ElementPath>
 
 
-def test_ogr_gml_61():
+def test_ogr_gml_61(tmp_path):
+
+    gdal.CopyFile("data/gml/gmlsubfeature.gml", tmp_path / "gmlsubfeature.gml")
+    gdal.CopyFile("data/gml/gmlsubfeature.gfs", tmp_path / "gmlsubfeature.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/gmlsubfeature.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/gmlsubfeature.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "gmlsubfeature.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "gmlsubfeature.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/gmlsubfeature.gfs", "rb+")
+        f = open(tmp_path / "gmlsubfeature.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/gmlsubfeature.gml")
+    ds = ogr.Open(tmp_path / "gmlsubfeature.gml")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, "did not get expected geometry column name"
 

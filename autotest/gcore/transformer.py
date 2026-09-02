@@ -153,28 +153,29 @@ def test_transformer_homography():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_4():
+def test_transformer_4(tmp_path):
 
-    ds = gdal.Open("data/sstgeo.vrt")
-    tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        ds = gdal.Open("data/sstgeo.vrt")
+        tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
 
-    success, pnt = tr.TransformPoint(0, 20, 10)
+        success, pnt = tr.TransformPoint(0, 20, 10)
 
-    assert (
-        success
-        and pnt[0] == pytest.approx(-81.961341857910156, abs=0.000001)
-        and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001)
-        and pnt[2] == 0
-    ), "got wrong forward transform result."
+        assert (
+            success
+            and pnt[0] == pytest.approx(-81.961341857910156, abs=0.000001)
+            and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001)
+            and pnt[2] == 0
+        ), "got wrong forward transform result."
 
-    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+        success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert (
-        success
-        and pnt[0] == pytest.approx(20, abs=0.000001)
-        and pnt[1] == pytest.approx(10, abs=0.000001)
-        and pnt[2] == 0
-    ), "got wrong reverse transform result."
+        assert (
+            success
+            and pnt[0] == pytest.approx(20, abs=0.000001)
+            and pnt[1] == pytest.approx(10, abs=0.000001)
+            and pnt[2] == 0
+        ), "got wrong reverse transform result."
 
 
 ###############################################################################

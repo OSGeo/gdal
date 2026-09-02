@@ -9647,7 +9647,11 @@ def test_ogr_gpkg_sozip(tmp_vsimem):
     filename = tmp_vsimem / "test_ogr_gpkg_sozip.gpkg.zip"
 
     with gdaltest.config_options(
-        {"CPL_SOZIP_MIN_FILE_SIZE": "256", "CPL_VSIL_DEFLATE_CHUNK_SIZE": "128"}
+        {
+            "CPL_SOZIP_MIN_FILE_SIZE": "256",
+            "CPL_VSIL_DEFLATE_CHUNK_SIZE": "128",
+            "CPL_TMPDIR": tmp_vsimem,
+        }
     ):
         ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
         ds.CreateLayer("foo")
@@ -9728,47 +9732,48 @@ def test_ogr_gpkg_update_feature(tmp_vsimem):
 
     filename = tmp_vsimem / "test_ogr_gpkg_update_feature.gpkg.zip"
 
-    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
-    lyr = ds.CreateLayer("test")
-    lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("str_field", ogr.OFTString))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-    f["int_field"] = 1
-    f["str_field"] = "foo"
-    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-    assert lyr.TestCapability(ogr.OLCUpdateFeature) == 1
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(1)
-    f["int_field"] = 123  # will be ignored
-    f["str_field"] = "bar"
-    assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
-    # Check recycling of existing statement
-    f["str_field"] = "baz"
-    assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
-    f = lyr.GetFeature(1)
-    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
-    assert f["int_field"] == 1
-    assert f["str_field"] == "baz"
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("str_field", ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        f["int_field"] = 1
+        f["str_field"] = "foo"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert lyr.TestCapability(ogr.OLCUpdateFeature) == 1
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(1)
+        f["int_field"] = 123  # will be ignored
+        f["str_field"] = "bar"
+        assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
+        # Check recycling of existing statement
+        f["str_field"] = "baz"
+        assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
+        f = lyr.GetFeature(1)
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        assert f["int_field"] == 1
+        assert f["str_field"] == "baz"
 
-    # Do not modify unset fields
-    f.UnsetField(1)
-    assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
-    f = lyr.GetFeature(1)
-    assert f["str_field"] == "baz"
+        # Do not modify unset fields
+        f.UnsetField(1)
+        assert lyr.UpdateFeature(f, [1], [], False) == ogr.OGRERR_NONE
+        f = lyr.GetFeature(1)
+        assert f["str_field"] == "baz"
 
-    # Nullify geometry
-    f.SetGeometry(None)
-    assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
-    f = lyr.GetFeature(1)
-    assert f.GetGeometryRef() is None
+        # Nullify geometry
+        f.SetGeometry(None)
+        assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
+        f = lyr.GetFeature(1)
+        assert f.GetGeometryRef() is None
 
-    # Set non null geometry
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-    assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
-    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+        # Set non null geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        assert lyr.UpdateFeature(f, [], [0], False) == ogr.OGRERR_NONE
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
 
-    ds = None
+        ds = None
 
 
 ###############################################################################
