@@ -316,3 +316,33 @@ def test_gdalalg_raster_shift_longitude_invalid_nodata(alg, nodata):
 
     with pytest.raises(Exception, match="Invalid NoData value"):
         alg.Run()
+
+
+def test_gdalalg_raster_shift_longitude_huge_range(alg, tmp_vsimem):
+
+    src_ds = create_ds(xmin=0, xmax=360, dx=1, dy=1, dt=gdal.GDT_Byte)
+
+    alg["input"] = src_ds
+    alg["min-x"] = 0
+    alg["max-x"] = 2**32 + 1
+    alg["output"] = tmp_vsimem / "out.vrt"
+    alg["output-format"] = "VRT"
+
+    with pytest.raises(
+        Exception, match="Size of output raster exceeds maximum allowable size"
+    ):
+        alg.Run()
+
+
+def test_gdalalg_raster_shift_longitude_xmin_offset_too_large(alg, tmp_vsimem):
+
+    src_ds = create_ds(xmin=0, xmax=360, dx=1, dy=1, dt=gdal.GDT_Byte)
+
+    alg["input"] = src_ds
+    alg["min-x"] = -(2**32) - 1 + 360
+    alg["max-x"] = -(2**32) - 1
+    alg["output"] = tmp_vsimem / "out.vrt"
+    alg["output-format"] = "VRT"
+
+    with pytest.raises(Exception, match="Failed to compute pixel offset"):
+        alg.Run()

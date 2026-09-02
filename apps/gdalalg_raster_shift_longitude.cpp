@@ -14,6 +14,7 @@
 
 #include "cpl_conv.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "../frmts/vrt/gdal_vrt.h"
 #include "../frmts/vrt/vrtdataset.h"
 
@@ -81,13 +82,27 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     // Snap m_minX and m_maxX to pixel boundaries of the input raster
     {
-        const int nXOff = static_cast<int>(
+        const double dfXOff =
             std::ceil(std::abs(dfSrcMinX - m_minX) / srcGT.xscale) *
-            (m_minX < dfSrcMinX ? -1 : 1));
+            (m_minX < dfSrcMinX ? -1 : 1);
+        if (!GDALIsValueInRange<int>(dfXOff))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to compute pixel offset between minimum x "
+                     "coordinate of input and output.");
+            return false;
+        }
+        const int nXOff = static_cast<int>(dfXOff);
         m_minX = dfSrcMinX + nXOff * srcGT.xscale;
     }
-    const int nDstXSize =
-        static_cast<int>(std::ceil((m_maxX - m_minX) / srcGT.xscale));
+    const double dfDstXSize = std::ceil((m_maxX - m_minX) / srcGT.xscale);
+    if (!GDALIsValueInRange<int>(dfDstXSize))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Size of output raster exceeds maximum allowable size.");
+        return false;
+    }
+    const int nDstXSize = static_cast<int>(dfDstXSize);
 
     if (nDstXSize <= 0)
     {
@@ -120,8 +135,17 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
             dfDstChunkMinX -= 360;
         }
 
-        const int nSrcXOff = static_cast<int>(
-            std::round(dfDstChunkMinX - dfSrcMinX) / srcGT.xscale);
+        const double dfSrcXOff =
+            std::round(dfDstChunkMinX - dfSrcMinX) / srcGT.xscale;
+        if (!GDALIsValueInRange<int>(dfSrcXOff))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to calculate source pixels for longitude range "
+                     "beginning at %g",
+                     dfDstChunkMinX);
+            return false;
+        }
+        const int nSrcXOff = static_cast<int>(dfSrcXOff);
 
         if (nSrcXOff < 0)
         {
