@@ -159,3 +159,20 @@ Examples
             ! read in.shp `
             ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" `
             ! info --features
+
+.. example::
+   :title: Filter features from a polygon dataset that intersect a point in a separate dataset
+
+   This example uses the spatial operations provided by the SQLite dialect to select polygons
+   that intersect at least one point feature in a separate dataset. Because :program:`gdal vector sql`
+   operates on a single dataset, the two input datasets are first combined using :ref:`gdal_vector_concat`.
+
+   .. code-block:: bash
+
+       gdal vector pipeline ! \
+           concat polys.shp points.shp \
+               --mode stack ! \
+           sql --sql "SELECT * FROM polys WHERE EXISTS (SELECT 1 FROM points WHERE ST_Intersects(polys.geometry, points.geometry))" \
+               --dialect sqlite ! \
+           write polys_filtered.shp
+
