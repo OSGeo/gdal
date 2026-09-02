@@ -56,7 +56,11 @@ constexpr const char *GAAC_ADVANCED = "Advanced";
 constexpr const char *GAAC_ESOTERIC = "Esoteric";
 
 /** Argument metadata item that applies to the "input-format" and
- * "output-format" argument */
+ * "output-format" argument.
+ *
+ * All the values of the list must be met by the driver. A single value may
+ * express alternatives separated by '|', of which at least one must be met,
+ * e.g. GDAL_DCAP_RASTER "|" GDAL_DCAP_MULTIDIM_RASTER. */
 constexpr const char *GAAMDI_REQUIRED_CAPABILITIES = "required_capabilities";
 
 /** Argument metadata item that applies to "output-format" argument */
