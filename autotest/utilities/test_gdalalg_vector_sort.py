@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
 import random
 
 import gdaltest
@@ -27,10 +26,8 @@ def alg():
 
 
 @pytest.fixture(scope="module", autouse=True)
-def _set_cpl_tmpdir():
-
-    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
-        yield
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_vector_sort")
 
 
 @pytest.fixture(params=("hilbert", "strtree"))

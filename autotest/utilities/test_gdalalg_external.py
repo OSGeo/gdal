@@ -11,8 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
-
+import gdaltest
 import pytest
 import test_cli_utilities
 
@@ -24,10 +23,8 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module", autouse=True)
-def _set_cpl_tmpdir():
-
-    with gdal.config_option("CPL_TMPDIR", os.path.join(os.getcwd(), "tmp")):
-        yield
+def set_cpl_tmpdir(tmp_path_factory):
+    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_external")
 
 
 def test_gdalalg_external_pipeline_simple_raster(tmp_vsimem, tmp_path):

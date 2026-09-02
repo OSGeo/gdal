@@ -2281,3 +2281,14 @@ def algorithm_check_ogrsf(alg, tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+###############################################################################
+#
+def set_cpl_tmpdir(tmp_path_factory, subdir_name):
+    """Yield after having created a temporary directory subdir_name in the
+    pytest tmp_path one, and set CPL_TMPDIR to that path."""
+
+    tmpdir = tmp_path_factory.mktemp(subdir_name)
+    with gdal.config_option("CPL_TMPDIR", tmpdir):
+        yield
