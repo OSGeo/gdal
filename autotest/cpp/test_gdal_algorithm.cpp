@@ -3702,6 +3702,44 @@ TEST_F(test_gdal_algorithm, invalid_input_format)
     }
 }
 
+TEST_F(test_gdal_algorithm, input_format_alternative_capabilities)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        std::vector<std::string> m_if{};
+
+        MyAlgorithm()
+        {
+            AddInputFormatsArg(&m_if).AddMetadataItem(
+                GAAMDI_REQUIRED_CAPABILITIES,
+                {GDAL_DCAP_VECTOR "|" GDAL_DCAP_MULTIDIM_RASTER});
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--if=ESRI Shapefile"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--if=VRT"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--if=GTIFF"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Invalid value for argument 'input-format'. "
+                     "Driver 'GTIFF' does not expose the required "
+                     "'DCAP_VECTOR or DCAP_MULTIDIM_RASTER' capability.");
+    }
+}
+
 TEST_F(test_gdal_algorithm, arg_layer_name_single)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun

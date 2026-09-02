@@ -71,12 +71,14 @@ GDALMdimPipelineStepAlgorithm::~GDALMdimPipelineStepAlgorithm() = default;
 
 GDALMdimPipelineAlgorithm::GDALMdimPipelineAlgorithm(
     bool openForMixedMdimVector)
-    : GDALAbstractPipelineAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                    ConstructorOptions()
-                                        .SetAddDefaultArguments(false)
-                                        .SetInputDatasetRequired(false)
-                                        .SetInputDatasetPositional(false)
-                                        .SetInputDatasetMaxCount(INT_MAX))
+    : GDALAbstractPipelineAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetAddDefaultArguments(false)
+              .SetInputDatasetRequired(false)
+              .SetInputDatasetPositional(false)
+              .SetInputDatasetMaxCount(INT_MAX)
+              .SetMdimOutputAcceptsClassicRaster(true))
 {
     m_supportsStreamedOutput = true;
 

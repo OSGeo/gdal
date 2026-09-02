@@ -23,8 +23,9 @@
 /************************************************************************/
 
 GDALMdimWriteAlgorithm::GDALMdimWriteAlgorithm()
-    : GDALMdimPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                    ConstructorOptions())
+    : GDALMdimPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetMdimOutputAcceptsClassicRaster(true))
 {
     AddMdimOutputArgs(/* hiddenForCLI = */ false);
 }
