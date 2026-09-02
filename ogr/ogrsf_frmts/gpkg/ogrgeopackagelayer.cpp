@@ -483,10 +483,10 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                         json_object *poObjProp = nullptr;
                         if (!OGRJSonParse(osValue.c_str(), &poObjProp))
                         {
-                            // Try adding a semi-colon at the end to see if that helps
-                            std::string oszValueWithSemiColon(osValue);
-                            oszValueWithSemiColon += ";";
-                            if (!OGRJSonParse(oszValueWithSemiColon.c_str(),
+                            // Add a space terminator at the end to make the parser happy
+                            std::string oszValueWithTerminator(osValue);
+                            oszValueWithTerminator += " ";
+                            if (!OGRJSonParse(oszValueWithTerminator.c_str(),
                                               &poObjProp))
                             {
                                 // Emit warning once
@@ -496,16 +496,16 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                                     "value is not a valid JSON. Converting to "
                                     "string.",
                                     poFieldDefn->GetNameRef());
-                                // Escape any double quote and quote
-                                osValue.replace(osValue.find("\""), 1, "\\\"");
-                                osValue.insert(0, "\"");
-                                osValue.append("\"");
+                                // Escape and quote
+                                osValue = CPLJSONObject(osValue).Format(
+                                    CPLJSONObject::PrettyFormat::Plain);
                             }
                             else
                             {
                                 osValue = json_object_to_json_string(poObjProp);
                             }
                         }
+                        json_object_put(poObjProp);
                     }
 
                     char *pszTxtDup = VSI_STRDUP_VERBOSE(osValue.c_str());

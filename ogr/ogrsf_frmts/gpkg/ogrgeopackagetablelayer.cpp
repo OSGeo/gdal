@@ -531,11 +531,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                             std::string osValue(pszVal);
                             if (!OGRJSonParse(osValue.c_str(), &poObjProp))
                             {
-                                // Try adding a semi-colon at the end to see if that helps
-                                std::string oszValueWithSemiColon(osValue);
-                                oszValueWithSemiColon += ";";
-                                if (!OGRJSonParse(oszValueWithSemiColon.c_str(),
-                                                  &poObjProp))
+                                // Add a space terminator at the end to make the parser happy
+                                std::string oszValueWithTerminator(osValue);
+                                oszValueWithTerminator += " ";
+                                if (!OGRJSonParse(
+                                        oszValueWithTerminator.c_str(),
+                                        &poObjProp))
                                 {
                                     // Emit warning once
                                     CPLErrorOnce(
@@ -544,12 +545,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                         "value is not a valid JSON. Storing as "
                                         "string.",
                                         poFieldDefn->GetNameRef());
-                                    // Escape any double quote and quote
-                                    osValue = pszVal;
-                                    osValue.replace(osValue.find("\""), 1,
-                                                    "\\\"");
-                                    osValue.insert(0, "\"");
-                                    osValue.append("\"");
+                                    // Escape and quote
+                                    osValue = CPLJSONObject(pszVal).Format(
+                                        CPLJSONObject::PrettyFormat::Plain);
                                     if (nValLengthBytes > 0)
                                     {
                                         nValLengthBytes +=
@@ -567,6 +565,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                 poStmt, nColCount++, osValue.c_str(),
                                 nValLengthBytes, SQLITE_TRANSIENT);
                             bBound = true;
+                            json_object_put(poObjProp);
                         }
                     }
                     else

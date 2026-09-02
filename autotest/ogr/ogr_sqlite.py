@@ -4831,7 +4831,7 @@ def test_json_field_convert_issues(tmp_path):
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     # Not a valid JSON, convert to string
-    feat.SetField("json", 'sca quot" lar')
+    feat.SetField("json", 'sca quot" \n quot" lar')
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -4854,7 +4854,7 @@ def test_json_field_convert_issues(tmp_path):
     assert json.loads(feat.GetField("json")) == 123
 
     feat = lyr.GetNextFeature()
-    assert json.loads(feat.GetField("json")) == 'sca quot" lar'
+    assert json.loads(feat.GetField("json")) == 'sca quot" \n quot" lar'
 
     feat = lyr.GetNextFeature()
     assert json.loads(feat.GetField("json")) == {"foo": "bar"}
