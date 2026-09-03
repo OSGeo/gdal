@@ -107,11 +107,42 @@ bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             CPLSPrintf("FIXED_BUF_VAL=%.17g", m_fixedBufferValue));
     }
 
-    if (GetArg("nodata")->IsExplicitlySet())
+    if (!GetArg("nodata")->IsExplicitlySet())
     {
-        proximityOptions.AddString(CPLSPrintf("NODATA=%.17g", m_noDataValue));
-        dstBand->SetNoDataValue(m_noDataValue);
+        switch (outputType)
+        {
+            case GDT_Int8:
+                m_noDataValue = std::numeric_limits<std::int8_t>::max();
+                break;
+            case GDT_UInt8:
+                m_noDataValue = std::numeric_limits<std::uint8_t>::max();
+                break;
+            case GDT_Int16:
+                m_noDataValue = std::numeric_limits<std::int16_t>::max();
+                break;
+            case GDT_UInt16:
+                m_noDataValue = std::numeric_limits<std::uint16_t>::max();
+                break;
+            case GDT_Int32:
+                m_noDataValue = std::numeric_limits<std::int32_t>::max();
+                break;
+            case GDT_UInt32:
+                m_noDataValue = std::numeric_limits<std::uint32_t>::max();
+                break;
+            case GDT_Float32:
+            case GDT_Float64:
+                m_noDataValue = std::numeric_limits<double>::quiet_NaN();
+                break;
+            default:
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "No default NoData value available for data type %s",
+                         GDALGetDataTypeName(outputType));
+                break;
+        }
     }
+
+    proximityOptions.AddString(CPLSPrintf("NODATA=%.17g", m_noDataValue));
+    dstBand->SetNoDataValue(m_noDataValue);
 
     // Always set this to YES. Note that this was NOT the
     // default behavior in the python implementation of the utility.
