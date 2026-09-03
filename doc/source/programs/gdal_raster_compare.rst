@@ -22,7 +22,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal raster compare` compares two GDAL supported datasets and
+:program:`gdal raster compare` compares two GDAL supported raster datasets and
 reports the differences. In addition to reporting differences to the
 standard output, the program will also return the difference count in its
 exit value.

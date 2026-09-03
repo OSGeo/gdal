@@ -110,6 +110,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_clip.cpp
   gdalalg_vector_clean_coverage.cpp
   gdalalg_vector_combine.cpp
+  gdalalg_vector_compare.cpp
   gdalalg_vector_concat.cpp
   gdalalg_vector_concave_hull.cpp
   gdalalg_vector_convert.cpp
