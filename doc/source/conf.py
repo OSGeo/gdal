@@ -1063,14 +1063,14 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_concave-hull",
+        "programs/gdal_vector_concave_hull",
         "gdal-vector-concave-hull",
         "Compute the concave hull of geometries of a vector dataset",
         [author_dbaston],
         1,
     ),
     (
-        "programs/gdal_vector_convex-hull",
+        "programs/gdal_vector_convex_hull",
         "gdal-vector-convex-hull",
         "Compute the convex hull of geometries of a vector dataset",
         [author_dbaston],
