@@ -98,15 +98,13 @@ Examples
 --------
 
 .. example::
-
    :title: Proximity map of a raster with max distance of 3 pixels
 
     .. code-block:: bash
 
-        $ gdal raster proximity --max-distance 3  input.tif output.tif
+        gdal raster proximity --max-distance 3 input.tif output.tif
 
 .. example::
-
    :title: Proximity map of a two bands raster with different target values for each band using a pipeline stack
 
     .. code-block:: bash
