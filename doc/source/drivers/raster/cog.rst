@@ -350,7 +350,7 @@ General creation options
       NEAREST is used by default, otherwise it is CUBIC.
 
 -  .. co:: OVERVIEW_RESAMPLING
-      :choices: NEAREST, AVERAGE, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, MODE, RMS
+      :choices: NEAREST, AVERAGE, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, MODE, RMS, GAUSS, AVERAGE_MAGPHASE
       :since: 3.2
 
       Resampling method used for overview generation.
