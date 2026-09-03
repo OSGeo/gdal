@@ -1379,6 +1379,9 @@ class CPL_DLL OGRFeature
     OGRFeature *Clone() const CPL_WARN_UNUSED_RESULT;
     virtual bool Equal(const OGRFeature *poFeature) const;
 
+    static bool IsSameFieldValue(const OGRFeature *poFeature1, int nIdxField1,
+                                 const OGRFeature *poFeature2, int nIdxField2);
+
     int GetFieldCount() const
     {
         return poDefn->GetFieldCount();
