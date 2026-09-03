@@ -51,10 +51,11 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
            &m_fixedBufferValue)
         .SetMinValueIncluded(0)
         .SetDefault(m_fixedBufferValue);
-    AddArg("nodata", 0,
+    AddArg("output-nodata", 0,
            _("Specify a nodata value to use for pixels that are beyond the "
              "maximum distance"),
-           &m_noDataValue);
+           &m_noDataValue)
+        .AddHiddenAlias("nodata");
 }
 
 /************************************************************************/
@@ -107,7 +108,7 @@ bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             CPLSPrintf("FIXED_BUF_VAL=%.17g", m_fixedBufferValue));
     }
 
-    if (GetArg("nodata")->IsExplicitlySet())
+    if (GetArg("output-nodata")->IsExplicitlySet())
     {
         proximityOptions.AddString(CPLSPrintf("NODATA=%.17g", m_noDataValue));
         dstBand->SetNoDataValue(m_noDataValue);

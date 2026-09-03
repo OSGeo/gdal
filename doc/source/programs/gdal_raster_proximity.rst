@@ -59,7 +59,7 @@ Program-Specific Options
     Maximum distance to search for a target pixel. The NoData value will be output if no target pixel is found within this distance.
     Distance is interpreted in pixels unless `--distance-units geo` is specified.
 
-.. option:: --nodata <NODATA>
+.. option:: --output-nodata <NODATA>
 
     Nodata value for the output raster. If not specified, the NoData value of the input band will be used.
     If the output band does not have a NoData value, then the value 65535 will be used for floating point

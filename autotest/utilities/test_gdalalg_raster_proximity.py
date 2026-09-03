@@ -66,7 +66,7 @@ def create_gtiff_from_array(
                 "target-values": [1],
                 "distance-units": "PIXEL",
                 "max-distance": 2,
-                "nodata": 0,
+                "output-nodata": 0,
             },
             np.array([[0, 0, 2], [0, 1, 1], [2, 1, 0]], dtype=np.uint8),
         ),
