@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -171,7 +173,11 @@ def create_gtiff_from_array(
                 "fixed-value": 128,
             },
             np.array(
-                [[65535, 65535, 128], [65535, 128, 128], [128, 128, 0]],
+                [
+                    [float("nan"), float("nan"), 128],
+                    [float("nan"), 128, 128],
+                    [128, 128, 0],
+                ],
                 dtype=np.float32,
             ),
         ),
@@ -249,13 +255,15 @@ def test_gdalalg_raster_proximity_options(tmp_vsimem, options, expected_output_d
     elif band_out.DataType == gdal.GDT_UInt32:
         assert band_out.GetNoDataValue() == 2**32 - 1
     elif band_out.DataType in (gdal.GDT_Float32, gdal.GDT_Float64):
-        assert band_out.GetNoDataValue() == 65535
+        assert math.isnan(band_out.GetNoDataValue())
     else:
         pytest.fail("Unhandled default NoData value")
 
     assert out_ds is not None
     output_data_file = out_ds.GetRasterBand(1).ReadAsArray()
-    assert np.allclose(output_data_file, expected_output_data, atol=1e-6)
+    assert np.allclose(
+        output_data_file, expected_output_data, atol=1e-6, equal_nan=True
+    )
     assert out_ds.GetGeoTransform() == src_ds_opened.GetGeoTransform()
     assert out_ds.GetProjection() == src_ds_opened.GetProjection()
     if (

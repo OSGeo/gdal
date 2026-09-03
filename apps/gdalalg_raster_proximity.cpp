@@ -131,7 +131,7 @@ bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 break;
             case GDT_Float32:
             case GDT_Float64:
-                m_noDataValue = 65535;
+                m_noDataValue = std::numeric_limits<double>::quiet_NaN();
                 break;
             default:
                 CPLError(CE_Failure, CPLE_AppDefined,
