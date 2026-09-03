@@ -220,6 +220,8 @@ def test_gdalalg_raster_proximity_options(tmp_vsimem, options, expected_output_d
     for k, v in options.items():
         alg[k] = v
 
+    set_nodata = alg["nodata"] if alg.GetArg("nodata").IsExplicitlySet() else None
+
     assert alg.Run()
     assert alg.Finalize()
 
@@ -231,6 +233,26 @@ def test_gdalalg_raster_proximity_options(tmp_vsimem, options, expected_output_d
     out_ds = gdal.Open(str(dst_filename_file))
     band_out = out_ds.GetRasterBand(1)
     assert band_out.DataType == data_type
+
+    if set_nodata is not None:
+        assert band_out.GetNoDataValue() == set_nodata
+    elif band_out.DataType == gdal.GDT_UInt8:
+        assert band_out.GetNoDataValue() == 255
+    elif band_out.DataType == gdal.GDT_Int8:
+        assert band_out.GetNoDataValue() == 127
+    elif band_out.DataType == gdal.GDT_Int16:
+        assert band_out.GetNoDataValue() == 2**15 - 1
+    elif band_out.DataType == gdal.GDT_UInt16:
+        assert band_out.GetNoDataValue() == 2**16 - 1
+    elif band_out.DataType == gdal.GDT_Int32:
+        assert band_out.GetNoDataValue() == 2**31 - 1
+    elif band_out.DataType == gdal.GDT_UInt32:
+        assert band_out.GetNoDataValue() == 2**32 - 1
+    elif band_out.DataType in (gdal.GDT_Float32, gdal.GDT_Float64):
+        assert band_out.GetNoDataValue() == 65535
+    else:
+        pytest.fail("Unhandled default NoData value")
+
     assert out_ds is not None
     output_data_file = out_ds.GetRasterBand(1).ReadAsArray()
     assert np.allclose(output_data_file, expected_output_data, atol=1e-6)
