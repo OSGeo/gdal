@@ -659,6 +659,30 @@ def test_gdalalg_raster_tile_too_large_min_zoom(tmp_vsimem):
         alg.Run()
 
 
+@pytest.mark.parametrize("zoom", [23, 24, 30])
+def test_gdalalg_raster_tile_stacta_transform_high_zoom(tmp_vsimem, zoom):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([0, 1e-5, 0, 1e-5, 0, -1e-5])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = tmp_vsimem
+    alg["min-zoom"] = zoom
+    alg["max-zoom"] = zoom
+    assert alg.Run()
+
+    with gdal.VSIFile(tmp_vsimem / "stacta.json", "rb") as f:
+        transform = json.loads(f.read())["properties"]["proj:transform"]
+
+    assert transform[0] == pytest.approx(156543.03392804097 / (1 << zoom))
+    assert transform[2] == 0.0
+
+
 def test_gdalalg_raster_tile_too_large_virtual_daaset(tmp_vsimem):
 
     alg = get_alg()

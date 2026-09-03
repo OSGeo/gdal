@@ -2513,12 +2513,14 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         oProperties["proj:transform"] = {
             ovrTileMatrix.mResX,
             0.0,
-            ovrTileMatrix.mTopLeftX +
-                nOvrMinTileX * ovrTileMatrix.mTileWidth * ovrTileMatrix.mResX,
+            ovrTileMatrix.mTopLeftX + static_cast<double>(nOvrMinTileX) *
+                                          ovrTileMatrix.mTileWidth *
+                                          ovrTileMatrix.mResX,
             0.0,
             -ovrTileMatrix.mResY,
-            ovrTileMatrix.mTopLeftY -
-                nOvrMinTileY * ovrTileMatrix.mTileHeight * ovrTileMatrix.mResY,
+            ovrTileMatrix.mTopLeftY - static_cast<double>(nOvrMinTileY) *
+                                          ovrTileMatrix.mTileHeight *
+                                          ovrTileMatrix.mResY,
             0.0,
             0.0,
             0.0};
