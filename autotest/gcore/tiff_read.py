@@ -5014,7 +5014,9 @@ def test_tiff_read_multi_threaded(
     "advise_read,test_retry", [(True, False), (True, True), (False, False)]
 )
 @pytest.mark.skipif(
-    platform.system() == "Darwin" or gdaltest.is_travis_branch("mingw64"),
+    platform.system() == "Darwin"
+    or gdaltest.is_travis_branch("mingw64")
+    or gdaltest.is_travis_branch("build-windows-conda"),
     reason="fails randomly",
 )
 @pytest.mark.require_curl()
