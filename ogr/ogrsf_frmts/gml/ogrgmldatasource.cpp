@@ -3338,7 +3338,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
     // Build a shortened XML file that contain only the global
     // boundedBy element, so as to be able to parse it easily.
 
-    char szStartTag[128];
+    char szStartTag[128] = {};
     char *pszXML = static_cast<char *>(CPLMalloc(8192 + 128 + 3 + 1));
     VSIFSeekL(fp, 0, SEEK_SET);
     int nRead = static_cast<int>(VSIFReadL(pszXML, 1, 8192, fp));
