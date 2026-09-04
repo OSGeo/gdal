@@ -332,6 +332,20 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
 {
     friend class PostGISRasterDataset;
 
+  private:
+    // Store stats from ST_SummaryStatsAgg
+    bool m_bStatsFetched = false;
+    double m_dfStatsMin = std::numeric_limits<double>::quiet_NaN();
+    double m_dfStatsMax = std::numeric_limits<double>::quiet_NaN();
+    // Unused for now:
+    double m_dfStatsMean = std::numeric_limits<double>::quiet_NaN();
+    double m_dfStatsStdDev = std::numeric_limits<double>::quiet_NaN();
+    double m_dfStatsSum = std::numeric_limits<double>::quiet_NaN();
+    double m_dfStatsCount = std::numeric_limits<double>::quiet_NaN();
+
+    // Call ST_SummaryStatsAgg to fetch stats for this band. Returns true if successful, false otherwise.
+    bool QueryStats();
+
     CPL_DISALLOW_COPY_ASSIGN(PostGISRasterRasterBand)
   protected:
     const char *pszSchema;
@@ -360,6 +374,7 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
 
     double GetMinimum(int *pbSuccess) override;
     double GetMaximum(int *pbSuccess) override;
+
     virtual CPLErr ComputeRasterMinMax(int bApproxOK,
                                        double *adfMinMax) override;
 };

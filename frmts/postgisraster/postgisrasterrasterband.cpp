@@ -80,6 +80,78 @@ PostGISRasterRasterBand::~PostGISRasterRasterBand()
 }
 
 /********************************************************
+ * \brief Query statistics for this band
+ ********************************************************/
+bool PostGISRasterRasterBand::QueryStats()
+{
+    m_dfStatsCount = std::numeric_limits<double>::quiet_NaN();
+    m_dfStatsSum = std::numeric_limits<double>::quiet_NaN();
+    m_dfStatsMean = std::numeric_limits<double>::quiet_NaN();
+    m_dfStatsStdDev = std::numeric_limits<double>::quiet_NaN();
+    m_dfStatsMin = std::numeric_limits<double>::quiet_NaN();
+    m_dfStatsMax = std::numeric_limits<double>::quiet_NaN();
+
+    m_bStatsFetched = false;
+
+    PostGISRasterDataset *poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
+    const CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
+    const CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
+    const CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
+    std::string osCommand = "SELECT ST_SummaryStatsAgg(";
+    osCommand += osColumnI;
+    osCommand += ", ";
+    osCommand += std::to_string(nBand);
+    osCommand += ", TRUE) FROM ";
+    osCommand += osSchemaI;
+    osCommand += ".";
+    osCommand += osTableI;
+    PGresult *poResult = PQexec(poRDS->poConn, osCommand.c_str());
+    if (PQresultStatus(poResult) != PGRES_TUPLES_OK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "PostGISRasterRasterBand::queryStats(): "
+                 "Error executing query: %s",
+                 PQerrorMessage(poRDS->poConn));
+        PQclear(poResult);
+        return false;
+    }
+    else
+    {
+        if (PQntuples(poResult) > 0 && PQgetisnull(poResult, 0, 0) == 0)
+        {
+            std::string osStats = PQgetvalue(poResult, 0, 0);
+            // Remove trailing and ending parenthesis
+            osStats.erase(0, 1);
+            osStats.erase(osStats.size() - 1);
+            char **papszTokens = CSLTokenizeString2(osStats.c_str(), ",", 0);
+            // count, sum, mean, stddev, min, max
+            if (CSLCount(papszTokens) == 6)
+            {
+                m_dfStatsCount = CPLAtof(papszTokens[0]);
+                m_dfStatsSum = CPLAtof(papszTokens[1]);
+                m_dfStatsMean = CPLAtof(papszTokens[2]);
+                m_dfStatsStdDev = CPLAtof(papszTokens[3]);
+                m_dfStatsMin = CPLAtof(papszTokens[4]);
+                m_dfStatsMax = CPLAtof(papszTokens[5]);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "PostGISRasterRasterBand::queryStats(): "
+                         "Unexpected number of tokens in ST_SummaryStatsAgg "
+                         "result: %d",
+                         CSLCount(papszTokens));
+            }
+            CSLDestroy(papszTokens);
+        }
+        PQclear(poResult);
+        m_bStatsFetched = !std::isnan(m_dfStatsCount);
+        return m_bStatsFetched;
+    }
+    return false;
+}
+
+/********************************************************
  * \brief Set nodata value to a buffer
  ********************************************************/
 void PostGISRasterRasterBand::NullBuffer(void *pData, int nBufXSize,
@@ -718,6 +790,18 @@ GDALColorInterp PostGISRasterRasterBand::GetColorInterpretation()
 
 double PostGISRasterRasterBand::GetMinimum(int *pbSuccess)
 {
+    if (!m_bStatsFetched)
+    {
+        CPL_IGNORE_RET_VAL(QueryStats());
+    }
+
+    if (!std::isnan(m_dfStatsMin))
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return m_dfStatsMin;
+    }
+
     PostGISRasterDataset *poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     if (poRDS->bBuildQuadTreeDynamically && poRDS->m_nTiles == 0)
     {
@@ -725,7 +809,7 @@ double PostGISRasterRasterBand::GetMinimum(int *pbSuccess)
             *pbSuccess = FALSE;
         return 0.0;
     }
-    return VRTSourcedRasterBand::GetMaximum(pbSuccess);
+    return VRTSourcedRasterBand::GetMinimum(pbSuccess);
 }
 
 /************************************************************************/
@@ -734,6 +818,18 @@ double PostGISRasterRasterBand::GetMinimum(int *pbSuccess)
 
 double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
 {
+    if (!m_bStatsFetched)
+    {
+        CPL_IGNORE_RET_VAL(QueryStats());
+    }
+
+    if (!std::isnan(m_dfStatsMax))
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return m_dfStatsMax;
+    }
+
     PostGISRasterDataset *poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     if (poRDS->bBuildQuadTreeDynamically && poRDS->m_nTiles == 0)
     {
@@ -751,6 +847,11 @@ double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
 CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,
                                                     double *adfMinMax)
 {
+    if (m_bStatsFetched)
+    {
+        return CE_None;
+    }
+
     if (nRasterXSize < 1024 && nRasterYSize < 1024)
         return VRTSourcedRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
 
@@ -762,5 +863,13 @@ CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,
             return poOverview->ComputeRasterMinMax(bApproxOK, adfMinMax);
     }
 
-    return CE_Failure;
+    // Try to fetch the min/max from the database
+    if (QueryStats())
+    {
+        return CE_None;
+    }
+    else
+    {
+        return CE_Failure;
+    }
 }
