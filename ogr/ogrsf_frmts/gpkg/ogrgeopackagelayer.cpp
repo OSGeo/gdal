@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_p.h"
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
@@ -474,9 +475,39 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                     sqlite3_column_text(hStmt, iRawField));
                 if (pszTxt)
                 {
-                    char *pszTxtDup = VSI_STRDUP_VERBOSE(pszTxt);
+                    std::string osValue = pszTxt;
+                    // If the field subtype is JSON and the current value cannot
+                    // be parsed as JSON, then convert it to a JSON string
+                    if (poFieldDefn->GetSubType() == OFSTJSON)
+                    {
+                        json_object *poObjProp = nullptr;
+                        if (!OGRJSonParse(
+                                osValue.c_str(), &poObjProp, false,
+                                static_cast<int>(osValue.length() + 1)))
+                        {
+                            // Emit warning once
+                            CPLErrorOnce(
+                                CE_Warning, CPLE_AppDefined,
+                                "Field %s is declared as JSON but the "
+                                "value is not a valid JSON. Converting to "
+                                "string.",
+                                poFieldDefn->GetNameRef());
+                            // Escape and quote
+                            osValue = CPLJSONObject(osValue).Format(
+                                CPLJSONObject::PrettyFormat::Plain);
+                        }
+                        else
+                        {
+                            osValue = json_object_to_json_string(poObjProp);
+                        }
+
+                        json_object_put(poObjProp);
+                    }
+
+                    char *pszTxtDup = VSI_STRDUP_VERBOSE(osValue.c_str());
                     if (pszTxtDup)
                     {
+
                         poFeature->SetFieldSameTypeUnsafe(iField, pszTxtDup);
                     }
                 }
