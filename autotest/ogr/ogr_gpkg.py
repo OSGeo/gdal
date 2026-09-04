@@ -9463,7 +9463,7 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
     filename = tmp_vsimem / "test_ogr_gpkg_read_generated_column.gpkg"
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
     ds.ExecuteSQL(
-        "CREATE TABLE test (fid INTEGER PRIMARY KEY NOT NULL,unused TEXT,strfield TEXT,strfield_generated TEXT GENERATED ALWAYS AS (strfield || '_generated'),intfield_generated_stored INTEGER GENERATED ALWAYS AS (5) STORED)"
+        "CREATE TABLE test (fid INTEGER PRIMARY KEY NOT NULL,unused TEXT,strfield TEXT,strfield_generated TEXT GENERATED ALWAYS AS (strfield || '_generated'),intfield_generated_stored INTEGER GENERATED ALWAYS AS (5) STORED,unique_col TEXT UNIQUE)"
     )
     ds.ExecuteSQL(
         "INSERT INTO gpkg_contents (table_name,data_type,identifier,description,last_change,srs_id) VALUES ('test','attributes','test','','',0)"
@@ -9472,7 +9472,7 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
 
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
-    assert lyr.GetLayerDefn().GetFieldCount() == 4
+    assert lyr.GetLayerDefn().GetFieldCount() == 5
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "strfield_generated"
     assert lyr.GetLayerDefn().GetFieldDefn(2).IsGenerated()
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
@@ -9519,14 +9519,19 @@ def test_ogr_gpkg_read_generated_column(tmp_vsimem):
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("strfield", "foo3")
+    f.SetField("unique_col", "unique_val")
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
+    f.SetFID(-1)
+    f.SetField("strfield", "foo4")
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
     f = lyr.GetFeature(3)
-    assert f["strfield"] == "foo3"
+    assert f["strfield"] == "foo4"
     # None for sqlite < 3.35.5 that uses table recreation for DeleteField() implementation
     # and thus for now the generated column expression is lost
     assert (
-        f["strfield_generated"] == "foo3_generated" or f["strfield_generated"] is None
+        f["strfield_generated"] == "foo4_generated" or f["strfield_generated"] is None
     )
 
     ds = None
