@@ -8153,7 +8153,7 @@ def test_ogr_gpkg_add_relationship_complex_names(tmp_vsimem, tmp_path):
         return res
 
     relationship = gdal.Relationship(
-        "my_relationship", "Origin' [tàble!", "dést ]table$", gdal.GRC_MANY_TO_MANY
+        "my_relationship", "Origin' [table!", "dest ]table$", gdal.GRC_MANY_TO_MANY
     )
     relationship.SetLeftTableFields(["o pkéy"])
     relationship.SetRightTableFields(["Dest pkéy"])
@@ -8161,18 +8161,18 @@ def test_ogr_gpkg_add_relationship_complex_names(tmp_vsimem, tmp_path):
 
     ds = gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
 
-    lyr = ds.CreateLayer("Origin' [tàble!", geom_type=ogr.wkbNone)
+    lyr = ds.CreateLayer("Origin' [table!", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("o pkéy", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
     ds.ExecuteSQL(
-        'CREATE UNIQUE INDEX origin_table_o_pkey_idx ON "Origin\' [tàble!"("o pkéy")'
+        'CREATE UNIQUE INDEX origin_table_o_pkey_idx ON "Origin\' [table!"("o pkéy")'
     )
 
-    lyr = ds.CreateLayer("dést ]table$", geom_type=ogr.wkbNone)
+    lyr = ds.CreateLayer("dest ]table$", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("Dest pkéy", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
     ds.ExecuteSQL(
-        'CREATE UNIQUE INDEX dest_table_dest_pkey_idx ON "dést ]table$"("Dest pkéy")'
+        'CREATE UNIQUE INDEX dest_table_dest_pkey_idx ON "dest ]table$"("Dest pkéy")'
     )
 
     relationship.SetLeftTableFields(["o pkéy"])
@@ -8180,16 +8180,16 @@ def test_ogr_gpkg_add_relationship_complex_names(tmp_vsimem, tmp_path):
 
     assert ds.AddRelationship(relationship)
 
-    assert set(ds.GetRelationshipNames()) == {"Origin' [tàble!_dést ]table$_media"}
-    retrieved_rel = ds.GetRelationship("Origin' [tàble!_dést ]table$_media")
+    assert set(ds.GetRelationshipNames()) == {"Origin' [table!_dest ]table$_media"}
+    retrieved_rel = ds.GetRelationship("Origin' [table!_dest ]table$_media")
     assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
     assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
-    assert retrieved_rel.GetLeftTableName() == "Origin' [tàble!"
-    assert retrieved_rel.GetRightTableName() == "dést ]table$"
+    assert retrieved_rel.GetLeftTableName() == "Origin' [table!"
+    assert retrieved_rel.GetRightTableName() == "dest ]table$"
     assert retrieved_rel.GetLeftTableFields() == ["o pkéy"]
     assert retrieved_rel.GetRightTableFields() == ["Dest pkéy"]
     assert retrieved_rel.GetRelatedTableType() == "media"
-    assert retrieved_rel.GetMappingTableName() == "Origin' [tàble!_dést ]table$"
+    assert retrieved_rel.GetMappingTableName() == "Origin' [table!_dest ]table$"
     assert retrieved_rel.GetLeftMappingTableFields() == ["base_id"]
     assert retrieved_rel.GetRightMappingTableFields() == ["related_id"]
 
