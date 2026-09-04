@@ -346,6 +346,10 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
     // Call ST_SummaryStatsAgg to fetch stats for this band. Returns true if successful, false otherwise.
     bool QueryStats();
 
+    /** Returns true if stats have been fetched and are valid (not NaN)
+     *  and the pixel count is > 0, false otherwise. */
+    bool StatsFetchedAndValid() const;
+
     CPL_DISALLOW_COPY_ASSIGN(PostGISRasterRasterBand)
   protected:
     const char *pszSchema;
@@ -377,6 +381,13 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
 
     virtual CPLErr ComputeRasterMinMax(int bApproxOK,
                                        double *adfMinMax) override;
+
+    virtual CPLErr ComputeStatistics(int bApproxOK, double *pdfMin,
+                                     double *pdfMax, double *pdfMean,
+                                     double *pdfStdDev,
+                                     GDALProgressFunc pfnProgress,
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
 };
 
 /***********************************************************************
