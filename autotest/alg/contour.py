@@ -679,6 +679,7 @@ def test_contour_polygonize_sawtooth_ring():
     for the ring; that index must not grow with the vertical extent of each
     segment."""
 
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     width, height = 16384, 16
