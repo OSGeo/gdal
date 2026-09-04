@@ -700,3 +700,26 @@ def test_gdal_subdataset_modify_filename(subdataset_component, new_path):
         assert info is None
     else:
         assert info.ModifyPathComponent("dbname='xxxx'") == new_path
+
+
+# Test min/max from stats
+def test_postgisraster_test_minmax():
+
+    with gdal.quiet_errors():
+        ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema, update=1)
+        ds.ExecuteSQL("DELETE TABLE IF EXISTS gis_schema.small_world_no_overviews")
+        ds.ExecuteSQL(
+            "CREATE TABLE gis_schema.small_world_no_overviews (rid serial primary key, rast raster)"
+        )
+        ds.ExecuteSQL(
+            "INSERT INTO gis_schema.small_world_no_overviews (rast) SELECT rast FROM gis_schema.small_world"
+        )
+        ds.ExecuteSQL("ANALYZE gis_schema.small_world_no_overviews")
+
+    ds = gdal.Open(
+        gdaltest.postgisraster_connection_string
+        + "table='small_world_no_overviews' mode=2"
+    )
+    min = ds.GetRasterBand(1).GetMinimum()
+    max = ds.GetRasterBand(1).GetMaximum()
+    assert min == 0.0 and max == 255.0

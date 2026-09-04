@@ -727,6 +727,8 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                          "contour: no valid pixels found in input band");
                 return CE_None;
             }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "contour: cannot compute min/max values for input band");
             return CE_Failure;
         }
     }
