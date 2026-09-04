@@ -100,10 +100,11 @@ Start a Conda-enabled PowerShell console and assuming there is a ``c:\\dev`` dir
     cd c:\dev
     conda create --yes --name gdal
     conda activate gdal
+
     conda install --yes --quiet -c conda-forge compilers cmake curl libiconv icu python swig numpy `
         pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
     # --only-deps only installs the dependencies of the listed packages, not the packages themselves
-    conda install --yes --quiet -c conda-forge --only-deps `
+    conda install --yes --quiet -c gdal-master -c conda-forge --only-deps `
         libgdal libgdal-hdf4 libgdal-hdf5 libgdal-netcdf libgdal-pdf libgdal-jp2openjpeg
 
 .. note::
@@ -167,19 +168,21 @@ This can be done by sourcing the following from the build directory:
 
 (with adjustments to the above path if the build directory is not a subdirectory of the GDAL source root).
 
-For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently assumes a Release build).
+For Windows, a similar ``scripts/setdevenv.bat`` script exists.
 
 .. code-block:: console
 
     cd c:\dev\gdal\build
-    ..\scripts\setdevenv.bat
+    ..\scripts\setdevenv.bat              REM uses "Release" (default)
+    ..\scripts\setdevenv.bat Debug        REM uses "Debug"
 
 Alternatively, on Windows, you can set up a PowerShell development environment using the ``scripts/setdevenv.ps1`` script:
 
 .. code-block:: ps1
 
     cd c:\dev\gdal\build
-    ..\scripts\setdevenv.ps1
+    ..\scripts\setdevenv.ps1                    # uses "Release" (default)
+    ..\scripts\setdevenv.ps1 RelWithDebInfo     # uses "RelWithDebInfo"
 
 To verify that environment variables have been set correctly, you can check the version of a GDAL binary:
 
