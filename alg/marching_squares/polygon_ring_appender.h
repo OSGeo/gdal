@@ -18,7 +18,6 @@
 #include <deque>
 #include <cassert>
 #include <iterator>
-#include <cstdint>
 #include <memory>
 #include <algorithm>
 
@@ -59,6 +58,7 @@ template <typename PolygonWriter> class PolygonRingAppender
 
         void computeBBox()
         {
+            bbox = OGREnvelope();
             for (const auto &pt : points)
                 bbox.Merge(pt.x, pt.y);
         }
@@ -176,6 +176,8 @@ template <typename PolygonWriter> class PolygonRingAppender
 
         bool build(const Ring &r)
         {
+            poly.empty();
+            prep.reset();
             auto ring = std::make_unique<OGRLinearRing>();
             ring->setNumPoints(static_cast<int>(r.points.size()));
             int i = 0;
@@ -196,11 +198,12 @@ template <typename PolygonWriter> class PolygonRingAppender
     };
 
     // Per-level spatial index over TOP-LEVEL rings: a CPLQuadTree over ring
-    // bounding boxes. Stored features are slot indices into the level's ring
-    // vector (encoded in the pointer value, never dereferenced), so vector
-    // reallocation is harmless. Rings captured as interior rings of a later
-    // ring are removed from the tree and their slot tombstoned (points
-    // cleared) rather than erased, keeping the remaining indices stable.
+    // bounding boxes. Each stored feature points at the ring's slot index in
+    // the level's ring vector, held in a std::deque so the pointer survives
+    // growth; vector reallocation of the rings themselves is harmless. Rings
+    // captured as interior rings of a later ring are removed from the tree
+    // and their slot tombstoned (points cleared) rather than erased, keeping
+    // the remaining indices stable.
     struct QuadTreeDestroyer
     {
         void operator()(CPLQuadTree *t) const
@@ -210,17 +213,12 @@ template <typename PolygonWriter> class PolygonRingAppender
     };
 
     std::map<double, std::unique_ptr<CPLQuadTree, QuadTreeDestroyer>> index_;
+    std::map<double, std::deque<std::size_t>> slots_;
     CPLRectObj domain_;
 
-    static void *slotFeature(std::size_t idx)
+    static std::size_t featureSlot(const void *f)
     {
-        return reinterpret_cast<void *>(static_cast<std::uintptr_t>(idx + 1));
-    }
-
-    static std::size_t featureSlot(void *f)
-    {
-        return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(f)) -
-               1;
+        return *static_cast<const std::size_t *>(f);
     }
 
     static CPLRectObj ringRect(const Ring &r)
@@ -235,7 +233,8 @@ template <typename PolygonWriter> class PolygonRingAppender
 
     PolygonRingAppender(PolygonWriter &writer, double minX, double minY,
                         double maxX, double maxY)
-        : rings_(), index_(), domain_{minX, minY, maxX, maxY}, writer_(writer)
+        : rings_(), index_(), slots_(), domain_{minX, minY, maxX, maxY},
+          writer_(writer)
     {
     }
 
@@ -243,6 +242,7 @@ template <typename PolygonWriter> class PolygonRingAppender
     {
         auto &levelRings = rings_[level];
         auto &levelTree = index_[level];
+        auto &levelSlots = slots_[level];
         if (!levelTree)
             levelTree.reset(CPLQuadTreeCreate(&domain_, nullptr));
         if (ls.empty())
@@ -344,14 +344,15 @@ template <typename PolygonWriter> class PolygonRingAppender
             for (std::size_t idx : captured)
             {
                 CPLRectObj rb = ringRect(levelRings[idx]);
-                CPLQuadTreeRemove(levelTree.get(), slotFeature(idx), &rb);
+                CPLQuadTreeRemove(levelTree.get(), &levelSlots[idx], &rb);
                 newRing.interiorRings.push_back(std::move(levelRings[idx]));
                 levelRings[idx].points.clear();  // tombstone the slot
             }
             levelRings.push_back(std::move(newRing));
+            levelSlots.push_back(levelRings.size() - 1);
             CPLRectObj nb = ringRect(levelRings.back());
-            CPLQuadTreeInsertWithBounds(
-                levelTree.get(), slotFeature(levelRings.size() - 1), &nb);
+            CPLQuadTreeInsertWithBounds(levelTree.get(), &levelSlots.back(),
+                                        &nb);
         }
         else
         {

@@ -673,10 +673,10 @@ def test_contour_polygonize_many_disjoint_rings():
 
 def test_contour_polygonize_sawtooth_ring():
     """A comb-shaped region whose boundary ring is almost entirely vertical
-    segments. Bucketing such a ring's segments by y must not copy each segment
-    into a large fraction of the buckets, which made RingPIPIndex::build()
-    quadratic in memory. The ponds in the comb's base force the capture path
-    that builds the index."""
+    segments, each spanning nearly the full raster height. The ponds in the
+    comb's base force the capture path that builds the point-in-polygon index
+    for the ring; that index must not grow with the vertical extent of each
+    segment."""
 
     numpy = pytest.importorskip("numpy")
 
