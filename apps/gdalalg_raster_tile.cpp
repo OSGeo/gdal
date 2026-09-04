@@ -2201,8 +2201,8 @@ static void GenerateLeaflet(const std::string &osDirectory,
         substs["west"] = CPLSPrintf(pszFmt, dfWestLon);
         substs["north"] = CPLSPrintf(pszFmt, dfNorthLat);
         substs["east"] = CPLSPrintf(pszFmt, dfEastLon);
-        substs["centerlon"] = CPLSPrintf(pszFmt, (dfNorthLat + dfSouthLat) / 2);
-        substs["centerlat"] = CPLSPrintf(pszFmt, (dfWestLon + dfEastLon) / 2);
+        substs["centerlon"] = CPLSPrintf(pszFmt, (dfWestLon + dfEastLon) / 2);
+        substs["centerlat"] = CPLSPrintf(pszFmt, (dfNorthLat + dfSouthLat) / 2);
         substs["minzoom"] = CPLSPrintf("%d", nMinZoom);
         substs["maxzoom"] = CPLSPrintf("%d", nMaxZoom);
         substs["beginzoom"] = CPLSPrintf("%d", nMaxZoom);
