@@ -38,7 +38,7 @@ template <typename PolygonWriter> class PolygonRingAppender
   private:
     struct Ring
     {
-        Ring() : points(), interiorRings()
+        Ring() : points(), bbox(), interiorRings()
         {
         }
 
@@ -167,6 +167,10 @@ template <typename PolygonWriter> class PolygonRingAppender
     // winding test.
     struct PreparedRing
     {
+        PreparedRing() : poly(), prep()
+        {
+        }
+
         OGRPolygon poly;
         OGRPreparedGeometryUniquePtr prep;
 
@@ -231,7 +235,7 @@ template <typename PolygonWriter> class PolygonRingAppender
 
     PolygonRingAppender(PolygonWriter &writer, double minX, double minY,
                         double maxX, double maxY)
-        : domain_{minX, minY, maxX, maxY}, writer_(writer)
+        : rings_(), index_(), domain_{minX, minY, maxX, maxY}, writer_(writer)
     {
     }
 

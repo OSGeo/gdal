@@ -649,7 +649,8 @@ def test_contour_polygonize_many_disjoint_rings():
     ogr_lyr.SetAttributeFilter("elevMin = -2")
     below = ogr_lyr.GetNextFeature()
     geom = below.GetGeometryRef()
-    assert geom.IsValid()
+    if ogrtest.have_geos():
+        assert geom.IsValid()
     assert geom.GetGeometryCount() == 1  # one polygon: the big region
     poly = geom.GetGeometryRef(0)
     # exterior + the 36 captured pond holes
@@ -658,19 +659,15 @@ def test_contour_polygonize_many_disjoint_rings():
     ogr_lyr.SetAttributeFilter("elevMax = 2")
     above = ogr_lyr.GetNextFeature()
     geom = above.GetGeometryRef()
-    assert geom.IsValid()
+    if ogrtest.have_geos():
+        assert geom.IsValid()
     # the domain polygon (with the big region as hole) + 36 pond islands
     assert geom.GetGeometryCount() == 37
-    ring_counts = sorted(
-        geom.GetGeometryRef(i).GetGeometryCount() for i in range(37)
-    )
+    ring_counts = sorted(geom.GetGeometryRef(i).GetGeometryCount() for i in range(37))
     assert ring_counts == [1] * 36 + [2]
 
     # the two bands partition the domain
-    total = sum(
-        f.GetGeometryRef().GetArea()
-        for f in (below, above)
-    )
+    total = sum(f.GetGeometryRef().GetArea() for f in (below, above))
     assert total == pytest.approx(512 * 512, rel=0.02)
 
 
@@ -719,7 +716,8 @@ def test_contour_polygonize_sawtooth_ring():
     ogr_lyr.SetAttributeFilter("elevMin = -2")
     below = ogr_lyr.GetNextFeature()
     geom = below.GetGeometryRef()
-    assert geom.IsValid()
+    if ogrtest.have_geos():
+        assert geom.IsValid()
     assert geom.GetGeometryCount() == 1  # one polygon: the whole comb
     poly = geom.GetGeometryRef(0)
     assert poly.GetGeometryCount() == 1 + n_ponds  # exterior + pond holes
@@ -727,7 +725,8 @@ def test_contour_polygonize_sawtooth_ring():
     ogr_lyr.SetAttributeFilter("elevMax = 2")
     above = ogr_lyr.GetNextFeature()
     geom = above.GetGeometryRef()
-    assert geom.IsValid()
+    if ogrtest.have_geos():
+        assert geom.IsValid()
     # the domain polygon (comb as hole) + one island per pond
     assert geom.GetGeometryCount() == 1 + n_ponds
 
