@@ -714,6 +714,9 @@ def test_postgisraster_test_minmax():
         ds.ExecuteSQL(
             "INSERT INTO gis_schema.small_world_no_overviews (rast) SELECT rast FROM gis_schema.small_world"
         )
+        ds.ExecuteSQL(
+            "SELECT AddRasterConstraints('gis_schema'::name, 'small_world_no_overviews'::name, 'rast'::name)"
+        )
         ds.ExecuteSQL("ANALYZE gis_schema.small_world_no_overviews")
 
     ds = gdal.Open(
@@ -723,3 +726,13 @@ def test_postgisraster_test_minmax():
     min = ds.GetRasterBand(1).GetMinimum()
     max = ds.GetRasterBand(1).GetMaximum()
     assert min == 0.0 and max == 255.0
+
+
+# Test get statistics
+def test_postgisraster_test_gestatistics():
+
+    ds = gdal.Open(
+        gdaltest.postgisraster_connection_string + "table='small_world' mode=2"
+    )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    assert [int(i) for i in stats] == [0, 255, 50, 67]

@@ -120,19 +120,29 @@ bool PostGISRasterRasterBand::QueryStats()
         if (PQntuples(poResult) > 0 && PQgetisnull(poResult, 0, 0) == 0)
         {
             std::string osStats = PQgetvalue(poResult, 0, 0);
+            if (osStats.size() <= 2)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "PostGISRasterRasterBand::queryStats(): "
+                         "Unexpected result from ST_SummaryStatsAgg: %s",
+                         osStats.c_str());
+                PQclear(poResult);
+                return false;
+            }
             // Remove trailing and ending parenthesis
             osStats.erase(0, 1);
             osStats.erase(osStats.size() - 1);
-            char **papszTokens = CSLTokenizeString2(osStats.c_str(), ",", 0);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(osStats.c_str(), ",", 0), false);
             // count, sum, mean, stddev, min, max
-            if (CSLCount(papszTokens) == 6)
+            if (CSLCount(aosTokens) == 6)
             {
-                m_dfStatsCount = CPLAtof(papszTokens[0]);
-                m_dfStatsSum = CPLAtof(papszTokens[1]);
-                m_dfStatsMean = CPLAtof(papszTokens[2]);
-                m_dfStatsStdDev = CPLAtof(papszTokens[3]);
-                m_dfStatsMin = CPLAtof(papszTokens[4]);
-                m_dfStatsMax = CPLAtof(papszTokens[5]);
+                m_dfStatsCount = CPLAtof(aosTokens[0]);
+                m_dfStatsSum = CPLAtof(aosTokens[1]);
+                m_dfStatsMean = CPLAtof(aosTokens[2]);
+                m_dfStatsStdDev = CPLAtof(aosTokens[3]);
+                m_dfStatsMin = CPLAtof(aosTokens[4]);
+                m_dfStatsMax = CPLAtof(aosTokens[5]);
             }
             else
             {
@@ -140,15 +150,25 @@ bool PostGISRasterRasterBand::QueryStats()
                          "PostGISRasterRasterBand::queryStats(): "
                          "Unexpected number of tokens in ST_SummaryStatsAgg "
                          "result: %d",
-                         CSLCount(papszTokens));
+                         CSLCount(aosTokens));
             }
-            CSLDestroy(papszTokens);
         }
         PQclear(poResult);
         m_bStatsFetched = !std::isnan(m_dfStatsCount);
         return m_bStatsFetched;
     }
     return false;
+}
+
+/********************************************************
+ * \brief Check if statistics have been fetched and are valid
+ *********************************************************/
+bool PostGISRasterRasterBand::StatsFetchedAndValid() const
+{
+    return m_bStatsFetched && !std::isnan(m_dfStatsCount) &&
+           !std::isnan(m_dfStatsSum) && !std::isnan(m_dfStatsMean) &&
+           !std::isnan(m_dfStatsStdDev) && !std::isnan(m_dfStatsMin) &&
+           !std::isnan(m_dfStatsMax) && m_dfStatsCount > 0;
 }
 
 /********************************************************
@@ -795,7 +815,7 @@ double PostGISRasterRasterBand::GetMinimum(int *pbSuccess)
         CPL_IGNORE_RET_VAL(QueryStats());
     }
 
-    if (!std::isnan(m_dfStatsMin))
+    if (StatsFetchedAndValid())
     {
         if (pbSuccess)
             *pbSuccess = TRUE;
@@ -823,7 +843,7 @@ double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
         CPL_IGNORE_RET_VAL(QueryStats());
     }
 
-    if (!std::isnan(m_dfStatsMax))
+    if (StatsFetchedAndValid())
     {
         if (pbSuccess)
             *pbSuccess = TRUE;
@@ -847,7 +867,7 @@ double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
 CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,
                                                     double *adfMinMax)
 {
-    if (m_bStatsFetched)
+    if (StatsFetchedAndValid())
     {
         return CE_None;
     }
@@ -871,5 +891,39 @@ CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,
     else
     {
         return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                         ComputeStatistics()                          */
+/************************************************************************/
+CPLErr PostGISRasterRasterBand::ComputeStatistics(
+    int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean,
+    double *pdfStdDev, GDALProgressFunc pfnProgress, void *pProgressData,
+    CSLConstList papszOptions)
+{
+    if (!m_bStatsFetched)
+    {
+        CPL_IGNORE_RET_VAL(QueryStats());
+    }
+
+    if (StatsFetchedAndValid())
+    {
+        *pdfMin = m_dfStatsMin;
+        *pdfMax = m_dfStatsMax;
+        *pdfMean = m_dfStatsMean;
+        *pdfStdDev = m_dfStatsStdDev;
+        if (CPLFetchBool(papszOptions, "SET_STATISTICS", true))
+        {
+            SetStatistics(m_dfStatsMin, m_dfStatsMax, m_dfStatsMean,
+                          m_dfStatsStdDev);
+        }
+        return CE_None;
+    }
+    else
+    {
+        return VRTSourcedRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
+            pProgressData, papszOptions);
     }
 }
