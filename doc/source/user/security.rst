@@ -226,3 +226,10 @@ Same issues as the GDAL VRT driver.
 +++++++++++++++
 
 Similar issues as the GDAL VRT driver. ``<SrcSQL>`` could be used to modify data.
+
+Known issues in utilities
+-------------------------
+
+* The ``--calc`` argument of :ref:`gdal_calc` is evaluated with Python ``eval()``
+  method which can be used to run arbitrary code. Be careful when using ``gdal_calc``
+  in a context where users can control the expression.
