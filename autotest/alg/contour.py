@@ -611,6 +611,7 @@ def test_contour_polygonize_many_disjoint_rings():
     big ring closes after the small ones and must capture all of them as
     interior rings; the small rings must survive as islands of the outer band."""
 
+    gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     drv = gdal.GetDriverByName("MEM")
