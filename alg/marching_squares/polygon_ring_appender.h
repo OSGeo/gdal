@@ -269,7 +269,7 @@ template <typename PolygonWriter> class PolygonRingAppender
             if (top != nullptr)
             {
                 parentRing = top;
-                // descend into nested rings (sibling lists are short)
+                // This queue holds the rings to be checked
                 std::deque<Ring *> queue;
                 std::transform(
                     top->interiorRings.begin(), top->interiorRings.end(),
@@ -280,6 +280,10 @@ template <typename PolygonWriter> class PolygonRingAppender
                     queue.pop_front();
                     if (newRing.isIn(*curRing))
                     {
+                        // We know that there should only be one ring per
+                        // level that we should fit in, so we can discard the
+                        // rest of the queue and try again with the children
+                        // of this ring
                         parentRing = curRing;
                         queue.clear();
                         std::transform(curRing->interiorRings.begin(),
@@ -347,15 +351,23 @@ template <typename PolygonWriter> class PolygonRingAppender
         }
         else
         {
-            // Nested insertion: identical to the original algorithm on the
-            // parent's (short) child list.
+            // Get a pointer to the list we need to check for rings to include
+            // in this ring
             std::vector<Ring> *parentRingList = &(parentRing->interiorRings);
+            // We found a valid parent, so we need to:
+            // 1. Find all the inner rings of the parent that are inside the new
+            // ring
             auto trueGroupIt = std::partition(
                 parentRingList->begin(), parentRingList->end(),
                 [&newRing](Ring &pRing) { return !pRing.isIn(newRing); });
+            // 2. Move those rings out of the parent and into the new ring's
+            // interior rings
             std::move(trueGroupIt, parentRingList->end(),
                       std::back_inserter(newRing.interiorRings));
+            // 3. Get rid of the moved-from elements in the parent's interior
+            // rings
             parentRingList->erase(trueGroupIt, parentRingList->end());
+            // 4. Add the new ring to the parent's interior rings
             parentRingList->push_back(std::move(newRing));
         }
     }
