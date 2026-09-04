@@ -100,9 +100,8 @@ Start a Conda-enabled PowerShell console and assuming there is a ``c:\\dev`` dir
     cd c:\dev
     conda create --yes --name gdal
     conda activate gdal
-
     conda install --yes --quiet -c conda-forge compilers cmake curl libiconv icu python swig numpy `
-        pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
+        zlib lxml setuptools
     # --only-deps only installs the dependencies of the listed packages, not the packages themselves
     conda install --yes --quiet -c gdal-master -c conda-forge --only-deps `
         libgdal libgdal-hdf4 libgdal-hdf5 libgdal-netcdf libgdal-pdf libgdal-jp2openjpeg
@@ -142,6 +141,10 @@ the commands below from a Conda-enabled PowerShell console:
 .. code-block:: ps1
 
     cd c:\dev\gdal\build
+
+    # install the Python dependencies for autotest
+    python -m pip install -r ../autotest/requirements.txt
+
     # set environment variables, see section below
     ..\scripts\setdevenv.ps1
     # check the version
@@ -188,12 +191,12 @@ To verify that environment variables have been set correctly, you can check the 
 
 .. code-block:: bash
 
-    gdalinfo --version
-    # GDAL 3.13.0dev-8c3cf3de02, released 2025/11/14
+    gdal --version
+    # GDAL 3.14.0dev-b0b8dcc320-dirty, released 2026/09/04
 
 and the Python bindings:
 
 .. code-block:: bash
 
-    python3 -c 'from osgeo import gdal; print(gdal.__version__)'
-    # 3.11.0dev-c4a2e0b926-dirty
+    python -c 'from osgeo import gdal; print(gdal.__version__)'
+    # 3.14.0dev-b0b8dcc320-dirty
