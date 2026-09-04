@@ -529,8 +529,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                         {
                             json_object *poObjProp = nullptr;
                             std::string osValue(pszVal);
-                            if (!OGRJSonParse(osValue.c_str(), &poObjProp,
-                                              false, osValue.length() + 1))
+                            if (!OGRJSonParse(
+                                    osValue.c_str(), &poObjProp, false,
+                                    static_cast<int>(osValue.length() + 1)))
                             {
                                 CPLErrorOnce(
                                     CE_Warning, CPLE_AppDefined,

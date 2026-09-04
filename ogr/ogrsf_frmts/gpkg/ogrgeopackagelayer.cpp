@@ -481,8 +481,9 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                     if (poFieldDefn->GetSubType() == OFSTJSON)
                     {
                         json_object *poObjProp = nullptr;
-                        if (!OGRJSonParse(osValue.c_str(), &poObjProp, false,
-                                          osValue.length() + 1))
+                        if (!OGRJSonParse(
+                                osValue.c_str(), &poObjProp, false,
+                                static_cast<int>(osValue.length() + 1)))
                         {
                             // Emit warning once
                             CPLErrorOnce(
