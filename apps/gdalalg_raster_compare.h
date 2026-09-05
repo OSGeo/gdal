@@ -72,10 +72,6 @@ class GDALRasterCompareAlgorithm /* non final */
                         GDALRasterBand *poRefBand, GDALRasterBand *poInputBand,
                         GDALProgressFunc pfnProgress, void *pProgressData);
 
-    static void MetadataComparison(std::vector<std::string> &aosReport,
-                                   const std::string &metadataDomain,
-                                   CSLConstList aosRef, CSLConstList aosInput);
-
     bool m_skipAllOptional = false;
     bool m_skipCRS = false;
     bool m_skipGeotransform = false;

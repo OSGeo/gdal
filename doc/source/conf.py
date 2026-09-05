@@ -959,6 +959,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_compare",
+        "gdal-vector-compare",
+        "Compare two vector datasets",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_vector_concat",
         "gdal-vector-concat",
         "Concatenate vector datasets",

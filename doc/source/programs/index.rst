@@ -207,6 +207,7 @@ Vector commands
    gdal_vector_clean_coverage
    gdal_vector_clip
    gdal_vector_combine
+   gdal_vector_compare
    gdal_vector_concat
    gdal_vector_concave_hull
    gdal_vector_convert
@@ -254,6 +255,7 @@ Vector commands
     - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_combine`: Combine geometries into collections
+    - :ref:`gdal_vector_compare`: Compare two vector datasets
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_concave_hull`: Compute the concave hull of geometries of a vector dataset
     - :ref:`gdal_vector_convert`: Convert a vector dataset
