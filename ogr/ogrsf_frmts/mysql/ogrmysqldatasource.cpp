@@ -339,7 +339,7 @@ int OGRMySQLDataSource::OpenTable(const char *pszNewName, int bUpdate)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLDataSource::TestCapability(const char *pszCap) const
+bool OGRMySQLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

@@ -254,7 +254,7 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
         GDALVectorPipelineOutputLayer::ResetReading();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastGetExtent) ||
             EQUAL(pszCap, OLCFastGetExtent3D) ||

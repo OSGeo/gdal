@@ -508,7 +508,7 @@ class OGRTigerLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/

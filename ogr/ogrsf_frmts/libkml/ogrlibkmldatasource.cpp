@@ -2569,7 +2569,7 @@ void OGRLIBKMLDataSource::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
+bool OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return bUpdate;

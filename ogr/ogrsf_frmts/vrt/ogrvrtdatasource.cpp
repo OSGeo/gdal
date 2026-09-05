@@ -752,7 +752,7 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTDataSource::TestCapability(const char *pszCap) const
+bool OGRVRTDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCurveGeometries))
         return true;

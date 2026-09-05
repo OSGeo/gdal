@@ -2281,7 +2281,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenFileGDBLayer::TestCapability(const char *pszCap) const
+bool OGROpenFileGDBLayer::TestCapability(const char *pszCap) const
 {
     if (!const_cast<OGROpenFileGDBLayer *>(this)->BuildLayerDefinition())
         return FALSE;

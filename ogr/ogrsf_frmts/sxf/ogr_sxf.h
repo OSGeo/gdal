@@ -80,7 +80,7 @@ class OGRSXFLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -142,7 +142,7 @@ class OGRSXFDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     void CloseFile();
 };
 

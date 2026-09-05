@@ -124,7 +124,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         return poLayer->GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return poLayer->TestCapability(pszCap);
     }

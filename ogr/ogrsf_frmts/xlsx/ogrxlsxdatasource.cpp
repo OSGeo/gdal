@@ -305,7 +305,7 @@ GDALDataset *OGRXLSXLayer::GetDataset()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSXLayer::TestCapability(const char *pszCap) const
+bool OGRXLSXLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCUpsertFeature))
@@ -370,7 +370,7 @@ CPLErr OGRXLSXDataSource::Close(GDALProgressFunc, void *)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSXDataSource::TestCapability(const char *pszCap) const
+bool OGRXLSXDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

@@ -202,7 +202,7 @@ OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap) const
+bool OGRGPSBabelWriteDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

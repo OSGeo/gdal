@@ -104,7 +104,7 @@ class OGRReadBufferedLayer
         return m_poFeature.get();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastFeatureCount) ||
             EQUAL(pszCap, OLCFastGetExtent) ||

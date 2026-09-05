@@ -3392,7 +3392,7 @@ OGRErr MEMDataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MEMDataset::TestCapability(const char *pszCap) const
+bool MEMDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||

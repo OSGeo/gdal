@@ -745,7 +745,7 @@ bool OGRFeatherLayer::CanRunNonForcedGetExtent()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRFeatherLayer::TestCapability(const char *pszCap) const
+bool OGRFeatherLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {

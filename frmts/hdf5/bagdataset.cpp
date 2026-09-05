@@ -3524,7 +3524,7 @@ class BAGTrackingListLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }

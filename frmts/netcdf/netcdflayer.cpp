@@ -2793,7 +2793,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int netCDFLayer::TestCapability(const char *pszCap) const
+bool netCDFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_poDS->GetAccess() == GA_Update;

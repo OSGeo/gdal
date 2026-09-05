@@ -210,7 +210,7 @@ GIntBig OGRPGResultLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGResultLayer::TestCapability(const char *pszCap) const
+bool OGRPGResultLayer::TestCapability(const char *pszCap) const
 
 {
     GetLayerDefn();

@@ -357,7 +357,7 @@ OGRErr OGRPGeoTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoTableLayer::TestCapability(const char *pszCap) const
+bool OGRPGeoTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

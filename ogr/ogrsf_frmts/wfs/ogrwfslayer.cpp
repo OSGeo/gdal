@@ -1530,7 +1530,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter(const char *pszFilter)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSLayer::TestCapability(const char *pszCap) const
+bool OGRWFSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

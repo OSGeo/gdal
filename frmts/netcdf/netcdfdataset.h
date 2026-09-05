@@ -574,7 +574,7 @@ class netCDFDataset final : public GDALPamDataset
     CPLErr SetMetadata(CSLConstList papszMD,
                        const char *pszDomain = "") override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     int GetLayerCount() const override
     {
@@ -758,7 +758,7 @@ class netCDFLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;

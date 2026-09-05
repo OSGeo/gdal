@@ -1298,7 +1298,7 @@ OGRErr OGRParquetDatasetLayer::SetIgnoredFields(CSLConstList papszFields)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRParquetDatasetLayer::TestCapability(const char *pszCap) const
+bool OGRParquetDatasetLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCIgnoreFields))
         return true;

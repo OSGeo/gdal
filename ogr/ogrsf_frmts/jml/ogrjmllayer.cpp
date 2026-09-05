@@ -806,7 +806,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk(const char * /* pszName */)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLLayer::TestCapability(const char *pszCap) const
+bool OGRJMLLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

@@ -150,7 +150,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
 

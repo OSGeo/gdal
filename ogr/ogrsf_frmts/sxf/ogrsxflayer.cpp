@@ -395,7 +395,7 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSXFLayer::TestCapability(const char *pszCap) const
+bool OGRSXFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) &&

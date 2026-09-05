@@ -614,7 +614,7 @@ GIntBig OGRMemLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMemLayer::TestCapability(const char *pszCap) const
+bool OGRMemLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

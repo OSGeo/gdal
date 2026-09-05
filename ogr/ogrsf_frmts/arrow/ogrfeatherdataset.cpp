@@ -28,7 +28,7 @@ OGRFeatherDataset::OGRFeatherDataset(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRFeatherDataset::TestCapability(const char *pszCap) const
+bool OGRFeatherDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))

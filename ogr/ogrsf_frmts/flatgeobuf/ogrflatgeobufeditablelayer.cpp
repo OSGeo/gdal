@@ -195,7 +195,7 @@ GIntBig OGRFlatGeobufEditableLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRFlatGeobufEditableLayer::TestCapability(const char *pszCap) const
+bool OGRFlatGeobufEditableLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite) ||
         EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCDeleteField) ||

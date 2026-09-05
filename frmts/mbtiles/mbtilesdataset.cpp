@@ -270,7 +270,7 @@ class MBTilesVectorLayer final : public OGRLayer
     }
 
     GIntBig GetFeatureCount(int bForce) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -1501,7 +1501,7 @@ MBTilesVectorLayer::~MBTilesVectorLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MBTilesVectorLayer::TestCapability(const char *pszCap) const
+bool MBTilesVectorLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) ||
         EQUAL(pszCap, OLCFastSpatialFilter) || EQUAL(pszCap, OLCFastGetExtent))

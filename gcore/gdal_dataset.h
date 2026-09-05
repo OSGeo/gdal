@@ -808,7 +808,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Features GetFeatures();
 
-    virtual int TestCapability(const char *) const;
+    virtual bool TestCapability(const char *) const;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;

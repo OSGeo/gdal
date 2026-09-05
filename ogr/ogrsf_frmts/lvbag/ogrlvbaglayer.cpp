@@ -932,7 +932,7 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability(const char *pszCap) const
+bool OGRLVBAGLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
     {

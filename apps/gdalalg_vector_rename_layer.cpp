@@ -184,7 +184,7 @@ class GDALVectorRenameLayerAlgorithmLayer final
         return poSrcFeature.release();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
     }

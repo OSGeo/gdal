@@ -61,7 +61,7 @@ class OGRVFKLayer final : public OGRLayer
 
     void ResetReading() override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int = TRUE) override;
 };
@@ -95,7 +95,7 @@ class OGRVFKDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     IVFKReader *GetReader() const
     {

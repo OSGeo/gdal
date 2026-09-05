@@ -976,7 +976,7 @@ const char *OGRGeoPackageLayer::GetFIDColumn() const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoPackageLayer::TestCapability(const char *pszCap) const
+bool OGRGeoPackageLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCIgnoreFields))
         return TRUE;

@@ -517,7 +517,7 @@ OGRErr OGRProxiedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRProxiedLayer::TestCapability(const char *pszCapability) const
+bool OGRProxiedLayer::TestCapability(const char *pszCapability) const
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return FALSE;

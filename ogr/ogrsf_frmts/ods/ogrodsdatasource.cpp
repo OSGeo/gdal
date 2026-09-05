@@ -315,7 +315,7 @@ OGRErr OGRODSLayer::SetAttributeFilter(const char *pszQuery)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODSLayer::TestCapability(const char *pszCap) const
+bool OGRODSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -401,7 +401,7 @@ CPLErr OGRODSDataSource::Close(GDALProgressFunc, void *)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODSDataSource::TestCapability(const char *pszCap) const
+bool OGRODSDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

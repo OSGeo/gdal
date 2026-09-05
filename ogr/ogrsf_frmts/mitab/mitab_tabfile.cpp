@@ -2944,7 +2944,7 @@ OGRErr TABFile::SyncToDisk()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABFile::TestCapability(const char *pszCap) const
+bool TABFile::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

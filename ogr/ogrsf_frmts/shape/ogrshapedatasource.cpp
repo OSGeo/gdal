@@ -952,7 +952,7 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRShapeDataSource::TestCapability(const char *pszCap) const
+bool OGRShapeDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

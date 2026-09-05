@@ -74,7 +74,7 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -115,7 +115,7 @@ class OGRODBCTableLayer final : public OGRODBCLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
 #ifdef notdef
     // follow methods are not base class overrides
@@ -156,7 +156,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -203,7 +203,7 @@ class OGRODBCDataSource final : public GDALDataset
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

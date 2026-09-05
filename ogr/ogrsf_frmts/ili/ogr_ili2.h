@@ -62,7 +62,7 @@ class OGRILI2Layer final : public OGRLayer
         return oGeomFieldInfos[cFieldName].iliGeomType;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -97,7 +97,7 @@ class OGRILI2DataSource final : public GDALDataset
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 #endif /* OGR_ILI2_H_INCLUDED */

@@ -137,7 +137,7 @@ class GDALVectorOutputDataset : public GDALVectorDecoratedDataset
                                                  : nullptr;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void AddLayer(std::unique_ptr<OGRLayer> layer)
     {
@@ -305,7 +305,7 @@ class GDALVectorPipelinePassthroughLayer /* non final */
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastFeatureCount))
             return false;
@@ -396,7 +396,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
 
     int GetLayerCount() const final override;
     OGRLayer *GetLayer(int idx) const final override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
   private:
     std::vector<std::unique_ptr<OGRLayer>> m_owned_layers{};
@@ -435,7 +435,7 @@ class GDALVectorPipelineOutputDataset /* non final */
 
     OGRLayer *GetLayer(int idx) const override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     void ResetReading() override;
 

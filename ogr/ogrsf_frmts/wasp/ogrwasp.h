@@ -143,7 +143,7 @@ class OGRWAsPLayer final : public OGRLayer,
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -198,7 +198,7 @@ class OGRWAsPDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr Load(bool bSilent = false);
 };
 

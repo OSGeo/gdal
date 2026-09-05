@@ -6676,7 +6676,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int netCDFDataset::TestCapability(const char *pszCap) const
+bool netCDFDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
     {

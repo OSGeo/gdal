@@ -671,7 +671,7 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::TestCapability(const char *pszCap) const
+bool OGRGeoJSONDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr && nLayers_ == 0;

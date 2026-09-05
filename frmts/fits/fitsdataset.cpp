@@ -108,7 +108,7 @@ class FITSDataset final : public GDALPamDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 };
@@ -210,7 +210,7 @@ class FITSLayer final : public OGRLayer,
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
@@ -877,7 +877,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSLayer::TestCapability(const char *pszCap) const
+bool FITSLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -2346,7 +2346,7 @@ OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSDataset::TestCapability(const char *pszCap) const
+bool FITSDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

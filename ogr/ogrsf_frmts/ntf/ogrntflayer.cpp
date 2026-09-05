@@ -157,7 +157,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNTFLayer::TestCapability(const char *pszCap) const
+bool OGRNTFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCZGeometries))

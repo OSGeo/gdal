@@ -170,7 +170,7 @@ class GDALVectorMakePointAlgorithmLayer final
         return m_defn.get();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
     }
