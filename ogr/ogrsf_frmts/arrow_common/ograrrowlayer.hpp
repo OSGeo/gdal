@@ -6032,9 +6032,6 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         OverrideArrowRelease(m_poArrowDS, out_array);
 
         const auto nFeatureIdxCur = m_nFeatureIdx;
-        // TODO: We likely have an issue regarding FIDs based on m_nFeatureIdx
-        // when m_iFIDArrowColumn < 0, only a subset of row groups is
-        // selected, and this batch goes across non consecutive row groups.
         for (int64_t i = 0; i < m_nIdxInBatch; ++i)
             IncrFeatureIdx();
 
