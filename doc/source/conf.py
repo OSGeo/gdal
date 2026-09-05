@@ -91,6 +91,7 @@ extensions = [
     "sphinxcontrib_programoutput_gdal",
     "sphinxcontrib.spelling",
     "myst_nb",
+    "sphinx_copybutton",
     "sphinx_tabs.tabs",
     "sphinx_toolbox.collapse",
 ]
@@ -1647,6 +1648,11 @@ spelling_word_list_filename = ["spelling_wordlist.txt"]
 nb_mime_priority_overrides = [
     ("spelling", "text/plain", 0),
 ]
+
+# -- copybutton -----------------------------------------------
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 
 # -- copy data files -----------------------------------------------------
 
