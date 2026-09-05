@@ -120,13 +120,20 @@ void GDALMDReaderLandsat::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
+    const bool bL8 =
+        CSLFetchNameValue(
+            m_papszIMDMD,
+            "LANDSAT_METADATA_FILE.IMAGE_ATTRIBUTES.SPACECRAFT_ID") != nullptr;
+
     // date/time
     // DATE_ACQUIRED = 2013-04-07
     // SCENE_CENTER_TIME = 15:47:03.0882620Z
 
     // L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID
     const char *pszSatId = CSLFetchNameValue(
-        m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
+        m_papszIMDMD,
+        bL8 ? "LANDSAT_METADATA_FILE.IMAGE_ATTRIBUTES.SPACECRAFT_ID"
+            : "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
     if (nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, GDALMD_SATELLITEID,
@@ -135,7 +142,8 @@ void GDALMDReaderLandsat::LoadMetadata()
 
     // L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER
     const char *pszCloudCover = CSLFetchNameValue(
-        m_papszIMDMD, "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
+        m_papszIMDMD, bL8 ? "LANDSAT_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER"
+                          : "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
     if (nullptr != pszCloudCover)
     {
         double fCC = CPLAtofM(pszCloudCover);
@@ -148,7 +156,9 @@ void GDALMDReaderLandsat::LoadMetadata()
         {
             m_papszIMAGERYMD =
                 CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
-                                CPLSPrintf("%d", int(fCC)));
+                                fCC == std::round(fCC) && fCC < INT_MAX
+                                    ? CPLSPrintf("%d", int(fCC))
+                                    : CPLSPrintf("%.02f", fCC));
         }
     }
 
@@ -159,7 +169,9 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME
 
     const char *pszDate = CSLFetchNameValue(
-        m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
+        m_papszIMDMD,
+        bL8 ? "LANDSAT_METADATA_FILE.IMAGE_ATTRIBUTES.DATE_ACQUIRED"
+            : "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
     if (nullptr == pszDate)
     {
         pszDate = CSLFetchNameValue(
@@ -170,7 +182,8 @@ void GDALMDReaderLandsat::LoadMetadata()
     {
         const char *pszTime = CSLFetchNameValue(
             m_papszIMDMD,
-            "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
+            bL8 ? "LANDSAT_METADATA_FILE.IMAGE_ATTRIBUTES.SCENE_CENTER_TIME"
+                : "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
         if (nullptr == pszTime)
         {
             pszTime = CSLFetchNameValue(
@@ -180,9 +193,13 @@ void GDALMDReaderLandsat::LoadMetadata()
         if (nullptr == pszTime)
             pszTime = "00:00:00.000000Z";
 
+        std::string osTime(pszTime);
+        if (osTime.size() > 2 && osTime.front() == '"' && osTime.back() == '"')
+            osTime = osTime.substr(1, osTime.size() - 2);
+
         char buffer[80];
-        GIntBig timeMid =
-            GetAcquisitionTimeFromString(CPLSPrintf("%sT%s", pszDate, pszTime));
+        GIntBig timeMid = GetAcquisitionTimeFromString(
+            CPLSPrintf("%sT%s", pszDate, osTime.c_str()));
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
