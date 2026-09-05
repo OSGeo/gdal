@@ -758,7 +758,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
         }
         for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
-            if (i == m_iFIDAsRegularColumnIndex)
+            const auto *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+            if (i == m_iFIDAsRegularColumnIndex || poFieldDefn->IsGenerated())
                 continue;
             if (!bBindUnsetFields && !poFeature->IsFieldSet(i))
                 continue;
@@ -772,12 +773,11 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
                 osSQLBack += ", ";
             }
 
-            osSQLBack += CPLSPrintf(
-                "\"%s\" = excluded.\"%s\"",
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str(),
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str());
+            const std::string osEscapedColName =
+                SQLEscapeName(poFieldDefn->GetNameRef());
+            osSQLBack +=
+                CPLSPrintf("\"%s\" = excluded.\"%s\"", osEscapedColName.c_str(),
+                           osEscapedColName.c_str());
         }
 #if SQLITE_VERSION_NUMBER >= 3035000L
         osSQLBack += " RETURNING \"";
