@@ -582,16 +582,138 @@ def test_gdalalg_raster_zonal_stats_missing_weights(zonal, polyrast, stat):
         zonal.Run()
 
 
-def test_gdalalg_raster_zonal_stats_non_polygon_geometry(zonal, strategy):
+def test_gdalalg_raster_zonal_stats_linestring_geometry(zonal, pixels, strategy):
 
     zonal["input"] = "../gcore/data/byte.tif"
-    zonal["zones"] = gdaltest.wkt_ds(["LINESTRING (3 3, 8 8)"])
+    zonal["zones"] = gdaltest.wkt_ds(["LINESTRING (441123 3751053, 441287 3750402)"])
     zonal["output"] = ""
     zonal["output-format"] = "MEM"
     zonal["strategy"] = strategy
-    zonal["stat"] = "sum"
+    zonal["pixels"] = pixels
+    zonal["stat"] = ["mean", "values", "coverage"]
 
-    with pytest.raises(Exception, match="Non-polygonal geometry"):
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+    out_lyr = out_ds.GetLayer(0)
+
+    assert out_lyr.GetFeatureCount() == 1
+
+    f = out_lyr.GetNextFeature()
+
+    intersecting_pixels = [
+        115,
+        148,
+        123,
+        132,
+        123,
+        132,
+        107,
+        132,
+        148,
+        115,
+        107,
+        99,
+        132,
+        123,
+        99,
+    ]
+
+    # check result of "values"
+    if pixels in ("all-touched", "fractional"):
+        assert sorted(f["values"]) == sorted(intersecting_pixels)
+    else:
+        assert len(f["values"]) > 0 and len(f["values"]) <= len(intersecting_pixels)
+        for v in set(f["values"]):
+            assert v in intersecting_pixels
+            assert f["values"].count(v) <= intersecting_pixels.count(v)
+
+    # check result of "coverage"
+    if pixels == "default":
+        assert len(f["coverage"]) == len(f["values"])
+        assert all(x == 1 for x in f["coverage"])
+    elif pixels == "all-touched":
+        assert len(f["coverage"]) == len(intersecting_pixels)
+        assert all(x == 1 for x in f["coverage"])
+    else:
+        assert len(f["coverage"]) == len(intersecting_pixels)
+        assert all(x > 0 and x <= 120 for x in f["coverage"])
+
+    # check result of "sum"
+    if pixels == "all-touched":
+        assert f["mean"] == sum(intersecting_pixels) / len(intersecting_pixels)
+    elif pixels == "fractional":
+        assert f["mean"] == pytest.approx(
+            sum(c * v for c, v in zip(f["values"], f["coverage"])) / sum(f["coverage"])
+        )
+
+
+def test_gdalalg_raster_zonal_stats_point_geometry(zonal, pixels, strategy):
+
+    zonal["input"] = "../gcore/data/byte.tif"
+    zonal["zones"] = gdaltest.wkt_ds(
+        [
+            "MULTIPOINT ((440810 3750926))",  # single point inside raster
+            "MULTIPOINT ((440685 3750871))",  # single point outside raster
+            "MULTIPOINT ((441831 3751225),(441962 3751226))",  # one point in, one point out
+            "MULTIPOINT ((441047 3750986),(441467 3751109),(441466 3750691))",  # three points in
+        ]
+    )
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["strategy"] = strategy
+    zonal["pixels"] = pixels
+    zonal["stat"] = ["mean", "values", "coverage", "count"]
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+    out_lyr = out_ds.GetLayer(0)
+
+    assert out_lyr.GetFeatureCount() == 4
+
+    f = [x for x in out_lyr]
+
+    # single point inside raster
+    assert f[0]["mean"] == 173
+    assert f[0]["values"] == [173]
+    assert f[0]["coverage"] == [1]
+    assert f[0]["count"] == 1
+
+    # single point outside raster
+    assert math.isnan(f[1]["mean"])
+    assert f[1]["values"] == []
+    assert f[1]["coverage"] == []
+    assert f[1]["count"] == 0
+
+    # one point inside raster, one point outside raster
+    assert f[2]["mean"] == 99.0
+    assert f[2]["values"] == [99]
+    assert f[2]["coverage"] == [1]
+    assert f[2]["count"] == 1
+
+    # three points inside raster
+    assert f[3]["mean"] == (107 + 115 + 140) / 3.0
+    assert f[3]["values"] == [107, 115, 140]
+    assert f[3]["coverage"] == [1, 1, 1]
+    assert f[3]["count"] == 3
+
+
+def test_gdalalg_raster_zonal_stats_mixed_dimension_geometry(zonal, pixels, strategy):
+
+    zonal["input"] = "../gcore/data/byte.tif"
+    zonal["zones"] = gdaltest.wkt_ds(
+        [
+            "GEOMETRYCOLLECTION (POINT (440810 3750926), LINESTRING (441123 3751053, 441287 3750402))",
+        ]
+    )
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["strategy"] = strategy
+    zonal["pixels"] = pixels
+    zonal["stat"] = ["mean", "values", "coverage", "count"]
+
+    with pytest.raises(Exception, match="Cannot calculate pixel coverage"):
         zonal.Run()
 
 
