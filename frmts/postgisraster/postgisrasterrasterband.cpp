@@ -157,7 +157,6 @@ bool PostGISRasterRasterBand::QueryStats()
         m_bStatsFetched = !std::isnan(m_dfStatsCount);
         return m_bStatsFetched;
     }
-    return false;
 }
 
 /********************************************************
