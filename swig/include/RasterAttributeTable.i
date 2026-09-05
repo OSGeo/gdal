@@ -61,10 +61,14 @@ typedef enum {
 } GDALRATTableType;
 #endif /* CSHARP */
 
+%{
+#include "gdal.h"
+%}
 %rename (RATDateTime) GDALRATDateTime;
 
-typedef struct
-{
+struct GDALRATDateTime {
+
+%mutable;
     /*! Year */ int nYear;
     /*! Month [1, 12] */ int nMonth;
     /*! Day [1, 31] */ int nDay;
@@ -75,7 +79,35 @@ typedef struct
     /*! Time zone minute: 0, 15, 30, 45 */ int nTimeZoneMinute;
     /*! Whether time zone is positive (or null) */ bool bPositiveTimeZone;
     /*! Whether this object is valid */ bool bIsValid;
-} GDALRATDateTime;
+
+%extend {
+  GDALRATDateTime( int year, int month, int day, int hour, int minute, float second, int timeZoneHour, int timeZoneMinute, bool positiveTimeZone ) {
+    GDALRATDateTime *self = (GDALRATDateTime*) CPLMalloc( sizeof( GDALRATDateTime ) );
+    self->nYear = year;
+    self->nMonth = month;
+    self->nDay = day;
+    self->nHour = hour;
+    self->nMinute = minute;
+    self->fSecond = second;
+    self->nTimeZoneHour = timeZoneHour;
+    self->nTimeZoneMinute = timeZoneMinute;
+    self->bPositiveTimeZone = positiveTimeZone;
+    self->bIsValid = TRUE;	  
+    return self;
+  }
+  GDALRATDateTime() {
+    GDALRATDateTime *self = (GDALRATDateTime*) CPLMalloc( sizeof( GDALRATDateTime ) );
+    self->nYear = self->nMonth = self->nDay = self->nHour = self->nMinute = self->nTimeZoneHour = self->nTimeZoneMinute = 0;
+	self->fSecond = 0.0;
+    self->bPositiveTimeZone = self->bIsValid = FALSE;	  
+    return self;
+  }
+
+  ~GDALRATDateTime() {
+    CPLFree(self);
+  }
+} //%extend
+};
 
 %rename (RasterAttributeTable) GDALRasterAttributeTableShadow;
 

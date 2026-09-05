@@ -154,7 +154,7 @@ public:
   }
 %clear char **;
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void GetDefaultAsIntegerList(int *nLen, const int **pList) {
      size_t nLenSizet = 0;
     *pList = GDALAlgorithmArgGetDefaultAsIntegerList(self, &nLenSizet);
@@ -162,7 +162,7 @@ public:
   }
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void GetDefaultAsDoubleList(int *nLen, const double **pList) {
      size_t nLenSizet = 0;
     *pList = GDALAlgorithmArgGetDefaultAsDoubleList(self, &nLenSizet);
@@ -248,7 +248,7 @@ public:
   }
 %clear char **;
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void GetAsIntegerList(int *nLen, const int **pList) {
      size_t nLenSizet = 0;
     *pList = GDALAlgorithmArgGetAsIntegerList(self, &nLenSizet);
@@ -256,7 +256,7 @@ public:
   }
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void GetAsDoubleList(int *nLen, const double **pList) {
      size_t nLenSizet = 0;
     *pList = GDALAlgorithmArgGetAsDoubleList(self, &nLenSizet);
@@ -302,7 +302,7 @@ public:
     return GDALAlgorithmArgSetDataset(self, ds);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   bool SetDatasets(int object_list_count, GDALDatasetShadow** poObjects) {
     return GDALAlgorithmArgSetDatasets(self, object_list_count, poObjects);
   }

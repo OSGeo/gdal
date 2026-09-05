@@ -25,7 +25,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature ("compactdefaultargs");
 #endif
 
@@ -492,6 +492,8 @@ struct GDAL_GCP {
 }; /* GDAL_GCP */
 
 %apply Pointer NONNULL {GDAL_GCP *gcp};
+
+#if !defined(SWIGCSHARP)
 %inline %{
 
 double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
@@ -541,64 +543,64 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
   gcp->pszId = CPLStrdup(pszId);
 }
 %} //%inline
-
-#if defined(SWIGCSHARP)
-%inline %{
-/* Duplicate, but transposed names for C# because
-*  the C# module outputs backwards names
-*/
-double GDAL_GCP_get_GCPX( GDAL_GCP *gcp ) {
+#else
+/*
+ * SWIG does not need these functions to be inlined to use
+ * them from C# properties.
+ */
+%{
+double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPX;
 }
-void GDAL_GCP_set_GCPX( GDAL_GCP *gcp, double dfGCPX ) {
+void GDAL_GCP_GCPX_set( GDAL_GCP *gcp, double dfGCPX ) {
   gcp->dfGCPX = dfGCPX;
 }
-double GDAL_GCP_get_GCPY( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPY_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPY;
 }
-void GDAL_GCP_set_GCPY( GDAL_GCP *gcp, double dfGCPY ) {
+void GDAL_GCP_GCPY_set( GDAL_GCP *gcp, double dfGCPY ) {
   gcp->dfGCPY = dfGCPY;
 }
-double GDAL_GCP_get_GCPZ( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPZ_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPZ;
 }
-void GDAL_GCP_set_GCPZ( GDAL_GCP *gcp, double dfGCPZ ) {
+void GDAL_GCP_GCPZ_set( GDAL_GCP *gcp, double dfGCPZ ) {
   gcp->dfGCPZ = dfGCPZ;
 }
-double GDAL_GCP_get_GCPPixel( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPPixel_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPPixel;
 }
-void GDAL_GCP_set_GCPPixel( GDAL_GCP *gcp, double dfGCPPixel ) {
+void GDAL_GCP_GCPPixel_set( GDAL_GCP *gcp, double dfGCPPixel ) {
   gcp->dfGCPPixel = dfGCPPixel;
 }
-double GDAL_GCP_get_GCPLine( GDAL_GCP *gcp ) {
+double GDAL_GCP_GCPLine_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPLine;
 }
-void GDAL_GCP_set_GCPLine( GDAL_GCP *gcp, double dfGCPLine ) {
+void GDAL_GCP_GCPLine_set( GDAL_GCP *gcp, double dfGCPLine ) {
   gcp->dfGCPLine = dfGCPLine;
 }
-const char * GDAL_GCP_get_Info( GDAL_GCP *gcp ) {
+const char * GDAL_GCP_Info_get( GDAL_GCP *gcp ) {
   return gcp->pszInfo;
 }
-void GDAL_GCP_set_Info( GDAL_GCP *gcp, const char * pszInfo ) {
+void GDAL_GCP_Info_set( GDAL_GCP *gcp, const char * pszInfo ) {
   if ( gcp->pszInfo )
     CPLFree( gcp->pszInfo );
   gcp->pszInfo = CPLStrdup(pszInfo);
 }
-const char * GDAL_GCP_get_Id( GDAL_GCP *gcp ) {
+const char * GDAL_GCP_Id_get( GDAL_GCP *gcp ) {
   return gcp->pszId;
 }
-void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
+void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
   if ( gcp->pszId )
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-%} //%inline
-#endif //if defined(SWIGCSHARP)
+%}
+#endif
 
 %clear GDAL_GCP *gcp;
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
 %inline
 {
@@ -615,7 +617,7 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 %clear (RETURN_NONE);
 #endif
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (GCPsToHomography) wrapper_GDALGCPsToHomography;
 %inline
 {
@@ -733,18 +735,22 @@ RETURN_NONE GDALInvHomography( double h_in[9], double h_out[9] );
 %clear (double *h_in);
 %clear (double *h_out);
 
+#ifdef SWIGPYTHON
+const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
+#else
+%rename (VersionInfo) wrapper_GDALVersionInfo;
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
-%rename (VersionInfo) wrapper_GDALVersionInfo;
+#endif
 %inline {
 const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
 {
     return GDALVersionInfo(request ? request : "VERSION_NUM");
 }
 }
+#ifdef SWIGJAVA
 %clear (const char* request);
-#else
-const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
+#endif
 #endif
 
 void GDALAllRegister();
@@ -825,9 +831,13 @@ GDALColorInterp GDALGetColorInterpretationByName( const char* pszColorInterpName
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
+#ifdef SWIGPYTHON
+const char *GDALDecToDMS( double, const char *, int nPrecision = 2 );
+#else
+%rename (DecToDMS) wrapper_GDALDecToDMS;
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *request};
-%rename (DecToDMS) wrapper_GDALDecToDMS;
+#endif
 %inline {
 const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
                                   int nPrecision = 2 )
@@ -835,9 +845,9 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
     return GDALDecToDMS(dfAngle, pszAxis, nPrecision);
 }
 }
+#ifdef SWIGJAVA
 %clear (const char* request);
-#else
-const char *GDALDecToDMS( double, const char *, int = 2 );
+#endif
 #endif
 
 double GDALPackedDMSToDec( double dfPacked );
@@ -947,6 +957,17 @@ GDALDatasetShadow* Open( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
 }
 %}
 
+#endif
+
+#if defined(SWIGCSHARP)
+%csmethodmodifiers wrapper_GetOpenDatasets "private";
+%apply (int *object_list_count, GDALDatasetShadow **poObjects) {(int *datasets, GDALDatasetShadow **pDatasets)};
+%inline %{
+  void wrapper_GetOpenDatasets(int *datasets, GDALDatasetShadow **pDatasets ){
+    GDALGetOpenDatasets((GDALDatasetH**)pDatasets, datasets);
+  }
+%}
+%clear (int *datasets, GDALDatasetShadow **pDatasets);
 #endif
 
 %newobject OpenEx;
@@ -1332,7 +1353,7 @@ struct GDALTranslateOptions {
 
 #ifdef SWIGPYTHON
 %rename (TranslateInternal) wrapper_GDALTranslate;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Translate) wrapper_GDALTranslate;
 #endif
 %newobject wrapper_GDALTranslate;
@@ -1394,7 +1415,7 @@ struct GDALWarpAppOptions {
 }
 };
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Warp) wrapper_GDALWarpDestDS;
 #endif
 
@@ -1442,7 +1463,7 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
 %}
 %clear GDALDatasetShadow* dstDS;
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Warp) wrapper_GDALWarpDestName;
 #endif
 
@@ -1507,7 +1528,7 @@ struct GDALVectorTranslateOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestDS;
 #endif
 
@@ -1549,7 +1570,7 @@ int wrapper_GDALVectorTranslateDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (VectorTranslate) wrapper_GDALVectorTranslateDestName;
 #endif
 %newobject wrapper_GDALVectorTranslateDestName;
@@ -1613,7 +1634,7 @@ struct GDALDEMProcessingOptions {
 
 #ifdef SWIGPYTHON
 %rename (DEMProcessingInternal) wrapper_GDALDEMProcessing;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (DEMProcessing) wrapper_GDALDEMProcessing;
 #endif
 %newobject wrapper_GDALDEMProcessing;
@@ -1680,7 +1701,7 @@ struct GDALNearblackOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Nearblack) wrapper_GDALNearblackDestDS;
 #endif
 %inline %{
@@ -1721,7 +1742,7 @@ int wrapper_GDALNearblackDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Nearblack) wrapper_GDALNearblackDestName;
 #endif
 %newobject wrapper_GDALNearblackDestName;
@@ -1785,7 +1806,7 @@ struct GDALGridOptions {
 
 #ifdef SWIGPYTHON
 %rename (GridInternal) wrapper_GDALGrid;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Grid) wrapper_GDALGrid;
 #endif
 %newobject wrapper_GDALGrid;
@@ -1850,7 +1871,7 @@ struct GDALContourOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Contour) wrapper_GDALContourDestDS;
 #endif
 %inline %{
@@ -1898,7 +1919,7 @@ int wrapper_GDALContourDestDS(  GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Contour) wrapper_GDALContourDestName;
 #endif
 %newobject wrapper_GDALContourDestName;
@@ -1976,7 +1997,7 @@ struct GDALRasterizeOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Rasterize) wrapper_GDALRasterizeDestDS;
 #endif
 %inline %{
@@ -2017,7 +2038,7 @@ int wrapper_GDALRasterizeDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Rasterize) wrapper_GDALRasterizeDestName;
 #endif
 %newobject wrapper_GDALRasterizeDestName;
@@ -2081,7 +2102,7 @@ struct GDALFootprintOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Footprint) wrapper_GDALFootprintDestDS;
 #endif
 %inline %{
@@ -2122,7 +2143,7 @@ int wrapper_GDALFootprintDestDS( GDALDatasetShadow* dstDS,
 }
 %}
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Footprint) wrapper_GDALFootprintDestName;
 #endif
 %newobject wrapper_GDALFootprintDestName;
@@ -2186,7 +2207,7 @@ struct GDALBuildVRTOptions {
 
 #ifdef SWIGPYTHON
 %rename (BuildVRTInternalObjects) wrapper_GDALBuildVRT_objects;
-#elif defined(SWIGJAVA)
+#else
 %rename (BuildVRT) wrapper_GDALBuildVRT_objects;
 #endif
 
@@ -2233,7 +2254,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
 
 #ifdef SWIGPYTHON
 %rename (BuildVRTInternalNames) wrapper_GDALBuildVRT_names;
-#elif defined(SWIGJAVA)
+#else
 %rename (BuildVRT) wrapper_GDALBuildVRT_names;
 #endif
 
@@ -2299,7 +2320,7 @@ struct GDALTileIndexOptions {
 
 #ifdef SWIGPYTHON
 %rename (TileIndexInternalNames) wrapper_TileIndex_names;
-#elif defined(SWIGJAVA)
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (TileIndex) wrapper_TileIndex_names;
 #endif
 %newobject wrapper_TileIndex_names;
@@ -2368,7 +2389,7 @@ struct GDALMultiDimTranslateOptions {
 }
 };
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (MultiDimTranslate) wrapper_GDALMultiDimTranslateDestName;
 #endif
 
