@@ -102,7 +102,7 @@ bool OGRMutexedDataSource::IsLayerPrivate(int iLayer) const
     return m_poBaseDataSource->IsLayerPrivate(iLayer);
 }
 
-int OGRMutexedDataSource::TestCapability(const char *pszCap) const
+bool OGRMutexedDataSource::TestCapability(const char *pszCap) const
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return m_poBaseDataSource->TestCapability(pszCap);

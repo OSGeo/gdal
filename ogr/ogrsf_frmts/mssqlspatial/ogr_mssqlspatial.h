@@ -336,7 +336,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     const char *GetFIDColumn() const override;
     const char *GetGeometryColumn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     static char *GByteArrayToHexString(const GByte *pabyData, int nLen);
 
     void SetLayerStatus(int nStatus)
@@ -476,7 +476,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void SetLaunderFlag(int bFlag)
     {
@@ -546,7 +546,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -636,7 +636,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

@@ -153,7 +153,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
                            CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int iLayer) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
@@ -329,7 +329,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const char *GetFIDColumn() const override
     {

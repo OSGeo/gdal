@@ -536,12 +536,12 @@ int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWarpedLayer::TestCapability(const char *pszCapability) const
+bool OGRWarpedLayer::TestCapability(const char *pszCapability) const
 {
     if (EQUAL(pszCapability, OLCFastGetExtent) && sStaticEnvelope.IsInit())
         return TRUE;
 
-    int bVal = m_poDecoratedLayer->TestCapability(pszCapability);
+    bool bVal = m_poDecoratedLayer->TestCapability(pszCapability);
 
     if (EQUAL(pszCapability, OLCFastGetArrowStream))
         return false;

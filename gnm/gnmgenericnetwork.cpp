@@ -1389,7 +1389,7 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset *const pDS)
     return CE_None;
 }
 
-int GNMGenericNetwork::TestCapability(const char *pszCap) const
+bool GNMGenericNetwork::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

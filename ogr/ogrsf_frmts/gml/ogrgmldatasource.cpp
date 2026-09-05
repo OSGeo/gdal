@@ -2377,7 +2377,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLDataSource::TestCapability(const char *pszCap) const
+bool OGRGMLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -3263,7 +3263,7 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn.get();
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

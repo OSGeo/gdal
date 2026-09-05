@@ -127,7 +127,7 @@ class GDALEEDALayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -975,7 +975,7 @@ OGRErr GDALEEDALayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALEEDALayer::TestCapability(const char *pszCap) const
+bool GDALEEDALayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;

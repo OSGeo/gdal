@@ -473,7 +473,7 @@ OGRErr OGRJSONFGWriteLayer::CreateField(const OGRFieldDefn *poField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGWriteLayer::TestCapability(const char *pszCap) const
+bool OGRJSONFGWriteLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField))
         return TRUE;

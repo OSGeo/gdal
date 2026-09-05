@@ -1219,10 +1219,8 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
     {
         // One time initialization
         m_poPrivate->m_bConvertGeomsIfNecessaryAlreadyCalled = true;
-        m_poPrivate->m_bSupportsCurve =
-            CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
-        m_poPrivate->m_bSupportsM =
-            CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
+        m_poPrivate->m_bSupportsCurve = TestCapability(OLCCurveGeometries);
+        m_poPrivate->m_bSupportsM = TestCapability(OLCMeasuredGeometries);
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_APPLY_GEOM_SET_PRECISION", "FALSE")))
         {
@@ -3144,7 +3142,7 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 /************************************************************************/
 
 /**
- \fn int OGRLayer::TestCapability( const char * pszCap ) const;
+ \fn bool OGRLayer::TestCapability( const char * pszCap ) const;
 
  \brief Test if this layer supported the named capability.
 

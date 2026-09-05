@@ -2112,7 +2112,7 @@ GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PCIDSK2Dataset::TestCapability(const char *pszCap) const
+bool PCIDSK2Dataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

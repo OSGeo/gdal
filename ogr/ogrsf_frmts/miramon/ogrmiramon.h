@@ -99,7 +99,7 @@ class OGRMiraMonLayer final
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     void AddToFileList(CPLStringList &oFileList);
 
     GDALDataset *GetDataset() override
@@ -142,7 +142,7 @@ class OGRMiraMonDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 #endif /* OGRMIRAMON_H_INCLUDED */

@@ -1642,7 +1642,7 @@ OGRErr OGRDGNV8Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNV8Layer::TestCapability(const char *pszCap) const
+bool OGRDGNV8Layer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

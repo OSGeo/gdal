@@ -227,7 +227,7 @@ int OGRIDBDataSource::OpenTable(const char *pszNewName, const char *pszGeomCol,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBDataSource::TestCapability(const char *pszCap) const
+bool OGRIDBDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

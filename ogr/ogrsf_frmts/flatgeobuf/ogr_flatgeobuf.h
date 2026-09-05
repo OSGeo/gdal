@@ -169,7 +169,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = true) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void ResetReading() override;
 
@@ -234,7 +234,7 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
         return this;
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
     {
@@ -266,7 +266,7 @@ class OGRFlatGeobufDataset final : public GDALDataset
                                CSLConstList papszOptions);
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

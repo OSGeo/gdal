@@ -302,7 +302,7 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoDataSource::TestCapability(const char *pszCap) const
+bool OGRPGeoDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
@@ -427,7 +427,7 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

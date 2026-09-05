@@ -95,7 +95,7 @@ class OGRDGNV8Layer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -138,7 +138,7 @@ class OGRDGNV8DataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     char **GetMetadataDomainList() override;

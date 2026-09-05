@@ -644,7 +644,7 @@ OGROCIDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCIDataSource::TestCapability(const char *pszCap) const
+bool OGROCIDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) && bDSUpdate)

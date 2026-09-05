@@ -285,7 +285,7 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTileDBDataset::TestCapability(const char *pszCap) const
+bool OGRTileDBDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
     {
@@ -4568,7 +4568,7 @@ void OGRTileDBLayer::ResetBuffers()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTileDBLayer::TestCapability(const char *pszCap) const
+bool OGRTileDBLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField))
         return m_bUpdatable && m_schema == nullptr;

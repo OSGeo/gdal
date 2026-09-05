@@ -827,7 +827,7 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialTableLayer::TestCapability(const char *pszCap) const
+bool OGRMSSQLSpatialTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (bUpdateAccess)

@@ -389,7 +389,7 @@ class OGRPGTableLayer final : public OGRPGLayer
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlagsIn) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -529,7 +529,7 @@ class OGRPGResultLayer final : public OGRPGLayer
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRFeature *GetNextFeature() override;
 
@@ -673,7 +673,7 @@ class OGRPGDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr StartTransaction(int bForce = FALSE) override;
     OGRErr CommitTransaction() override;

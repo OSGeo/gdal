@@ -279,7 +279,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr Rename(const char *pszNewName) override;
 
@@ -535,7 +535,7 @@ class OGROpenFileGDBDataSource final : public GDALDataset
                          const char *pszDialect) override;
     void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -686,7 +686,7 @@ class OGROpenFileGDBSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

@@ -86,7 +86,7 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
         return osFIDColName.c_str();
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -150,7 +150,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
@@ -280,7 +280,7 @@ class OGRCARTODataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

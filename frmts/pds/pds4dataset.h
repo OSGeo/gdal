@@ -178,7 +178,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
     void ResetReading() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
@@ -290,7 +290,7 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
@@ -461,7 +461,7 @@ class PDS4Dataset final : public RawDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 

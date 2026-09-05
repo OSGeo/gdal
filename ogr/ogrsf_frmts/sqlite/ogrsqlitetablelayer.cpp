@@ -1156,7 +1156,7 @@ void OGRSQLiteTableLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteTableLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

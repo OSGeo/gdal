@@ -4854,7 +4854,7 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDS4Dataset::TestCapability(const char *pszCap) const
+bool PDS4Dataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

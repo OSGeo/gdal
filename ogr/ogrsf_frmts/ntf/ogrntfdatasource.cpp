@@ -84,7 +84,7 @@ OGRNTFDataSource::~OGRNTFDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNTFDataSource::TestCapability(const char *pszCap) const
+bool OGRNTFDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))

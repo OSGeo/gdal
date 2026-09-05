@@ -57,7 +57,7 @@ class OGRS57Layer final : public OGRLayer
     }
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -103,7 +103,7 @@ class OGRS57DataSource final : public GDALDataset
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
     void AddLayer(OGRS57Layer *);
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRSpatialReference *DSGetSpatialRef() const
     {

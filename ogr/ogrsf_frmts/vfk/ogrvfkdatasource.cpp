@@ -116,7 +116,7 @@ const OGRLayer *OGRVFKDataSource::GetLayer(int iLayer) const
 
   \return TRUE if supported or FALSE if not supported
 */
-int OGRVFKDataSource::TestCapability(const char *pszCap) const
+bool OGRVFKDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, "IsPreProcessed") && poReader)
     {

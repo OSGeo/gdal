@@ -298,7 +298,7 @@ const OGRLayer *GDALCADDataset::GetLayer(int iLayer) const
         return papoLayers[iLayer];
 }
 
-int GDALCADDataset::TestCapability(const char *pszCap) const
+bool GDALCADDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
         return FALSE;

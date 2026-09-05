@@ -223,7 +223,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
         return m_poFeatureDefn.get();
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -321,7 +321,7 @@ class OGRCSVDataSource final : public GDALDataset
 
     OGRErr DeleteLayer(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void CreateForSingleFile(const char *pszDirname, const char *pszFilename);
 

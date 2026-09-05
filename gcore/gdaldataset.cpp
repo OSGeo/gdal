@@ -8500,7 +8500,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability(const char *pszCap) const
+bool GDALDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, GDsCFastGetExtent) ||
         EQUAL(pszCap, GDsCFastGetExtentWGS84LongLat))

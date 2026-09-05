@@ -97,7 +97,7 @@ const OGRLayer *OGRXODRDataSource::GetLayer(int iLayer) const
     return m_apoLayers[iLayer].get();
 }
 
-int OGRXODRDataSource::TestCapability(const char *pszCap) const
+bool OGRXODRDataSource::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

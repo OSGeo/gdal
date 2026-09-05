@@ -1024,7 +1024,7 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGDataset::TestCapability(const char *pszCap) const
+bool OGRJSONFGDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr &&

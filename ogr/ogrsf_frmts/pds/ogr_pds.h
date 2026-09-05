@@ -80,7 +80,7 @@ class OGRPDSLayer final : public OGRLayer,
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
 

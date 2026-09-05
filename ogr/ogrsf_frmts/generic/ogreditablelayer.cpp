@@ -626,7 +626,7 @@ OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGREditableLayer::TestCapability(const char *pszCap) const
+bool OGREditableLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poDecoratedLayer)
         return FALSE;

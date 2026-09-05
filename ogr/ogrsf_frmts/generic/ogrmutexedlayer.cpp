@@ -156,7 +156,7 @@ OGRErr OGRMutexedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
     return OGRLayerDecorator::IGetExtent(iGeomField, psExtent, bForce);
 }
 
-int OGRMutexedLayer::TestCapability(const char *pszCapability) const
+bool OGRMutexedLayer::TestCapability(const char *pszCapability) const
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::TestCapability(pszCapability);

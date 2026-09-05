@@ -119,7 +119,7 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFWritableVectorDataset::TestCapability(const char *pszCap) const
+bool PDFWritableVectorDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

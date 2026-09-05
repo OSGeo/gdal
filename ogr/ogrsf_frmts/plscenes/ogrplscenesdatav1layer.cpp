@@ -1367,7 +1367,7 @@ OGRErr OGRPLScenesDataV1Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPLScenesDataV1Layer::TestCapability(const char *pszCap) const
+bool OGRPLScenesDataV1Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return !m_bFilterMustBeClientSideEvaluated;

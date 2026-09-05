@@ -41,7 +41,7 @@ OGRWAsPDataSource::~OGRWAsPDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWAsPDataSource::TestCapability(const char *pszCap) const
+bool OGRWAsPDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) && oLayer.get() == nullptr)

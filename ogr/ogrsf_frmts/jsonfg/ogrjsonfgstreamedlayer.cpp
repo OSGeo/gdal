@@ -165,7 +165,7 @@ OGRFeature *OGRJSONFGStreamedLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGStreamedLayer::TestCapability(const char *pszCap) const
+bool OGRJSONFGStreamedLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

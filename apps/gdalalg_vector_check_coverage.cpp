@@ -71,7 +71,7 @@ class GDALVectorCheckCoverageOutputLayer final
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }

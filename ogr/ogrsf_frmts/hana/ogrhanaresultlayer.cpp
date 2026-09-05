@@ -52,7 +52,7 @@ OGRErr OGRHanaResultLayer::Initialize()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaResultLayer::TestCapability(const char *capabilities) const
+bool OGRHanaResultLayer::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, OLCFastGetExtent))
     {

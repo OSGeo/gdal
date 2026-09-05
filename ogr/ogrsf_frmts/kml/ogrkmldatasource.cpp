@@ -430,7 +430,7 @@ OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRKMLDataSource::TestCapability(const char *pszCap) const
+bool OGRKMLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

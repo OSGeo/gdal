@@ -790,9 +790,9 @@ class OGRSplitListFieldLayer : public OGRLayer
         poSrcLayer->ResetReading();
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
-        return FALSE;
+        return false;
     }
 
     GIntBig GetFeatureCount(int bForce = TRUE) override
@@ -2960,8 +2960,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     /* -------------------------------------------------------------------- */
     /*      For random reading                                              */
     /* -------------------------------------------------------------------- */
-    const bool bRandomLayerReading =
-        CPL_TO_BOOL(poDS->TestCapability(ODsCRandomLayerRead));
+    const bool bRandomLayerReading = poDS->TestCapability(ODsCRandomLayerRead);
     if (bRandomLayerReading && !poODS->TestCapability(ODsCRandomLayerWrite) &&
         psOptions->aosLayers.size() != 1 && psOptions->osSQLStatement.empty() &&
         poDS->GetLayerCount() > 1 && !psOptions->bQuiet)
@@ -5841,12 +5840,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
     }
 
-    psInfo->m_bSupportCurves =
-        CPL_TO_BOOL(poDstLayer->TestCapability(OLCCurveGeometries));
-    psInfo->m_bSupportZ =
-        CPL_TO_BOOL(poDstLayer->TestCapability(OLCZGeometries));
-    psInfo->m_bSupportM =
-        CPL_TO_BOOL(poDstLayer->TestCapability(OLCMeasuredGeometries));
+    psInfo->m_bSupportCurves = poDstLayer->TestCapability(OLCCurveGeometries);
+    psInfo->m_bSupportZ = poDstLayer->TestCapability(OLCZGeometries);
+    psInfo->m_bSupportM = poDstLayer->TestCapability(OLCMeasuredGeometries);
 
     psInfo->m_sArrowArrayStream = std::move(streamSrc);
 

@@ -59,7 +59,7 @@ MIFFile::MIFFile(GDALDataset *poDS)
       m_nTexts(0), m_nPreloadedId(0), m_poMIDFile(nullptr),
       m_poMIFFile(nullptr), m_poDefn(nullptr), m_poSpatialRef(nullptr),
       m_nFeatureCount(0), m_nWriteFeatureId(-1), m_nAttribute(0),
-      m_bPreParsed(FALSE), m_bHeaderWrote(FALSE)
+      m_bPreParsed(false), m_bHeaderWrote(FALSE)
 {
     m_nCurFeatureId = 0;
     m_poCurFeature = nullptr;
@@ -780,7 +780,7 @@ void MIFFile::PreParseFile()
     GBool bPLine = FALSE;
     GBool bText = FALSE;
 
-    if (m_bPreParsed == TRUE)
+    if (m_bPreParsed)
         return;
 
     m_poMIFFile->Rewind();
@@ -884,7 +884,7 @@ void MIFFile::PreParseFile()
         m_poMIDFile->Rewind();
     }
 
-    m_bPreParsed = TRUE;
+    m_bPreParsed = true;
 }
 
 /**********************************************************************
@@ -2113,7 +2113,7 @@ OGRErr MIFFile::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MIFFile::TestCapability(const char *pszCap) const
+bool MIFFile::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

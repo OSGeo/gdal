@@ -39,7 +39,7 @@ OGRXODRLayerReferenceLine::OGRXODRLayerReferenceLine(
     m_poFeatureDefn->AddFieldDefn(&oFieldJunction);
 }
 
-int OGRXODRLayerReferenceLine::TestCapability(const char *pszCap) const
+bool OGRXODRLayerReferenceLine::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

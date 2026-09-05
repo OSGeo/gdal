@@ -80,7 +80,7 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
+bool OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

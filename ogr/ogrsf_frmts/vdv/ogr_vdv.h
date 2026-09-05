@@ -42,7 +42,7 @@ class OGRIDFDataSource final : public GDALDataset
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/
@@ -78,7 +78,7 @@ class OGRVDVLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -168,7 +168,7 @@ class OGRVDVWriterLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
@@ -213,7 +213,7 @@ class OGRVDVDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     void SetCurrentWriterLayer(OGRVDVWriterLayer *poLayer);
 

@@ -54,7 +54,7 @@ class OGRCADLayer final : public OGRLayer
     }
 
     std::set<CPLString> asFeaturesAttributes;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -87,7 +87,7 @@ class GDALCADDataset final : public GDALDataset
     }
 
     const OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     char **GetFileList() override;
     const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;

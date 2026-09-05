@@ -45,7 +45,7 @@ OGRJMLDataset::~OGRJMLDataset()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLDataset::TestCapability(const char *pszCap) const
+bool OGRJMLDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
