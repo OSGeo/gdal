@@ -174,9 +174,16 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         }
     };
 
-    typedef std::map<Point, std::vector<typename Lines::iterator>,
-                     PointCompare>
-        EndpointIndex;
+    // A marching squares point has degree two, so at most two line ends can
+    // sit on it (the two ends of the same line, when it has closed): a fixed
+    // two-slot entry avoids a heap allocation per endpoint.
+    struct EndpointEntry
+    {
+        typename Lines::iterator its[2];
+        int n = 0;
+    };
+
+    typedef std::map<Point, EndpointEntry, PointCompare> EndpointIndex;
     std::map<int, EndpointIndex> endpointIndex_;
 
     const LevelGenerator &levelGenerator_;
@@ -187,7 +194,9 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     void registerEndpoint_(EndpointIndex &idx, typename Lines::iterator it,
                            const Point &p)
     {
-        idx[p].push_back(it);
+        EndpointEntry &e = idx[p];
+        assert(e.n < 2);
+        e.its[e.n++] = it;
     }
 
     void unregisterEndpoint_(EndpointIndex &idx, typename Lines::iterator it,
@@ -195,11 +204,13 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     {
         auto f = idx.find(p);
         assert(f != idx.end());
-        auto &v = f->second;
-        auto e = std::find(v.begin(), v.end(), it);
-        assert(e != v.end());
-        v.erase(e);
-        if (v.empty())
+        EndpointEntry &e = f->second;
+        if (e.its[0] == it)
+            e.its[0] = e.its[1];
+        else
+            assert(e.n == 2 && e.its[1] == it);
+        e.n--;
+        if (e.n == 0)
             idx.erase(f);
     }
 
@@ -368,7 +379,7 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         auto findLine = [&](const Point &p)
         {
             auto f = idx.find(p);
-            return f == idx.end() ? lines.end() : f->second.front();
+            return f == idx.end() ? lines.end() : f->second.its[0];
         };
 
         Point matched = end;
@@ -416,12 +427,13 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
             }
             // is there another line ending at `added`?
             auto f = idx.find(added);
+            assert(f != idx.end());
             typename Lines::iterator other = lines.end();
-            for (auto cand : f->second)
+            for (int i = 0; i < f->second.n; i++)
             {
-                if (cand != it)
+                if (f->second.its[i] != it)
                 {
-                    other = cand;
+                    other = f->second.its[i];
                     break;
                 }
             }
@@ -488,6 +500,11 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         {
             unregisterEndpoint_(idxIt->second, it, it->ls.front());
             unregisterEndpoint_(idxIt->second, it, it->ls.back());
+            // An emptied index means no line is open at this level anymore:
+            // drop it so the level returns to the linear path until it grows
+            // past the threshold again.
+            if (idxIt->second.empty())
+                endpointIndex_.erase(idxIt);
         }
 
         // consume "it" and remove it from the list
