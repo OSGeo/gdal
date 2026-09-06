@@ -72,9 +72,10 @@ bool GDALVSISyncAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (!VSISync(m_source.c_str(), m_destination.c_str(), aosOptions.List(),
                  pfnProgress, pProgressData, nullptr))
     {
-        VSIStatBufL sStat;
-        VSIErrorReset();
         const auto nOldErrorNum = VSIGetLastErrorNo();
+        VSIErrorReset();
+
+        VSIStatBufL sStat;
         if (VSIStatL(m_source.c_str(), &sStat) != 0)
         {
             if (nOldErrorNum != VSIGetLastErrorNo())

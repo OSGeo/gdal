@@ -51,10 +51,11 @@ GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
 
 bool GDALVSIDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
+    const auto nOldErrorNum = VSIGetLastErrorNo();
+    VSIErrorReset();
+
     bool ret = false;
     VSIStatBufL sStat;
-    VSIErrorReset();
-    const auto nOldErrorNum = VSIGetLastErrorNo();
     if (VSIStatL(m_filename.c_str(), &sStat) != 0)
     {
         if (nOldErrorNum != VSIGetLastErrorNo())
