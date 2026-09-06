@@ -4157,7 +4157,7 @@ TEST_F(test_cpl, CPLQuadTreeRemoveThenReinsert)
 
     CPLQuadTree *hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
 
-    constexpr int N = 32;
+    static constexpr int N = 32;
     const auto featRect = [](int i)
     {
         CPLRectObj rect;
