@@ -42,6 +42,7 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     SegmentMerger(LineWriter &lineWriter, const LevelGenerator &levelGenerator,
                   bool polygonize_)
         : polygonize(polygonize_), lineWriter_(lineWriter), lines_(),
+          endpointIndex_(),
           levelGenerator_(levelGenerator), m_anSkipLevels()
     {
     }
