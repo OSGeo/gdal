@@ -4167,8 +4167,9 @@ TEST_F(test_cpl, CPLQuadTreeRemoveThenReinsert)
         rect.maxy = rect.miny + 0.5 / N;
         return rect;
     };
+    // offset by 1 so no feature handle is nullptr
     const auto feat = [](int i)
-    { return reinterpret_cast<void *>(static_cast<uintptr_t>(i)); };
+    { return reinterpret_cast<void *>(static_cast<uintptr_t>(i + 1)); };
 
     for (int i = 0; i < N * N; i++)
     {

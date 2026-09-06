@@ -426,8 +426,9 @@ static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
         bool bAllSubNodesEmpty = true;
         for (int i = 0; i < psNode->nNumSubNodes; i++)
         {
-            if (psNode->apSubNode[i]->nFeatures != 0 ||
-                psNode->apSubNode[i]->nNumSubNodes != 0)
+            if (psNode->apSubNode[i] &&
+                (psNode->apSubNode[i]->nFeatures != 0 ||
+                 psNode->apSubNode[i]->nNumSubNodes != 0))
             {
                 bAllSubNodesEmpty = false;
                 break;
@@ -437,7 +438,8 @@ static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
         {
             for (int i = 0; i < psNode->nNumSubNodes; i++)
             {
-                CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
+                if (psNode->apSubNode[i])
+                    CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
                 psNode->apSubNode[i] = nullptr;
             }
             psNode->nNumSubNodes = 0;
