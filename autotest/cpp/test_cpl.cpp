@@ -4144,6 +4144,73 @@ TEST_F(test_cpl, CPLQuadTree)
     CPLQuadTreeDestroy(hTree);
 }
 
+// Removing features must not degrade the tree structure: features inserted
+// after removals should still descend and split, not accumulate in the
+// bucket of a node whose subnodes were partially destroyed.
+TEST_F(test_cpl, CPLQuadTreeRemoveThenReinsert)
+{
+    CPLRectObj globalbounds;
+    globalbounds.minx = 0;
+    globalbounds.miny = 0;
+    globalbounds.maxx = 1;
+    globalbounds.maxy = 1;
+
+    CPLQuadTree *hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
+
+    constexpr int N = 32;
+    const auto featRect = [](int i)
+    {
+        CPLRectObj rect;
+        rect.minx = (0.25 + (i % N)) / N;
+        rect.miny = (0.25 + (i / N)) / N;
+        rect.maxx = rect.minx + 0.5 / N;
+        rect.maxy = rect.miny + 0.5 / N;
+        return rect;
+    };
+    const auto feat = [](int i)
+    { return reinterpret_cast<void *>(static_cast<uintptr_t>(i)); };
+
+    for (int i = 0; i < N * N; i++)
+    {
+        CPLRectObj rect = featRect(i);
+        CPLQuadTreeInsertWithBounds(hTree, feat(i), &rect);
+    }
+
+    // Empty out the left half of the domain, then reinsert the same
+    // features.
+    for (int i = 0; i < N * N; i++)
+    {
+        if (i % N < N / 2)
+        {
+            CPLRectObj rect = featRect(i);
+            CPLQuadTreeRemove(hTree, feat(i), &rect);
+        }
+    }
+    for (int i = 0; i < N * N; i++)
+    {
+        if (i % N < N / 2)
+        {
+            CPLRectObj rect = featRect(i);
+            CPLQuadTreeInsertWithBounds(hTree, feat(i), &rect);
+        }
+    }
+
+    int nFeatureCount = 0;
+    int nNodeCount = 0;
+    int nMaxDepth = 0;
+    int nMaxBucketCapacity = 0;
+    CPLQuadTreeGetStats(hTree, &nFeatureCount, &nNodeCount, &nMaxDepth,
+                        &nMaxBucketCapacity);
+    EXPECT_EQ(nFeatureCount, N * N);
+    EXPECT_LE(nMaxBucketCapacity, 16);
+
+    int nSearchCount = 0;
+    CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nSearchCount));
+    EXPECT_EQ(nSearchCount, N * N);
+
+    CPLQuadTreeDestroy(hTree);
+}
+
 // Test bUnlinkAndSize on VSIGetMemFileBuffer
 TEST_F(test_cpl, VSIGetMemFileBuffer_unlink_and_size)
 {
