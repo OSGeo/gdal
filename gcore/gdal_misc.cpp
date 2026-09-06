@@ -44,6 +44,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_typetraits.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_geos.h"
@@ -1060,6 +1061,108 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
         case GDT_TypeCount:
             break;
     }
+    return true;
+}
+
+/************************************************************************/
+/*                       GDALGetDataTypeLimits()                        */
+/************************************************************************/
+
+/**
+ * \brief Get the minimum and maximum values that can be stored in the
+ * specified data type, if those values can also be exactly stored in a double.
+ *
+ * @param eType type to check.
+ * @param pdfMin optional pointer to double where the minimum value will be stored
+ * @param pdfMax optional pointer to double where the maximum value will be stored
+ *
+ * @return true if the min/max values for the specified data type can be stored
+ * exactly in a double, false otherwise.
+ * @since GDAL 3.14
+ */
+bool GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
+                                   double *pdfMax)
+{
+    double dfMin, dfMax;
+
+    switch (eType)
+    {
+        case GDT_Int8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::max());
+            break;
+        case GDT_UInt8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::max());
+            break;
+        case GDT_Int16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::max());
+            break;
+        case GDT_UInt16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::max());
+            break;
+        case GDT_Int32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::max());
+            break;
+        case GDT_UInt32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::max());
+            break;
+        case GDT_Float16:
+            dfMin =
+                static_cast<double>(cpl::NumericLimits<cpl::Float16>::min());
+            dfMax =
+                static_cast<double>(cpl::NumericLimits<cpl::Float16>::max());
+            break;
+        case GDT_Float32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::max());
+            break;
+        case GDT_Float64:
+            dfMin = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::min();
+            dfMax = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::max();
+            break;
+        default:
+            return false;
+    }
+
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
     return true;
 }
 
