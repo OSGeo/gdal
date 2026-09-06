@@ -672,7 +672,7 @@ def test_contour_polygonize_many_disjoint_rings():
     assert total == pytest.approx(512 * 512, rel=0.02)
 
 
-def DISABLED_BECAUSE_TOO_SLOW_test_contour_polygonize_sawtooth_ring():
+def test_contour_polygonize_sawtooth_ring():
     """A comb-shaped region whose boundary ring is almost entirely vertical
     segments, each spanning nearly the full raster height. The ponds in the
     comb's base force the capture path that builds the point-in-polygon index

@@ -15,8 +15,11 @@
 #include "cpl_error.h"
 #include "point.h"
 
+#include <algorithm>
+#include <cassert>
 #include <list>
 #include <map>
+#include <vector>
 
 #include <iostream>
 
@@ -156,10 +159,49 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     LineWriter &lineWriter_;
     // lines of each level
     std::map<int, Lines> lines_;
+
+    // Index of the open lines of each level, keyed by their two endpoints.
+    // Marching squares emits segments whose endpoints have degree two, so a
+    // point can only ever be shared by two segment ends; a lookup here
+    // replaces a linear scan over all open lines, which is quadratic on
+    // rasters that keep many lines open at once (e.g. many long parallel
+    // contours crossing each scanline).
+    struct PointCompare
+    {
+        bool operator()(const Point &a, const Point &b) const
+        {
+            return a.x < b.x || (a.x == b.x && a.y < b.y);
+        }
+    };
+
+    typedef std::map<Point, std::vector<typename Lines::iterator>,
+                     PointCompare>
+        EndpointIndex;
+    std::map<int, EndpointIndex> endpointIndex_;
+
     const LevelGenerator &levelGenerator_;
 
     // Store 0-indexed levels to skip when polygonize option is set
     std::vector<int> m_anSkipLevels;
+
+    void registerEndpoint_(EndpointIndex &idx, typename Lines::iterator it,
+                           const Point &p)
+    {
+        idx[p].push_back(it);
+    }
+
+    void unregisterEndpoint_(EndpointIndex &idx, typename Lines::iterator it,
+                             const Point &p)
+    {
+        auto f = idx.find(p);
+        assert(f != idx.end());
+        auto &v = f->second;
+        auto e = std::find(v.begin(), v.end(), it);
+        assert(e != v.end());
+        v.erase(e);
+        if (v.empty())
+            idx.erase(f);
+    }
 
     void addSegment_(int levelIdx, const Point &start, const Point &end)
     {
@@ -171,6 +213,37 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
             debug("degenerate segment (%f %f)", start.x, start.y);
             return;
         }
+
+        auto idxIt = endpointIndex_.find(levelIdx);
+        if (idxIt == endpointIndex_.end())
+        {
+            addSegmentLinear_(levelIdx, lines, start, end);
+            // The linear scans above are quadratic when many lines stay open
+            // at once (e.g. long parallel contours crossing each scanline):
+            // past this size, switch the level to the endpoint index. Below
+            // it, the scans are cheaper than maintaining the index.
+            constexpr std::size_t INDEX_THRESHOLD = 100;
+            if (lines.size() > INDEX_THRESHOLD)
+            {
+                EndpointIndex &idx = endpointIndex_[levelIdx];
+                for (auto it = lines.begin(); it != lines.end(); ++it)
+                {
+                    registerEndpoint_(idx, it, it->ls.front());
+                    registerEndpoint_(idx, it, it->ls.back());
+                }
+            }
+        }
+        else
+        {
+            addSegmentIndexed_(levelIdx, lines, idxIt->second, start, end);
+        }
+    }
+
+    // Merge the segment by scanning the open lines: cheap while there are
+    // few of them, quadratic when there are many.
+    void addSegmentLinear_(int levelIdx, Lines &lines, const Point &start,
+                           const Point &end)
+    {
         // attempt to merge segment with existing line
         auto it = lines.begin();
         for (; it != lines.end(); ++it)
@@ -283,6 +356,125 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         }
     }
 
+    // Merge the segment through the endpoint index. Same merging rules as
+    // the linear scan (a marching squares point has degree two, so at most
+    // one line can match each of the segment's endpoints), but O(log n)
+    // lookups instead of O(n) scans.
+    void addSegmentIndexed_(int levelIdx, Lines &lines, EndpointIndex &idx,
+                            const Point &start, const Point &end)
+    {
+        // attempt to merge the segment with an existing line whose endpoint
+        // matches one of the segment's endpoints
+        auto findLine = [&](const Point &p)
+        {
+            auto f = idx.find(p);
+            return f == idx.end() ? lines.end() : f->second.front();
+        };
+
+        Point matched = end;
+        Point added = start;
+        typename Lines::iterator it = findLine(end);
+        if (it == lines.end())
+        {
+            matched = start;
+            added = end;
+            it = findLine(start);
+        }
+
+        if (it == lines.end())
+        {
+            // new line
+            lines.push_back(LineStringEx());
+            it = std::prev(lines.end());
+            it->ls.push_back(start);
+            it->ls.push_back(end);
+            it->isMerged = true;
+            registerEndpoint_(idx, it, start);
+            registerEndpoint_(idx, it, end);
+            return;
+        }
+
+        // extend the matched line with the segment's other endpoint
+        unregisterEndpoint_(idx, it, matched);
+        if (it->ls.back() == matched)
+            it->ls.push_back(added);
+        else
+            it->ls.push_front(added);
+        it->isMerged = true;
+        registerEndpoint_(idx, it, added);
+
+        // The extension may close a ring, or bring the line's new endpoint
+        // onto another line's endpoint; merging two lines moves the free
+        // endpoint again, so iterate until neither applies.
+        for (;;)
+        {
+            if (polygonize && it->ls.front() == it->ls.back())
+            {
+                // ring closed
+                emitLine_(levelIdx, it, /* closed */ true);
+                return;
+            }
+            // is there another line ending at `added`?
+            auto f = idx.find(added);
+            typename Lines::iterator other = lines.end();
+            for (auto cand : f->second)
+            {
+                if (cand != it)
+                {
+                    other = cand;
+                    break;
+                }
+            }
+            if (other == lines.end())
+                return;
+
+            // merge `other` into `it` at the shared point `added`
+            unregisterEndpoint_(idx, it, added);
+            unregisterEndpoint_(idx, other, added);
+            const Point otherEnd =
+                other->ls.front() == added ? other->ls.back()
+                                           : other->ls.front();
+            unregisterEndpoint_(idx, other, otherEnd);
+            if (it->ls.back() == added)
+            {
+                it->ls.pop_back();
+                if (other->ls.front() == added)
+                {
+                    it->ls.splice(it->ls.end(), other->ls);
+                }
+                else
+                {
+                    // opposite direction: append reversed
+                    for (auto rit = other->ls.rbegin(); rit != other->ls.rend();
+                         ++rit)
+                    {
+                        it->ls.push_back(*rit);
+                    }
+                }
+            }
+            else
+            {
+                it->ls.pop_front();
+                if (other->ls.back() == added)
+                {
+                    it->ls.splice(it->ls.begin(), other->ls);
+                }
+                else
+                {
+                    // opposite direction: prepend reversed
+                    for (auto rit = other->ls.begin(); rit != other->ls.end();
+                         ++rit)
+                    {
+                        it->ls.push_front(*rit);
+                    }
+                }
+            }
+            lines.erase(other);
+            registerEndpoint_(idx, it, otherEnd);
+            added = otherEnd;
+        }
+    }
+
     typename Lines::iterator emitLine_(int levelIdx,
                                        typename Lines::iterator it, bool closed)
     {
@@ -290,6 +482,13 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         Lines &lines = lines_[levelIdx];
         if (lines.empty())
             lines_.erase(levelIdx);
+
+        auto idxIt = endpointIndex_.find(levelIdx);
+        if (idxIt != endpointIndex_.end())
+        {
+            unregisterEndpoint_(idxIt->second, it, it->ls.front());
+            unregisterEndpoint_(idxIt->second, it, it->ls.back());
+        }
 
         // consume "it" and remove it from the list
         // but clear the line if the level should be skipped
