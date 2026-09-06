@@ -12,6 +12,8 @@
 
 #include "gdalalg_raster_proximity.h"
 
+#include <cmath>
+
 #include "cpl_conv.h"
 
 #include "gdal_alg.h"
@@ -76,6 +78,13 @@ bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         outputType = GDALGetDataTypeByName(m_outputDataType.c_str());
     }
 
+    if (GDALDataTypeIsComplex(outputType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Complex output types not supported");
+        return false;
+    }
+
     auto poTmpDS = CreateTemporaryDataset(
         poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(), 1, outputType,
         /* bTiledIfPossible = */ true, poSrcDS, /* bCopyMetadata = */ false);
@@ -108,44 +117,53 @@ bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             CPLSPrintf("FIXED_BUF_VAL=%.17g", m_fixedBufferValue));
     }
 
-    if (!GetArg("output-nodata")->IsExplicitlySet())
+    if (GetArg("output-nodata")->IsExplicitlySet())
     {
-        switch (outputType)
+        // Because GDALComputeProximity does all of its work with 32-bit floats,
+        // we need to check that a manually-specified NoData value can be represented
+        // as a 32-bit float. The default NoData value for some integer types
+        // also cannot be represented as 32-bit floats, but they still round-trip OK,
+        // so we only perform the runtime check for manually-specified values.
+        if (!std::isnan(m_noDataValue))
         {
-            case GDT_Int8:
-                m_noDataValue = std::numeric_limits<std::int8_t>::max();
-                break;
-            case GDT_UInt8:
-                m_noDataValue = std::numeric_limits<std::uint8_t>::max();
-                break;
-            case GDT_Int16:
-                m_noDataValue = std::numeric_limits<std::int16_t>::max();
-                break;
-            case GDT_UInt16:
-                m_noDataValue = std::numeric_limits<std::uint16_t>::max();
-                break;
-            case GDT_Int32:
-                m_noDataValue = std::numeric_limits<std::int32_t>::max();
-                break;
-            case GDT_UInt32:
-                m_noDataValue = std::numeric_limits<std::uint32_t>::max();
-                break;
-            case GDT_Float32:
-            case GDT_Float64:
-                m_noDataValue = std::numeric_limits<double>::quiet_NaN();
-                break;
-            default:
+            const float fNoData = static_cast<float>(m_noDataValue);
+            if (static_cast<double>(fNoData) != m_noDataValue)
+            {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "No default NoData value available for data type %s",
-                         GDALGetDataTypeName(outputType));
-                break;
+                         "gdal raster proximity requires the output NoData "
+                         "value to be representable as a 32-bit floating point "
+                         "number, but the specified value of %g cannot.",
+                         m_noDataValue);
+                return false;
+            }
+        }
+        dstBand->SetNoDataValue(m_noDataValue);
+    }
+    else if (outputType == GDT_Float16 || outputType == GDT_Float32 ||
+             outputType == GDT_Float64)
+    {
+        dstBand->SetNoDataValue(std::numeric_limits<double>::quiet_NaN());
+    }
+    else if (outputType == GDT_Int64)
+    {
+        constexpr auto nMax = std::numeric_limits<int64_t>::max();
+        dstBand->SetNoDataValueAsInt64(nMax);
+    }
+    else
+    {
+        double dfNoData;
+        if (GDALGetDataTypeMinMaxAsDouble(outputType, nullptr, &dfNoData))
+        {
+            dstBand->SetNoDataValue(dfNoData);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "No default NoData value for output data type %s",
+                     GDALGetDataTypeName(outputType));
+            return false;
         }
     }
-
-    CPLDebug("GDAL", "Using NoData value %g", m_noDataValue);
-
-    proximityOptions.AddString(CPLSPrintf("NODATA=%.17g", m_noDataValue));
-    dstBand->SetNoDataValue(m_noDataValue);
 
     // Always set this to YES. Note that this was NOT the
     // default behavior in the python implementation of the utility.
