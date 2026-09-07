@@ -34,10 +34,12 @@ def test_gdalalg_vsi_move_nominal(tmp_vsimem, tmp_path):
 
 def test_gdalalg_vsi_move_source_does_not_exist(tmp_vsimem):
 
+    gdal.ErrorReset()
+
     alg = get_alg()
     alg["source"] = tmp_vsimem / "i_do_not_exist.bin"
     alg["destination"] = tmp_vsimem / "dest.bin"
-    with pytest.raises(Exception, match="does not exist"):
+    with pytest.raises(Exception, match="cannot be accessed"):
         alg.Run()
 
 
@@ -56,9 +58,11 @@ def test_gdalalg_vsi_move_error(tmp_vsimem, tmp_path):
 @pytest.mark.require_curl()
 def test_gdalalg_vsi_move_source_does_not_exist_vsi():
 
+    gdal.ErrorReset()
+
     with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
         alg = get_alg()
         alg["source"] = "/vsioss/i_do_not/exist.bin"
         alg["destination"] = "/vsimem/"
-        with pytest.raises(Exception, match="InvalidCredentials"):
+        with pytest.raises(Exception, match="does not exist or cannot be accessed"):
             alg.Run()

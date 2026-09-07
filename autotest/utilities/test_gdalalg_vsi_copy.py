@@ -77,24 +77,28 @@ def test_gdalalg_vsi_copy_single_source_does_not_exist_vsi():
 @pytest.mark.require_curl()
 def test_gdalalg_vsi_copy_recursive_source_does_not_exist_vsi():
 
+    gdal.ErrorReset()
+
     with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
         alg = get_alg()
         alg["source"] = "/vsioss/i_do_not/exist.bin"
         alg["destination"] = "/vsimem/"
         alg["recursive"] = True
-        with pytest.raises(Exception, match="InvalidCredentials"):
+        with pytest.raises(Exception, match="cannot be accessed"):
             alg.Run()
 
 
 @pytest.mark.require_curl()
 def test_gdalalg_vsi_copy_recursive_slash_star_source_does_not_exist_vsi():
 
+    gdal.ErrorReset()
+
     with gdal.config_option("OSS_SECRET_ACCESS_KEY", ""):
         alg = get_alg()
         alg["source"] = "/vsioss/i_do_not/exist.bin/*"
         alg["destination"] = "/vsimem/"
         alg["recursive"] = True
-        with pytest.raises(Exception, match="InvalidCredentials"):
+        with pytest.raises(Exception, match="cannot be accessed"):
             alg.Run()
 
 
