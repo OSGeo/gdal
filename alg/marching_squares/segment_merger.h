@@ -42,8 +42,7 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
     SegmentMerger(LineWriter &lineWriter, const LevelGenerator &levelGenerator,
                   bool polygonize_)
         : polygonize(polygonize_), lineWriter_(lineWriter), lines_(),
-          endpointIndex_(),
-          levelGenerator_(levelGenerator), m_anSkipLevels()
+          endpointIndex_(), levelGenerator_(levelGenerator), m_anSkipLevels()
     {
     }
 
@@ -444,9 +443,9 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
             // merge `other` into `it` at the shared point `added`
             unregisterEndpoint_(idx, it, added);
             unregisterEndpoint_(idx, other, added);
-            const Point otherEnd =
-                other->ls.front() == added ? other->ls.back()
-                                           : other->ls.front();
+            const Point otherEnd = other->ls.front() == added
+                                       ? other->ls.back()
+                                       : other->ls.front();
             unregisterEndpoint_(idx, other, otherEnd);
             if (it->ls.back() == added)
             {
