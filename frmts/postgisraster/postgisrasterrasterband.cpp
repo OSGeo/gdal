@@ -900,8 +900,7 @@ CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,
 /************************************************************************/
 CPLErr PostGISRasterRasterBand::ComputeStatistics(
     int bApproxOK, double *pdfMin, double *pdfMax, double *pdfMean,
-    double *pdfStdDev, GDALProgressFunc pfnProgress, void *pProgressData,
-    CSLConstList papszOptions)
+    double *pdfStdDev, GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (!m_bStatsFetched)
     {
@@ -914,17 +913,14 @@ CPLErr PostGISRasterRasterBand::ComputeStatistics(
         *pdfMax = m_dfStatsMax;
         *pdfMean = m_dfStatsMean;
         *pdfStdDev = m_dfStatsStdDev;
-        if (CPLFetchBool(papszOptions, "SET_STATISTICS", true))
-        {
-            SetStatistics(m_dfStatsMin, m_dfStatsMax, m_dfStatsMean,
-                          m_dfStatsStdDev);
-        }
+        SetStatistics(m_dfStatsMin, m_dfStatsMax, m_dfStatsMean,
+                      m_dfStatsStdDev);
         return CE_None;
     }
     else
     {
         return VRTSourcedRasterBand::ComputeStatistics(
             bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
-            pProgressData, papszOptions);
+            pProgressData);
     }
 }

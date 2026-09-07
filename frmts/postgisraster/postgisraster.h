@@ -387,8 +387,7 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData,
-                                     CSLConstList papszOptions) override;
+                                     void *pProgressData) override;
 };
 
 /***********************************************************************
