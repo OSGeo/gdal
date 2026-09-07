@@ -25,6 +25,7 @@
 #include "cpl_quad_tree.h"
 #include <float.h>
 #include <map>
+#include <limits>
 
 // #define DEBUG_VERBOSE
 // #define DEBUG_QUERY
