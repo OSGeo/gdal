@@ -17,6 +17,8 @@
 #include "postgisraster.h"
 
 #include <algorithm>
+#include <limits>
+#include <cmath>
 
 /**
  * \brief Constructor.
