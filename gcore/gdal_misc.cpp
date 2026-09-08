@@ -1065,7 +1065,7 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                       GDALGetDataTypeLimits()                        */
+/*                   GDALGetDataTypeMinMaxAsDouble()                    */
 /************************************************************************/
 
 /**
@@ -1083,6 +1083,11 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
 bool GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
                                    double *pdfMax)
 {
+    if (static_cast<int>(eType) >= static_cast<int>(GDT_TypeCount))
+    {
+        return false;
+    }
+
     double dfMin, dfMax;
 
     switch (eType)
@@ -1136,26 +1141,32 @@ bool GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
                     gdal::GDALDataTypeTraits<GDT_UInt32>::type>::max());
             break;
         case GDT_Float16:
-            dfMin =
-                static_cast<double>(cpl::NumericLimits<cpl::Float16>::min());
-            dfMax =
-                static_cast<double>(cpl::NumericLimits<cpl::Float16>::max());
+            dfMin = static_cast<double>(cpl::NumericLimits<GFloat16>::lowest());
+            dfMax = static_cast<double>(cpl::NumericLimits<GFloat16>::max());
             break;
         case GDT_Float32:
             dfMin = static_cast<double>(
                 cpl::NumericLimits<
-                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::min());
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::lowest());
             dfMax = static_cast<double>(
                 cpl::NumericLimits<
                     gdal::GDALDataTypeTraits<GDT_Float32>::type>::max());
             break;
         case GDT_Float64:
             dfMin = cpl::NumericLimits<
-                gdal::GDALDataTypeTraits<GDT_Float64>::type>::min();
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::lowest();
             dfMax = cpl::NumericLimits<
                 gdal::GDALDataTypeTraits<GDT_Float64>::type>::max();
             break;
-        default:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Int64:
+        case GDT_UInt64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             return false;
     }
 
