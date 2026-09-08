@@ -1137,15 +1137,18 @@ if all the following conditions are met:
 The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
 Explicit assignment of target SRS and bounds are also possible.
 
+Exact preservation of pixel values is guaranteed only if a single strip image is
+generated, or said otherwise, if the block height is the image height.
+
 So, the following commands will use the lossless copy method :
 
 ::
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height>
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES       # some decompression differences possible
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -a_srs EPSG:4326 -a_ullr -180 90 180 -90
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height> -a_srs EPSG:4326 -a_ullr -180 90 180 -90
 
 
 whereas the following commands will *not* (and thus cause JPEG decompression and
@@ -1153,9 +1156,9 @@ compression):
 
 ::
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60 -co BLOCKYSIZE=<image-height>
 
-    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG
+    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height>
 
 
 Streaming operations
