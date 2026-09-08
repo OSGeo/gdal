@@ -30,7 +30,7 @@ pytestmark = pytest.mark.require_driver("ECW")
 ###############################################################################
 
 
-def has_write_support():
+def has_write_support(tmp_path):
     if hasattr(gdaltest, "b_ecw_has_write_support"):
         return gdaltest.b_ecw_has_write_support
     gdaltest.b_ecw_has_write_support = False
@@ -48,17 +48,19 @@ def has_write_support():
 
     ds = gdal.Open("data/ecw/jrc.ecw")
     if ds:
-        out_ds = ecw_drv.CreateCopy("tmp/jrc_out.ecw", ds, options=["TARGET=75"])
+        out_ds = ecw_drv.CreateCopy(
+            str(tmp_path / "jrc_out.ecw"), ds, options=["TARGET=75"]
+        )
         if out_ds:
             out_ds = None
             gdaltest.b_ecw_has_write_support = True
 
             try:
-                os.remove("tmp/jrc_out.ecw")
+                os.remove(str(tmp_path / "jrc_out.ecw"))
             except OSError:
                 pass
             try:
-                os.remove("tmp/jrc_out.ecw.aux.xml")
+                os.remove(str(tmp_path / "jrc_out.ecw.aux.xml"))
             except OSError:
                 pass
         else:
@@ -2269,14 +2271,16 @@ def test_ecw_online_1():
         "7sisters200.j2k",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 32316 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/7sisters200.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/7sisters200.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/7sisters200.j2k")
+    ds = gdal.Open(f"{tmp_dir}/7sisters200.j2k")
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2292,12 +2296,16 @@ def test_ecw_online_2():
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 1292 on my PC
-    tst = gdaltest.GDALTest("JP2ECW", "tmp/cache/gcp.jp2", 1, None, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "JP2ECW", f"{tmp_dir}/gcp.jp2", 1, None, filename_absolute=1
+    )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/gcp.jp2")
+    ds = gdal.Open(f"{tmp_dir}/gcp.jp2")
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
@@ -2323,15 +2331,17 @@ def ecw_online_3():
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 16481 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne1.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne1.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne1.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne1.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne1.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
     print(ds.GetRasterBand(1).Checksum())
     print(ds_ref.GetRasterBand(1).Checksum())
@@ -2362,15 +2372,17 @@ def test_ecw_online_4():
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 53054 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne2.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne2.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne2.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne2.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne2.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
     #    print(ds.GetRasterBand(1).Checksum())
     #    print(ds_ref.GetRasterBand(1).Checksum())
@@ -2391,7 +2403,9 @@ def test_ecw_online_5():
         "http://download.osgeo.org/gdal/data/ecw/red_flower.ecw", "red_flower.ecw"
     )
 
-    ds = gdal.Open("tmp/cache/red_flower.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/red_flower.ecw")
 
     if gdaltest.ecw_drv.major_version == 3:
         exp_mean, exp_stddev = (112.801, 52.0431)
@@ -2455,7 +2469,9 @@ def test_ecw_online_7():
         "sandiego2m_null.ecw",
     )
 
-    ds = gdal.Open("tmp/cache/sandiego2m_null.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/sandiego2m_null.ecw")
     if gdaltest.ecw_drv.major_version == 3:
         expected_band_count = 3
     else:

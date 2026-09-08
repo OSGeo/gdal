@@ -2,6 +2,7 @@
 import glob
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -55,7 +56,7 @@ def setup_proj_search_paths():
     assert os.path.exists(proj_grids_path)
 
     proj_db_tmpdir = os.path.join(
-        os.path.dirname(__file__), "gcore", "tmp", "proj_db_tmpdir"
+        tempfile.gettempdir(), "gdaltest", "gcore", "tmp", "proj_db_tmpdir"
     )
     proj_db_tmpdir_filename = os.path.join(proj_db_tmpdir, "proj.db")
     src_proj_db_filename = None

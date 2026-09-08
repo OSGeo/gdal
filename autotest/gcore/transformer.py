@@ -566,11 +566,11 @@ def test_transformer_9():
     reason="VRT driver open missing",
 )
 @pytest.mark.require_driver("GTX")
-def test_transformer_10():
+def test_transformer_10(tmp_path):
 
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName("GTX").Create(
-        "tmp/fake.gtx", 10, 10, 1, gdal.GDT_Float32
+        str(tmp_path / "fake.gtx"), 10, 10, 1, gdal.GDT_Float32
     )
     out_ds.SetGeoTransform([-180, 36, 0, 90, 0, -18])
     sr = osr.SpatialReference()
@@ -604,7 +604,7 @@ def test_transformer_10():
     vrt_dem = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/dem.vrt", ds_dem)
     ds_dem = None
 
-    vrt_dem.SetProjection("""COMPD_CS["WGS 84 + my_height",
+    vrt_dem.SetProjection(f"""COMPD_CS["WGS 84 + my_height",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -617,7 +617,7 @@ def test_transformer_10():
         AUTHORITY["EPSG","4326"]],
     VERT_CS["my_height",
         VERT_DATUM["my_height",0,
-            EXTENSION["PROJ4_GRIDS","./tmp/fake.gtx"]],
+            EXTENSION["PROJ4_GRIDS","{tmp_path}/fake.gtx"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP]]]""")
@@ -648,7 +648,7 @@ def test_transformer_10():
         and pnt[2] == 0
     ), "got wrong result."
 
-    gdal.GetDriverByName("GTX").Delete("tmp/fake.gtx")
+    gdal.GetDriverByName("GTX").Delete(str(tmp_path / "fake.gtx"))
     gdal.Unlink("/vsimem/dem.tif")
     gdal.Unlink("/vsimem/dem.vrt")
 

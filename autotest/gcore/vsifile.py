@@ -209,12 +209,12 @@ def test_vsifile_WRITE_THROUGH(tmp_path):
 # Test ftruncate >= 32 bit
 
 
-def test_vsifile_3():
+def test_vsifile_3(tmp_path):
 
-    if not gdaltest.filesystem_supports_sparse_files("tmp"):
+    if not gdaltest.filesystem_supports_sparse_files(tmp_path):
         pytest.skip()
 
-    filename = "tmp/vsifile_3"
+    filename = f"{tmp_path}/vsifile_3"
 
     fp = gdal.VSIFOpenL(filename, "wb+")
     gdal.VSIFTruncateL(fp, 10 * 1024 * 1024 * 1024)
@@ -307,9 +307,9 @@ def test_vsifile_5(tmp_path, cache_size):
 # Test vsicache an read errors (https://github.com/qgis/QGIS/issues/45293)
 
 
-def test_vsifile_vsicache_read_error():
+def test_vsifile_vsicache_read_error(tmp_path):
 
-    tmpfilename = "tmp/test_vsifile_vsicache_read_error.bin"
+    tmpfilename = f"{tmp_path}/test_vsifile_vsicache_read_error.bin"
     f = gdal.VSIFOpenL(tmpfilename, "wb")
     assert f
     try:
@@ -364,21 +364,21 @@ def test_vsifile_vsicache_read_error():
 # Test vsicache above 2 GB
 
 
-def test_vsifile_6():
+def test_vsifile_6(tmp_path):
 
-    if not gdaltest.filesystem_supports_sparse_files("tmp"):
+    if not gdaltest.filesystem_supports_sparse_files(tmp_path):
         pytest.skip()
 
     offset = 4 * 1024 * 1024 * 1024
 
     ref_data = "abcd".encode("ascii")
-    fp = gdal.VSIFOpenL("tmp/vsifile_6.bin", "wb")
+    fp = gdal.VSIFOpenL(f"{tmp_path}/vsifile_6.bin", "wb")
     gdal.VSIFSeekL(fp, offset, 0)
     gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
     # Sanity check without VSI_CACHE
-    fp = gdal.VSIFOpenL("tmp/vsifile_6.bin", "rb")
+    fp = gdal.VSIFOpenL(f"{tmp_path}/vsifile_6.bin", "rb")
     gdal.VSIFSeekL(fp, offset, 0)
     got_data = gdal.VSIFReadL(1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
@@ -387,14 +387,14 @@ def test_vsifile_6():
 
     # Real test now
     with gdal.config_option("VSI_CACHE", "YES"):
-        fp = gdal.VSIFOpenL("tmp/vsifile_6.bin", "rb")
+        fp = gdal.VSIFOpenL(f"{tmp_path}/vsifile_6.bin", "rb")
     gdal.VSIFSeekL(fp, offset, 0)
     got_data = gdal.VSIFReadL(1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
     assert ref_data == got_data
 
-    gdal.Unlink("tmp/vsifile_6.bin")
+    gdal.Unlink(f"{tmp_path}/vsifile_6.bin")
 
 
 ###############################################################################
@@ -634,9 +634,9 @@ def test_vsifile_11():
 # Test regular file system sparse file support
 
 
-def test_vsifile_12():
+def test_vsifile_12(tmp_path):
 
-    target_dir = "tmp"
+    target_dir = f"{tmp_path}"
 
     if gdal.VSISupportsSparseFiles(target_dir) == 0:
         pytest.skip()
@@ -979,12 +979,15 @@ def test_vsisync():
 # Test gdal.OpenDir()
 
 
-@pytest.mark.parametrize("basepath", ["/vsimem/", "tmp/"])
-def test_vsifile_opendir(basepath):
+@pytest.mark.parametrize("basepath", ["/vsimem/", "TMP_PATH"])
+def test_vsifile_opendir(tmp_path, basepath):
 
     # Non existing dir
     d = gdal.OpenDir(basepath + "/i_dont_exist")
     assert not d
+
+    if basepath == "TMP_PATH":
+        basepath = f"{tmp_path}"
 
     gdal.RmdirRecursive(basepath + "/vsifile_opendir")
 
@@ -1057,7 +1060,7 @@ def test_vsifile_opendir(basepath):
         if name == "test":
             entries_found.append(name)
             assert (entry.mode & 32768) != 0
-            if os.name == "posix" and basepath == "tmp/":
+            if os.name == "posix" and basepath == str(tmp_path):
                 assert entry.size == 0
         elif name == "subdir":
             entries_found.append(name)
@@ -1068,7 +1071,7 @@ def test_vsifile_opendir(basepath):
         elif name == "subdir/subdir2/test2":
             entries_found.append(name)
             assert (entry.mode & 32768) != 0
-            if os.name == "posix" and basepath == "tmp/":
+            if os.name == "posix" and basepath == str(tmp_path):
                 assert entry.size == 0
         else:
             assert False, entry.name
@@ -1168,7 +1171,7 @@ def test_vsitar_longfilename_ustar():
     )
 
 
-def test_unlink_batch():
+def test_unlink_batch(tmp_path):
 
     gdal.FileFromMemBuffer("/vsimem/foo", "foo")
     gdal.FileFromMemBuffer("/vsimem/bar", "bar")
@@ -1179,25 +1182,25 @@ def test_unlink_batch():
     assert not gdal.UnlinkBatch([])
 
     gdal.FileFromMemBuffer("/vsimem/foo", "foo")
-    open("tmp/bar", "wt").write("bar")
+    open(f"{tmp_path}/bar", "wt").write("bar")
     with gdal.quiet_errors():
-        assert not gdal.UnlinkBatch(["/vsimem/foo", "tmp/bar"])
+        assert not gdal.UnlinkBatch(["/vsimem/foo", f"{tmp_path}/bar"])
     gdal.Unlink("/vsimem/foo")
-    gdal.Unlink("tmp/bar")
+    gdal.Unlink(f"{tmp_path}/bar")
 
 
 ###############################################################################
 # Test gdal.RmdirRecursive()
 
 
-def test_vsifile_rmdirrecursive():
+def test_vsifile_rmdirrecursive(tmp_path):
 
-    gdal.Mkdir("tmp/rmdirrecursive", 493)
-    gdal.Mkdir("tmp/rmdirrecursive/subdir", 493)
-    open("tmp/rmdirrecursive/foo.bin", "wb").close()
-    open("tmp/rmdirrecursive/subdir/bar.bin", "wb").close()
-    assert gdal.RmdirRecursive("tmp/rmdirrecursive") == 0
-    assert not os.path.exists("tmp/rmdirrecursive")
+    gdal.Mkdir(tmp_path / "rmdirrecursive", 493)
+    gdal.Mkdir(tmp_path / "rmdirrecursive/subdir", 493)
+    open(tmp_path / "rmdirrecursive/foo.bin", "wb").close()
+    open(tmp_path / "rmdirrecursive/subdir/bar.bin", "wb").close()
+    assert gdal.RmdirRecursive(tmp_path / "rmdirrecursive") == 0
+    assert not os.path.exists(tmp_path / "rmdirrecursive")
 
 
 ###############################################################################

@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
 import shutil
 
 import gdaltest
@@ -111,13 +110,13 @@ def test_rpftoc_zone9():
 # Add an overview
 
 
-def test_rpftoc_4():
+def test_rpftoc_4(tmp_path):
 
-    shutil.copyfile("data/nitf/A.TOC", "tmp/A.TOC")
-    shutil.copyfile("data/nitf/RPFTOC01.ON2", "tmp/RPFTOC01.ON2")
+    shutil.copyfile("data/nitf/A.TOC", str(tmp_path / "A.TOC"))
+    shutil.copyfile("data/nitf/RPFTOC01.ON2", str(tmp_path / "RPFTOC01.ON2"))
 
     with gdal.config_option("RPFTOC_FORCE_RGBA", "YES"):
-        ds = gdal.Open("NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC")
+        ds = gdal.Open(f"NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:{tmp_path}/A.TOC")
         err = ds.BuildOverviews(overviewlist=[2, 4])
 
         assert err == 0, "BuildOverviews reports an error"
@@ -127,16 +126,12 @@ def test_rpftoc_4():
         ), "Overview missing on target file."
 
         ds = None
-        ds = gdal.Open("NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:tmp/A.TOC")
+        ds = gdal.Open(f"NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:{tmp_path}/A.TOC")
         assert (
             ds.GetRasterBand(1).GetOverviewCount() == 2
         ), "Overview missing on target file after re-open."
 
         ds = None
-
-    os.unlink("tmp/A.TOC")
-    os.unlink("tmp/A.TOC.1.ovr")
-    os.unlink("tmp/RPFTOC01.ON2")
 
 
 ###############################################################################

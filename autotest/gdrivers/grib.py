@@ -2043,7 +2043,9 @@ def test_grib_online_grib2_jpeg2000_single_line():
     filename = "CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2"
     gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/grib/" + filename)
 
-    ds = gdal.Open("tmp/cache/" + filename)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(tmp_dir + "/" + filename)
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0, "Could not open file"
     nd = ds.GetRasterBand(1).GetNoDataValue()

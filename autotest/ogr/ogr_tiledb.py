@@ -37,9 +37,9 @@ def get_tiledb_version():
 ###############################################################################
 
 
-def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
+def create_tiledb_dataset(tmp_path, nullable, batch_size, extra_feature=False):
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     srs = osr.SpatialReference()
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs.ImportFromEPSG(4326)
@@ -227,14 +227,14 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
 
 
 @pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
-def test_ogr_tiledb_basic(nullable, batch_size):
+def test_ogr_tiledb_basic(tmp_path, nullable, batch_size):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
     field_count, srs, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.Open("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open(tmp_path / "test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetGeomType() == ogr.wkbUnknown
@@ -734,7 +734,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
@@ -762,13 +762,13 @@ def test_ogr_tiledb_basic(nullable, batch_size):
         "TIN (((0 0,0 1,1 1,0 0)))",
     ],
 )
-def test_ogr_tiledb_geometry_types(wkt):
+def test_ogr_tiledb_geometry_types(tmp_path, wkt):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
     g = ogr.CreateGeometryFromWkt(wkt)
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     options = ["BOUNDS=-1e4,-1e4,1e4,1e4"]
     if g.GetGeometryType() in (ogr.wkbPoint, ogr.wkbPoint25D):
         options += ["GEOMETRY_NAME="]
@@ -779,7 +779,7 @@ def test_ogr_tiledb_geometry_types(wkt):
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(tmp_path / "test.tiledb")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == g.GetGeometryType()
     if g.GetGeometryType() in (ogr.wkbPoint, ogr.wkbPoint25D):
@@ -790,18 +790,18 @@ def test_ogr_tiledb_geometry_types(wkt):
     assert f.GetGeometryRef().ExportToIsoWkt() == wkt
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_compression():
+def test_ogr_tiledb_compression(tmp_path):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     lyr = ds.CreateLayer(
         "test", options=["BOUNDS=-1e4,-1e4,1e4,1e4", "COMPRESSION=ZSTD"]
     )
@@ -829,7 +829,7 @@ def test_ogr_tiledb_compression():
         lyr.CreateField(fld_defn)
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(tmp_path / "test.tiledb")
     lyr = ds.GetLayer(0)
     tiledb_md = json.loads(lyr.GetMetadata_List("json:TILEDB")[0])
     ds = None
@@ -838,7 +838,7 @@ def test_ogr_tiledb_compression():
     for attr in tiledb_md["schema"]["attributes"]:
         assert attr["filter_list"] == ["ZSTD"], attr
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
@@ -848,18 +848,20 @@ def test_ogr_tiledb_compression():
 @pytest.mark.skipif(
     test_cli_utilities.get_test_ogrsf_path() is None, reason="test_ogrsf not available"
 )
-def test_ogr_tiledb_test_ogrsf():
+def test_ogr_tiledb_test_ogrsf(tmp_path):
 
-    if os.path.exists("tmp/poly.tiledb"):
-        shutil.rmtree("tmp/poly.tiledb")
+    if os.path.exists(tmp_path / "poly.tiledb"):
+        shutil.rmtree(tmp_path / "poly.tiledb")
 
-    gdal.VectorTranslate("tmp/poly.tiledb", "data/poly.shp", format="TileDB")
-
-    ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " tmp/poly.tiledb"
+    gdal.VectorTranslate(
+        str(tmp_path / "poly.tiledb"), "data/poly.shp", format="TileDB"
     )
 
-    shutil.rmtree("tmp/poly.tiledb")
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + " " + str(tmp_path / "poly.tiledb")
+    )
+
+    shutil.rmtree(tmp_path / "poly.tiledb")
 
     assert "INFO" in ret
     assert "ERROR" not in ret
@@ -868,12 +870,12 @@ def test_ogr_tiledb_test_ogrsf():
 ###############################################################################
 
 
-def test_ogr_tiledb_dimension_names_open_option():
+def test_ogr_tiledb_dimension_names_open_option(tmp_path):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     lyr = ds.CreateLayer(
         "test",
         geom_type=ogr.wkbPoint,
@@ -884,40 +886,40 @@ def test_ogr_tiledb_dimension_names_open_option():
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(tmp_path / "test.tiledb")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
     ds = None
 
-    ds = gdal.Open("tmp/test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
+    ds = gdal.Open(tmp_path / "test.tiledb", open_options=["DIM_X=_Y", "DIM_Y=_X"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
     ds = None
 
     with pytest.raises(Exception):
-        gdal.Open("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
+        gdal.Open(tmp_path / "test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
 
     with pytest.raises(Exception):
         gdal.Open(
-            "tmp/test.tiledb",
+            tmp_path / "test.tiledb",
             gdal.OF_UPDATE,
             open_options=["DIM_X=invalid", "DIM_Y=_Y"],
         )
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_switch_between_read_and_write():
+def test_ogr_tiledb_switch_between_read_and_write(tmp_path):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     lyr = ds.CreateLayer("test", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
     lyr.ResetReading()
     assert lyr.TestCapability(ogr.OLCSequentialWrite)
@@ -963,7 +965,7 @@ def test_ogr_tiledb_switch_between_read_and_write():
 
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb", update=1)
+    ds = ogr.Open(tmp_path / "test.tiledb", update=1)
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCSequentialWrite)
     assert lyr.GetFeatureCount() == 3
@@ -991,19 +993,19 @@ def test_ogr_tiledb_switch_between_read_and_write():
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_create_group():
+def test_ogr_tiledb_create_group(tmp_path):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
     ds = ogr.GetDriverByName("TileDB").CreateDataSource(
-        "tmp/test.tiledb", options=["CREATE_GROUP=YES"]
+        str(tmp_path / "test.tiledb"), options=["CREATE_GROUP=YES"]
     )
     assert ds.TestCapability(ogr.ODsCCreateLayer)
     lyr = ds.CreateLayer("test", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
@@ -1013,10 +1015,10 @@ def test_ogr_tiledb_create_group():
     lyr2.CreateField(ogr.FieldDefn("field2", ogr.OFTString))
     ds = None
 
-    assert os.path.exists("tmp/test.tiledb/layers/test")
-    assert os.path.exists("tmp/test.tiledb/layers/test2")
+    assert os.path.exists(str(tmp_path / "test.tiledb/layers/test"))
+    assert os.path.exists(str(tmp_path / "test.tiledb/layers/test2"))
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(str(tmp_path / "test.tiledb"))
     assert ds.GetLayerCount() == 2
     lyr = ds.GetLayerByName("test")
     assert lyr
@@ -1031,32 +1033,32 @@ def test_ogr_tiledb_create_group():
         ds.CreateLayer("failed", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb", update=1)
+    ds = ogr.Open(str(tmp_path / "test.tiledb"), update=1)
     assert ds.TestCapability(ogr.ODsCCreateLayer)
     lyr = ds.CreateLayer("test3", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
     assert lyr
     ds = None
 
-    assert os.path.exists("tmp/test.tiledb/layers/test3")
+    assert os.path.exists(str(tmp_path / "test.tiledb/layers/test3"))
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(str(tmp_path / "test.tiledb"))
     assert ds.GetLayerCount() == 3
     lyr = ds.GetLayerByName("test3")
     assert lyr
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(str(tmp_path / "test.tiledb"))
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_errors():
+def test_ogr_tiledb_errors(tmp_path):
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(str(tmp_path / "test.tiledb"))
 
     with pytest.raises(Exception):
         ds.CreateLayer("test", geom_type=ogr.wkbNone)
@@ -1089,22 +1091,22 @@ def test_ogr_tiledb_errors():
         lyr.CreateFeature(f)
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(str(tmp_path / "test.tiledb"))
 
 
 ###############################################################################
 
 
 @pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
-def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
+def test_ogr_tiledb_arrow_stream_pyarrow(tmp_path, nullable, batch_size):
     pytest.importorskip("pyarrow")
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
     _, _, options = create_tiledb_dataset(nullable, batch_size)
 
-    ds = gdal.Open("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open(str(tmp_path / "test.tiledb"), open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
@@ -1194,31 +1196,31 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(str(tmp_path / "test.tiledb"))
 
 
 ###############################################################################
 
 
 @pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
-def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
+def test_ogr_tiledb_arrow_stream_numpy(tmp_path, nullable, batch_size):
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
     import datetime
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
     _, _, options = create_tiledb_dataset(nullable, batch_size, extra_feature=True)
 
-    ds = gdal.Open("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open(str(tmp_path / "test.tiledb"), open_options=options)
     lyr = ds.GetLayer(0)
 
     mapFeatures = {}
     for f in lyr:
         mapFeatures[f.GetFID()] = f
 
-    ds = gdal.Open("tmp/test.tiledb", open_options=options)
+    ds = gdal.Open(str(tmp_path / "test.tiledb"), open_options=options)
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
@@ -1425,20 +1427,20 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
+def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col(tmp_path):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(tmp_path / "test.tiledb"):
+        shutil.rmtree(tmp_path / "test.tiledb")
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(tmp_path / "test.tiledb")
     srs = osr.SpatialReference()
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs.ImportFromEPSG(4326)
@@ -1453,7 +1455,7 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.Open("tmp/test.tiledb")
+    ds = gdal.Open(str(tmp_path / "test.tiledb"))
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()
@@ -1469,20 +1471,20 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(str(tmp_path / "test.tiledb"))
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
+def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col(tmp_path):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(str(tmp_path / "test.tiledb"))
     srs = osr.SpatialReference()
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs.ImportFromEPSG(4326)
@@ -1497,7 +1499,7 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
     lyr.CreateFeature(f)
     ds = None
 
-    ds = gdal.Open("tmp/test.tiledb")
+    ds = gdal.Open(str(tmp_path / "test.tiledb"))
     lyr = ds.GetLayer(0)
 
     stream = lyr.GetArrowStreamAsNumPy()
@@ -1511,20 +1513,20 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(str(tmp_path / "test.tiledb"))
 
 
 ###############################################################################
 
 
-def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter():
+def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter(tmp_path):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+    if os.path.exists(str(tmp_path / "test.tiledb")):
+        shutil.rmtree(str(tmp_path / "test.tiledb"))
 
-    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource(str(tmp_path / "test.tiledb"))
     srs = osr.SpatialReference()
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs.ImportFromEPSG(32631)
@@ -1545,7 +1547,7 @@ def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter():
         lyr.CreateFeature(f)
     ds = None
 
-    ds = ogr.Open("tmp/test.tiledb")
+    ds = ogr.Open(str(tmp_path / "test.tiledb"))
     lyr = ds.GetLayer(0)
 
     eps = 1e-1
@@ -1611,7 +1613,7 @@ def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter():
 
     ds = None
 
-    shutil.rmtree("tmp/test.tiledb")
+    shutil.rmtree(tmp_path / "test.tiledb")
 
 
 ###############################################################################

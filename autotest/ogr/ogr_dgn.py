@@ -35,13 +35,6 @@ pytestmark = pytest.mark.require_driver("DGN")
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-    yield
-    gdaltest.clean_tmp()
-
-
-###############################################################################
 # Check first feature, a text element.
 
 
@@ -288,7 +281,9 @@ def test_ogr_dgn_online_1():
         "http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn", "DGNSample_v7.dgn"
     )
 
-    ds = ogr.Open("tmp/cache/DGNSample_v7.dgn")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"{tmp_dir}/DGNSample_v7.dgn")
     assert ds is not None
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(35)

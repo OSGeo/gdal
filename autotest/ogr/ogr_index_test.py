@@ -47,9 +47,9 @@ def startup_and_cleanup():
 
 
 @contextlib.contextmanager
-def create_index_p_test_file():
+def create_index_p_test_file(tmp_path):
     drv = ogr.GetDriverByName("MapInfo File")
-    with drv.CreateDataSource("tmp/index_p.mif") as p_ds:
+    with drv.CreateDataSource(tmp_path / "index_p.mif") as p_ds:
         p_lyr = p_ds.CreateLayer("index_p")
 
         ogrtest.quick_create_layer_def(p_lyr, [("PKEY", ogr.OFTInteger)])
@@ -62,13 +62,13 @@ def create_index_p_test_file():
 
     yield
 
-    ogr.GetDriverByName("MapInfo File").DeleteDataSource("tmp/index_p.mif")
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource(tmp_path / "index_p.mif")
 
 
 @contextlib.contextmanager
-def create_join_t_test_file(create_index=False):
+def create_join_t_test_file(tmp_path, create_index=False):
     drv = ogr.GetDriverByName("ESRI Shapefile")
-    with drv.CreateDataSource("tmp/join_t.dbf") as s_ds:
+    with drv.CreateDataSource(tmp_path / "join_t.dbf") as s_ds:
         s_lyr = s_ds.CreateLayer("join_t", geom_type=ogr.wkbNone)
 
         ogrtest.quick_create_layer_def(
@@ -84,22 +84,22 @@ def create_join_t_test_file(create_index=False):
 
     yield
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/join_t.dbf")
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(tmp_path / "join_t.dbf")
 
 
 ###############################################################################
 # Verify a simple join without indexing.
 
 
-def test_ogr_index_can_join_without_index():
+def test_ogr_index_can_join_without_index(tmp_path):
     expect = ["Value 5", "Value 10", "Value 9", "Value 4", "Value 3", "Value 1"]
 
-    with create_index_p_test_file(), create_join_t_test_file():
-        p_ds = ogr.OpenShared("tmp/index_p.mif", update=0)
+    with create_index_p_test_file(tmp_path), create_join_t_test_file(tmp_path):
+        p_ds = ogr.OpenShared(tmp_path / "index_p.mif", update=0)
 
         with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
-            + 'LEFT JOIN "tmp/join_t.dbf".join_t j ON p.PKEY = j.SKEY '
+            + 'LEFT JOIN "{}/join_t.dbf".join_t j ON p.PKEY = j.SKEY '.format(tmp_path)
         ) as sql_lyr:
 
             ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
@@ -109,9 +109,9 @@ def test_ogr_index_can_join_without_index():
 # Create an INDEX on the SKEY and VALUE field in the join table.
 
 
-def test_ogr_index_creating_index_causes_index_files_to_be_created():
-    with create_join_t_test_file(create_index=True):
-        for filename in ["tmp/join_t.idm", "tmp/join_t.ind"]:
+def test_ogr_index_creating_index_causes_index_files_to_be_created(tmp_path):
+    with create_join_t_test_file(tmp_path, create_index=True):
+        for filename in [tmp_path / "join_t.idm", tmp_path / "join_t.ind"]:
             assert os.path.exists(filename)
 
 
@@ -119,11 +119,11 @@ def test_ogr_index_creating_index_causes_index_files_to_be_created():
 # Check that indexable single int lookup works.
 
 
-def test_ogr_index_indexed_single_integer_lookup_works():
+def test_ogr_index_indexed_single_integer_lookup_works(tmp_path):
     expect = ["Value 5"]
 
-    with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("tmp/join_t.dbf", update=1)
+    with create_join_t_test_file(tmp_path, create_index=True):
+        s_ds = ogr.OpenShared(tmp_path / "join_t.dbf", update=1)
 
         s_lyr = s_ds.GetLayerByName("join_t")
         s_lyr.SetAttributeFilter("SKEY = 5")
@@ -135,11 +135,11 @@ def test_ogr_index_indexed_single_integer_lookup_works():
 # Check that indexable single string lookup works.
 
 
-def test_ogr_index_indexed_single_string_works():
+def test_ogr_index_indexed_single_string_works(tmp_path):
     expect = [5]
 
-    with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("tmp/join_t.dbf", update=1)
+    with create_join_t_test_file(tmp_path, create_index=True):
+        s_ds = ogr.OpenShared(tmp_path / "join_t.dbf", update=1)
         s_lyr = s_ds.GetLayerByName("join_t")
 
         s_lyr.SetAttributeFilter("VALUE='Value 5'")
@@ -151,11 +151,11 @@ def test_ogr_index_indexed_single_string_works():
 # Check that range query that isn't currently implemented using index works.
 
 
-def test_ogr_index_unimplemented_range_query_works():
+def test_ogr_index_unimplemented_range_query_works(tmp_path):
     expect = [0, 1, 2]
 
-    with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("tmp/join_t.dbf", update=1)
+    with create_join_t_test_file(tmp_path, create_index=True):
+        s_ds = ogr.OpenShared(tmp_path / "join_t.dbf", update=1)
         s_lyr = s_ds.GetLayerByName("join_t")
         s_lyr.SetAttributeFilter("SKEY < 3")
 
@@ -166,14 +166,16 @@ def test_ogr_index_unimplemented_range_query_works():
 # Try join again.
 
 
-def test_ogr_index_indexed_join_works():
+def test_ogr_index_indexed_join_works(tmp_path):
     expect = ["Value 5", "Value 10", "Value 9", "Value 4", "Value 3", "Value 1"]
 
-    with create_index_p_test_file(), create_join_t_test_file(create_index=True):
-        p_ds = ogr.OpenShared("tmp/index_p.mif", update=0)
+    with create_index_p_test_file(tmp_path), create_join_t_test_file(
+        tmp_path, create_index=True
+    ):
+        p_ds = ogr.OpenShared(tmp_path / "index_p.mif", update=0)
         with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
-            + 'LEFT JOIN "tmp/join_t.dbf".join_t j ON p.PKEY = j.SKEY '
+            + 'LEFT JOIN "{}/join_t.dbf".join_t j ON p.PKEY = j.SKEY '.format(tmp_path)
         ) as sql_lyr:
 
             ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
@@ -183,15 +185,15 @@ def test_ogr_index_indexed_join_works():
 # Test that dropping the index causes index files to be removed
 
 
-def test_ogr_index_drop_index_removes_files():
-    with create_join_t_test_file(create_index=True):
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+def test_ogr_index_drop_index_removes_files(tmp_path):
+    with create_join_t_test_file(tmp_path, create_index=True):
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # After dataset closing, check that the index files do not exist after
         # dropping the index
-        for filename in ["tmp/join_t.idm", "tmp/join_t.ind"]:
+        for filename in [tmp_path / "join_t.idm", tmp_path / "join_t.ind"]:
             assert not os.path.exists(filename)
 
 
@@ -199,11 +201,11 @@ def test_ogr_index_drop_index_removes_files():
 # Test that attribute filters work after an index on that attribute is dropped
 
 
-def test_ogr_index_attribute_filter_works_after_drop_index():
+def test_ogr_index_attribute_filter_works_after_drop_index(tmp_path):
     expect = ["Value 5"]
 
-    with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("tmp/join_t.dbf", update=1)
+    with create_join_t_test_file(tmp_path, create_index=True):
+        s_ds = ogr.OpenShared(tmp_path / "join_t.dbf", update=1)
         s_lyr = s_ds.GetLayerByName("join_t")
 
         s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
@@ -219,18 +221,18 @@ def test_ogr_index_attribute_filter_works_after_drop_index():
 # opened
 
 
-def test_ogr_index_recreating_index_causes_index_files_to_be_created():
+def test_ogr_index_recreating_index_causes_index_files_to_be_created(tmp_path):
 
-    with create_join_t_test_file(create_index=True):
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+    with create_join_t_test_file(tmp_path, create_index=True):
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
-        for filename in ["tmp/join_t.idm", "tmp/join_t.ind"]:
+        for filename in [tmp_path / "join_t.idm", tmp_path / "join_t.ind"]:
             try:
                 os.stat(filename)
             except (OSError, FileNotFoundError):
@@ -242,18 +244,18 @@ def test_ogr_index_recreating_index_causes_index_files_to_be_created():
 # to be placed in the re-created index file
 
 
-def test_ogr_index_recreating_index_causes_index_to_be_populated():
+def test_ogr_index_recreating_index_causes_index_to_be_populated(tmp_path):
 
-    with create_join_t_test_file(create_index=True):
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+    with create_join_t_test_file(tmp_path, create_index=True):
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
-        with open("tmp/join_t.idm", "rt") as f:
+        with open(tmp_path / "join_t.idm", "rt") as f:
             xml = f.read()
         assert xml.find("VALUE") != -1, "VALUE column is not indexed (1)"
 
@@ -263,24 +265,24 @@ def test_ogr_index_recreating_index_causes_index_to_be_populated():
 # columns to be indexed.
 
 
-def test_ogr_index_creating_index_in_separate_steps_works():
+def test_ogr_index_creating_index_in_separate_steps_works(tmp_path):
 
-    with create_join_t_test_file(create_index=True):
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+    with create_join_t_test_file(tmp_path, create_index=True):
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
             s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
         # Close the dataset and re-open
-        with ogr.OpenShared("tmp/join_t.dbf", update=1) as s_ds:
+        with ogr.OpenShared(tmp_path / "join_t.dbf", update=1) as s_ds:
             # At this point the .ind was opened in read-only. Now it
             # will be re-opened in read-write mode
             s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
 
-        with open("tmp/join_t.idm", "rt") as f:
+        with open(tmp_path / "join_t.idm", "rt") as f:
             xml = f.read()
         assert xml.find("VALUE") != -1, "VALUE column is not indexed (2)"
         assert xml.find("SKEY") != -1, "SKEY column is not indexed (2)"

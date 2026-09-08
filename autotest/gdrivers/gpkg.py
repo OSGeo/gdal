@@ -14,6 +14,7 @@
 
 import os
 import sys
+import tempfile
 
 import pytest
 from test_py_scripts import samples_path
@@ -28,6 +29,8 @@ import gdaltest
 from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GPKG")
+
+temp_dir = tempfile.gettempdir()
 
 
 ###############################################################################
@@ -78,7 +81,7 @@ def validate(filename, quiet=False):
 
     my_filename = filename
     if my_filename.startswith("/vsimem/"):
-        my_filename = "tmp/validate.gpkg"
+        my_filename = os.path.join(temp_dir, "validate.gpkg")
         f = gdal.VSIFOpenL(filename, "rb")
         if f is None:
             print("Cannot open %s" % filename)
@@ -3625,10 +3628,10 @@ def test_gpkg_48(tmp_path):
     old_pwd = os.getcwd()
     try:
         if sys.platform == "win32":
-            filename = os.path.join(os.getcwd(), "tmp", "byte.gpkg")
+            filename = os.path.join(os.getcwd(), temp_dir, "byte.gpkg")
         else:
             # Test Windows code path in a weird way...
-            os.chdir(os.path.join(old_pwd, "tmp"))
+            os.chdir(temp_dir)
             filename = "C:\\byte.gpkg"
 
         gdal.Translate(

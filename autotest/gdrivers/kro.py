@@ -67,18 +67,20 @@ def test_kro_4():
 # Test optimized IO
 
 
-def test_kro_5():
+def test_kro_5(tmp_path):
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
     if not gdaltest.filesystem_supports_sparse_files("tmp"):
         pytest.skip()
 
-    ds = gdal.GetDriverByName("KRO").Create("tmp/kro_5.kro", 100000, 10000, 4)
+    ds = gdal.GetDriverByName("KRO").Create(
+        str(tmp_path / "kro_5.kro"), 100000, 10000, 4
+    )
     ds = None
 
-    ds = gdal.Open("tmp/kro_5.kro")
+    ds = gdal.Open(str(tmp_path / "kro_5.kro"))
     ds.ReadRaster(int(ds.RasterXSize / 2), int(ds.RasterYSize / 2), 100, 100)
     ds = None
 
-    gdal.Unlink("tmp/kro_5.kro")
+    gdal.Unlink(str(tmp_path / "kro_5.kro"))

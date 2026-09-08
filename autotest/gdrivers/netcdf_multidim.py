@@ -16,6 +16,7 @@ import os
 import shutil
 import stat
 import struct
+import tempfile
 import time
 
 import gdaltest
@@ -660,14 +661,16 @@ def test_netcdf_multidim_read_netcdf_4d():
     assert dim_time.GetType() == gdal.DIM_TYPE_TEMPORAL
 
 
-def test_netcdf_multidim_create_nc3():
+def test_netcdf_multidim_create_nc3(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
     with gdal.quiet_errors():
         assert not drv.CreateMultiDimensional("/i_do/not_exist.nc")
 
     def f():
-        ds = drv.CreateMultiDimensional("tmp/multidim_nc3.nc", [], ["FORMAT=NC"])
+        ds = drv.CreateMultiDimensional(
+            str(tmp_path / "multidim_nc3.nc"), [], ["FORMAT=NC"]
+        )
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -778,7 +781,9 @@ def test_netcdf_multidim_create_nc3():
     f()
 
     def f2():
-        ds = gdal.Open("tmp/multidim_nc3.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc3.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -790,7 +795,9 @@ def test_netcdf_multidim_create_nc3():
     f2()
 
     def create_georeferenced():
-        ds = gdal.Open("tmp/multidim_nc3.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc3.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         dim_y = rg.CreateDimension("my_y", gdal.DIM_TYPE_HORIZONTAL_Y, None, 2)
@@ -822,15 +829,15 @@ def test_netcdf_multidim_create_nc3():
 
     create_georeferenced()
 
-    gdal.Unlink("tmp/multidim_nc3.nc")
+    gdal.Unlink(str(tmp_path / "multidim_nc3.nc"))
 
 
-def test_netcdf_multidim_create_nc4():
+def test_netcdf_multidim_create_nc4(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
 
     def f():
-        ds = drv.CreateMultiDimensional("tmp/multidim_nc4.nc")
+        ds = drv.CreateMultiDimensional(str(tmp_path / "multidim_nc4.nc"))
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -1248,7 +1255,9 @@ def test_netcdf_multidim_create_nc4():
     f()
 
     def f2():
-        ds = gdal.Open("tmp/multidim_nc4.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc4.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -1257,7 +1266,9 @@ def test_netcdf_multidim_create_nc4():
     f2()
 
     def f3():
-        ds = gdal.Open("tmp/multidim_nc4.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc4.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -1268,7 +1279,9 @@ def test_netcdf_multidim_create_nc4():
     f3()
 
     def create_georeferenced_projected(grp_name, set_dim_type):
-        ds = gdal.Open("tmp/multidim_nc4.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc4.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         subg = rg.CreateGroup(grp_name)
@@ -1319,7 +1332,9 @@ def test_netcdf_multidim_create_nc4():
         )
 
     def create_georeferenced_geographic(grp_name, set_dim_type):
-        ds = gdal.Open("tmp/multidim_nc4.nc", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        ds = gdal.Open(
+            str(tmp_path / "multidim_nc4.nc"), gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+        )
         assert ds
         rg = ds.GetRootGroup()
         subg = rg.CreateGroup(grp_name)
@@ -1368,12 +1383,12 @@ def test_netcdf_multidim_create_nc4():
             "georeferenced_geographic_without_dim_type", False
         )
 
-    gdal.Unlink("tmp/multidim_nc4.nc")
+    gdal.Unlink(str(tmp_path / "multidim_nc4.nc"))
 
 
-def test_netcdf_multidim_create_several_arrays_with_srs():
+def test_netcdf_multidim_create_several_arrays_with_srs(tmp_path):
 
-    tmpfilename = "tmp/several_arrays_with_srs.nc"
+    tmpfilename = str(tmp_path / "several_arrays_with_srs.nc")
 
     def create():
         drv = gdal.GetDriverByName("netCDF")
@@ -1471,9 +1486,9 @@ def test_netcdf_multidim_create_several_arrays_with_srs():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_create_dim_zero():
+def test_netcdf_multidim_create_dim_zero(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_create_dim_zero_in.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_multidim_create_dim_zero_in.nc")
 
     def create():
         drv = gdal.GetDriverByName("netCDF")
@@ -1488,7 +1503,7 @@ def test_netcdf_multidim_create_dim_zero():
 
     create()
 
-    tmpfilename2 = "tmp/test_netcdf_multidim_create_dim_zero_out.nc"
+    tmpfilename2 = str(tmp_path / "test_netcdf_multidim_create_dim_zero_out.nc")
 
     def copy():
         out_ds = gdal.MultiDimTranslate(tmpfilename2, tmpfilename, format="netCDF")
@@ -1510,7 +1525,7 @@ def test_netcdf_multidim_create_dim_zero():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_netcdf_multidim_dims_with_same_name_different_size():
+def test_netcdf_multidim_dims_with_same_name_different_size(tmp_path):
 
     src_ds = gdal.Open(
         """<VRTDataset>
@@ -1528,7 +1543,9 @@ def test_netcdf_multidim_dims_with_same_name_different_size():
         gdal.OF_MULTIDIM_RASTER,
     )
 
-    tmpfilename = "tmp/test_netcdf_multidim_dims_with_same_name_different_size.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_dims_with_same_name_different_size.nc"
+    )
     gdal.GetDriverByName("netCDF").CreateCopy(tmpfilename, src_ds)
 
     def check():
@@ -1579,9 +1596,11 @@ def test_netcdf_multidim_getmdarraynames_options():
     assert "mygridmapping" in rg.GetMDArrayNames(["SHOW_ZERO_DIM=YES"])
 
 
-def test_netcdf_multidim_indexing_var_through_coordinates_opposite_order():
+def test_netcdf_multidim_indexing_var_through_coordinates_opposite_order(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    )
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1634,9 +1653,11 @@ def test_netcdf_multidim_indexing_var_through_coordinates_opposite_order():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_same_order():
+def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_same_order(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    )
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1696,9 +1717,13 @@ def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_same_order():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_opposite_order():
+def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_opposite_order(
+    tmp_path,
+):
 
-    tmpfilename = "tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_indexing_var_through_coordinates.nc"
+    )
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1758,9 +1783,9 @@ def test_netcdf_multidim_indexing_var_through_coordinates_2D_dims_opposite_order
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_indexing_var_single_dim():
+def test_netcdf_multidim_indexing_var_single_dim(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_indexing_var_single_dim.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_multidim_indexing_var_single_dim.nc")
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1786,9 +1811,11 @@ def test_netcdf_multidim_indexing_var_single_dim():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_indexing_var_single_dim_two_candidates():
+def test_netcdf_multidim_indexing_var_single_dim_two_candidates(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_indexing_var_single_dim_two_candidates.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_indexing_var_single_dim_two_candidates.nc"
+    )
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1812,9 +1839,9 @@ def test_netcdf_multidim_indexing_var_single_dim_two_candidates():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_stats():
+def test_netcdf_multidim_stats(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_stats.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_multidim_stats.nc")
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1955,9 +1982,9 @@ def test_netcdf_multidim_advise_read():
         assert var.AdviseRead(array_start_idx=[2, 3], count=[20, 5]) == gdal.CE_Failure
 
 
-def test_netcdf_multidim_get_mask():
+def test_netcdf_multidim_get_mask(tmp_path):
 
-    tmpfilename = "tmp/test_netcdf_multidim_get_mask.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_multidim_get_mask.nc")
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
@@ -1991,10 +2018,10 @@ def test_netcdf_multidim_get_mask():
         drv.Delete(tmpfilename)
 
 
-def test_netcdf_multidim_createcopy_array_options():
+def test_netcdf_multidim_createcopy_array_options(tmp_path):
 
     src_ds = gdal.Open("data/netcdf/byte_no_cf.nc", gdal.OF_MULTIDIM_RASTER)
-    tmpfilename = "tmp/test_netcdf_multidim_createcopy_array_options.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_multidim_createcopy_array_options.nc")
     with gdal.quiet_errors():
         gdal.GetDriverByName("netCDF").CreateCopy(
             tmpfilename,
@@ -2018,11 +2045,11 @@ def test_netcdf_multidim_createcopy_array_options():
     gdal.Unlink(tmpfilename)
 
 
-def test_netcdf_multidim_createcopy_array_options_if_name_fullname():
+def test_netcdf_multidim_createcopy_array_options_if_name_fullname(tmp_path):
 
     src_ds = gdal.Open("data/netcdf/byte_no_cf.nc", gdal.OF_MULTIDIM_RASTER)
-    tmpfilename = (
-        "tmp/test_netcdf_multidim_createcopy_array_options_if_name_fullname.nc"
+    tmpfilename = str(
+        tmp_path / "test_netcdf_multidim_createcopy_array_options_if_name_fullname.nc"
     )
     with gdal.quiet_errors():
         gdal.GetDriverByName("netCDF").CreateCopy(
@@ -2106,9 +2133,9 @@ def test_netcdf_multidim_getresampled_with_geoloc():
     assert not os.path.exists("data/netcdf/sentinel5p_fake.nc.aux.xml")
 
 
-def test_netcdf_multidim_cache():
+def test_netcdf_multidim_cache(tmp_path):
 
-    tmpfilename = "tmp/test.nc"
+    tmpfilename = str(tmp_path / "test.nc")
     shutil.copy("data/netcdf/alldatatypes.nc", tmpfilename)
     gdal.Unlink(tmpfilename + ".gmac")
 
@@ -2179,30 +2206,38 @@ def test_netcdf_multidim_cache():
 
 
 def test_netcdf_multidim_cache_pamproxydb():
+
+    temp_dir = tempfile.gettempdir()
+
     def remove_dir():
         try:
-            os.chmod("tmp/tmpdirreadonly", stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-            shutil.rmtree("tmp/tmpdirreadonly")
+            os.chmod(
+                os.path.join(temp_dir, "tmpdirreadonly"),
+                stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR,
+            )
+            shutil.rmtree(os.path.join(temp_dir, "tmpdirreadonly"))
         except OSError:
             pass
         try:
-            shutil.rmtree("tmp/tmppamproxydir")
+            shutil.rmtree(os.path.join(temp_dir, "tmppamproxydir"))
         except OSError:
             pass
 
     # Create a read-only directory
     remove_dir()
-    os.mkdir("tmp/tmpdirreadonly")
-    os.mkdir("tmp/tmppamproxydir")
-    shutil.copy("data/netcdf/byte_no_cf.nc", "tmp/tmpdirreadonly/test.nc")
+    os.mkdir(os.path.join(temp_dir, "tmpdirreadonly"))
+    os.mkdir(os.path.join(temp_dir, "tmppamproxydir"))
+    shutil.copy(
+        "data/netcdf/byte_no_cf.nc", os.path.join(temp_dir, "tmpdirreadonly/test.nc")
+    )
 
     # FIXME: how do we create a read-only dir on windows ?
     # The following has no effect
-    os.chmod("tmp/tmpdirreadonly", stat.S_IRUSR | stat.S_IXUSR)
+    os.chmod(os.path.join(temp_dir, "tmpdirreadonly"), stat.S_IRUSR | stat.S_IXUSR)
 
     # Test that the directory is really read-only
     try:
-        f = open("tmp/tmpdirreadonly/test", "w")
+        f = open(os.path.join(temp_dir, "tmpdirreadonly/test"), "w")
         if f is not None:
             f.close()
             remove_dir()
@@ -2250,11 +2285,13 @@ def test_netcdf_multidim_open_vsimem():
 # Test /vsi access through userfaultfd
 
 
-def test_netcdf_multidim_open_userfaultfd():
+def test_netcdf_multidim_open_userfaultfd(tmp_path):
 
-    gdal.Unlink("tmp/test_netcdf_open_userfaultfd.zip")
+    gdal.Unlink(str(tmp_path / "test_netcdf_open_userfaultfd.zip"))
 
-    f = gdal.VSIFOpenL("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc", "wb")
+    f = gdal.VSIFOpenL(
+        "/vsizip/" + str(tmp_path) + "/test_netcdf_open_userfaultfd.zip/test.nc", "wb"
+    )
     assert f
     data = open("data/netcdf/byte_no_cf.nc", "rb").read()
     gdal.VSIFWriteL(data, 1, len(data), f)
@@ -2267,7 +2304,9 @@ def test_netcdf_multidim_open_userfaultfd():
     if netcdf.has_working_userfaultfd():
         assert (
             gdal.Open(
-                "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
+                "/vsizip/"
+                + str(tmp_path)
+                + "/test_netcdf_open_userfaultfd.zip/test.nc",
                 gdal.OF_MULTIDIM_RASTER,
             )
             is not None
@@ -2276,13 +2315,15 @@ def test_netcdf_multidim_open_userfaultfd():
         with gdal.quiet_errors():
             assert (
                 gdal.Open(
-                    "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
+                    "/vsizip/"
+                    + str(tmp_path)
+                    + "/test_netcdf_open_userfaultfd.zip/test.nc",
                     gdal.OF_MULTIDIM_RASTER,
                 )
                 is None
             )
 
-    gdal.Unlink("tmp/test_netcdf_open_userfaultfd.zip")
+    gdal.Unlink(str(tmp_path / "test_netcdf_open_userfaultfd.zip"))
 
 
 ###############################################################################
@@ -2333,7 +2374,7 @@ def test_netcdf_multidim_open_char_2d_zero_dim():
 )
 @pytest.mark.parametrize("has_one_sample_z_dim", [False, True])
 def test_netcdf_multidim_read_transposed_optimized_last_2dims(
-    datatype, request_datatype, has_one_sample_z_dim
+    tmp_path, datatype, request_datatype, has_one_sample_z_dim
 ):
 
     map_gdal_datatype_to_array_letter = {
@@ -2351,7 +2392,10 @@ def test_netcdf_multidim_read_transposed_optimized_last_2dims(
 
     def f():
         ds = drv.CreateMultiDimensional(
-            "tmp/test_netcdf_multidim_read_transposed_optimized_last_2dims.nc"
+            str(
+                tmp_path
+                / "test_netcdf_multidim_read_transposed_optimized_last_2dims.nc"
+            )
         )
         assert ds
         rg = ds.GetRootGroup()
@@ -2401,7 +2445,12 @@ def test_netcdf_multidim_read_transposed_optimized_last_2dims(
     try:
         f()
     finally:
-        gdal.Unlink("tmp/test_netcdf_multidim_read_transposed_optimized_last_2dims.nc")
+        gdal.Unlink(
+            str(
+                tmp_path
+                / "test_netcdf_multidim_read_transposed_optimized_last_2dims.nc"
+            )
+        )
 
 
 ###############################################################################
@@ -2418,7 +2467,7 @@ def test_netcdf_multidim_read_transposed_optimized_last_2dims(
     ],
 )
 def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
-    datatype, request_datatype
+    tmp_path, datatype, request_datatype
 ):
 
     map_gdal_datatype_to_array_letter = {
@@ -2434,7 +2483,10 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
 
     def f():
         ds = drv.CreateMultiDimensional(
-            "tmp/test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc"
+            str(
+                tmp_path
+                / "test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc"
+            )
         )
         assert ds
         rg = ds.GetRootGroup()
@@ -2479,7 +2531,10 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
         f()
     finally:
         gdal.Unlink(
-            "tmp/test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc"
+            str(
+                tmp_path
+                / "test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc"
+            )
         )
 
 
@@ -2496,7 +2551,9 @@ def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(
         (gdal.GDT_Float64, gdal.GDT_Float64),
     ],
 )
-def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datatype):
+def test_netcdf_multidim_read_transposed_3d_general_case(
+    tmp_path, datatype, request_datatype
+):
 
     map_gdal_datatype_to_array_letter = {
         gdal.GDT_UInt8: "B",
@@ -2511,7 +2568,7 @@ def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datat
 
     def f():
         ds = drv.CreateMultiDimensional(
-            "tmp/test_netcdf_multidim_read_transposed_3d_general_case.nc"
+            str(tmp_path / "test_netcdf_multidim_read_transposed_3d_general_case.nc")
         )
         assert ds
         rg = ds.GetRootGroup()
@@ -2550,7 +2607,9 @@ def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datat
     try:
         f()
     finally:
-        gdal.Unlink("tmp/test_netcdf_multidim_read_transposed_3d_general_case.nc")
+        gdal.Unlink(
+            str(tmp_path / "test_netcdf_multidim_read_transposed_3d_general_case.nc")
+        )
 
 
 ###############################################################################
@@ -2558,13 +2617,13 @@ def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datat
 # large than it would take forever to read with a non-optimized implementation
 
 
-def test_netcdf_multidim_read_transposed_bigger_file():
+def test_netcdf_multidim_read_transposed_bigger_file(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
 
     def create():
         ds = drv.CreateMultiDimensional(
-            "tmp/test_netcdf_multidim_read_transposed_bigger_file.nc"
+            str(tmp_path / "test_netcdf_multidim_read_transposed_bigger_file.nc")
         )
         assert ds
         rg = ds.GetRootGroup()
@@ -2587,7 +2646,7 @@ def test_netcdf_multidim_read_transposed_bigger_file():
     create()
 
     ds = gdal.Open(
-        "tmp/test_netcdf_multidim_read_transposed_bigger_file.nc",
+        str(tmp_path / "test_netcdf_multidim_read_transposed_bigger_file.nc"),
         gdal.OF_MULTIDIM_RASTER,
     )
     rg = ds.GetRootGroup()
@@ -2599,7 +2658,7 @@ def test_netcdf_multidim_read_transposed_bigger_file():
     delay = time.time() - start
     assert delay < 1
 
-    gdal.Unlink("tmp/test_netcdf_multidim_read_transposed_bigger_file.nc")
+    gdal.Unlink(str(tmp_path / "test_netcdf_multidim_read_transposed_bigger_file.nc"))
 
 
 def test_netcdf_multidim_var_alldatatypes_opened_twice():
@@ -2677,9 +2736,9 @@ def test_netcdf_read_missing_value_text_numeric_not_in_range():
 ###############################################################################
 
 
-def test_netcdf_read_missing_value_of_different_type():
+def test_netcdf_read_missing_value_of_different_type(tmp_path):
 
-    filename = "tmp/test_netcdf_read_missing_value_of_different_type.nc"
+    filename = str(tmp_path / "test_netcdf_read_missing_value_of_different_type.nc")
 
     def create():
         ds = gdal.GetDriverByName("netCDF").CreateMultiDimensional(filename)
@@ -2716,9 +2775,11 @@ def test_netcdf_read_missing_value_of_different_type():
 ###############################################################################
 
 
-def test_netcdf_read_missing_value_of_different_type_not_in_range():
+def test_netcdf_read_missing_value_of_different_type_not_in_range(tmp_path):
 
-    filename = "tmp/test_netcdf_read_missing_value_of_different_type_not_in_range.nc"
+    filename = str(
+        tmp_path / "test_netcdf_read_missing_value_of_different_type_not_in_range.nc"
+    )
 
     def create():
         ds = gdal.GetDriverByName("netCDF").CreateMultiDimensional(filename)
@@ -2756,10 +2817,10 @@ def test_netcdf_read_missing_value_of_different_type_not_in_range():
 ###############################################################################
 
 
-def test_netcdf_multidim_update_missing_value():
+def test_netcdf_multidim_update_missing_value(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_update_missing_value.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_update_missing_value.nc")
 
     def create():
         ds = drv.CreateMultiDimensional(filename)
@@ -2797,10 +2858,12 @@ def test_netcdf_multidim_update_missing_value():
 ###############################################################################
 
 
-def test_netcdf_multidim_update_missing_value_and_FillValue():
+def test_netcdf_multidim_update_missing_value_and_FillValue(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_update_missing_value_and_FillValue.nc"
+    filename = str(
+        tmp_path / "test_netcdf_multidim_update_missing_value_and_FillValue.nc"
+    )
 
     def create():
         ds = drv.CreateMultiDimensional(filename)
@@ -2882,10 +2945,10 @@ def test_netcdf_multidim_USE_DEFAULT_FILL_AS_NODATA():
 ###############################################################################
 
 
-def test_netcdf_multidim_resize_fill():
+def test_netcdf_multidim_resize_fill(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_resize_fill.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_resize_fill.nc")
 
     def create():
         ds = drv.CreateMultiDimensional(filename)
@@ -2967,10 +3030,10 @@ def test_netcdf_multidim_resize_fill():
 ###############################################################################
 
 
-def test_netcdf_multidim_resize_no_fill():
+def test_netcdf_multidim_resize_no_fill(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_resize_no_fill.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_resize_no_fill.nc")
 
     def create():
         ds = drv.CreateMultiDimensional(filename)
@@ -3022,10 +3085,10 @@ def test_netcdf_multidim_resize_no_fill():
 ###############################################################################
 
 
-def test_netcdf_multidim_resize_dim_referenced_twice():
+def test_netcdf_multidim_resize_dim_referenced_twice(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_resize_dim_referenced_twice.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_resize_dim_referenced_twice.nc")
 
     def create():
         ds = drv.CreateMultiDimensional(filename)
@@ -3072,10 +3135,10 @@ def test_netcdf_multidim_resize_dim_referenced_twice():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_rename_dim():
+def test_netcdf_multidim_rename_dim(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_rename_dim.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_rename_dim.nc")
 
     def test():
         ds = drv.CreateMultiDimensional(filename)
@@ -3136,10 +3199,10 @@ def test_netcdf_multidim_rename_dim():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_rename_group():
+def test_netcdf_multidim_rename_group(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_rename_group.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_rename_group.nc")
 
     def test():
         ds = drv.CreateMultiDimensional(filename)
@@ -3241,10 +3304,10 @@ def test_netcdf_multidim_rename_group():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_rename_array():
+def test_netcdf_multidim_rename_array(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_rename_array.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_rename_array.nc")
 
     def test():
         ds = drv.CreateMultiDimensional(filename)
@@ -3305,10 +3368,10 @@ def test_netcdf_multidim_rename_array():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_rename_attribute():
+def test_netcdf_multidim_rename_attribute(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_rename_attribute.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_rename_attribute.nc")
 
     def test():
         ds = drv.CreateMultiDimensional(filename)
@@ -3395,9 +3458,9 @@ def test_netcdf_multidim_rename_attribute():
 ###############################################################################
 
 
-def test_netcdf_multidim_copy_group_with_indexing_variable_after_regular_var():
+def test_netcdf_multidim_copy_group_with_indexing_variable_after_regular_var(tmp_path):
 
-    outfilename = "tmp/out.nc"
+    outfilename = str(tmp_path / "out.nc")
 
     try:
 
@@ -3458,10 +3521,10 @@ def test_netcdf_multidim_copy_group_with_indexing_variable_after_regular_var():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_delete_attribute():
+def test_netcdf_multidim_delete_attribute(tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    filename = "tmp/test_netcdf_multidim_delete_attribute.nc"
+    filename = str(tmp_path / "test_netcdf_multidim_delete_attribute.nc")
 
     def test():
         ds = drv.CreateMultiDimensional(filename)
@@ -3527,9 +3590,11 @@ def test_netcdf_multidim_delete_attribute():
 
 
 @gdaltest.enable_exceptions()
-def test_netcdf_multidim_compute_statistics_update_metadata():
+def test_netcdf_multidim_compute_statistics_update_metadata(tmp_path):
 
-    filename = "tmp/test_netcdf_multidim_compute_statistics_update_metadata.nc"
+    filename = str(
+        tmp_path / "test_netcdf_multidim_compute_statistics_update_metadata.nc"
+    )
     shutil.copy("data/netcdf/byte_no_cf.nc", filename)
 
     def test():

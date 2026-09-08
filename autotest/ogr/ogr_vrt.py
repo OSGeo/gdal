@@ -502,7 +502,9 @@ def test_ogr_vrt_14(tmp_path):
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find("GEOS support not enabled") != -1:
             vrt_ds = None
-            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                tmp_path / "test.shp"
+            )
             pytest.skip()
 
         print(vrt_lyr.GetFeatureCount())
@@ -841,7 +843,9 @@ def test_ogr_vrt_20(tmp_path):
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find("GEOS support not enabled") != -1:
             vrt_ds = None
-            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                tmp_path / "test.shp"
+            )
             pytest.skip()
 
         print(vrt_lyr.GetFeatureCount())

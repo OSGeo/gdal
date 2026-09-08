@@ -545,75 +545,75 @@ def test_vrtwarp_sourcedataset_all_relatives(tmp_vsimem):
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_relative_dest_absolute():
+def test_vrtwarp_sourcedataset_source_relative_dest_absolute(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
     try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
+        src_ds = gdal.Open(tmp_path / "byte.tif")
         ds = gdal.AutoCreateWarpedVRT(src_ds)
-        path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
+        path = tmp_path / "byte.vrt"
         if sys.platform == "win32":
-            path = path.replace("/", "\\")
-        ds.SetDescription(path)
+            path = str(path).replace("/", "\\")
+        ds.SetDescription(str(path))
         src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
+            in open(str(tmp_path / "byte.vrt"), "rt").read()
         )
     finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+        gdal.Unlink(str(tmp_path / "byte.tif"))
+        gdal.Unlink(str(tmp_path / "byte.vrt"))
 
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_absolute_dest_absolute():
+def test_vrtwarp_sourcedataset_source_absolute_dest_absolute(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
     try:
-        src_ds = gdal.Open(os.path.join(os.getcwd(), "tmp", "byte.tif"))
+        src_ds = gdal.Open(tmp_path / "byte.tif")
         ds = gdal.AutoCreateWarpedVRT(src_ds)
-        ds.SetDescription(os.path.join(os.getcwd(), "tmp", "byte.vrt"))
+        ds.SetDescription(str(tmp_path / "byte.vrt"))
         src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
+            in open(str(tmp_path / "byte.vrt"), "rt").read()
         )
     finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+        os.unlink(str(tmp_path / "byte.tif"))
+        os.unlink(str(tmp_path / "byte.vrt"))
 
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_absolute_dest_relative():
+def test_vrtwarp_sourcedataset_source_absolute_dest_relative(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
     try:
-        path = os.path.join(os.getcwd(), "tmp", "byte.tif")
+        path = tmp_path / "byte.tif"
         if sys.platform == "win32":
-            path = path.replace("/", "\\")
+            path = str(path).replace("/", "\\")
         src_ds = gdal.Open(path)
         ds = gdal.AutoCreateWarpedVRT(src_ds)
-        ds.SetDescription(os.path.join("tmp", "byte.vrt"))
+        ds.SetDescription(str(tmp_path / "byte.vrt"))
         src_ds = None
         ds = None
         assert (
             '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
+            in open(str(tmp_path / "byte.vrt"), "rt").read()
         )
     finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+        gdal.Unlink(str(tmp_path / "byte.tif"))
+        gdal.Unlink(str(tmp_path / "byte.vrt"))
 
 
 ###############################################################################

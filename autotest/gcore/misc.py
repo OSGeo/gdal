@@ -87,16 +87,16 @@ def test_misc_3():
 # Test Create() with invalid arguments
 
 
-def test_misc_4():
+def test_misc_4(tmp_vsimem):
 
     with gdal.quiet_errors():
 
         # Test a few invalid argument
         drv = gdal.GetDriverByName("GTiff")
-        drv.Create("tmp/foo", 0, 100, 1)
-        drv.Create("tmp/foo", 100, 1, 1)
-        drv.Create("tmp/foo", 100, 100, -1)
-        drv.Delete("tmp/foo")
+        drv.Create(tmp_vsimem / "foo", 0, 100, 1)
+        drv.Create(tmp_vsimem / "foo", 100, 1, 1)
+        drv.Create(tmp_vsimem / "foo", 100, 100, -1)
+        drv.Delete(tmp_vsimem / "foo")
 
 
 ###############################################################################
@@ -133,25 +133,16 @@ def get_filename(drv, dirname):
 # Test Create() with various band numbers (including 0) and datatype
 
 
-def _misc_5_internal(drv, datatype, nBands):
+def _misc_5_internal(tmp_vsimem, drv, datatype, nBands):
 
-    dirname = "tmp/tmp/tmp_%s_%d_%s" % (
-        drv.ShortName,
-        nBands,
-        gdal.GetDataTypeName(datatype),
+    dirname = tmp_vsimem / (
+        "tmp_%s_%d_%s"
+        % (
+            drv.ShortName,
+            nBands,
+            gdal.GetDataTypeName(datatype),
+        )
     )
-    # print('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
-    try:
-        os.mkdir(dirname)
-    except OSError:
-        try:
-            os.stat(dirname)
-            # Hum the directory already exists... Not expected, but let's try to go on
-        except OSError:
-            pytest.fail(
-                "Cannot create %s for drv = %s, nBands = %d, datatype = %s"
-                % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-            )
 
     filename = get_filename(drv, dirname)
     ds = drv.Create(filename, 100, 100, nBands, datatype)
@@ -194,7 +185,7 @@ def _misc_5_internal(drv, datatype, nBands):
     ds = None
 
     try:
-        shutil.rmtree(dirname)
+        gdal.RmdirRecursive(dirname)
     except OSError:
         pytest.fail(
             "Cannot remove %s for drv = %s, nBands = %d, datatype = %s"
@@ -202,23 +193,9 @@ def _misc_5_internal(drv, datatype, nBands):
         )
 
 
-def test_misc_5():
+def test_misc_5(tmp_vsimem):
 
     with gdal.quiet_errors():
-
-        try:
-            shutil.rmtree("tmp/tmp")
-        except OSError:
-            pass
-
-        try:
-            os.mkdir("tmp/tmp")
-        except OSError:
-            try:
-                os.stat("tmp/tmp")
-                # Hum the directory already exists... Not expected, but let's try to go on
-            except OSError:
-                pytest.fail("Cannot create tmp/tmp")
 
         # This is to speed-up the runtime of tests on EXT4 filesystems
         # Do not use this for production environment if you care about data safety
@@ -238,7 +215,7 @@ def test_misc_5():
                 if "DCAP_CREATE" in md and "DCAP_RASTER" in md:
                     datatype = gdal.GDT_UInt8
                     for nBands in range(6):
-                        _misc_5_internal(drv, datatype, nBands)
+                        _misc_5_internal(tmp_vsimem, drv, datatype, nBands)
 
                     for nBands in [1, 3]:
                         for datatype in (
@@ -256,7 +233,7 @@ def test_misc_5():
                             gdal.GDT_CFloat32,
                             gdal.GDT_CFloat64,
                         ):
-                            _misc_5_internal(drv, datatype, nBands)
+                            _misc_5_internal(tmp_vsimem, drv, datatype, nBands)
 
 
 ###############################################################################
@@ -273,7 +250,7 @@ class misc_6_interrupt_callback_class:
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
 
 
-def misc_6_internal(datatype, nBands, setDriversDone):
+def misc_6_internal(tmp_path, datatype, nBands, setDriversDone):
 
     ds = gdal.GetDriverByName("MEM").Create("", 10, 10, nBands, datatype)
     if nBands > 0:
@@ -288,10 +265,17 @@ def misc_6_internal(datatype, nBands, setDriversDone):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
         if ("DCAP_CREATECOPY" in md or "DCAP_CREATE" in md) and "DCAP_RASTER" in md:
-            dirname = "tmp/tmp/tmp_%s_%d_%s" % (
-                drv.ShortName,
-                nBands,
-                gdal.GetDataTypeName(datatype),
+            dirname = (
+                tmp_path
+                / "tmp"
+                / (
+                    "tmp_%s_%d_%s"
+                    % (
+                        drv.ShortName,
+                        nBands,
+                        gdal.GetDataTypeName(datatype),
+                    )
+                )
             )
             try:
                 os.mkdir(dirname)
@@ -457,18 +441,18 @@ def test_misc_6(tmp_path):
     with gdal.quiet_errors():
 
         try:
-            shutil.rmtree("tmp/tmp")
+            shutil.rmtree(str(tmp_path / "tmp"))
         except OSError:
             pass
 
         try:
-            os.mkdir("tmp/tmp")
+            os.mkdir(str(tmp_path / "tmp"))
         except OSError:
             try:
-                os.stat("tmp/tmp")
+                os.stat(str(tmp_path / "tmp"))
                 # Hum the directory already exists... Not expected, but let's try to go on
             except OSError:
-                pytest.fail("Cannot create tmp/tmp")
+                pytest.fail("Cannot create %s" % str(tmp_path / "tmp"))
 
         # This is to speed-up the runtime of tests on EXT4 filesystems
         # Do not use this for production environment if you care about data safety
@@ -480,7 +464,7 @@ def test_misc_6(tmp_path):
             datatype = gdal.GDT_UInt8
             setDriversDone = set()
             for nBands in range(6):
-                misc_6_internal(datatype, nBands, setDriversDone)
+                misc_6_internal(tmp_path, datatype, nBands, setDriversDone)
 
             nBands = 1
             for datatype in (
@@ -495,7 +479,7 @@ def test_misc_6(tmp_path):
                 gdal.GDT_CFloat32,
                 gdal.GDT_CFloat64,
             ):
-                misc_6_internal(datatype, nBands, setDriversDone)
+                misc_6_internal(tmp_path, datatype, nBands, setDriversDone)
 
 
 @pytest.mark.parametrize(
@@ -664,22 +648,22 @@ def test_misc_10(tmp_path):
 # file, but a filename that GDAL recognizes
 
 
-def test_misc_11():
+def test_misc_11(tmp_path):
 
     if not gdaltest.support_symlink():
         pytest.skip()
 
-    gdal.Unlink("tmp/symlink.tif")
-    os.symlink("GTIFF_DIR:1:data/byte.tif", "tmp/symlink.tif")
+    gdal.Unlink(tmp_path / "symlink.tif")
+    os.symlink("GTIFF_DIR:1:data/byte.tif", tmp_path / "symlink.tif")
 
-    ds = gdal.Open("tmp/symlink.tif")
+    ds = gdal.Open(str(tmp_path / "symlink.tif"))
     if ds is None:
-        os.remove("tmp/symlink.tif")
+        os.remove(tmp_path / "symlink.tif")
         pytest.fail()
     desc = ds.GetDescription()
     ds = None
 
-    os.remove("tmp/symlink.tif")
+    os.remove(tmp_path / "symlink.tif")
 
     assert desc == "GTIFF_DIR:1:data/byte.tif", "did not get expected description"
 
@@ -1131,14 +1115,3 @@ with gdal.{context}():
         assert "Debug" in err
         assert "Warning" not in err
         assert "Failure" in err
-
-
-###############################################################################
-
-
-def test_misc_cleanup():
-
-    try:
-        shutil.rmtree("tmp/tmp")
-    except OSError:
-        pass

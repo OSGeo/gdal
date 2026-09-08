@@ -1192,9 +1192,9 @@ def test_jsonfg_write_time(
 # Test gdal.VectorTranslate()
 
 
-def test_jsonfg_vector_translate():
+def test_jsonfg_vector_translate(tmp_path):
 
-    filename = "tmp/out.json"
+    filename = tmp_path / "out.json"
     try:
         ds = gdal.VectorTranslate(filename, "data/poly.shp", format="JSONFG")
         assert ds
@@ -1204,7 +1204,7 @@ def test_jsonfg_vector_translate():
 
         if test_cli_utilities.get_test_ogrsf_path() is not None:
             ret = gdaltest.runexternal(
-                test_cli_utilities.get_test_ogrsf_path() + " -ro " + filename
+                test_cli_utilities.get_test_ogrsf_path() + " -ro " + str(filename)
             )
 
             assert "INFO" in ret

@@ -178,18 +178,18 @@ def test_usgsdem_record_1026_bytes_ending_with_crlf():
 # Cleanup
 
 
-def test_usgsdem_cleanup():
+def test_usgsdem_cleanup(tmp_path):
 
     try:
-        os.remove("tmp/n43.dem")
-        os.remove("tmp/n43.dem.aux.xml")
+        os.remove(str(tmp_path / "n43.dem"))
+        os.remove(str(tmp_path / "n43.dem.aux.xml"))
 
-        os.remove("tmp/file_1.dem")
-        os.remove("tmp/file_1.dem.aux.xml")
-        os.remove("tmp/file_2.dem")
-        os.remove("tmp/file_2.dem.aux.xml")
+        os.remove(str(tmp_path / "file_1.dem"))
+        os.remove(str(tmp_path / "file_1.dem.aux.xml"))
+        os.remove(str(tmp_path / "file_2.dem"))
+        os.remove(str(tmp_path / "file_2.dem.aux.xml"))
 
-        os.remove("tmp/000a00DEMz")
-        os.remove("tmp/000a00DEMz.aux.xml")
+        os.remove(str(tmp_path / "000a00DEMz"))
+        os.remove(str(tmp_path / "000a00DEMz.aux.xml"))
     except OSError:
         pass

@@ -226,7 +226,7 @@ def test_kmlsuperoverlay_4():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_kmlsuperoverlay_5():
+def test_kmlsuperoverlay_5(tmp_path):
 
     from xml.etree import ElementTree
 
@@ -260,18 +260,18 @@ def test_kmlsuperoverlay_5():
   </VRTRasterBand>
 </VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        "tmp/tmp.kml", src_ds, options=["FIX_ANTIMERIDIAN=YES"]
+        str(tmp_path / "tmp.kml"), src_ds, options=["FIX_ANTIMERIDIAN=YES"]
     )
     del ds
     src_ds = None
 
     files = [
-        "tmp/tmp.kml",
-        "tmp/0/0/0.kml",
-        "tmp/1/0/0.kml",
-        "tmp/1/0/1.kml",
-        "tmp/1/1/0.kml",
-        "tmp/1/1/1.kml",
+        str(tmp_path / "tmp.kml"),
+        str(tmp_path / "0/0/0.kml"),
+        str(tmp_path / "1/0/0.kml"),
+        str(tmp_path / "1/0/1.kml"),
+        str(tmp_path / "1/1/0.kml"),
+        str(tmp_path / "1/1/1.kml"),
     ]
 
     for f in files:
@@ -284,9 +284,9 @@ def test_kmlsuperoverlay_5():
                 west
             ), "East is less than west in LatLonAltBox %s, (%s < %s)" % (f, east, west)
 
-    shutil.rmtree("tmp/0")
-    shutil.rmtree("tmp/1")
-    os.remove("tmp/tmp.kml")
+    shutil.rmtree(str(tmp_path / "0"))
+    shutil.rmtree(str(tmp_path / "1"))
+    os.remove(str(tmp_path / "tmp.kml"))
 
 
 ###############################################################################
@@ -395,7 +395,7 @@ def test_kmlsuperoverlay_gx_latlonquad():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_kmlsuperoverlay_8():
+def test_kmlsuperoverlay_8(tmp_path):
 
     # a large raster with actual data on each end and blank space in between
     src_ds = gdal.Open("""<VRTDataset rasterXSize="2048" rasterYSize="512">
@@ -475,13 +475,13 @@ def test_kmlsuperoverlay_8():
   </VRTRasterBand>
 </VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        "tmp/tmp.kml", src_ds, options=["FORMAT=AUTO"]
+        str(tmp_path / "tmp.kml"), src_ds, options=["FORMAT=AUTO"]
     )
     del ds
     src_ds = None
 
-    assert set(os.listdir("tmp/0/0")) == set(("0.kml", "0.png"))
-    assert set(os.listdir("tmp/3/1")) == set(
+    assert set(os.listdir(str(tmp_path / "0/0"))) == set(("0.kml", "0.png"))
+    assert set(os.listdir(str(tmp_path / "3/1"))) == set(
         (
             "0.jpg",
             "0.kml",
@@ -501,10 +501,10 @@ def test_kmlsuperoverlay_8():
             "7.kml",
         )
     )
-    assert set(os.listdir("tmp/3/2")) == set()
+    assert set(os.listdir(str(tmp_path / "3/2"))) == set()
 
-    shutil.rmtree("tmp/0")
-    shutil.rmtree("tmp/1")
-    shutil.rmtree("tmp/2")
-    shutil.rmtree("tmp/3")
-    os.remove("tmp/tmp.kml")
+    shutil.rmtree(str(tmp_path / "0"))
+    shutil.rmtree(str(tmp_path / "1"))
+    shutil.rmtree(str(tmp_path / "2"))
+    shutil.rmtree(str(tmp_path / "3"))
+    os.remove(str(tmp_path / "tmp.kml"))

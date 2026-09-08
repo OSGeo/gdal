@@ -13,11 +13,14 @@
 
 import os
 import sys
+import tempfile
 
 try:
     os.putenv("CPL_SHOW_MEM_STATS", "")
 except OSError:
     pass
+
+temp_dir = tempfile.gettempdir()
 
 # Must to be launched from pam.py/pam_11()
 # Test creating a new proxydb
@@ -28,14 +31,14 @@ if len(sys.argv) == 3 and sys.argv[1] == "-test1":
     from osgeo import gdal
 
     try:
-        shutil.rmtree("tmp/tmppamproxydir")
+        shutil.rmtree(os.path.join(temp_dir, "tmppamproxydir"))
     except OSError:
         pass
-    os.mkdir("tmp/tmppamproxydir")
+    os.mkdir(os.path.join(temp_dir, "tmppamproxydir"))
 
     tmpdirreadonly = sys.argv[2]
 
-    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmp/tmppamproxydir")
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(temp_dir, "tmppamproxydir"))
 
     # Compute statistics. They should be saved in the  .aux.xml in the proxyDB
     ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
@@ -48,13 +51,13 @@ if len(sys.argv) == 3 and sys.argv[1] == "-test1":
         sys.exit(1)
 
     # Check that the .aux.xml in the proxyDB exists
-    filelist = gdal.ReadDir("tmp/tmppamproxydir")
+    filelist = gdal.ReadDir(os.path.join(temp_dir, "tmppamproxydir"))
     aux_xml = None
     for filename in filelist:
         if filename.startswith("000000_") and filename.endswith(
             "tmpdirreadonly_byte.tif.aux.xml"
         ):
-            aux_xml = "tmp/tmppamproxydir/" + filename
+            aux_xml = os.path.join(temp_dir, "tmppamproxydir", filename)
     if not aux_xml:
         print("did not get find 000000_tmpdirreadonly_byte.tif.aux.xml on filesystem")
         print(filelist)
@@ -96,13 +99,13 @@ if len(sys.argv) == 3 and sys.argv[1] == "-test1":
     gdal.PopErrorHandler()
     ds = None
 
-    filelist = gdal.ReadDir("tmp/tmppamproxydir")
+    filelist = gdal.ReadDir(os.path.join(temp_dir, "tmppamproxydir"))
     ovr_filename = None
     for filename in filelist:
         if filename.startswith("000001_") and filename.endswith(
             "tmpdirreadonly_byte.tif.ovr"
         ):
-            ovr_filename = "tmp/tmppamproxydir/" + filename
+            ovr_filename = os.path.join(temp_dir, "tmppamproxydir", filename)
     if not ovr_filename:
         print("did not get find 000001_tmpdirreadonly_byte.tif.ovr")
         sys.exit(1)
@@ -132,7 +135,7 @@ if len(sys.argv) == 3 and sys.argv[1] == "-test2":
 
     from osgeo import gdal
 
-    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmp/tmppamproxydir")
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(temp_dir, "tmppamproxydir"))
 
     tmpdirreadonly = sys.argv[2]
     ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")

@@ -32,7 +32,9 @@ pytestmark = pytest.mark.require_driver("NAS")
 
 
 @pytest.mark.skipif(
-    not os.path.exists("tmp/cache/nas_testdaten_peine.zip"),
+    not os.path.exists(
+        os.path.join(gdaltest.get_cache_dir(), "nas_testdaten_peine.zip")
+    ),
     reason="Test data no longer available",
 )
 def test_ogr_nas_1():
@@ -42,25 +44,27 @@ def test_ogr_nas_1():
         "nas_testdaten_peine.zip",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/BKG_NAS_Peine.xml")
+        os.stat(f"{tmp_dir}/BKG_NAS_Peine.xml")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/nas_testdaten_peine.zip")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/nas_testdaten_peine.zip")
             try:
-                os.stat("tmp/cache/BKG_NAS_Peine.xml")
+                os.stat(f"{tmp_dir}/BKG_NAS_Peine.xml")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
     try:
-        os.remove("tmp/cache/BKG_NAS_Peine.gfs")
+        os.remove(f"{tmp_dir}/BKG_NAS_Peine.gfs")
     except OSError:
         pass
 
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
-        ds = ogr.Open("tmp/cache/BKG_NAS_Peine.xml")
+        ds = ogr.Open(f"{tmp_dir}/BKG_NAS_Peine.xml")
     assert ds is not None, "could not open dataset"
 
     assert ds.GetLayerCount() == 40, "did not get expected layer count"
@@ -101,27 +105,29 @@ def test_ogr_nas_2():
         "gm2566-testdaten-gid60-2008-11-11.xml.zip",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
+        os.stat(f"{tmp_dir}/gm2566-testdaten-gid60-2008-11-11.xml")
     except OSError:
         try:
             gdaltest.unzip(
-                "tmp/cache", "tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml.zip"
+                tmp_dir, f"{tmp_dir}/gm2566-testdaten-gid60-2008-11-11.xml.zip"
             )
             try:
-                os.stat("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
+                os.stat(f"{tmp_dir}/gm2566-testdaten-gid60-2008-11-11.xml")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
     try:
-        os.remove("tmp/cache/gm2566-testdaten-gid60-2008-11-11.gfs")
+        os.remove(f"{tmp_dir}/gm2566-testdaten-gid60-2008-11-11.gfs")
     except OSError:
         pass
 
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
-        ds = ogr.Open("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
+        ds = ogr.Open(f"{tmp_dir}/gm2566-testdaten-gid60-2008-11-11.xml")
 
     assert ds.GetLayerCount() == 84, "did not get expected layer count"
 
