@@ -13,6 +13,7 @@
 #include "gdalalg_raster_proximity.h"
 
 #include <cmath>
+#include <limits>
 
 #include "cpl_conv.h"
 
