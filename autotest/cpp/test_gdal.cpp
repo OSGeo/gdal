@@ -1074,8 +1074,8 @@ TEST_F(test_gdal, GDALGetDataTypeMinMaxAsDouble)
     EXPECT_EQ(dfMax, 2147483647.0);
 
     EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Float16, &dfMin, &dfMax));
-    EXPECT_EQ(dfMin, cpl::NumericLimits<cpl::Float16>::lowest());
-    EXPECT_EQ(dfMax, cpl::NumericLimits<cpl::Float16>::max());
+    EXPECT_EQ(dfMin, cpl::NumericLimits<GFloat16>::lowest());
+    EXPECT_EQ(dfMax, cpl::NumericLimits<GFloat16>::max());
 
     EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Float32, &dfMin, &dfMax));
     EXPECT_EQ(dfMin, std::numeric_limits<float>::lowest());
