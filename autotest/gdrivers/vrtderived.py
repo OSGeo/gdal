@@ -14,6 +14,7 @@
 
 import math
 import os
+import struct
 import sys
 import threading
 
@@ -2287,6 +2288,35 @@ def test_vrt_pixelfn_min_max_image(dt, function):
     src_array = src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GetDataTypeByName(dt))
     result = gdal.Open(xml).ReadRaster()
     assert result == src_array
+
+
+@pytest.mark.parametrize("dt", ["Float32", "Float64"])
+@pytest.mark.parametrize(
+    "function,values", [("min", [5, math.nan, 7]), ("max", [5, math.nan, 3])]
+)
+def test_vrt_pixelfn_min_max_nan_source(tmp_vsimem, dt, function, values):
+
+    # No NoDataValue on the derived band: NaN source values must still be
+    # ignored. Width 16 so that the SSE2 code path is exercised.
+    src = tmp_vsimem / "src.tif"
+    with gdal.GetDriverByName("GTiff").Create(
+        src, 16, 1, len(values), gdal.GetDataTypeByName(dt)
+    ) as src_ds:
+        for i, v in enumerate(values):
+            src_ds.GetRasterBand(i + 1).Fill(v)
+
+    xml = f"""
+    <VRTDataset rasterXSize="16" rasterYSize="1">
+      <VRTRasterBand dataType="{dt}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>{function}</PixelFunctionType>
+        <SourceTransferType>{dt}</SourceTransferType>
+        {"".join(f'<SimpleSource><SourceFilename>{src}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with gdal.Open(xml) as ds:
+        fmt = "f" if dt == "Float32" else "d"
+        assert struct.unpack(fmt * 16, ds.ReadRaster()) == (5,) * 16
 
 
 @pytest.mark.parametrize(
