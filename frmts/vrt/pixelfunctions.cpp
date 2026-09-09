@@ -2648,19 +2648,21 @@ static void OptimizedMinOrMaxSSE2(const void *const *papoSources, int nSources,
 }
 
 /************************************************************************/
-/*                        NaNAwareMinOrMax()                            */
+/*                    NaNAwareMinOrMaxFloat/Double()                    */
 /************************************************************************/
 
-static inline __m128 NaNAwareMinOrMax(__m128 x, __m128 y, bool bMin)
+static inline __m128 NaNAwareMinOrMaxFloat(__m128 x, __m128 y, bool bMin)
 {
     const __m128 xIsNaN = _mm_cmpunord_ps(x, x);
     const __m128 yIsNaN = _mm_cmpunord_ps(y, y);
-    const __m128 xx = _mm_or_ps(_mm_andnot_ps(xIsNaN, x), _mm_and_ps(xIsNaN, y));
-    const __m128 yy = _mm_or_ps(_mm_andnot_ps(yIsNaN, y), _mm_and_ps(yIsNaN, x));
+    const __m128 xx =
+        _mm_or_ps(_mm_andnot_ps(xIsNaN, x), _mm_and_ps(xIsNaN, y));
+    const __m128 yy =
+        _mm_or_ps(_mm_andnot_ps(yIsNaN, y), _mm_and_ps(yIsNaN, x));
     return bMin ? _mm_min_ps(xx, yy) : _mm_max_ps(xx, yy);
 }
 
-static inline __m128d NaNAwareMinOrMax(__m128d x, __m128d y, bool bMin)
+static inline __m128d NaNAwareMinOrMaxDouble(__m128d x, __m128d y, bool bMin)
 {
     const __m128d xIsNaN = _mm_cmpunord_pd(x, x);
     const __m128d yIsNaN = _mm_cmpunord_pd(y, y);
@@ -2774,7 +2776,7 @@ struct SSEWrapperMinFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMax(x, y, true); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, true); }
     static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
@@ -2785,7 +2787,7 @@ struct SSEWrapperMaxFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMax(x, y, false); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, false); }
     static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
@@ -2796,7 +2798,7 @@ struct SSEWrapperMinDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMax(x, y, true); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, true); }
     static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
@@ -2807,7 +2809,7 @@ struct SSEWrapperMaxDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMax(x, y, false); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, false); }
     static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
