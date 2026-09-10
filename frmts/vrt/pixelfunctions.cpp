@@ -3393,6 +3393,38 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ReclassifyPixelFunc
 
+struct CountKernel
+{
+    static constexpr const char *pszName = "count";
+
+    int nCount = 0;
+
+    void Reset()
+    {
+        nCount = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double)
+    {
+        ++nCount;
+    }
+
+    bool HasValue() const
+    {
+        return true;
+    }
+
+    double GetValue() const
+    {
+        return nCount;
+    }
+};
+
 struct MeanKernel
 {
     static constexpr const char *pszName = "mean";
@@ -4490,5 +4522,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("area", AreaPixelFunc,
                                         pszAreaPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("count", BasicPixelFunc<CountKernel>,
+                                        pszBasicPixelFuncMetadata);
     return CE_None;
 }
