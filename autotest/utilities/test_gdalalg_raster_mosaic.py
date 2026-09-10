@@ -487,6 +487,53 @@ def test_gdalalg_raster_mosaic_pixel_function(pixfn, args):
     assert alg.Finalize()
 
 
+def test_gdalalg_raster_mosaic_pixel_function_count():
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    # (0, 2) to (3, 4)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, eType=gdal.GDT_Int16)
+    src1_ds.SetGeoTransform([0, 1, 0, 4, 0, -1])
+
+    # (1, 3) to (4, 0)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=gdal.GDT_Int16)
+    src2_ds.SetGeoTransform([1, 1, 0, 3, 0, -1])
+    src2_ds.GetRasterBand(1).Fill(2)
+
+    # (5, 0) to (6, 4)
+    src3_ds = gdal.GetDriverByName("MEM").Create("", 1, 4, eType=gdal.GDT_Int16)
+    src3_ds.SetGeoTransform([5, 1, 0, 4, 0, -1])
+
+    # (0, 2) to (2, 3)
+    src4_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, eType=gdal.GDT_Int16)
+    src4_ds.SetGeoTransform([0, 1, 0, 3, 0, -1])
+    src4_ds.GetRasterBand(1).SetNoDataValue(5)
+    src4_ds.WriteArray(np.array([[5, 1], [5, 1]]))
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds, src3_ds, src4_ds]
+    alg["output-format"] = "stream"
+    alg["dst-nodata"] = [-999]
+    alg["pixel-function"] = "count"
+
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+
+    dst_values = ds.ReadAsMaskedArray()
+
+    assert not np.any(dst_values.mask)
+    np.testing.assert_array_equal(
+        dst_values,
+        [
+            [1, 1, 1, 0, 0, 1],
+            [1, 3, 2, 1, 0, 1],
+            [0, 2, 1, 1, 0, 1],
+            [0, 1, 1, 1, 0, 1],
+        ],
+    )
+
+
 def test_gdalalg_raster_mosaic_pixel_function_invalid():
 
     alg = get_mosaic_alg()
