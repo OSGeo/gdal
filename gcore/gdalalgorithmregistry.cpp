@@ -319,8 +319,17 @@ GDALGlobalAlgorithmRegistry::InstantiateDeclaredSubAlgorithm(
         {
             auto callPath = path;
             if (path[0] != GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME)
+            {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
                 callPath.insert(callPath.begin(),
                                 GDALGlobalAlgorithmRegistry::ROOT_ALG_NAME);
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+            }
             alg->SetCallPath(callPath);
         }
         return alg;
