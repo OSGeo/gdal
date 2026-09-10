@@ -260,7 +260,7 @@ gwE6fxOLyJDxuWRf
 """,
     )
     gdal.SetConfigOption("EEDA_CLIENT_EMAIL", "my@email.com")
-    gdal.SetConfigOption("GO2A_AUD", "/vsimem/oauth2/v4/token")
+    gdal.SetConfigOption("GOA2_AUD", "/vsimem/oauth2/v4/token")
     gdal.SetConfigOption("GOA2_NOW", "123456")
     gdal.FileFromMemBuffer(
         "/vsimem/oauth2/v4/token&POSTFIELDS=grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAibXlAZW1haWwuY29tIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZWFydGhlbmdpbmUucmVhZG9ubHkiLCAiYXVkIjogIi92c2ltZW0vb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.1W564xcQESVsqZmBEIMzj4rr0RuGa4RiUPZp5H%2FNENN9V9oPSTdacw%2BMiu3pcFf9AJv8wj0ajUeRsgTmvSicAftER49xeCQYUrs6uV122FGVsxml26kMFacNsCgRad%2Fy7xCAhMPfRJsqxS2%2BB392ssBeEzTGCSI6W3AsJg64OfA%3D",
@@ -305,7 +305,7 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS(use_vsi_path):
         gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "/vsimem/my.json")
     gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
     gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
-    gdal.SetConfigOption("GO2A_AUD", "/vsimem/oauth2/v4/token")
+    gdal.SetConfigOption("GOA2_AUD", "/vsimem/oauth2/v4/token")
     gdal.SetConfigOption("GOA2_NOW", "123456")
     gdal.FileFromMemBuffer(
         "/vsimem/oauth2/v4/token&POSTFIELDS=grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAibXlAZW1haWwuY29tIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZWFydGhlbmdpbmUucmVhZG9ubHkiLCAiYXVkIjogIi92c2ltZW0vb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.1W564xcQESVsqZmBEIMzj4rr0RuGa4RiUPZp5H%2FNENN9V9oPSTdacw%2BMiu3pcFf9AJv8wj0ajUeRsgTmvSicAftER49xeCQYUrs6uV122FGVsxml26kMFacNsCgRad%2Fy7xCAhMPfRJsqxS2%2BB392ssBeEzTGCSI6W3AsJg64OfA%3D",
@@ -585,7 +585,7 @@ def test_eedai_cleanup():
     gdal.SetConfigOption("EEDA_URL", gdaltest.EEDA_URL)
     gdal.SetConfigOption("EEDA_PRIVATE_KEY", gdaltest.EEDA_PRIVATE_KEY)
     gdal.SetConfigOption("EEDA_CLIENT_EMAIL", gdaltest.EEDA_CLIENT_EMAIL)
-    gdal.SetConfigOption("GO2A_AUD", None)
+    gdal.SetConfigOption("GOA2_AUD", None)
     gdal.SetConfigOption("GOA2_NOW", None)
     gdal.SetConfigOption(
         "GOOGLE_APPLICATION_CREDENTIALS", gdaltest.GOOGLE_APPLICATION_CREDENTIALS

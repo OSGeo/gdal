@@ -1022,7 +1022,7 @@ def test_vsigs_GetFileMetadatabucket_root_oauth2(
     try:
         with gdaltest.config_options(
             {
-                "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+                "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
                 "GOA2_NOW": "123456",
             },
             thread_local=False,
@@ -1330,7 +1330,7 @@ gwE6fxOLyJDxuWRf
 
     with gdaltest.config_options(
         {
-            "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+            "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
             "GS_OAUTH2_CLIENT_EMAIL": "CLIENT_EMAIL",
         },
@@ -1438,7 +1438,7 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
     with gdaltest.config_options(
         {
             "GOOGLE_APPLICATION_CREDENTIALS": "/vsimem/service_account.json",
-            "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+            "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
         },
         thread_local=False,
