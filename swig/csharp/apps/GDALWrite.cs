@@ -107,7 +107,10 @@ class GDALWrite
                 new GCP(44.5, 26.5, 0, 0, 100, "info2", "id2"),
                 new GCP(45.5, 26.5, 0, 100, 100, "info3", "id3")
             };
-            ds.SetGCPs(GCPs, "");
+            ds.SetGCPs(GCPs);
+            CompareGCPs(GCPs, ds.GetGCPs());
+            ds.SetGCPs2(GCPs);
+            CompareGCPs(GCPs, ds.GetGCPs());
 
             using (Band band = ds.GetRasterBand(1))
             {
@@ -127,5 +130,26 @@ class GDALWrite
             }
             ds.FlushCache();
         }
+    }
+
+    private static void CompareGCPs(GCP[] set1, GCP[] set2)
+    {
+        if (set1.Length != set2.Length) ErrorAndClose("GCP count mismatch");
+        for (int i = 0; i < set1.Length; i++)
+        {
+            if (set1[i].Id != set2[i].Id) ErrorAndClose("GCP id mismatch");
+            if (set1[i].Info != set2[i].Info) ErrorAndClose("GCP info mismatch");
+            if (set1[i].GCPPixel != set2[i].GCPPixel) ErrorAndClose("GCP pixel mismatch");
+            if (set1[i].GCPLine != set2[i].GCPLine) ErrorAndClose("GCP line mismatch");
+            if (set1[i].GCPX != set2[i].GCPX) ErrorAndClose("GCP X mismatch");
+            if (set1[i].GCPY != set2[i].GCPY) ErrorAndClose("GCP Y mismatch");
+            if (set1[i].GCPZ != set2[i].GCPZ) ErrorAndClose("GCP Z mismatch");
+        }
+    }
+
+    private static void ErrorAndClose(string message)
+    {
+        Console.WriteLine("Error: " + message);
+        System.Environment.Exit(-1);
     }
 }

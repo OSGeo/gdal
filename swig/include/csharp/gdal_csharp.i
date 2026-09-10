@@ -28,78 +28,48 @@ DEFINE_EXTERNAL_CLASS(GDALSubdatasetInfoShadow, OSGeo.GDAL.SubdatasetInfo)
 %apply (double *OUTPUT) {double *min_ret, double *max_ret};
 %apply (int *nLen) {int *buckets_ret};
 %apply (double *pList) {double *burn_values_list, double *fixedLevels};
-%apply (int **pList) {int **ppanHistogram};
 %apply (void *buffer_ptr) {void *pfnTransformer, void *pTransformArg};
 
-%apply (void *buffer_ptr) {GDAL_GCP const *pGCPs};
-%csmethodmodifiers __SetGCPs "private";
-%csmethodmodifiers __GetGCPs "private";
-%csmethodmodifiers GDALGCPsToGeoTransform "private";
+VALUE_LIST_INOUT(GDAL_GCP, GCP)
+%apply (int nList, GDAL_GCP *pList)  { (int nGCPs, GDAL_GCP const *pGCPs) };
+%apply (int* nList, GDAL_GCP **pList)  { (int *nGCPs, GDAL_GCP const **pGCPs) };
 
-%apply (void *buffer_ptr) {GDALDatasetShadow** poObjects};
-%csmethodmodifiers wrapper_GDALWarpDestDS "private";
-%csmethodmodifiers wrapper_GDALWarpDestName "private";
-
-%apply (GDALProgressFunc callback) {GDALProgressFunc pfnProgress};
 %apply (void *buffer_ptr) {void *pProgressData};
 
+%typemap(cscode, noblock=1) GDALRasterIOExtraArg %{
+  private $module.GDALProgressFuncDelegate pfnProgressManaged;
+  public void SetProgressDelegate(Func<double, string, IntPtr, bool> progressFunc, IntPtr progressData = default(IntPtr)) {
+    pProgressData = progressData;
+    pfnProgress = pfnProgressManaged = progressFunc == null ? default($module.GDALProgressFuncDelegate)
+      : (p, m, d) => progressFunc(p, $module.StringEncoder?.FromNullTerminated(m), d) ? 1 : 0;
+  }
+  public void SetProgressDelegate<TData>(Func<double, string, TData, bool> progressFunc, TData progressData) {
+    pfnProgress = pfnProgressManaged = progressFunc == null ? default($module.GDALProgressFuncDelegate)
+      : (p, m, _) => progressFunc(p, $module.StringEncoder?.FromNullTerminated(m), progressData) ? 1 : 0;
+  }
+%}
 %rename (RasterIOExtraArg) GDALRasterIOExtraArg;
-typedef struct
+struct GDALRasterIOExtraArg
 {
-    /*! Version of structure (to allow future extensions of the structure) */
-    int                    nVersion;
-
-    /*! Resampling algorithm */
-    GDALRIOResampleAlg     eResampleAlg;
-
-    /*! Progress callback */
-    GDALProgressFunc pfnProgress;
-    /*! Progress callback user data */
-    void *pProgressData;
-
-    /*! Indicate if dfXOff, dfYOff, dfXSize and dfYSize are set.
-        Mostly reserved from the VRT driver to communicate a more precise
-        source window. Must be such that dfXOff - nXOff < 1.0 and
-        dfYOff - nYOff < 1.0 and nXSize - dfXSize < 1.0 and nYSize - dfYSize < 1.0 */
-    int bFloatingPointWindowValidity;
-    /*! Pixel offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfXOff;
-    /*! Line offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfYOff;
-    /*! Width in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfXSize;
-    /*! Height in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
-    double dfYSize;
-} GDALRasterIOExtraArg;
+  %mutable;
+    int                 nVersion;
+    GDALRIOResampleAlg  eResampleAlg;
+    GDALProgressFunc    pfnProgress;
+    void               *pProgressData;
+    int                 bFloatingPointWindowValidity;
+    double              dfXOff;
+    double              dfYOff;
+    double              dfXSize;
+    double              dfYSize;
+};
 
 DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
 DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 
 
 %define %rasterio_functions(GDALTYPE,CSTYPE)
- public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+    long pixelSpace = 0, long lineSpace = 0, RasterIOExtraArg extraArg = null) {
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -110,7 +80,8 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
       GC.KeepAlive(this);
       return retval;
   }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+    long pixelSpace = 0, long lineSpace = 0, RasterIOExtraArg extraArg = null) {
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -125,11 +96,45 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 %enddef
 
 %typemap(cscode, noblock="1") GDALRasterBandShadow {
-/*! Eight bit unsigned integer */ %rasterio_functions(DataType.GDT_Byte,byte)
-/*! Sixteen bit signed integer */ %rasterio_functions(DataType.GDT_Int16,short)
-/*! Thirty two bit signed integer */ %rasterio_functions(DataType.GDT_Int32,int)
-/*! Thirty two bit floating point */ %rasterio_functions(DataType.GDT_Float32,float)
-/*! Sixty four bit floating point */ %rasterio_functions(DataType.GDT_Float64,double)
+/*!  8-bit unsigned integer */ %rasterio_functions(DataType.GDT_Byte,    byte)
+/*! 16-bit signed integer   */ %rasterio_functions(DataType.GDT_Int16,   short)
+/*! 32-bit signed integer   */ %rasterio_functions(DataType.GDT_Int32,   int)
+/*! 64-bit signed integer   */ %rasterio_functions(DataType.GDT_Int64,   long)
+/*! 32-bit floating point   */ %rasterio_functions(DataType.GDT_Float32, float)
+/*! 64-bit floating point   */ %rasterio_functions(DataType.GDT_Float64, double)
+/*! 16-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt16,  ushort)
+/*! 32-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt32,  uint)
+/*! 64-bit unsigned integer */ %rasterio_functions(DataType.GDT_UInt64,  ulong)
+/*!  8-bit signed integer   */ %rasterio_functions(DataType.GDT_Int8,    sbyte)
+
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+[Obsolete("Use MaximumOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MaximumOfNBands(int band_count, Band[] bands) => MaximumOfNBands(bands);
+[Obsolete("Use MeanOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MeanOfNBands(int band_count, Band[] bands) => MeanOfNBands(bands);
+[Obsolete("Use MinimumOfNBands(Band[] band_count) instead.")]
+public static ComputedBand MinimumOfNBands(int band_count, Band[] bands) => MinimumOfNBands(bands);
+[Obsolete("Use GetHistogram(double min, double max, int[] histogram, bool include_out_of_range, bool approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
+public CPLErr GetHistogram(double min, double max, int buckets, int[] panHistogram, int include_out_of_range, int approx_ok, Gdal.GDALProgressFuncDelegate callback, string callback_data)
+  => GetHistogram(min, max, panHistogram, include_out_of_range != 0, approx_ok != 0, callback, callback_data);
+[Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, DataType buf_type, string[] options) instead.")]
+public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, string[] options)
+  => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, options);
+[Obsolete("Use public int Checksum(int xoff, int yoff, int xsize, int ysize) instead.")]
+public int Checksum(int xoff, int yoff, ref int xsize, ref int ysize) => Checksum(xoff, yoff, xsize, ysize);
+[Obsolete("Use SetDefaultHistogram(double min, double max, int[] buckets_in) instead.")]
+public CPLErr SetDefaultHistogram(double min, double max, int buckets_in, int[] panHistogram_in)
+  => SetDefaultHistogram(min, max, panHistogram_in);
+[Obsolete("Use GetDefaultHistogram(out double min_ret, out double max_ret, out int[] histogram, bool force, Gdal.GDALProgressFuncDelegate callback, string callback_data) instead.")]
+public CPLErr GetDefaultHistogram(out double min_ret, out double max_ret, out int buckets_ret, out int[] ppanHistogram, int force, Gdal.GDALProgressFuncDelegate callback, string callback_data) {
+   var ret = GetDefaultHistogram(out min_ret, out max_ret, out ppanHistogram, force != 0, callback, callback_data);
+   buckets_ret = ppanHistogram.Length;
+   return ret;
+}
 }
 
 /*! Sixteen bit unsigned integer */ //%rasterio_functions(DataType.GDT_UInt16,ushort)
@@ -140,34 +145,10 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 /*! Complex Float64 */ //%rasterio_functions(DataType.GDT_CFloat64,int)
 
 %define %ds_rasterio_functions(GDALTYPE,CSTYPE)
- public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
-                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace) {
-      CPLErr retval;
-      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      try {
-          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
-                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
-      } finally {
-          handle.Free();
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
   public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+     int bandCount, int[] bandMap = null, long pixelSpace = 0, long lineSpace = 0, long bandSpace = 0, RasterIOExtraArg extraArg = null) {
+      if (bandMap != null && bandMap.Length < bandCount)
+        throw new ArgumentException("Array bandMap must be at least bandCount elements long.");
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -180,7 +161,9 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
       return retval;
   }
   public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
-     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+     int bandCount, int[] bandMap = null, long pixelSpace = 0, long lineSpace = 0, long bandSpace = 0, RasterIOExtraArg extraArg = null) {
+      if (bandMap != null && bandMap.Length < bandCount)
+        throw new ArgumentException("Array bandMap must be at least bandCount elements long.");
       CPLErr retval;
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
@@ -195,73 +178,50 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 
 %enddef
 
+%csmethodmodifiers GetGCPs "private";
+%typemap(csimports) GDALDatasetShadow %{
+  using System;
+  using System.Runtime.InteropServices;
+  using OSGeo.OGR;
+%}
 %typemap(cscode, noblock="1") GDALDatasetShadow {
-/*! Eight bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,byte)
-/*! Sixteen bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int16,short)
-/*! Thirty two bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int32,int)
-/*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
-/*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
-
-public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
-      int retval;
-      if (overviewlist.Length <= 0)
-        throw new ArgumentException("overviewlist size is small (BuildOverviews)");
-
-      IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
-      try {
-          Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
-          retval = BuildOverviews(resampling, overviewlist.Length, ptr, callback, callback_data, options);
-      } finally {
-          Marshal.FreeHGlobal(ptr);
-      }
-      GC.KeepAlive(this);
-      return retval;
-  }
-
-public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return BuildOverviews( resampling, overviewlist, null, null, null);
-  }
-
-public int BuildOverviews( string resampling, int[] overviewlist) {
-      return BuildOverviews( resampling, overviewlist, null, null);
-  }
+/*!  8-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,    byte)
+/*! 16-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int16,   short)
+/*! 32-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int32,   int)
+/*! 64-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int64,   long)
+/*! 32-bit floating point   */ %ds_rasterio_functions(DataType.GDT_Float32, float)
+/*! 64-bit floating point   */ %ds_rasterio_functions(DataType.GDT_Float64, double)
+/*! 16-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt16,  ushort)
+/*! 32-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt32,  uint)
+/*! 64-bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_UInt64,  ulong)
+/*!  8-bit signed integer   */ %ds_rasterio_functions(DataType.GDT_Int8,    sbyte)
 
 public GCP[] GetGCPs() {
-      /*hello*/
-      IntPtr cPtr = __GetGCPs();
-      int length = GetGCPCount();
-      GCP[] ret = null;
-      if (cPtr != IntPtr.Zero && length > 0)
-      {
-          ret = new GCP[length];
-          for (int i=0; i < length; i++)
-              ret[i] = __ReadCArrayItem_GDAL_GCP(cPtr, i);
-      }
-      GC.KeepAlive(this);
-      return ret;
+    GetGCPs(out GCP[] gcps);
+    return gcps;
   }
 
-public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
-     CPLErr ret = 0;
-     if (pGCPs != null && pGCPs.Length > 0)
-     {
-         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
-         if (cPtr == IntPtr.Zero)
-            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
 
-         try {
-             for (int i=0; i < pGCPs.Length; i++)
-                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
+  [Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int[] band_list, string[] options) instead.")]
+  public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int band_list, int[] pband_list, string[] options)
+    => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, pband_list, options);
+  
+  [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.")]
+  public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
+    var managedList = new int[overviewlist];
+	Marshal.Copy(pOverviews, managedList, overviewlist, overviewlist);
+	return BuildOverviews(resampling, managedList, callback, callback_data, options);
+  }
 
-             ret = __SetGCPs(pGCPs.Length, cPtr, pszGCPProjection);
-         }
-         finally
-         {
-            __FreeCArray_GDAL_GCP(cPtr);
-         }
-     }
-     GC.KeepAlive(this);
-     return ret;
+  [Obsolete("Use GetNextFeature(out Layer ppoBelongingLayer, out double pdfProgressPct, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public Feature GetNextFeature(ref IntPtr ppoBelongingLayer, ref double pdfProgressPct, Gdal.GDALProgressFuncDelegate callback, string callback_data) {
+    Feature feature = GetNextFeature(out Layer belongingLayer, out double progressPct, callback, callback_data);
+    ppoBelongingLayer = Layer.getCPtr(belongingLayer).Handle;
+    pdfProgressPct = progressPct;
+    return feature;
   }
 }
 
@@ -273,27 +233,6 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 /*! Complex Float64 */ //%ds_rasterio_functions(DataType.GDT_CFloat64,int)
 
 %pragma(csharp) modulecode=%{
-  public static int GCPsToGeoTransform(GCP[] pGCPs, double[] argout, int bApproxOK) {
-    int ret = 0;
-    if (pGCPs != null && pGCPs.Length > 0)
-     {
-         IntPtr cPtr = __AllocCArray_GDAL_GCP(pGCPs.Length);
-         if (cPtr == IntPtr.Zero)
-            throw new ApplicationException("Error allocating CArray with __AllocCArray_GDAL_GCP");
-
-         try {
-             for (int i=0; i < pGCPs.Length; i++)
-                __WriteCArrayItem_GDAL_GCP(cPtr, i, pGCPs[i]);
-
-             ret = GCPsToGeoTransform(pGCPs.Length, cPtr, argout, bApproxOK);
-         }
-         finally
-         {
-            __FreeCArray_GDAL_GCP(cPtr);
-         }
-     }
-     return ret;
-   }
 
   /*
    *  Keep this seemingly redundant overload to maintain
@@ -375,82 +314,6 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     }
   }
 
-  public static int Warp(Dataset dstDS, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      int retval = 0;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALWarpDestDS(dstDS, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset Warp(string dest, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALWarpDestName(dest, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return wrapper_GDALBuildVRT_names(dest, poObjects, buildVrtAppOptions, callback, callback_data);
-   }
-
-   public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (BuildVRT)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALBuildVRT_objects(dest, poObjects.Length, nativeArray, buildVrtAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
-   public static Dataset MultiDimTranslate(string dest, Dataset[] poObjects, GDALMultiDimTranslateOptions multiDimAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      Dataset retval = null;
-      if (poObjects.Length <= 0)
-        throw new ArgumentException("poObjects size is small (GDALMultiDimTranslateDestName)");
-
-      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
-      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
-      try {
-          for (int i=0; i < poObjects.Length; i++)
-            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
-
-          retval  = wrapper_GDALMultiDimTranslateDestName(dest, poObjects.Length, nativeArray, multiDimAppOptions, callback, callback_data);
-      } finally {
-          Marshal.FreeHGlobal(nativeArray);
-      }
-      return retval;
-   }
-
   public static bool VSIFSeekL(IntPtr fp, long offset, System.IO.SeekOrigin origin) {
     return VSIFSeekL(fp, offset, (int)origin) == 0;
   }
@@ -487,6 +350,10 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       handle.Free();
     }
   }
+  public static Dataset[] GetOpenDatasets() {
+    wrapper_GetOpenDatasets(out Dataset[] datasets);
+    return datasets;
+  }
 %}
 
 %rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
@@ -517,3 +384,371 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
     SWIG_CSharpSetPendingExceptionArgument(static_cast<SWIG_CSharpExceptionArgumentCodes>(code), message, param_name);
   }
 %}
+
+
+%typemap(cscode, noblock="1") GDALGroupHS {
+  [Obsolete("Use CreateAttribute(string name, ulong[] dimensions, ExtendedDataType data_type, string[] options) instead.", error: true)]
+  public Attribute CreateAttribute(string name, int dimensions, uint[] sizes, ExtendedDataType data_type, string[] options)
+    => throw new NotSupportedException();
+}
+
+%typemap(cscode, noblock="1") GDALAlgorithmArgHS {
+  [Obsolete("Use SetAsIntegerList(int[] nList) instead.")]
+  public bool SetAsIntegerList(int nList, int[] pList) => SetAsIntegerList(pList);
+  [Obsolete("Use SetAsDoubleList(double[] nList) instead.")]
+  public bool SetAsDoubleList(int nList, double[] pList) => SetAsDoubleList(pList);
+}
+
+%typemap(cscode, noblock="1") GDALTransformerInfoShadow {
+  [Obsolete("Use TransformPoints(int bDstToSrc, double[] x, double[] y, double[] z, int[] success) instead.", error: true)]
+  public int TransformPoints(int bDstToSrc, int nCount, double[] x, double[] y, double[] z, double[] panSuccess)
+    => throw new NotSupportedException();
+}
+
+%typemap(cscode, noblock="1") GDALMDArrayHS {
+  [Obsolete("Use CreateAttribute(string name, ulong[] dimensions, ExtendedDataType data_type, string[] options) instead.", error: true)]
+  public Attribute CreateAttribute(string name, int dimensions, uint[] sizes, ExtendedDataType data_type, string[] options)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use Resize(ulong[] newDimensions, string[] options) instead.", error: true)]
+  public CPLErr Resize(int newDimensions, uint[] newSizes, string[] options) => throw new NotSupportedException();
+
+  [Obsolete("Use Transpose(int[] axisMap) instead.")]
+  public MDArray Transpose(int axisMap, int[] mapInts) => Transpose(mapInts);
+}
+
+
+%typemap(cscode, noblock="1") GDALRATDateTime {
+
+  public static implicit operator RATDateTime(DateTimeOffset value) => FromDateTimeOffset(value);
+  public static implicit operator DateTimeOffset(RATDateTime value) => value.ToDateTimeOffset();
+  public DateTimeOffset ToDateTimeOffset() {
+    var sec = (int)fSecond;
+    var ms = (int)Math.Round((fSecond - sec) * 1000);
+	var offsetMins = nTimeZoneHour * 60 + nTimeZoneMinute;
+	if (!bPositiveTimeZone)
+	  offsetMins *= -1;
+    var offset = TimeSpan.FromMinutes(offsetMins);
+    return new DateTimeOffset(nYear, nMonth, nDay, nHour, nMinute, sec, ms, offset);
+  }
+  public static RATDateTime FromDateTimeOffset(DateTimeOffset value) => new RATDateTime(
+    value.Year, value.Month, value.Day,
+    value.Hour, value.Minute, value.Second + value.Millisecond / 1000f,
+    Math.Abs(value.Offset.Hours), Math.Abs(value.Offset.Minutes), value.Offset.Ticks >= 0
+  );
+}
+
+/*
+ * Overloads to maintain backwards compatibility with multi-argument typemaps
+ */
+
+%pragma(csharp) modulecode=%{
+  [Obsolete("Use GCPsToHomography(GCP[] nGCPs, double[] argout) instead.", error: true)]
+  public static int GCPsToHomography(int nGCPs, IntPtr pGCPs, double[] argout)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use RasterizeLayers(Dataset dataset, int[] bands, Layer[] layers, GDALTransformerFuncDelegate pfnTransformer, IntPtr pTransformArg, double[] burn_values, string[] options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int RasterizeLayer(Dataset dataset, int bands, int[] band_list, OSGeo.OGR.Layer layer, IntPtr pfnTransformer, IntPtr pTransformArg, int burn_values, double[] burn_values_list, string[] options, GDALProgressFuncDelegate callback, string callback_data)
+    => RasterizeLayers(dataset, band_list, new OSGeo.OGR.Layer[]{ layer }, Marshal.GetDelegateForFunctionPointer<Gdal.GDALTransformerFuncDelegate>(pfnTransformer), pTransformArg, burn_values_list, options, callback, callback_data);
+
+  [Obsolete("Use RegenerateOverviews(Band srcBand, Band[] overviewBandCount, string resampling, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int RegenerateOverviews(Band srcBand, int overviewBandCount, Band[] overviewBands, string resampling, GDALProgressFuncDelegate callback, string callback_data)
+    => RegenerateOverviews(srcBand, overviewBands, resampling, callback, callback_data);
+
+  [Obsolete("Use ContourGenerate(Band srcBand, double contourInterval, double contourBase, double[] fixedLevelCount, bool useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, double[] fixedLevels, int useNoData, double noDataValue, OSGeo.OGR.Layer dstLayer, int idField, int elevField, GDALProgressFuncDelegate callback, string callback_data)
+    => ContourGenerate(srcBand, contourInterval, contourBase, fixedLevels, useNoData != 0, noDataValue, dstLayer, idField, elevField, callback, callback_data);
+
+  [Obsolete("Use CreatePansharpenedVRT(string pszXML, Band panchroBand, Band[] nInputSpectralBands) instead.")]
+  public static Dataset CreatePansharpenedVRT(string pszXML, Band panchroBand, int nInputSpectralBands, Band[] ahInputSpectralBands)
+    => CreatePansharpenedVRT(pszXML, panchroBand, ahInputSpectralBands);
+
+  [Obsolete("Use BuildVRT(string dest, Dataset[] object_list_count, GDALBuildVRTOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.", error: true)]
+  public static Dataset wrapper_GDALBuildVRT_objects(string dest, int object_list_count, IntPtr poObjects, GDALBuildVRTOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use MultiDimTranslate(string dest, Dataset[] object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data) instead.", error: true)]
+  public static Dataset wrapper_GDALMultiDimTranslateDestName(string dest, int object_list_count, IntPtr poObjects, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFuncDelegate callback, string callback_data)
+    => throw new NotSupportedException();
+
+  [Obsolete("Use Contour(Dataset dstDS, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALContourDestDS(Dataset dstDS, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Contour(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Contour(string dest, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALContourDestName(string dest, Dataset srcDS, GDALContourOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Contour(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use DEMProcessing(string dest, Dataset dataset, string pszProcessing, string pszColorFilename, GDALDEMProcessingOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALDEMProcessing(string dest, Dataset dataset, string pszProcessing, string pszColorFilename, GDALDEMProcessingOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => DEMProcessing(dest, dataset, pszProcessing, pszColorFilename, options, callback, callback_data);
+
+  [Obsolete("Use Footprint(Dataset dstDS, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALFootprintDestDS(Dataset dstDS, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Footprint(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Footprint(string dest, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALFootprintDestName(string dest, Dataset srcDS, GDALFootprintOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Footprint(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Grid(string dest, Dataset dataset, GDALGridOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALGrid(string dest, Dataset dataset, GDALGridOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Grid(dest, dataset, options, callback, callback_data);
+
+  [Obsolete("Use Nearblack(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Nearblack(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Nearblack(string dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALNearblackDestName(string dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Nearblack(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Rasterize(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Rasterize(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Rasterize(string dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALRasterizeDestName(string dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => Rasterize(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use Translate(string dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALTranslate(string dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFuncDelegate callback, string callback_data)
+    => Translate(dest, dataset, translateOptions, callback, callback_data);
+
+  [Obsolete("Use VectorTranslate(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static int wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => VectorTranslate(dstDS, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use VectorTranslate(string dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_GDALVectorTranslateDestName(string dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => VectorTranslate(dest, srcDS, options, callback, callback_data);
+
+  [Obsolete("Use TileIndex(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data) instead.")]
+  public static Dataset wrapper_TileIndex_names(string dest, string[] source_filenames, GDALTileIndexOptions options, GDALProgressFuncDelegate callback, string callback_data)
+    => TileIndex(dest, source_filenames, options, callback, callback_data);
+
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static double GDAL_GCP_GCPX_get(GCP gcp) => gcp.GCPX;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static void GDAL_GCP_GCPX_set(GCP gcp, double dfGCPX) => gcp.GCPX = dfGCPX;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static double GDAL_GCP_GCPY_get(GCP gcp) => gcp.GCPY;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static void GDAL_GCP_GCPY_set(GCP gcp, double dfGCPY) => gcp.GCPY = dfGCPY;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static double GDAL_GCP_GCPZ_get(GCP gcp) => gcp.GCPZ;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static void GDAL_GCP_GCPZ_set(GCP gcp, double dfGCPZ) => gcp.GCPZ = dfGCPZ;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static double GDAL_GCP_GCPPixel_get(GCP gcp) => gcp.GCPPixel;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static void GDAL_GCP_GCPPixel_set(GCP gcp, double dfGCPPixel) => gcp.GCPPixel = dfGCPPixel;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static double GDAL_GCP_GCPLine_get(GCP gcp) => gcp.GCPLine;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static void GDAL_GCP_GCPLine_set(GCP gcp, double dfGCPLine) => gcp.GCPLine = dfGCPLine;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static string GDAL_GCP_Info_get(GCP gcp) => gcp.Info;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static void GDAL_GCP_Info_set(GCP gcp, string pszInfo) => gcp.Info = pszInfo;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static string GDAL_GCP_Id_get(GCP gcp) => gcp.Id;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static void GDAL_GCP_Id_set(GCP gcp, string pszId) => gcp.Id = pszId;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static double GDAL_GCP_get_GCPX(GCP gcp) => gcp.GCPX;
+  [Obsolete("Use the GCP.GCPX property instead.")]
+  public static void GDAL_GCP_set_GCPX(GCP gcp, double dfGCPX) => gcp.GCPX = dfGCPX;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static double GDAL_GCP_get_GCPY(GCP gcp) => gcp.GCPY;
+  [Obsolete("Use the GCP.GCPY property instead.")]
+  public static void GDAL_GCP_set_GCPY(GCP gcp, double dfGCPY) => gcp.GCPY = dfGCPY;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static double GDAL_GCP_get_GCPZ(GCP gcp) => gcp.GCPZ;
+  [Obsolete("Use the GCP.GCPZ property instead.")]
+  public static void GDAL_GCP_set_GCPZ(GCP gcp, double dfGCPZ) => gcp.GCPZ = dfGCPZ;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static double GDAL_GCP_get_GCPPixel(GCP gcp) => gcp.GCPPixel;
+  [Obsolete("Use the GCP.GCPPixel property instead.")]
+  public static void GDAL_GCP_set_GCPPixel(GCP gcp, double dfGCPPixel) => gcp.GCPPixel = dfGCPPixel;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static double GDAL_GCP_get_GCPLine(GCP gcp) => gcp.GCPLine;
+  [Obsolete("Use the GCP.GCPLine property instead.")]
+  public static void GDAL_GCP_set_GCPLine(GCP gcp, double dfGCPLine) => gcp.GCPLine = dfGCPLine;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static string GDAL_GCP_get_Info(GCP gcp) => gcp.Info;
+  [Obsolete("Use the GCP.Info property instead.")]
+  public static void GDAL_GCP_set_Info(GCP gcp, string pszInfo) => gcp.Info = pszInfo;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static string GDAL_GCP_get_Id(GCP gcp) => gcp.Id;
+  [Obsolete("Use the GCP.Id property instead.")]
+  public static void GDAL_GCP_set_Id(GCP gcp, string pszId) => gcp.Id = pszId;
+%}
+
+/*
+ * C# extension method class
+ */
+%{
+typedef struct {} GdalExtensions;
+%}
+%typemap(csclassmodifiers) GdalExtensions "public static class";
+%typemap(csinterfaces)     GdalExtensions "";
+%typemap(csdisposing)      GdalExtensions "";
+%typemap(csdispose)        GdalExtensions "";
+%typemap(csbody)           GdalExtensions %{
+  public static Dataset GetDataset(this OGR.Layer layer) => Gdal.GetDatasetFromLayer(layer);
+%}
+
+%ignore GdalExtensions::GdalExtensions();
+struct  GdalExtensions{};
+
+/*****************************************************************************
+ * Enable C# default arguments all GDAL methods                              *
+ * Apply fixes to specific methods to translate C++ default values to C#     *
+ ****************************************************************************/
+ 
+#if SWIG_VERSION >= 0x040200
+%feature("cs:defaultargs");
+
+%feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDatasetShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateVector;
+%feature("cs:defaultargs", root_group_options="null", options="null") GDALDatasetShadow::CreateMultiDimensional;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") GDALDatasetShadow::CreateCopy;
+
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALAlgorithmHS::Run;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALAlgorithmHS::ParseRunAndFinalize;
+
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetMDArrayNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenMDArrayFromFullname;
+%feature("cs:defaultargs", options="null") GDALGroupHS::ResolveMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetGroupNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenGroupFromFullname;
+%feature("cs:defaultargs", options="null") GDALGroupHS::GetVectorLayerNames;
+%feature("cs:defaultargs", options="null") GDALGroupHS::OpenVectorLayer;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteGroup;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateDimension;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteMDArray;
+%feature("cs:defaultargs", options="null") GDALGroupHS::DeleteAttribute;
+%feature("cs:defaultargs", options="null") GDALGroupHS::CreateAttribute;
+%feature("cs:defaultargs", options="null") GDALGroupHS::SubsetDimensionFromSelection;
+%feature("cs:defaultargs", groupOptions="null", arrayOptions="null") GDALGroupHS::GetMDArrayFullNamesRecursive;
+
+%feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::ReadRaster;
+%feature("cs:defaultargs", extraArg="null") GDALRasterBandShadow::WriteRaster;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALRasterBandShadow::ComputeStatistics;
+%feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogram;
+%feature("cs:defaultargs", histogram="null", include_out_of_range="false", approx_ok="true", callback="null", callback_data="null") GDALRasterBandShadow::GetHistogramEx;
+%feature("cs:defaultargs", force="true", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogram;
+%feature("cs:defaultargs", force="true", callback="null", callback_data="null") GDALRasterBandShadow::GetDefaultHistogramEx;
+%feature("cs:defaultargs", buf_type="DataType.GDT_Byte", options="null") GDALRasterBandShadow::AdviseRead;
+%feature("cs:defaultargs", transformerOptions="null") GDALRasterBandShadow::InterpolateAtGeolocation;
+
+%feature("cs:defaultargs", buf_type="DataType.GDT_Byte", band_list="null", options="null") GDALDatasetShadow::AdviseRead;
+%feature("cs:defaultargs", overviewlist="null") GDALDatasetShadow::BuildOverviews;
+%feature("cs:defaultargs", srs="null") GDALDatasetShadow::GetExtent;
+%feature("cs:defaultargs", srs="null", geom_type="wkbGeometryType.wkbUnknown", options="null") GDALDatasetShadow::CreateLayer;
+%feature("cs:defaultargs", datatype="DataType.GDT_Byte") GDALDatasetShadow::AddBand;
+%feature("cs:defaultargs", spatialFilter="null") GDALDatasetShadow::ExecuteSQL;
+%feature("cs:defaultargs", force=0) GDALDatasetShadow::StartTransaction;
+%feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::ReadRaster;
+%feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::WriteRaster;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALDatasetShadow::BuildOverviews;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::GetNextFeature;
+%feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::Close;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::AddBand;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateLayerFromGeomFieldDefn;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::CopyLayer;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::GetFieldDomainNames;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::GetRelationshipNames;
+%feature("cs:defaultargs", options="null") GDALDatasetShadow::AsMDArray;
+%feature("cs:defaultargs", hSRS="null") GDALDatasetShadow::SetGCPs2;
+
+%feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDriverShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDriverShadow::Create;
+%feature("cs:defaultargs", options="null") GDALDriverShadow::CreateVector;
+%feature("cs:defaultargs", root_group_options="null", options="null") GDALDriverShadow::CreateMultiDimensional;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") GDALDriverShadow::CreateCopy;
+
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALTransformerInfoShadow::TransformGeolocations;
+
+%feature("cs:defaultargs", eSubType="ExtendedDataTypeSubType.GEDTST_NONE") GDALExtendedDataTypeHS::CreateString;
+
+%feature("cs:defaultargs", palette="PaletteInterp.GPI_RGB") GDALColorTableShadow::GDALColorTableShadow;
+
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::Resize;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::CreateAttribute;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::DeleteAttribute;
+%feature("cs:defaultargs", storageType="DataType.GDT_Unknown") GDALMDArrayHS::SetOffset;
+%feature("cs:defaultargs", storageType="DataType.GDT_Unknown") GDALMDArrayHS::SetScale;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::GetMask;
+%feature("cs:defaultargs", xArray="null", yArray="null", options="null") GDALMDArrayHS::GetGridded;
+%feature("cs:defaultargs", hRootGroup="null", options="null") GDALMDArrayHS::AsClassicDataset;
+%feature("cs:defaultargs", options="null") GDALMDArrayHS::Cache;
+%feature("cs:defaultargs", overviewlist="null", callback="null", callback_data="null", options="null") GDALMDArrayHS::BuildOverviews;
+
+%feature("cs:defaultargs", pfnTransformer="null", pTransformArg="default(IntPtr)", burn_values="null", options="null", callback="null", callback_data="null") RasterizeLayers;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverviews;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverview;
+%feature("cs:defaultargs", pfnErrorHandler="null", user_data="default(IntPtr)") SetErrorHandler;
+%feature("cs:defaultargs", pszCallbackName="null") PushErrorHandler;
+%feature("cs:defaultargs", msg_class="CPLErr.CE_Failure") Error;
+%feature("cs:defaultargs", scheme=3) EscapeString; //CPLES_SQL
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetGlobalConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_CPLGetThreadLocalConfigOption;
+%feature("cs:defaultargs", pszDefault="null") wrapper_VSIGetCredential;
+%feature("cs:defaultargs", pszDefault="null") wrapper_VSIGetPathSpecificOption;
+%feature("cs:defaultargs", pszPathPrefix="null") wrapper_VSIClearCredentials;
+%feature("cs:defaultargs", pszPathPrefix="null") wrapper_VSIClearPathSpecificOptions;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") wrapper_VSIMove;
+%feature("cs:defaultargs", fpSource="default(IntPtr)", options="null", callback="null", callback_data="null") wrapper_VSICopyFile;
+%feature("cs:defaultargs", options="null") wrapper_VSIGetSignedURL;
+%feature("cs:defaultargs", options="null") wrapper_VSIGetFileMetadata;
+%feature("cs:defaultargs", options="null") wrapper_VSISetFileMetadata;
+%feature("cs:defaultargs", options="null") wrapper_VSINetworkStatsGetAsSerializedJSON;
+%feature("cs:defaultargs", bSetError=0, options="null") wrapper_VSIFOpenExL;
+%feature("cs:defaultargs", callback="null", callback_data="null") ComputeMedianCutPCT;
+%feature("cs:defaultargs", callback="null", callback_data="null") DitherRGB2PCT;
+%feature("cs:defaultargs", src_wkt="null", dst_wkt="null", eResampleAlg="ResampleAlg.GRA_NearestNeighbour", callback="null", callback_data="null", options="null") ReprojectImage;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") Polygonize;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") FPolygonize;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") FillNodata;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") SieveFilter;
+%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverview;
+%feature("cs:defaultargs", callback="null", callback_data="null") ContourGenerate;
+%feature("cs:defaultargs", callback="null", callback_data="null", options="null") ContourGenerateEx;
+%feature("cs:defaultargs", heightMode="ViewshedOutputType.GVOT_NORMAL", callback="null", callback_data="null", options="null") ViewshedGenerate;
+%feature("cs:defaultargs", options="null") IsLineOfSightVisible;
+%feature("cs:defaultargs", options="null") ApplyVerticalShiftGrid;
+%feature("cs:defaultargs", src_wkt="null", dst_wkt="null", eResampleAlg="ResampleAlg.GRA_NearestNeighbour") AutoCreateWarpedVRT;
+%feature("cs:defaultargs", options="null", callback="null", callback_data="null") ComputeProximity;
+%feature("cs:defaultargs", options="null") GetJPEG2000StructureAsString;
+%feature("cs:defaultargs", eAccess="Access.GA_ReadOnly") Open;
+%feature("cs:defaultargs", eAccess="Access.GA_ReadOnly") OpenShared;
+%feature("cs:defaultargs", allowed_drivers="null", open_options="null", sibling_files="null") OpenEx;
+%feature("cs:defaultargs", papszSiblings="null") IdentifyDriver;
+%feature("cs:defaultargs", allowed_drivers="null", sibling_files="null") IdentifyDriverEx;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALTranslate;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALWarpDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALWarpDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALVectorTranslateDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALVectorTranslateDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALDEMProcessing;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALNearblackDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALNearblackDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALGrid;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALContourDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALContourDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALRasterizeDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALRasterizeDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALFootprintDestDS;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALFootprintDestName;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALBuildVRT_objects;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALBuildVRT_names;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_TileIndex_names;
+%feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALMultiDimTranslateDestName;
+
+#endif //SWIG_VERSION >= 0x040200

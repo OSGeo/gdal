@@ -1,3 +1,15 @@
+/******************************************************************************
+ *
+ * Name:     GDALTestUtf8.cs
+ * Project:  GDAL CSharp Interface
+ * Purpose:  A sample app to demonstrate getting and setting Unicode strings.
+ * Author:   Michael Bucari-Tovo, mbucari1@gmail.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2026, Michael Bucari-Tovo
+ *
+ * SPDX-License-Identifier: MIT
+ *****************************************************************************/
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -113,19 +125,28 @@ namespace testapp
             string fileName = UnicodeString + ".gdb";
             if (File.Exists(fileName))
                 File.Delete(fileName);
-            using (OSGeo.OGR.Driver shpDriver = Ogr.GetDriverByName("OpenFileGDB"))
+            using (OSGeo.GDAL.Driver shpDriver = Gdal.GetDriverByName("OpenFileGDB"))
             {
                 if (shpDriver != null)
-                    using (DataSource shpSrc = shpDriver.CreateDataSource(fileName, null))
-                        shpSrc.CreateLayer("图层", null, wkbGeometryType.wkbPoint, null).Dispose();
+                {
+                    using Dataset shpSrc = shpDriver.CreateVector(fileName, null);
+                    shpSrc.CreateLayer("图层", null, wkbGeometryType.wkbPoint, null).Dispose();
+                    using GeomFieldDefn geomFieldDefn = new GeomFieldDefn(UnicodeString, wkbGeometryType.wkbMultiPolygon);
+                    shpSrc.CreateLayerFromGeomFieldDefn("层图2", geomFieldDefn).Dispose();
+                }
             }
-            using (DataSource shpSrc = Ogr.Open(fileName, 0))
+            using (Dataset shpSrc = Gdal.OpenEx(fileName))
             {
                 if (shpSrc != null)
                 {
-                    AssertEqual(fileName, shpSrc.GetName(), $"{nameof(DataSource)}.{nameof(shpSrc.GetName)}");
+                    AssertEqual(fileName, shpSrc.GetDescription(), $"{nameof(Dataset)}.{nameof(shpSrc.GetDescription)}");
                     using (Layer shpLyr = shpSrc.GetLayerByName("图层"))
-                        AssertEqual("图层", shpLyr.GetName(), $"{nameof(Layer)}.{nameof(shpSrc.GetName)}");
+                        AssertEqual("图层", shpLyr.GetName(), $"{nameof(Layer)}.{nameof(shpLyr.GetName)}");
+                    using (Layer shpLyr = shpSrc.GetLayerByName("层图2"))
+                    {
+                        AssertEqual("层图2", shpLyr.GetName(), $"{nameof(Layer)}.{nameof(shpLyr.GetName)}");
+                        AssertEqual("wkbMultiPolygon", shpLyr.GetGeomType().ToString(), $"{nameof(Layer)}.{nameof(shpLyr.GetGeomType)}");
+                    }
                 }
             }
         }
@@ -144,8 +165,8 @@ namespace testapp
             if (File.Exists(fileName))
                 File.Delete(fileName);
 
-            using (OSGeo.OGR.Driver shpDriver = Ogr.GetDriverByName("ESRI Shapefile"))
-            using (DataSource shpSrc = shpDriver.CreateDataSource(fileName, null))
+            using (OSGeo.GDAL.Driver shpDriver = Gdal.GetDriverByName("ESRI Shapefile"))
+            using (Dataset shpSrc = shpDriver.CreateVector(fileName, null))
             using (Layer shpLyr = shpSrc.CreateLayer(UnicodeString, null, wkbGeometryType.wkbPoint, new string[] { "ENCODING=UTF-8" }))
             using (FeatureDefn layerDef = shpLyr.GetLayerDefn())
             {
@@ -163,22 +184,20 @@ namespace testapp
                     }
                 }
             }
-            using (DataSource shpSrc = Ogr.Open(fileName, 0))
+            using (Dataset shpSrc = Gdal.OpenEx(fileName))
             {
                 if (shpSrc == null)
                     throw new Exception($"Failed to open dataset: {shpSrc}");
 
-                Layer shpLyr = shpSrc.GetLayerByName(UnicodeString)
-                    ?? throw new Exception("Failed to get layer from shape file by name.");
-
                 int featureIndex = 0;
-                while (true) using (Feature feat = shpLyr.GetNextFeature())
+                while (true) using (Feature feat = shpSrc.GetNextFeature(out Layer shpLyr, out double progress))
                 {
+                    shpLyr?.Dispose();
                     if (feat == null)
                         break;
 
                     string fieldValue = feat.GetFieldAsString("图层");
-                    AssertEqual(nameFieldValues[featureIndex++], fieldValue, $"{nameof(Layer)}.{nameof(shpSrc.GetName)}");
+                    AssertEqual(nameFieldValues[featureIndex++], fieldValue, $"{nameof(Layer)}.{nameof(shpSrc.GetDescription)}");
                 }
             }
         }
@@ -197,42 +216,32 @@ namespace testapp
             if (File.Exists(vrtFile))
                 File.Delete(vrtFile);
 
-            using (SpatialReference webMerc = new SpatialReference(""))
-            {
-                webMerc.ImportFromEPSG(3857);
-                using (OSGeo.GDAL.Driver tifDriver = Gdal.GetDriverByName("GTiff"))
-                {
-                    using (Dataset ds1 = tifDriver.Create(fileName1, 100, 100, 3, DataType.GDT_Byte, null))
-                    {
-                        ds1.SetSpatialRef(webMerc);
-                        ds1.SetGeoTransform(new double[] { 0, 1, 0, 0, 0, -1 });
-                    }
+            using SpatialReference webMerc = new SpatialReference();
+            webMerc.ImportFromEPSG(3857);
+            using OSGeo.GDAL.Driver tifDriver = Gdal.GetDriverByName("GTiff");
+            Dataset ds1 = tifDriver.Create(fileName1, 100, 100, 3, DataType.GDT_Byte);
+            ds1.SetSpatialRef(webMerc);
+            ds1.SetGeoTransform(new double[] { 0, 1, 0, 0, 0, -1 });
 
-                    using (Dataset ds2 = tifDriver.Create(fileName2, 100, 100, 3, DataType.GDT_Byte, null))
-                    {
-                        ds2.SetSpatialRef(webMerc);
-                        ds2.SetGeoTransform(new double[] { 100, 1, 0, 0, 0, -1 });
-                    }
-                }
-            }
+            Dataset ds2 = tifDriver.Create(fileName2, 100, 100, 3, DataType.GDT_Byte);
+            ds2.SetSpatialRef(webMerc);
+            ds2.SetGeoTransform(new double[] { 100, 1, 0, 0, 0, -1 });
 
-            Gdal.BuildVRT(vrtFile, new string[] { fileName1, fileName2 }, null, null, null).Dispose();
-            using (Dataset vrt = Gdal.Open(vrtFile, Access.GA_ReadOnly))
-            {
-                if (vrt.RasterXSize != 200)
-                    throw new Exception($"Expected VRT width of 200, got {vrt.RasterXSize}");
+            Gdal.BuildVRT(vrtFile, new Dataset[] { ds1, ds2 }, null).Dispose();
+            using Dataset vrt = Gdal.Open(vrtFile, Access.GA_ReadOnly);
+            if (vrt.RasterXSize != 200)
+                throw new Exception($"Expected VRT width of 200, got {vrt.RasterXSize}");
 
-                if (vrt.RasterYSize != 100)
-                    throw new Exception($"Expected VRT height of 100, got {vrt.RasterYSize}");
+            if (vrt.RasterYSize != 100)
+                throw new Exception($"Expected VRT height of 100, got {vrt.RasterYSize}");
 
-                string[] list = vrt.GetFileList();
-                if (list.Length != 3)
-                    throw new Exception($"Expected 3 files in VRT file list, got {list.Length}");
+            string[] list = vrt.GetFileList();
+            if (list.Length != 3)
+                throw new Exception($"Expected 3 files in VRT file list, got {list.Length}");
 
-                AssertEqual(vrtFile, list[0], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[0]");
-                AssertEqual(fileName1, list[1], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[1]");
-                AssertEqual(fileName2, list[2], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[2]");
-            }
+            AssertEqual(vrtFile, list[0], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[0]");
+            AssertEqual(fileName1, list[1], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[1]");
+            AssertEqual(fileName2, list[2], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[2]");
         }
         private static void TestCSharpExceptions()
         {
@@ -326,4 +335,3 @@ namespace testapp
             ?? throw new MissingMethodException($"Could not get non-public, static method {methodName} from {nameof(Gdal)}");
     }
 }
-
