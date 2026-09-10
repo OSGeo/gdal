@@ -48,6 +48,13 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
         }
     }
 
+    // Level 2: Surface Reflectance or Surface Temperature
+    if (i > 3 && (STARTS_WITH_CI(osBaseName.c_str() + i - 3, "_SR") ||
+                  STARTS_WITH_CI(osBaseName.c_str() + i - 3, "_ST")))
+    {
+        i -= 3;
+    }
+
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
