@@ -1217,7 +1217,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                             nRasterYSize, /* bOwnData = */ false));
                     poMaskBand->m_bIsMask = true;
                     poNewBand->poMask.reset(std::move(poMaskBand));
-                    poNewBand->nMaskFlags = poSrcMaskBand->nMaskFlags;
+                    poNewBand->nMaskFlags = poSrcMEMBand->nMaskFlags;
                 }
             }
 
