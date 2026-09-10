@@ -2289,6 +2289,24 @@ def test_vrt_pixelfn_mean_float64_image():
     assert result == src_array
 
 
+@pytest.mark.parametrize(
+    "dt", ["Byte", "UInt16", "Int16", "Int32", "Float32", "Float64"]
+)
+def test_vrt_pixelfn_mean_no_source(dt):
+
+    xml = f"""
+    <VRTDataset rasterXSize="32" rasterYSize="1">
+      <VRTRasterBand dataType="{dt}" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>mean</PixelFunctionType>
+        <SourceTransferType>{dt}</SourceTransferType>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with gdal.Open(xml) as ds:
+        nbytes = 32 * gdal.GetDataTypeSize(gdal.GetDataTypeByName(dt)) // 8
+        assert ds.ReadRaster() == b"\x00" * nbytes
+
+
 @pytest.mark.parametrize("dt", ["Byte", "UInt16", "Int16", "Float32", "Float64"])
 @pytest.mark.parametrize("function", ["min", "max"])
 def test_vrt_pixelfn_min_max_image(dt, function):
