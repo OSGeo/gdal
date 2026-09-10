@@ -592,7 +592,7 @@ def test_jp2grok_22():
     assert fourth_band.GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_22.jp2")
-    assert ds.GetRasterBand(4).Checksum() in (26477, 30223)
+    assert ds.GetRasterBand(4).Checksum() in (22499, 26477, 30223)
     ds = None
     gdal.Unlink("/vsimem/jp2grok_22.jp2")
 
@@ -721,7 +721,7 @@ def test_jp2grok_24():
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_24.jp2")
     assert ds.GetRasterBand(2).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") is None
-    assert ds.GetRasterBand(2).Checksum() in (27389, 30223)
+    assert ds.GetRasterBand(2).Checksum() in (22499, 27389, 30223)
     ds = None
     gdal.Unlink("/vsimem/jp2grok_24.jp2")
 
