@@ -1182,7 +1182,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Field %s of type Date will be written as a DateTime. "
-                 "To get DateTime, use layer creation option "
+                 "To get Date, use layer creation option "
                  "TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER",
                  poField->GetNameRef());
     }
