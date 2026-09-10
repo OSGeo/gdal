@@ -271,6 +271,27 @@ static void CalculateCellCenters(const GDALRasterWindow &window,
     }
 }
 
+static bool IsHomogeneous(const OGRGeometryCollection &coll)
+{
+    const auto nGeoms = coll.getNumGeometries();
+
+    if (nGeoms < 2)
+    {
+        return true;
+    }
+
+    const auto nDim = coll.getGeometryRef(0)->getDimension();
+    for (int i = 1; i < nGeoms; i++)
+    {
+        if (coll.getGeometryRef(i)->getDimension() != nDim)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 class GDALZonalStatsImpl
 {
   public:
@@ -1393,13 +1414,6 @@ class GDALZonalStatsImpl
                     continue;
                 }
 
-                if (poGeom->getDimension() != 2)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Non-polygonal geometry encountered.");
-                    return false;
-                }
-
                 poGeom->getEnvelope(&oGeomExtent);
                 GEOSGeometry *poEnv = CreateGEOSEnvelope(oGeomExtent);
                 if (poEnv == nullptr)
@@ -1697,12 +1711,6 @@ class GDALZonalStatsImpl
             {
                 // do nothing
             }
-            else if (poGeom->getDimension() != 2)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Non-polygonal geometry encountered.");
-                return false;
-            }
             else
             {
                 poGeom->getEnvelope(&oGeomExtent);
@@ -1921,8 +1929,22 @@ class GDALZonalStatsImpl
                            const OGREnvelope &oSnappedGeomExtent, int nXSize,
                            int nYSize, GByte *pabyCoverageBuf) const
     {
+        if (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
+        {
+            const auto *poColl =
+                cpl::down_cast<const OGRGeometryCollection *>(poGeom);
+            if (!IsHomogeneous(*poColl))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot calculate pixel coverage for mixed-dimension "
+                         "GeometryCollection.");
+                return false;
+            }
+        }
+
 #if GEOS_GRID_INTERSECTION_AVAILABLE
-        if (m_options.pixels == GDALZonalStatsOptions::FRACTIONAL)
+        if (m_options.pixels == GDALZonalStatsOptions::FRACTIONAL &&
+            poGeom->getDimension() > 0)
         {
             std::memset(pabyCoverageBuf, 0,
                         static_cast<size_t>(nXSize) * nYSize *
@@ -1968,7 +1990,9 @@ class GDALZonalStatsImpl
             std::unique_ptr<MEMDataset> poMemDS(MEMDataset::Create(
                 "", nXSize, nYSize, 0, m_coverageDataType, nullptr));
             poMemDS->SetGeoTransform(oCoverageGT);
-            constexpr double dfBurnValue = 255.0;
+            const double dfBurnValue =
+                m_options.pixels == GDALZonalStatsOptions::FRACTIONAL ? 1.0
+                                                                      : 255.0;
             constexpr int nBand = 1;
 
             MEMRasterBand *poCoverageBand =
