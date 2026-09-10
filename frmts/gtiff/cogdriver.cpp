@@ -866,12 +866,17 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
             dfSrcMinY = srcGT[3] + nSrcYSize * srcGT[5];
         }
 
+        const auto IsCloseEnough = [](double a, double b)
+        {
+            constexpr double EPSILON = 1e-10;
+            return std::fabs(a - b) <= EPSILON ||
+                   std::fabs(a - b) <= EPSILON * std::fabs(a);
+        };
         if (nTargetXSize == nSrcXSize && nTargetYSize == nSrcYSize &&
-            osTargetSRS == osSrcSRS &&
-            fabs(dfSrcMinX - dfTargetMinX) < 1e-10 * fabs(dfSrcMinX) &&
-            fabs(dfSrcMinY - dfTargetMinY) < 1e-10 * fabs(dfSrcMinY) &&
-            fabs(dfSrcMaxX - dfTargetMaxX) < 1e-10 * fabs(dfSrcMaxX) &&
-            fabs(dfSrcMaxY - dfTargetMaxY) < 1e-10 * fabs(dfSrcMaxY))
+            osTargetSRS == osSrcSRS && IsCloseEnough(dfSrcMinX, dfTargetMinX) &&
+            IsCloseEnough(dfSrcMinY, dfTargetMinY) &&
+            IsCloseEnough(dfSrcMaxX, dfTargetMaxX) &&
+            IsCloseEnough(dfSrcMaxY, dfTargetMaxY))
         {
             CPLDebug("COG",
                      "Skipping reprojection step: "
