@@ -846,7 +846,7 @@ class CPLHTTPPostFields
 
                 if (nullptr == pszKey)
                 {
-                    osErrMsg = CPLSPrintf("Key #%d is not exists. Maybe wrong "
+                    osErrMsg = CPLSPrintf("Key #%d does not exist. Maybe wrong "
                                           "count of form items",
                                           i);
                     return CE_Failure;
@@ -854,7 +854,7 @@ class CPLHTTPPostFields
 
                 if (nullptr == pszValue)
                 {
-                    osErrMsg = CPLSPrintf("Value #%d is not exists. Maybe "
+                    osErrMsg = CPLSPrintf("Value #%d does not exist. Maybe "
                                           "wrong count of form items",
                                           i);
                     return CE_Failure;
