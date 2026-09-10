@@ -147,7 +147,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_CURL_MAX_RANGES", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_NON_CACHED", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_SLOW_GET_SIZE", // from cpl_vsil_curl.cpp, cpl_vsil_curl_streaming.cpp
-   "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", // from cpl_vsil_curl_streaming.cpp
+   "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR", // from cpl_vsil_curl_streaming.cpp
    "CPL_VSIL_CURL_USE_HEAD", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_USE_S3_REDIRECT", // from cpl_vsil_curl.cpp
    "CPL_VSIL_DEFLATE_CHUNK_SIZE", // from cpl_minizip_zip.cpp, cpl_vsil_gzip.cpp

@@ -373,7 +373,7 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
     if (ctx->pObject != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A complete JSon object had already been parsed before new "
+                 "A complete JSON object had already been parsed before new "
                  "content is appended to it");
         return 0;
     }
