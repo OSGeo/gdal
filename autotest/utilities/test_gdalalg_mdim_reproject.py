@@ -13,7 +13,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 @pytest.mark.require_driver("netCDF")
@@ -196,3 +196,49 @@ def test_gdalalg_mdim_reproject_vrt_not_possible_in_pipeline(tmp_vsimem):
         gdal.alg.mdim.pipeline(
             pipeline="read ../gdrivers/data/netcdf/byte.nc ! reproject ! write {tmp_vsimem}/out.vrt"
         )
+
+
+def test_gdalalg_mdim_reproject_array_names():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateMultiDimensional("myds")
+    rg = src_ds.GetRootGroup()
+    f64 = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+
+    dimTime = rg.CreateDimension("time", None, None, 2)
+    dimY = rg.CreateDimension("y", "HORIZONTAL_Y", "NORTH", 4)
+    dimX = rg.CreateDimension("x", "HORIZONTAL_X", "EAST", 5)
+
+    arTime = rg.CreateMDArray("time", [dimTime], f64)
+    arTime.Write([0.0, 1.0])
+    dimTime.SetIndexingVariable(arTime)
+
+    arY = rg.CreateMDArray("y", [dimY], f64)
+    arY.Write([3.5, 2.5, 1.5, 0.5])
+    dimY.SetIndexingVariable(arY)
+
+    arX = rg.CreateMDArray("x", [dimX], f64)
+    arX.Write([0.5, 1.5, 2.5, 3.5, 4.5])
+    dimX.SetIndexingVariable(arX)
+
+    ar = rg.CreateMDArray(
+        "ar",
+        [dimTime, dimY, dimX],
+        gdal.ExtendedDataType.Create(gdal.GDT_Float32),
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetDataAxisToSRSAxisMapping([2, 3])
+    ar.SetSpatialRef(srs)
+
+    with gdal.alg.mdim.reproject(
+        input=src_ds,
+        output_crs="EPSG:3857",
+        output="",
+        output_format="stream",
+    ) as alg:
+        out_rg = alg.Output().GetRootGroup()
+        names = out_rg.GetMDArrayNames()
+        # "x" and "y" are replaced by "dimX" and "dimY", "time" is preserved
+        assert sorted(names) == ["ar", "dimX", "dimY", "time"]
+        for name in names:
+            assert out_rg.OpenMDArray(name) is not None
