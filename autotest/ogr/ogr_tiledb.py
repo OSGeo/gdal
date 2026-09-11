@@ -232,7 +232,7 @@ def test_ogr_tiledb_basic(tmp_path, nullable, batch_size):
     if os.path.exists(tmp_path / "test.tiledb"):
         shutil.rmtree(tmp_path / "test.tiledb")
 
-    field_count, srs, options = create_tiledb_dataset(nullable, batch_size)
+    field_count, srs, options = create_tiledb_dataset(tmp_path, nullable, batch_size)
 
     ds = gdal.Open(tmp_path / "test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1104,7 +1104,7 @@ def test_ogr_tiledb_arrow_stream_pyarrow(tmp_path, nullable, batch_size):
     if os.path.exists(str(tmp_path / "test.tiledb")):
         shutil.rmtree(str(tmp_path / "test.tiledb"))
 
-    _, _, options = create_tiledb_dataset(nullable, batch_size)
+    _, _, options = create_tiledb_dataset(tmp_path, nullable, batch_size)
 
     ds = gdal.Open(str(tmp_path / "test.tiledb"), open_options=options)
     lyr = ds.GetLayer(0)
@@ -1211,7 +1211,9 @@ def test_ogr_tiledb_arrow_stream_numpy(tmp_path, nullable, batch_size):
     if os.path.exists(str(tmp_path / "test.tiledb")):
         shutil.rmtree(str(tmp_path / "test.tiledb"))
 
-    _, _, options = create_tiledb_dataset(nullable, batch_size, extra_feature=True)
+    _, _, options = create_tiledb_dataset(
+        tmp_path, nullable, batch_size, extra_feature=True
+    )
 
     ds = gdal.Open(str(tmp_path / "test.tiledb"), open_options=options)
     lyr = ds.GetLayer(0)
