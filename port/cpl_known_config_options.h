@@ -491,7 +491,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GMLAS_XML_MAX_LEVEL", // from ogrgmlasreader.cpp
    "GMLJP2OVERRIDE", // from gdaljp2metadata.cpp, jp2opjlikedataset.cpp
    "GMT_USE_TAB", // from ogrgmtlayer.cpp
-   "GO2A_AUD", // from cpl_google_oauth2.cpp
+   "GOA2_AUD", // from cpl_google_oauth2.cpp
    "GOA2_AUTH_URL_TOKEN", // from cpl_google_oauth2.cpp
    "GOA2_CLIENT_ID", // from cpl_google_oauth2.cpp
    "GOA2_CLIENT_SECRET", // from cpl_google_oauth2.cpp
