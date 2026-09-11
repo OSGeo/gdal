@@ -31,79 +31,81 @@ def module_disable_exceptions():
 @pytest.mark.parametrize(
     "filename", ["byte", "int16", "uint16", "int32", "uint32", "float32", "float64"]
 )
-def test_fits(filename):
+def test_fits(tmp_path, filename):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/" + filename + ".tif")
-    driver.CreateCopy("tmp/" + filename + ".fits", ds, options=["PAGESIZE=2,2"])
+    driver.CreateCopy(
+        str(tmp_path) + "/" + filename + ".fits", ds, options=["PAGESIZE=2,2"]
+    )
 
-    ds2 = gdal.Open("tmp/" + filename + ".fits")
+    ds2 = gdal.Open(str(tmp_path) + "/" + filename + ".fits")
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     assert ds2.GetRasterBand(1).DataType == ds.GetRasterBand(1).DataType
 
     ds2 = None
-    driver.Delete("tmp/" + filename + ".fits")
+    driver.Delete(str(tmp_path) + "/" + filename + ".fits")
 
 
-def test_fits_metadata():
+def test_fits_metadata(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds2 = driver.CreateCopy("tmp/byte.fits", ds)
+    ds2 = driver.CreateCopy(str(tmp_path / "byte.fits"), ds)
     md = {"TEST": "test_value"}
     ds2.SetMetadata(md)
     ds2 = None
-    gdal.Unlink("tmp/byte.fits.aux.xml")
+    gdal.Unlink(str(tmp_path / "byte.fits.aux.xml"))
 
-    ds2 = gdal.Open("tmp/byte.fits")
+    ds2 = gdal.Open(str(tmp_path / "byte.fits"))
     md = ds2.GetMetadata()
     ds2 = None
 
     assert md["TEST"] == "test_value"
 
-    ds2 = gdal.Open("tmp/byte.fits", gdal.GA_Update)
+    ds2 = gdal.Open(str(tmp_path / "byte.fits"), gdal.GA_Update)
     md = {"TEST2": "test_value2"}
     ds2.SetMetadata(md)
     ds2 = None
-    gdal.Unlink("tmp/byte.fits.aux.xml")
+    gdal.Unlink(str(tmp_path / "byte.fits.aux.xml"))
 
-    ds2 = gdal.Open("tmp/byte.fits")
+    ds2 = gdal.Open(str(tmp_path / "byte.fits"))
     md = ds2.GetMetadata()
     ds2 = None
 
     assert md["TEST2"] == "test_value2"
 
 
-def test_fits_nodata():
+def test_fits_nodata(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/nodata_byte.tif")
-    ds2 = driver.CreateCopy("tmp/nodata_byte.fits", ds)
+    ds2 = driver.CreateCopy(str(tmp_path / "nodata_byte.fits"), ds)
     ds2 = None
-    gdal.Unlink("tmp/nodata_byte.fits.aux.xml")
+    gdal.Unlink(str(tmp_path / "nodata_byte.fits.aux.xml"))
 
-    ds2 = gdal.Open("tmp/nodata_byte.fits")
+    ds2 = gdal.Open(str(tmp_path / "nodata_byte.fits"))
     nd = ds2.GetRasterBand(1).GetNoDataValue()
     ds2 = None
-    driver.Delete("tmp/nodata_byte.fits")
+    driver.Delete(str(tmp_path / "nodata_byte.fits"))
 
     assert nd == 0
 
 
-def test_fits_offscale():
+def test_fits_offscale(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gdrivers/data/fits/offscale_byte.tif")
-    ds2 = driver.CreateCopy("tmp/offscale_byte.fits", ds)
+    ds2 = driver.CreateCopy(str(tmp_path / "offscale_byte.fits"), ds)
     ds2 = None
-    gdal.Unlink("tmp/offscale_byte.fits.aux.xml")
+    gdal.Unlink(str(tmp_path / "offscale_byte.fits.aux.xml"))
 
-    ds2 = gdal.Open("tmp/offscale_byte.fits")
+    ds2 = gdal.Open(str(tmp_path / "offscale_byte.fits"))
     offset = ds2.GetRasterBand(1).GetOffset()
     scale = ds2.GetRasterBand(1).GetScale()
     ds2 = None
-    driver.Delete("tmp/offscale_byte.fits")
+    driver.Delete(str(tmp_path / "offscale_byte.fits"))
 
     assert offset == -0.0039525691699605
     assert scale == 1.00395256917
@@ -700,9 +702,9 @@ def _check_lyr_defn_after_write(lyr_defn):
         assert False
 
 
-def test_fits_vector_write_with_source_fits_metadata():
+def test_fits_vector_write_with_source_fits_metadata(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = str(tmp_path / "out.fits")
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -skip"
@@ -817,9 +819,9 @@ def test_fits_vector_write_with_source_fits_metadata():
         raise
 
 
-def test_fits_vector_write_without_source_fits_metadata():
+def test_fits_vector_write_without_source_fits_metadata(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = str(tmp_path / "out.fits")
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"
@@ -935,9 +937,9 @@ def test_fits_vector_write_without_source_fits_metadata():
         raise
 
 
-def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
+def test_fits_vector_write_without_source_fits_metadata_compute_repeat(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = str(tmp_path / "out.fits")
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename,
@@ -1056,9 +1058,9 @@ def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
         raise
 
 
-def test_fits_vector_editing():
+def test_fits_vector_editing(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = str(tmp_path / "out.fits")
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"

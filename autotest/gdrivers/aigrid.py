@@ -130,27 +130,27 @@ def test_aigrid_6():
 # Read twice a broken tile (https://github.com/OSGeo/gdal/issues/4316)
 
 
-def test_aigrid_broken():
+def test_aigrid_broken(tmp_path):
 
-    if os.path.exists("tmp/broken_aigrid"):
-        shutil.rmtree("tmp/broken_aigrid")
+    if os.path.exists(str(tmp_path / "broken_aigrid")):
+        shutil.rmtree(str(tmp_path / "broken_aigrid"))
 
-    shutil.copytree("data/aigrid/abc3x1", "tmp/broken_aigrid")
+    shutil.copytree("data/aigrid/abc3x1", str(tmp_path / "broken_aigrid"))
 
     # Write a bad offset for a block
-    f = gdal.VSIFOpenL("tmp/broken_aigrid/w001001x.adf", "rb+")
+    f = gdal.VSIFOpenL(str(tmp_path / "broken_aigrid/w001001x.adf"), "rb+")
     gdal.VSIFSeekL(f, 100, 0)
     gdal.VSIFWriteL(b"\xff" * 4, 1, 4, f)
     gdal.VSIFCloseL(f)
 
-    ds = gdal.Open("tmp/broken_aigrid")
+    ds = gdal.Open(str(tmp_path / "broken_aigrid"))
     with pytest.raises(Exception):
         ds.GetRasterBand(1).Checksum()
     with pytest.raises(Exception):
         ds.GetRasterBand(1).Checksum()
     ds = None
 
-    shutil.rmtree("tmp/broken_aigrid")
+    shutil.rmtree(str(tmp_path / "broken_aigrid"))
 
 
 ###############################################################################
@@ -177,10 +177,12 @@ def test_aigrid_online_1():
         "nzdem500/w001001x.adf",
     ]
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.mkdir("tmp/cache/nzdem")
-        os.mkdir("tmp/cache/nzdem/info")
-        os.mkdir("tmp/cache/nzdem/nzdem500")
+        os.mkdir(f"{tmp_dir}/nzdem")
+        os.mkdir(f"{tmp_dir}/nzdem/info")
+        os.mkdir(f"{tmp_dir}/nzdem/nzdem500")
     except OSError:
         pass
 
@@ -191,11 +193,11 @@ def test_aigrid_online_1():
         )
 
     tst = gdaltest.GDALTest(
-        "AIG", "tmp/cache/nzdem/nzdem500/hdr.adf", 1, 45334, filename_absolute=1
+        "AIG", f"{tmp_dir}/nzdem/nzdem500/hdr.adf", 1, 45334, filename_absolute=1
     )
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/nzdem/nzdem500/hdr.adf")
+    ds = gdal.Open(f"{tmp_dir}/nzdem/nzdem500/hdr.adf")
 
     try:
         rat = ds.GetRasterBand(1).GetDefaultRAT()
@@ -238,20 +240,22 @@ def test_aigrid_online_2():
         "http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip", "ai_bug_6886.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/ai_bug")
+        os.stat(f"{tmp_dir}/ai_bug")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/ai_bug_6886")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/ai_bug_6886")
             try:
-                os.stat("tmp/cache/ai_bug")
+                os.stat(f"{tmp_dir}/ai_bug")
             except OSError:
                 pytest.skip()
         except Exception:
             pytest.skip()
 
     tst = gdaltest.GDALTest(
-        "AIG", "tmp/cache/ai_bug/ai_bug/hdr.adf", 1, 16018, filename_absolute=1
+        "AIG", f"{tmp_dir}/ai_bug/ai_bug/hdr.adf", 1, 16018, filename_absolute=1
     )
     tst.testOpen()
 

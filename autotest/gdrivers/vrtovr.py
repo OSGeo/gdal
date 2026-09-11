@@ -311,10 +311,10 @@ def test_vrtovr_external_ovr_has_priority_over_implicit(tmp_vsimem):
 # Test with anonymous VRT
 
 
-def test_vrtovr_anonymous_vrt():
+def test_vrtovr_anonymous_vrt(tmp_path):
 
     old_cwd = os.getcwd()
-    os.chdir(os.path.join(old_cwd, "tmp"))
+    os.chdir(tmp_path)
     try:
         gdal.GetDriverByName("GTiff").Create(".ovr", 1, 1)
 

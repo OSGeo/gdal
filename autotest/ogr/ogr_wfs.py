@@ -752,23 +752,23 @@ def test_ogr_wfs_xmldescriptionfile_requires_csv():
 
 
 @pytest.mark.skip("FIXME: re-enable after adapting test")
-def test_ogr_wfs_xmldescriptionfile_to_be_updated():
+def test_ogr_wfs_xmldescriptionfile_to_be_updated(tmp_path):
 
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "wt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "wt")
     f.write("<OGRWFSDataSource>\n")
     f.write("<URL>http://demo.opengeo.org/geoserver/wfs</URL>\n")
     f.write("</OGRWFSDataSource>\n")
     f.close()
 
     # Should only emit GetCapabilities and serialize it
-    ds = ogr.Open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    ds = ogr.Open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
     assert ds is not None
     ds = None
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
     content = f.read()
     assert (
         content.find("WFS_Capabilities") != -1
@@ -779,19 +779,19 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
     f.close()
 
     # Should emit DescribeFeatureType and serialize its result
-    ds = ogr.Open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    ds = ogr.Open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
     assert ds is not None
     ds.GetLayerByName("za:za_points").GetLayerDefn()
     ds = None
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
     content = f.read()
     assert (
         content.find('<OGRWFSLayer name="za:za_points">') != -1
     ), "XML description file was not filled as expected"
     f.close()
 
-    os.unlink("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    os.unlink(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
 
 
 ###############################################################################

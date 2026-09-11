@@ -34,8 +34,10 @@ def test_ogr_sosi_1():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/cache/20BygnAnlegg.SOS"
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_dir}/20BygnAnlegg.SOS"
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1

@@ -1298,10 +1298,12 @@ def test_netcdf_34():
         "http://download.osgeo.org/gdal/data/netcdf/" + filename, filename
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     sys.stdout.write(".")
     sys.stdout.flush()
 
-    tst = gdaltest.GDALTest("NetCDF", "../tmp/cache/" + filename, 1, 31621)
+    tst = gdaltest.GDALTest("NetCDF", tmp_dir + "/" + filename, 1, 31621)
     # tst.testOpen()
 
     with gdal.quiet_errors():
@@ -1449,34 +1451,42 @@ def test_netcdf_38():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_netcdf_39():
+def test_netcdf_39(tmp_path):
 
-    shutil.copy("data/netcdf/two_vars_scale_offset.nc", "tmp")
-    src_ds = gdal.Open("NETCDF:tmp/two_vars_scale_offset.nc:z", gdal.OF_RASTER)
-    out_ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/netcdf_39.vrt", src_ds)
+    shutil.copy("data/netcdf/two_vars_scale_offset.nc", tmp_path)
+    src_ds = gdal.Open(
+        "NETCDF:{}/two_vars_scale_offset.nc:z".format(str(tmp_path)), gdal.OF_RASTER
+    )
+    out_ds = gdal.GetDriverByName("VRT").CreateCopy(
+        str(tmp_path / "netcdf_39.vrt"), src_ds
+    )
     del out_ds
     src_ds = None
 
-    ds = gdal.Open("tmp/netcdf_39.vrt")
+    ds = gdal.Open(str(tmp_path / "netcdf_39.vrt"))
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdal.Unlink("tmp/two_vars_scale_offset.nc")
-    gdal.Unlink("tmp/netcdf_39.vrt")
+    gdal.Unlink(str(tmp_path / "two_vars_scale_offset.nc"))
+    gdal.Unlink(str(tmp_path / "netcdf_39.vrt"))
     assert cs == 65463
 
-    shutil.copy("data/netcdf/two_vars_scale_offset.nc", "tmp")
-    src_ds = gdal.Open('NETCDF:"tmp/two_vars_scale_offset.nc":z', gdal.OF_RASTER)
-    out_ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/netcdf_39.vrt", src_ds)
+    shutil.copy("data/netcdf/two_vars_scale_offset.nc", tmp_path)
+    src_ds = gdal.Open(
+        "NETCDF:{}:z".format(str(tmp_path / "two_vars_scale_offset.nc")), gdal.OF_RASTER
+    )
+    out_ds = gdal.GetDriverByName("VRT").CreateCopy(
+        str(tmp_path / "netcdf_39.vrt"), src_ds
+    )
     del out_ds
     src_ds = None
 
-    ds = gdal.Open("tmp/netcdf_39.vrt")
+    ds = gdal.Open(str(tmp_path / "netcdf_39.vrt"))
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdal.Unlink("tmp/two_vars_scale_offset.nc")
-    gdal.Unlink("tmp/netcdf_39.vrt")
+    gdal.Unlink(str(tmp_path / "two_vars_scale_offset.nc"))
+    gdal.Unlink(str(tmp_path / "netcdf_39.vrt"))
     assert cs == 65463
 
 
@@ -1484,7 +1494,7 @@ def test_netcdf_39():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_netcdf_39_absolute():
+def test_netcdf_39_absolute(tmp_path):
 
     if (
         gdal.Open(
@@ -1498,37 +1508,39 @@ def test_netcdf_39_absolute():
             "netcdf library can't handle absolute paths. Known to happen with some versions of msys mingw-w64-x86_64-netcdf package"
         )
 
-    shutil.copy("data/netcdf/two_vars_scale_offset.nc", "tmp")
+    shutil.copy("data/netcdf/two_vars_scale_offset.nc", tmp_path)
     src_ds = gdal.Open(
-        'NETCDF:"%s/tmp/two_vars_scale_offset.nc":z' % os.getcwd(), gdal.OF_RASTER
+        'NETCDF:"%s/two_vars_scale_offset.nc":z' % str(tmp_path), gdal.OF_RASTER
     )
     out_ds = gdal.GetDriverByName("VRT").CreateCopy(
-        "%s/tmp/netcdf_39.vrt" % os.getcwd(), src_ds
+        "%s/netcdf_39.vrt" % str(tmp_path), src_ds
     )
     del out_ds
     src_ds = None
 
-    ds = gdal.Open("tmp/netcdf_39.vrt")
+    ds = gdal.Open(str(tmp_path / "netcdf_39.vrt"))
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdal.Unlink("tmp/two_vars_scale_offset.nc")
-    gdal.Unlink("tmp/netcdf_39.vrt")
+    gdal.Unlink(str(tmp_path / "two_vars_scale_offset.nc"))
+    gdal.Unlink(str(tmp_path / "netcdf_39.vrt"))
     assert cs == 65463
 
     src_ds = gdal.Open(
         'NETCDF:"%s/data/netcdf/two_vars_scale_offset.nc":z' % os.getcwd(),
         gdal.OF_RASTER,
     )
-    out_ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/netcdf_39.vrt", src_ds)
+    out_ds = gdal.GetDriverByName("VRT").CreateCopy(
+        str(tmp_path / "netcdf_39.vrt"), src_ds
+    )
     del out_ds
     src_ds = None
 
-    ds = gdal.Open("tmp/netcdf_39.vrt")
+    ds = gdal.Open(str(tmp_path / "netcdf_39.vrt"))
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdal.Unlink("tmp/netcdf_39.vrt")
+    gdal.Unlink(str(tmp_path / "netcdf_39.vrt"))
     assert cs == 65463
 
 
@@ -5894,7 +5906,7 @@ def test_netcdf_open_userfaultfd(tmp_path):
             assert gdal.Open(f"/vsizip/{ofile}/test.nc") is None
 
 
-def test_netcdf_write_4D():
+def test_netcdf_write_4D(tmp_path):
 
     # Create in-memory file with required metadata to define the extra >2D
     # dimensions
@@ -5912,7 +5924,7 @@ def test_netcdf_write_4D():
     src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
 
     # Create netCDF file
-    tmpfilename = "tmp/test_netcdf_write_4D.nc"
+    tmpfilename = str(tmp_path / "test_netcdf_write_4D.nc")
     gdal.GetDriverByName("netCDF").CreateCopy(tmpfilename, src_ds)
 
     # Checks

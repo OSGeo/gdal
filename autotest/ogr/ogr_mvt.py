@@ -1591,7 +1591,7 @@ def test_ogr_mvt_write_custom_tiling_scheme():
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
 @gdaltest.disable_exceptions()
-def test_ogr_mvt_write_errors():
+def test_ogr_mvt_write_errors(tmp_path):
 
     # Raster creation attempt
     if gdal.VSIStatL("/vsimem/foo") is not None:
@@ -1691,9 +1691,9 @@ def test_ogr_mvt_write_errors():
     assert ds is None
 
     # Test failure in creating tile
-    gdal.RmdirRecursive("tmp/tmpmvt")
-    ds = ogr.GetDriverByName("MVT").CreateDataSource("tmp/tmpmvt")
-    gdal.RmdirRecursive("tmp/tmpmvt")
+    gdal.RmdirRecursive(tmp_path / "tmpmvt")
+    ds = ogr.GetDriverByName("MVT").CreateDataSource(tmp_path / "tmpmvt")
+    gdal.RmdirRecursive(tmp_path / "tmpmvt")
     lyr = ds.CreateLayer("test")
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1702,7 +1702,7 @@ def test_ogr_mvt_write_errors():
     with gdal.quiet_errors():
         ds = None
     assert gdal.GetLastErrorMsg() != ""
-    gdal.RmdirRecursive("tmp/tmpmvt")
+    gdal.RmdirRecursive(tmp_path / "tmpmvt")
 
     # Test failure in writing in temp db (multi-threaded)
     gdal.RmdirRecursive("/vsimem/foo")
@@ -1719,7 +1719,7 @@ def test_ogr_mvt_write_errors():
         lyr.CreateFeature(f)
         ds = None
     assert gdal.GetLastErrorMsg() != ""
-    gdal.RmdirRecursive("tmp/tmpmvt")
+    gdal.RmdirRecursive(tmp_path / "tmpmvt")
 
     # Test failure in writing in temp db (single-threaded)
     gdal.RmdirRecursive("/vsimem/foo")
@@ -1737,7 +1737,7 @@ def test_ogr_mvt_write_errors():
         lyr.CreateFeature(f)
         ds = None
     assert gdal.GetLastErrorMsg() != ""
-    gdal.RmdirRecursive("tmp/tmpmvt")
+    gdal.RmdirRecursive(tmp_path / "tmpmvt")
 
     # Test reprojection failure
     gdal.RmdirRecursive("/vsimem/foo")

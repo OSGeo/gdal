@@ -11,7 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import sys
+import tempfile
 
 sys.path.append("../pymod")
 
@@ -19,12 +21,14 @@ import gdaltest
 
 from osgeo import gdal
 
+tmp_dir = tempfile.gettempdir()
+
 # Must to be launched from netcdf_multidim.py::test_netcdf_multidim_cache_pamproxydb
 if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb":
 
-    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmp/tmppamproxydir")
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(tmp_dir, "tmppamproxydir"))
 
-    tmpfilename = "tmp/tmpdirreadonly/test.nc"
+    tmpfilename = os.path.join(tmp_dir, "tmpdirreadonly/test.nc")
 
     def get_transposed_and_cache():
         ds = gdal.Open(tmpfilename, gdal.OF_MULTIDIM_RASTER)
@@ -47,7 +51,9 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
     def check_cache_exists():
         cache_ds = gdal.Open(
-            "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
+            os.path.join(
+                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
+            ),
             gdal.OF_MULTIDIM_RASTER,
         )
         assert cache_ds
@@ -73,7 +79,9 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
     # Now alter the cache directly
     def alter_cache():
         cache_ds = gdal.Open(
-            "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
+            os.path.join(
+                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
+            ),
             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE,
         )
         assert cache_ds
@@ -94,7 +102,11 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
 
     with gdaltest.disable_exceptions():
         gdal.Unlink(tmpfilename)
-        gdal.Unlink("tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac")
+        gdal.Unlink(
+            os.path.join(
+                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
+            )
+        )
 
     print("success")
     sys.exit(0)

@@ -52,33 +52,33 @@ def test_ilwis_1():
 # copy byte data and verify.
 
 
-def test_ilwis_2():
+def test_ilwis_2(tmp_path):
 
     tst = gdaltest.GDALTest("ilwis", "byte.tif", 1, 4672)
 
-    tst.testCreateCopy(check_srs=1, check_gt=1, new_filename="tmp/byte.mpr")
+    tst.testCreateCopy(check_srs=1, check_gt=1, new_filename=str(tmp_path / "byte.mpr"))
 
 
 ###############################################################################
 # copy floating point data and use Create interface.
 
 
-def test_ilwis_3():
+def test_ilwis_3(tmp_path):
 
     tst = gdaltest.GDALTest("ilwis", "hfa/float.img", 1, 23529)
 
-    tst.testCreate(new_filename="tmp/float.mpr", out_bands=1)
+    tst.testCreate(new_filename=str(tmp_path / "float.mpr"), out_bands=1)
 
 
 ###############################################################################
 # Try multi band dataset.
 
 
-def test_ilwis_4():
+def test_ilwis_4(tmp_path):
 
     tst = gdaltest.GDALTest("ilwis", "rgbsmall.tif", 2, 21053)
 
-    tst.testCreate(new_filename="tmp/rgb.mpl", check_minmax=0, out_bands=3)
+    tst.testCreate(new_filename=str(tmp_path / "rgb.mpl"), check_minmax=0, out_bands=3)
 
 
 ###############################################################################
@@ -105,15 +105,3 @@ def test_ilwis_read_real_store_value_domain():
     tst = gdaltest.GDALTest("ilwis", "ilwis/real_store_value_domain.mpr", 1, 350)
 
     tst.testOpen()
-
-
-###############################################################################
-# Cleanup.
-#
-# Currently the ILWIS driver does not keep track of the files that are
-# part of the dataset properly, so we can't automatically clean them up
-# properly. So we do the brute force approach...
-
-
-def test_ilwis_cleanup():
-    gdaltest.clean_tmp()

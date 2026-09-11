@@ -31,6 +31,7 @@ import json
 import math
 import os
 import struct
+import tempfile
 
 import gdaltest
 import ogrtest
@@ -120,17 +121,37 @@ def verify_geojson_copy(fname, fids, names):
 
 def copy_shape_to_geojson(gjname, compress=None):
 
+    temp_dir = tempfile.gettempdir()
+
+    # Remove ending slash from the temporary directory path if it exists
+    if temp_dir.endswith(os.path.sep):
+        temp_dir_pruned_slashes = temp_dir[:-1]
+    else:
+        temp_dir_pruned_slashes = temp_dir
+
+    real_path = os.path.join(temp_dir_pruned_slashes, gjname + ".geojson")
+
     if compress is not None:
         if compress[0:5] == "/vsig":
-            dst_name = os.path.join("/vsigzip/", "tmp", gjname + ".geojson" + ".gz")
+            dst_name = "/vsigzip/" + os.path.join(
+                temp_dir_pruned_slashes, gjname + ".geojson" + ".gz"
+            )
+            real_path += ".gz"
         elif compress[0:4] == "/vsiz":
-            dst_name = os.path.join("/vsizip/", "tmp", gjname + ".geojson" + ".zip")
+            dst_name = "/vsizip/" + os.path.join(
+                temp_dir_pruned_slashes, gjname + ".geojson" + ".zip"
+            )
+            real_path += ".zip"
         elif compress == "/vsistdout/":
             dst_name = compress
         else:
             return False, None
     else:
-        dst_name = os.path.join("tmp", gjname + ".geojson")
+        dst_name = real_path
+
+    # Remove the file if it already exists
+    if os.path.exists(real_path):
+        os.unlink(real_path)
 
     ds = gdal.GetDriverByName("GeoJSON").Create(dst_name, 0, 0, 0, gdal.GDT_Unknown)
     if ds is None:

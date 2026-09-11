@@ -13,6 +13,7 @@
 ###############################################################################
 
 import os
+import tempfile
 from http.server import BaseHTTPRequestHandler
 
 import gdaltest
@@ -24,13 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("FlatGeobuf")
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-    yield
-    gdaltest.clean_tmp()
-
+temp_dir = tempfile.gettempdir()
 
 ### utils
 
@@ -39,7 +34,7 @@ def verify_flatgeobuf_copy(name, fids, names):
 
     assert gdaltest.features is not None, "Missing features collection"
 
-    fname = os.path.join("tmp", name + ".fgb")
+    fname = os.path.join(temp_dir, name + ".fgb")
     ds = ogr.Open(fname)
     assert ds is not None, f"Can not open '{fname}'"
 
@@ -76,15 +71,15 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
 
     if compress is not None:
         if compress[0:5] == "/vsig":
-            dst_name = os.path.join("/vsigzip/", "tmp", name + ".fgb" + ".gz")
+            dst_name = os.path.join("/vsigzip/", temp_dir, name + ".fgb" + ".gz")
         elif compress[0:4] == "/vsiz":
-            dst_name = os.path.join("/vsizip/", "tmp", name + ".fgb" + ".zip")
+            dst_name = os.path.join("/vsizip/", temp_dir, name + ".fgb" + ".zip")
         elif compress == "/vsistdout/":
             dst_name = compress
         else:
             return False
     else:
-        dst_name = os.path.join("tmp", name + ".fgb")
+        dst_name = os.path.join(temp_dir, name + ".fgb")
 
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(dst_name)
     if ds is None:

@@ -66,8 +66,10 @@ def test_bmp_online_1():
         "http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp", "8bit_pal_rle.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "BMP", "tmp/cache/8bit_pal_rle.bmp", 1, 17270, filename_absolute=1
+        "BMP", "{}/8bit_pal_rle.bmp".format(tmp_dir), 1, 17270, filename_absolute=1
     )
 
     tst.testOpen()
@@ -79,9 +81,15 @@ def test_bmp_online_2():
         "http://download.osgeo.org/gdal/data/bmp/24bit.bmp", "24bit.bmp"
     )
 
-    tst = gdaltest.GDALTest("BMP", "tmp/cache/24bit.bmp", 1, 7158, filename_absolute=1)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    tst = gdaltest.GDALTest(
+        "BMP", "{}/24bit.bmp".format(tmp_dir), 1, 7158, filename_absolute=1
+    )
     tst.testOpen()
 
-    tst = gdaltest.GDALTest("BMP", "tmp/cache/24bit.bmp", 3, 27670, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "BMP", "{}/24bit.bmp".format(tmp_dir), 3, 27670, filename_absolute=1
+    )
 
     tst.testOpen()

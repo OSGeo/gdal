@@ -98,9 +98,9 @@ def test_basisu_read_wrong_subds(filename):
         assert gdal.Open(filename) is None
 
 
-def test_basisu_write_rgba_output_on_filesystem():
+def test_basisu_write_rgba_output_on_filesystem(tmp_path):
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
-    out_filename = "tmp/out.basis"
+    out_filename = str(tmp_path / "out.basis")
     assert gdal.GetDriverByName("BASISU").CreateCopy(out_filename, src_ds) is not None
     out_ds = gdal.Open(out_filename)
     assert out_ds.RasterXSize == src_ds.RasterXSize

@@ -60,10 +60,10 @@ def test_ehdr_3():
 # create dataset with a nodata value and a color table.
 
 
-def test_ehdr_4():
+def test_ehdr_4(tmp_path):
 
     drv = gdal.GetDriverByName("EHdr")
-    ds = drv.Create("tmp/test_4.bil", 200, 100, 1, gdal.GDT_UInt8)
+    ds = drv.Create(str(tmp_path / "test_4.bil"), 200, 100, 1, gdal.GDT_UInt8)
 
     raw_data = b"".join(struct.pack("h", v) for v in range(200))
 
@@ -89,7 +89,7 @@ def test_ehdr_4():
     ###############################################################################
     # verify dataset's colortable and nodata value.
 
-    ds = gdal.Open("tmp/test_4.bil")
+    ds = gdal.Open(str(tmp_path / "test_4.bil"))
     band = ds.GetRasterBand(1)
 
     assert band.GetNoDataValue() == 17, "failed to preserve nodata value."
@@ -107,7 +107,7 @@ def test_ehdr_4():
     ct = None
     ds = None
 
-    gdal.GetDriverByName("EHdr").Delete("tmp/test_4.bil")
+    gdal.GetDriverByName("EHdr").Delete(str(tmp_path / "test_4.bil"))
 
 
 ###############################################################################
@@ -140,11 +140,11 @@ def test_ehdr_7():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_ehdr_8():
+def test_ehdr_8(tmp_path):
 
     drv = gdal.GetDriverByName("EHDR")
     src_ds = gdal.Open("data/ehdr/8s.vrt")
-    ds = drv.CreateCopy("tmp/ehdr_8.bil", src_ds)
+    ds = drv.CreateCopy(str(tmp_path / "ehdr_8.bil"), src_ds)
     src_ds = None
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
@@ -154,7 +154,7 @@ def test_ehdr_8():
 
     ds = None
 
-    drv.Delete("tmp/ehdr_8.bil")
+    drv.Delete(str(tmp_path / "ehdr_8.bil"))
 
 
 ###############################################################################

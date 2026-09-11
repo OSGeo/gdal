@@ -58,24 +58,24 @@ def test_hfa_histread():
 # info is preserved.
 
 
-def test_hfa_histwrite():
+def test_hfa_histwrite(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
     ds_src = gdal.Open("../gcore/data/utmsmall.img")
-    out_ds = drv.CreateCopy("tmp/work.img", ds_src)
+    out_ds = drv.CreateCopy(str(tmp_path / "work.img"), ds_src)
     del out_ds
     ds_src = None
 
     # Remove .aux.xml file as histogram can be written in it
-    tmpAuxXml = "tmp/work.img.aux.xml"
+    tmpAuxXml = str(tmp_path / "work.img.aux.xml")
     if os.path.exists(tmpAuxXml):
         os.remove(tmpAuxXml)
 
-    ds = gdal.Open("tmp/work.img")
+    ds = gdal.Open(str(tmp_path / "work.img"))
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    drv.Delete("tmp/work.img")
+    drv.Delete(str(tmp_path / "work.img"))
 
     assert md["STATISTICS_MINIMUM"] == "8", "STATISTICS_MINIMUM is wrong."
 
@@ -94,16 +94,16 @@ def test_hfa_histwrite():
 # histogram information, the new histogram can then be read back in.
 
 
-def test_hfa_histrewrite():
+def test_hfa_histrewrite(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
     ds_src = gdal.Open("../gcore/data/utmsmall.img")
-    out_ds = drv.CreateCopy("tmp/work.img", ds_src)
+    out_ds = drv.CreateCopy(str(tmp_path / "work.img"), ds_src)
     del out_ds
     ds_src = None
 
     # Remove .aux.xml file as histogram can be written in it
-    tmpAuxXml = "tmp/work.img.aux.xml"
+    tmpAuxXml = str(tmp_path / "work.img.aux.xml")
     if os.path.exists(tmpAuxXml):
         os.remove(tmpAuxXml)
 
@@ -111,7 +111,7 @@ def test_hfa_histrewrite():
     # but we are just testing the re-writing of the histogram, so we don't mind.
     newHist = "8|23|29|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|"
 
-    ds = gdal.Open("tmp/work.img", gdal.GA_Update)
+    ds = gdal.Open(str(tmp_path / "work.img"), gdal.GA_Update)
     band = ds.GetRasterBand(1)
     band.SetMetadataItem("STATISTICS_HISTOBINVALUES", newHist)
     ds = None
@@ -119,11 +119,11 @@ def test_hfa_histrewrite():
     if os.path.exists(tmpAuxXml):
         os.remove(tmpAuxXml)
 
-    ds = gdal.Open("tmp/work.img")
+    ds = gdal.Open(str(tmp_path / "work.img"))
     histStr = ds.GetRasterBand(1).GetMetadataItem("STATISTICS_HISTOBINVALUES")
     ds = None
 
-    drv.Delete("tmp/work.img")
+    drv.Delete(str(tmp_path / "work.img"))
 
     assert histStr == newHist, "Rewritten STATISTICS_HISTOBINVALUES is wrong."
 
@@ -308,17 +308,17 @@ def test_hfa_pe_read():
 # Verify we can write PE_STRING nodes.
 
 
-def test_hfa_pe_write():
+def test_hfa_pe_write(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
     ds_src = gdal.Open("data/hfa/87test.img")
-    out_ds = drv.CreateCopy("tmp/87test.img", ds_src)
+    out_ds = drv.CreateCopy(str(tmp_path / "87test.img"), ds_src)
     del out_ds
     ds_src = None
 
     expected = 'PROJCS["World_Cube",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cube"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",0],PARAMETER["Option",1],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
 
-    ds = gdal.Open("tmp/87test.img")
+    ds = gdal.Open(str(tmp_path / "87test.img"))
     wkt = ds.GetProjectionRef()
 
     if wkt != expected:
@@ -326,7 +326,7 @@ def test_hfa_pe_write():
         pytest.fail("failed to write pe string as expected.")
 
     ds = None
-    drv.Delete("tmp/87test.img")
+    drv.Delete(str(tmp_path / "87test.img"))
 
 
 ###############################################################################
@@ -376,49 +376,51 @@ def test_hfa_metadata_1(tmp_path):
 # moving the HFAEntry to the end of the file.  (bug #1109)
 
 
-def test_hfa_grow_rrdlist():
+def test_hfa_grow_rrdlist(tmp_path):
 
     import shutil
 
-    shutil.copyfile("data/hfa/bug_1109.img", "tmp/bug_1109.img")
+    shutil.copyfile("data/hfa/bug_1109.img", str(tmp_path / "bug_1109.img"))
     # os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
-    ds = gdal.Open("tmp/bug_1109.img", gdal.GA_Update)
+    ds = gdal.Open(str(tmp_path / "bug_1109.img"), gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[4, 8])
     ds = None
 
     assert result == 0, "BuildOverviews failed."
 
     # Verify overviews are now findable.
-    ds = gdal.Open("tmp/bug_1109.img")
+    ds = gdal.Open(str(tmp_path / "bug_1109.img"))
     assert ds.GetRasterBand(1).GetOverviewCount() == 3, "Overview count wrong."
 
     ds = None
-    gdal.GetDriverByName("HFA").Delete("tmp/bug_1109.img")
+    gdal.GetDriverByName("HFA").Delete(str(tmp_path / "bug_1109.img"))
 
 
 ###############################################################################
 # Make sure an old .ige file is deleted when creating a new dataset. (#1784)
 
 
-def test_hfa_clean_ige():
+def test_hfa_clean_ige(tmp_path):
 
     # Create an imagine file, forcing creation of an .ige file.
 
     drv = gdal.GetDriverByName("HFA")
     src_ds = gdal.Open("data/byte.tif")
 
-    out_ds = drv.CreateCopy("tmp/igetest.img", src_ds, options=["USE_SPILL=YES"])
+    out_ds = drv.CreateCopy(
+        str(tmp_path / "igetest.img"), src_ds, options=["USE_SPILL=YES"]
+    )
     out_ds = None
 
     try:
-        open("tmp/igetest.ige")
+        open(str(tmp_path / "igetest.ige"))
     except IOError:
         pytest.fail("ige file not created with USE_SPILL=YES")
 
     # confirm ige shows up in file list.
-    ds = gdal.Open("tmp/igetest.img")
+    ds = gdal.Open(str(tmp_path / "igetest.img"))
     filelist = ds.GetFileList()
     ds = None
 
@@ -433,12 +435,12 @@ def test_hfa_clean_ige():
 
     # Create a file without a spill file, and verify old ige cleaned up.
 
-    out_ds = drv.CreateCopy("tmp/igetest.img", src_ds)
+    out_ds = drv.CreateCopy(str(tmp_path / "igetest.img"), src_ds)
     del out_ds
 
-    assert not os.path.exists("tmp/igetest.ige")
+    assert not os.path.exists(str(tmp_path / "igetest.ige"))
 
-    drv.Delete("tmp/igetest.img")
+    drv.Delete(str(tmp_path / "igetest.img"))
 
 
 ###############################################################################
@@ -567,16 +569,16 @@ def test_hfa_rotated_read():
 # Verify we can write affine geotransforms.
 
 
-def test_hfa_rotated_write():
+def test_hfa_rotated_write(tmp_path):
 
     # make sure we aren't preserving info in .aux.xml file
     try:
-        os.remove("tmp/rot.img.aux.xml")
+        os.remove(str(tmp_path / "rot.img.aux.xml"))
     except OSError:
         pass
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create("tmp/rot.img", 100, 150, 1, gdal.GDT_UInt8)
+    ds = drv.Create(str(tmp_path / "rot.img"), 100, 150, 1, gdal.GDT_UInt8)
 
     check_gt = (
         11856857.07898215,
@@ -618,7 +620,7 @@ def test_hfa_rotated_write():
 
     ds = None
 
-    ds = gdal.Open("tmp/rot.img")
+    ds = gdal.Open(str(tmp_path / "rot.img"))
     gt_epsilon = (abs(check_gt[1]) + abs(check_gt[2])) / 100.0
 
     new_gt = ds.GetGeoTransform()
@@ -634,7 +636,7 @@ def test_hfa_rotated_write():
 
     ds = None
 
-    gdal.GetDriverByName("HFA").Delete("tmp/rot.img")
+    gdal.GetDriverByName("HFA").Delete(str(tmp_path / "rot.img"))
 
 
 ###############################################################################
@@ -657,47 +659,49 @@ def test_hfa_vsimem():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_hfa_proName():
+def test_hfa_proName(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
     with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
         src_ds = gdal.Open("data/hfa/stateplane.vrt")
-    dst_ds = drv.CreateCopy("tmp/proname.img", src_ds)
+    dst_ds = drv.CreateCopy(str(tmp_path / "proname.img"), src_ds)
 
     del dst_ds
     src_ds = None
 
     # Make sure we don't have interference from an .aux.xml
     try:
-        os.remove("tmp/proname.img.aux.xml")
+        os.remove(str(tmp_path / "proname.img.aux.xml"))
     except OSError:
         pass
 
-    ds = gdal.Open("tmp/proname.img")
+    ds = gdal.Open(str(tmp_path / "proname.img"))
 
     srs = ds.GetProjectionRef()
     assert srs.startswith('PROJCS["NAD83 / Ohio South (ftUS)",')
 
     ds = None
 
-    drv.Delete("tmp/proname.img")
+    drv.Delete(str(tmp_path / "proname.img"))
 
 
 ###############################################################################
 # Read a compressed file where no block has been written (#2523)
 
 
-def test_hfa_read_empty_compressed():
+def test_hfa_read_empty_compressed(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create("tmp/emptycompressed.img", 64, 64, 1, options=["COMPRESSED=YES"])
+    ds = drv.Create(
+        str(tmp_path / "emptycompressed.img"), 64, 64, 1, options=["COMPRESSED=YES"]
+    )
     ds = None
 
-    ds = gdal.Open("tmp/emptycompressed.img")
+    ds = gdal.Open(str(tmp_path / "emptycompressed.img"))
     assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
 
-    drv.Delete("tmp/emptycompressed.img")
+    drv.Delete(str(tmp_path / "emptycompressed.img"))
 
 
 ###############################################################################
@@ -818,12 +822,14 @@ def test_hfa_xforms_3rd():
 # Verify that we can clear an existing color table
 
 
-def test_hfa_delete_colortable():
+def test_hfa_delete_colortable(tmp_path):
     # copy a file to tmp dir to modify.
-    open("tmp/i8u.img", "wb").write(open("data/hfa/i8u_c_i.img", "rb").read())
+    open(str(tmp_path / "i8u.img"), "wb").write(
+        open("data/hfa/i8u_c_i.img", "rb").read()
+    )
 
     # clear color table.
-    ds = gdal.Open("tmp/i8u.img", gdal.GA_Update)
+    ds = gdal.Open(str(tmp_path / "i8u.img"), gdal.GA_Update)
 
     try:
         ds.GetRasterBand(1).SetColorTable
@@ -832,19 +838,19 @@ def test_hfa_delete_colortable():
         # SetRasterColorTable, it doesn't work either as None isn't a valid
         # value for them
         ds = None
-        gdal.GetDriverByName("HFA").Delete("tmp/i8u.img")
+        gdal.GetDriverByName("HFA").Delete(str(tmp_path / "i8u.img"))
         pytest.skip()
 
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
 
     # check color table gone.
-    ds = gdal.Open("tmp/i8u.img")
+    ds = gdal.Open(str(tmp_path / "i8u.img"))
     assert ds.GetRasterBand(1).GetColorTable() is None, "failed to remove color table"
 
     ds = None
 
-    gdal.GetDriverByName("HFA").Delete("tmp/i8u.img")
+    gdal.GetDriverByName("HFA").Delete(str(tmp_path / "i8u.img"))
 
 
 ###############################################################################
@@ -852,18 +858,18 @@ def test_hfa_delete_colortable():
 
 
 @pytest.mark.require_driver("BMP")
-def test_hfa_delete_colortable2():
+def test_hfa_delete_colortable2(tmp_path):
 
     # copy a file to tmp dir to modify.
     src_ds = gdal.Open("../gcore/data/8bit_pal.bmp")
     ds = gdal.GetDriverByName("HFA").CreateCopy(
-        "tmp/hfa_delete_colortable2.img", src_ds
+        str(tmp_path / "hfa_delete_colortable2.img"), src_ds
     )
     src_ds = None
     ds = None
 
     # clear color table.
-    ds = gdal.Open("tmp/hfa_delete_colortable2.img", gdal.GA_Update)
+    ds = gdal.Open(str(tmp_path / "hfa_delete_colortable2.img"), gdal.GA_Update)
 
     try:
         ds.GetRasterBand(1).SetColorTable
@@ -872,19 +878,19 @@ def test_hfa_delete_colortable2():
         # SetRasterColorTable, it doesn't work either as None isn't a valid
         # value for them
         ds = None
-        gdal.GetDriverByName("HFA").Delete("tmp/hfa_delete_colortable2.img")
+        gdal.GetDriverByName("HFA").Delete(str(tmp_path / "hfa_delete_colortable2.img"))
         pytest.skip()
 
     ds.GetRasterBand(1).SetColorTable(None)
     ds = None
 
     # check color table gone.
-    ds = gdal.Open("tmp/hfa_delete_colortable2.img")
+    ds = gdal.Open(str(tmp_path / "hfa_delete_colortable2.img"))
     assert ds.GetRasterBand(1).GetColorTable() is None, "failed to remove color table"
 
     ds = None
 
-    gdal.GetDriverByName("HFA").Delete("tmp/hfa_delete_colortable2.img")
+    gdal.GetDriverByName("HFA").Delete(str(tmp_path / "hfa_delete_colortable2.img"))
 
 
 ###############################################################################
@@ -962,16 +968,16 @@ def test_hfa_read_bit2grayscale():
 # the bit2grayscale algorithm (#2914)
 
 
-def test_hfa_write_bit2grayscale():
+def test_hfa_write_bit2grayscale(tmp_path):
 
     import shutil
 
-    shutil.copyfile("data/hfa/small1bit.img", "tmp/small1bit.img")
-    shutil.copyfile("data/hfa/small1bit.rrd", "tmp/small1bit.rrd")
+    shutil.copyfile("data/hfa/small1bit.img", str(tmp_path / "small1bit.img"))
+    shutil.copyfile("data/hfa/small1bit.rrd", str(tmp_path / "small1bit.rrd"))
 
     with gdal.config_options({"USE_RRD": "YES", "HFA_USE_RRD": "YES"}):
 
-        ds = gdal.Open("tmp/small1bit.img", gdal.GA_Update)
+        ds = gdal.Open(str(tmp_path / "small1bit.img"), gdal.GA_Update)
         ds.BuildOverviews(resampling="average_bit2grayscale", overviewlist=[2])
 
         ov = ds.GetRasterBand(1).GetOverview(1)
@@ -980,10 +986,10 @@ def test_hfa_write_bit2grayscale():
 
         ds = None
 
-        gdal.GetDriverByName("HFA").Delete("tmp/small1bit.img")
+        gdal.GetDriverByName("HFA").Delete(str(tmp_path / "small1bit.img"))
 
     # as an aside, confirm the .rrd file was deleted.
-    assert not os.path.exists("tmp/small1bit.rrd")
+    assert not os.path.exists(str(tmp_path / "small1bit.rrd"))
 
 
 ###############################################################################
@@ -1050,8 +1056,8 @@ def test_hfa_read_tmso_projection():
 # Verify can write Transverse Mercator (South Orientated) projections to aux files
 
 
-def test_hfa_write_tmso_projection():
-    dataset_path = "tmp/tmso.img"
+def test_hfa_write_tmso_projection(tmp_path):
+    dataset_path = str(tmp_path / "tmso.img")
     out_ds = gdal.GetDriverByName("HFA").Create(dataset_path, 1, 1)
     gt = (0, 1, 0, 0, 0, 1)
     out_ds.SetGeoTransform(gt)
@@ -1085,8 +1091,8 @@ def test_hfa_read_homva_projection():
 # Verify can write  Hotine Oblique Mercator (Variant A) projections to aux files
 
 
-def test_hfa_write_homva_projection():
-    dataset_path = "tmp/homva.img"
+def test_hfa_write_homva_projection(tmp_path):
+    dataset_path = str(tmp_path / "homva.img")
     out_ds = gdal.GetDriverByName("HFA").Create(dataset_path, 1, 1)
     gt = (0, 1, 0, 0, 0, 1)
     out_ds.SetGeoTransform(gt)
@@ -1137,14 +1143,16 @@ def test_hfa_rde_overviews():
 # in the .img and .rrd seem to be updated properly.
 
 
-def test_hfa_copyfiles():
+def test_hfa_copyfiles(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
-    drv.CopyFiles("tmp/newnamexxx_after_copy.img", "data/hfa/spill.img")
+    drv.CopyFiles(str(tmp_path / "newnamexxx_after_copy.img"), "data/hfa/spill.img")
 
-    drv.Rename("tmp/newnamexxx.img", "tmp/newnamexxx_after_copy.img")
+    drv.Rename(
+        str(tmp_path / "newnamexxx.img"), str(tmp_path / "newnamexxx_after_copy.img")
+    )
 
-    ds = gdal.Open("tmp/newnamexxx.img")
+    ds = gdal.Open(str(tmp_path / "newnamexxx.img"))
 
     exp_cs = 340
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1153,13 +1161,13 @@ def test_hfa_copyfiles():
 
     filelist = ds.GetFileList()
     exp_filelist = [
-        "tmp/newnamexxx.img",
-        "tmp/newnamexxx.ige",
-        "tmp/newnamexxx.rrd",
-        "tmp/newnamexxx.rde",
+        str(tmp_path / "newnamexxx.img"),
+        str(tmp_path / "newnamexxx.ige"),
+        str(tmp_path / "newnamexxx.rrd"),
+        str(tmp_path / "newnamexxx.rde"),
     ]
     exp_filelist_win32 = [
-        "tmp/newnamexxx.img",
+        str(tmp_path / "newnamexxx.img"),
         "tmp\\newnamexxx.ige",
         "tmp\\newnamexxx.rrd",
         "tmp\\newnamexxx.rde",
@@ -1171,26 +1179,26 @@ def test_hfa_copyfiles():
     ds = None
 
     # Check that the filenames in the actual files seem to have been updated.
-    img = open("tmp/newnamexxx.img", "rb").read()
+    img = open(str(tmp_path / "newnamexxx.img"), "rb").read()
     img = str(img)
     assert img.find("newnamexxx.rrd") != -1, "RRDNames not updated?"
 
     assert img.find("newnamexxx.ige") != -1, "spill file not updated?"
 
-    rrd = open("tmp/newnamexxx.rrd", "rb").read()
+    rrd = open(str(tmp_path / "newnamexxx.rrd"), "rb").read()
     rrd = str(rrd)
     assert rrd.find("newnamexxx.img") != -1, "DependentFile not updated?"
 
     assert rrd.find("newnamexxx.rde") != -1, "overview spill file not updated?"
 
-    drv.Delete("tmp/newnamexxx.img")
+    drv.Delete(str(tmp_path / "newnamexxx.img"))
 
 
 ###############################################################################
 # Test the ability to write a RAT (#999)
 
 
-def test_hfa_write_rat():
+def test_hfa_write_rat(tmp_path):
 
     drv = gdal.GetDriverByName("HFA")
 
@@ -1198,7 +1206,7 @@ def test_hfa_write_rat():
 
     rat = src_ds.GetRasterBand(1).GetDefaultRAT()
 
-    dst_ds = drv.Create("tmp/write_rat.img", 100, 100, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(str(tmp_path / "write_rat.img"), 100, 100, 1, gdal.GDT_UInt8)
 
     dst_ds.GetRasterBand(1).SetDefaultRAT(rat)
 
@@ -1207,7 +1215,7 @@ def test_hfa_write_rat():
 
     rat = None
 
-    ds = gdal.Open("tmp/write_rat.img")
+    ds = gdal.Open(str(tmp_path / "write_rat.img"))
     rat = ds.GetRasterBand(1).GetDefaultRAT()
 
     assert (
@@ -1223,7 +1231,7 @@ def test_hfa_write_rat():
     rat = None
     ds = None
 
-    drv.Delete("tmp/write_rat.img")
+    drv.Delete(str(tmp_path / "write_rat.img"))
 
 
 ###############################################################################

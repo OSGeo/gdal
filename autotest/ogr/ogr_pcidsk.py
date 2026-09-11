@@ -245,7 +245,9 @@ def test_ogr_pcidsk_online_1():
         "polygon.pix",
     )
 
-    ds = ogr.Open("tmp/cache/polygon.pix")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"{tmp_dir}/polygon.pix")
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -274,8 +276,10 @@ def test_ogr_pcidsk_online_2():
         "polygon.pix",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/cache/polygon.pix"
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_dir}/polygon.pix"
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1

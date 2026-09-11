@@ -68,19 +68,21 @@ def download_test_data():
         "http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip", "PGeoTest.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/Autodesk Test.mdb")
+        os.stat(f"{tmp_dir}/Autodesk Test.mdb")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/PGeoTest.zip")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/PGeoTest.zip")
             try:
-                os.stat("tmp/cache/Autodesk Test.mdb")
+                os.stat(f"{tmp_dir}/Autodesk Test.mdb")
             except OSError:
                 pytest.skip()
         except Exception:
             pytest.skip()
 
-    pgeo_ds = ogr.Open("tmp/cache/Autodesk Test.mdb")
+    pgeo_ds = ogr.Open(f"{tmp_dir}/Autodesk Test.mdb")
     if pgeo_ds is None:
         pytest.skip("could not open DB. Driver probably misconfigured")
 
@@ -546,7 +548,8 @@ def test_ogr_pgeo_ogrsf(ogrsf_path):
 
 
 def test_ogr_pgeo_ogrsf_v9(download_test_data, ogrsf_path):
-    ret = gdaltest.runexternal(ogrsf_path + ' "tmp/cache/Autodesk Test.mdb"')
+    tmp_dir = gdaltest.get_cache_dir()
+    ret = gdaltest.runexternal(ogrsf_path + f' "{tmp_dir}/Autodesk Test.mdb"')
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
@@ -568,8 +571,9 @@ def test_ogr_pgeo_ogrsf_sql(ogrsf_path):
 
 
 def test_ogr_pgeo_ogrsf_sql_v9(download_test_data, ogrsf_path):
+    tmp_dir = gdaltest.get_cache_dir()
     ret = gdaltest.runexternal(
-        ogrsf_path + ' "tmp/cache/Autodesk Test.mdb" -sql "SELECT * FROM SDPipes"'
+        ogrsf_path + f' "{tmp_dir}/Autodesk Test.mdb" -sql "SELECT * FROM SDPipes"'
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1

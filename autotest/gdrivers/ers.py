@@ -43,20 +43,20 @@ def test_ers_1():
 # Create simple copy and check.
 
 
-def test_ers_2():
+def test_ers_2(tmp_path):
 
     tst = gdaltest.GDALTest("ERS", "ehdr/float32.bil", 1, 27)
-    tst.testCreateCopy(new_filename="tmp/float32.ers", check_gt=1, vsimem=1)
+    tst.testCreateCopy(new_filename=str(tmp_path / "float32.ers"), check_gt=1, vsimem=1)
 
 
 ###############################################################################
 # Test multi-band file.
 
 
-def test_ers_3():
+def test_ers_3(tmp_path):
 
     tst = gdaltest.GDALTest("ERS", "rgbsmall.tif", 2, 21053)
-    tst.testCreate(new_filename="tmp/rgbsmall.ers")
+    tst.testCreate(new_filename=str(tmp_path / "rgbsmall.ers"))
 
 
 ###############################################################################
@@ -92,18 +92,18 @@ def test_ers_5():
 # Confirm a copy preserves the signed byte info.
 
 
-def test_ers_6():
+def test_ers_6(tmp_path):
 
     drv = gdal.GetDriverByName("ERS")
 
     src_ds = gdal.Open("data/ers/8s.ers")
 
-    ds = drv.CreateCopy("tmp/8s.ers", src_ds)
+    ds = drv.CreateCopy(str(tmp_path / "8s.ers"), src_ds)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
 
     ds = None
 
-    drv.Delete("tmp/8s.ers")
+    drv.Delete(str(tmp_path / "8s.ers"))
 
 
 ###############################################################################
@@ -314,11 +314,3 @@ def test_ers_recursive_opening():
 def test_ers_open_data_file_ecw():
 
     assert gdal.Open("data/ers/references_ecw.ers")
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ers_cleanup():
-    gdaltest.clean_tmp()

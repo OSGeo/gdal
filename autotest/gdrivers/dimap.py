@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
 import shutil
 
 import gdaltest
@@ -29,13 +28,13 @@ pytestmark = pytest.mark.require_driver("DIMAP")
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_dimap_1():
+def test_dimap_1(tmp_path):
 
-    shutil.copy("data/dimap/METADATA.DIM", "tmp")
-    shutil.copy("data/dimap/IMAGERY.TIF", "tmp")
-    shutil.copy("data/rgbsmall.tif", "tmp")
+    shutil.copy("data/dimap/METADATA.DIM", tmp_path)
+    shutil.copy("data/dimap/IMAGERY.TIF", tmp_path)
+    shutil.copy("data/rgbsmall.tif", tmp_path)
 
-    ds = gdal.Open("tmp/METADATA.DIM")
+    ds = gdal.Open(str(tmp_path / "METADATA.DIM"))
 
     assert (
         ds.RasterCount == 1 and ds.RasterXSize == 6000 and ds.RasterYSize == 6000
@@ -65,9 +64,6 @@ def test_dimap_1():
     ), "GCPs wrong."
 
     ds = None
-    os.unlink("tmp/METADATA.DIM")
-    os.unlink("tmp/IMAGERY.TIF")
-    os.unlink("tmp/rgbsmall.tif")
 
 
 ###############################################################################

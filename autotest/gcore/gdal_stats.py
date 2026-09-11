@@ -28,7 +28,6 @@
 
 import math
 import os
-import shutil
 import struct
 import sys
 from itertools import chain
@@ -42,32 +41,32 @@ from osgeo import gdal
 # Test handling NaN with GDT_Float32 data
 
 
-def test_stats_nan_1():
+def test_stats_nan_1(tmp_vsimem):
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
-    shutil.copyfile("data/nan32.tif", "tmp/nan32.tif")
+    gdal.CopyFile("data/nan32.tif", tmp_vsimem / "nan32.tif")
 
-    t = gdaltest.GDALTest("GTiff", "tmp/nan32.tif", 1, 874, filename_absolute=1)
+    t = gdaltest.GDALTest(
+        "GTiff", tmp_vsimem / "nan32.tif", 1, 874, filename_absolute=1
+    )
     t.testOpen(check_approx_stat=stats, check_stat=stats)
-
-    gdal.GetDriverByName("GTiff").Delete("tmp/nan32.tif")
 
 
 ###############################################################################
 # Test handling NaN with GDT_Float64 data
 
 
-def test_stats_nan_2():
+def test_stats_nan_2(tmp_vsimem):
 
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
-    shutil.copyfile("data/nan64.tif", "tmp/nan64.tif")
+    gdal.CopyFile("data/nan64.tif", tmp_vsimem / "nan64.tif")
 
-    t = gdaltest.GDALTest("GTiff", "tmp/nan64.tif", 1, 4414, filename_absolute=1)
+    t = gdaltest.GDALTest(
+        "GTiff", tmp_vsimem / "nan64.tif", 1, 4414, filename_absolute=1
+    )
     t.testOpen(check_approx_stat=stats, check_stat=stats)
-
-    gdal.GetDriverByName("GTiff").Delete("tmp/nan64.tif")
 
 
 ###############################################################################
@@ -75,18 +74,16 @@ def test_stats_nan_2():
 
 
 @pytest.mark.require_driver("HFA")
-def test_stats_signedbyte():
+def test_stats_signedbyte(tmp_vsimem):
 
     stats = (-128.0, 127.0, -0.2, 80.64)
 
-    shutil.copyfile("data/stats_signed_byte.img", "tmp/stats_signed_byte.img")
+    gdal.CopyFile("data/stats_signed_byte.img", tmp_vsimem / "stats_signed_byte.img")
 
     t = gdaltest.GDALTest(
-        "HFA", "tmp/stats_signed_byte.img", 1, 11, filename_absolute=1
+        "HFA", tmp_vsimem / "stats_signed_byte.img", 1, 11, filename_absolute=1
     )
     t.testOpen(check_approx_stat=stats, check_stat=stats, skip_checksum=1)
-
-    gdal.GetDriverByName("HFA").Delete("tmp/stats_signed_byte.img")
 
 
 ###############################################################################
@@ -108,27 +105,27 @@ def test_stats_dont_force():
 # value used in the imagery (#3573)
 
 
-def test_stats_approx_nodata():
+def test_stats_approx_nodata(tmp_vsimem):
 
-    shutil.copyfile("data/minfloat.tif", "tmp/minfloat.tif")
+    gdal.CopyFile("data/minfloat.tif", tmp_vsimem / "minfloat.tif")
     try:
-        os.remove("tmp/minfloat.tif.aux.xml")
-    except OSError:
+        gdal.Unlink(tmp_vsimem / "minfloat.tif.aux.xml")
+    except RuntimeError:
         pass
 
-    ds = gdal.Open("tmp/minfloat.tif")
+    ds = gdal.Open(tmp_vsimem / "minfloat.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     md = ds.GetRasterBand(1).GetMetadata()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    os.remove("tmp/minfloat.tif.aux.xml")
+    gdal.Unlink(tmp_vsimem / "minfloat.tif.aux.xml")
 
-    ds = gdal.Open("tmp/minfloat.tif")
+    ds = gdal.Open(tmp_vsimem / "minfloat.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
 
-    os.remove("tmp/minfloat.tif")
+    gdal.Unlink(tmp_vsimem / "minfloat.tif")
 
     if nodata != -3.4028234663852886e38:
         print("%.17g" % nodata)
@@ -152,27 +149,29 @@ def test_stats_approx_nodata():
 
 
 @pytest.mark.require_driver("GTiff")
-def test_stats_nan_3():
+def test_stats_nan_3(tmp_vsimem):
 
     src_ds = gdal.Open("data/nan32_nodata.tif")
     nodata = src_ds.GetRasterBand(1).GetNoDataValue()
     assert gdaltest.isnan(nodata), "expected nan, got %f" % nodata
 
-    out_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/nan32_nodata.tif", src_ds)
+    out_ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "nan32_nodata.tif", src_ds
+    )
     del out_ds
 
     src_ds = None
 
     try:
-        os.remove("tmp/nan32_nodata.tif.aux.xml")
-    except OSError:
+        gdal.Unlink(tmp_vsimem / "nan32_nodata.tif.aux.xml")
+    except RuntimeError:
         pass
 
-    ds = gdal.Open("tmp/nan32_nodata.tif")
+    ds = gdal.Open(tmp_vsimem / "nan32_nodata.tif")
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    gdal.GetDriverByName("GTiff").Delete("tmp/nan32_nodata.tif")
+    gdal.GetDriverByName("GTiff").Delete(tmp_vsimem / "nan32_nodata.tif")
     assert gdaltest.isnan(nodata), "expected nan, got %f" % nodata
 
 
@@ -411,26 +410,26 @@ def test_stats_square_shape():
 # Test when nodata = FLT_MIN (#6578)
 
 
-def test_stats_flt_min():
+def test_stats_flt_min(tmp_vsimem):
 
-    shutil.copyfile("data/flt_min.tif", "tmp/flt_min.tif")
+    gdal.CopyFile("data/flt_min.tif", tmp_vsimem / "flt_min.tif")
     try:
-        os.remove("tmp/flt_min.tif.aux.xml")
-    except OSError:
+        gdal.Unlink(tmp_vsimem / "flt_min.tif.aux.xml")
+    except RuntimeError:
         pass
 
-    ds = gdal.Open("tmp/flt_min.tif")
+    ds = gdal.Open(tmp_vsimem / "flt_min.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    os.remove("tmp/flt_min.tif.aux.xml")
+    gdal.Unlink(tmp_vsimem / "flt_min.tif.aux.xml")
 
-    ds = gdal.Open("tmp/flt_min.tif")
+    ds = gdal.Open(tmp_vsimem / "flt_min.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
 
-    os.remove("tmp/flt_min.tif")
+    gdal.Unlink(tmp_vsimem / "flt_min.tif")
 
     if nodata != 1.17549435082228751e-38:
         print("%.17g" % nodata)
@@ -450,26 +449,26 @@ def test_stats_flt_min():
 # Test when nodata = DBL_MIN (#6578)
 
 
-def test_stats_dbl_min():
+def test_stats_dbl_min(tmp_vsimem):
 
-    shutil.copyfile("data/dbl_min.tif", "tmp/dbl_min.tif")
+    gdal.CopyFile("data/dbl_min.tif", tmp_vsimem / "dbl_min.tif")
     try:
-        os.remove("tmp/dbl_min.tif.aux.xml")
-    except OSError:
+        gdal.Unlink(tmp_vsimem / "dbl_min.tif.aux.xml")
+    except RuntimeError:
         pass
 
-    ds = gdal.Open("tmp/dbl_min.tif")
+    ds = gdal.Open(tmp_vsimem / "dbl_min.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    os.remove("tmp/dbl_min.tif.aux.xml")
+    gdal.Unlink(tmp_vsimem / "dbl_min.tif.aux.xml")
 
-    ds = gdal.Open("tmp/dbl_min.tif")
+    ds = gdal.Open(tmp_vsimem / "dbl_min.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
 
-    os.remove("tmp/dbl_min.tif")
+    gdal.Unlink(tmp_vsimem / "dbl_min.tif")
 
     if nodata != 2.22507385850720138e-308:
         print("%.17g" % nodata)

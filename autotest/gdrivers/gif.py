@@ -20,14 +20,6 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("GIF")
 
 
-@pytest.fixture(autouse=True)
-def setup_and_cleanup_test():
-
-    yield
-
-    gdaltest.clean_tmp()
-
-
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.
 
@@ -101,11 +93,11 @@ def test_gif_5():
 # Verify nodata support
 
 
-def test_gif_6():
+def test_gif_6(tmp_path):
 
     src_ds = gdal.Open("../gcore/data/nodata_byte.tif")
 
-    new_ds = gdaltest.gif_drv.CreateCopy("tmp/nodata_byte.gif", src_ds)
+    new_ds = gdaltest.gif_drv.CreateCopy(str(tmp_path / "nodata_byte.gif"), src_ds)
     assert new_ds is not None, "Create copy operation failure"
 
     bnd = new_ds.GetRasterBand(1)
@@ -115,7 +107,7 @@ def test_gif_6():
     new_ds = None
     src_ds = None
 
-    new_ds = gdal.Open("tmp/nodata_byte.gif")
+    new_ds = gdal.Open(str(tmp_path / "nodata_byte.gif"))
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 4440, "Wrong checksum"
@@ -127,7 +119,7 @@ def test_gif_6():
     bnd = None
     new_ds = None
 
-    gdaltest.gif_drv.Delete("tmp/nodata_byte.gif")
+    gdaltest.gif_drv.Delete(str(tmp_path / "nodata_byte.gif"))
 
 
 ###############################################################################

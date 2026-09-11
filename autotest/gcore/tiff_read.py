@@ -1111,7 +1111,9 @@ def test_tiff_read_online_1():
         "imgpb17.tif",
     )
 
-    ds = gdal.Open("tmp/cache/imgpb17.tif")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/imgpb17.tif")
     gdal.ErrorReset()
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -1277,7 +1279,7 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff_overview():
 # Test GTIFF_DIRECT_IO and GTIFF_VIRTUAL_MEM_IO optimizations
 
 
-def test_tiff_direct_and_virtual_mem_io():
+def test_tiff_direct_and_virtual_mem_io(tmp_path):
 
     with gdal.ExceptionMgr(useExceptions=False):
 
@@ -1335,12 +1337,12 @@ def test_tiff_direct_and_virtual_mem_io():
                     options = [
                         ("GTIFF_DIRECT_IO", "/vsimem"),
                         ("GTIFF_VIRTUAL_MEM_IO", "/vsimem"),
-                        ("GTIFF_VIRTUAL_MEM_IO", "tmp"),
+                        ("GTIFF_VIRTUAL_MEM_IO", str(tmp_path)),
                     ]
                 for option, prefix in options:
                     if dt == gdal.GDT_CInt16:
                         niter = 3
-                    elif prefix == "tmp":
+                    elif prefix == str(tmp_path):
                         niter = 4
                     else:
                         niter = nitermax

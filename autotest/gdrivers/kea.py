@@ -36,12 +36,14 @@ def setup_and_cleanup():
 # Test copying a reference sample with CreateCopy()
 
 
-def test_kea_1():
+def test_kea_1(tmp_path):
 
     tst = gdaltest.GDALTest(
         "KEA", "byte.tif", 1, 4672, options=["IMAGEBLOCKSIZE=15", "THEMATIC=YES"]
     )
-    tst.testCreateCopy(check_srs=True, check_gt=1, new_filename="tmp/byte.kea")
+    tst.testCreateCopy(
+        check_srs=True, check_gt=1, new_filename=str(tmp_path / "byte.kea")
+    )
 
 
 ###############################################################################
@@ -63,12 +65,12 @@ def test_kea_1():
         "../../gcore/data/float64.tif",
     ],
 )
-def test_kea_2(src_file):
+def test_kea_2(tmp_path, src_file):
 
     tst = gdaltest.GDALTest(
         "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
     )
-    tst.testCreateCopy(check_minmax=1, new_filename="tmp/test.kea")
+    tst.testCreateCopy(check_minmax=1, new_filename=str(tmp_path / "test.kea"))
 
 
 ###############################################################################

@@ -49,13 +49,15 @@ def test_ntv2_online_1():
         "http://download.osgeo.org/proj/nzgd2kgrid0005.gsb", "nzgd2kgrid0005.gsb"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/nzgd2kgrid0005.gsb")
+        os.stat(f"{tmp_dir}/nzgd2kgrid0005.gsb")
     except OSError:
         pytest.skip()
 
     tst = gdaltest.GDALTest(
-        "NTV2", "tmp/cache/nzgd2kgrid0005.gsb", 1, 54971, filename_absolute=1
+        "NTV2", f"{tmp_dir}/nzgd2kgrid0005.gsb", 1, 54971, filename_absolute=1
     )
     gt = (165.95, 0.1, 0.0, -33.95, 0.0, -0.1)
     tst.testOpen(check_gt=gt, check_prj="WGS84")

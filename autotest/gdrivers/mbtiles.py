@@ -300,7 +300,7 @@ def test_mbtiles_5():
 
 
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_6():
+def test_mbtiles_6(tmp_path):
 
     # Test options
     src_ds = gdal.Open("data/byte.tif")
@@ -312,10 +312,12 @@ def test_mbtiles_6():
     options += ["TYPE=baselayer"]
     options += ["VERSION=version"]
     options += ["WRITE_BOUNDS=no"]
-    gdaltest.mbtiles_drv.CreateCopy("tmp/mbtiles_6.mbtiles", src_ds, options=options)
+    gdaltest.mbtiles_drv.CreateCopy(
+        str(tmp_path / "mbtiles_6.mbtiles"), src_ds, options=options
+    )
     src_ds = None
 
-    ds = gdal.Open("tmp/mbtiles_6.mbtiles")
+    ds = gdal.Open(str(tmp_path / "mbtiles_6.mbtiles"))
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs != 0
     got_md = ds.GetMetadata()
@@ -332,7 +334,7 @@ def test_mbtiles_6():
     assert got_md == expected_md
     ds = None
 
-    gdal.Unlink("tmp/mbtiles_6.mbtiles")
+    gdal.Unlink(str(tmp_path / "mbtiles_6.mbtiles"))
 
 
 ###############################################################################

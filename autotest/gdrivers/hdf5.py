@@ -112,8 +112,18 @@ def test_hdf5_5():
 # Test generating an overview on a subdataset.
 
 
-def test_hdf5_6():
+def test_hdf5_6(tmp_path, monkeypatch):
 
+    data_subdir = tmp_path / "data" / "hdf5"
+    gdal.MkdirRecursive(data_subdir, 0o755)
+
+    tmp_subdir2 = tmp_path / "tmp"
+    gdal.Mkdir(tmp_subdir2, 0o755)
+
+    shutil.copyfile("data/hdf5/groups.h5", str(data_subdir / "groups.h5"))
+
+    # Temporaryily change working directory to tmp_path
+    monkeypatch.chdir(tmp_path)
     shutil.copyfile("data/hdf5/groups.h5", "tmp/groups.h5")
 
     ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
@@ -129,14 +139,13 @@ def test_hdf5_6():
     # confirm that it works with a different path. (#3290)
 
     ds = gdal.Open('HDF5:"data/../tmp/groups.h5"://MyGroup/dset1')
+
     assert (
         ds.GetRasterBand(1).GetOverviewCount() == 1
     ), "failed to find overview with alternate path"
     ovfile = ds.GetMetadataItem("OVERVIEW_FILE", "OVERVIEWS")
     assert ovfile[:11] == "data/../tmp", "did not get expected OVERVIEW_FILE."
     ds = None
-
-    gdaltest.clean_tmp()
 
 
 ###############################################################################
@@ -340,7 +349,9 @@ def test_hdf5_12():
         "norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf",
     )
 
-    ds = gdal.Open("tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf")
     got_projection = ds.GetProjection()
     assert "Azimuthal_Equidistant" in got_projection
 
@@ -372,8 +383,10 @@ def test_hdf5_13():
         "A2016273115000.L2_LAC_OC.nc",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        'HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490'
+        f'HDF5:"{tmp_dir}/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490'
     )
 
     got_gcps = ds.GetGCPs()
@@ -516,7 +529,9 @@ hdf5_list = [
 def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
-    ds = gdal.Open('HDF5:"tmp/cache/' + fileName + '"://' + subdatasetname)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open('HDF5:"' + tmp_dir + "/" + fileName + '"://' + subdatasetname)
 
     assert (
         ds.GetRasterBand(1).Checksum() == checksum
