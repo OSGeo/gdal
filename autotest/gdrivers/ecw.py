@@ -152,7 +152,7 @@ def test_ecw_2():
 
 def test_ecw_4(tmp_path):
 
-    if not has_write_support():
+    if not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     src_ds = gdal.Open("data/ecw/jrc.ecw")
@@ -201,7 +201,7 @@ def test_ecw_4(tmp_path):
 
 
 def test_ecw_5(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/small.vrt")
@@ -272,7 +272,7 @@ def test_ecw_5(tmp_path):
 
 
 def test_ecw_7(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/small.vrt")
@@ -324,7 +324,7 @@ def test_ecw_7(tmp_path):
 
 
 def test_ecw_9(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -379,7 +379,7 @@ def test_ecw_9(tmp_path):
 
 
 def test_ecw_11(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     drv = gdal.GetDriverByName("NITF")
@@ -470,7 +470,7 @@ def test_ecw_13():
 
 
 def test_ecw_14(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/rgb_gcp.vrt")
@@ -853,9 +853,9 @@ def test_ecw_26(tmp_path):
 # Check that we can use .j2w world files (#4651)
 
 
-def test_ecw_27():
+def test_ecw_27(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/jpeg2000/byte_without_geotransform.jp2")
@@ -1153,7 +1153,7 @@ def test_ecw_33_bis():
 
 def test_ecw_34(tmp_path):
 
-    if not has_write_support():
+    if not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1183,7 +1183,7 @@ def test_ecw_34(tmp_path):
 
 
 def test_ecw_35(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     ds = gdal.GetDriverByName("MEM").Create("MEM:::", 128, 128, 1, gdal.GDT_UInt16)
@@ -1208,7 +1208,7 @@ def test_ecw_35(tmp_path):
 
 def test_ecw_36(tmp_path):
 
-    if not has_write_support():
+    if not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1287,7 +1287,7 @@ def test_ecw_36(tmp_path):
 
 def test_ecw_37(tmp_path):
 
-    if not has_write_support():
+    if not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1371,7 +1371,7 @@ def test_ecw_38(tmp_path):
 
 def test_ecw_39(tmp_path):
 
-    if not has_write_support():
+    if not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1950,8 +1950,8 @@ def RemoveDriverMetadata(md):
     return md
 
 
-def test_ecw_45():
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+def test_ecw_45(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     # No metadata
@@ -2036,9 +2036,9 @@ def test_ecw_45():
 # Test non nearest upsampling
 
 
-def test_ecw_46():
+def test_ecw_46(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
     tmp_ds = gdaltest.jp2ecw_drv.CreateCopy(
@@ -2203,12 +2203,12 @@ def test_ecw_read_uint32_jpeg2000():
 # Test unsupported XML SRS
 
 
-def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_vsimem):
+def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support():
+    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
         pytest.skip("ECW write support not available")
 
-    filename = str(tmp_vsimem / "out.jp2")
+    filename = str(tmp_path / "out.jp2")
     # There is no EPSG code and Albers Equal Area is not supported by OGRSpatialReference::exportToXML()
     wkt = """PROJCRS["Africa_Albers_Equal_Area_Conic",
     BASEGEOGCRS["WGS 84",
