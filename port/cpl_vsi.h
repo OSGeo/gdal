@@ -36,7 +36,7 @@ extern "C++"
  * aliases for Standard C I/O, memory allocation and other system functions.
  * They are intended to allow virtualization of disk I/O so that non file data
  * sources can be made to appear as files, and so that additional error trapping
- * and reporting can be interested.  The memory access API is aliased
+ * and reporting can be investigated.  The memory access API is aliased
  * so that special application memory management services can be used.
  *
  * It is intended that each of these functions retains exactly the same

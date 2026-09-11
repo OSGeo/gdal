@@ -3738,7 +3738,7 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
     {
         // Conversion from the work type to the VRT band data type is
         // not lossy, so we can directly convert from the work type to
-        // the the output type
+        // the output type.
         for (int iY = 0; iY < nOutYSize; iY++)
         {
             GByte *pDstLocation = static_cast<GByte *>(pData) +

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Name:     cpl_userfault.h
+ * Name:     cpl_userfaultfd.h
  * Project:  CPL - Common Portability Library
  * Purpose:  Use userfaultfd and VSIL to service page faults
  * Author:   James McClain, <james.mcclain@gmail.com>
