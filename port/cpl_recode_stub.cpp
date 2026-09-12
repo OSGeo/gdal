@@ -805,7 +805,7 @@ static unsigned utf8towc(const char *src, unsigned srclen, wchar_t *dst,
 
     Errors in the UTF-8 are converted as individual bytes, same as
     utf8decode() does. This allows ISO-8859-1 text mistakenly identified
-    as UTF-8 to be printed correctly (and possibly CP1512 on Windows).
+    as UTF-8 to be printed correctly (and possibly CP1252 on Windows).
 
     \a src points at the UTF-8, and \a srclen is the number of bytes to
     convert.

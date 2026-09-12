@@ -1045,7 +1045,7 @@ const char *CPLStringList::FetchNameValueDef(const char *pszName,
  *
  * @param nInsertAtLineNo the line to insert at, zero to insert at front.
  * @param pszNewLine to the line to insert, the ownership of this string
- * will be taken over the by the object.  It must have been allocated on the
+ * will be taken over by the object.  It must have been allocated on the
  * heap.
  */
 

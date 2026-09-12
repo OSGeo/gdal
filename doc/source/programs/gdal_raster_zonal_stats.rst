@@ -141,7 +141,7 @@ Program-Specific Options
 
 .. option:: --strategy <STRATEGY>
 
-   Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
+   Specifies the processing strategy (``raster`` or ``feature``), when vector zones are used.
    In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times if the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :option:``--chunk-size``.) This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
 
 .. option:: --weights <WEIGHTS>

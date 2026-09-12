@@ -654,7 +654,7 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName,
  * @param pszDSN The name of the DSN being used to connect.  This is not
  * optional.
  *
- * @param pszUserid the userid to logon as, may be NULL if not not required,
+ * @param pszUserid the userid to logon as, may be NULL if not required,
  * or provided by the DSN.
  *
  * @param pszPassword the password to logon with.   May be NULL if not required
@@ -1035,7 +1035,7 @@ short CPLODBCStatement::GetColType(int iCol)
  * @param iCol the zero based column index.
  *
  * @return NULL on failure (out of bounds column), or a pointer to an
- * internal copy of the column dat type name.
+ * internal copy of the column data type name.
  */
 
 const char *CPLODBCStatement::GetColTypeName(int iCol)
@@ -1168,7 +1168,7 @@ int CPLODBCStatement::Fetch(int nOrientation, int nOffset)
         return FALSE;
 
     /* -------------------------------------------------------------------- */
-    /*      Fetch a new row.  Note that some brain dead drives (such as     */
+    /*      Fetch a new row.  Note that some brain dead drivers (such as    */
     /*      the unixodbc text file driver) don't implement                  */
     /*      SQLScrollFetch(), so we try to stick to SQLFetch() if we        */
     /*      can).                                                           */
