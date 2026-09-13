@@ -927,7 +927,7 @@ extern "C++"
      *
      * @param papszList List to iterate over.
      * @param bReturnNullKeyIfNotNameValue When this is set to true, if a string
-     * contained in the list if not of the form name=value, then the value of
+     * contained in the list is not of the form name=value, then the value of
      * the iterator will be (nullptr, string).
      *
      * @since GDAL 3.9
