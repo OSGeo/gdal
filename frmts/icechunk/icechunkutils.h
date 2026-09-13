@@ -42,7 +42,8 @@ DecompressFile(const char *pszFilename, VSIVirtualHandle *poFile,
 
 std::string CrockfordBase32Encode(const uint8_t *data, size_t size);
 
-template <class T> static std::string CrockfordBase32Encode(const T &buffer)
+template <class T>
+static inline std::string CrockfordBase32Encode(const T &buffer)
 {
     return CrockfordBase32Encode(buffer.data(), buffer.size());
 }

@@ -285,7 +285,7 @@ static inline unsigned long long net64(const unsigned long long x)
 #endif
 
 // Count the values in a buffer that match a specific value
-template <typename T> static int MatchCount(T *buff, int sz, T val)
+template <typename T> static inline int MatchCount(T *buff, int sz, T val)
 {
     int ncount = 0;
     for (int i = 0; i < sz; i++)

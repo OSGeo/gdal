@@ -1181,7 +1181,7 @@ CPL_C_END
 
 extern "C++"
 {
-    template <class T> static void CPL_IGNORE_RET_VAL(const T &)
+    template <class T> inline static void CPL_IGNORE_RET_VAL(const T &)
     {
     }
 
