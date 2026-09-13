@@ -1101,7 +1101,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
                 }
                 else
                 {
-                    CPLDebug(GetDebugKey(), "Ignorizing metadata item %s",
+                    CPLDebug(GetDebugKey(), "Ignoring metadata item %s",
                              *papszIter);
                 }
             }
