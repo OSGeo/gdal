@@ -3414,7 +3414,7 @@ struct CountKernel
         ++nCount;
     }
 
-    bool HasValue() const
+    static bool HasValue()
     {
         return true;
     }
