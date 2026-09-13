@@ -76,8 +76,10 @@ static bool bHaveWarned1 = false;
 static bool bHaveWarned2 = false;
 static bool bHaveWarned3 = false;
 static bool bHaveWarned4 = false;
+#ifdef _WIN32
 static bool bHaveWarned5 = false;
 static bool bHaveWarned6 = false;
+#endif
 
 /************************************************************************/
 /*                   CPLClearRecodeStubWarningFlags()                   */
@@ -89,8 +91,10 @@ void CPLClearRecodeStubWarningFlags()
     bHaveWarned2 = false;
     bHaveWarned3 = false;
     bHaveWarned4 = false;
+#ifdef _WIN32
     bHaveWarned5 = false;
     bHaveWarned6 = false;
+#endif
 }
 
 /************************************************************************/
