@@ -157,7 +157,7 @@ CPLMutexHolder::CPLMutexHolder(CPLMutex **phMutex, double dfWaitInSeconds,
 {
     if (phMutex == nullptr)
     {
-        fprintf(stderr, "CPLMutexHolder: phMutex )) NULL !\n");
+        fprintf(stderr, "CPLMutexHolder: phMutex is NULL.\n");
         hMutex = nullptr;
         return;
     }
