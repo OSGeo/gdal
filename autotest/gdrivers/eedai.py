@@ -277,8 +277,8 @@ gwE6fxOLyJDxuWRf
         gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
         gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
 
-    if "CPLRSASHA256Sign() not implemented" in gdal.GetLastErrorMsg():
-        pytest.skip("CPLRSASHA256Sign() not implemented")
+    if "CPL_RSA_SHA256_Sign() not implemented" in gdal.GetLastErrorMsg():
+        pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
 
 ###############################################################################
@@ -329,8 +329,8 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS(use_vsi_path):
         gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
         gdal.ClearPathSpecificOptions("/vsigs/to_test_eeda")
 
-    if "CPLRSASHA256Sign() not implemented" in gdal.GetLastErrorMsg():
-        pytest.skip("CPLRSASHA256Sign() not implemented")
+    if "CPL_RSA_SHA256_Sign() not implemented" in gdal.GetLastErrorMsg():
+        pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
 
 ###############################################################################

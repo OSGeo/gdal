@@ -1059,10 +1059,10 @@ def test_vsigs_GetFileMetadatabucket_root_oauth2(
 
             except Exception:
                 if (
-                    gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented")
+                    gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented")
                     >= 0
                 ):
-                    pytest.skip("CPLRSASHA256Sign() not implemented")
+                    pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
             assert md == {"foo": "bar"}
     finally:
@@ -1407,7 +1407,7 @@ gwE6fxOLyJDxuWRf
                 except Exception:
                     if (
                         gdal.GetLastErrorMsg().find(
-                            "CPLRSASHA256Sign() not implemented"
+                            "CPL_RSA_SHA256_Sign() not implemented"
                         )
                         >= 0
                     ):
@@ -1507,8 +1507,8 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
                 )
 
         except Exception:
-            if gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented") >= 0:
-                pytest.skip("CPLRSASHA256Sign() not implemented")
+            if gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented") >= 0:
+                pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
         assert (
             signed_url
