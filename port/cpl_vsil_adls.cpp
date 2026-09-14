@@ -1294,7 +1294,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath,
     VSIStatBufL sStat;
     if (VSIStatL(oldpath, &sStat) != 0)
     {
-        CPLDebug(GetDebugKey(), "%s is not a object", oldpath);
+        CPLDebug(GetDebugKey(), "%s is not an object", oldpath);
         errno = ENOENT;
         return -1;
     }
