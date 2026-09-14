@@ -22,7 +22,7 @@
 
 /** Release the GDAL in-memory object associated with a GDALGroupH.
  *
- * Note: when applied on a object coming from a driver, this does not
+ * Note: when applied on an object coming from a driver, this does not
  * destroy the object in the file, database, etc...
  */
 void GDALGroupRelease(GDALGroupH hGroup)
