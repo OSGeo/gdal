@@ -13,27 +13,28 @@
 
 import os
 import sys
-import tempfile
 
 try:
     os.putenv("CPL_SHOW_MEM_STATS", "")
 except OSError:
     pass
 
-temp_dir = tempfile.gettempdir()
 
 # Must to be launched from pam.py/pam_11()
 # Test creating a new proxydb
-if len(sys.argv) == 3 and sys.argv[1] == "-test1":
+if len(sys.argv) == 4 and sys.argv[1] == "-test1":
 
     import shutil
 
     from osgeo import gdal
 
+    temp_dir = sys.argv[3]
+
     try:
         shutil.rmtree(os.path.join(temp_dir, "tmppamproxydir"))
     except OSError:
         pass
+
     os.mkdir(os.path.join(temp_dir, "tmppamproxydir"))
 
     tmpdirreadonly = sys.argv[2]
@@ -131,9 +132,11 @@ if len(sys.argv) == 3 and sys.argv[1] == "-test1":
 
 # Must to be launched from pam.py/pam_11()
 # Test loading an existing proxydb
-if len(sys.argv) == 3 and sys.argv[1] == "-test2":
+if len(sys.argv) == 4 and sys.argv[1] == "-test2":
 
     from osgeo import gdal
+
+    temp_dir = sys.argv[3]
 
     gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(temp_dir, "tmppamproxydir"))
 

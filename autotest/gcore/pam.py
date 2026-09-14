@@ -16,7 +16,6 @@
 import os
 import shutil
 import stat
-import tempfile
 
 import gdaltest
 import pytest
@@ -29,11 +28,6 @@ from osgeo import gdal, osr
 def startup_and_cleanup():
     with gdaltest.config_option("GDAL_PAM_ENABLED", "YES"):
         yield
-
-    try:
-        shutil.rmtree("tmp/tmppamproxydir")
-    except OSError:
-        pass
 
 
 ###############################################################################
@@ -325,12 +319,10 @@ def test_pam_10():
 # Test PamProxyDb mechanism
 
 
-def test_pam_11():
-
-    temp_dir = tempfile.gettempdir()
+def test_pam_11(tmp_path):
 
     # Create a read-only directory
-    tmpdirreadonly = os.path.join(temp_dir, "tmpdirreadonly")
+    tmpdirreadonly = os.path.join(tmp_path, "tmpdirreadonly")
     if not os.path.exists(tmpdirreadonly):
         os.mkdir(tmpdirreadonly)
     shutil.copy("data/byte.tif", os.path.join(tmpdirreadonly, "byte.tif"))
@@ -371,13 +363,13 @@ def test_pam_11():
     import test_py_scripts
 
     ret = test_py_scripts.run_py_script_as_external_script(
-        ".", "pamproxydb", " ".join(["-test1", str(tmpdirreadonly)])
+        ".", "pamproxydb", " ".join(["-test1", str(tmpdirreadonly), str(tmp_path)])
     )
     assert "success" in ret, "pamproxydb.py -test1 failed %s" % ret
 
     # Test loading an existing proxydb
     ret = test_py_scripts.run_py_script_as_external_script(
-        ".", "pamproxydb", " ".join(["-test2", str(tmpdirreadonly)])
+        ".", "pamproxydb", " ".join(["-test2", str(tmpdirreadonly), str(tmp_path)])
     )
     assert "success" in ret, "pamproxydb.py -test2 failed %s" % ret
 

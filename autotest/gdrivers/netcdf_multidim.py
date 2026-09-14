@@ -16,7 +16,6 @@ import os
 import shutil
 import stat
 import struct
-import tempfile
 import time
 
 import gdaltest
@@ -27,6 +26,12 @@ from osgeo import gdal, osr
 pytestmark = [
     pytest.mark.require_driver("netCDF"),
 ]
+
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
 
 
 ###############################################################################
@@ -2205,9 +2210,7 @@ def test_netcdf_multidim_cache(tmp_path):
     gdal.Unlink(tmpfilename + ".gmac")
 
 
-def test_netcdf_multidim_cache_pamproxydb():
-
-    temp_dir = tempfile.gettempdir()
+def test_netcdf_multidim_cache_pamproxydb(temp_dir):
 
     def remove_dir():
         try:
@@ -2251,7 +2254,9 @@ def test_netcdf_multidim_cache_pamproxydb():
         import test_py_scripts
 
         ret = test_py_scripts.run_py_script_as_external_script(
-            ".", "netcdf_multidim_pamproxydb", "-test_netcdf_multidim_cache_pamproxydb"
+            ".",
+            "netcdf_multidim_pamproxydb",
+            "-test_netcdf_multidim_cache_pamproxydb " + str(temp_dir),
         )
         assert ret.find("success") != -1, (
             "netcdf_multidim_pamproxydb.py -test_netcdf_multidim_cache_pamproxydb failed %s"

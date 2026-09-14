@@ -31,7 +31,6 @@ import json
 import math
 import os
 import struct
-import tempfile
 
 import gdaltest
 import ogrtest
@@ -119,28 +118,16 @@ def verify_geojson_copy(fname, fids, names):
     lyr = None
 
 
-def copy_shape_to_geojson(gjname, compress=None):
+def copy_shape_to_geojson(tmp_path, gjname, compress=None):
 
-    temp_dir = tempfile.gettempdir()
-
-    # Remove ending slash from the temporary directory path if it exists
-    if temp_dir.endswith(os.path.sep):
-        temp_dir_pruned_slashes = temp_dir[:-1]
-    else:
-        temp_dir_pruned_slashes = temp_dir
-
-    real_path = os.path.join(temp_dir_pruned_slashes, gjname + ".geojson")
+    real_path = os.path.join(tmp_path, gjname + ".geojson")
 
     if compress is not None:
         if compress[0:5] == "/vsig":
-            dst_name = "/vsigzip/" + os.path.join(
-                temp_dir_pruned_slashes, gjname + ".geojson" + ".gz"
-            )
+            dst_name = "/vsigzip/" + os.path.join(tmp_path, gjname + ".geojson" + ".gz")
             real_path += ".gz"
         elif compress[0:4] == "/vsiz":
-            dst_name = "/vsizip/" + os.path.join(
-                temp_dir_pruned_slashes, gjname + ".geojson" + ".zip"
-            )
+            dst_name = "/vsizip/" + os.path.join(tmp_path, gjname + ".geojson" + ".zip")
             real_path += ".zip"
         elif compress == "/vsistdout/":
             dst_name = compress
@@ -361,7 +348,7 @@ def test_ogr_geojson_8():
 # Test translation of data/gjpoint.shp to GeoJSON file
 
 
-def test_ogr_geojson_9():
+def test_ogr_geojson_9(tmp_path):
 
     tests = [
         ["gjpoint", [1], ["Point 1"]],
@@ -374,7 +361,7 @@ def test_ogr_geojson_9():
 
     for test in tests:
 
-        rc, dstname = copy_shape_to_geojson(test[0])
+        rc, dstname = copy_shape_to_geojson(tmp_path, test[0])
         try:
             assert rc, "Failed making copy of " + test[0] + ".shp"
 
@@ -388,7 +375,7 @@ def test_ogr_geojson_9():
 # Test translation of data/gjpoint.shp to GZip compressed GeoJSON file
 
 
-def test_ogr_geojson_10():
+def test_ogr_geojson_10(tmp_path):
 
     tests = [
         ["gjpoint", [1], ["Point 1"]],
@@ -401,7 +388,7 @@ def test_ogr_geojson_10():
 
     for test in tests:
 
-        rc, dstname = copy_shape_to_geojson(test[0], "/vsigzip/")
+        rc, dstname = copy_shape_to_geojson(tmp_path, test[0], "/vsigzip/")
         try:
             assert rc, "Failed making copy of " + test[0] + ".shp"
 
@@ -471,11 +458,11 @@ def test_ogr_geojson_12():
 # Test writing to stdout (#3381)
 
 
-def test_ogr_geojson_13():
+def test_ogr_geojson_13(tmp_path):
 
     test = ["gjpoint", [1], ["Point 1"]]
 
-    rc, _ = copy_shape_to_geojson(test[0], "/vsistdout/")
+    rc, _ = copy_shape_to_geojson(tmp_path, test[0], "/vsistdout/")
     assert rc, "Failed making copy of " + test[0] + ".shp"
 
 

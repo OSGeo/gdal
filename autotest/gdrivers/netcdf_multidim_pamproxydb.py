@@ -13,7 +13,6 @@
 
 import os
 import sys
-import tempfile
 
 sys.path.append("../pymod")
 
@@ -21,14 +20,17 @@ import gdaltest
 
 from osgeo import gdal
 
-tmp_dir = tempfile.gettempdir()
-
 # Must to be launched from netcdf_multidim.py::test_netcdf_multidim_cache_pamproxydb
-if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb":
+if len(sys.argv) == 3 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb":
+
+    tmp_dir = sys.argv[2]
 
     gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(tmp_dir, "tmppamproxydir"))
 
     tmpfilename = os.path.join(tmp_dir, "tmpdirreadonly/test.nc")
+    assert os.path.exists(tmpfilename)
+
+    normalized_dir = str(tmp_dir).replace("/", "_").replace("-", "_").replace("\\", "_")
 
     def get_transposed_and_cache():
         ds = gdal.Open(tmpfilename, gdal.OF_MULTIDIM_RASTER)
@@ -50,9 +52,13 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
         transposed_data = get_transposed_and_cache()
 
     def check_cache_exists():
+
         cache_ds = gdal.Open(
             os.path.join(
-                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
+                tmp_dir,
+                "tmppamproxydir/000000_{}_tmpdirreadonly_test.nc.gmac".format(
+                    normalized_dir
+                ),
             ),
             gdal.OF_MULTIDIM_RASTER,
         )
@@ -80,11 +86,21 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
     def alter_cache():
         cache_ds = gdal.Open(
             os.path.join(
-                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
+                tmp_dir,
+                "tmppamproxydir/000000_{}_tmpdirreadonly_test.nc.gmac".format(
+                    normalized_dir
+                ),
             ),
             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE,
         )
-        assert cache_ds
+        assert cache_ds, "Failed to open cache dataset at {}".format(
+            os.path.join(
+                tmp_dir,
+                "tmppamproxydir/000000_{}_tmpdirreadonly_test.nc.gmac".format(
+                    normalized_dir
+                ),
+            )
+        )
         rg = cache_ds.GetRootGroup()
         cached_ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         cached_ar.Write(b"\x00" * len(transposed_data))
@@ -99,14 +115,6 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb
         assert transpose.Read() == b"\x00" * len(transposed_data)
 
     check_cache_really_working()
-
-    with gdaltest.disable_exceptions():
-        gdal.Unlink(tmpfilename)
-        gdal.Unlink(
-            os.path.join(
-                tmp_dir, "tmppamproxydir/000000__tmp_tmpdirreadonly_test.nc.gmac"
-            )
-        )
 
     print("success")
     sys.exit(0)

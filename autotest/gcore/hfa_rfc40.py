@@ -13,14 +13,18 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import tempfile
 
 import gdaltest
 import pytest
 
 from osgeo import gdal
 
-temp_dir = tempfile.gettempdir()
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
+
 
 pytestmark = [
     pytest.mark.random_order(disabled=True),
@@ -383,7 +387,7 @@ def CheckLinearBinning(fname):
     ds = None
 
 
-def CheckClone(fname):
+def CheckClone(temp_dir, fname):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
     rat = band.GetDefaultRAT()
@@ -403,97 +407,97 @@ def CheckClone(fname):
     ds = None
 
     # basic tests
-    return CreateAndWriteRAT(temp_dir + "/test.img")
+    return CreateAndWriteRAT(temp_dir / "test.img")
 
 
-def test_hfa_rfc40_1():
-    return CreateAndWriteRAT(temp_dir + "/test.img")
+def test_hfa_rfc40_1(temp_dir):
+    return CreateAndWriteRAT(temp_dir / "test.img")
 
 
-def test_hfa_rfc40_2():
-    return ReadAndCheckValues(temp_dir + "/test.img", 10)
+def test_hfa_rfc40_2(temp_dir):
+    return ReadAndCheckValues(temp_dir / "test.img", 10)
 
 
 # the older interface
 
 
-def test_hfa_rfc40_3():
-    return CheckSetGetValues(temp_dir + "/test.img")
+def test_hfa_rfc40_3(temp_dir):
+    return CheckSetGetValues(temp_dir / "test.img")
 
 
 # make sure original data not changed
 
 
-def test_hfa_rfc40_4():
-    return ReadAndCheckValues(temp_dir + "/test.img", 10)
+def test_hfa_rfc40_4(temp_dir):
+    return ReadAndCheckValues(temp_dir / "test.img", 10)
 
 
 # make it longer - data will be re-written
 
 
-def test_hfa_rfc40_5():
-    return ExtendAndWrite(temp_dir + "/test.img")
+def test_hfa_rfc40_5(temp_dir):
+    return ExtendAndWrite(temp_dir / "test.img")
 
 
 # make sure old data not changed
 
 
-def test_hfa_rfc40_6():
-    return ReadAndCheckValues(temp_dir + "/test.img", 20)
+def test_hfa_rfc40_6(temp_dir):
+    return ReadAndCheckValues(temp_dir / "test.img", 20)
 
 
 # new data at the end ok?
 
 
-def test_hfa_rfc40_7():
-    return CheckExtension(temp_dir + "/test.img")
+def test_hfa_rfc40_7(temp_dir):
+    return CheckExtension(temp_dir / "test.img")
 
 
 # write some longer strings - string column will
 # have to be re-written
 
 
-def test_hfa_rfc40_8():
-    return WriteLongStrings(temp_dir + "/test.img")
+def test_hfa_rfc40_8(temp_dir):
+    return WriteLongStrings(temp_dir / "test.img")
 
 
 # make sure old data not changed
 
 
-def test_hfa_rfc40_9():
-    return ReadAndCheckValues(temp_dir + "/test.img", 20)
+def test_hfa_rfc40_9(temp_dir):
+    return ReadAndCheckValues(temp_dir / "test.img", 20)
 
 
 # check new data ok
 
 
-def test_hfa_rfc40_10():
-    return CheckLongStrings(temp_dir + "/test.img")
+def test_hfa_rfc40_10(temp_dir):
+    return CheckLongStrings(temp_dir / "test.img")
 
 
 # linear binning
 
 
-def test_hfa_rfc40_11():
-    return SetLinearBinning(temp_dir + "/test.img")
+def test_hfa_rfc40_11(temp_dir):
+    return SetLinearBinning(temp_dir / "test.img")
 
 
 # linear binning
 
 
-def test_hfa_rfc40_12():
-    return CheckLinearBinning(temp_dir + "/test.img")
+def test_hfa_rfc40_12(temp_dir):
+    return CheckLinearBinning(temp_dir / "test.img")
 
 
 # clone
 
 
-def test_hfa_rfc40_13():
-    return CheckClone(temp_dir + "/test.img")
+def test_hfa_rfc40_13(temp_dir):
+    return CheckClone(temp_dir, temp_dir / "test.img")
 
 
 # serialize not available from Python...
 
 
-def test_hfa_rfc40_cleanup():
-    gdal.GetDriverByName("HFA").Delete(temp_dir + "/test.img")
+def test_hfa_rfc40_cleanup(temp_dir):
+    gdal.GetDriverByName("HFA").Delete(temp_dir / "test.img")

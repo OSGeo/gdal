@@ -13,7 +13,6 @@
 ###############################################################################
 
 import os
-import tempfile
 from http.server import BaseHTTPRequestHandler
 
 import gdaltest
@@ -25,12 +24,16 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("FlatGeobuf")
 
-temp_dir = tempfile.gettempdir()
-
 ### utils
 
 
-def verify_flatgeobuf_copy(name, fids, names):
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
+
+
+def verify_flatgeobuf_copy(temp_dir, name, fids, names):
 
     assert gdaltest.features is not None, "Missing features collection"
 
@@ -67,7 +70,7 @@ def verify_flatgeobuf_copy(name, fids, names):
     lyr = None
 
 
-def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
+def copy_shape_to_flatgeobuf(temp_dir, name, wkbType, compress=None, options=[]):
 
     if compress is not None:
         if compress[0:5] == "/vsig":
@@ -266,7 +269,7 @@ def test_ogr_flatgeobuf_8():
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
 
-def test_ogr_flatgeobuf_9():
+def test_ogr_flatgeobuf_9(temp_dir):
 
     gdaltest.tests = [
         ["gjpoint", [1], ["Point 1"], ogr.wkbPoint],
@@ -280,18 +283,20 @@ def test_ogr_flatgeobuf_9():
     for i in range(len(gdaltest.tests)):
         test = gdaltest.tests[i]
 
-        rc = copy_shape_to_flatgeobuf(test[0], test[3])
+        rc = copy_shape_to_flatgeobuf(temp_dir, test[0], test[3])
         assert rc, "Failed making copy of " + test[0] + ".shp"
 
-        verify_flatgeobuf_copy(test[0], test[1], test[2])
+        verify_flatgeobuf_copy(temp_dir, test[0], test[1], test[2])
 
     for i in range(len(gdaltest.tests)):
         test = gdaltest.tests[i]
 
-        rc = copy_shape_to_flatgeobuf(test[0], test[3], None, ["SPATIAL_INDEX=NO"])
+        rc = copy_shape_to_flatgeobuf(
+            temp_dir, test[0], test[3], None, ["SPATIAL_INDEX=NO"]
+        )
         assert rc, "Failed making copy of " + test[0] + ".shp"
 
-        verify_flatgeobuf_copy(test[0], test[1], test[2])
+        verify_flatgeobuf_copy(temp_dir, test[0], test[1], test[2])
 
 
 # Test support for multiple layers in a directory

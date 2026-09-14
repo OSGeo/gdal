@@ -14,7 +14,6 @@
 
 import os
 import sys
-import tempfile
 
 import pytest
 from test_py_scripts import samples_path
@@ -30,7 +29,14 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GPKG")
 
-temp_dir = tempfile.gettempdir()
+
+###############################################################################
+
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
 
 
 ###############################################################################
@@ -68,7 +74,7 @@ def setup_and_cleanup():
 # Validate a geopackage
 
 
-def validate(filename, quiet=False):
+def validate(temp_dir, filename, quiet=False):
 
     path = samples_path
     if path not in sys.path:
@@ -222,7 +228,7 @@ def check_tile_format(
 
 
 @pytest.mark.require_driver("PNG")
-def test_gpkg_1():
+def test_gpkg_1(temp_dir):
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -239,7 +245,7 @@ def test_gpkg_1():
     )
     ds = None
 
-    assert validate("/vsimem/tmp.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/tmp.gpkg"), "validation failed"
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
     assert out_ds.RasterCount == 4
@@ -411,7 +417,7 @@ def test_gpkg_2():
 
 
 @pytest.mark.require_driver("WEBP")
-def test_gpkg_3():
+def test_gpkg_3(temp_dir):
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -430,7 +436,7 @@ def test_gpkg_3():
     )
     out_ds = None
 
-    assert validate("/vsimem/tmp.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/tmp.gpkg"), "validation failed"
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg", open_options=["BAND_COUNT=4"])
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
@@ -1468,7 +1474,7 @@ def test_gpkg_16():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gpkg_17():
+def test_gpkg_17(temp_dir):
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1481,7 +1487,7 @@ def test_gpkg_17():
     out_ds = None
     ds = None
 
-    assert validate("/vsimem/tmp.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/tmp.gpkg"), "validation failed"
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
     assert out_ds.RasterCount == 1
@@ -2803,12 +2809,12 @@ def test_gpkg_38():
 # Test tile gridded coverage data
 
 
-def test_gpkg_39():
+def test_gpkg_39(temp_dir):
 
     src_ds = gdal.Open("data/int16.tif")
     gdal.Translate("/vsimem/gpkg_39.gpkg", src_ds, format="GPKG")
 
-    assert validate("/vsimem/gpkg_39.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/gpkg_39.gpkg"), "validation failed"
 
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
 
@@ -3168,7 +3174,7 @@ cellsize     60
         creationOptions=["TILE_FORMAT=PNG"],
     )
 
-    assert validate("/vsimem/gpkg_39.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/gpkg_39.gpkg"), "validation failed"
 
     src_ds = gdal.Open("/vsimem/gpkg_39.asc")
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
@@ -3499,7 +3505,7 @@ def test_gpkg_42():
 # Test adding raster to a database without pre-existing raster support tables.
 
 
-def test_gpkg_43():
+def test_gpkg_43(temp_dir):
 
     with gdal.config_option("CREATE_RASTER_TABLES", "NO"):
         ds = gdaltest.gpkg_dr.Create("/vsimem/gpkg_43.gpkg", 0, 0, 0, gdal.GDT_Unknown)
@@ -3526,7 +3532,7 @@ def test_gpkg_43():
     assert ds.GetLayerCount() == 1
     ds = None
 
-    assert validate("/vsimem/gpkg_43.gpkg"), "validation failed"
+    assert validate(temp_dir, "/vsimem/gpkg_43.gpkg"), "validation failed"
 
     gdal.Unlink("/vsimem/gpkg_43.gpkg")
 
@@ -3628,10 +3634,10 @@ def test_gpkg_48(tmp_path):
     old_pwd = os.getcwd()
     try:
         if sys.platform == "win32":
-            filename = os.path.join(os.getcwd(), temp_dir, "byte.gpkg")
+            filename = os.path.join(tmp_path, "byte.gpkg")
         else:
             # Test Windows code path in a weird way...
-            os.chdir(temp_dir)
+            os.chdir(tmp_path)
             filename = "C:\\byte.gpkg"
 
         gdal.Translate(
@@ -3776,7 +3782,7 @@ def test_gpkg_match_overview_factor():
 
 
 @pytest.mark.parametrize("version", ["1.2", "1.4"])
-def test_gpkg_wkt2(version):
+def test_gpkg_wkt2(tmp_path, version):
 
     # WKT2-only compatible SRS with EPSG code
     filename = "/vsimem/test_gpkg_wkt2.gpkg"
@@ -3870,7 +3876,7 @@ def test_gpkg_wkt2(version):
     ds.ReleaseResultSet(lyr)
     ds = None
 
-    assert validate(filename), "validation failed"
+    assert validate(tmp_path, filename), "validation failed"
 
     gdal.Unlink(filename)
 

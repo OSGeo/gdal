@@ -22,6 +22,17 @@ import webserver
 
 from osgeo import gdal, ogr
 
+###############################################################################
+
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
+
+
+###############################################################################
+
 
 def curl_version():
     actual_version = [0, 0, 0]
@@ -1855,7 +1866,7 @@ def test_vsicurl_header_option(server):
 )
 @pytest.mark.parametrize("location", ["vsimem", "system_tmp", "TEMP"])
 def test_vsicurl_header_file_kvp_in_temp(
-    server, tmp_vsimem, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, location
+    temp_dir, server, tmp_vsimem, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, location
 ):
 
     gdal.VSICurlClearCache()
@@ -1897,8 +1908,6 @@ def test_vsicurl_header_file_kvp_in_temp(
 
         finally:
             gdal.Unlink(header_file)
-
-    temp_dir = tempfile.gettempdir()
 
     if location == "vsimem":
         header_file = tmp_vsimem / "subdir" / ".." / "header_file.txt"

@@ -14,7 +14,6 @@
 import os
 import shutil
 import struct
-import tempfile
 
 import gdaltest
 import pytest
@@ -26,11 +25,15 @@ pytestmark = pytest.mark.skipif(
     reason="VRT driver open missing",
 )
 
-temp_dir = tempfile.gettempdir()
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
 
 
 @pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
+def startup_and_cleanup(temp_dir):
 
     src_ds = gdal.Open("data/small_world.tif")
     src_data = src_ds.GetRasterBand(1).ReadRaster()
@@ -64,7 +67,7 @@ def startup_and_cleanup():
 
 
 @gdaltest.disable_exceptions()
-def test_vrtpansharpen_1():
+def test_vrtpansharpen_1(temp_dir):
 
     # Missing PansharpeningOptions
     with gdal.quiet_errors():
@@ -855,7 +858,7 @@ def test_vrtpansharpen_1():
 # Nominal cases
 
 
-def test_vrtpansharpen_2():
+def test_vrtpansharpen_2(temp_dir):
 
     shutil.copy("data/small_world.tif", os.path.join(temp_dir, "small_world.tif"))
 
@@ -1072,7 +1075,7 @@ def test_vrtpansharpen_2():
 # Test with overviews
 
 
-def test_vrtpansharpen_3():
+def test_vrtpansharpen_3(temp_dir):
 
     shutil.copy("data/small_world.tif", os.path.join(temp_dir, "small_world.tif"))
 
@@ -1169,7 +1172,7 @@ def test_vrtpansharpen_3():
 # Test RasterIO() with various buffer datatypes
 
 
-def test_vrtpansharpen_4():
+def test_vrtpansharpen_4(temp_dir):
 
     shutil.copy("data/small_world.tif", f"{temp_dir}/small_world.tif")
 
@@ -1219,7 +1222,7 @@ def test_vrtpansharpen_4():
 # Test RasterIO() with various band datatypes
 
 
-def test_vrtpansharpen_5():
+def test_vrtpansharpen_5(temp_dir):
 
     for dt in [
         gdal.GDT_Int16,
@@ -1576,7 +1579,7 @@ def test_vrtpansharpen_7():
 # Test bands with different extents
 
 
-def test_vrtpansharpen_band_with_different_extents():
+def test_vrtpansharpen_band_with_different_extents(temp_dir):
 
     xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
@@ -1669,7 +1672,7 @@ def test_vrtpansharpen_band_with_different_extents():
 # Test bands with different extents and positive geotransform[5] coefficient
 
 
-def test_vrtpansharpen_band_with_different_extents_positive_yres():
+def test_vrtpansharpen_band_with_different_extents_positive_yres(temp_dir):
 
     gdal.Warp(
         "/vsimem/small_world_pan_positive_yres.vrt",
@@ -1775,7 +1778,7 @@ def test_vrtpansharpen_band_with_different_extents_positive_yres():
 # Test SerializeToXML()
 
 
-def test_vrtpansharpen_8():
+def test_vrtpansharpen_8(temp_dir):
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -1823,7 +1826,7 @@ def test_vrtpansharpen_8():
 # Test NoData support
 
 
-def test_vrtpansharpen_9():
+def test_vrtpansharpen_9(temp_dir):
 
     # Explicit nodata
     vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
@@ -2046,7 +2049,7 @@ def test_vrtpansharpen_10():
 
 
 @gdaltest.disable_exceptions()
-def test_vrtpansharpen_11():
+def test_vrtpansharpen_11(temp_dir):
 
     pan_ds = gdal.Open(f"{temp_dir}/small_world_pan.tif")
     ms_ds = gdal.Open("data/small_world.tif")
@@ -2316,7 +2319,7 @@ def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
 # Test open options for input bands
 
 
-def test_vrtpansharpen_open_options_input_bands():
+def test_vrtpansharpen_open_options_input_bands(temp_dir):
     def my_handler(typ, errno, msg):
         msgs.append(msg)
 
