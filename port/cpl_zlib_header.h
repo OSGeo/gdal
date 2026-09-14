@@ -5,7 +5,7 @@
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 201, Even Rouault <even dot rouault at spatialys dot com>
+ * Copyright (c) 2021, Even Rouault <even dot rouault at spatialys dot com>
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/

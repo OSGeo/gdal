@@ -234,7 +234,7 @@ struct CPL_DLL VSIVirtualHandle
 /*                        VSIVirtualHandleCloser                        */
 /************************************************************************/
 
-/** Helper close to use with a std:unique_ptr<VSIVirtualHandle>,
+/** Helper close to use with a std::unique_ptr<VSIVirtualHandle>,
  *  such as VSIVirtualHandleUniquePtr. */
 struct VSIVirtualHandleCloser
 
