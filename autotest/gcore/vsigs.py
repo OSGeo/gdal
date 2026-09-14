@@ -1507,7 +1507,10 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
                 )
 
         except Exception:
-            if gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented") >= 0:
+            if (
+                gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented")
+                >= 0
+            ):
                 pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
         assert (
