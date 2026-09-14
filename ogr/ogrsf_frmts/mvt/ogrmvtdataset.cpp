@@ -421,7 +421,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
     // By default, we are more tolerant and only use reversal of winding order
     // to detect inner rings.
     m_bEnforceExternalIsClockwise = CPLTestBool(
-        CPLGetConfigOption("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "NO"));
+        CPLGetConfigOption("OGR_MVT_ENFORCE_EXTERNAL_RING_IS_CLOCKWISE", "NO"));
 }
 
 /************************************************************************/
