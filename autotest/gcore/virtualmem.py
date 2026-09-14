@@ -24,7 +24,9 @@ gdaltest.importorskip_gdal_array()
 numpy = pytest.importorskip("numpy")
 
 pytestmark = pytest.mark.skipif(
-    gdal.GetConfigOption("SKIP_VIRTUALMEM"), reason="SKIP_VIRTUALMEM is set in config"
+    (gdal.GetConfigOption("SKIP_VIRTUALMEM") or "").upper()
+    in ("1", "TRUE", "YES", "ON"),
+    reason="SKIP_VIRTUALMEM is set in config",
 )
 
 
