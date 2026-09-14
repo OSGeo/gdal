@@ -58,6 +58,9 @@ fi
 find -L \
     ogr gcore gdrivers osr alg gnm utilities pyscripts \
     -name '*.py' \
+        ! -name generate_fits.py \
+        ! -name 'generate_test*.py' \
+        ! -name 'create_refs*.py' \
         ! -name netcdf_cf.py \
         ! -name ogr_fgdb.py `# Don't run these` \
         ! -name ogr_pgeo.py `# Don't run these` \
