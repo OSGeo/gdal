@@ -2856,7 +2856,7 @@ def test_gpkg_39():
     assert md == {}
     ds = None
 
-    # From a AREA_OR_POINT=Point dataset
+    # From an AREA_OR_POINT=Point dataset
     src_ds2 = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_Int16)
     src_ds2.SetGeoTransform([2, 1, 0, 49, 0, -1])
     src_ds2.SetMetadataItem("AREA_OR_POINT", "Point")

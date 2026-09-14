@@ -1087,7 +1087,7 @@ int VSICopyFileRestartable(const char *pszSource, const char *pszTarget,
 /**
  * \brief Synchronize a source file/directory with a target file/directory.
  *
- * This is a analog of the 'rsync' utility. In the current implementation,
+ * This is an analog of the 'rsync' utility. In the current implementation,
  * rsync would be more efficient for local file copying, but VSISync() main
  * interest is when the source or target is a remote
  * file system like /vsis3/ or /vsigs/, in which case it can take into account

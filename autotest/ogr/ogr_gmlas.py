@@ -542,7 +542,7 @@ def test_ogr_gmlas_geometryproperty():
 
 
 ###############################################################################
-# Test reading geometries referenced by a AbstractGeometry element
+# Test reading geometries referenced by an AbstractGeometry element
 
 
 def test_ogr_gmlas_abstractgeometry():

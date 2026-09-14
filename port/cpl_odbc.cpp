@@ -1003,7 +1003,7 @@ const char *CPLODBCStatement::GetColName(int iCol)
 /**
  * Fetch a column data type.
  *
- * The return type code is a an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE,
+ * The return type code is an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE,
  * SQL_CHAR, SQL_NUMERIC, SQL_DECIMAL, SQL_INTEGER, SQL_SMALLINT, SQL_FLOAT,
  * SQL_REAL, SQL_DOUBLE, SQL_DATETIME, SQL_VARCHAR, SQL_TYPE_DATE,
  * SQL_TYPE_TIME, SQL_TYPE_TIMESTAMPT.

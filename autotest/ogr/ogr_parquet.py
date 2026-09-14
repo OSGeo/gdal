@@ -2983,7 +2983,7 @@ def test_ogr_parquet_check_geom_column_schema_metadata():
 
 ###############################################################################
 # Check that we recognize the geometry field just from the presence of
-# a ARROW:extension:name == ogc.wkb column on it
+# an ARROW:extension:name == ogc.wkb column on it
 
 
 def test_ogr_parquet_recognize_geo_from_arrow_extension_name():

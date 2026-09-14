@@ -1736,7 +1736,7 @@ def test_ogr_mem_write_arrow_error_negative_fid():
 
 
 ###############################################################################
-# Test writing a ArrowArray into a OGR field whose types don't fully match
+# Test writing an ArrowArray into a OGR field whose types don't fully match
 
 
 @pytest.mark.parametrize("IF_FIELD_NOT_PRESERVED", [None, "ERROR"])

@@ -4923,7 +4923,7 @@ def test_ogr_gpkg_48(tmp_vsimem):
 
 
 ###############################################################################
-# Test CreateGeomField() on a attributes layer
+# Test CreateGeomField() on an attributes layer
 
 
 def test_ogr_gpkg_49(tmp_vsimem):

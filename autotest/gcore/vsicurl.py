@@ -2085,7 +2085,7 @@ def test_vsicurl_test_redirect_301_to_url_ending_slash_and_then_403(server):
 
 
 ###############################################################################
-# Test server returning a Accept-Range header on HEAD, but without Content-Length
+# Test server returning an Accept-Range header on HEAD, but without Content-Length
 # https://github.com/qgis/QGIS/issues/65800
 
 
