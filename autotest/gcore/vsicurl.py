@@ -1914,11 +1914,15 @@ def test_vsicurl_header_file_kvp_in_temp(
         run_test(header_file)
 
     elif location == "system_tmp":
-        if not gdal.VSIStatL(temp_dir):
-            pytest.skip(f"{temp_dir} does not exist")
+        # tempfile.gettempdir() may return a directory that is _not_
+        # recognized as a temporary directory on macOS
+        system_temp_dir = "/tmp"
+
+        if not gdal.VSIStatL(system_temp_dir):
+            pytest.skip(f"{system_temp_dir} does not exist")
         import uuid
 
-        header_file = f"{temp_dir}/header_file_{uuid.uuid1()}.txt"
+        header_file = f"{system_temp_dir}/header_file_{uuid.uuid1()}.txt"
         run_test(header_file)
 
     else:
