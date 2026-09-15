@@ -2609,7 +2609,7 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
     if (!osCanonicalQueryString.empty())
         osCanonicalQueryString = osCanonicalQueryString.substr(1);
 
-    // If accessing a AWS account from a AWS VM, check that
+    // If accessing an AWS account from an AWS VM, check that
     // AWS is still a sponsor, and if not, make some (kind) noise.
     if ((m_eCredentialsSource != AWSCredentialsSource::UNINITIALIZED &&
          m_eCredentialsSource != AWSCredentialsSource::NO_SIGN_REQUEST &&

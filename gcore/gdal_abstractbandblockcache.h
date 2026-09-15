@@ -31,7 +31,7 @@ class GDALRasterBlock;
 
 //! @cond Doxygen_Suppress
 
-//! This manages how a raster band store its cached block.
+//! This manages how a raster band stores its cached block.
 // only used by GDALRasterBand implementation.
 
 class GDALAbstractBandBlockCache /* non final */
@@ -93,7 +93,7 @@ class GDALAbstractBandBlockCache /* non final */
     virtual CPLErr FlushCache() = 0;
     virtual CPLErr AdoptBlock(GDALRasterBlock *poBlock) = 0;
     virtual GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
-                                                  int nYBlockYOff) = 0;
+                                                  int nYBlockOff) = 0;
     virtual CPLErr UnreferenceBlock(GDALRasterBlock *poBlock) = 0;
     virtual CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
                               int bWriteDirtyBlock) = 0;

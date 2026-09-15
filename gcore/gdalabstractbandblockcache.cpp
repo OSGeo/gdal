@@ -26,7 +26,7 @@
 //! @cond Doxygen_Suppress
 
 #ifdef DEBUG_VERBOSE_ABBC
-static int nAllBandsKeptAlivedBlocks = 0;
+static int nAllBandsKeptAliveBlocks = 0;
 #endif
 
 /************************************************************************/
@@ -87,10 +87,10 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList(GDALRasterBlock *poBlock)
     CPLAssert(poBlock->poNext == nullptr);
     {
 #ifdef DEBUG_VERBOSE_ABBC
-        CPLAtomicInc(&nAllBandsKeptAlivedBlocks);
+        CPLAtomicInc(&nAllBandsKeptAliveBlocks);
         fprintf(/*ok*/ stderr,
-                "AddBlockToFreeList(): nAllBandsKeptAlivedBlocks=%d\n",
-                nAllBandsKeptAlivedBlocks);
+                "AddBlockToFreeList(): nAllBandsKeptAliveBlocks=%d\n",
+                nAllBandsKeptAliveBlocks);
 #endif
         CPLLockHolderOptionalLockD(hSpinLock);
         poBlock->poNext = psListBlocksToFree;
@@ -142,10 +142,10 @@ void GDALAbstractBandBlockCache::FreeDanglingBlocks()
     while (poList)
     {
 #ifdef DEBUG_VERBOSE_ABBC
-        CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
+        CPLAtomicDec(&nAllBandsKeptAliveBlocks);
         fprintf(/*ok*/ stderr,
-                "FreeDanglingBlocks(): nAllBandsKeptAlivedBlocks=%d\n",
-                nAllBandsKeptAlivedBlocks);
+                "FreeDanglingBlocks(): nAllBandsKeptAliveBlocks=%d\n",
+                nAllBandsKeptAliveBlocks);
 #endif
         GDALRasterBlock *poNext = poList->poNext;
         poList->poNext = nullptr;
@@ -168,10 +168,10 @@ GDALRasterBlock *GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
         if (poBlock)
         {
 #ifdef DEBUG_VERBOSE_ABBC
-            CPLAtomicDec(&nAllBandsKeptAlivedBlocks);
+            CPLAtomicDec(&nAllBandsKeptAliveBlocks);
             fprintf(/*ok*/ stderr,
-                    "CreateBlock(): nAllBandsKeptAlivedBlocks=%d\n",
-                    nAllBandsKeptAlivedBlocks);
+                    "CreateBlock(): nAllBandsKeptAliveBlocks=%d\n",
+                    nAllBandsKeptAliveBlocks);
 #endif
             psListBlocksToFree = poBlock->poNext;
         }

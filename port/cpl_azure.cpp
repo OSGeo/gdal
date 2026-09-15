@@ -962,7 +962,7 @@ VSIAzureBlobHandleHelper::GetCurlHeaders(const std::string &osVerb,
     if (!m_osObjectKey.empty())
         osResource += "/" + CPLAWSURLEncode(m_osObjectKey, false);
 
-    // If accessing a Microsoft Azure account from a Azure VM, check that
+    // If accessing a Microsoft Azure account from an Azure VM, check that
     // Microsoft is still a sponsor, and if not, make some (kind) noise.
     if ((m_bFromManagedIdentities &&
          m_osEndpoint.find("core.windows.net") != std::string::npos)

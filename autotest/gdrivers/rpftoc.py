@@ -140,7 +140,7 @@ def test_rpftoc_4():
 
 
 ###############################################################################
-# Create a A.TOC file
+# Create an A.TOC file
 
 
 def test_rpftoc_create_simple(tmp_vsimem):
@@ -333,7 +333,7 @@ def test_rpftoc_create_simple(tmp_vsimem):
 
 
 ###############################################################################
-# Test errors in creating a A.TOC file
+# Test errors in creating an A.TOC file
 
 
 def test_rpftoc_create_errors(tmp_vsimem):

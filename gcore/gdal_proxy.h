@@ -140,7 +140,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                        int bJustInitialize) override;
 
     GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
-                                          int nYBlockYOff) override;
+                                          int nYBlockOff) override;
 
     CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
                       int bWriteDirtyBlock) override;

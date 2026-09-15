@@ -2,7 +2,7 @@
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test basic read support for a all datatypes from a HDF file.
+# Purpose:  Test basic read support for all datatypes from a HDF file.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 ###############################################################################

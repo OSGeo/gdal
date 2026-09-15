@@ -537,7 +537,7 @@ def test_vsiaz_AZURE_NO_SIGN_REQUEST_fake_stat_file():
 
     gdal.VSICurlClearCache()
 
-    # Test that we don't emit a Authorization header in AZURE_NO_SIGN_REQUEST
+    # Test that we don't emit an Authorization header in AZURE_NO_SIGN_REQUEST
     # mode, even if we have credentials
     with gdaltest.config_option("AZURE_NO_SIGN_REQUEST", "YES", thread_local=False):
         handler = webserver.SequentialHandler()
