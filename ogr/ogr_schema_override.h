@@ -345,4 +345,4 @@ class CPL_DLL OGRSchemaOverride
 
 //! @endcond
 
-#endif /* ndef OGR_FEATURE_H_INCLUDED */
+#endif /* ndef OGR_SCHEMA_OVERRIDE_H_INCLUDED */

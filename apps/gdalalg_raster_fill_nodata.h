@@ -67,4 +67,4 @@ class GDALRasterFillNodataAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_FILLNODATA_INCLUDED */
+#endif /* GDALALG_RASTER_FILL_NODATA_INCLUDED */

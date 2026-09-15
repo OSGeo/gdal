@@ -379,4 +379,4 @@ CPL_C_START
 void CPL_DLL RegisterOGRFileGDB();
 CPL_C_END
 
-#endif /* ndef _OGR_PG_H_INCLUDED */
+#endif /* ndef OGR_FGDB_H_INCLUDED */

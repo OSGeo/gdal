@@ -301,4 +301,4 @@ class OGRTopoJSONReader
     OGRTopoJSONReader &operator=(OGRTopoJSONReader const &);
 };
 
-#endif /* OGR_GEOJSONUTILS_H_INCLUDED */
+#endif /* OGR_GEOJSONREADER_H_INCLUDED */

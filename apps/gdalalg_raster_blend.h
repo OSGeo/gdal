@@ -109,4 +109,4 @@ class GDALRasterBlendAlgorithmStandalone final : public GDALRasterBlendAlgorithm
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_COLOR_MERGE_INCLUDED */
+#endif /* GDALALG_RASTER_BLEND_INCLUDED */
