@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef OGR_ODBC_H_INCLUDED
-#define OGR_ODBC_H_INCLUDED
+#ifndef OGR_PGEO_H_INCLUDED
+#define OGR_PGEO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -228,4 +228,4 @@ class OGRPGeoDataSource final : public GDALDataset
     }
 };
 
-#endif /* ndef _OGR_PGeo_H_INCLUDED */
+#endif /* ndef OGR_PGEO_H_INCLUDED */
