@@ -1245,6 +1245,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Computes the complex conjugate of a single raster band
 
        (just a copy if the input is non-complex)
+   * - **count**
+     - >= 1
+     - -
+     - (GDAL >= 3.14) Number of sources with defined (non-NoData) values
    * - **dB**
      - 1
      - ``fact`` (optional)
