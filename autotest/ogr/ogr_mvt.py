@@ -25,7 +25,7 @@ pytestmark = pytest.mark.require_driver("MVT")
 
 @pytest.fixture(scope="module", autouse=True)
 def init():
-    with gdaltest.config_option("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "YES"):
+    with gdaltest.config_option("OGR_MVT_ENFORCE_EXTERNAL_RING_IS_CLOCKWISE", "YES"):
         yield
 
 
@@ -617,7 +617,7 @@ def test_ogr_mvt_x_y_z_filename_scheme():
 
 def test_ogr_mvt_polygon_larger_than_header():
 
-    with gdaltest.config_option("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "NO"):
+    with gdaltest.config_option("OGR_MVT_ENFORCE_EXTERNAL_RING_IS_CLOCKWISE", "NO"):
         ds = gdal.Open(
             "data/mvt/polygon_larger_than_header.pbf", open_options=["CLIP=NO"]
         )
