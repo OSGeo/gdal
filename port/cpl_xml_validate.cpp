@@ -65,7 +65,7 @@
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
 
-static xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoader = nullptr;
+static xmlExternalEntityLoader pfnLibXMLOldExternalEntityLoader = nullptr;
 
 /************************************************************************/
 /*                             CPLFixPath()                             */
@@ -780,12 +780,12 @@ static xmlParserInputPtr CPLExternalEntityLoader(const char *URL,
         else if (!STARTS_WITH(URL, "http://schemas.opengis.net/"))
         {
             CPLDebug("CPL", "Loading %s", URL);
-            return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+            return pfnLibXMLOldExternalEntityLoader(URL, ID, context);
         }
     }
     else if (STARTS_WITH(URL, "ftp://"))
     {
-        return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+        return pfnLibXMLOldExternalEntityLoader(URL, ID, context);
     }
     else if (STARTS_WITH(URL, "file://"))
     {
@@ -806,7 +806,7 @@ static xmlParserInputPtr CPLExternalEntityLoader(const char *URL,
         }
         else
         {
-            return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+            return pfnLibXMLOldExternalEntityLoader(URL, ID, context);
         }
     }
 
@@ -983,9 +983,9 @@ static CPLXMLSchemaPtr CPLLoadXMLSchema(const char *pszXSDFilename)
     if (pszStr == nullptr)
         return nullptr;
 
-    xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoaderLocal = nullptr;
-    pfnLibXMLOldExtranerEntityLoaderLocal = xmlGetExternalEntityLoader();
-    pfnLibXMLOldExtranerEntityLoader = pfnLibXMLOldExtranerEntityLoaderLocal;
+    xmlExternalEntityLoader pfnLibXMLOldExternalEntityLoaderLocal = nullptr;
+    pfnLibXMLOldExternalEntityLoaderLocal = xmlGetExternalEntityLoader();
+    pfnLibXMLOldExternalEntityLoader = pfnLibXMLOldExternalEntityLoaderLocal;
     xmlSetExternalEntityLoader(CPLExternalEntityLoader);
 
     xmlSchemaParserCtxtPtr pSchemaParserCtxt =
@@ -997,7 +997,7 @@ static CPLXMLSchemaPtr CPLLoadXMLSchema(const char *pszXSDFilename)
     xmlSchemaPtr pSchema = xmlSchemaParse(pSchemaParserCtxt);
     xmlSchemaFreeParserCtxt(pSchemaParserCtxt);
 
-    xmlSetExternalEntityLoader(pfnLibXMLOldExtranerEntityLoaderLocal);
+    xmlSetExternalEntityLoader(pfnLibXMLOldExternalEntityLoaderLocal);
 
     CPLFree(pszStr);
 
