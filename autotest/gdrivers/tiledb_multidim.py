@@ -27,7 +27,7 @@ pytestmark = pytest.mark.require_driver("TileDB")
 
 def test_tiledb_multidim_basic(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_basic.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def create():
 
@@ -208,7 +208,7 @@ def test_tiledb_multidim_mixed_fixed_and_variable_sized_attributes(tmp_path):
 
     tiledb = pytest.importorskip("tiledb")
     np = pytest.importorskip("numpy")
-    filename = str(tmp_path / "mixed_attributes.tiledb")
+    filename = str(tmp_path / "out.tiledb")
     domain = tiledb.Domain(
         tiledb.Dim(name="X", domain=(0, 3), tile=4, dtype=np.uint64),
         tiledb.Dim(name="Y", domain=(0, 3), tile=4, dtype=np.uint64),
@@ -278,7 +278,7 @@ def test_tiledb_multidim_mixed_fixed_and_variable_sized_attributes(tmp_path):
 )
 def test_tiledb_multidim_array_data_types(tmp_path, gdal_data_type):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_data_types.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def create():
 
@@ -315,7 +315,7 @@ def test_tiledb_multidim_array_data_types(tmp_path, gdal_data_type):
 
 def test_tiledb_multidim_array_nodata(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_nodata.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -350,10 +350,7 @@ def test_tiledb_multidim_array_nodata(tmp_path):
 
 def test_tiledb_multidim_array_nodata_cannot_be_set_after_finalize(tmp_path):
 
-    filename = str(
-        tmp_path
-        / "test_tiledb_multidim_array_nodata_cannot_be_set_after_finalize.tiledb"
-    )
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -392,7 +389,7 @@ def test_tiledb_multidim_array_nodata_cannot_be_set_after_finalize(tmp_path):
 
 def test_tiledb_multidim_array_blocksize(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_blocksize.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -429,7 +426,7 @@ def test_tiledb_multidim_array_blocksize(tmp_path):
 
 def test_tiledb_multidim_array_compression(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_compression.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -465,7 +462,7 @@ def test_tiledb_multidim_array_compression(tmp_path):
 
 def test_tiledb_multidim_array_same_name_as_dim(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_same_name_as_dim.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -496,7 +493,7 @@ def test_tiledb_multidim_array_same_name_as_dim(tmp_path):
 
 def test_tiledb_multidim_array_read_write(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_read_write.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -584,7 +581,7 @@ def test_tiledb_multidim_array_read_dim_label_and_spatial_ref(
     tmp_path, epsg_code, axis_mapping
 ):
 
-    filename = str(tmp_path / "test_tiledb_multidim_array_read_dim_label.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
 
@@ -677,9 +674,7 @@ def test_tiledb_multidim_array_read_dim_label_and_spatial_ref(
 
 def test_tiledb_multidim_array_read_gdal_raster_classic(tmp_path):
 
-    filename = str(
-        tmp_path / "test_tiledb_multidim_array_read_gdal_raster_classic.tiledb"
-    )
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
         gdal.Translate(filename, "data/small_world.tif", format="TileDB")
@@ -724,10 +719,7 @@ def test_tiledb_multidim_array_read_gdal_raster_classic(tmp_path):
 
 def test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes(tmp_path):
 
-    filename = str(
-        tmp_path
-        / "test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes.tiledb"
-    )
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
         gdal.Translate(
@@ -767,7 +759,7 @@ def test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes(tm
 @pytest.mark.require_driver("netCDF")
 def test_tiledb_multidim_translate_from_netcdf(tmp_path):
 
-    filename = str(tmp_path / "test_tiledb_multidim_translate_from_netcdf.tiledb")
+    filename = str(tmp_path / "out.tiledb")
 
     def test():
         gdal.MultiDimTranslate(
