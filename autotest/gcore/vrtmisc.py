@@ -732,22 +732,18 @@ def test_vrtmisc_sourcefilename_source_relative_dest_absolute(tmp_path, monkeypa
 
     shutil.copy("data/byte.tif", "tmp")
 
-    try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
-        ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
-        path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
-        if sys.platform == "win32":
-            path = path.replace("/", "\\")
-        ds.SetDescription(path)
-        ds = None
-        src_ds = None
-        assert (
-            '<SourceFilename relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink(tmp_path / "tmp" / "byte.tif")
-        gdal.Unlink(tmp_path / "tmp" / "byte.vrt")
+    src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
+    ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
+    path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
+    if sys.platform == "win32":
+        path = path.replace("/", "\\")
+    ds.SetDescription(path)
+    ds = None
+    src_ds = None
+    assert (
+        '<SourceFilename relativeToVRT="1">byte.tif<'
+        in open("tmp/byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################

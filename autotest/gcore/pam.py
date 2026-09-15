@@ -66,7 +66,7 @@ def test_pam_2(tmp_path):
 
     driver = gdal.GetDriverByName("PNM")
 
-    with driver.Create(str(tmp_path / "pam.pgm"), 10, 10) as ds:
+    with driver.Create(tmp_path / "pam.pgm", 10, 10) as ds:
         band = ds.GetRasterBand(1)
 
         band.SetMetadata({"other": "red", "key": "value"})
@@ -79,7 +79,7 @@ def test_pam_2(tmp_path):
 
         band.SetNoDataValue(100)
 
-    with gdal.Open(str(tmp_path / "pam.pgm")) as ds:
+    with gdal.Open(tmp_path / "pam.pgm") as ds:
 
         band = ds.GetRasterBand(1)
         base_md = band.GetMetadata()
@@ -96,10 +96,10 @@ def test_pam_2(tmp_path):
 
         assert band.GetNoDataValue() == 100, "nodata not saved via pam"
 
-    with gdal.Open(str(tmp_path / "pam.pgm"), gdal.GA_Update) as ds:
+    with gdal.Open(tmp_path / "pam.pgm", gdal.GA_Update) as ds:
         assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
 
-    with gdal.Open(str(tmp_path / "pam.pgm")) as ds:
+    with gdal.Open(tmp_path / "pam.pgm") as ds:
         assert (
             ds.GetRasterBand(1).GetNoDataValue() is None
         ), "got nodata value whereas none was expected"
@@ -115,11 +115,11 @@ def test_pam_4(tmp_path):
 
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
-    shutil.copyfile("data/mfftest.hdr.aux.xml", str(tmp_path / "mfftest.hdr.aux.xml"))
-    shutil.copyfile("data/mfftest.hdr", str(tmp_path / "mfftest.hdr"))
-    shutil.copyfile("data/mfftest.r00", str(tmp_path / "mfftest.r00"))
+    shutil.copyfile("data/mfftest.hdr.aux.xml", tmp_path / "mfftest.hdr.aux.xml")
+    shutil.copyfile("data/mfftest.hdr", tmp_path / "mfftest.hdr")
+    shutil.copyfile("data/mfftest.r00", tmp_path / "mfftest.r00")
 
-    ds = gdal.Open(str(tmp_path / "mfftest.hdr"))
+    ds = gdal.Open(tmp_path / "mfftest.hdr")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
 
     assert (
@@ -172,19 +172,14 @@ def test_pam_7(tmp_path):
 
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
-        shutil.copyfile(
-            "data/stefan_full_rgba.png", str(tmp_path / "stefan_full_rgba.png")
-        )
-        ds = gdal.Open(str(tmp_path / "stefan_full_rgba.png"))
+        shutil.copyfile("data/stefan_full_rgba.png", tmp_path / "stefan_full_rgba.png")
+        ds = gdal.Open(tmp_path / "stefan_full_rgba.png")
         ds.BuildOverviews("NEAR", [2])
         ds = None
 
-        ds = gdal.Open(str(tmp_path / "stefan_full_rgba.png"))
+        ds = gdal.Open(tmp_path / "stefan_full_rgba.png")
         ovr_count = ds.GetRasterBand(1).GetOverviewCount()
         ds = None
-
-        os.remove(str(tmp_path / "stefan_full_rgba.png"))
-        os.remove(str(tmp_path / "stefan_full_rgba.png.ovr"))
 
         assert ovr_count == 1
 
@@ -380,8 +375,8 @@ def test_pam_11(tmp_path):
 
 def test_pam_12(tmp_path):
 
-    shutil.copy("data/byte.tif", str(tmp_path / "byte.tif"))
-    open(str(tmp_path / "byte.tif.aux.xml"), "wt").write("""<PAMDataset>
+    shutil.copy("data/byte.tif", tmp_path / "byte.tif")
+    open(tmp_path / "byte.tif.aux.xml", "wt").write("""<PAMDataset>
   <PAMRasterBand band="1">
     <Histograms>
       <HistItem>
@@ -396,15 +391,13 @@ def test_pam_12(tmp_path):
   </PAMRasterBand>
 </PAMDataset>""")
 
-    ds = gdal.Open(str(tmp_path / "byte.tif"))
+    ds = gdal.Open(tmp_path / "byte.tif")
     mini, maxi, _, hist1 = ds.GetRasterBand(1).GetDefaultHistogram()
     hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range=1, approx_ok=0)
     ds.SetMetadataItem("FOO", "BAR")
     ds.GetRasterBand(1).SetDefaultHistogram(mini, maxi, hist1)
     ds = None
-    aux_xml = open(str(tmp_path / "byte.tif.aux.xml"), "rt").read()
-    gdal.Unlink(str(tmp_path / "byte.tif"))
-    gdal.Unlink(str(tmp_path / "byte.tif.aux.xml"))
+    aux_xml = open(tmp_path / "byte.tif.aux.xml", "rt").read()
 
     assert hist1 == hist2
     assert hist1[0] == 6000000000

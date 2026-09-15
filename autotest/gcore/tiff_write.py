@@ -96,7 +96,7 @@ def test_tiff_write_2(tmp_vsimem):
 
     src_ds = gdal.Open("data/cfloat64.tif")
 
-    new_ds = gdaltest.tiff_drv.CreateCopy("/vsimem/test_2.tif", src_ds)
+    new_ds = gdaltest.tiff_drv.CreateCopy(tmp_vsimem / "test_2.tif", src_ds)
     assert new_ds.FlushCache() == gdal.CE_None
 
     bnd = new_ds.GetRasterBand(1)
@@ -107,7 +107,7 @@ def test_tiff_write_2(tmp_vsimem):
 
     # hopefully it's closed now!
 
-    new_ds = gdal.Open("/vsimem/test_2.tif")
+    new_ds = gdal.Open(tmp_vsimem / "test_2.tif")
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 5028, "Didn't get expected checksum on reopened file"
 
@@ -118,8 +118,6 @@ def test_tiff_write_2(tmp_vsimem):
 
     bnd = None
     new_ds = None
-
-    gdaltest.tiff_drv.Delete("/vsimem/test_2.tif")
 
 
 ###############################################################################
@@ -141,8 +139,6 @@ def test_tiff_write_3(tmp_vsimem):
 
     bnd = None
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_3.tif")
 
 
 ###############################################################################
@@ -206,8 +202,6 @@ def test_tiff_write_4(tmp_vsimem):
     assert md_dict["TEST_KEY"] == "TestValue <>", "Missing metadata"
 
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_4.tif")
 
 
 def test_tiff_write_tiled_blockxsize_not_tiled(tmp_vsimem):
@@ -285,8 +279,6 @@ def test_tiff_write_5(tmp_vsimem):
     assert len(gcps) == 4, "GCP count wrong."
     new_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_5.tif")
-
 
 ###############################################################################
 # Test a mixture of reading and writing on a DEFLATE compressed file.
@@ -326,7 +318,6 @@ def test_tiff_write_6(tmp_vsimem):
     ds = None
 
     gdaltest.tiff_write_6_failed = False
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_6.tif")
 
 
 ###############################################################################
@@ -352,8 +343,6 @@ def test_tiff_write_7(tmp_vsimem):
     assert buf_read == buf, "did not get back expected data."
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_7.tif")
 
 
 ###############################################################################
@@ -381,8 +370,6 @@ def test_tiff_write_8(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_8.tif")
-
 
 ###############################################################################
 # Create a simple file by copying from an existing one.
@@ -403,8 +390,6 @@ def test_tiff_write_9(tmp_vsimem):
 
     bnd = None
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_9.tif")
 
 
 ###############################################################################
@@ -544,8 +529,6 @@ def test_tiff_write_15(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_15.tif")
-
 
 ###############################################################################
 # Test that we can restrict metadata and georeferencing in the output
@@ -612,8 +595,6 @@ def test_tiff_write_16(tmp_vsimem):
     assert "testBand" not in md, "Metadata written to BASELINE file."
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_16.tif")
 
 
 ###############################################################################
@@ -767,8 +748,6 @@ def test_tiff_write_18(tmp_vsimem):
     ds = None
     assert not os.path.exists(tmp_vsimem / "tw_18.RPB"), "RPB did not get removed"
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_18.tif")
-
 
 ###############################################################################
 # Test writing a IMD files with space in values
@@ -882,7 +861,7 @@ def test_tiff_write_rpc_in_pam(tmp_path):
     rpc_md = ds_in.GetMetadata("RPC")
 
     ds = gdaltest.tiff_drv.CreateCopy(
-        str(tmp_path / "tiff_write_rpc_in_pam.tif"),
+        tmp_path / "tiff_write_rpc_in_pam.tif",
         ds_in,
         options=["PROFILE=BASELINE", "RPB=NO"],
     )
@@ -905,8 +884,6 @@ def test_tiff_write_rpc_in_pam(tmp_path):
     gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_rpc_in_pam.tif")
 
 
 ###############################################################################
@@ -936,8 +913,6 @@ def test_tiff_write_19(tmp_vsimem):
 
     new_ds = None
     src_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "contig_strip_7.tif")
 
 
 ###############################################################################
@@ -1015,8 +990,6 @@ def test_tiff_write_20(tmp_vsimem):
 
     assert got_md == {}, "expected empty metadata list, but got some"
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tags.tif")
-
 
 ###############################################################################
 # Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNASSOCALPHA
@@ -1079,8 +1052,6 @@ def test_tiff_write_22(tmp_vsimem):
     new_ds = None
     src_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "stefan_full_rgba_photometric_rgb.tif")
-
 
 ###############################################################################
 # Test grey+alpha images with ALPHA=YES
@@ -1111,8 +1082,6 @@ def test_tiff_write_23(tmp_vsimem):
     new_ds = None
     src_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "stefan_full_greyalpha.tif")
-
 
 ###############################################################################
 # Test grey+alpha images without ALPHA=YES
@@ -1142,8 +1111,6 @@ def test_tiff_write_24(tmp_vsimem):
 
     new_ds = None
     src_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "stefan_full_greyunspecified.tif")
 
 
 ###############################################################################
@@ -1238,9 +1205,6 @@ def test_tiff_write_27(tmp_vsimem):
     ct = None
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "ct16.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "ct16_copy.tif")
-
 
 ###############################################################################
 # Test SetRasterColorInterpretation on a 2 channel image
@@ -1262,8 +1226,6 @@ def test_tiff_write_28(tmp_vsimem):
 
     assert ds.GetRasterBand(2).GetRasterColorInterpretation() == gdal.GCI_AlphaBand
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "greyalpha.tif")
 
 
 ###############################################################################
@@ -1328,7 +1290,7 @@ def test_tiff_write_29():
 def test_tiff_write_30(tmp_path):
 
     ds = gdaltest.tiff_drv.Create(
-        str(tmp_path / "bigtiff.tif"), 1, 1, 1, options=["BigTIFF=YES"]
+        tmp_path / "bigtiff.tif", 1, 1, 1, options=["BigTIFF=YES"]
     )
     ds = None
 
@@ -1339,8 +1301,6 @@ def test_tiff_write_30(tmp_path):
     fileobj = open(tmp_path / "bigtiff.tif", mode="rb")
     binvalues = struct.unpack("B" * 4, fileobj.read(4))
     fileobj.close()
-
-    gdaltest.tiff_drv.Delete(str(tmp_path / "bigtiff.tif"))
 
     # Check BigTIFF signature
     assert not (
@@ -1356,19 +1316,17 @@ def test_tiff_write_30(tmp_path):
 def test_tiff_write_31(tmp_path):
 
     ds = gdaltest.tiff_drv.Create(
-        str(tmp_path / "bigtiff.tif"), 100000, 100000, 1, options=["SPARSE_OK=TRUE"]
+        tmp_path / "bigtiff.tif", 100000, 100000, 1, options=["SPARSE_OK=TRUE"]
     )
     ds = None
 
-    ds = gdal.Open(str(tmp_path / "bigtiff.tif"))
+    ds = gdal.Open(tmp_path / "bigtiff.tif")
     assert ds is not None
     ds = None
 
-    fileobj = open(str(tmp_path / "bigtiff.tif"), mode="rb")
+    fileobj = open(tmp_path / "bigtiff.tif", mode="rb")
     binvalues = struct.unpack("B" * 4, fileobj.read(4))
     fileobj.close()
-
-    gdaltest.tiff_drv.Delete(str(tmp_path / "bigtiff.tif"))
 
     # Check BigTIFF signature
     assert not (
@@ -1418,9 +1376,6 @@ def test_tiff_write_32(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "byte_rotated.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "byte_rotated_copy.tif")
-
 
 ###############################################################################
 # Test that metadata is written in .aux.xml file in GeoTIFF profile with CreateCopy
@@ -1436,14 +1391,14 @@ def test_tiff_write_33(tmp_path):
     ds_in = gdal.Open("data/byte.vrt")
 
     ds = gdaltest.tiff_drv.CreateCopy(
-        str(tmp_path / "tw_33.tif"), ds_in, options=["PROFILE=GeoTIFF"]
+        tmp_path / "tw_33.tif", ds_in, options=["PROFILE=GeoTIFF"]
     )
 
     ds_in = None
 
     ds = None
 
-    ds = gdal.Open(str(tmp_path / "tw_33.tif"))
+    ds = gdal.Open(tmp_path / "tw_33.tif")
 
     md = ds.GetMetadata()
     assert "test" in md, "Metadata absent from .aux.xml file."
@@ -1454,14 +1409,14 @@ def test_tiff_write_33(tmp_path):
     ds = None
 
     try:
-        gdal.Unlink(str(tmp_path / "tw_33.tif.aux.xml"))
+        os.remove(tmp_path / "tw_33.tif.aux.xml")
     except OSError:
         try:
-            os.stat(str(tmp_path / "tw_33.tif.aux.xml"))
+            os.stat(tmp_path / "tw_33.tif.aux.xml")
         except OSError:
             pytest.fail("No .aux.xml file.")
 
-    ds = gdal.Open(str(tmp_path / "tw_33.tif"))
+    ds = gdal.Open(tmp_path / "tw_33.tif")
 
     md = ds.GetMetadata()
     assert "test" not in md, "Metadata written to GeoTIFF file."
@@ -1470,8 +1425,6 @@ def test_tiff_write_33(tmp_path):
     assert "testBand" not in md, "Metadata written to GeoTIFF file."
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(str(tmp_path / "tw_33.tif"))
 
 
 ###############################################################################
@@ -1482,7 +1435,7 @@ def test_tiff_write_33(tmp_path):
 def test_tiff_write_34(tmp_path):
 
     ds = gdaltest.tiff_drv.Create(
-        str(tmp_path / "tw_34.tif"), 1, 1, gdal.GDT_UInt8, options=["PROFILE=GeoTIFF"]
+        tmp_path / "tw_34.tif", 1, 1, gdal.GDT_UInt8, options=["PROFILE=GeoTIFF"]
     )
     ds.SetMetadata({"test": "testvalue"})
     ds.GetRasterBand(1).SetMetadata({"testBand": "testvalueBand"})
@@ -1500,14 +1453,14 @@ def test_tiff_write_34(tmp_path):
     ds = None
 
     try:
-        gdal.Unlink(str(tmp_path / "tw_34.tif.aux.xml"))
+        os.remove(tmp_path / "tw_34.tif.aux.xml")
     except OSError:
         try:
-            os.stat(str(tmp_path / "tw_34.tif.aux.xml"))
+            os.stat(tmp_path / "tw_34.tif.aux.xml")
         except OSError:
             pytest.fail("No .aux.xml file.")
 
-    ds = gdal.Open(str(tmp_path / "tw_34.tif"))
+    ds = gdal.Open(tmp_path / "tw_34.tif")
 
     md = ds.GetMetadata()
     assert "test" not in md, "Metadata written to GeoTIFF file."
@@ -1516,8 +1469,6 @@ def test_tiff_write_34(tmp_path):
     assert "testBand" not in md, "Metadata written to GeoTIFF file."
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(str(tmp_path / "tw_34.tif"))
 
 
 ###############################################################################
@@ -1528,20 +1479,18 @@ def test_tiff_write_34(tmp_path):
 def test_tiff_write_35(tmp_path):
 
     big_string = "a" * 12345678
-    ds = gdaltest.tiff_drv.Create(str(tmp_path / "tw_35.tif"), 1, 1, gdal.GDT_UInt8)
+    ds = gdaltest.tiff_drv.Create(tmp_path / "tw_35.tif", 1, 1, gdal.GDT_UInt8)
 
     md = {}
     md["test"] = big_string
     ds.SetMetadata(md)
     ds = None
 
-    assert not os.path.exists(str(tmp_path / "tw_35.tif.aux.xml"))
+    assert not os.path.exists(tmp_path / "tw_35.tif.aux.xml")
 
-    ds = gdal.Open(str(tmp_path / "tw_35.tif"))
+    ds = gdal.Open(tmp_path / "tw_35.tif")
     assert ds.GetMetadataItem("test") == big_string
     ds = None
-
-    gdaltest.tiff_drv.Delete(str(tmp_path / "tw_35.tif"))
 
 
 ###############################################################################
@@ -1722,9 +1671,6 @@ def test_tiff_write_44(tmp_vsimem):
     ds = None
     ds2 = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_44.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_44_copy.tif")
-
 
 ###############################################################################
 # Test create with NBITS=17 and preservation through CreateCopy of NBITS
@@ -1753,9 +1699,6 @@ def test_tiff_write_45(tmp_vsimem):
 
     ds = None
     ds2 = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_45.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tw_45_copy.tif")
 
 
 ###############################################################################
@@ -1798,9 +1741,6 @@ def test_tiff_write_46(tmp_vsimem):
     ds = None
     ds2 = None
     ds3 = None
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_46_1.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_46_2.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_46_3.tif")
 
 
 ###############################################################################
@@ -1841,8 +1781,6 @@ def test_tiff_write_48(tmp_vsimem):
 
     new_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_48.tif")
-
 
 ###############################################################################
 # Test copying a CMYK TIFF into another CMYK TIFF
@@ -1874,8 +1812,6 @@ def test_tiff_write_49(tmp_vsimem):
 
     src_ds = None
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_49.tif")
 
 
 ###############################################################################
@@ -1919,8 +1855,6 @@ def test_tiff_write_50(tmp_vsimem):
     src_ds = None
     new_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_50.tif")
-
 
 ###############################################################################
 # Test proper clearing of existing GeoTIFF tags when updating the projection.
@@ -1961,9 +1895,6 @@ def test_tiff_write_51(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_51.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_51_ref.tif")
-
 
 ###############################################################################
 # Test the ability to update a paletted TIFF files color table.
@@ -1989,8 +1920,6 @@ def test_tiff_write_52(tmp_vsimem):
 
     ct = None
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_52.tif")
 
 
 ###############################################################################
@@ -2021,8 +1950,6 @@ def test_tiff_write_53(tmp_vsimem):
 
     ct = None
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_53.tif")
 
 
 ###############################################################################
@@ -2056,8 +1983,6 @@ def test_tiff_write_53_bis(tmp_vsimem):
     ct = None
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_53_bis.tif")
-
 
 ###############################################################################
 # Test the ability to create a JPEG compressed TIFF, with PHOTOMETRIC=YCBCR
@@ -2081,8 +2006,6 @@ def test_tiff_write_54(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "tiff_write_54.tif")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_54.tif")
 
     assert cs != 0, "did not get expected checksum"
 
@@ -2108,8 +2031,6 @@ def test_tiff_write_55(tmp_vsimem):
     assert (
         srs == srs_expected
     ), "failed to preserve Equirectangular projection as expected, old libgeotiff?"
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_55.tif")
 
 
 ###############################################################################
@@ -2144,8 +2065,6 @@ def test_tiff_write_56(tmp_vsimem):
     ct = None
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_56.tif")
-
 
 ###############################################################################
 # Test replacing normal norm up georef with rotated georef (#2625)
@@ -2174,8 +2093,6 @@ def test_tiff_write_57(tmp_vsimem):
         3,
         1,
     ), "did not get expected geotransform, perhaps unset is not working?"
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff57.tif")
 
 
 ###############################################################################
@@ -2372,8 +2289,6 @@ def test_tiff_write_62(tmp_vsimem):
     binvalues = struct.unpack("B" * 4, gdal.VSIFReadL(4, 1, fileobj))
     gdal.VSIFCloseL(fileobj)
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "bigtiff.tif")
-
     # Check BigTIFF signature
     assert not (
         (binvalues[2] != 0x2B or binvalues[3] != 0)
@@ -2415,8 +2330,6 @@ def test_tiff_write_64(tmp_vsimem):
     got_srs = ds.GetSpatialRef()
     assert got_srs.IsSame(srs)
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_64.tif")
 
 
 ###############################################################################
@@ -2482,8 +2395,6 @@ def test_tiff_write_66(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_66.tif")
-
 
 ###############################################################################
 # Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
@@ -2508,8 +2419,6 @@ def test_tiff_write_67(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_67.tif")
-
 
 ###############################################################################
 # Verify that we can set the color table after a Create() (scenario hit by map.tif in #2820)
@@ -2533,8 +2442,6 @@ def test_tiff_write_68(tmp_vsimem):
     assert ds.GetRasterBand(1).Checksum() != 0
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_68.tif")
-
 
 ###############################################################################
 # Verify GTiffRasterBand::NullBlock() when reading empty block without any nodata value set
@@ -2555,8 +2462,6 @@ def test_tiff_write_69(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "tiff_write_69.tif")
     assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_69.tif")
 
 
 ###############################################################################
@@ -2609,9 +2514,6 @@ def test_tiff_write_70(tmp_path):
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_70.tif")
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_70_ref.tif")
-
 
 ###############################################################################
 # Test reading in a real BigTIFF file (on filesystems supporting sparse files)
@@ -2650,8 +2552,6 @@ def test_tiff_write_71(tmp_path):
     assert struct.unpack("b", data)[0] == 0x78
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_71.tif")
-
 
 ###############################################################################
 # With CreateCopy(), check that TIFF directory is in the first bytes of the file
@@ -2687,9 +2587,6 @@ def test_tiff_write_72(tmp_path):
             and binvalues[2] == 0x00
             and binvalues[3] == 0x00
         ), ("Failed with profile %s" % profile)
-
-    gdaltest.tiff_drv.Delete(tmp_path / "byte.tif")
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_72.tif")
 
 
 ###############################################################################
@@ -2741,8 +2638,6 @@ def test_tiff_write_73(tmp_path):
         and binvalues[2] == 0x00
         and binvalues[3] == 0x00
     )
-
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_73.tif")
 
 
 ###############################################################################
@@ -2827,8 +2722,6 @@ def test_tiff_write_75(tmp_vsimem):
     ds.FlushCache()
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_75.tif")
-
 
 ###############################################################################
 # Test generating a G4 band to use the TIFFWriteScanline()
@@ -2851,8 +2744,6 @@ def test_tiff_write_76(tmp_vsimem):
 
     src_ds = None
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_76.tif")
 
 
 ###############################################################################
@@ -2993,10 +2884,7 @@ def test_tiff_write_78(tmp_vsimem):
         assert cs == expected_cs, "Got wrong checksum"
 
     new_ds = None
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_78.tif")
-
     src_ds = None
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_78_src.tif")
 
 
 ###############################################################################
@@ -3071,8 +2959,6 @@ def test_tiff_write_79(tmp_vsimem):
             mdi = ds.GetMetadataItem("AREA_OR_POINT")
             assert mdi == "Area", "(6) did not get expected value"
             ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_79.tif")
 
 
 ###############################################################################
@@ -3166,8 +3052,6 @@ def test_tiff_write_80(tmp_vsimem):
     assert not offset
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_80_bis.tif")
-
 
 ###############################################################################
 # Test retrieving GCP from PAM
@@ -3200,8 +3084,6 @@ def test_tiff_write_81(tmp_vsimem):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_81.tif")
-
 
 ###############################################################################
 # Test writing & reading a signedbyte 8 bit geotiff
@@ -3221,8 +3103,6 @@ def test_tiff_write_82(tmp_vsimem):
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (-124, 123)
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_82.tif")
 
 
 ###############################################################################
@@ -3292,8 +3172,6 @@ def test_tiff_write_84(tmp_vsimem):
             cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
             ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_84.tif")
-
     assert cs == 0, "did not get expected checksum"
 
 
@@ -3349,7 +3227,7 @@ def test_tiff_write_85(tmp_vsimem):
 
     try:
         # check that it *goes* to PAM
-        assert gdal.VSIStatL(str(tmp_vsimem / "tiff_write_85_bis.tif.aux.xml"))
+        assert gdal.VSIStatL(tmp_vsimem / "tiff_write_85_bis.tif.aux.xml")
     except AssertionError:
         pytest.fail("did not go to PAM as expected")
 
@@ -3363,14 +3241,12 @@ def test_tiff_write_85(tmp_vsimem):
     ds.GetRasterBand(1).SetUnitType(None)
     ds = None
 
-    assert not os.path.exists(tmp_vsimem / "tiff_write_85_bis.tif.aux.xml")
+    assert not gdal.VSIStatL(tmp_vsimem / "tiff_write_85_bis.tif.aux.xml")
 
     ds = gdal.Open(tmp_vsimem / "tiff_write_85_bis.tif")
     unittype = ds.GetRasterBand(1).GetUnitType()
     assert unittype == "", "did not get expected values in PAM case (2)"
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_85_bis.tif")
 
 
 ###############################################################################
@@ -3458,11 +3334,6 @@ def test_tiff_write_86(tmp_vsimem):
 
         ds = None
 
-    # Cleanup
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_86.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_86_cc.tif")
-
 
 ###############################################################################
 # Test COPY_SRC_OVERVIEWS creation option
@@ -3519,9 +3390,6 @@ def test_tiff_write_87(tmp_vsimem):
     ds = None
 
     _check_cog(tmp_vsimem / "tiff_write_87_dst.tif", check_tiled=False, full_check=True)
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_87_src.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_87_dst.tif")
 
     # Check checksums
     assert cs1 == expected_cs1 and cs2 == expected_cs2, "did not get expected checksums"
@@ -3588,9 +3456,6 @@ def test_tiff_write_88(tmp_vsimem):
     data = gdal.VSIFReadL(8, 1, f)
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink(tmp_vsimem / "tiff_write_88_src.tif")
-    gdal.Unlink(tmp_vsimem / "tiff_write_88_dst.tif")
-
     ar = struct.unpack("B" * 8, data)
     assert ar[2] == 43, "not a BIGTIFF file"
     assert (
@@ -3645,8 +3510,6 @@ def test_tiff_write_89(tmp_path):
             assert size < last_size, "did not get decreasing file sizes"
 
         last_size = size
-
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_89.tif")
 
 
 ###############################################################################
@@ -3849,8 +3712,6 @@ def test_tiff_write_91(tmp_vsimem):
         ]
         ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_91.tif")
-
     assert checksums[75][0] != checksums[90][0]
     assert checksums[75][1] != checksums[90][1]
     assert checksums[75][2] != checksums[90][2]
@@ -3967,8 +3828,6 @@ def test_tiff_write_92(tmp_path):
 
         last_size = size
 
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_92.tif")
-
 
 ###############################################################################
 # Test JPEG_QUALITY_OVERVIEW propagation while creating external overviews
@@ -4029,8 +3888,6 @@ def test_tiff_write_93(tmp_path):
 
         last_size = size
 
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_93.tif")
-
 
 ###############################################################################
 # Test CreateCopy() of a dataset with a mask into a JPEG compressed dataset
@@ -4059,9 +3916,6 @@ def test_tiff_write_94(tmp_vsimem):
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_94_src.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_94_dst.tif")
-
     assert cs == 3, "wrong checksum"
 
 
@@ -4085,9 +3939,6 @@ def test_tiff_write_95(tmp_vsimem):
     ok = ds is not None
     ds = None
     src_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_95_src.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_95_dst.tif")
 
     assert ok
 
@@ -4185,9 +4036,6 @@ def test_tiff_write_96(tmp_vsimem, other_options=[], nbands=1, nbits=8):
         ds = None
 
     _check_cog(tmp_vsimem / "tiff_write_96_dst.tif", check_tiled=False, full_check=True)
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_96_src.tif")
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_96_dst.tif")
 
 
 def test_tiff_write_96_tiled_threads_nbits7_nbands1(tmp_vsimem):
@@ -4387,8 +4235,6 @@ def test_tiff_write_97(tmp_vsimem):
 
     assert md == "Point", "did not get expected AREA_OR_POINT value"
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_97_2.tif")
-
 
 ###############################################################################
 # Create a rotated geotiff file (uses a geomatrix) with - PixelIsPoint
@@ -4428,8 +4274,6 @@ def test_tiff_write_98(tmp_vsimem):
 
     assert md == "Point", "did not get expected AREA_OR_POINT value"
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_98.tif")
-
 
 ###############################################################################
 # Create a rotated geotiff file (uses a geomatrix) with - PixelIsPoint
@@ -4437,7 +4281,7 @@ def test_tiff_write_98(tmp_vsimem):
 
 def test_tiff_write_tiepoints_pixelispoint(tmp_vsimem):
 
-    tmpfilename = "/vsimem/test_tiff_write_tiepoints_pixelispoint.tif"
+    tmpfilename = tmp_vsimem / "test_tiff_write_tiepoints_pixelispoint.tif"
 
     gdal.Translate(tmpfilename, "data/byte_gcp_pixelispoint.tif")
     ds = gdal.Open(tmpfilename)
@@ -4466,8 +4310,6 @@ def test_tiff_write_tiepoints_pixelispoint(tmp_vsimem):
             and gcp.GCPZ == pytest.approx(0, abs=1e-5)
         )
 
-    gdal.Unlink(tmpfilename)
-
 
 ###############################################################################
 # Create copy into a RGB JPEG-IN-TIFF (#3887)
@@ -4489,8 +4331,6 @@ def test_tiff_write_99(tmp_vsimem):
     cs3 = ds.GetRasterBand(3).Checksum()
     ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_99.tif")
-
     assert (cs1, cs2, cs3) == (21629, 21651, 21371), "%d,%d,%d" % (cs1, cs2, cs3)
 
 
@@ -4501,21 +4341,18 @@ def test_tiff_write_99(tmp_vsimem):
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_100(tmp_vsimem):
 
-    src_ds = gdaltest.tiff_drv.Create("/vsimem/test_100_src.tif", 16, 16, 2)
+    src_ds = gdaltest.tiff_drv.Create(tmp_vsimem / "test_100_src.tif", 16, 16, 2)
     src_ds.GetRasterBand(1).Fill(255)
     new_ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/test_100_dst.tif", src_ds, options=["COMPRESS=JPEG"]
+        tmp_vsimem / "test_100_dst.tif", src_ds, options=["COMPRESS=JPEG"]
     )
     del new_ds
     src_ds = None
 
-    ds = gdal.Open("/vsimem/test_100_dst.tif")
+    ds = gdal.Open(tmp_vsimem / "test_100_dst.tif")
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     ds = None
-
-    gdaltest.tiff_drv.Delete("/vsimem/test_100_src.tif")
-    gdaltest.tiff_drv.Delete("/vsimem/test_100_dst.tif")
 
     assert (cs1, cs2) == (3118, 0), "%d,%d" % (cs1, cs2)
 
@@ -4603,7 +4440,6 @@ Band 1}""".encode("ascii"))
             )
 
     src_ds = None
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiff_write_101.bin")
 
 
 ###############################################################################
@@ -4677,9 +4513,6 @@ def test_tiff_write_103(tmp_path):
     src_ds = None
     dst_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_103_src.tif")
-    gdaltest.tiff_drv.Delete(tmp_path / "tiff_write_103_dst.tif")
-
     assert src_cs == dst_cs, "did not get expected checksum"
 
 
@@ -4706,8 +4539,6 @@ def test_tiff_write_104(tmp_vsimem):
         2000000.0, abs=0.001
     ), "did not get expected false easting"
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_104.tif")
-
 
 ###############################################################################
 # Confirm as best we can that we can write geotiff files with detailed
@@ -4731,8 +4562,6 @@ def test_tiff_write_105(tmp_vsimem):
     assert cs == 2923, "Did not get expected checksum, got %d." % cs
 
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "bug4468.tif")
 
 
 ###############################################################################
@@ -5215,8 +5044,6 @@ def test_tiff_write_122(tmp_vsimem):
         )
 
     new_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tags122.tif")
 
 
 ###############################################################################
@@ -6023,7 +5850,6 @@ def test_tiff_write_130(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "byte_jpg_tablesmodezero.tif")
     assert ds.GetRasterBand(1).Checksum() == 4743
     ds = None
-    gdal.Unlink(tmp_vsimem / "byte_jpg_tablesmodezero.tif")
 
 
 ###############################################################################
@@ -7204,8 +7030,6 @@ def test_tiff_write_144(tmp_path):
     got_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
-    gdal.Unlink(tmp_path / "tiff_write_144.tif")
-
     assert got_cs == 4873 and got_cs_ovr == 1218
 
 
@@ -7517,7 +7341,6 @@ def test_tiff_write_150(tmp_vsimem):
         ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "tiled_bad_offset.tif")
 
 
 ###############################################################################
@@ -9112,8 +8935,6 @@ def test_tiff_write_181_xmp(tmp_vsimem):
     ), "No XMP data written in output file"
     new_ds = None
 
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_181.tif")
-
 
 def test_tiff_write_181_xmp_copy(tmp_vsimem):
 
@@ -9134,8 +8955,6 @@ def test_tiff_write_181_xmp_copy(tmp_vsimem):
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert "W5M0MpCehiHzreSzNTczkc9d" in xmp[0], "Wrong input file without XMP"
-
-    gdaltest.tiff_drv.Delete(filename)
 
 
 ###############################################################################
@@ -9160,8 +8979,6 @@ def test_tiff_write_182_xmp_delete(tmp_vsimem):
     read_xmp = again_ds.GetMetadata("xml:XMP")
     assert not read_xmp, "XMP data not removed"
     again_ds = None
-
-    gdaltest.tiff_drv.Delete(tmp_vsimem / "test_182.tif")
 
 
 ###############################################################################

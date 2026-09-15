@@ -667,7 +667,6 @@ def test_histogram_6(tmp_vsimem):
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     assert hist is None, "did not get expected histogram."
     ds = None
-    gdal.Unlink(tmp_vsimem / "albania.jpg")
 
 
 ###############################################################################

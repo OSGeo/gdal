@@ -570,7 +570,7 @@ def test_transformer_10(tmp_path):
 
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName("GTX").Create(
-        str(tmp_path / "fake.gtx"), 10, 10, 1, gdal.GDT_Float32
+        tmp_path / "fake.gtx", 10, 10, 1, gdal.GDT_Float32
     )
     out_ds.SetGeoTransform([-180, 36, 0, 90, 0, -18])
     sr = osr.SpatialReference()
@@ -648,7 +648,6 @@ def test_transformer_10(tmp_path):
         and pnt[2] == 0
     ), "got wrong result."
 
-    gdal.GetDriverByName("GTX").Delete(str(tmp_path / "fake.gtx"))
     gdal.Unlink("/vsimem/dem.tif")
     gdal.Unlink("/vsimem/dem.vrt")
 

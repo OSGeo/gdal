@@ -653,17 +653,12 @@ def test_misc_11(tmp_path):
     if not gdaltest.support_symlink():
         pytest.skip()
 
-    gdal.Unlink(tmp_path / "symlink.tif")
     os.symlink("GTIFF_DIR:1:data/byte.tif", tmp_path / "symlink.tif")
 
     ds = gdal.Open(str(tmp_path / "symlink.tif"))
-    if ds is None:
-        os.remove(tmp_path / "symlink.tif")
-        pytest.fail()
+    assert ds
     desc = ds.GetDescription()
     ds = None
-
-    os.remove(tmp_path / "symlink.tif")
 
     assert desc == "GTIFF_DIR:1:data/byte.tif", "did not get expected description"
 

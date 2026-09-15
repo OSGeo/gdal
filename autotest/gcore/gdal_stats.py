@@ -108,10 +108,6 @@ def test_stats_dont_force():
 def test_stats_approx_nodata(tmp_vsimem):
 
     gdal.CopyFile("data/minfloat.tif", tmp_vsimem / "minfloat.tif")
-    try:
-        gdal.Unlink(tmp_vsimem / "minfloat.tif.aux.xml")
-    except RuntimeError:
-        pass
 
     ds = gdal.Open(tmp_vsimem / "minfloat.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -124,8 +120,6 @@ def test_stats_approx_nodata(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "minfloat.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
-
-    gdal.Unlink(tmp_vsimem / "minfloat.tif")
 
     if nodata != -3.4028234663852886e38:
         print("%.17g" % nodata)
@@ -171,7 +165,6 @@ def test_stats_nan_3(tmp_vsimem):
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    gdal.GetDriverByName("GTiff").Delete(tmp_vsimem / "nan32_nodata.tif")
     assert gdaltest.isnan(nodata), "expected nan, got %f" % nodata
 
 
@@ -413,10 +406,6 @@ def test_stats_square_shape():
 def test_stats_flt_min(tmp_vsimem):
 
     gdal.CopyFile("data/flt_min.tif", tmp_vsimem / "flt_min.tif")
-    try:
-        gdal.Unlink(tmp_vsimem / "flt_min.tif.aux.xml")
-    except RuntimeError:
-        pass
 
     ds = gdal.Open(tmp_vsimem / "flt_min.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -428,8 +417,6 @@ def test_stats_flt_min(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "flt_min.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
-
-    gdal.Unlink(tmp_vsimem / "flt_min.tif")
 
     if nodata != 1.17549435082228751e-38:
         print("%.17g" % nodata)
@@ -452,10 +439,6 @@ def test_stats_flt_min(tmp_vsimem):
 def test_stats_dbl_min(tmp_vsimem):
 
     gdal.CopyFile("data/dbl_min.tif", tmp_vsimem / "dbl_min.tif")
-    try:
-        gdal.Unlink(tmp_vsimem / "dbl_min.tif.aux.xml")
-    except RuntimeError:
-        pass
 
     ds = gdal.Open(tmp_vsimem / "dbl_min.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -467,8 +450,6 @@ def test_stats_dbl_min(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "dbl_min.tif")
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
     ds = None
-
-    gdal.Unlink(tmp_vsimem / "dbl_min.tif")
 
     if nodata != 2.22507385850720138e-308:
         print("%.17g" % nodata)
