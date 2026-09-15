@@ -387,14 +387,14 @@ def test_pdf_jpeg_compression(poppler_or_pdfium):
     _test_pdf_jpeg_compression("byte.tif")
 
 
-def pdf_get_J2KDriver(drv_name):
+def pdf_get_J2KDriver(drv_name, tmpdir):
     drv = gdal.GetDriverByName(drv_name)
     if drv is None:
         return None
     if drv_name == "JP2ECW":
         import ecw
 
-        if not ecw.has_write_support():
+        if not ecw.has_write_support(tmpdir):
             return None
     return drv
 
@@ -409,16 +409,16 @@ def pdf_get_J2KDriver(drv_name):
         ("rgbsmall.tif", "JP2ECW"),
     ],
 )
-def test_pdf_jpx_compression(filename, drv_name):
+def test_pdf_jpx_compression(filename, drv_name, tmp_path):
     if drv_name is None:
         if (
-            pdf_get_J2KDriver("JP2KAK") is None
-            and pdf_get_J2KDriver("JP2ECW") is None
-            and pdf_get_J2KDriver("JP2OpenJpeg") is None
-            and pdf_get_J2KDriver("JPEG2000") is None
+            pdf_get_J2KDriver("JP2KAK", tmp_path) is None
+            and pdf_get_J2KDriver("JP2ECW", tmp_path) is None
+            and pdf_get_J2KDriver("JP2OpenJpeg", tmp_path) is None
+            and pdf_get_J2KDriver("JPEG2000", tmp_path) is None
         ):
             pytest.skip()
-    elif pdf_get_J2KDriver(drv_name) is None:
+    elif pdf_get_J2KDriver(drv_name, tmp_path) is None:
         pytest.skip()
 
     if drv_name is None:
