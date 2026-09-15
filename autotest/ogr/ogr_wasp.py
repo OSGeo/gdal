@@ -27,12 +27,12 @@ pytestmark = pytest.mark.require_driver("WAsP")
 # Create wasp datasource
 
 
-def test_ogr_wasp_create_ds():
+def test_ogr_wasp_create_ds(tmp_path):
 
     wasp_drv = ogr.GetDriverByName("WAsP")
-    wasp_drv.DeleteDataSource("tmp/tmp.map")
+    wasp_drv.DeleteDataSource(str(tmp_path / "tmp.map"))
 
-    gdaltest.wasp_ds = wasp_drv.CreateDataSource("tmp/tmp.map")
+    gdaltest.wasp_ds = wasp_drv.CreateDataSource(str(tmp_path / "tmp.map"))
 
     if gdaltest.wasp_ds is not None:
         return
@@ -43,9 +43,9 @@ def test_ogr_wasp_create_ds():
 # Create elevation .map from linestrings z
 
 
-def test_ogr_wasp_elevation_from_linestring_z():
+def test_ogr_wasp_elevation_from_linestring_z(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4(
@@ -71,7 +71,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -93,9 +93,9 @@ def test_ogr_wasp_elevation_from_linestring_z():
 # Create elevation .map from linestrings z with simplification
 
 
-def test_ogr_wasp_elevation_from_linestring_z_toler():
+def test_ogr_wasp_elevation_from_linestring_z_toler(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4(
@@ -133,7 +133,7 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -159,9 +159,9 @@ def test_ogr_wasp_elevation_from_linestring_z_toler():
 # Create elevation .map from linestrings field
 
 
-def test_ogr_wasp_elevation_from_linestring_field():
+def test_ogr_wasp_elevation_from_linestring_field(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     layer = gdaltest.wasp_ds.CreateLayer(
         "mylayer", options=["WASP_FIELDS=elevation"], geom_type=ogr.wkbLineString
@@ -184,7 +184,7 @@ def test_ogr_wasp_elevation_from_linestring_field():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -204,9 +204,9 @@ def test_ogr_wasp_elevation_from_linestring_field():
 # Create roughness .map from linestrings fields
 
 
-def test_ogr_wasp_roughness_from_linestring_fields():
+def test_ogr_wasp_roughness_from_linestring_fields(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     layer = gdaltest.wasp_ds.CreateLayer(
         "mylayer", options=["WASP_FIELDS=z_left,z_right"], geom_type=ogr.wkbLineString
@@ -233,7 +233,7 @@ def test_ogr_wasp_roughness_from_linestring_fields():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -257,9 +257,9 @@ def test_ogr_wasp_roughness_from_linestring_fields():
 # Create .map from polygons z
 
 
-def test_ogr_wasp_roughness_from_polygon_z():
+def test_ogr_wasp_roughness_from_polygon_z(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     if not ogrtest.have_geos():
         with pytest.raises(Exception):
@@ -290,7 +290,7 @@ def test_ogr_wasp_roughness_from_polygon_z():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -318,9 +318,9 @@ def test_ogr_wasp_roughness_from_polygon_z():
 # Create .map from polygons field
 
 
-def test_ogr_wasp_roughness_from_polygon_field():
+def test_ogr_wasp_roughness_from_polygon_field(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     if not ogrtest.have_geos():
         with pytest.raises(Exception):
@@ -356,7 +356,7 @@ def test_ogr_wasp_roughness_from_polygon_field():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -386,9 +386,9 @@ def test_ogr_wasp_roughness_from_polygon_field():
 # a continuing line (pichart map)
 
 
-def test_ogr_wasp_merge():
+def test_ogr_wasp_merge(tmp_path):
 
-    test_ogr_wasp_create_ds()
+    test_ogr_wasp_create_ds(tmp_path)
 
     if not ogrtest.have_geos():
         with pytest.raises(Exception):
@@ -420,7 +420,7 @@ def test_ogr_wasp_merge():
     del gdaltest.wasp_ds
     del layer
 
-    f = open("tmp/tmp.map")
+    f = open(str(tmp_path / "tmp.map"))
     for i in range(4):
         f.readline()
     i = 0
@@ -448,12 +448,12 @@ def test_ogr_wasp_merge():
 # Read map file
 
 
-def test_ogr_wasp_reading():
-    test_ogr_wasp_elevation_from_linestring_z()
+def test_ogr_wasp_reading(tmp_path):
+    test_ogr_wasp_elevation_from_linestring_z(tmp_path)
 
     gdaltest.wasp_ds = None
 
-    ds = ogr.Open("tmp/tmp.map")
+    ds = ogr.Open(str(tmp_path / "tmp.map"))
 
     assert ds is not None and ds.GetLayerCount() == 1
 
@@ -472,7 +472,7 @@ def test_ogr_wasp_reading():
 # Cleanup
 
 
-def test_ogr_wasp_cleanup():
+def test_ogr_wasp_cleanup(tmp_path):
 
     wasp_drv = ogr.GetDriverByName("WAsP")
-    wasp_drv.DeleteDataSource("tmp/tmp.map")
+    wasp_drv.DeleteDataSource(str(tmp_path / "tmp.map"))

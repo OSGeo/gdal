@@ -558,7 +558,9 @@ def test_pcidsk_online_1():
         "irvine_gcp2.pix",
     )
 
-    ds = gdal.Open("tmp/cache/irvine_gcp2.pix")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/irvine_gcp2.pix")
 
     band = ds.GetRasterBand(6)
 
@@ -729,15 +731,17 @@ def test_pcidsk_online_rpc():
         "https://github.com/OSGeo/gdal/files/6822835/pix-test.zip", "pix-test.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/demo.PIX")
+        os.stat(f"{tmp_dir}/demo.PIX")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/pix-test.zip")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/pix-test.zip")
         except Exception:
             pytest.skip()
 
-    ds = gdal.Open("tmp/cache/demo.PIX")
+    ds = gdal.Open(f"{tmp_dir}/demo.PIX")
     assert ds.GetMetadata("RPC") is not None
 
 

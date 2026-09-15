@@ -50,16 +50,16 @@ def setup_driver():
 
 
 @pytest.fixture()
-def create_tmp_table():
+def create_tmp_table(tmp_path):
     if sys.platform != "win32":
         pytest.skip("Requires an ODBC driver with write capabilities")
 
     odbc_drv = ogr.GetDriverByName("ODBC")
 
-    shutil.copy("data/mdb/empty.mdb", "tmp/odbc.mdb")
+    shutil.copy("data/mdb/empty.mdb", tmp_path / "odbc.mdb")
 
     # Create and fill tables
-    ds = odbc_drv.Open("tmp/odbc.mdb")
+    ds = odbc_drv.Open(str(tmp_path / "odbc.mdb"))
     ds.ExecuteSQL(
         "CREATE TABLE test (intfield INT, doublefield DOUBLE, stringfield VARCHAR)"
     )
@@ -79,7 +79,7 @@ def create_tmp_table():
 
     yield
 
-    gdal.Unlink("tmp/odbc.mdb")
+    gdal.Unlink(tmp_path / "odbc.mdb")
 
 
 @pytest.fixture()
@@ -104,30 +104,35 @@ def recent_enough_mdb_odbc_driver():
 # Basic testing
 
 
-def test_ogr_odbc_1(create_tmp_table):
+def test_ogr_odbc_1(tmp_path, create_tmp_table):
     odbc_drv = ogr.GetDriverByName("ODBC")
     # Test with ODBC:user/pwd@dsn syntax
     ds = odbc_drv.Open(
-        "ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb"
+        "ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ="
+        + str(tmp_path / "odbc.mdb")
     )
     assert ds is not None
     ds = None
 
     # Test with ODBC:dsn syntax
-    ds = odbc_drv.Open("ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb")
+    ds = odbc_drv.Open(
+        "ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=" + str(tmp_path / "odbc.mdb")
+    )
     assert ds is not None
     ds = None
 
     # Test with ODBC:dsn,table_list syntax
     ds = odbc_drv.Open(
-        "ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test"
+        "ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ="
+        + str(tmp_path / "odbc.mdb")
+        + ",test"
     )
     assert ds is not None
     assert ds.GetLayerCount() == 1
     ds = None
 
     # Reopen and check
-    ds = odbc_drv.Open("tmp/odbc.mdb")
+    ds = odbc_drv.Open(str(tmp_path / "odbc.mdb"))
     assert ds.GetLayerCount() == 2
 
     lyr = ds.GetLayerByName("test")
@@ -176,8 +181,8 @@ def test_ogr_odbc_1(create_tmp_table):
 # Run test_ogrsf
 
 
-def test_ogr_odbc_2(create_tmp_table, ogrsf_path):
-    ret = gdaltest.runexternal(ogrsf_path + " tmp/odbc.mdb")
+def test_ogr_odbc_2(tmp_path, create_tmp_table, ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + " " + str(tmp_path / "odbc.mdb"))
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 

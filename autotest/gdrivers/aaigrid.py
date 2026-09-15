@@ -246,16 +246,14 @@ def test_aaigrid_8():
 # Test DECIMAL_PRECISION creation option
 
 
-def test_aaigrid_9():
+def test_aaigrid_9(tmp_path):
 
     ds = gdal.Open("data/ehdr/float32.bil")
     ds2 = gdal.GetDriverByName("AAIGRID").CreateCopy(
-        "tmp/aaigrid.tmp", ds, options=["DECIMAL_PRECISION=2"]
+        tmp_path / "aaigrid.tmp", ds, options=["DECIMAL_PRECISION=2"]
     )
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
-
-    gdal.GetDriverByName("AAIGRID").Delete("tmp/aaigrid.tmp")
 
     if got_minmax[0] == pytest.approx(-0.84, abs=1e-7):
         return
@@ -314,16 +312,14 @@ def test_aaigrid_10():
 # Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
 
 
-def test_aaigrid_11():
+def test_aaigrid_11(tmp_path):
 
     ds = gdal.Open("data/ehdr/float32.bil")
     ds2 = gdal.GetDriverByName("AAIGRID").CreateCopy(
-        "tmp/aaigrid.tmp", ds, options=["SIGNIFICANT_DIGITS=2"]
+        tmp_path / "aaigrid.tmp", ds, options=["SIGNIFICANT_DIGITS=2"]
     )
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
-
-    gdal.GetDriverByName("AAIGRID").Delete("tmp/aaigrid.tmp")
 
     if got_minmax[0] == pytest.approx(-0.84, abs=1e-7):
         return
@@ -334,21 +330,20 @@ def test_aaigrid_11():
 # Test no data is written to correct precision with DECIMAL_PRECISION.
 
 
-def test_aaigrid_12():
+def test_aaigrid_12(tmp_path):
 
     ds = gdal.Open("data/aaigrid/nodata_float.asc")
     ds2 = gdal.GetDriverByName("AAIGRID").CreateCopy(
-        "tmp/aaigrid.tmp", ds, options=["DECIMAL_PRECISION=3"]
+        tmp_path / "aaigrid.tmp", ds, options=["DECIMAL_PRECISION=3"]
     )
     del ds2
 
-    aai = open("tmp/aaigrid.tmp")
+    aai = open(tmp_path / "aaigrid.tmp")
     assert aai
     for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
-    gdal.GetDriverByName("AAIGRID").Delete("tmp/aaigrid.tmp")
     assert ndv.startswith("nodata_value")
     assert ndv.endswith("-99999.000")
 
@@ -357,21 +352,20 @@ def test_aaigrid_12():
 # Test no data is written to correct precision WITH SIGNIFICANT_DIGITS.
 
 
-def test_aaigrid_13():
+def test_aaigrid_13(tmp_path):
 
     ds = gdal.Open("data/aaigrid/nodata_float.asc")
     ds2 = gdal.GetDriverByName("AAIGRID").CreateCopy(
-        "tmp/aaigrid.tmp", ds, options=["SIGNIFICANT_DIGITS=3"]
+        tmp_path / "aaigrid.tmp", ds, options=["SIGNIFICANT_DIGITS=3"]
     )
     del ds2
 
-    aai = open("tmp/aaigrid.tmp")
+    aai = open(tmp_path / "aaigrid.tmp")
     assert aai
     for _ in range(5):
         aai.readline()
     ndv = aai.readline().strip().lower()
     aai.close()
-    gdal.GetDriverByName("AAIGRID").Delete("tmp/aaigrid.tmp")
     assert ndv.startswith("nodata_value")
     assert ndv.endswith("-1e+05") or ndv.endswith("-1e+005")
 

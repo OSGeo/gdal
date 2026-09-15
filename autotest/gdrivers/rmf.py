@@ -212,7 +212,9 @@ def test_rmf_12d():
 # Build overviews and check
 
 
-def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_count=1):
+def rmf_build_ov(
+    tmp_path, source, testid, options, ov_sizes, crs, reopen=False, pass_count=1
+):
 
     rmf_drv = gdal.GetDriverByName("RMF")
     assert rmf_drv is not None, "RMF driver not found."
@@ -221,7 +223,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    test_ds_name = "tmp/ov-" + testid + ".tst"
+    test_ds_name = str(tmp_path / ("ov-" + testid + ".tst"))
     src_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=options)
     assert src_ds is not None, "Failed to create test dataset copy."
 
@@ -271,8 +273,9 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
 # Build overviews on newly created RSW file
 
 
-def test_rmf_13():
+def test_rmf_13(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/byte.rsw",
         testid="13",
         options=["RMFHUGE=NO"],
@@ -286,8 +289,9 @@ def test_rmf_13():
 # Build overviews on newly created huge RSW file
 
 
-def test_rmf_14():
+def test_rmf_14(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/byte.rsw",
         testid="14",
         options=["RMFHUGE=YES"],
@@ -301,8 +305,9 @@ def test_rmf_14():
 # Build overviews on closed and reopened RSW file
 
 
-def test_rmf_15():
+def test_rmf_15(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/byte.rsw",
         testid="15",
         options=["RMFHUGE=NO"],
@@ -316,8 +321,9 @@ def test_rmf_15():
 # Build overviews on closed and reopened huge RSW file
 
 
-def test_rmf_16():
+def test_rmf_16(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/byte.rsw",
         testid="16",
         options=["RMFHUGE=YES"],
@@ -331,8 +337,9 @@ def test_rmf_16():
 # Build overviews on newly created MTW file
 
 
-def test_rmf_17():
+def test_rmf_17(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="17",
         options=["RMFHUGE=NO", "MTW=YES"],
@@ -346,8 +353,9 @@ def test_rmf_17():
 # Build overviews on newly created MTW file
 
 
-def test_rmf_18():
+def test_rmf_18(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="18",
         options=["RMFHUGE=YES", "MTW=YES"],
@@ -361,8 +369,9 @@ def test_rmf_18():
 # Build overviews on closed and reopened MTW file
 
 
-def test_rmf_19():
+def test_rmf_19(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="19",
         options=["RMFHUGE=NO", "MTW=YES"],
@@ -376,8 +385,9 @@ def test_rmf_19():
 # Build overviews on closed and reopened huge MTW file
 
 
-def test_rmf_20():
+def test_rmf_20(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="20",
         options=["RMFHUGE=YES", "MTW=YES"],
@@ -391,8 +401,9 @@ def test_rmf_20():
 # Recreate overviews on newly created MTW file
 
 
-def test_rmf_21():
+def test_rmf_21(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="21",
         options=["RMFHUGE=NO", "MTW=YES"],
@@ -407,8 +418,9 @@ def test_rmf_21():
 # Recreate overviews on newly created huge MTW file
 
 
-def test_rmf_22():
+def test_rmf_22(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="22",
         options=["RMFHUGE=YES", "MTW=YES"],
@@ -423,8 +435,9 @@ def test_rmf_22():
 # Recreate overviews on closed and reopened MTW file
 
 
-def test_rmf_23():
+def test_rmf_23(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="23",
         options=["RMFHUGE=NO", "MTW=YES"],
@@ -439,8 +452,9 @@ def test_rmf_23():
 # Recreate overviews on closed and reopened huge MTW file
 
 
-def test_rmf_24():
+def test_rmf_24(tmp_path):
     return rmf_build_ov(
+        tmp_path=tmp_path,
         source="data/rmf/float64.mtw",
         testid="24",
         options=["RMFHUGE=YES", "MTW=YES"],
@@ -455,7 +469,7 @@ def test_rmf_24():
 # Nodata write test
 
 
-def test_rmf_25():
+def test_rmf_25(tmp_path):
     rmf_drv = gdal.GetDriverByName("RMF")
     assert rmf_drv is not None, "RMF driver not found."
 
@@ -463,7 +477,7 @@ def test_rmf_25():
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    test_ds_name = "tmp/nodata.rsw"
+    test_ds_name = str(tmp_path / "nodata.rsw")
     test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds)
     assert test_ds is not None, "Failed to create test dataset copy."
 
@@ -492,7 +506,7 @@ def test_rmf_25():
 # Unit write test
 
 
-def test_rmf_26():
+def test_rmf_26(tmp_path):
     rmf_drv = gdal.GetDriverByName("RMF")
     assert rmf_drv is not None, "RMF driver not found."
 
@@ -500,7 +514,7 @@ def test_rmf_26():
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    test_ds_name = "tmp/unit.mtw"
+    test_ds_name = str(tmp_path / "unit.mtw")
     test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=["MTW=YES"])
     assert test_ds is not None, "Failed to create test dataset copy."
 
@@ -589,7 +603,7 @@ def test_rmf_28b():
 # Check EPSG code
 
 
-def test_rmf_29():
+def test_rmf_29(tmp_path):
 
     rmf_drv = gdal.GetDriverByName("RMF")
     assert rmf_drv is not None, "RMF driver not found."
@@ -597,7 +611,7 @@ def test_rmf_29():
     ds = gdal.Open("data/rmf/byte.rsw", gdal.GA_ReadOnly)
     assert ds is not None, "Failed to open test dataset."
 
-    test_ds_name = "tmp/epsg.rsw"
+    test_ds_name = str(tmp_path / "epsg.rsw")
     test_ds = rmf_drv.CreateCopy(test_ds_name, ds)
     assert test_ds is not None, "Failed to create test dataset copy."
 
@@ -622,9 +636,9 @@ def test_rmf_29():
 # Check interleaved access
 
 
-def test_rmf_30():
+def test_rmf_30(tmp_path):
 
-    ds_name = "tmp/interleaved.tif"
+    ds_name = str(tmp_path / "interleaved.tif")
     gdal.Translate(ds_name, "data/rmf/rgbsmall-lzw.rsw", format="GTiff")
 
     ds = gdal.Open(ds_name)
@@ -663,9 +677,9 @@ def test_rmf_31b():
     tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
-def test_rmf_31c():
+def test_rmf_31c(tmp_path):
 
-    ds_name = "tmp/rmf_31c.rsw"
+    ds_name = str(tmp_path / "rmf_31c.rsw")
     gdal.Translate(
         ds_name, "data/small_world.tif", format="RMF", options="-co COMPRESS=JPEG"
     )
@@ -701,7 +715,7 @@ def rmf_31e_data_gen(min_val, max_val, stripeSize, sx):
     return x
 
 
-def test_rmf_31e():
+def test_rmf_31e(tmp_path, monkeypatch):
 
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
@@ -714,6 +728,11 @@ def test_rmf_31e():
     sx = 256
     sy = 8 * stripeSize
     tst_name = "tmp/rmf_31e.tif"
+
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    monkeypatch.chdir(tmp_path)
+
     tst_ds = drv.Create(tst_name, sx, sy, 1, gdal.GDT_Int32)
     assert tst_ds is not None, "Can't create " + tst_name
 
@@ -767,9 +786,16 @@ def test_rmf_31e():
 # Check parallel compression
 
 
-def test_rmf_32a():
+def test_rmf_32a(tmp_path, monkeypatch):
 
     ds_name = "tmp/rmf_32a.rsw"
+
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    gdal.CopyFile("data/small_world.tif", tmp_path / "data" / "small_world.tif")
+
+    monkeypatch.chdir(tmp_path)
+
     gdal.Translate(
         ds_name,
         "data/small_world.tif",
@@ -779,12 +805,16 @@ def test_rmf_32a():
 
     tst = gdaltest.GDALTest("rmf", "../" + ds_name, 1, 5540)
     tst.testOpen(check_gt=None)
-    os.remove(ds_name)
 
 
-def test_rmf_32b():
+def test_rmf_32b(tmp_path, monkeypatch):
 
     ds_name = "tmp/rmf_32b.rsw"
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    gdal.CopyFile("data/small_world.tif", tmp_path / "data" / "small_world.tif")
+    monkeypatch.chdir(tmp_path)
+
     gdal.Translate(
         ds_name,
         "data/small_world.tif",
@@ -801,8 +831,8 @@ def test_rmf_32b():
 # Parallel build overviews on newly created RSW file
 
 
-def test_rmf_32c():
-    ds_name = "tmp/rmf_32c.rsw"
+def test_rmf_32c(tmp_path):
+    ds_name = str(tmp_path / "rmf_32c.rsw")
     gdal.Translate(
         ds_name,
         "data/small_world.tif",
@@ -811,6 +841,7 @@ def test_rmf_32c():
     )
 
     rmf_build_ov(
+        tmp_path=tmp_path,
         source=ds_name,
         testid="32c",
         options=["RMFHUGE=NO", "COMPRESS=LZW", "NUM_THREADS=4"],
@@ -847,13 +878,13 @@ def test_rmf_33c():
 # Flush NoData blocks in MTW
 
 
-def test_rmf_34():
+def test_rmf_34(tmp_path):
 
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
 
     drv = gdal.GetDriverByName("RMF")
-    tst_name = "tmp/rmf_34.mtw"
+    tst_name = str(tmp_path / "rmf_34.mtw")
     tst_ds = drv.Create(
         tst_name,
         32,

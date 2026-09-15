@@ -287,25 +287,25 @@ def test_mrsid_7():
 # Test PAM override for nodata, coordsys, and geotransform.
 
 
-def test_mrsid_8():
+def test_mrsid_8(tmp_path):
 
     new_gt = (10000, 50, 0, 20000, 0, -50)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(27700)
 
-    if os.path.exists("tmp/mercator.sid"):
-        gdal.Unlink("tmp/mercator.sid")
+    if os.path.exists(str(tmp_path / "mercator.sid")):
+        gdal.Unlink(str(tmp_path / "mercator.sid"))
 
-    shutil.copyfile("data/sid/mercator.sid", "tmp/mercator.sid")
+    shutil.copyfile("data/sid/mercator.sid", str(tmp_path / "mercator.sid"))
 
-    ds = gdal.Open("tmp/mercator.sid")
+    ds = gdal.Open(str(tmp_path / "mercator.sid"))
 
     ds.SetGeoTransform(new_gt)
     ds.SetSpatialRef(srs)
     ds.GetRasterBand(1).SetNoDataValue(255)
     ds = None
 
-    ds = gdal.Open("tmp/mercator.sid")
+    ds = gdal.Open(str(tmp_path / "mercator.sid"))
 
     assert ds.GetSpatialRef().IsSame(srs), "SRS Override failed."
 
@@ -315,7 +315,7 @@ def test_mrsid_8():
 
     ds = None
 
-    gdal.GetDriverByName("MrSID").Delete("tmp/mercator.sid")
+    gdal.GetDriverByName("MrSID").Delete(str(tmp_path / "mercator.sid"))
 
 
 ###############################################################################
@@ -400,14 +400,16 @@ def test_mrsid_online_1():
         "7sisters200.j2k",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 29473 on my PC
     tst = gdaltest.GDALTest(
-        "JP2MrSID", "tmp/cache/7sisters200.j2k", 1, None, filename_absolute=1
+        "JP2MrSID", f"{tmp_dir}/7sisters200.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/7sisters200.j2k")
+    ds = gdal.Open(f"{tmp_dir}/7sisters200.j2k")
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -424,15 +426,17 @@ def test_mrsid_online_2():
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 209 on my PC
     tst = gdaltest.GDALTest(
-        "JP2MrSID", "tmp/cache/gcp.jp2", 1, None, filename_absolute=1
+        "JP2MrSID", f"{tmp_dir}/gcp.jp2", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
     # The JP2MrSID driver doesn't handle GCPs
-    ds = gdal.Open("tmp/cache/gcp.jp2")
+    ds = gdal.Open(f"{tmp_dir}/gcp.jp2")
     ds.GetRasterBand(1).Checksum()
     # if len(ds.GetGCPs()) != 15:
     #    gdaltest.post_reason('bad number of GCP')
@@ -462,15 +466,17 @@ def test_mrsid_online_3():
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 14443 on my PC
     tst = gdaltest.GDALTest(
-        "JP2MrSID", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
+        "JP2MrSID", f"{tmp_dir}/Bretagne1.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne1.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne1.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne1.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne1.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose=0)
 
     ds = None
@@ -501,15 +507,17 @@ def test_mrsid_online_4():
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 53186 on my PC
     tst = gdaltest.GDALTest(
-        "JP2MrSID", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
+        "JP2MrSID", f"{tmp_dir}/Bretagne2.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne2.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne2.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne2.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne2.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
 
     ds = None

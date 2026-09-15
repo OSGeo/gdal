@@ -31,79 +31,78 @@ def module_disable_exceptions():
 @pytest.mark.parametrize(
     "filename", ["byte", "int16", "uint16", "int32", "uint32", "float32", "float64"]
 )
-def test_fits(filename):
+def test_fits(tmp_path, filename):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/" + filename + ".tif")
-    driver.CreateCopy("tmp/" + filename + ".fits", ds, options=["PAGESIZE=2,2"])
+    driver.CreateCopy(
+        str(tmp_path) + "/" + filename + ".fits", ds, options=["PAGESIZE=2,2"]
+    )
 
-    ds2 = gdal.Open("tmp/" + filename + ".fits")
+    ds2 = gdal.Open(str(tmp_path) + "/" + filename + ".fits")
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     assert ds2.GetRasterBand(1).DataType == ds.GetRasterBand(1).DataType
 
     ds2 = None
-    driver.Delete("tmp/" + filename + ".fits")
 
 
-def test_fits_metadata():
+def test_fits_metadata(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds2 = driver.CreateCopy("tmp/byte.fits", ds)
+    ds2 = driver.CreateCopy(tmp_path / "byte.fits", ds)
     md = {"TEST": "test_value"}
     ds2.SetMetadata(md)
     ds2 = None
-    gdal.Unlink("tmp/byte.fits.aux.xml")
+    gdal.Unlink(tmp_path / "byte.fits.aux.xml")
 
-    ds2 = gdal.Open("tmp/byte.fits")
+    ds2 = gdal.Open(tmp_path / "byte.fits")
     md = ds2.GetMetadata()
     ds2 = None
 
     assert md["TEST"] == "test_value"
 
-    ds2 = gdal.Open("tmp/byte.fits", gdal.GA_Update)
+    ds2 = gdal.Open(tmp_path / "byte.fits", gdal.GA_Update)
     md = {"TEST2": "test_value2"}
     ds2.SetMetadata(md)
     ds2 = None
-    gdal.Unlink("tmp/byte.fits.aux.xml")
+    gdal.Unlink(tmp_path / "byte.fits.aux.xml")
 
-    ds2 = gdal.Open("tmp/byte.fits")
+    ds2 = gdal.Open(tmp_path / "byte.fits")
     md = ds2.GetMetadata()
     ds2 = None
 
     assert md["TEST2"] == "test_value2"
 
 
-def test_fits_nodata():
+def test_fits_nodata(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gcore/data/nodata_byte.tif")
-    ds2 = driver.CreateCopy("tmp/nodata_byte.fits", ds)
+    ds2 = driver.CreateCopy(tmp_path / "nodata_byte.fits", ds)
     ds2 = None
-    gdal.Unlink("tmp/nodata_byte.fits.aux.xml")
+    gdal.Unlink(tmp_path / "nodata_byte.fits.aux.xml")
 
-    ds2 = gdal.Open("tmp/nodata_byte.fits")
+    ds2 = gdal.Open(tmp_path / "nodata_byte.fits")
     nd = ds2.GetRasterBand(1).GetNoDataValue()
     ds2 = None
-    driver.Delete("tmp/nodata_byte.fits")
 
     assert nd == 0
 
 
-def test_fits_offscale():
+def test_fits_offscale(tmp_path):
     driver = gdal.GetDriverByName("FITS")
 
     ds = gdal.Open("../gdrivers/data/fits/offscale_byte.tif")
-    ds2 = driver.CreateCopy("tmp/offscale_byte.fits", ds)
+    ds2 = driver.CreateCopy(tmp_path / "offscale_byte.fits", ds)
     ds2 = None
-    gdal.Unlink("tmp/offscale_byte.fits.aux.xml")
+    gdal.Unlink(tmp_path / "offscale_byte.fits.aux.xml")
 
-    ds2 = gdal.Open("tmp/offscale_byte.fits")
+    ds2 = gdal.Open(tmp_path / "offscale_byte.fits")
     offset = ds2.GetRasterBand(1).GetOffset()
     scale = ds2.GetRasterBand(1).GetScale()
     ds2 = None
-    driver.Delete("tmp/offscale_byte.fits")
 
     assert offset == -0.0039525691699605
     assert scale == 1.00395256917
@@ -700,408 +699,386 @@ def _check_lyr_defn_after_write(lyr_defn):
         assert False
 
 
-def test_fits_vector_write_with_source_fits_metadata():
+def test_fits_vector_write_with_source_fits_metadata(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = tmp_path / "out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -skip"
         )
-    try:
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 3
-        lyr_defn = lyr.GetLayerDefn()
-        _check_lyr_defn_after_write(lyr_defn)
 
-        md = lyr.GetMetadata()
-        assert md["TFORM13"].rstrip() == "2J"
-        assert md["TFORM16"].rstrip() == "1X"
-        assert md["TFORM17"].rstrip() == "33X"
-        assert md["TFORM23"].rstrip() == "2I"
-        assert md["TFORM29"].rstrip() == "2K"
-        assert md["TFORM32"].rstrip() == "2A"
-        assert md["TFORM35"].rstrip() == "2E"
-        assert md["TFORM38"].rstrip() == "2D"
-        assert md["TFORM40"].rstrip() == "C"
-        assert md["TFORM41"].rstrip() == "M"
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+    lyr_defn = lyr.GetLayerDefn()
+    _check_lyr_defn_after_write(lyr_defn)
 
-        expected_f1 = [
-            -128,
-            5.5,
-            0,
-            -49149.5,
-            0,
-            -3221225469.5,
-            -1.3835058055282164e19,
-            4.375,
-            4.375,
-            "4.375 + 5.875j",
-            "4.375 + 5.875j",
-            0,
-            [0, 0],
-            [1, 0],
-            [1, 0],
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            [255, 0],
-            [255, 0],
-            [0, 255, 0, 255, 0, 255],
-            -32768,
-            [-32768, 32767],
-            [-32768, 32767],
-            -2147483648,
-            [-2147483648, 2147483647],
-            [-2147483648, 2147483647],
-            -9223372036854775808,
-            [-9223372036854775808, 9223372036854775807],
-            [-9223372036854775808, 9223372036854775807],
-            "A",
-            "AB",
-            "AB",
-            # ['AB', 'ab', 'Ab'],
-            1.25,
-            [1.25, 2.25],
-            [1.25, 2.25],
-            1.2534,
-            [1.2534, 2.25],
-            [1.2534, 2.25],
-            "1.25 + 2.25j",
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            "1.2534000000000001 + 2.25j",
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
-        ]
+    md = lyr.GetMetadata()
+    assert md["TFORM13"].rstrip() == "2J"
+    assert md["TFORM16"].rstrip() == "1X"
+    assert md["TFORM17"].rstrip() == "33X"
+    assert md["TFORM23"].rstrip() == "2I"
+    assert md["TFORM29"].rstrip() == "2K"
+    assert md["TFORM32"].rstrip() == "2A"
+    assert md["TFORM35"].rstrip() == "2E"
+    assert md["TFORM38"].rstrip() == "2D"
+    assert md["TFORM40"].rstrip() == "C"
+    assert md["TFORM41"].rstrip() == "M"
 
-        f = lyr.GetNextFeature()
-        got = [f.GetField(i) for i in range(f.GetFieldCount())]
-        assert got == expected_f1
+    expected_f1 = [
+        -128,
+        5.5,
+        0,
+        -49149.5,
+        0,
+        -3221225469.5,
+        -1.3835058055282164e19,
+        4.375,
+        4.375,
+        "4.375 + 5.875j",
+        "4.375 + 5.875j",
+        0,
+        [0, 0],
+        [1, 0],
+        [1, 0],
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        [255, 0],
+        [255, 0],
+        [0, 255, 0, 255, 0, 255],
+        -32768,
+        [-32768, 32767],
+        [-32768, 32767],
+        -2147483648,
+        [-2147483648, 2147483647],
+        [-2147483648, 2147483647],
+        -9223372036854775808,
+        [-9223372036854775808, 9223372036854775807],
+        [-9223372036854775808, 9223372036854775807],
+        "A",
+        "AB",
+        "AB",
+        # ['AB', 'ab', 'Ab'],
+        1.25,
+        [1.25, 2.25],
+        [1.25, 2.25],
+        1.2534,
+        [1.2534, 2.25],
+        [1.2534, 2.25],
+        "1.25 + 2.25j",
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        "1.2534000000000001 + 2.25j",
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
+    ]
 
-    except Exception:
-        ds = None
-        os.unlink(filename)
-        raise
+    f = lyr.GetNextFeature()
+    got = [f.GetField(i) for i in range(f.GetFieldCount())]
+    assert got == expected_f1
 
 
-def test_fits_vector_write_without_source_fits_metadata():
+def test_fits_vector_write_without_source_fits_metadata(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = tmp_path / "out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"
         )
-    try:
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 3
-        lyr_defn = lyr.GetLayerDefn()
-        assert lyr_defn.GetFieldCount() == 73
-        _check_lyr_defn_after_write(lyr_defn)
 
-        md = lyr.GetMetadata()
-        assert md["TFORM13"].rstrip() == "PJ(2)"
-        assert md["TFORM16"].rstrip() == "1X"
-        assert md["TFORM17"].rstrip() == "33X"
-        assert md["TFORM23"].rstrip() == "PI(2)"
-        assert md["TFORM29"].rstrip() == "PK(2)"
-        assert md["TFORM32"].rstrip() == "2A"  # from field width
-        assert md["TFORM35"].rstrip() == "PE(2)"
-        assert md["TFORM38"].rstrip() == "PD(2)"
-        assert md["TFORM40"].rstrip().startswith("PA(")  # not recognized as complex
-        assert md["TFORM41"].rstrip().startswith("PA(")  # not recognized as complex
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 73
+    _check_lyr_defn_after_write(lyr_defn)
 
-        expected_f1 = [
-            -128,
-            5.5,
-            0,
-            -49149.5,
-            0,
-            -3221225469.5,
-            -1.3835058055282164e19,
-            4.375,
-            4.375,
-            "4.375 + 5.875j",
-            "4.375 + 5.875j",
-            0,
-            [0, 0],
-            [1, 0],
-            [1, 0],
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            [255, 0],
-            [255, 0],
-            [0, 255, 0, 255, 0, 255],
-            -32768,
-            [-32768, 32767],
-            [-32768, 32767],
-            -2147483648,
-            [-2147483648, 2147483647],
-            [-2147483648, 2147483647],
-            -9223372036854775808,
-            [-9223372036854775808, 9223372036854775807],
-            [-9223372036854775808, 9223372036854775807],
-            "A",
-            "AB",
-            "AB",
-            # ['AB', 'ab', 'Ab'],
-            1.25,
-            [1.25, 2.25],
-            [1.25, 2.25],
-            1.2534,
-            [1.2534, 2.25],
-            [1.2534, 2.25],
-            "1.25 + 2.25j",
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            "1.2534000000000001 + 2.25j",
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
-        ]
+    md = lyr.GetMetadata()
+    assert md["TFORM13"].rstrip() == "PJ(2)"
+    assert md["TFORM16"].rstrip() == "1X"
+    assert md["TFORM17"].rstrip() == "33X"
+    assert md["TFORM23"].rstrip() == "PI(2)"
+    assert md["TFORM29"].rstrip() == "PK(2)"
+    assert md["TFORM32"].rstrip() == "2A"  # from field width
+    assert md["TFORM35"].rstrip() == "PE(2)"
+    assert md["TFORM38"].rstrip() == "PD(2)"
+    assert md["TFORM40"].rstrip().startswith("PA(")  # not recognized as complex
+    assert md["TFORM41"].rstrip().startswith("PA(")  # not recognized as complex
 
-        f = lyr.GetNextFeature()
-        got = [f.GetField(i) for i in range(f.GetFieldCount())]
-        assert got == expected_f1
+    expected_f1 = [
+        -128,
+        5.5,
+        0,
+        -49149.5,
+        0,
+        -3221225469.5,
+        -1.3835058055282164e19,
+        4.375,
+        4.375,
+        "4.375 + 5.875j",
+        "4.375 + 5.875j",
+        0,
+        [0, 0],
+        [1, 0],
+        [1, 0],
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        [255, 0],
+        [255, 0],
+        [0, 255, 0, 255, 0, 255],
+        -32768,
+        [-32768, 32767],
+        [-32768, 32767],
+        -2147483648,
+        [-2147483648, 2147483647],
+        [-2147483648, 2147483647],
+        -9223372036854775808,
+        [-9223372036854775808, 9223372036854775807],
+        [-9223372036854775808, 9223372036854775807],
+        "A",
+        "AB",
+        "AB",
+        # ['AB', 'ab', 'Ab'],
+        1.25,
+        [1.25, 2.25],
+        [1.25, 2.25],
+        1.2534,
+        [1.2534, 2.25],
+        [1.2534, 2.25],
+        "1.25 + 2.25j",
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        "1.2534000000000001 + 2.25j",
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
+    ]
 
-    except Exception:
-        ds = None
-        os.unlink(filename)
-        raise
+    f = lyr.GetNextFeature()
+    got = [f.GetField(i) for i in range(f.GetFieldCount())]
+    assert got == expected_f1
 
 
-def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
+def test_fits_vector_write_without_source_fits_metadata_compute_repeat(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = tmp_path / "out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename,
             "data/fits/binary_table.fits",
             options="-f FITS -nomd -lco COMPUTE_REPEAT=AT_FIRST_FEATURE_CREATION -lco REPEAT_2E=3 -skip",
         )
-    try:
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 3
-        lyr_defn = lyr.GetLayerDefn()
-        _check_lyr_defn_after_write(lyr_defn)
 
-        md = lyr.GetMetadata()
-        assert md["TFORM13"].rstrip() == "2J"
-        assert md["TFORM16"].rstrip() == "1X"
-        assert md["TFORM17"].rstrip() == "33X"
-        assert md["TFORM23"].rstrip() == "2I"
-        assert md["TFORM29"].rstrip() == "2K"
-        assert md["TFORM32"].rstrip() == "2A"  # from field width
-        assert (
-            md["TFORM35"].rstrip() == "3E"
-        )  # should normally be 2E, but overridden by REPEAT_2E=3
-        assert md["TFORM38"].rstrip() == "2D"
-        assert md["TFORM40"].rstrip().startswith("PA(")  # not recognized as complex
-        assert md["TFORM41"].rstrip().startswith("PA(")  # not recognized as complex
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+    lyr_defn = lyr.GetLayerDefn()
+    _check_lyr_defn_after_write(lyr_defn)
 
-        expected_f1 = [
-            -128,
-            5.5,
-            0,
-            -49149.5,
-            0,
-            -3221225469.5,
-            -1.3835058055282164e19,
-            4.375,
-            4.375,
-            "4.375 + 5.875j",
-            "4.375 + 5.875j",
-            0,
-            [0, 0],
-            [1, 0],
-            [1, 0],
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            0,
-            1,
-            1,
-            0,
-            [255, 0],
-            [255, 0],
-            [0, 255, 0, 255, 0, 255],
-            -32768,
-            [-32768, 32767],
-            [-32768, 32767],
-            -2147483648,
-            [-2147483648, 2147483647],
-            [-2147483648, 2147483647],
-            -9223372036854775808,
-            [-9223372036854775808, 9223372036854775807],
-            [-9223372036854775808, 9223372036854775807],
-            "A",
-            "AB",
-            "AB",
-            # ['AB', 'ab', 'Ab'],
-            1.25,
-            [1.25, 2.25, 0],
-            [1.25, 2.25],
-            1.2534,
-            [1.2534, 2.25],
-            [1.2534, 2.25],
-            "1.25 + 2.25j",
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            # ['1.25 + 2.25j', '2.25 + 1.25j'],
-            "1.2534000000000001 + 2.25j",
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
-            # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
-        ]
+    md = lyr.GetMetadata()
+    assert md["TFORM13"].rstrip() == "2J"
+    assert md["TFORM16"].rstrip() == "1X"
+    assert md["TFORM17"].rstrip() == "33X"
+    assert md["TFORM23"].rstrip() == "2I"
+    assert md["TFORM29"].rstrip() == "2K"
+    assert md["TFORM32"].rstrip() == "2A"  # from field width
+    assert (
+        md["TFORM35"].rstrip() == "3E"
+    )  # should normally be 2E, but overridden by REPEAT_2E=3
+    assert md["TFORM38"].rstrip() == "2D"
+    assert md["TFORM40"].rstrip().startswith("PA(")  # not recognized as complex
+    assert md["TFORM41"].rstrip().startswith("PA(")  # not recognized as complex
 
-        f = lyr.GetNextFeature()
-        got = [f.GetField(i) for i in range(f.GetFieldCount())]
-        assert got == expected_f1
+    expected_f1 = [
+        -128,
+        5.5,
+        0,
+        -49149.5,
+        0,
+        -3221225469.5,
+        -1.3835058055282164e19,
+        4.375,
+        4.375,
+        "4.375 + 5.875j",
+        "4.375 + 5.875j",
+        0,
+        [0, 0],
+        [1, 0],
+        [1, 0],
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        [255, 0],
+        [255, 0],
+        [0, 255, 0, 255, 0, 255],
+        -32768,
+        [-32768, 32767],
+        [-32768, 32767],
+        -2147483648,
+        [-2147483648, 2147483647],
+        [-2147483648, 2147483647],
+        -9223372036854775808,
+        [-9223372036854775808, 9223372036854775807],
+        [-9223372036854775808, 9223372036854775807],
+        "A",
+        "AB",
+        "AB",
+        # ['AB', 'ab', 'Ab'],
+        1.25,
+        [1.25, 2.25, 0],
+        [1.25, 2.25],
+        1.2534,
+        [1.2534, 2.25],
+        [1.2534, 2.25],
+        "1.25 + 2.25j",
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        # ['1.25 + 2.25j', '2.25 + 1.25j'],
+        "1.2534000000000001 + 2.25j",
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j'],
+        # ['1.2534000000000001 + 2.25j', '2.25 + 1.25j']
+    ]
 
-    except Exception:
-        ds = None
-        os.unlink(filename)
-        raise
+    f = lyr.GetNextFeature()
+    got = [f.GetField(i) for i in range(f.GetFieldCount())]
+    assert got == expected_f1
 
 
-def test_fits_vector_editing():
+def test_fits_vector_editing(tmp_path):
 
-    filename = "tmp/out.fits"
+    filename = tmp_path / "out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
             filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"
         )
-    try:
-        ds = ogr.Open(filename, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 3
-        f = lyr.GetNextFeature()
-        f["A2"] = "XY"
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        f = lyr.GetFeature(1)
-        assert f["A2"] == "XY"
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+    f = lyr.GetNextFeature()
+    f["A2"] = "XY"
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        f = None
+    f = lyr.GetFeature(1)
+    assert f["A2"] == "XY"
 
-        assert (
-            lyr.CreateField(ogr.FieldDefn("new_field", ogr.OFTReal)) == ogr.OGRERR_NONE
-        )
+    f = None
 
-        f = lyr.GetFeature(1)
-        f.SetFID(-1)
-        f["new_field"] = 1.25
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 4
-        assert f.GetFID() == 4
-        f = lyr.GetFeature(4)
-        assert f["A2"] == "XY"
-        assert f["new_field"] == 1.25
+    assert lyr.CreateField(ogr.FieldDefn("new_field", ogr.OFTReal)) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(0)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
-        f.SetFID(5)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    f = lyr.GetFeature(1)
+    f.SetFID(-1)
+    f["new_field"] = 1.25
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 4
+    assert f.GetFID() == 4
+    f = lyr.GetFeature(4)
+    assert f["A2"] == "XY"
+    assert f["new_field"] == 1.25
 
-        assert lyr.DeleteFeature(0) == ogr.OGRERR_NON_EXISTING_FEATURE
-        assert lyr.DeleteFeature(5) == ogr.OGRERR_NON_EXISTING_FEATURE
-        assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    f.SetFID(5)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
 
-    except Exception:
-        ds = None
-        os.unlink(filename)
-        raise
+    assert lyr.DeleteFeature(0) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.DeleteFeature(5) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 3

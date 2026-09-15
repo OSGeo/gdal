@@ -78,19 +78,21 @@ def test_ogr_ntf_1():
         "stratntf.exe",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SS.ntf")
+        os.stat(f"{tmp_dir}/SS.ntf")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/stratntf.exe")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/stratntf.exe")
             try:
-                os.stat("tmp/cache/SS.ntf")
+                os.stat(f"{tmp_dir}/SS.ntf")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
-    ds = ogr.Open("tmp/cache/SS.ntf")
+    ds = ogr.Open(f"{tmp_dir}/SS.ntf")
     assert ds.GetLayerCount() == 5
 
     layers = [
@@ -121,19 +123,21 @@ def test_ogr_ntf_2():
         "meridian2ntf.exe",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/Port_Talbot_NTF/SS78.ntf")
+        os.stat(f"{tmp_dir}/Port_Talbot_NTF/SS78.ntf")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/meridian2ntf.exe")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/meridian2ntf.exe")
             try:
-                os.stat("tmp/cache/Port_Talbot_NTF/SS78.ntf")
+                os.stat(f"{tmp_dir}/Port_Talbot_NTF/SS78.ntf")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
-    ds = ogr.Open("tmp/cache/Port_Talbot_NTF/SS78.ntf")
+    ds = ogr.Open(f"{tmp_dir}/Port_Talbot_NTF/SS78.ntf")
     assert ds.GetLayerCount() == 5
 
     layers = [

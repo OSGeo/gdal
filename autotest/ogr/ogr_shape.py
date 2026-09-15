@@ -5508,7 +5508,7 @@ def test_ogr_shape_rename_layer(tmp_path):
 
 def test_ogr_shape_rename_layer_zip(tmp_vsimem):
 
-    outfilename = "tmp/test_rename.shp.zip"
+    outfilename = tmp_vsimem / "test_rename.shp.zip"
     gdal.VectorTranslate(outfilename, "data/poly.shp")
 
     ds = ogr.Open(outfilename, update=1)
@@ -6140,7 +6140,9 @@ def test_ogr_shape_read_huge_multipolygon():
         "pred_4G_TIM_dbm-90.zip",
     )
 
-    ds = ogr.Open("/vsizip/tmp/cache/pred_4G_TIM_dbm-90.zip/4G_TIM_dbm.shp")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"/vsizip/{tmp_dir}/pred_4G_TIM_dbm-90.zip/4G_TIM_dbm.shp")
     lyr = ds.GetLayer(0)
     start = time.time()
     f = lyr.GetNextFeature()

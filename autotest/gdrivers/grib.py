@@ -42,7 +42,7 @@ def has_jp2kdrv():
 
 
 @pytest.fixture(scope="module")
-def found_j2k_drivers():
+def found_j2k_drivers(tmp_path_factory):
     found_j2k_drivers = []
     for drvname in ["JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW"]:
         if gdal.GetDriverByName(drvname) is not None:
@@ -51,7 +51,9 @@ def found_j2k_drivers():
             else:
                 import ecw
 
-                if ecw.has_write_support():
+                tmpdir = tmp_path_factory.mktemp("ecwtest")
+
+                if ecw.has_write_support(tmpdir):
                     found_j2k_drivers.append(drvname)
 
     return found_j2k_drivers
@@ -2043,7 +2045,9 @@ def test_grib_online_grib2_jpeg2000_single_line():
     filename = "CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2"
     gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/grib/" + filename)
 
-    ds = gdal.Open("tmp/cache/" + filename)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(tmp_dir + "/" + filename)
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0, "Could not open file"
     nd = ds.GetRasterBand(1).GetNoDataValue()

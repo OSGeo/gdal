@@ -11,7 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import sys
+import tempfile
 import time
 
 import gdaltest
@@ -19,6 +21,17 @@ import pytest
 import webserver
 
 from osgeo import gdal, ogr
+
+###############################################################################
+
+
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
+
+
+###############################################################################
 
 
 def curl_version():
@@ -1851,9 +1864,9 @@ def test_vsicurl_header_option(server):
 @pytest.mark.parametrize(
     "CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED", [None, "ONLY_IN_TEMP", "YES", "NO"]
 )
-@pytest.mark.parametrize("location", ["vsimem", "tmp", "TEMP"])
+@pytest.mark.parametrize("location", ["vsimem", "system_tmp", "TEMP"])
 def test_vsicurl_header_file_kvp_in_temp(
-    server, tmp_vsimem, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, location
+    temp_dir, server, tmp_vsimem, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, location
 ):
 
     gdal.VSICurlClearCache()
@@ -1900,20 +1913,24 @@ def test_vsicurl_header_file_kvp_in_temp(
         header_file = tmp_vsimem / "subdir" / ".." / "header_file.txt"
         run_test(header_file)
 
-    elif location == "tmp":
-        if not gdal.VSIStatL("/tmp"):
-            pytest.skip("/tmp does not exist")
+    elif location == "system_tmp":
+        # tempfile.gettempdir() may return a directory that is _not_
+        # recognized as a temporary directory on macOS
+        system_temp_dir = "/tmp"
+
+        if not gdal.VSIStatL(system_temp_dir):
+            pytest.skip(f"{system_temp_dir} does not exist")
         import uuid
 
-        header_file = f"/tmp/header_file_{uuid.uuid1()}.txt"
+        header_file = f"{system_temp_dir}/header_file_{uuid.uuid1()}.txt"
         run_test(header_file)
 
     else:
         assert location == "TEMP"
         import uuid
 
-        header_file = f"tmp/header_file{uuid.uuid1()}_.txt"
-        with gdal.config_option("TEMP", "tmp"):
+        header_file = f"{temp_dir}/header_file{uuid.uuid1()}_.txt"
+        with gdal.config_option("TEMP", temp_dir):
             run_test(header_file)
 
 
@@ -1958,15 +1975,35 @@ def test_vsicurl_header_file_kvp_path_traversal(server):
     ],
 )
 def test_vsicurl_header_file_kvp_not_in_temp(
-    server, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, expected_headers
+    tmp_path, server, CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED, expected_headers
 ):
+
+    # Note: since the /tmp directory is hardcoded in GDAL for temporary header files, we cannot use the tmp_path
+    # for them to test the failure case when CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED is set to "ONLY_IN_TEMP" (or None).
+    # For this reason, we will simulate a non-temporary location by using a fake path.
 
     gdal.VSICurlClearCache()
 
-    header_file = "tmp/header_file.txt"
+    temp_dir = tmp_path
+
+    # Make sure no header_file.txt is left in system's tmp
     try:
-        with gdal.VSIFile(header_file, "wb") as f:
-            f.write(b"foo: bar\n")
+        gdal.Unlink(tempfile.gettempdir() + "/header_file.txt")
+    except RuntimeError:
+        pass
+
+    header_file = os.path.join(temp_dir, "header_file.txt")
+
+    try:
+
+        if (
+            CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED is None
+            or CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED == "ONLY_IN_TEMP"
+        ):
+            header_file = "/faketmp/header_file.txt"
+        else:
+            with gdal.VSIFile(header_file, "wb") as f:
+                f.write(b"foo: bar\n")
 
         handler = webserver.SequentialHandler()
         handler.add(
@@ -1990,7 +2027,11 @@ def test_vsicurl_header_file_kvp_not_in_temp(
                 assert statres.size == 3
 
     finally:
-        gdal.Unlink(header_file)
+        if (
+            CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED is not None
+            and CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED != "ONLY_IN_TEMP"
+        ):
+            gdal.Unlink(header_file)
 
 
 ###############################################################################

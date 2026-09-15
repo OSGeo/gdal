@@ -32,19 +32,21 @@ def TGR01001_dir():
         "http://www2.census.gov/geo/tiger/tiger2006se/AL/TGR01001.ZIP", "TGR01001.ZIP"
     )
 
-    dirname = pathlib.Path("tmp") / "cache" / "TGR01001"
+    tmp_dir = gdaltest.get_cache_dir()
+
+    dirname = pathlib.Path(tmp_dir) / "TGR01001"
 
     try:
-        os.stat("tmp/cache/TGR01001/TGR01001.MET")
+        os.stat(f"{tmp_dir}/TGR01001/TGR01001.MET")
     except OSError:
         try:
             try:
-                os.stat("tmp/cache/TGR01001")
+                os.stat(f"{tmp_dir}/TGR01001")
             except OSError:
-                os.mkdir("tmp/cache/TGR01001")
-            gdaltest.unzip("tmp/cache/TGR01001", "tmp/cache/TGR01001.ZIP")
+                os.mkdir(f"{tmp_dir}/TGR01001")
+            gdaltest.unzip(f"{tmp_dir}/TGR01001", f"{tmp_dir}/TGR01001.ZIP")
             try:
-                os.stat("tmp/cache/TGR01001/TGR01001.MET")
+                os.stat(f"{tmp_dir}/TGR01001/TGR01001.MET")
             except OSError:
                 pytest.skip()
         except Exception:

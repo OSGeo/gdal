@@ -29,11 +29,6 @@ def startup_and_cleanup():
     with gdaltest.config_option("GDAL_PAM_ENABLED", "YES"):
         yield
 
-    try:
-        shutil.rmtree("tmp/tmppamproxydir")
-    except OSError:
-        pass
-
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
@@ -67,11 +62,11 @@ def test_pam_1():
 
 
 @pytest.mark.require_driver("PNM")
-def test_pam_2():
+def test_pam_2(tmp_path):
 
     driver = gdal.GetDriverByName("PNM")
 
-    with driver.Create("tmp/pam.pgm", 10, 10) as ds:
+    with driver.Create(tmp_path / "pam.pgm", 10, 10) as ds:
         band = ds.GetRasterBand(1)
 
         band.SetMetadata({"other": "red", "key": "value"})
@@ -84,7 +79,7 @@ def test_pam_2():
 
         band.SetNoDataValue(100)
 
-    with gdal.Open("tmp/pam.pgm") as ds:
+    with gdal.Open(tmp_path / "pam.pgm") as ds:
 
         band = ds.GetRasterBand(1)
         base_md = band.GetMetadata()
@@ -101,10 +96,10 @@ def test_pam_2():
 
         assert band.GetNoDataValue() == 100, "nodata not saved via pam"
 
-    with gdal.Open("tmp/pam.pgm", gdal.GA_Update) as ds:
+    with gdal.Open(tmp_path / "pam.pgm", gdal.GA_Update) as ds:
         assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
 
-    with gdal.Open("tmp/pam.pgm") as ds:
+    with gdal.Open(tmp_path / "pam.pgm") as ds:
         assert (
             ds.GetRasterBand(1).GetNoDataValue() is None
         ), "got nodata value whereas none was expected"
@@ -116,15 +111,15 @@ def test_pam_2():
 
 
 @pytest.mark.require_driver("MFF")
-def test_pam_4():
+def test_pam_4(tmp_path):
 
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
-    shutil.copyfile("data/mfftest.hdr.aux.xml", "tmp/mfftest.hdr.aux.xml")
-    shutil.copyfile("data/mfftest.hdr", "tmp/mfftest.hdr")
-    shutil.copyfile("data/mfftest.r00", "tmp/mfftest.r00")
+    shutil.copyfile("data/mfftest.hdr.aux.xml", tmp_path / "mfftest.hdr.aux.xml")
+    shutil.copyfile("data/mfftest.hdr", tmp_path / "mfftest.hdr")
+    shutil.copyfile("data/mfftest.r00", tmp_path / "mfftest.r00")
 
-    ds = gdal.Open("tmp/mfftest.hdr")
+    ds = gdal.Open(tmp_path / "mfftest.hdr")
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
 
     assert (
@@ -173,21 +168,18 @@ def test_pam_6():
 
 
 @pytest.mark.require_driver("PNG")
-def test_pam_7():
+def test_pam_7(tmp_path):
 
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
-        shutil.copyfile("data/stefan_full_rgba.png", "tmp/stefan_full_rgba.png")
-        ds = gdal.Open("tmp/stefan_full_rgba.png")
+        shutil.copyfile("data/stefan_full_rgba.png", tmp_path / "stefan_full_rgba.png")
+        ds = gdal.Open(tmp_path / "stefan_full_rgba.png")
         ds.BuildOverviews("NEAR", [2])
         ds = None
 
-        ds = gdal.Open("tmp/stefan_full_rgba.png")
+        ds = gdal.Open(tmp_path / "stefan_full_rgba.png")
         ovr_count = ds.GetRasterBand(1).GetOverviewCount()
         ds = None
-
-        os.remove("tmp/stefan_full_rgba.png")
-        os.remove("tmp/stefan_full_rgba.png.ovr")
 
         assert ovr_count == 1
 
@@ -325,9 +317,10 @@ def test_pam_10():
 def test_pam_11(tmp_path):
 
     # Create a read-only directory
-    tmpdirreadonly = tmp_path / "tmpdirreadonly"
-    os.mkdir(tmpdirreadonly)
-    shutil.copy("data/byte.tif", tmpdirreadonly / "byte.tif")
+    tmpdirreadonly = os.path.join(tmp_path, "tmpdirreadonly")
+    if not os.path.exists(tmpdirreadonly):
+        os.mkdir(tmpdirreadonly)
+    shutil.copy("data/byte.tif", os.path.join(tmpdirreadonly, "byte.tif"))
 
     # FIXME: how do we create a read-only dir on windows ?
     # The following has no effect
@@ -335,7 +328,7 @@ def test_pam_11(tmp_path):
 
     # Test that the directory is really read-only
     try:
-        f = open(tmpdirreadonly / "test", "w")
+        f = open(os.path.join(tmpdirreadonly, "test"), "w")
         if f is not None:
             f.close()
             pytest.skip()
@@ -343,7 +336,7 @@ def test_pam_11(tmp_path):
         pass
 
     # Compute statistics --> the saving as .aux.xml should fail
-    ds = gdal.Open(tmpdirreadonly / "byte.tif")
+    ds = gdal.Open(os.path.join(tmpdirreadonly, "byte.tif"))
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     assert stats[0] == 74, "did not get expected minimum"
     gdal.ErrorReset()
@@ -355,7 +348,7 @@ def test_pam_11(tmp_path):
     ), "warning was expected at that point"
 
     # Check that we actually have no saved statistics
-    ds = gdal.Open(tmpdirreadonly / "byte.tif")
+    ds = gdal.Open(os.path.join(tmpdirreadonly, "byte.tif"))
     stats = ds.GetRasterBand(1).GetStatistics(False, False)
     assert stats is None
     ds = None
@@ -365,13 +358,13 @@ def test_pam_11(tmp_path):
     import test_py_scripts
 
     ret = test_py_scripts.run_py_script_as_external_script(
-        ".", "pamproxydb", " ".join(["-test1", str(tmpdirreadonly)])
+        ".", "pamproxydb", " ".join(["-test1", str(tmpdirreadonly), str(tmp_path)])
     )
     assert "success" in ret, "pamproxydb.py -test1 failed %s" % ret
 
     # Test loading an existing proxydb
     ret = test_py_scripts.run_py_script_as_external_script(
-        ".", "pamproxydb", " ".join(["-test2", str(tmpdirreadonly)])
+        ".", "pamproxydb", " ".join(["-test2", str(tmpdirreadonly), str(tmp_path)])
     )
     assert "success" in ret, "pamproxydb.py -test2 failed %s" % ret
 
@@ -380,10 +373,10 @@ def test_pam_11(tmp_path):
 # Test histogram with 64bit counts
 
 
-def test_pam_12():
+def test_pam_12(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
-    open("tmp/byte.tif.aux.xml", "wt").write("""<PAMDataset>
+    shutil.copy("data/byte.tif", tmp_path / "byte.tif")
+    open(tmp_path / "byte.tif.aux.xml", "wt").write("""<PAMDataset>
   <PAMRasterBand band="1">
     <Histograms>
       <HistItem>
@@ -398,15 +391,13 @@ def test_pam_12():
   </PAMRasterBand>
 </PAMDataset>""")
 
-    ds = gdal.Open("tmp/byte.tif")
+    ds = gdal.Open(tmp_path / "byte.tif")
     mini, maxi, _, hist1 = ds.GetRasterBand(1).GetDefaultHistogram()
     hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range=1, approx_ok=0)
     ds.SetMetadataItem("FOO", "BAR")
     ds.GetRasterBand(1).SetDefaultHistogram(mini, maxi, hist1)
     ds = None
-    aux_xml = open("tmp/byte.tif.aux.xml", "rt").read()
-    gdal.Unlink("tmp/byte.tif")
-    gdal.Unlink("tmp/byte.tif.aux.xml")
+    aux_xml = open(tmp_path / "byte.tif.aux.xml", "rt").read()
 
     assert hist1 == hist2
     assert hist1[0] == 6000000000

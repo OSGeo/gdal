@@ -39,8 +39,10 @@ def test_hdf4multidim_hdfeos_swath():
         "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        "tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf", gdal.OF_MULTIDIM_RASTER
+        f"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf", gdal.OF_MULTIDIM_RASTER
     )
     assert ds
     rg = ds.GetRootGroup()
@@ -109,7 +111,7 @@ def test_hdf4multidim_hdfeos_swath():
     assert struct.unpack("h" * 6, got_data) == (0, 17318, 17318, 0, 17317, 17317)
 
     ds = gdal.Open(
-        "tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        f"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
         gdal.OF_MULTIDIM_RASTER,
         open_options=["LIST_SDS=YES"],
     )
@@ -128,8 +130,10 @@ def test_hdf4multidim_hdfeos_grid():
         "MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        "tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
+        f"{tmp_dir}/MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
         gdal.OF_MULTIDIM_RASTER,
     )
     assert ds
@@ -192,7 +196,7 @@ def test_hdf4multidim_hdfeos_grid():
     assert not MOD_Grid_500m_Surface_Reflectance.OpenMDArray("foo")
 
     ds = gdal.Open(
-        "tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
+        f"{tmp_dir}/MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
         gdal.OF_MULTIDIM_RASTER,
         open_options=["LIST_SDS=YES"],
     )
@@ -381,7 +385,9 @@ def test_hdf4multidim_sds_read_world():
         "A2004259075000.L2_LAC_SST.hdf",
     )
 
-    ds = gdal.Open("tmp/cache/A2004259075000.L2_LAC_SST.hdf", gdal.OF_MULTIDIM_RASTER)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/A2004259075000.L2_LAC_SST.hdf", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == ["scientific_datasets"]
@@ -421,7 +427,9 @@ def test_hdf4multidim_sds_read_world_with_indexing_variable():
         "REANALYSIS_1999217.hdf",
     )
 
-    ds = gdal.Open("tmp/cache/REANALYSIS_1999217.hdf", gdal.OF_MULTIDIM_RASTER)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/REANALYSIS_1999217.hdf", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == ["scientific_datasets"]

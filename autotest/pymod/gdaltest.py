@@ -24,6 +24,7 @@ import socket
 import stat
 import subprocess
 import sys
+import tempfile as tmpfile
 import time
 import urllib.error
 import urllib.parse
@@ -48,19 +49,20 @@ jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2grok_drv_unregistered = False
 
+# Temporary directory for caching test data
+# This is used as a default location for caching test data by file_download() and similar functions.
+gdaltest_download_base_dir = None
+
 ###############################################################################
+#
+# Creates (if not exists) and return a temporary directory for caching test data
 
 
-def clean_tmp():
-    all_files = os.listdir("tmp")
-    for filename in all_files:
-        if filename in ["CVS", "do-not-remove"]:
-            continue
-
-        try:
-            os.remove("tmp/" + filename)
-        except OSError:
-            pass
+def get_cache_dir():
+    global gdaltest_download_base_dir
+    if gdaltest_download_base_dir is None:
+        gdaltest_download_base_dir = tmpfile.mkdtemp(suffix="gdaltest")
+    return gdaltest_download_base_dir
 
 
 ###############################################################################
@@ -118,7 +120,7 @@ class GDALTest:
         self.open_options = open_options
 
         if tmpdir is None:
-            self.tmpdir = "tmp/"
+            self.tmpdir = tmpfile.gettempdir()
         else:
             self.tmpdir = tmpdir
 
@@ -1097,11 +1099,11 @@ def check_geotransform(gt1, gt2, gt_epsilon):
 
 
 ###############################################################################
-# Download file at url 'url' and put it as 'filename' in 'tmp/cache/'
+# Download file at url 'url' and put it as 'filename' in the cache dir (see get_cache_dir())
 #
-# If 'filename' already exits in 'tmp/cache/', it is not downloaded
+# If 'filename' already exists in the cache dir, it is not downloaded
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
-# If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
+# If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded as 'filename' in the cache dir
 
 
 def download_file(
@@ -1110,9 +1112,12 @@ def download_file(
     download_size=-1,
     force_download=False,
     max_download_duration=None,
-    base_dir="tmp/cache",
+    base_dir=None,
     chunk_size=1024,
 ):
+
+    if base_dir is None:
+        base_dir = get_cache_dir()
 
     if filename is None:
         filename = os.path.basename(url)
@@ -2094,8 +2099,8 @@ def validate_json(jsn, schema):
         def retrieve_remote_file(uri: str):
             if not uri.startswith("http://") and not uri.startswith("https://"):
                 raise Exception(f"Cannot retrieve {uri}")
-            os.makedirs("tmp/cache", exist_ok=True)
-            filename = "tmp/cache/" + os.path.basename(uri)
+            tmp_dir = get_cache_dir()
+            filename = tmp_dir + "/" + os.path.basename(uri)
             if not download_file(uri, filename=filename, force_download=True):
                 raise Exception(f"Cannot download {uri}")
             response = open(filename, "rb").read()
