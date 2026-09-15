@@ -51,7 +51,7 @@ def found_j2k_drivers(tmp_path_factory):
             else:
                 import ecw
 
-                tmpdir = tmp_path_factory.mktemp()
+                tmpdir = tmp_path_factory.mktemp("ecwtest")
 
                 if ecw.has_write_support(tmpdir):
                     found_j2k_drivers.append(drvname)
