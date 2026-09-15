@@ -99,7 +99,9 @@ def test_ogr_index_can_join_without_index(tmp_path):
 
         with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
-            + 'LEFT JOIN "{}/join_t.dbf".join_t j ON p.PKEY = j.SKEY '.format(tmp_path)
+            + 'LEFT JOIN "{}".join_t j ON p.PKEY = j.SKEY '.format(
+                (tmp_path / "join_t.dbf").as_posix()
+            )
         ) as sql_lyr:
 
             ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
@@ -175,7 +177,9 @@ def test_ogr_index_indexed_join_works(tmp_path):
         p_ds = ogr.OpenShared(tmp_path / "index_p.mif", update=0)
         with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
-            + 'LEFT JOIN "{}/join_t.dbf".join_t j ON p.PKEY = j.SKEY '.format(tmp_path)
+            + 'LEFT JOIN "{}".join_t j ON p.PKEY = j.SKEY '.format(
+                (tmp_path / "join_t.dbf").as_posix()
+            )
         ) as sql_lyr:
 
             ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
