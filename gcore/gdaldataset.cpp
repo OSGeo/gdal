@@ -13327,7 +13327,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
             //
             // There might be a small gotcha in the fact that the set of
             // pixels on which the means are computed is not always the
-            // same as the the one on which the comoment is computed, if
+            // same as the one on which the comoment is computed, if
             // pixels are not valid/invalid at the same indices among bands
             // It is not obvious (to me) what should be the correct behavior.
             // The current approach has the benefit to avoid recomputing

@@ -29,7 +29,7 @@ CPL_C_START
  * This file provides mechanism to define virtual memory mappings, whose content
  * is allocated transparently and filled on-the-fly. Those virtual memory
  * mappings can be much larger than the available RAM, but only parts of the
- * virtual memory mapping, in the limit of the allowed the cache size, will
+ * virtual memory mapping, in the limit of the allowed cache size, will
  * actually be physically allocated.
  *
  * This exploits low-level mechanisms of the operating system (virtual memory
@@ -83,13 +83,13 @@ typedef void (*CPLVirtualMemFreeUserData)(void *pUserData);
 /** Access mode of a virtual memory mapping. */
 typedef enum
 {
-    /*! The mapping is meant at being read-only, but writes will not be
+    /*! The mapping is meant to be read-only, but writes will not be
        prevented. Note that any content written will be lost. */
     VIRTUALMEM_READONLY,
-    /*! The mapping is meant at being read-only, and this will be enforced
+    /*! The mapping is meant to be read-only, and this will be enforced
         through the operating system page protection mechanism. */
     VIRTUALMEM_READONLY_ENFORCED,
-    /*! The mapping is meant at being read-write, and modified pages can be
+    /*! The mapping is meant to be read-write, and modified pages can be
        saved thanks to the pfnUnCachePage callback */
     VIRTUALMEM_READWRITE
 } CPLVirtualMemAccessMode;
@@ -186,7 +186,7 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
     CPLVirtualMemAccessMode eAccessMode,
     CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
 
-/** Create a new virtual memory mapping derived from an other virtual memory
+/** Create a new virtual memory mapping derived from another virtual memory
  *  mapping.
  *
  * This may be useful in case of creating mapping for pixel interleaved data.
@@ -197,7 +197,7 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
  * @param nOffset   Offset in the base virtual memory mapping from which to
  * start the new mapping.
  * @param nSize     Size of the base virtual memory mapping to expose in the
- *                  the new mapping.
+ *                  new mapping.
  * @param pfnFreeUserData callback that is called when the object is destroyed.
  * @param pCbkUserData user data passed to pfnFreeUserData.
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
@@ -278,7 +278,7 @@ size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem *ctxt);
  * a page of the mapping that is not yet mapped.
  *
  * The return value of this function depends on whether bSingleThreadUsage has
- * been set of not in CPLVirtualMemNew() and/or the implementation.
+ * been set or not in CPLVirtualMemNew() and/or the implementation.
  *
  * On Linux, this will always return TRUE if bSingleThreadUsage = FALSE.
  *
@@ -328,7 +328,7 @@ void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem *ctxt);
  * @param ctxt context returned by CPLVirtualMemNew().
  * @param pAddr the memory region to pin.
  * @param nSize the size of the memory region.
- * @param bWriteOp set to TRUE if the memory are will be accessed in write mode.
+ * @param bWriteOp set to TRUE if the memory area will be accessed in write mode.
  *
  */
 void CPL_DLL CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
