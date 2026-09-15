@@ -125,18 +125,16 @@ def test_png_7(tmp_path):
     drv = gdal.GetDriverByName("PNG")
     srcds = gdal.Open("data/png/tbbn2c16.png")
 
-    dstds = drv.CreateCopy(str(tmp_path / "png7.png"), srcds)
+    dstds = drv.CreateCopy(tmp_path / "png7.png", srcds)
     srcds = None
 
-    dstds = gdal.Open(str(tmp_path / "png7.png"))
+    dstds = gdal.Open(tmp_path / "png7.png")
     md = dstds.GetMetadata()
     dstds = None
 
     assert md["NODATA_VALUES"] == "32639 32639 32639", "NODATA_VALUES wrong"
 
     dstds = None
-
-    drv.Delete(str(tmp_path / "png7.png"))
 
 
 ###############################################################################

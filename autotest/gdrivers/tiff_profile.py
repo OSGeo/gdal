@@ -51,9 +51,7 @@ def test_tiff_write_icc(tmp_path):
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(
-        str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8, options
-    )
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
 
     # Check with dataset from Create()
     md = ds.GetMetadata("COLOR_PROFILE")
@@ -65,26 +63,24 @@ def test_tiff_write_icc(tmp_path):
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"))
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
     with pytest.raises(OSError):
-        os.stat(str(tmp_path / "icc_test.tiff.aux.xml"))
+        os.stat(tmp_path / "icc_test.tiff.aux.xml")
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with GetMetadataItem()
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"))
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
     source_icc_profile = ds.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds = None
 
     with pytest.raises(OSError):
-        os.stat(str(tmp_path / "icc_test.tiff.aux.xml"))
+        os.stat(tmp_path / "icc_test.tiff.aux.xml")
 
     assert source_icc_profile == icc
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
 
 
 ###############################################################################
@@ -102,10 +98,8 @@ def test_tiff_copy_icc(tmp_path):
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(
-        str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8, options
-    )
-    ds2 = driver.CreateCopy(str(tmp_path / "icc_test2.tiff"), ds)
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test2.tiff", ds)
 
     # Check with dataset from CreateCopy()
     md = ds2.GetMetadata("COLOR_PROFILE")
@@ -115,15 +109,12 @@ def test_tiff_copy_icc(tmp_path):
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open(str(tmp_path / "icc_test2.tiff"))
+    ds2 = gdal.Open(tmp_path / "icc_test2.tiff")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
-    driver.Delete(str(tmp_path / "icc_test2.tiff"))
 
 
 ###############################################################################
@@ -141,8 +132,8 @@ def test_tiff_copy_options_icc(tmp_path):
     options = ["SOURCE_ICC_PROFILE=" + icc]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8)
-    ds2 = driver.CreateCopy(str(tmp_path / "icc_test2.tiff"), ds, options=options)
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test2.tiff", ds, options=options)
 
     # Check with dataset from CreateCopy()
     md = ds2.GetMetadata("COLOR_PROFILE")
@@ -152,15 +143,12 @@ def test_tiff_copy_options_icc(tmp_path):
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open(str(tmp_path / "icc_test2.tiff"))
+    ds2 = gdal.Open(tmp_path / "icc_test2.tiff")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
-    driver.Delete(str(tmp_path / "icc_test2.tiff"))
 
 
 def cvtTuple2String(t):
@@ -193,10 +181,10 @@ def test_tiff_copy_options_colorimetric_data(tmp_path):
     ]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy(str(tmp_path / "icc_test2.tiff"), ds, options=options)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test2.tiff", ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -227,7 +215,7 @@ def test_tiff_copy_options_colorimetric_data(tmp_path):
     assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open(str(tmp_path / "icc_test2.tiff"))
+    ds2 = gdal.Open(tmp_path / "icc_test2.tiff")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -256,9 +244,6 @@ def test_tiff_copy_options_colorimetric_data(tmp_path):
     )
 
     assert tifftag_transferfunction2 == tifftag_transferfunction
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
-    driver.Delete(str(tmp_path / "icc_test2.tiff"))
 
 
 ###############################################################################
@@ -287,14 +272,12 @@ def test_tiff_copy_colorimetric_data(tmp_path):
     ]
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(
-        str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8, options
-    )
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
     ds = None
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"))
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy(str(tmp_path / "icc_test2.tiff"), ds)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test2.tiff", ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -325,7 +308,7 @@ def test_tiff_copy_colorimetric_data(tmp_path):
     assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open(str(tmp_path / "icc_test2.tiff"))
+    ds2 = gdal.Open(tmp_path / "icc_test2.tiff")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -355,9 +338,6 @@ def test_tiff_copy_colorimetric_data(tmp_path):
 
     assert tifftag_transferfunction2 == tifftag_transferfunction
 
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
-    driver.Delete(str(tmp_path / "icc_test2.tiff"))
-
 
 ###############################################################################
 # Test updating ICC profile
@@ -370,10 +350,10 @@ def test_tiff_update_icc(tmp_path):
 
     # Create dummy file
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
     ds = None
 
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"), gdal.GA_Update)
+    ds = gdal.Open(tmp_path / "icc_test.tiff", gdal.GA_Update)
 
     ds.SetMetadataItem("SOURCE_ICC_PROFILE", icc, "COLOR_PROFILE")
     md = ds.GetMetadata("COLOR_PROFILE")
@@ -382,13 +362,11 @@ def test_tiff_update_icc(tmp_path):
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Reopen the file to verify it was written.
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"))
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
 
 
 ###############################################################################
@@ -406,10 +384,10 @@ def test_tiff_update_colorimetric(tmp_path):
 
     # Create dummy file
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
     ds = None
 
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"), gdal.GA_Update)
+    ds = gdal.Open(tmp_path / "icc_test.tiff", gdal.GA_Update)
 
     ds.SetMetadataItem(
         "SOURCE_PRIMARIES_RED", cvtTuple2String(source_primaries[0]), "COLOR_PROFILE"
@@ -467,7 +445,7 @@ def test_tiff_update_colorimetric(tmp_path):
     assert tifftag_transferfunction2 == tifftag_transferfunction
 
     # Reopen the file to verify it was written.
-    ds = gdal.Open(str(tmp_path / "icc_test.tiff"))
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None
 
@@ -495,8 +473,3 @@ def test_tiff_update_colorimetric(tmp_path):
     )
 
     assert tifftag_transferfunction2 == tifftag_transferfunction
-
-    driver.Delete(str(tmp_path / "icc_test.tiff"))
-
-
-############################################################################

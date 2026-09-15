@@ -41,9 +41,7 @@ def test_kea_1(tmp_path):
     tst = gdaltest.GDALTest(
         "KEA", "byte.tif", 1, 4672, options=["IMAGEBLOCKSIZE=15", "THEMATIC=YES"]
     )
-    tst.testCreateCopy(
-        check_srs=True, check_gt=1, new_filename=str(tmp_path / "byte.kea")
-    )
+    tst.testCreateCopy(check_srs=True, check_gt=1, new_filename=tmp_path / "byte.kea")
 
 
 ###############################################################################
@@ -70,7 +68,7 @@ def test_kea_2(tmp_path, src_file):
     tst = gdaltest.GDALTest(
         "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
     )
-    tst.testCreateCopy(check_minmax=1, new_filename=str(tmp_path / "test.kea"))
+    tst.testCreateCopy(check_minmax=1, new_filename=tmp_path / "test.kea")
 
 
 ###############################################################################
@@ -97,7 +95,7 @@ def test_kea_3(tmp_path, src_file):
     tst = gdaltest.GDALTest(
         "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
     )
-    tst.testCreate(out_bands=1, check_minmax=1, new_filename=str(tmp_path / "test.kea"))
+    tst.testCreate(out_bands=1, check_minmax=1, new_filename=tmp_path / "test.kea")
 
 
 ###############################################################################

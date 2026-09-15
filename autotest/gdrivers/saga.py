@@ -12,8 +12,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
-
 import gdaltest
 import pytest
 
@@ -50,7 +48,7 @@ def test_saga_1():
 def test_saga_2(tmp_path):
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    tst.testCreateCopy(new_filename=str(tmp_path / "createcopy.sdat"), check_srs=True)
+    tst.testCreateCopy(new_filename=tmp_path / "createcopy.sdat", check_srs=True)
 
 
 ###############################################################################
@@ -60,7 +58,7 @@ def test_saga_2(tmp_path):
 def test_saga_3(tmp_path):
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    tst.testCreate(new_filename=str(tmp_path / "copy.sdat"), out_bands=1)
+    tst.testCreate(new_filename=tmp_path / "copy.sdat", out_bands=1)
 
 
 ###############################################################################
@@ -86,7 +84,7 @@ def test_saga_4(tmp_path):
         else:
             check_minmax = 1
         tst.testCreateCopy(
-            new_filename=str(tmp_path / "test4.sdat"), check_minmax=check_minmax
+            new_filename=tmp_path / "test4.sdat", check_minmax=check_minmax
         )
 
 
@@ -113,7 +111,7 @@ def test_saga_5(tmp_path):
         else:
             check_minmax = 1
         tst.testCreate(
-            new_filename=str(tmp_path / "test5.sdat"),
+            new_filename=tmp_path / "test5.sdat",
             out_bands=1,
             check_minmax=check_minmax,
         )
@@ -140,11 +138,11 @@ def test_saga_6(tmp_path):
     for i, gdal_type in enumerate(gdal_types):
 
         ds = gdal.GetDriverByName("SAGA").Create(
-            str(tmp_path / "test6.sdat"), 2, 2, 1, gdal_type
+            tmp_path / "test6.sdat", 2, 2, 1, gdal_type
         )
         ds = None
 
-        ds = gdal.Open(str(tmp_path / "test6.sdat"))
+        ds = gdal.Open(tmp_path / "test6.sdat")
 
         data = ds.GetRasterBand(1).ReadRaster(1, 1, 1, 1, buf_type=gdal.GDT_Float64)
 
@@ -158,12 +156,6 @@ def test_saga_6(tmp_path):
         assert nodata == expected_nodata[i], "did not get expected nodata value"
 
         ds = None
-
-    try:
-        os.remove(str(tmp_path / "test6.sgrd"))
-        os.remove(str(tmp_path / "test6.sdat"))
-    except OSError:
-        pass
 
 
 ###############################################################################
@@ -204,18 +196,18 @@ def test_saga_9(tmp_path):
     gdal_type = gdal.GDT_Float64
 
     ds = gdal.GetDriverByName("SAGA").Create(
-        str(tmp_path / "test9.sdat"), 2, 2, 1, gdal_type
+        tmp_path / "test9.sdat", 2, 2, 1, gdal_type
     )
     ds = None
 
-    ds = gdal.Open(str(tmp_path / "test9.sdat"))
+    ds = gdal.Open(tmp_path / "test9.sdat")
     with pytest.raises(Exception):
         ds.GetRasterBand(1).SetNoDataValue(56)
     # make sure nodata value is not changed
     assert ds.GetRasterBand(1).GetNoDataValue() == -99999
 
     ds = None
-    ds = gdal.Open(str(tmp_path / "test9.sdat"), gdal.GA_Update)
+    ds = gdal.Open(tmp_path / "test9.sdat", gdal.GA_Update)
 
     ret = ds.GetRasterBand(1).SetNoDataValue(56)
     assert ret == gdalconst.CE_None
@@ -224,11 +216,6 @@ def test_saga_9(tmp_path):
 
     ds = None
 
-    with open(str(tmp_path / "test9.sgrd"), "r") as f:
+    with open(tmp_path / "test9.sgrd", "r") as f:
         header_string = f.read()
         assert "NODATA_VALUE\t= 56.000000" in header_string
-    try:
-        os.remove(str(tmp_path / "test9.sgrd"))
-        os.remove(str(tmp_path / "test9.sdat"))
-    except OSError:
-        pass

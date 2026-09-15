@@ -11,8 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
-
 import gdaltest
 import pytest
 
@@ -172,24 +170,3 @@ def test_usgsdem_record_1026_bytes_ending_with_crlf():
 
     tst = gdaltest.GDALTest("USGSDEM", "usgsdem/crlf.dem", 1, 14172)
     tst.testOpen()
-
-
-###############################################################################
-# Cleanup
-
-
-def test_usgsdem_cleanup(tmp_path):
-
-    try:
-        os.remove(str(tmp_path / "n43.dem"))
-        os.remove(str(tmp_path / "n43.dem.aux.xml"))
-
-        os.remove(str(tmp_path / "file_1.dem"))
-        os.remove(str(tmp_path / "file_1.dem.aux.xml"))
-        os.remove(str(tmp_path / "file_2.dem"))
-        os.remove(str(tmp_path / "file_2.dem.aux.xml"))
-
-        os.remove(str(tmp_path / "000a00DEMz"))
-        os.remove(str(tmp_path / "000a00DEMz.aux.xml"))
-    except OSError:
-        pass

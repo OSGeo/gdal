@@ -132,25 +132,20 @@ def test_aigrid_6():
 
 def test_aigrid_broken(tmp_path):
 
-    if os.path.exists(str(tmp_path / "broken_aigrid")):
-        shutil.rmtree(str(tmp_path / "broken_aigrid"))
-
-    shutil.copytree("data/aigrid/abc3x1", str(tmp_path / "broken_aigrid"))
+    shutil.copytree("data/aigrid/abc3x1", tmp_path / "broken_aigrid")
 
     # Write a bad offset for a block
-    f = gdal.VSIFOpenL(str(tmp_path / "broken_aigrid/w001001x.adf"), "rb+")
+    f = gdal.VSIFOpenL(tmp_path / "broken_aigrid/w001001x.adf", "rb+")
     gdal.VSIFSeekL(f, 100, 0)
     gdal.VSIFWriteL(b"\xff" * 4, 1, 4, f)
     gdal.VSIFCloseL(f)
 
-    ds = gdal.Open(str(tmp_path / "broken_aigrid"))
+    ds = gdal.Open(tmp_path / "broken_aigrid")
     with pytest.raises(Exception):
         ds.GetRasterBand(1).Checksum()
     with pytest.raises(Exception):
         ds.GetRasterBand(1).Checksum()
     ds = None
-
-    shutil.rmtree(str(tmp_path / "broken_aigrid"))
 
 
 ###############################################################################

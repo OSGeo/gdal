@@ -112,8 +112,8 @@ def test_rpftoc_zone9():
 
 def test_rpftoc_4(tmp_path):
 
-    shutil.copyfile("data/nitf/A.TOC", str(tmp_path / "A.TOC"))
-    shutil.copyfile("data/nitf/RPFTOC01.ON2", str(tmp_path / "RPFTOC01.ON2"))
+    shutil.copyfile("data/nitf/A.TOC", tmp_path / "A.TOC")
+    shutil.copyfile("data/nitf/RPFTOC01.ON2", tmp_path / "RPFTOC01.ON2")
 
     with gdal.config_option("RPFTOC_FORCE_RGBA", "YES"):
         ds = gdal.Open(f"NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:{tmp_path}/A.TOC")

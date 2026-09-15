@@ -97,7 +97,7 @@ def test_gif_6(tmp_path):
 
     src_ds = gdal.Open("../gcore/data/nodata_byte.tif")
 
-    new_ds = gdaltest.gif_drv.CreateCopy(str(tmp_path / "nodata_byte.gif"), src_ds)
+    new_ds = gdaltest.gif_drv.CreateCopy(tmp_path / "nodata_byte.gif", src_ds)
     assert new_ds is not None, "Create copy operation failure"
 
     bnd = new_ds.GetRasterBand(1)
@@ -107,7 +107,7 @@ def test_gif_6(tmp_path):
     new_ds = None
     src_ds = None
 
-    new_ds = gdal.Open(str(tmp_path / "nodata_byte.gif"))
+    new_ds = gdal.Open(tmp_path / "nodata_byte.gif")
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 4440, "Wrong checksum"
@@ -118,8 +118,6 @@ def test_gif_6(tmp_path):
 
     bnd = None
     new_ds = None
-
-    gdaltest.gif_drv.Delete(str(tmp_path / "nodata_byte.gif"))
 
 
 ###############################################################################

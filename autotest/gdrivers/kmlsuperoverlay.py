@@ -13,7 +13,6 @@
 ###############################################################################
 
 import os
-import shutil
 import sys
 
 import gdaltest
@@ -260,7 +259,7 @@ def test_kmlsuperoverlay_5(tmp_path):
   </VRTRasterBand>
 </VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        str(tmp_path / "tmp.kml"), src_ds, options=["FIX_ANTIMERIDIAN=YES"]
+        tmp_path / "tmp.kml", src_ds, options=["FIX_ANTIMERIDIAN=YES"]
     )
     del ds
     src_ds = None
@@ -283,10 +282,6 @@ def test_kmlsuperoverlay_5(tmp_path):
             assert float(east) >= float(
                 west
             ), "East is less than west in LatLonAltBox %s, (%s < %s)" % (f, east, west)
-
-    shutil.rmtree(str(tmp_path / "0"))
-    shutil.rmtree(str(tmp_path / "1"))
-    os.remove(str(tmp_path / "tmp.kml"))
 
 
 ###############################################################################
@@ -475,7 +470,7 @@ def test_kmlsuperoverlay_8(tmp_path):
   </VRTRasterBand>
 </VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        str(tmp_path / "tmp.kml"), src_ds, options=["FORMAT=AUTO"]
+        tmp_path / "tmp.kml", src_ds, options=["FORMAT=AUTO"]
     )
     del ds
     src_ds = None
@@ -502,9 +497,3 @@ def test_kmlsuperoverlay_8(tmp_path):
         )
     )
     assert set(os.listdir(str(tmp_path / "3/2"))) == set()
-
-    shutil.rmtree(str(tmp_path / "0"))
-    shutil.rmtree(str(tmp_path / "1"))
-    shutil.rmtree(str(tmp_path / "2"))
-    shutil.rmtree(str(tmp_path / "3"))
-    os.remove(str(tmp_path / "tmp.kml"))

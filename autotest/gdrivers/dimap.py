@@ -34,7 +34,7 @@ def test_dimap_1(tmp_path):
     shutil.copy("data/dimap/IMAGERY.TIF", tmp_path)
     shutil.copy("data/rgbsmall.tif", tmp_path)
 
-    ds = gdal.Open(str(tmp_path / "METADATA.DIM"))
+    ds = gdal.Open(tmp_path / "METADATA.DIM")
 
     assert (
         ds.RasterCount == 1 and ds.RasterXSize == 6000 and ds.RasterYSize == 6000

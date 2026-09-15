@@ -63,7 +63,7 @@ def test_ehdr_3():
 def test_ehdr_4(tmp_path):
 
     drv = gdal.GetDriverByName("EHdr")
-    ds = drv.Create(str(tmp_path / "test_4.bil"), 200, 100, 1, gdal.GDT_UInt8)
+    ds = drv.Create(tmp_path / "test_4.bil", 200, 100, 1, gdal.GDT_UInt8)
 
     raw_data = b"".join(struct.pack("h", v) for v in range(200))
 
@@ -89,7 +89,7 @@ def test_ehdr_4(tmp_path):
     ###############################################################################
     # verify dataset's colortable and nodata value.
 
-    ds = gdal.Open(str(tmp_path / "test_4.bil"))
+    ds = gdal.Open(tmp_path / "test_4.bil")
     band = ds.GetRasterBand(1)
 
     assert band.GetNoDataValue() == 17, "failed to preserve nodata value."
@@ -144,7 +144,7 @@ def test_ehdr_8(tmp_path):
 
     drv = gdal.GetDriverByName("EHDR")
     src_ds = gdal.Open("data/ehdr/8s.vrt")
-    ds = drv.CreateCopy(str(tmp_path / "ehdr_8.bil"), src_ds)
+    ds = drv.CreateCopy(tmp_path / "ehdr_8.bil", src_ds)
     src_ds = None
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
@@ -153,8 +153,6 @@ def test_ehdr_8(tmp_path):
     assert cs == expected, "Did not get expected image checksum."
 
     ds = None
-
-    drv.Delete(str(tmp_path / "ehdr_8.bil"))
 
 
 ###############################################################################

@@ -47,20 +47,17 @@ def test_nwt_grd_2(tmp_path):
     """
     Test writing a GRD via CreateCopy
     """
-    shutil.copy("data/nwt_grd/nwt_grd.grd", str(tmp_path / "nwt_grd.grd"))
+    shutil.copy("data/nwt_grd/nwt_grd.grd", tmp_path / "nwt_grd.grd")
     tst1 = gdaltest.GDALTest(
         "NWT_GRD",
-        str(tmp_path / "nwt_grd.grd"),
+        tmp_path / "nwt_grd.grd",
         1,
         25856,
         filename_absolute=1,
         open_options=["BAND_COUNT=1"],
     )
-    ret = tst1.testCreateCopy(
-        new_filename=str(tmp_path / "out.grd"),
+    tst1.testCreateCopy(
+        new_filename=tmp_path / "out.grd",
         check_minmax=0,
         dest_open_options=["BAND_COUNT=1"],
     )
-    gdal.Unlink(str(tmp_path / "nwt_grd.grd"))
-    gdal.Unlink(str(tmp_path / "nwt_grd.grd.aux.xml"))
-    return ret

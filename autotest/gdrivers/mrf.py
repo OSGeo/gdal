@@ -190,7 +190,7 @@ def cleanup(base="/vsimem/out."):
         "psz",
         "pq3",
     ):
-        gdal.Unlink(base + ext)
+        gdal.Unlink(str(base) + ext)
 
 
 @pytest.mark.skipif(
@@ -218,7 +218,7 @@ def test_mrf_zen_test(tmp_path):
     for interleave in "PIXEL", "BAND":
         co = ["COMPRESS=JPEG", "INTERLEAVE=" + interleave]
         gdal.Translate(
-            str(tmp_path / "masked.mrf"),
+            tmp_path / "masked.mrf",
             "data/jpeg/masked.jpg",
             format="MRF",
             creationOptions=co,
@@ -530,10 +530,10 @@ def test_mrf_cached_source(tmp_path):
         ds = None
         cleanup()
 
-        open(str(tmp_path / "byte.tif"), "wb").write(open("data/byte.tif", "rb").read())
+        open(tmp_path / "byte.tif", "wb").write(open("data/byte.tif", "rb").read())
         gdal.Translate(
-            str(tmp_path / "out.mrf"),
-            str(tmp_path / "byte.tif"),
+            tmp_path / "out.mrf",
+            tmp_path / "byte.tif",
             format="MRF",
             creationOptions=["CACHEDSOURCE=byte.tif", "NOCOPY=TRUE"],
         )
@@ -543,8 +543,8 @@ def test_mrf_cached_source(tmp_path):
         assert cs == expected_cs
         ds = None
 
-        gdal.Unlink(str(tmp_path / "byte.tif"))
-        ds = gdal.Open(str(tmp_path / "out.mrf"))
+        gdal.Unlink(tmp_path / "byte.tif")
+        ds = gdal.Open(tmp_path / "out.mrf")
         cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4672
         assert cs == expected_cs
@@ -552,8 +552,8 @@ def test_mrf_cached_source(tmp_path):
         cleanup(str(tmp_path / "out."))
 
         # Caching MRF in mp_safe mode
-        open(str(tmp_path / "byte.tif"), "wb").write(open("data/byte.tif", "rb").read())
-        open(str(tmp_path / "out.mrf"), "wt").write("""<MRF_META>
+        open(tmp_path / "byte.tif", "wb").write(open("data/byte.tif", "rb").read())
+        open(tmp_path / "out.mrf", "wt").write("""<MRF_META>
     <CachedSource>
         <Source>byte.tif</Source>
     </CachedSource>
@@ -562,15 +562,15 @@ def test_mrf_cached_source(tmp_path):
         <PageSize x="512" y="512" c="1" />
     </Raster>
     </MRF_META>""")
-        ds = gdal.Open(str(tmp_path / "out.mrf"))
+        ds = gdal.Open(tmp_path / "out.mrf")
         cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4672
         assert cs == expected_cs
         ds = None
 
         # Read it again, from the cache
-        gdal.Unlink(str(tmp_path / "byte.tif"))
-        ds = gdal.Open(str(tmp_path / "out.mrf"))
+        gdal.Unlink(tmp_path / "byte.tif")
+        ds = gdal.Open(tmp_path / "out.mrf")
         cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4672
         assert cs == expected_cs
@@ -578,7 +578,7 @@ def test_mrf_cached_source(tmp_path):
         # No cleanup, will test cloning next
 
         # Cloning MRF
-        open(str(tmp_path / "cloning.mrf"), "wt").write("""<MRF_META>
+        open(tmp_path / "cloning.mrf", "wt").write("""<MRF_META>
     <CachedSource>
         <Source clone="true">out.mrf</Source>
     </CachedSource>
@@ -587,20 +587,20 @@ def test_mrf_cached_source(tmp_path):
         <PageSize x="512" y="512" c="1" />
     </Raster>
     </MRF_META>""")
-        ds = gdal.Open(str(tmp_path / "cloning.mrf"))
+        ds = gdal.Open(tmp_path / "cloning.mrf")
         cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4672
         assert cs == expected_cs
         ds = None
-        cleanup(str(tmp_path / "out."))
+        cleanup(tmp_path / "out.")
 
         # Read it again, from the cache
-        ds = gdal.Open(str(tmp_path / "cloning.mrf"))
+        ds = gdal.Open(tmp_path / "cloning.mrf")
         cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4672
         assert cs == expected_cs
         ds = None
-        cleanup(str(tmp_path / "cloning."))
+        cleanup(tmp_path / "cloning.")
 
 
 def test_mrf_versioned():

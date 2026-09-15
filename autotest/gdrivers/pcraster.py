@@ -57,7 +57,7 @@ def test_pcraster_2():
 def test_pcraster_createcopy(tmp_path):
 
     tst = gdaltest.GDALTest("PCRaster", "pcraster/ldd.map", 1, 4528)
-    tst.testCreateCopy(new_filename=str(tmp_path / "ldd.map"))
+    tst.testCreateCopy(new_filename=tmp_path / "ldd.map")
 
 
 ###############################################################################
@@ -68,4 +68,4 @@ def test_pcraster_create(tmp_path):
     tst = gdaltest.GDALTest(
         "PCRaster", "float32.tif", 1, 4672, options=["PCRASTER_VALUESCALE=VS_SCALAR"]
     )
-    tst.testCreate(new_filename=str(tmp_path / "float32.map"))
+    tst.testCreate(new_filename=tmp_path / "float32.map")

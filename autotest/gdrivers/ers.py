@@ -46,7 +46,7 @@ def test_ers_1():
 def test_ers_2(tmp_path):
 
     tst = gdaltest.GDALTest("ERS", "ehdr/float32.bil", 1, 27)
-    tst.testCreateCopy(new_filename=str(tmp_path / "float32.ers"), check_gt=1, vsimem=1)
+    tst.testCreateCopy(new_filename=tmp_path / "float32.ers", check_gt=1, vsimem=1)
 
 
 ###############################################################################
@@ -56,7 +56,7 @@ def test_ers_2(tmp_path):
 def test_ers_3(tmp_path):
 
     tst = gdaltest.GDALTest("ERS", "rgbsmall.tif", 2, 21053)
-    tst.testCreate(new_filename=str(tmp_path / "rgbsmall.ers"))
+    tst.testCreate(new_filename=tmp_path / "rgbsmall.ers")
 
 
 ###############################################################################
@@ -98,12 +98,10 @@ def test_ers_6(tmp_path):
 
     src_ds = gdal.Open("data/ers/8s.ers")
 
-    ds = drv.CreateCopy(str(tmp_path / "8s.ers"), src_ds)
+    ds = drv.CreateCopy(tmp_path / "8s.ers", src_ds)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
 
     ds = None
-
-    drv.Delete(str(tmp_path / "8s.ers"))
 
 
 ###############################################################################

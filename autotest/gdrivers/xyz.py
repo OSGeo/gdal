@@ -42,14 +42,13 @@ def test_xyz_2(tmp_path):
 
     src_ds = gdal.Open("data/hfa/float.img")
     ds = gdal.GetDriverByName("XYZ").CreateCopy(
-        str(tmp_path / "float.xyz"),
+        tmp_path / "float.xyz",
         src_ds,
         options=["COLUMN_SEPARATOR=,", "ADD_HEADER_LINE=YES"],
     )
     got_cs = ds.GetRasterBand(1).Checksum()
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.GetDriverByName("XYZ").Delete(str(tmp_path / "float.xyz"))
     assert got_cs == expected_cs or got_cs == 24387
 
 

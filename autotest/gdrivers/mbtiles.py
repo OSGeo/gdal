@@ -317,7 +317,7 @@ def test_mbtiles_6(tmp_path):
     )
     src_ds = None
 
-    ds = gdal.Open(str(tmp_path / "mbtiles_6.mbtiles"))
+    ds = gdal.Open(tmp_path / "mbtiles_6.mbtiles")
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs != 0
     got_md = ds.GetMetadata()
@@ -333,8 +333,6 @@ def test_mbtiles_6(tmp_path):
     }
     assert got_md == expected_md
     ds = None
-
-    gdal.Unlink(str(tmp_path / "mbtiles_6.mbtiles"))
 
 
 ###############################################################################
