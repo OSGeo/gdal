@@ -120,6 +120,7 @@ class GDALTest:
         self.open_options = open_options
 
         if tmpdir is None:
+            # TODO: make tmpdir a required argument
             self.tmpdir = tmpfile.gettempdir()
         else:
             self.tmpdir = tmpdir
