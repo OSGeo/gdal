@@ -99,7 +99,7 @@ static bool readraster_acquirebuffer(void** buf,
                 PyBuffer_Release(&view);
                 SWIG_PYTHON_THREAD_END_BLOCK;
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "buffer has not the appropriate alignment");
+                         "buffer does not have appropriate alignment for data type %s", GDALGetDataTypeName(ntype));
                 return false;
             }
         }

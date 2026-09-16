@@ -205,7 +205,6 @@ def test_rasterio_4(tmp_path):
 # Test error cases of ReadRaster()
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_5():
 
     ds = gdal.Open("data/byte.tif")
@@ -215,27 +214,15 @@ def test_rasterio_5():
         obj.ReadRaster(0, 0, 1, -2000000000, 1, 1)
 
     for band_number in [-1, 0, 2]:
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            res = ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
-        error_msg = gdal.GetLastErrorMsg()
-        assert res is None, "expected None"
-        assert (
-            error_msg.find("this band does not exist on dataset") != -1
-        ), "did not get expected error msg"
+        with pytest.raises(Exception, match="band does not exist"):
+            ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
 
     res = ds.ReadRaster(0, 0, 1, 1, band_list=[1, 1])
     assert res is not None, "expected non None"
 
     for obj in [ds, ds.GetRasterBand(1)]:
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            res = obj.ReadRaster(0, 0, 21, 21)
-        error_msg = gdal.GetLastErrorMsg()
-        assert res is None, "expected None"
-        assert (
-            error_msg.find("Access window out of range in RasterIO()") != -1
-        ), "did not get expected error msg (1)"
+        with pytest.raises(Exception, match="Access window out of range"):
+            obj.ReadRaster(0, 0, 21, 21)
 
         # This should only fail on a 32bit build
         try:
@@ -248,65 +235,35 @@ def test_rasterio_5():
         # because of integer overflow. I'm not sure on how
         # to detect win64 better.
         if maxsize == 2147483647 and sys.platform != "win32":
-            gdal.ErrorReset()
-            with gdal.quiet_errors():
-                res = obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
-            error_msg = gdal.GetLastErrorMsg()
-            assert res is None, "expected None"
-            assert (
-                error_msg.find("Integer overflow") != -1
-            ), "did not get expected error msg (2)"
+            with pytest.raises(Exception, match="Integer overflow"):
+                obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
 
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            res = obj.ReadRaster(0, 0, 0, 1)
-        error_msg = gdal.GetLastErrorMsg()
-        assert res is None, "expected None"
-        assert (
-            error_msg.find("Illegal values for buffer size") != -1
-        ), "did not get expected error msg (3)"
-
-    ds = None
+        with pytest.raises(Exception, match="Illegal values for buffer size"):
+            obj.ReadRaster(0, 0, 0, 1)
 
 
 ###############################################################################
 # Test error cases of WriteRaster()
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_6():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
 
     for obj in [ds, ds.GetRasterBand(1)]:
-        with pytest.raises(Exception):
+        with pytest.raises(
+            Exception, match="not a unicode string, bytes, bytearray or memoryview"
+        ):
             obj.WriteRaster(0, 0, 2, 2, None)
 
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
+        with pytest.raises(Exception, match="Buffer too small"):
             obj.WriteRaster(0, 0, 2, 2, " ")
-        error_msg = gdal.GetLastErrorMsg()
-        assert (
-            error_msg.find("Buffer too small") != -1
-        ), "did not get expected error msg (1)"
 
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
+        with pytest.raises(Exception, match="Access window out of range"):
             obj.WriteRaster(-1, 0, 1, 1, " ")
-        error_msg = gdal.GetLastErrorMsg()
-        assert (
-            error_msg.find("Access window out of range in RasterIO()") != -1
-        ), "did not get expected error msg (2)"
 
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
+        with pytest.raises(Exception, match="Illegal values for buffer size"):
             obj.WriteRaster(0, 0, 0, 1, " ")
-        error_msg = gdal.GetLastErrorMsg()
-        assert (
-            error_msg.find("Illegal values for buffer size") != -1
-        ), "did not get expected error msg (3)"
-
-    ds = None
 
 
 ###############################################################################
@@ -748,23 +705,19 @@ def test_rasterio_overview_subpixel_resampling(tmp_vsimem):
 # Test error when getting a block
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_10():
     ds = gdal.Open("data/byte_truncated.tif")
 
-    with gdal.quiet_errors():
-        data = ds.GetRasterBand(1).ReadRaster()
-    assert data is None
+    with pytest.raises(Exception, match="IReadBlock failed"):
+        ds.GetRasterBand(1).ReadRaster()
 
     # Change buffer type
-    with gdal.quiet_errors():
-        data = ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
-    assert data is None
+    with pytest.raises(Exception, match="IReadBlock failed"):
+        ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
 
     # Resampling case
-    with gdal.quiet_errors():
-        data = ds.GetRasterBand(1).ReadRaster(buf_xsize=10, buf_ysize=10)
-    assert data is None
+    with pytest.raises(Exception, match="IReadBlock failed"):
+        ds.GetRasterBand(1).ReadRaster(buf_xsize=10, buf_ysize=10)
 
 
 ###############################################################################
@@ -1436,23 +1389,23 @@ def test_rasterio_dataset_readarray_cint16():
     assert got[1] == numpy.array([[3 + 4j]])
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_rasterband_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
     band = ds.GetRasterBand(1)
-    with gdal.quiet_errors():
-        err = band.WriteRaster(0, 0, 20, 20, band.ReadRaster())
-    assert err != 0
+    with pytest.raises(
+        Exception, match="attempt to write to dataset opened in read-only mode"
+    ):
+        band.WriteRaster(0, 0, 20, 20, band.ReadRaster())
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_dataset_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
-    with gdal.quiet_errors():
-        err = ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
-    assert err != 0
+    with pytest.raises(
+        Exception, match="not permitted on dataset opened in read-only mode"
+    ):
+        ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
 
 
 @pytest.mark.parametrize("resample_alg", [-1, 8, "foo"])
@@ -3384,44 +3337,35 @@ def test_rasterio_writeraster_from_memoryview():
 # Test ReadRaster() in an existing buffer
 
 
-@gdaltest.disable_exceptions()
-def test_rasterio_readraster_in_existing_buffer():
+@pytest.mark.parametrize("src_type", ("dataset", "band"))
+def test_rasterio_readraster_in_existing_buffer(src_type):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
     ar = bytearray([1, 2])
     ds.WriteRaster(0, 0, 2, 1, ar)
     band = ds.GetRasterBand(1)
 
-    # buf_obj is of expected size
-    assert ds.ReadRaster(buf_obj=bytearray([0, 0])) == ar
-    # buf_obj is larger than expected
-    assert ds.ReadRaster(buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdal.quiet_errors():
-        # buf_obj is a wrong object type
-        assert ds.ReadRaster(buf_obj=123) is None
-        # buf_obj is not large enough
-        assert ds.ReadRaster(buf_obj=bytearray([0])) is None
-        # buf_obj is read-only
-        assert ds.ReadRaster(buf_obj=bytes(bytearray([0, 0]))) is None
+    src = ds if src_type == "dataset" else band
 
     # buf_obj is of expected size
-    assert band.ReadRaster(buf_obj=bytearray([0, 0])) == ar
+    assert src.ReadRaster(buf_obj=bytearray([0, 0])) == ar
     # buf_obj is larger than expected
-    assert band.ReadRaster(buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdal.quiet_errors():
-        # buf_obj is a wrong object type
-        assert band.ReadRaster(buf_obj=123) is None
-        # buf_obj is not large enough
-        assert band.ReadRaster(buf_obj=bytearray([0])) is None
-        # buf_obj is read-only
-        assert band.ReadRaster(buf_obj=bytes(bytearray([0, 0]))) is None
+    assert src.ReadRaster(buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
+
+    with pytest.raises(Exception, match="buf_obj is not a simple writable buffer"):
+        src.ReadRaster(buf_obj=123)
+
+    with pytest.raises(Exception, match="buf_obj length .* should be at least 2"):
+        src.ReadRaster(buf_obj=bytearray([0]))
+
+    with pytest.raises(Exception, match="buf_obj is not a simple writable buffer"):
+        src.ReadRaster(buf_obj=bytes(bytearray([0, 0])))
 
 
 ###############################################################################
 # Test ReadBlock() in an existing buffer
 
 
-@gdaltest.disable_exceptions()
 def test_rasterio_readblock_in_existing_buffer():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
@@ -3435,20 +3379,21 @@ def test_rasterio_readblock_in_existing_buffer():
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0, 0])) == ar
     # buf_obj is larger than expected
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdal.quiet_errors():
-        # buf_obj is a wrong object type
-        assert band.ReadBlock(0, 0, buf_obj=123) is None
-        # buf_obj is not large enough
-        assert band.ReadBlock(0, 0, buf_obj=bytearray([0])) is None
-        # buf_obj is read-only
-        assert band.ReadBlock(0, 0, buf_obj=bytes(bytearray([0, 0]))) is None
+
+    with pytest.raises(Exception, match="buf_obj is not a simple writable buffer"):
+        band.ReadBlock(0, 0, buf_obj=123)
+
+    with pytest.raises(Exception, match="buf_obj length .* should be at least 2"):
+        band.ReadBlock(0, 0, buf_obj=bytearray([0]))
+
+    with pytest.raises(Exception, match="buf_obj is not a simple writable buffer"):
+        band.ReadBlock(0, 0, buf_obj=bytes(bytearray([0, 0])))
 
 
 ###############################################################################
 # Test ReadRaster() in an existing buffer and alignment issues
 
 
-@gdaltest.disable_exceptions()
 @pytest.mark.parametrize(
     "datatype",
     [
@@ -3476,32 +3421,29 @@ def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
     # buf_obj has appropriate alignment
     assert ds.ReadRaster(buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdal.quiet_errors():
-        # buf_obj has not appropriate alignment
-        assert (
-            ds.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
-            is None
-        )
+    # buf_obj does not have appropriate alignment
+    with pytest.raises(
+        Exception, match="does not have appropriate alignment for data type"
+    ):
+        ds.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
 
     # buf_obj has appropriate alignment
     assert band.ReadRaster(buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdal.quiet_errors():
-        # buf_obj has not appropriate alignment
-        assert (
-            band.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
-            is None
-        )
+    # buf_obj does not have appropriate alignment
+    with pytest.raises(
+        Exception, match="does not have appropriate alignment for data type"
+    ):
+        band.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
 
     # buf_obj has appropriate alignment
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdal.quiet_errors():
-        # buf_obj has not appropriate alignment
-        assert (
-            band.ReadBlock(0, 0, buf_obj=memoryview(bytearray([0] * (2 * 8 + 1)))[1:])
-            is None
-        )
+    # buf_obj does not have appropriate alignment
+    with pytest.raises(
+        Exception, match="does not have appropriate alignment for data type"
+    ):
+        band.ReadBlock(0, 0, buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
 
 
 def test_rasterio_gdal_rasterio_resampling():
