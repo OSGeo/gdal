@@ -706,7 +706,7 @@ def test_nitf_28_jp2ecw(tmp_path):
 
     import ecw
 
-    if not ecw.has_write_support(tmp_path):
+    if not ecw.has_write_support():
         pytest.skip()
 
     # Deregister other potential conflicting JPEG2000 drivers
@@ -1753,7 +1753,7 @@ def test_nitf_43_jasper(tmp_path):
 def test_nitf_43_jp2ecw(tmp_path):
     import ecw
 
-    if not ecw.has_write_support(tmp_path):
+    if not ecw.has_write_support():
         pytest.skip()
     nitf_43(tmp_path, "JP2ECW", ["IC=C8", "TARGET=0"])
 

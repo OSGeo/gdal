@@ -19,6 +19,7 @@ import os.path
 import shutil
 import struct
 import sys
+import tempfile
 
 import gdaltest
 import pytest
@@ -30,7 +31,7 @@ pytestmark = pytest.mark.require_driver("ECW")
 ###############################################################################
 
 
-def has_write_support(tmp_path):
+def has_write_support():
     if hasattr(gdaltest, "b_ecw_has_write_support"):
         return gdaltest.b_ecw_has_write_support
     gdaltest.b_ecw_has_write_support = False
@@ -48,24 +49,17 @@ def has_write_support(tmp_path):
 
     ds = gdal.Open("data/ecw/jrc.ecw")
     if ds:
-        out_ds = ecw_drv.CreateCopy(
-            str(tmp_path / "jrc_out.ecw"), ds, options=["TARGET=75"]
-        )
-        if out_ds:
-            out_ds = None
-            gdaltest.b_ecw_has_write_support = True
+        with tempfile.TemporaryDirectory() as tmp_path:
+            out_ds = ecw_drv.CreateCopy(
+                os.path.join(tmp_path, "jrc_out.ecw"), ds, options=["TARGET=75"]
+            )
+            if out_ds:
+                out_ds = None
+                gdaltest.b_ecw_has_write_support = True
 
-            try:
-                os.remove(str(tmp_path / "jrc_out.ecw"))
-            except OSError:
-                pass
-            try:
-                os.remove(str(tmp_path / "jrc_out.ecw.aux.xml"))
-            except OSError:
-                pass
-        else:
-            if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
-                pytest.fail("ECW creation failed for unknown reason")
+            else:
+                if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
+                    pytest.fail("ECW creation failed for unknown reason")
 
     return gdaltest.b_ecw_has_write_support
 
@@ -152,7 +146,7 @@ def test_ecw_2():
 
 def test_ecw_4(tmp_path):
 
-    if not has_write_support(tmp_path):
+    if not has_write_support():
         pytest.skip("ECW write support not available")
 
     src_ds = gdal.Open("data/ecw/jrc.ecw")
@@ -201,7 +195,7 @@ def test_ecw_4(tmp_path):
 
 
 def test_ecw_5(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/small.vrt")
@@ -272,7 +266,7 @@ def test_ecw_5(tmp_path):
 
 
 def test_ecw_7(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/small.vrt")
@@ -324,7 +318,7 @@ def test_ecw_7(tmp_path):
 
 
 def test_ecw_9(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -379,7 +373,7 @@ def test_ecw_9(tmp_path):
 
 
 def test_ecw_11(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     drv = gdal.GetDriverByName("NITF")
@@ -470,7 +464,7 @@ def test_ecw_13():
 
 
 def test_ecw_14(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/rgb_gcp.vrt")
@@ -855,7 +849,7 @@ def test_ecw_26(tmp_path):
 
 def test_ecw_27(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     ds = gdal.Open("data/jpeg2000/byte_without_geotransform.jp2")
@@ -1153,7 +1147,7 @@ def test_ecw_33_bis():
 
 def test_ecw_34(tmp_path):
 
-    if not has_write_support(tmp_path):
+    if not has_write_support():
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1183,7 +1177,7 @@ def test_ecw_34(tmp_path):
 
 
 def test_ecw_35(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     ds = gdal.GetDriverByName("MEM").Create("MEM:::", 128, 128, 1, gdal.GDT_UInt16)
@@ -1208,7 +1202,7 @@ def test_ecw_35(tmp_path):
 
 def test_ecw_36(tmp_path):
 
-    if not has_write_support(tmp_path):
+    if not has_write_support():
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1287,7 +1281,7 @@ def test_ecw_36(tmp_path):
 
 def test_ecw_37(tmp_path):
 
-    if not has_write_support(tmp_path):
+    if not has_write_support():
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1371,7 +1365,7 @@ def test_ecw_38(tmp_path):
 
 def test_ecw_39(tmp_path):
 
-    if not has_write_support(tmp_path):
+    if not has_write_support():
         pytest.skip("ECW write support not available")
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
@@ -1951,7 +1945,7 @@ def RemoveDriverMetadata(md):
 
 
 def test_ecw_45(tmp_path):
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     # No metadata
@@ -2038,7 +2032,7 @@ def test_ecw_45(tmp_path):
 
 def test_ecw_46(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     tmp_ds = gdaltest.jp2ecw_drv.CreateCopy(
@@ -2205,7 +2199,7 @@ def test_ecw_read_uint32_jpeg2000():
 
 def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_path):
 
-    if gdaltest.jp2ecw_drv is None or not has_write_support(tmp_path):
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
     filename = str(tmp_path / "out.jp2")

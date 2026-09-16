@@ -394,7 +394,7 @@ def pdf_get_J2KDriver(drv_name, tmpdir):
     if drv_name == "JP2ECW":
         import ecw
 
-        if not ecw.has_write_support(tmpdir):
+        if not ecw.has_write_support():
             return None
     return drv
 
