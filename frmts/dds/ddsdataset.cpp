@@ -500,7 +500,7 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
     VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
     if (fpImage == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create dds file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create dds file %s.",
                  pszFilename);
         return nullptr;
     }

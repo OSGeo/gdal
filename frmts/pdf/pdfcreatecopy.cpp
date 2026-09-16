@@ -4486,7 +4486,7 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     VSILFILE *fp = VSIFOpenL(pszFilename, "wb");
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.",
                  pszFilename);
         return nullptr;
     }

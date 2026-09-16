@@ -436,7 +436,7 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/,
     enum json_tokener_error jerr;
     if ((jerr = json_tokener_get_error(ctx.pTokener)) != json_tokener_success)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "JSON error: %s\n",
+        CPLError(CE_Failure, CPLE_AppDefined, "JSON error: %s",
                  json_tokener_error_desc(jerr));
         bResult = false;
     }

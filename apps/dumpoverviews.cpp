@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
             if (hSrcOver == nullptr)
             {
-                fprintf(stderr, "skipping overview %d as being null\n",
+                fprintf(stderr, "skipping overview %d because it is null\n",
                         iOverview);
                 continue;
             }

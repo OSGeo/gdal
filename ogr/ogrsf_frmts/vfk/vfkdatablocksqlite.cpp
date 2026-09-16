@@ -221,7 +221,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
         cpl::down_cast<VFKDataBlockSQLite *>(m_poReader->GetDataBlock("SOBR"));
     if (nullptr == poDataBlockPoints)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.",
                  m_pszName);
         return nInvalid;
     }

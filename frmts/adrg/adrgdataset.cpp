@@ -673,8 +673,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     VSILFILE *fdIMG = VSIFOpenL(pszIMGFileName, "rb");
     if (fdIMG == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s\n",
-                 pszIMGFileName);
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszIMGFileName);
         delete[] TILEINDEX;
         return nullptr;
     }
