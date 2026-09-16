@@ -1220,7 +1220,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 if (!bFound)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'sd_name' option should be be a valid "
+                             "'sd_name' option should be a valid "
                              "subdataset component name");
                     return nullptr;
                 }

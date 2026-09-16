@@ -440,4 +440,4 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushTile(
                TILE_SIZE * sizeof(Type), nullptr) == CE_None;
 }
 
-#endif  // GDAL_PIXEL_ACCESSOR_INCLUDED
+#endif  // GDAL_CACHED_PIXEL_ACCESSOR_INCLUDED

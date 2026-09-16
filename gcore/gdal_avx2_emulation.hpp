@@ -65,7 +65,6 @@ static inline __m128i GDALmm_mullo_epi32(__m128i x, __m128i y)
     const __m128i mul13 = _mm_shuffle_epi32(
         _mm_mul_epu32(_mm_srli_si128(x, 4), _mm_srli_si128(y, 4)), 2 << 2);
     return _mm_unpacklo_epi32(mul02, mul13);
-    ;
 }
 
 static inline __m128i GDALmm_cvtepu8_epi16(__m128i x)
