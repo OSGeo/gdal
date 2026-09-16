@@ -42,7 +42,7 @@ def has_jp2kdrv():
 
 
 @pytest.fixture(scope="module")
-def found_j2k_drivers(tmp_path_factory):
+def found_j2k_drivers():
     found_j2k_drivers = []
     for drvname in ["JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW"]:
         if gdal.GetDriverByName(drvname) is not None:
@@ -51,9 +51,7 @@ def found_j2k_drivers(tmp_path_factory):
             else:
                 import ecw
 
-                tmpdir = tmp_path_factory.mktemp("ecwtest")
-
-                if ecw.has_write_support(tmpdir):
+                if ecw.has_write_support():
                     found_j2k_drivers.append(drvname)
 
     return found_j2k_drivers
