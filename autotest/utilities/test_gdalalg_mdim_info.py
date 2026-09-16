@@ -159,6 +159,11 @@ def test_gdalalg_mdim_info_binary_json(tmp_path, gdal_path):
     out = gdaltest.runexternal(
         f"{gdal_path} mdim info {tmp_path}/byte.nc --format json"
     )
+
+    # make PROJ 9.9.0 output equivalent to previous versions (#15250)
+    out = out.replace("(E)", "easting")
+    out = out.replace("(N)", "northing")
+
     assert json.loads(out) == {
         "type": "group",
         "driver": "netCDF",
