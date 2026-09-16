@@ -96,12 +96,14 @@ def test_jpeg_2():
 # Create simple copy and check (greyscale) using progressive option.
 
 
-def test_jpeg_3():
+def test_jpeg_3(tmp_path):
 
     ds = gdal.Open("data/byte.tif")
 
     options = ["PROGRESSIVE=YES", "QUALITY=50", "WORLDFILE=YES"]
-    ds = gdal.GetDriverByName("JPEG").CreateCopy("tmp/byte.jpg", ds, options=options)
+    ds = gdal.GetDriverByName("JPEG").CreateCopy(
+        str(tmp_path / "byte.jpg"), ds, options=options
+    )
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -123,18 +125,18 @@ def test_jpeg_3():
 
     ds = None
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
     ds = None
 
-    os.unlink("tmp/byte.jpg.aux.xml")
+    os.unlink(str(tmp_path / "byte.jpg.aux.xml"))
 
     try:
-        os.stat("tmp/byte.wld")
+        os.stat(str(tmp_path / "byte.wld"))
     except OSError:
         pytest.fail("should have .wld file at that point")
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     gt = ds.GetGeoTransform()
     for i in range(6):
@@ -143,13 +145,13 @@ def test_jpeg_3():
         ), "did not get expected geotransform from .wld"
     ds = None
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     ds.GetFileList()
     ds = None
 
-    gdal.GetDriverByName("JPEG").Delete("tmp/byte.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "byte.jpg"))
 
-    assert not os.path.exists("tmp/byte.wld")
+    assert not os.path.exists(str(tmp_path / "byte.wld"))
 
 
 ###############################################################################
@@ -174,11 +176,11 @@ def test_jpeg_4():
 # Verify CreateCopy() of masked jpeg.
 
 
-def test_jpeg_5():
+def test_jpeg_5(tmp_path):
 
     ds = gdal.Open("data/jpeg/masked.jpg")
 
-    ds2 = gdal.GetDriverByName("JPEG").CreateCopy("tmp/masked.jpg", ds)
+    ds2 = gdal.GetDriverByName("JPEG").CreateCopy(str(tmp_path / "masked.jpg"), ds)
 
     refband = ds2.GetRasterBand(1)
 
@@ -189,7 +191,7 @@ def test_jpeg_5():
 
     refband = None
     ds2 = None
-    gdal.GetDriverByName("JPEG").Delete("tmp/masked.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "masked.jpg"))
 
 
 ###############################################################################
@@ -372,7 +374,7 @@ def test_jpeg_10(jpeg_version):
 # Check creating a 12-bit JPEG
 
 
-def test_jpeg_11(jpeg_version):
+def test_jpeg_11(tmp_path, jpeg_version):
 
     if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
@@ -384,16 +386,16 @@ def test_jpeg_11(jpeg_version):
         pytest.skip("12bit jpeg not available")
 
     ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
-    out_ds = gdal.GetDriverByName("JPEG").CreateCopy("tmp/jpeg11.jpg", ds)
+    out_ds = gdal.GetDriverByName("JPEG").CreateCopy(str(tmp_path / "jpeg11.jpg"), ds)
     del out_ds
 
-    ds = gdal.Open("tmp/jpeg11.jpg")
+    ds = gdal.Open(str(tmp_path / "jpeg11.jpg"))
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 3613 and stats[2] <= 3614
     ds = None
 
-    gdal.GetDriverByName("JPEG").Delete("tmp/jpeg11.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "jpeg11.jpg"))
 
 
 ###############################################################################

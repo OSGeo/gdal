@@ -31,7 +31,9 @@ def test_rfc30_1():
         "http://download.osgeo.org/gdal/data/gtiff/" + filename_escaped, filename
     )
 
-    filename = "tmp/cache/" + filename
+    tmp_dir = gdaltest.get_cache_dir()
+
+    filename = tmp_dir + "/" + filename
 
     ds = gdal.Open(filename)
 
@@ -50,9 +52,9 @@ def test_rfc30_1():
 # Try creating, then renaming a utf-8 named file.
 
 
-def test_rfc30_2():
+def test_rfc30_2(tmp_path):
 
-    filename = "tmp/yy\u4e2d\u6587.\u4e2d\u6587"
+    filename = str(tmp_path / "yy\u4e2d\u6587.\u4e2d\u6587")
     fd = gdal.VSIFOpenL(filename, "w")
     assert fd is not None, "failed to create utf-8 named file."
 
@@ -61,7 +63,7 @@ def test_rfc30_2():
 
     # rename
 
-    new_filename = "tmp/yy\u4e2d\u6587.\u4e2d\u6587"
+    new_filename = str(tmp_path / "yy\u4e2d\u6587.\u4e2d\u6587")
     filename_for_rename = filename
 
     assert gdal.Rename(filename_for_rename, new_filename) == 0, "utf-8 rename failed."

@@ -1366,7 +1366,7 @@ def with_webserver():
     ],
 )
 @pytest.mark.require_driver("CSV")
-def test_ogr_sql_geocode(with_webserver, service, template):
+def test_ogr_sql_geocode(tmp_path, with_webserver, service, template):
 
     options = {
         "OGR_GEOCODE_APPLICATION": "GDAL/OGR autotest suite",
@@ -1381,7 +1381,10 @@ def test_ogr_sql_geocode(with_webserver, service, template):
     elif service == "BING":
         options["OGR_GEOCODE_KEY"] = "fakekey"
 
-    for cache_filename in ["tmp/ogr_geocode_cache.sqlite", "tmp/ogr_geocode_cache.csv"]:
+    for cache_filename in [
+        str(tmp_path / "ogr_geocode_cache.sqlite"),
+        str(tmp_path / "ogr_geocode_cache.csv"),
+    ]:
 
         gdal.Unlink(cache_filename)
 
@@ -1503,7 +1506,7 @@ def test_ogr_sql_geocode(with_webserver, service, template):
     ],
 )
 @pytest.mark.require_driver("CSV")
-def test_ogr_sql_reverse_geocode(with_webserver, service, template):
+def test_ogr_sql_reverse_geocode(tmp_path, with_webserver, service, template):
 
     options = {
         "OGR_GEOCODE_APPLICATION": "GDAL/OGR autotest suite",
@@ -1518,7 +1521,10 @@ def test_ogr_sql_reverse_geocode(with_webserver, service, template):
     elif service == "BING":
         options["OGR_GEOCODE_KEY"] = "fakekey"
 
-    for cache_filename in ["tmp/ogr_geocode_cache.sqlite", "tmp/ogr_geocode_cache.csv"]:
+    for cache_filename in [
+        tmp_path / "ogr_geocode_cache.sqlite",
+        tmp_path / "ogr_geocode_cache.csv",
+    ]:
 
         gdal.Unlink(cache_filename)
 

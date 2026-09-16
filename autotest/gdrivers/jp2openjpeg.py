@@ -110,7 +110,10 @@ def test_jp2openjpeg_3():
 # Test copying byte.jp2
 
 
-def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
+def test_jp2openjpeg_4(tmp_path, out_filename=None):
+
+    if out_filename is None:
+        out_filename = str(tmp_path / "jp2openjpeg_4.jp2")
 
     src_ds = gdal.Open("data/jpeg2000/byte.jp2")
     # 5x3 wavelet with Kakadu < 6.4 last layer at -256.0
@@ -172,8 +175,8 @@ def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
     assert cs == 50054, "bad checksum"
 
 
-def test_jp2openjpeg_4_vsimem():
-    return test_jp2openjpeg_4("/vsimem/jp2openjpeg_4.jp2")
+def test_jp2openjpeg_4_vsimem(tmp_path):
+    return test_jp2openjpeg_4(tmp_path, "/vsimem/jp2openjpeg_4.jp2")
 
 
 ###############################################################################
@@ -334,37 +337,37 @@ def test_jp2openjpeg_11():
 # Check that PAM overrides internal georeferencing (#5279)
 
 
-def test_jp2openjpeg_12():
+def test_jp2openjpeg_12(tmp_path):
 
     # Override projection
-    shutil.copy("data/jpeg2000/byte.jp2", "tmp/jp2openjpeg_12.jp2")
+    shutil.copy("data/jpeg2000/byte.jp2", str(tmp_path / "jp2openjpeg_12.jp2"))
 
-    ds = gdal.Open("tmp/jp2openjpeg_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_12.jp2"))
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/jp2openjpeg_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_12.jp2"))
     wkt = ds.GetProjectionRef()
     ds = None
 
-    gdaltest.jp2openjpeg_drv.Delete("tmp/jp2openjpeg_12.jp2")
+    gdaltest.jp2openjpeg_drv.Delete(str(tmp_path / "jp2openjpeg_12.jp2"))
 
     assert "32631" in wkt
 
     # Override geotransform
-    shutil.copy("data/jpeg2000/byte.jp2", "tmp/jp2openjpeg_12.jp2")
+    shutil.copy("data/jpeg2000/byte.jp2", str(tmp_path / "jp2openjpeg_12.jp2"))
 
-    ds = gdal.Open("tmp/jp2openjpeg_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_12.jp2"))
     ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
     ds = None
 
-    ds = gdal.Open("tmp/jp2openjpeg_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_12.jp2"))
     gt = ds.GetGeoTransform()
     ds = None
 
-    gdaltest.jp2openjpeg_drv.Delete("tmp/jp2openjpeg_12.jp2")
+    gdaltest.jp2openjpeg_drv.Delete(str(tmp_path / "jp2openjpeg_12.jp2"))
 
     assert gt == (1000, 1, 0, 2000, 0, -1)
 
@@ -377,17 +380,19 @@ def test_jp2openjpeg_12():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_jp2openjpeg_13():
+def test_jp2openjpeg_13(tmp_path):
 
     # Create a dataset with GCPs
     src_ds = gdal.Open("data/rgb_gcp.vrt")
-    ds = gdaltest.jp2openjpeg_drv.CreateCopy("tmp/jp2openjpeg_13.jp2", src_ds)
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy(
+        str(tmp_path / "jp2openjpeg_13.jp2"), src_ds
+    )
     ds = None
     src_ds = None
 
-    assert gdal.VSIStatL("tmp/jp2openjpeg_13.jp2.aux.xml") is None
+    assert gdal.VSIStatL(str(tmp_path / "jp2openjpeg_13.jp2.aux.xml")) is None
 
-    ds = gdal.Open("tmp/jp2openjpeg_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_13.jp2"))
     count = ds.GetGCPCount()
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
@@ -397,20 +402,20 @@ def test_jp2openjpeg_13():
     ds = None
 
     # Override GCP
-    ds = gdal.Open("tmp/jp2openjpeg_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_13.jp2"))
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/jp2openjpeg_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2openjpeg_13.jp2"))
     count = ds.GetGCPCount()
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
     ds = None
 
-    gdaltest.jp2openjpeg_drv.Delete("tmp/jp2openjpeg_13.jp2")
+    gdaltest.jp2openjpeg_drv.Delete(str(tmp_path / "jp2openjpeg_13.jp2"))
 
     assert count == 1
     assert len(gcps) == 1
@@ -553,12 +558,14 @@ def test_jp2openjpeg_20():
 
     xmlvalidate = pytest.importorskip("xmlvalidate")
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET.zip")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET.zip")
     except OSError:
         try:
             os.stat("../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip")
-            shutil.copy("../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip", "tmp/cache")
+            shutil.copy("../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip", tmp_dir)
         except OSError:
             url = "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip"
             gdaltest.download_or_skip(
@@ -569,21 +576,21 @@ def test_jp2openjpeg_20():
             )
 
     try:
-        os.mkdir("tmp/cache/SCHEMAS_OPENGIS_NET")
+        os.mkdir(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
     except OSError:
         pass
 
     try:
         os.stat(
-            "tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd"
+            f"{tmp_dir}/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd"
         )
     except OSError:
         gdaltest.unzip(
-            "tmp/cache/SCHEMAS_OPENGIS_NET", "tmp/cache/SCHEMAS_OPENGIS_NET.zip"
+            f"{tmp_dir}/SCHEMAS_OPENGIS_NET", f"{tmp_dir}/SCHEMAS_OPENGIS_NET.zip"
         )
 
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xlink.xsd")
     except OSError:
         xlink_xsd_url = "http://www.w3.org/1999/xlink.xsd"
         if not gdaltest.download_file(
@@ -601,7 +608,7 @@ def test_jp2openjpeg_20():
             )
 
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xml.xsd")
     except OSError:
         xlink_xsd_url = "http://www.w3.org/1999/xml.xsd"
         if not gdaltest.download_file(
@@ -618,7 +625,7 @@ def test_jp2openjpeg_20():
                 max_download_duration=10,
             )
 
-    xmlvalidate.transform_abs_links_to_ref_links("tmp/cache/SCHEMAS_OPENGIS_NET")
+    xmlvalidate.transform_abs_links_to_ref_links(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
 
     src_ds = gdal.Open("data/byte.tif")
     ds = gdaltest.jp2openjpeg_drv.CreateCopy("/vsimem/jp2openjpeg_20.jp2", src_ds)
@@ -627,7 +634,7 @@ def test_jp2openjpeg_20():
     gdal.Unlink("/vsimem/jp2openjpeg_20.jp2")
 
     assert xmlvalidate.validate(
-        gmljp2, ogc_schemas_location="tmp/cache/SCHEMAS_OPENGIS_NET"
+        gmljp2, ogc_schemas_location=f"{tmp_dir}/SCHEMAS_OPENGIS_NET"
     )
 
 
@@ -892,11 +899,13 @@ def validate(
 
     validate_jp2 = pytest.importorskip("validate_jp2")
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET")
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd")
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd")
-        ogc_schemas_location = "tmp/cache/SCHEMAS_OPENGIS_NET"
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xlink.xsd")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xml.xsd")
+        ogc_schemas_location = f"{tmp_dir}/SCHEMAS_OPENGIS_NET"
     except OSError:
         ogc_schemas_location = "disabled"
 
@@ -1633,14 +1642,16 @@ def test_jp2openjpeg_38():
     except ImportError:
         print("Cannot import xmlvalidate")
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
     except OSError:
         do_validate = False
 
     if do_validate:
         assert xmlvalidate.validate(
-            crsdictionary, ogc_schemas_location="tmp/cache/SCHEMAS_OPENGIS_NET"
+            crsdictionary, ogc_schemas_location=f"{tmp_dir}/SCHEMAS_OPENGIS_NET"
         )
 
 
@@ -3063,14 +3074,16 @@ def test_jp2openjpeg_online_1():
         "7sisters200.j2k",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 32669 on my PC
     tst = gdaltest.GDALTest(
-        "JP2OpenJPEG", "tmp/cache/7sisters200.j2k", 1, None, filename_absolute=1
+        "JP2OpenJPEG", f"{tmp_dir}/7sisters200.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/7sisters200.j2k")
+    ds = gdal.Open(f"{tmp_dir}/7sisters200.j2k")
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -3084,14 +3097,16 @@ def test_jp2openjpeg_online_2():
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 15621 on my PC
     tst = gdaltest.GDALTest(
-        "JP2OpenJPEG", "tmp/cache/gcp.jp2", 1, None, filename_absolute=1
+        "JP2OpenJPEG", f"{tmp_dir}/gcp.jp2", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/gcp.jp2")
+    ds = gdal.Open(f"{tmp_dir}/gcp.jp2")
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
@@ -3113,14 +3128,16 @@ def test_jp2openjpeg_online_3():
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "JP2OpenJPEG", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
+        "JP2OpenJPEG", f"{tmp_dir}/Bretagne1.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne1.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne1.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne1.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne1.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
     print(ds.GetRasterBand(1).Checksum())
     print(ds_ref.GetRasterBand(1).Checksum())
@@ -3145,14 +3162,16 @@ def test_jp2openjpeg_online_4():
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "JP2OpenJPEG", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
+        "JP2OpenJPEG", f"{tmp_dir}/Bretagne2.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne2.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne2.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne2.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne2.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, 0, 0, 1024, 1024)
     print(ds.GetRasterBand(1).Checksum())
     print(ds_ref.GetRasterBand(1).Checksum())
@@ -3175,7 +3194,9 @@ def test_jp2openjpeg_online_5():
         "file9.jp2",
     )
 
-    ds = gdal.Open("tmp/cache/file9.jp2")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/file9.jp2")
     cs1 = ds.GetRasterBand(1).Checksum()
     assert cs1 == 47664, "Did not get expected checksums"
     assert (
@@ -3195,7 +3216,9 @@ def test_jp2openjpeg_online_6():
         "file3.jp2",
     )
 
-    ds = gdal.Open("tmp/cache/file3.jp2")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/file3.jp2")
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()

@@ -456,16 +456,18 @@ def test_ogr_fgdb_15(tmp_path):
 # Test fix for #5674
 
 
-def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
+def test_ogr_fgdb_16(tmp_path, openfilegdb_drv, fgdb_drv):
     if fgdb_drv is None or openfilegdb_drv is None:
         pytest.skip()
 
     try:
-        gdaltest.unzip("tmp/cache", "data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip")
+        gdaltest.unzip(
+            tmp_path / "cache", "data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip"
+        )
     except OSError:
         pass
     try:
-        os.stat("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        os.stat(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
     except OSError:
         pytest.skip()
 
@@ -476,13 +478,13 @@ def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
 
     try:
-        ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        ds = ogr.Open(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
         assert ds is not None
     finally:
         # Deregister OpenFileGDB again
         openfilegdb_drv.Deregister()
 
-        shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        shutil.rmtree(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
 
 
 ###############################################################################

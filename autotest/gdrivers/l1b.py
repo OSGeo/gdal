@@ -86,7 +86,9 @@ l1b_list = [
 def test_l1b(downloadURL, fileName, checksum, download_size, gcpNumber):
     gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
-    ds = gdal.Open("tmp/cache/" + fileName)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(tmp_dir + "/" + fileName)
 
     assert ds.GetRasterBand(1).Checksum() == checksum
 
@@ -94,12 +96,13 @@ def test_l1b(downloadURL, fileName, checksum, download_size, gcpNumber):
 
 
 def test_l1b_geoloc():
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n12gac8bit.l1b")
+        os.stat(f"{tmp_dir}/n12gac8bit.l1b")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open("tmp/cache/n12gac8bit.l1b")
+    ds = gdal.Open(f"{tmp_dir}/n12gac8bit.l1b")
     md = ds.GetMetadata("GEOLOCATION")
     expected_md = {
         "LINE_OFFSET": "0",
@@ -107,15 +110,15 @@ def test_l1b_geoloc():
         "PIXEL_OFFSET": "0",
         "PIXEL_STEP": "1",
         "X_BAND": "1",
-        "X_DATASET": 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
+        "X_DATASET": f'L1BGCPS_INTERPOL:"{tmp_dir}/n12gac8bit.l1b"',
         "Y_BAND": "2",
-        "Y_DATASET": 'L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"',
+        "Y_DATASET": f'L1BGCPS_INTERPOL:"{tmp_dir}/n12gac8bit.l1b"',
     }
     for key in expected_md:
         assert md[key] == expected_md[key]
     ds = None
 
-    ds = gdal.Open('L1BGCPS_INTERPOL:"tmp/cache/n12gac8bit.l1b"')
+    ds = gdal.Open(f'L1BGCPS_INTERPOL:"{tmp_dir}/n12gac8bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 62397
     cs = ds.GetRasterBand(2).Checksum()
@@ -127,22 +130,23 @@ def test_l1b_geoloc():
 
 
 def test_l1b_solar_zenith_angles_before_noaa_15():
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n12gac10bit.l1b")
+        os.stat(f"{tmp_dir}/n12gac10bit.l1b")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open("tmp/cache/n12gac10bit.l1b")
+    ds = gdal.Open(f"{tmp_dir}/n12gac10bit.l1b")
     md = ds.GetMetadata("SUBDATASETS")
     expected_md = {
-        "SUBDATASET_1_NAME": 'L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"',
+        "SUBDATASET_1_NAME": f'L1B_SOLAR_ZENITH_ANGLES:"{tmp_dir}/n12gac10bit.l1b"',
         "SUBDATASET_1_DESC": "Solar zenith angles",
     }
     for key in expected_md:
         assert md[key] == expected_md[key]
     ds = None
 
-    ds = gdal.Open('L1B_SOLAR_ZENITH_ANGLES:"tmp/cache/n12gac10bit.l1b"')
+    ds = gdal.Open(f'L1B_SOLAR_ZENITH_ANGLES:"{tmp_dir}/n12gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 22924
 
@@ -151,19 +155,20 @@ def test_l1b_solar_zenith_angles_before_noaa_15():
 #
 
 
-def test_l1b_metadata_before_noaa_15():
+def test_l1b_metadata_before_noaa_15(tmp_path):
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n12gac10bit.l1b")
+        os.stat(f"{tmp_dir}/n12gac10bit.l1b")
     except OSError:
         pytest.skip()
 
     with gdal.config_options(
         {"L1B_FETCH_METADATA": "YES", "L1B_METADATA_DIRECTORY": "tmp"}
     ):
-        ds = gdal.Open("tmp/cache/n12gac10bit.l1b")
+        ds = gdal.Open(f"{tmp_dir}/n12gac10bit.l1b")
     del ds
 
-    f = open("tmp/n12gac10bit.l1b_metadata.csv", "rb")
+    f = open(str(tmp_path / "n12gac10bit.l1b_metadata.csv"), "rb")
     ln = f.readline().decode("ascii")
     assert (
         ln
@@ -176,7 +181,7 @@ def test_l1b_metadata_before_noaa_15():
     )
     f.close()
 
-    os.unlink("tmp/n12gac10bit.l1b_metadata.csv")
+    os.unlink(str(tmp_path / "n12gac10bit.l1b_metadata.csv"))
 
 
 ###############################################################################
@@ -184,22 +189,23 @@ def test_l1b_metadata_before_noaa_15():
 
 
 def test_l1b_angles_after_noaa_15():
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n16gac10bit.l1b")
+        os.stat(f"{tmp_dir}/n16gac10bit.l1b")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open("tmp/cache/n16gac10bit.l1b")
+    ds = gdal.Open(f"{tmp_dir}/n16gac10bit.l1b")
     md = ds.GetMetadata("SUBDATASETS")
     expected_md = {
-        "SUBDATASET_1_NAME": 'L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"',
+        "SUBDATASET_1_NAME": f'L1B_ANGLES:"{tmp_dir}/n16gac10bit.l1b"',
         "SUBDATASET_1_DESC": "Solar zenith angles, satellite zenith angles and relative azimuth angles",
     }
     for key in expected_md:
         assert md[key] == expected_md[key]
     ds = None
 
-    ds = gdal.Open('L1B_ANGLES:"tmp/cache/n16gac10bit.l1b"')
+    ds = gdal.Open(f'L1B_ANGLES:"{tmp_dir}/n16gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 31487
     cs = ds.GetRasterBand(2).Checksum()
@@ -213,22 +219,23 @@ def test_l1b_angles_after_noaa_15():
 
 
 def test_l1b_clouds_after_noaa_15():
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n16gac10bit.l1b")
+        os.stat(f"{tmp_dir}/n16gac10bit.l1b")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open("tmp/cache/n16gac10bit.l1b")
+    ds = gdal.Open(f"{tmp_dir}/n16gac10bit.l1b")
     md = ds.GetMetadata("SUBDATASETS")
     expected_md = {
-        "SUBDATASET_2_NAME": 'L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"',
+        "SUBDATASET_2_NAME": f'L1B_CLOUDS:"{tmp_dir}/n16gac10bit.l1b"',
         "SUBDATASET_2_DESC": "Clouds from AVHRR (CLAVR)",
     }
     for key in expected_md:
         assert md[key] == expected_md[key]
     ds = None
 
-    ds = gdal.Open('L1B_CLOUDS:"tmp/cache/n16gac10bit.l1b"')
+    ds = gdal.Open(f'L1B_CLOUDS:"{tmp_dir}/n16gac10bit.l1b"')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0
 
@@ -237,19 +244,20 @@ def test_l1b_clouds_after_noaa_15():
 #
 
 
-def test_l1b_metadata_after_noaa_15():
+def test_l1b_metadata_after_noaa_15(tmp_path):
+    tmp_dir = gdaltest.get_cache_dir()
     try:
-        os.stat("tmp/cache/n16gac10bit.l1b")
+        os.stat(f"{tmp_dir}/n16gac10bit.l1b")
     except OSError:
         pytest.skip()
 
     with gdal.config_options(
         {"L1B_FETCH_METADATA": "YES", "L1B_METADATA_DIRECTORY": "tmp"}
     ):
-        ds = gdal.Open("tmp/cache/n16gac10bit.l1b")
+        ds = gdal.Open(f"{tmp_dir}/n16gac10bit.l1b")
     del ds
 
-    f = open("tmp/n16gac10bit.l1b_metadata.csv", "rb")
+    f = open(tmp_path / "n16gac10bit.l1b_metadata.csv", "rb")
     ln = f.readline().decode("ascii")
     assert (
         ln
@@ -261,8 +269,6 @@ def test_l1b_metadata_after_noaa_15():
         == "3406,0,2003,85,3275054,79,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.052300,-2.015999,0.152800,-51.910000,499,0.052300,-2.015999,0.152800,-51.910000,498,0.052300,-2.015999,0.152800,-51.910000,498,0.051300,-1.942999,0.151000,-51.770000,500,0.051300,-1.942999,0.151000,-51.770000,500,0.051300,-1.942999,0.151000,-51.770000,500,0.000000,0.000000,0.000000,0.000000,0,0.000000,0.000000,0.000000,0.000000,0,0.000000,0.000000,0.000000,0.000000,0,2.488212,-0.002511,0.000000,2.488212,-0.002511,0.000000,179.546496,-0.188553,0.000008,179.546496,-0.188553,0.000008,195.236384,-0.201709,0.000006,195.236384,-0.201709,0.000006,0,0,0,0,0,608093,-0.021000,-0.007000,0.000000,862.000000\n"
     )
     f.close()
-
-    os.unlink("tmp/n16gac10bit.l1b_metadata.csv")
 
 
 ###############################################################################

@@ -236,9 +236,9 @@ def test_virtualmem_2():
 # Test virtual mem auto with a raw driver
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
 @pytest.mark.require_driver("EHdr")
-def test_virtualmem_3():
+def test_virtualmem_3(tmp_path):
 
-    for tmpfile in ["tmp/virtualmem_3.img", "/vsimem/virtualmem_3.img"]:
+    for tmpfile in [str(tmp_path / "virtualmem_3.img"), "/vsimem/virtualmem_3.img"]:
         ds = gdal.GetDriverByName("EHdr").Create(tmpfile, 400, 300, 2)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         ar2 = ds.GetRasterBand(2).GetVirtualMemAutoArray(gdal.GF_Write)
@@ -271,8 +271,8 @@ def test_virtualmem_3():
 ###############################################################################
 # Test virtual mem auto with GTiff
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
-def test_virtualmem_4():
-    tmpfile = "tmp/virtualmem_4.tif"
+def test_virtualmem_4(tmp_path):
+    tmpfile = str(tmp_path / "virtualmem_4.tif")
     for option in ["INTERLEAVE=PIXEL", "INTERLEAVE=BAND"]:
         if gdal.VSIStatL(tmpfile) is not None:
             gdal.Unlink(tmpfile)

@@ -100,9 +100,9 @@ def test_ktx2_read_wrong_subds(filename):
         assert gdal.Open(filename) is None
 
 
-def test_ktx2_write_rgba_output_on_filesystem():
+def test_ktx2_write_rgba_output_on_filesystem(tmp_path):
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
-    out_filename = "tmp/out.ktx2"
+    out_filename = tmp_path / "out.ktx2"
     assert gdal.GetDriverByName("KTX2").CreateCopy(out_filename, src_ds) is not None
     out_ds = gdal.Open(out_filename)
     assert out_ds.RasterXSize == src_ds.RasterXSize
@@ -114,7 +114,6 @@ def test_ktx2_write_rgba_output_on_filesystem():
         [7913, 58488, 37737, 8324],
     )  # Windows
     assert out_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "ETC1S"
-    gdal.Unlink(out_filename)
 
 
 @pytest.mark.parametrize("compression", ["ETC1S", "UASTC"])

@@ -52,27 +52,6 @@ def module_disable_exceptions():
 
 
 ###############################################################################
-
-
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-
-    yield
-
-    try:
-        with gdal.quiet_errors():
-            ogr.GetDriverByName("CSV").DeleteDataSource("tmp/csvwrk")
-    except Exception:
-        pass
-
-    try:
-        with gdal.quiet_errors():
-            ogr.GetDriverByName("CSV").DeleteDataSource("tmp/ogr_csv_29")
-    except Exception:
-        pass
-
-
-###############################################################################
 # Check layer
 
 

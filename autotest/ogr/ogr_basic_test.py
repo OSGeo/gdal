@@ -447,7 +447,7 @@ def test_ogr_basic_9():
 # Run test_ogrsf -all_drivers
 
 
-def test_ogr_basic_10():
+def test_ogr_basic_10(tmp_path):
 
     import test_cli_utilities
 
@@ -458,7 +458,9 @@ def test_ogr_basic_10():
     # under UBSAN.
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
-        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES --config CPL_TMPDIR tmp"
+        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES --config CPL_TMPDIR {}".format(
+            tmp_path
+        )
     )
 
     assert "INFO" in ret

@@ -472,17 +472,13 @@ def test_vrt_read_12(tmp_path):
     if not gdaltest.support_symlink():
         pytest.skip()
 
-    try:
-        os.remove("tmp/byte.vrt")
-        print("Removed tmp/byte.vrt. Was not supposed to exist...")
-    except OSError:
-        pass
+    gdal.MkdirRecursive(tmp_path / "data", 0o755)
+    gdal.Mkdir(tmp_path / "test_vrt_read_12", 0o755)
+    gdal.CopyFile("data/byte.vrt", tmp_path / "data" / "byte.vrt")
 
-    os.symlink("../data/byte.vrt", "tmp/byte.vrt")
+    os.symlink("../data/byte.vrt", tmp_path / "test_vrt_read_12" / "byte.vrt")
 
-    ds = gdal.Open("tmp/byte.vrt")
-
-    os.remove("tmp/byte.vrt")
+    ds = gdal.Open(tmp_path / "test_vrt_read_12" / "byte.vrt")
 
     assert ds is not None
 
@@ -491,29 +487,21 @@ def test_vrt_read_12(tmp_path):
 # Test resolving files from a symlinked vrt using relativeToVRT with a relative symlink
 
 
-def test_vrt_read_13():
+def test_vrt_read_13(tmp_path):
 
     if not gdaltest.support_symlink():
         pytest.skip()
 
-    try:
-        os.remove("tmp/byte.vrt")
-        print("Removed tmp/byte.vrt. Was not supposed to exist...")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/other_byte.vrt")
-        print("Removed tmp/other_byte.vrt. Was not supposed to exist...")
-    except OSError:
-        pass
+    gdal.MkdirRecursive(tmp_path / "data", 0o755)
+    gdal.Mkdir(tmp_path / "test_vrt_read_13", 0o755)
+    gdal.CopyFile("data/byte.vrt", tmp_path / "data" / "byte.vrt")
 
-    os.symlink("../data/byte.vrt", "tmp/byte.vrt")
-    os.symlink("../tmp/byte.vrt", "tmp/other_byte.vrt")
+    os.symlink("../data/byte.vrt", tmp_path / "test_vrt_read_13" / "byte.vrt")
+    os.symlink(
+        "../test_vrt_read_13/byte.vrt", tmp_path / "test_vrt_read_13" / "other_byte.vrt"
+    )
 
-    ds = gdal.Open("tmp/other_byte.vrt")
-
-    os.remove("tmp/other_byte.vrt")
-    os.remove("tmp/byte.vrt")
+    ds = gdal.Open(tmp_path / "test_vrt_read_13" / "other_byte.vrt")
 
     assert ds is not None
 

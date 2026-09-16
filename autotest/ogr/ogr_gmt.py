@@ -22,20 +22,13 @@ pytestmark = pytest.mark.require_driver("OGR_GMT")
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-    yield
-    gdaltest.clean_tmp()
-
-
-###############################################################################
 # Create table from data/poly.shp
 
 
-def test_ogr_gmt_2():
+def test_ogr_gmt_2(tmp_path):
 
     gmt_drv = ogr.GetDriverByName("GMT")
-    gmt_ds = gmt_drv.CreateDataSource("tmp/tpoly.gmt")
+    gmt_ds = gmt_drv.CreateDataSource(tmp_path / "tpoly.gmt")
 
     #######################################################
     # Create gmtory Layer
@@ -74,7 +67,7 @@ def test_ogr_gmt_2():
 
     # Verify that stuff we just wrote is still OK.
 
-    gmt_ds = ogr.Open("tmp/tpoly.gmt")
+    gmt_ds = ogr.Open(tmp_path / "tpoly.gmt")
     gmt_lyr = gmt_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
@@ -134,12 +127,12 @@ def test_ogr_gmt_4():
 # Write a multipolygon file and verify it.
 
 
-def test_ogr_gmt_5():
+def test_ogr_gmt_5(tmp_path):
 
     #######################################################
     # Create gmtory Layer
     gmt_drv = ogr.GetDriverByName("GMT")
-    gmt_ds = gmt_drv.CreateDataSource("tmp/mpoly.gmt")
+    gmt_ds = gmt_drv.CreateDataSource(tmp_path / "mpoly.gmt")
     gmt_lyr = gmt_ds.CreateLayer("mpoly")
 
     #######################################################
@@ -171,9 +164,9 @@ def test_ogr_gmt_5():
 
     # Reopen.
 
-    assert "@R" in open("tmp/mpoly.gmt", "rt", encoding="UTF-8").read()
+    assert "@R" in open(tmp_path / "mpoly.gmt", "rt", encoding="UTF-8").read()
 
-    ds = ogr.Open("tmp/mpoly.gmt")
+    ds = ogr.Open(tmp_path / "mpoly.gmt")
     lyr = ds.GetLayer(0)
 
     assert (

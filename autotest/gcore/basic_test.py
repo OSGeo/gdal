@@ -262,7 +262,7 @@ def basic_test_7_internal():
 # Test gdal.VersionInfo('RELEASE_DATE') and gdal.VersionInfo('LICENSE')
 
 
-def test_basic_test_8():
+def test_basic_test_8(tmp_path):
 
     ret = gdal.VersionInfo("RELEASE_DATE")
     assert len(ret) == 8
@@ -282,13 +282,13 @@ def test_basic_test_8():
     if "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" not in gdal.VersionInfo("BUILD_INFO"):
         # Use a subprocess to avoid the cached license text
         env = os.environ.copy()
-        env["GDAL_DATA"] = "tmp"
-        with open("tmp/LICENSE.TXT", "wt") as f:
+        env["GDAL_DATA"] = str(tmp_path)
+        with open(tmp_path / "LICENSE.TXT", "wt") as f:
             f.write("fake_license")
         license_text = subprocess.check_output(
             [sys.executable, "basic_test_subprocess.py"], env=env
         ).decode("utf-8")
-        os.unlink("tmp/LICENSE.TXT")
+        os.unlink(tmp_path / "LICENSE.TXT")
         assert license_text.startswith("fake_license")
 
 

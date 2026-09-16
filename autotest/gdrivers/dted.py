@@ -13,8 +13,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
-
 import gdaltest
 import pytest
 
@@ -92,10 +90,10 @@ def test_dted_4():
 # Test a DTED Level 1 (made from a DTED Level 0)
 
 
-def test_dted_5():
+def test_dted_5(tmp_path):
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/n43.dt1.tif", 1201, 1201, 1, gdal.GDT_Int16)
+    ds = driver.Create(tmp_path / "n43.dt1.tif", 1201, 1201, 1, gdal.GDT_Int16)
     ds.SetProjection(
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
     )
@@ -111,7 +109,7 @@ def test_dted_5():
 
     ds = None
 
-    ds = gdal.Open("tmp/n43.dt1.tif")
+    ds = gdal.Open(tmp_path / "n43.dt1.tif")
     geotransform = ds.GetGeoTransform()
     for i in range(6):
         assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
@@ -123,10 +121,10 @@ def test_dted_5():
 # Test a DTED Level 2 (made from a DTED Level 0)
 
 
-def test_dted_6():
+def test_dted_6(tmp_path):
 
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create("tmp/n43.dt2.tif", 3601, 3601, 1, gdal.GDT_Int16)
+    ds = driver.Create(tmp_path / "n43.dt2.tif", 3601, 3601, 1, gdal.GDT_Int16)
     ds.SetProjection(
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
     )
@@ -142,7 +140,7 @@ def test_dted_6():
 
     ds = None
 
-    ds = gdal.Open("tmp/n43.dt2.tif")
+    ds = gdal.Open(tmp_path / "n43.dt2.tif")
     geotransform = ds.GetGeoTransform()
     for i in range(6):
         assert geotransform[i] == pytest.approx(ref_geotransform[i], abs=1e-10)
@@ -187,14 +185,14 @@ def test_dted_8():
 # Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
 
 
-def test_dted_9():
+def test_dted_9(tmp_path):
 
     ds = gdal.Open("data/n43.dt0")
 
     bandSrc = ds.GetRasterBand(1)
 
     driver = gdal.GetDriverByName("GTiff")
-    dsDst = driver.Create("tmp/n53.dt1.tif", 601, 1201, 1, gdal.GDT_Int16)
+    dsDst = driver.Create(tmp_path / "n53.dt1.tif", 601, 1201, 1, gdal.GDT_Int16)
     dsDst.SetProjection(
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
     )
@@ -220,9 +218,9 @@ def test_dted_9():
     ds = None
     dsDst = None
 
-    ds = gdal.Open("tmp/n53.dt1.tif")
+    ds = gdal.Open(tmp_path / "n53.dt1.tif")
     driver = gdal.GetDriverByName("DTED")
-    dsDst = driver.CreateCopy("tmp/n53.dt1", ds)
+    dsDst = driver.CreateCopy(tmp_path / "n53.dt1", ds)
 
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
@@ -331,22 +329,3 @@ def test_dted_16():
             (-80.0, 0.0083333333333333332, 0, 44.0, 0, -0.0083333333333333332),
             abs=max_error,
         )
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_dted_cleanup():
-    try:
-        os.remove("tmp/n43.dt1.tif")
-        os.remove("tmp/n43.dt1.aux.xml")
-        os.remove("tmp/n43.dt1")
-        os.remove("tmp/n53.dt1.tif")
-        os.remove("tmp/n53.dt1.aux.xml")
-        os.remove("tmp/n53.dt1")
-        os.remove("tmp/n43.dt2.tif")
-        os.remove("tmp/n43.dt2.aux.xml")
-        os.remove("tmp/n43.dt2")
-    except OSError:
-        pass
