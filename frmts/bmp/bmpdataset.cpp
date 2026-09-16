@@ -1461,7 +1461,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     poDS->fp = VSIFOpenL(pszFilename, "wb+");
     if (poDS->fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create file %s.",
                  pszFilename);
         delete poDS;
         return nullptr;
