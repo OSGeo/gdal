@@ -2,7 +2,7 @@
  *
  * Name:     gdal_cpp_functions.h
  * Project:  GDAL Core
- * Purpose:  Declaration of various semi-primate C++ functions
+ * Purpose:  Declaration of various semi-private C++ functions
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

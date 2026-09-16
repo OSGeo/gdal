@@ -142,7 +142,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
               GSpacing nLineSpace, GSpacing nBandSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
-    /* This method should only be be overloaded by GDALProxyDataset */
+    /* This method should only be overloaded by GDALProxyDataset */
     virtual CPLErr
     BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                        int nYSize, void *pData, int nBufXSize, int nBufYSize,

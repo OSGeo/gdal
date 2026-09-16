@@ -1498,7 +1498,7 @@ const char *CPL_STDCALL GDALGetProjectionRef(GDALDatasetH hDS)
  *
  * This method is the same as the C GDALSetProjection() function.
  *
- * \note Startig with GDAL 3.0, this is a compatibility layer around
+ * \note Starting with GDAL 3.0, this is a compatibility layer around
  * SetSpatialRef()
 
  * @param pszProjection projection reference string.

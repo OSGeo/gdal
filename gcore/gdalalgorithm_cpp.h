@@ -1123,7 +1123,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      * - std::string for GAAT_STRING
      * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
-     * - std::vector<double for GAAT_REAL_LIST
+     * - std::vector<double> for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
      * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
@@ -1615,7 +1615,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * - std::string for GAAT_STRING
      * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
-     * - std::vector<double for GAAT_REAL_LIST
+     * - std::vector<double> for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
      * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
@@ -2448,7 +2448,7 @@ class CPL_DLL GDALAlgorithmRegistry
 /** GDAL algorithm.
  *
  * An algorithm declares its name, description, help URL.
- * It also defined arguments or (mutual exclusion) sub-algorithms.
+ * It also defines arguments for sub-algorithms.
  *
  * It can be used from the command line with the ParseCommandLineArguments()
  * method, or users can iterate over the available arguments with the GetArgs()
@@ -2598,7 +2598,7 @@ class CPL_DLL GDALAlgorithmRegistry
     }
 
     /** Set hint before calling ParseCommandLineArguments() that it must
-     * try to be be graceful when possible, e.g. accepting
+     * try to be graceful when possible, e.g. accepting
      * "gdal raster convert in.tif out.tif --co"
      */
     void SetParseForAutoCompletion()
@@ -2861,7 +2861,7 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_subAlgRegistry.Register<MyAlgorithm>();
     }
 
-    /** Register a sub-algoritm by its AlgInfo structure.
+    /** Register a sub-algorithm by its AlgInfo structure.
      */
     bool RegisterSubAlgorithm(const GDALAlgorithmRegistry::AlgInfo &info)
     {
@@ -3176,7 +3176,7 @@ class CPL_DLL GDALAlgorithmRegistry
         GDALG_OK,
         /** GDALG output requested but an error has occurred. */
         GDALG_ERROR,
-        /** GDALG output not requeste. RunImpl() must be run. */
+        /** GDALG output not requested. RunImpl() must be run. */
         NOT_GDALG,
     };
 
