@@ -630,6 +630,16 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                     }
                     break;
 
+                    case wkbMultiPoint:
+                    {
+                        OGRMultiPoint *poMP = poGeom->toMultiPoint();
+                        OGRPoint oPoint(dfX, dfY);
+                        if (nDim == 3)
+                            oPoint.setZ(dfZ);
+                        poMP->addGeometry(&oPoint);
+                    }
+                    break;
+
                     default:
                         CPLAssert(false);
                 }
