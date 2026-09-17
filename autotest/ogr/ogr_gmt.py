@@ -221,3 +221,18 @@ def test_ogr_gmt_write_stdout():
     assert lyr.GetFeatureCount() == 10
     ds = None
     gdal.Unlink("/vsimem/test.gmt")
+
+
+###############################################################################
+# Test reading a file with multipoint geometry
+
+
+def test_ogr_gmt_multipoint_3d(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_mp.gmt"
+    gdal.FileFromMemBuffer(filename, """# @VGMT1.0 @GMULTIPOINT\n1 2 3\n4 5 6\n""")
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOINT Z ((1 2 3),(4 5 6))")
