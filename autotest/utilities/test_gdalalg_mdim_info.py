@@ -159,7 +159,14 @@ def test_gdalalg_mdim_info_binary_json(tmp_path, gdal_path):
     out = gdaltest.runexternal(
         f"{gdal_path} mdim info {tmp_path}/byte.nc --format json"
     )
-    assert json.loads(out) == {
+
+    info = json.loads(out)
+
+    # make PROJ 9.9.0 output equivalent to previous versions (#15250)
+    srs = info["arrays"]["Band1"]["srs"]
+    srs["wkt"] = srs["wkt"].replace("(E)", "easting").replace("(N)", "northing")
+
+    expected = {
         "type": "group",
         "driver": "netCDF",
         "name": "/",
@@ -225,6 +232,8 @@ def test_gdalalg_mdim_info_binary_json(tmp_path, gdal_path):
         },
         "structural_info": {"NC_FORMAT": "CLASSIC"},
     }
+
+    assert info == expected
 
 
 def test_gdalalg_mdim_info_text(tmp_path):
