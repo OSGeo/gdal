@@ -1777,6 +1777,8 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("argmin", [3, 1, 7], 7, {"propagateNoData": True}, 7),
         ("argmin", [7, 7, 7], 7, {}, 7),
         ("dB", [7], 7, {}, 7),
+        ("count", [7], 7, {}, 0),
+        ("count", [6, 7], 7, {}, 1),
         ("diff", [3, 7], 7, {}, 7),
         ("diff", [7, 3], 7, {}, 7),
         ("div", [3, 7], 7, {}, 7),
