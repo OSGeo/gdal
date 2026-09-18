@@ -255,15 +255,16 @@ layer name, and may have the following subelements:
   attribute can be set to "TRUE" to clip the geometries to the source
   region, otherwise the source geometries are not modified.
 
-  **Field** (optional): One or more attribute fields may
+- **Field** (optional): One or more attribute fields may
   be defined with Field elements. If no Field elements are defined, the
   fields of the source layer/sql will be defined on the VRT layer. The
   Field may have the following attributes:
 
   *  **name** (required): the name of the field.
-  *  **type**: the field type, one of "Integer", "IntegerList", "Real",
-     "RealList", "String", "StringList", "Binary", "Date", "Time", or
-     "DateTime". Defaults to "String".
+  *  **type**: the field type, one of "Integer", "IntegerList",
+     "Integer64", "Integer64List", "Real", "RealList", "String",
+     "StringList", "Binary", "Date", "Time", or "DateTime". Defaults
+     to "String".
   *  **subtype**: the field subtype, one of "None",
      "Boolean", "Int16", "Float32". Defaults to "None".
   *  **width**: the field width. Defaults to unknown.
