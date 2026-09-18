@@ -72,6 +72,7 @@ const struct sqlite3_api_routines OGRSQLITE_static_routines = {
     MEMBER(result_int),
     MEMBER(result_int64),
     MEMBER(result_null),
+    MEMBER(result_text),
     MEMBER(result_value),
     .xsnprintf = sqlite3_snprintf,
     MEMBER(step),
