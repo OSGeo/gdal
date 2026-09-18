@@ -1,0 +1,28 @@
+DataSetHeader Begin
+    Version     = "3.0"
+    DataSetType = ERStorage
+    DataType    = Raster
+    ByteOrder   = LSBFirst
+    CoordinateSpace Begin
+        Datum          = "RAW"
+        Projection     = "RAW"
+        CoordinateType = RAW
+    CoordinateSpace End
+    RasterInfo Begin
+        CellType        = IEEE4ByteReal
+        NrOfLines       = 166
+        NrOfCellsPerLine = 131
+        NrOfBands       = 1
+        NullCellValue   = -1.0e32
+        RegistrationCellX = 0
+        RegistrationCellY = 165
+        CellInfo Begin
+            Xdimension = 200
+            Ydimension = 200
+        CellInfo End
+        RegistrationCoord Begin
+            MetersX    = -301100
+            MetersY    = -69400
+        RegistrationCoord End
+    RasterInfo End
+DataSetHeader End
