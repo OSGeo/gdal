@@ -52,8 +52,8 @@ init_list = [
     ],
 )
 @pytest.mark.require_driver("GTiff")
-def test_gtiff_set(testfunction):
-    ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
+def test_gtiff_set(testfunction, tmp_path):
+    ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, tmpdir=tmp_path)
     getattr(ut, testfunction)()
 
 
@@ -72,6 +72,6 @@ def test_gtiff_set(testfunction):
     ],
 )
 @pytest.mark.require_driver("GTiff")
-def test_gtiff_create(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("GTiff", filename, 1, checksum)
+def test_gtiff_create(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest("GTiff", filename, 1, checksum, tmpdir=tmp_path)
     getattr(ut, testfunction)()

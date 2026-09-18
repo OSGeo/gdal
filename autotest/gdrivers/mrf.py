@@ -143,7 +143,9 @@ mrf_tests = (
     mrf_tests,
     ids=("{0}-{3}".format(*r) for r in mrf_tests),
 )
-def test_mrf(src_filename, chksum, chksum_after_reopening, options, jpeg_version):
+def test_mrf(
+    src_filename, chksum, chksum_after_reopening, options, jpeg_version, tmp_path
+):
 
     mrf_co = gdal.GetDriverByName("MRF").GetMetadataItem("DMD_CREATIONOPTIONLIST")
 
@@ -168,6 +170,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options, jpeg_version
         chksum,
         options=options,
         chksum_after_reopening=chksum_after_reopening,
+        tmpdir=tmp_path,
     )
 
     check_minmax = "COMPRESS=JPEG" not in ut.options

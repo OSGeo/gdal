@@ -35,9 +35,9 @@ def set_cpl_tmpdir(tmp_path_factory):
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_geoloc_1():
+def test_geoloc_1(tmp_path):
 
-    tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034)
+    tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034, tmpdir=tmp_path)
     tst.testOpen(check_filelist=False)
 
 

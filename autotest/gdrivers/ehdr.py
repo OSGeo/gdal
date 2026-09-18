@@ -38,9 +38,9 @@ def test_ehdr_1():
 # 8bit with geotransform and projection check.
 
 
-def test_ehdr_2():
+def test_ehdr_2(tmp_path):
 
-    tst = gdaltest.GDALTest("EHDR", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("EHDR", "byte.tif", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1, check_srs=1)
 
@@ -49,9 +49,9 @@ def test_ehdr_2():
 # 32bit floating point (read, and createcopy).
 
 
-def test_ehdr_3():
+def test_ehdr_3(tmp_path):
 
-    tst = gdaltest.GDALTest("EHDR", "ehdr/float32.bil", 1, 27)
+    tst = gdaltest.GDALTest("EHDR", "ehdr/float32.bil", 1, 27, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
@@ -125,9 +125,9 @@ def test_ehdr_6():
 # 32bit integer (read, and createcopy).
 
 
-def test_ehdr_7():
+def test_ehdr_7(tmp_path):
 
-    tst = gdaltest.GDALTest("EHDR", "int32.tif", 1, 4672)
+    tst = gdaltest.GDALTest("EHDR", "int32.tif", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 

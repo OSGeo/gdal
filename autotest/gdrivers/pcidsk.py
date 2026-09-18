@@ -56,9 +56,9 @@ def test_pcidsk_2():
 # Test copying of georeferencing and projection.
 
 
-def test_pcidsk_3():
+def test_pcidsk_3(tmp_path):
 
-    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/utm.pix", 1, 39576)
+    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/utm.pix", 1, 39576, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1, check_srs=1)
 
@@ -681,9 +681,9 @@ def test_pcidsk_online_1():
 # Read test of a PCIDSK TILED version 1 file.
 
 
-def test_pcidsk_tile_v1():
+def test_pcidsk_tile_v1(tmp_path):
 
-    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/tile_v1.1.pix", 1, 49526)
+    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/tile_v1.1.pix", 1, 49526, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1, check_srs=1)
 
@@ -703,9 +703,9 @@ def test_pcidsk_tile_v1_overview():
 # Read test of a PCIDSK TILED version 2 file.
 
 
-def test_pcidsk_tile_v2():
+def test_pcidsk_tile_v2(tmp_path):
 
-    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/tile_v2.pix", 1, 49526)
+    tst = gdaltest.GDALTest("PCIDSK", "pcidsk/tile_v2.pix", 1, 49526, tmpdir=tmp_path)
 
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 

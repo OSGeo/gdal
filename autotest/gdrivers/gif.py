@@ -45,10 +45,10 @@ def test_gif_2():
 # Test lossless copying.
 
 
-def test_gif_3():
+def test_gif_3(tmp_path):
 
     tst = gdaltest.GDALTest(
-        "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"]
+        "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"], tmpdir=tmp_path
     )
 
     tst.testCreateCopy()

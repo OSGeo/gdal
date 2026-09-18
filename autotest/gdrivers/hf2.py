@@ -48,9 +48,9 @@ def test_hf2_2(tmp_path):
 # Test CreateCopy() of float.img
 
 
-def test_hf2_3():
+def test_hf2_3(tmp_path):
 
-    tst = gdaltest.GDALTest("HF2", "hfa/float.img", 1, 23529)
+    tst = gdaltest.GDALTest("HF2", "hfa/float.img", 1, 23529, tmpdir=tmp_path)
     tst.testCreateCopy(check_minmax=0)
 
 
@@ -58,9 +58,9 @@ def test_hf2_3():
 # Test CreateCopy() of n43.dt0
 
 
-def test_hf2_4():
+def test_hf2_4(tmp_path):
 
-    tst = gdaltest.GDALTest("HF2", "n43.dt0", 1, 49187)
+    tst = gdaltest.GDALTest("HF2", "n43.dt0", 1, 49187, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 

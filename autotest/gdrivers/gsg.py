@@ -42,16 +42,16 @@ def test_gsg_3():
 # Create simple copy and check.
 
 
-def test_gsg_4():
+def test_gsg_4(tmp_path):
 
-    tst = gdaltest.GDALTest("gsbg", "gsg/gsg_binary.grd", 1, 4672)
+    tst = gdaltest.GDALTest("gsbg", "gsg/gsg_binary.grd", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1)
 
 
-def test_gsg_5():
+def test_gsg_5(tmp_path):
 
-    tst = gdaltest.GDALTest("gsag", "gsg/gsg_ascii.grd", 1, 4672)
+    tst = gdaltest.GDALTest("gsag", "gsg/gsg_ascii.grd", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1)
 
@@ -70,9 +70,9 @@ def test_gsg_7():
     tst.testCreate(out_bands=1)
 
 
-def test_gsg_8():
+def test_gsg_8(tmp_path):
 
-    tst = gdaltest.GDALTest("gs7bg", "gsg/gsg_7binary.grd", 1, 4672)
+    tst = gdaltest.GDALTest("gs7bg", "gsg/gsg_7binary.grd", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_gt=1)
 
