@@ -540,3 +540,41 @@ def test_gdalalg_raster_neighbors_custom_kernel_0_sum_error(neighbors):
         match="Specifying method = 'mean' for a kernel whose sum of coefficients is zero is not allowed. Use 'sum' instead",
     ):
         neighbors.Run()
+
+
+@pytest.mark.parametrize(
+    "method,expected",
+    [
+        ("sum", 40.0),
+        ("mean", 5.0),
+        ("min", 1.0),
+        ("max", 9.0),
+        ("median", 5.0),
+        ("stddev", 2.7386127875258306),
+    ],
+)
+@pytest.mark.parametrize("nodata", [None, -999])
+def test_gdalalg_raster_neighbors_nan_ignored(neighbors, method, expected, nodata):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, gdal.GDT_Float32)
+    src_ds.WriteRaster(
+        0,
+        0,
+        3,
+        3,
+        array.array("f", [1, 2, 3, 4, float("nan"), 6, 7, 8, 9]),
+    )
+    if nodata is not None:
+        src_ds.GetRasterBand(1).SetNoDataValue(nodata)
+
+    neighbors["input"] = src_ds
+    neighbors["kernel"] = "equal"
+    neighbors["method"] = method
+    neighbors["output-format"] = "MEM"
+    assert neighbors.Run()
+
+    out_ds = neighbors.Output()
+    ar = array.array("d")
+    ar.frombytes(out_ds.ReadRaster(1, 1, 1, 1))
+    assert ar[0] == pytest.approx(expected)
+
