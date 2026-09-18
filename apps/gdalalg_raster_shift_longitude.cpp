@@ -147,7 +147,13 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         }
         const int nSrcXOff = static_cast<int>(dfSrcXOff);
 
-        if (nSrcXOff < 0)
+        const int nColumnsWanted = nDstXSize - nDstXOff;
+        const int nColumnsAvailable = nSrcXOff < 0 ? 0
+                                      : nSrcXOff > nSrcXSize
+                                          ? 0
+                                          : nSrcXSize - nSrcXOff;
+
+        if (nColumnsAvailable == 0)
         {
             const double dfMissingRangeMinX =
                 NormalizeLongitude(dfDstChunkMinX);
@@ -170,9 +176,6 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
             aosSrcWindows.push_back(chunk);
             continue;
         }
-
-        const int nColumnsWanted = nSrcXSize - nSrcXOff;
-        const int nColumnsAvailable = nDstXSize - nDstXOff;
 
         const GDALRasterWindow chunk{
             nSrcXOff, 0, std::min(nColumnsWanted, nColumnsAvailable), nYSize};
