@@ -594,3 +594,18 @@ def test_thread_safe_GetGCPs():
         for t in threads:
             t.join()
         assert res[0]
+
+
+def test_thread_safe_checksum(tmp_vsimem):
+    tmpfilename = str(tmp_vsimem / "test.tif")
+    gdal.Translate(tmpfilename, "data/byte.tif")
+
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+        def thread_job():
+            _ = ds.GetRasterBand(1).Checksum()
+
+        threads = [threading.Thread(target=thread_job) for i in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
