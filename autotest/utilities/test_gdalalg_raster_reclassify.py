@@ -226,6 +226,28 @@ def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
             assert np.all(dst_val[np.where(src_val >= 128)] == 1)
 
 
+@pytest.mark.parametrize(
+    "dt",
+    (gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64),
+    ids=gdal.GetDataTypeName,
+)
+def test_gdalalg_raster_reclassify_match_nan(reclassify, dt):
+
+    gdaltest.importorskip_gdal_array()
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, eType=dt)
+    src_ds.GetRasterBand(1).Fill(float("nan"))
+
+    reclassify["input"] = src_ds
+    reclassify["output-format"] = "MEM"
+    reclassify["mapping"] = "nan=75"
+
+    assert reclassify.Run()
+
+    dst_ds = reclassify.Output()
+    assert dst_ds.ReadAsArray()[0, 0] == 75
+
+
 @pytest.mark.parametrize("keep_color_table", (True, False))
 def test_gdalalg_raster_reclassify_keep_color_table(
     reclassify, tmp_vsimem, keep_color_table
