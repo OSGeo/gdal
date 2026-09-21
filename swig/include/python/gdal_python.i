@@ -1063,7 +1063,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
       buf_line_space : int, optional
          Number of bytes between the start of successive scanlines written to the buffer. 
          Defaults to the size of ``buf_type`` times ``buf_xsize``.
-      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
          Specifies the resampling algorithm to use when the size of
          the read window and the buffer are not equal.
       operate_in_buf_type : bool, default = True
@@ -1080,7 +1080,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
       
       Returns
       -------
-      bytearray
+      bytearray, or ``buf_obj`` if provided
           
       Examples
       --------
