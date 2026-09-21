@@ -303,31 +303,31 @@ bool GDALRasterMosaicStackCommonAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         m_standaloneStep = false;
         m_alreadyRun = false;
-        bool ret = Run(pfnProgress, pProgressData);
+        const bool ok = Run(pfnProgress, pProgressData);
         m_standaloneStep = true;
-        if (ret)
+
+        if (!ok)
         {
-            if (m_format == "stream")
-            {
-                ret = true;
-            }
-            else
-            {
-                std::vector<GDALArgDatasetValue> inputDataset(1);
-                inputDataset[0].Set(m_outputDataset.GetDatasetRef());
-                auto inputArg = writeAlg.GetArg(GDAL_ARG_NAME_INPUT);
-                CPLAssert(inputArg);
-                inputArg->Set(std::move(inputDataset));
-                if (writeAlg.Run(pfnProgress, pProgressData))
-                {
-                    m_outputDataset.Set(
-                        writeAlg.m_outputDataset.GetDatasetRef());
-                    ret = true;
-                }
-            }
+            return false;
         }
 
-        return ret;
+        if (m_format == "stream")
+        {
+            return true;
+        }
+
+        std::vector<GDALArgDatasetValue> inputDataset(1);
+        inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+        auto inputArg = writeAlg.GetArg(GDAL_ARG_NAME_INPUT);
+        CPLAssert(inputArg);
+        inputArg->Set(std::move(inputDataset));
+        if (!writeAlg.Run(pfnProgress, pProgressData))
+        {
+            return false;
+        }
+
+        m_outputDataset.Set(writeAlg.m_outputDataset.GetDatasetRef());
+        return true;
     }
     else
     {
