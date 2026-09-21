@@ -176,3 +176,19 @@ Examples
                --dialect sqlite ! \
            write polys_filtered.shp
 
+.. example::
+   :title: Use a pipeline to calculate the length of a GPS track and write to stdout
+
+   This example uses the ``ST_Length`` function to calculate the length of a layer with
+   a single feature. To calculate a length in meters, the layer is first projected to
+   a suitable coordinate reference system.
+
+   .. code-block:: console
+
+       $ gdal vector pipeline ! \
+            read out.gpx ! \ 
+            reproject --output-crs EPSG:32145 ! \
+            sql "SELECT ST_Length(geometry) FROM tracks" --dialect sqlite ! \
+            write /vsistdout/ --output-format CSV --lco HEADER=NO
+       10716.7409690568
+
