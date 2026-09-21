@@ -256,6 +256,60 @@ def test_gdalalg_vector_check_geometry_point(alg):
     assert dst_lyr.GetFeatureCount() == 0
 
 
+@pytest.mark.parametrize(
+    "wkt",
+    (
+        "POINT (3 NaN)",
+        "LINESTRING (8 0, 2 NaN)",
+        "POLYGON ((0 0, 1 0, 1 NaN 0 1, 0 0))",
+    ),
+)
+def test_gdalalg_vector_check_geometry_nan(alg, wkt):
+
+    # can only construct using WKT; calling AddPoint with a NaN value yields POINT EMPTY
+    alg["input"] = gdaltest.wkt_ds(wkt)
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+
+    dst_feat = dst_lyr.GetNextFeature()
+
+    assert dst_feat["error"] == "Invalid Coordinate"
+
+
+def test_gdalalg_vector_check_geometry_point_inf(alg):
+
+    # can only construct using WKT; WKT parser does not accept inf
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("point", geom_type=ogr.wkbPoint)
+    src_feat = ogr.Feature(src_lyr.GetLayerDefn())
+    src_geom = ogr.Geometry(ogr.wkbPoint)
+    src_geom.AddPoint_2D(3, float("inf"))
+    src_feat.SetGeometry(src_geom)
+    src_lyr.CreateFeature(src_feat)
+
+    alg["input"] = src_ds
+
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 1
+
+    dst_feat = dst_lyr.GetNextFeature()
+
+    assert dst_feat["error"] == "Invalid Coordinate"
+
+
 def test_gdalalg_vector_check_geometry_geometry_collection(alg):
 
     # valid polygon + non-simple linestring
