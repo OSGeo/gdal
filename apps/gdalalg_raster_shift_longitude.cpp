@@ -120,6 +120,7 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         dstGT.xorig = m_minX;
         poDstDS->SetGeoTransform(dstGT);
     }
+    poDstDS->SetSpatialRef(poSrcDS->GetSpatialRef());
 
     std::vector<GDALRasterWindow> aosSrcWindows;
     for (int nDstXOff = 0; nDstXOff < nDstXSize;)
