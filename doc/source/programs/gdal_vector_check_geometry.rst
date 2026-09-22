@@ -26,12 +26,12 @@ Description
 :program:`gdal vector check-geometry` checks that individual features of a dataset are valid and simple according to the :term:`OGC` Simple Features standard. For each invalid or non-simple feature,
 it will output a description and, in most cases, a point location of the error. To fix any reported errors, use :ref:`gdal_vector_make_valid`.
 
-The following checks are performed, depending on the input geometry type:
+All geometry types are checked for non-finite X and Y coordinates.
+The following additional checks are performed, depending on the input geometry type:
 
 - Polygons and MultiPolygons are checked for validity. A single error point will be reported even if there are multiple causes of invalidity.
 - LineStrings and MultiLineStrings are checked for simplicity. All self-intersection locations will be reported if GDAL is built using version 3.14 or later of the GEOS library. With earlier versions, self-intersection locations are not reported.
 - GeometryCollections are checked that their individual elements are valid / simple. A single error point will be reported even if there are multiple causes of invalidity.
-- Point geometries are always considered valid/simple.
 - Other geometry types are not checked.
 
 Validity/simplicity checking is performed by the GEOS library and should be consistent with results of software such as PostGIS, QGIS, and Shapely that also use that library. GEOS does not consider repeated consecutive vertices to be a cause of invalidity or non-simplicity.
