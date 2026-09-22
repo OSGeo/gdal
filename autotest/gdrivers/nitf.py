@@ -50,9 +50,9 @@ def hex_string(s):
 # Write/Read test of simple byte reference data.
 
 
-def test_nitf_1():
+def test_nitf_1(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -60,9 +60,9 @@ def test_nitf_1():
 # Write/Read test of simple 16bit reference data.
 
 
-def test_nitf_2():
+def test_nitf_2(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "int16.tif", 1, 4672)
+    tst = gdaltest.GDALTest("NITF", "int16.tif", 1, 4672, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -70,9 +70,9 @@ def test_nitf_2():
 # Write/Read RGB image with lat/long georeferencing, and verify.
 
 
-def test_nitf_3():
+def test_nitf_3(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349)
+    tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -316,7 +316,12 @@ def test_nitf_9(tmp_path):
     )
 
     tst = gdaltest.GDALTest(
-        "NITF", tmp_path / "nitf9.ntf", 2, expected_cs, filename_absolute=1
+        "NITF",
+        tmp_path / "nitf9.ntf",
+        2,
+        expected_cs,
+        filename_absolute=1,
+        tmpdir=tmp_path,
     )
     tst.testCreateCopy()
 
@@ -638,9 +643,11 @@ def test_nitf_21():
 # Write/Read test of simple int32 reference data.
 
 
-def test_nitf_22():
+def test_nitf_22(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/int32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/int32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -648,9 +655,11 @@ def test_nitf_22():
 # Write/Read test of simple float32 reference data.
 
 
-def test_nitf_23():
+def test_nitf_23(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/float32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/float32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -658,9 +667,11 @@ def test_nitf_23():
 # Write/Read test of simple float64 reference data.
 
 
-def test_nitf_24():
+def test_nitf_24(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/float64.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/float64.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -668,9 +679,11 @@ def test_nitf_24():
 # Write/Read test of simple uint16 reference data.
 
 
-def test_nitf_25():
+def test_nitf_25(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint16.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/uint16.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -678,9 +691,11 @@ def test_nitf_25():
 # Write/Read test of simple uint32 reference data.
 
 
-def test_nitf_26():
+def test_nitf_26(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/uint32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -1367,9 +1382,11 @@ def test_nitf_33(tmp_path):
 
 
 @pytest.mark.require_driver("DTED")
-def test_nitf_34():
+def test_nitf_34(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"])
+    tst = gdaltest.GDALTest(
+        "NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"], tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 

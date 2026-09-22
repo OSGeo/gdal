@@ -183,7 +183,7 @@ def test_jp2openjpeg_4_vsimem(tmp_path):
 # Test copying int16.jp2
 
 
-def test_jp2openjpeg_5():
+def test_jp2openjpeg_5(tmp_path):
 
     tst = gdaltest.GDALTest(
         "JP2OpenJPEG",
@@ -191,6 +191,7 @@ def test_jp2openjpeg_5():
         1,
         None,
         options=["REVERSIBLE=YES", "QUALITY=100", "CODEC=J2K"],
+        tmpdir=tmp_path,
     )
     tst.testCreateCopy()
 

@@ -1051,15 +1051,22 @@ def test_netcdf_float_valid_min_max():
 # depending on y-axis order
 
 
-def test_netcdf_26():
+def test_netcdf_26(tmp_path):
 
     # test default config
-    test = gdaltest.GDALTest("NETCDF", "netcdf/int16-nogeo.nc", 1, 4672)
+    test = gdaltest.GDALTest(
+        "NETCDF", "netcdf/int16-nogeo.nc", 1, 4672, tmpdir=tmp_path
+    )
     test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
 
     # test WRITE_BOTTOMUP=NO
     test = gdaltest.GDALTest(
-        "NETCDF", "netcdf/int16-nogeo.nc", 1, 4855, options=["WRITE_BOTTOMUP=NO"]
+        "NETCDF",
+        "netcdf/int16-nogeo.nc",
+        1,
+        4855,
+        options=["WRITE_BOTTOMUP=NO"],
+        tmpdir=tmp_path,
     )
     test.testCreateCopy(check_gt=0, check_srs=0, check_minmax=0)
 
@@ -3727,8 +3734,10 @@ def test_netcdf_functions_1(testfunction):
     "testfunction", ["testCreateCopy", "testCreate", "testSetNoDataValue"]
 )
 @pytest.mark.require_driver("netcdf")
-def test_netcdf_functions_2(filename, checksum, options, testfunction):
-    ut = gdaltest.GDALTest("netcdf", filename, 1, checksum, options=options)
+def test_netcdf_functions_2(filename, checksum, options, testfunction, tmp_path):
+    ut = gdaltest.GDALTest(
+        "netcdf", filename, 1, checksum, options=options, tmpdir=tmp_path
+    )
     getattr(ut, testfunction)()
 
 

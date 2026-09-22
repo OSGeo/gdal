@@ -57,9 +57,9 @@ def test_envi_1():
 # Verify this can be exported losslessly.
 
 
-def test_envi_2():
+def test_envi_2(tmp_path):
 
-    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823, tmpdir=tmp_path)
     tst.testCreateCopy(check_gt=1)
 
 
@@ -67,9 +67,9 @@ def test_envi_2():
 # Try the Create interface with an RGB image.
 
 
-def test_envi_3():
+def test_envi_3(tmp_path):
 
-    tst = gdaltest.GDALTest("envi", "rgbsmall.tif", 2, 21053)
+    tst = gdaltest.GDALTest("envi", "rgbsmall.tif", 2, 21053, tmpdir=tmp_path)
     tst.testCreate()
 
 
@@ -185,9 +185,11 @@ def test_envi_8():
 # Verify reading a compressed file
 
 
-def test_envi_9():
+def test_envi_9(tmp_path):
 
-    tst = gdaltest.GDALTest("envi", "envi/aea_compressed.dat", 1, 14823)
+    tst = gdaltest.GDALTest(
+        "envi", "envi/aea_compressed.dat", 1, 14823, tmpdir=tmp_path
+    )
     tst.testCreateCopy(check_gt=1)
 
 

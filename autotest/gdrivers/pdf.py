@@ -329,8 +329,8 @@ def test_pdf_1(poppler_or_pdfium):
 # Test write support with ISO32000 geo encoding
 
 
-def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
-    tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None)
+def test_pdf_iso32000(poppler_or_pdfium_or_podofo, tmp_path):
+    tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, tmpdir=tmp_path)
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
@@ -343,8 +343,10 @@ def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
 # Test write support with ISO32000 geo encoding, with DPI=300
 
 
-def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
-    tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["DPI=300"])
+def test_pdf_iso32000_dpi_300(poppler_or_pdfium, tmp_path):
+    tst = gdaltest.GDALTest(
+        "PDF", "byte.tif", 1, None, options=["DPI=300"], tmpdir=tmp_path
+    )
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
@@ -357,8 +359,10 @@ def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
 # Test no compression
 
 
-def test_pdf_no_compression(poppler_or_pdfium):
-    tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["COMPRESS=NONE"])
+def test_pdf_no_compression(poppler_or_pdfium, tmp_path):
+    tst = gdaltest.GDALTest(
+        "PDF", "byte.tif", 1, None, options=["COMPRESS=NONE"], tmpdir=tmp_path
+    )
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
@@ -371,20 +375,23 @@ def test_pdf_no_compression(poppler_or_pdfium):
 # Test compression methods
 
 
-def _test_pdf_jpeg_compression(filename):
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.parametrize(
+    "filename",
+    ("byte.tif", "rgbsmall.tif", "../../gcore/data/stefan_full_rgba.tif"),
+    ids=("single", "rgb", "rgba"),
+)
+def test_pdf_jpeg_compression(poppler_or_pdfium, filename, tmp_path):
 
-    tst = gdaltest.GDALTest("PDF", filename, 1, None, options=["COMPRESS=JPEG"])
+    tst = gdaltest.GDALTest(
+        "PDF", filename, 1, None, options=["COMPRESS=JPEG"], tmpdir=tmp_path
+    )
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-
-@pytest.mark.require_driver("JPEG")
-def test_pdf_jpeg_compression(poppler_or_pdfium):
-    _test_pdf_jpeg_compression("byte.tif")
 
 
 def pdf_get_J2KDriver(drv_name, tmpdir):
@@ -426,18 +433,13 @@ def test_pdf_jpx_compression(filename, drv_name, tmp_path):
     else:
         options = ["COMPRESS=JPEG2000", "JPEG2000_DRIVER=%s" % drv_name]
 
-    tst = gdaltest.GDALTest("PDF", filename, 1, None, options=options)
+    tst = gdaltest.GDALTest("PDF", filename, 1, None, options=options, tmpdir=tmp_path)
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-
-@pytest.mark.require_driver("JPEG")
-def test_pdf_jpeg_compression_rgb(poppler_or_pdfium):
-    return _test_pdf_jpeg_compression("rgbsmall.tif")
 
 
 ###############################################################################
@@ -504,27 +506,15 @@ def test_pdf_rgba_default_compression_tiled(tmp_path, poppler_or_pdfium_or_podof
     return pdf_rgba_default_compression(tmp_path, ["BLOCKXSIZE=32", "BLOCKYSIZE=32"])
 
 
-@pytest.mark.require_driver("JPEG")
-def test_pdf_jpeg_compression_rgba(poppler_or_pdfium):
-    return _test_pdf_jpeg_compression("../../gcore/data/stefan_full_rgba.tif")
-
-
 ###############################################################################
 # Test PREDICTOR=2
 
 
-def test_pdf_predictor_2(poppler_or_pdfium):
-    tst = gdaltest.GDALTest("PDF", "utm.tif", 1, None, options=["PREDICTOR=2"])
-    tst.testCreateCopy(
-        check_minmax=0,
-        check_gt=0,
-        check_srs=None,
-        check_checksum_not_null=pdf_checksum_available(),
+@pytest.mark.parametrize("filename", ("utm.tif", "rgbsmall.tif"))
+def test_pdf_predictor_2(poppler_or_pdfium, filename, tmp_path):
+    tst = gdaltest.GDALTest(
+        "PDF", filename, 1, None, options=["PREDICTOR=2"], tmpdir=tmp_path
     )
-
-
-def test_pdf_predictor_2_rgb(poppler_or_pdfium):
-    tst = gdaltest.GDALTest("PDF", "rgbsmall.tif", 1, None, options=["PREDICTOR=2"])
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
@@ -537,9 +527,14 @@ def test_pdf_predictor_2_rgb(poppler_or_pdfium):
 # Test tiling
 
 
-def test_pdf_tiled(poppler_or_pdfium):
+def test_pdf_tiled(poppler_or_pdfium, tmp_path):
     tst = gdaltest.GDALTest(
-        "PDF", "utm.tif", 1, None, options=["COMPRESS=DEFLATE", "TILED=YES"]
+        "PDF",
+        "utm.tif",
+        1,
+        None,
+        options=["COMPRESS=DEFLATE", "TILED=YES"],
+        tmpdir=tmp_path,
     )
     tst.testCreateCopy(
         check_minmax=0,
@@ -549,9 +544,14 @@ def test_pdf_tiled(poppler_or_pdfium):
     )
 
 
-def test_pdf_tiled_128(poppler_or_pdfium):
+def test_pdf_tiled_128(poppler_or_pdfium, tmp_path):
     tst = gdaltest.GDALTest(
-        "PDF", "utm.tif", 1, None, options=["BLOCKXSIZE=128", "BLOCKYSIZE=128"]
+        "PDF",
+        "utm.tif",
+        1,
+        None,
+        options=["BLOCKXSIZE=128", "BLOCKYSIZE=128"],
+        tmpdir=tmp_path,
     )
     tst.testCreateCopy(
         check_minmax=0,
@@ -566,9 +566,9 @@ def test_pdf_tiled_128(poppler_or_pdfium):
 
 
 @pytest.mark.require_driver("GIF")
-def test_pdf_color_table(poppler_or_pdfium):
+def test_pdf_color_table(poppler_or_pdfium, tmp_path):
 
-    tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None)
+    tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None, tmpdir=tmp_path)
     tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,

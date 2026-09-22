@@ -55,9 +55,9 @@ def test_pnm_3():
 # Write Test RGB (PPM)
 
 
-def test_pnm_4():
+def test_pnm_4(tmp_path):
 
-    tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053)
+    tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 

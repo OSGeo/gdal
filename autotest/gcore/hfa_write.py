@@ -405,8 +405,10 @@ def test_hfa_create_spill(filename, checksum, testfunction, tmp_path):
     ],
 )
 @pytest.mark.require_driver("HFA")
-def test_hfa_create_compress(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("HFA", filename, 1, checksum, options=["COMPRESS=YES"])
+def test_hfa_create_compress(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest(
+        "HFA", filename, 1, checksum, options=["COMPRESS=YES"], tmpdir=tmp_path
+    )
     getattr(ut, testfunction)()
 
 
