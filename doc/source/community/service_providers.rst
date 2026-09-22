@@ -91,6 +91,14 @@ and related Open Source technologies.
 
 .. container:: service-provider
 
+  |logo_alphapixel|
+
+  .. container:: service-provider-description
+
+      `AlphaPixel`_ (USA) is a US-based computer graphics and geospatial software consultancy. We build real-time 3D, visual simulation, and terrain applications on GDAL/OGR and the wider OSGeo stack (such as osgEarth and PROJ), including porting GDAL-backed terrain and imagery pipelines to embedded, avionics, and other constrained hardware. AlphaPixel helps clients integrate and optimize GDAL, and the geospatial software built on it, in demanding real-time and mission-critical systems.
+
+.. container:: service-provider
+
   |logo_faunalia|
 
   .. container:: service-provider-description
@@ -177,6 +185,12 @@ The steps to add a company to the service providers list are outlined in the :re
 .. ###########
 .. Other service providers - use max(width=100px,height=100px) for logo
 .. ###########
+
+.. _`AlphaPixel`: https://alphapixeldev.com/
+.. |logo_alphapixel| image:: ../../images/logo-alphapixel.png
+   :class: img-logos
+   :width: 100 px
+   :target: `AlphaPixel`_
 
 .. _`Faunalia`: https://www.faunalia.eu/
 .. |logo_faunalia| image:: ../../images/logo-faunalia.png
