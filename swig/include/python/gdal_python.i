@@ -1425,6 +1425,31 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
         self._parent_ds()._add_child_ref(val)
 %}
 
+%feature("pythonappend") GetSampleOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetDefaultRAT %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetRasterColorTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetColorTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetDataset %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs):
     """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None)
@@ -2690,6 +2715,14 @@ def ComputeInterBandCovarianceMatrix(self,
 %}
 
 %feature("pythonappend") CopyLayer %{
+    self._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetFieldDomain %{
+    self._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetStyleTable %{
     self._add_child_ref(val)
 %}
 
