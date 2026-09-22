@@ -182,10 +182,15 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
         CPLAssert(chunk.nXSize > 0);
 
-        const double dstChunkMaxX = dfDstChunkMinX + chunk.nXSize;
-        CPLDebug("ShiftLongitude", "Src %g - %g, Dst %g - %g", dfDstChunkMinX,
-                 dstChunkMaxX, m_minX + chunk.nXOff * srcGT.xscale,
-                 m_minX + (chunk.nXOff + chunk.nXSize) * srcGT.xscale);
+        const double dfDstChunkMaxX =
+            m_minX + (nDstXOff + chunk.nXSize) * srcGT.xscale;
+        const double dfSrcChunkMinX = dfSrcMinX + chunk.nXOff * srcGT.xscale;
+        const double dfSrcChunkMaxX =
+            dfSrcMinX + (nSrcXOff + chunk.nXSize) * srcGT.xscale;
+
+        CPLDebug("ShiftLongitude", "Src %g - %g, Dst %g - %g", dfSrcChunkMinX,
+                 dfSrcChunkMaxX, m_minX + nDstXOff * srcGT.xscale,
+                 dfDstChunkMaxX);
 
         aosSrcWindows.push_back(chunk);
         nDstXOff += chunk.nXSize;
