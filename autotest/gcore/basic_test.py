@@ -19,7 +19,7 @@ import sys
 import gdaltest
 import pytest
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 
 ###############################################################################
@@ -1027,6 +1027,102 @@ def test_ovr_band_use_after_dataset_close():
 
     with pytest.raises(Exception):
         ovr.Checksum()
+
+
+def test_sample_ovr_band_use_after_dataset_close():
+    with gdal.Open("data/byte_with_ovr.tif") as ds:
+        ovr = ds.GetRasterBand(1).GetSampleOverview(0)
+
+    # Make sure ds.__exit__() invalidation has propagated to sample overviews
+
+    with pytest.raises(Exception):
+        ovr.Checksum()
+
+
+@pytest.mark.require_driver("HFA")
+def test_rat_use_after_dataset_close():
+    with gdal.Open("data/rat.img") as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+
+    # Make sure ds.__exit__() invalidation has propagated to the RAT
+
+    with pytest.raises(Exception):
+        rat.GetRowCount()
+
+
+@pytest.mark.require_driver("BMP")
+def test_color_table_use_after_dataset_close():
+    with gdal.Open("data/8bit_pal.bmp") as ds:
+        ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the color table
+
+    with pytest.raises(Exception):
+        ct.GetCount()
+
+
+def test_field_domain_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        ds.AddFieldDomain(
+            ogr.CreateRangeFieldDomain(
+                "dom", "", ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True
+            )
+        )
+        dom = ds.GetFieldDomain("dom")
+
+    # Make sure ds.__exit__() invalidation has propagated to the field domain
+
+    with pytest.raises(Exception):
+        dom.GetName()
+
+
+def test_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        ds.SetStyleTable(st)
+        style_table = ds.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the style table
+
+    with pytest.raises(Exception):
+        style_table.Find("style")
+
+
+def test_layer_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        lyr = ds.CreateLayer("lyr")
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        lyr.SetStyleTable(st)
+        style_table = lyr.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer style table
+
+    with pytest.raises(Exception):
+        style_table.Find("style")
+
+
+def test_spatial_filter_use_after_dataset_close():
+    with gdal.OpenEx("../ogr/data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(0, 0, 1, 1)
+        filter_geom = lyr.GetSpatialFilter()
+
+    # Make sure ds.__exit__() invalidation has propagated to the spatial filter
+
+    with pytest.raises(Exception):
+        filter_geom.ExportToWkt()
+
+
+def test_band_dataset_use_after_dataset_close():
+    with gdal.Open("data/byte.tif") as ds:
+        band_ds = ds.GetRasterBand(1).GetDataset()
+
+    # Make sure ds.__exit__() invalidation has propagated to Band.GetDataset()
+
+    with pytest.raises(Exception):
+        assert band_ds.RasterXSize
 
 
 @pytest.mark.slow()
