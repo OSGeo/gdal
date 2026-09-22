@@ -1142,6 +1142,20 @@ retry:
         *pnLines = static_cast<int>(dfLines + 0.5);
     }
 
+    if (*pnPixels <= 0 || *pnLines <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Computed dimensions are invalid : %d x %d. The extent of "
+                 "the source in the target CRS may be degenerate.",
+                 *pnPixels, *pnLines);
+
+        CPLFree(padfX);
+        CPLFree(padfXRevert);
+        CPLFree(pabSuccess);
+
+        return CE_Failure;
+    }
+
     double dfPixelSizeX = dfPixelSize;
     double dfPixelSizeY = dfPixelSize;
 

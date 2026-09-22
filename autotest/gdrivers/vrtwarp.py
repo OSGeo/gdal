@@ -18,7 +18,7 @@ import sys
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -747,6 +747,29 @@ def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
     ds.GetRasterBand(1).SetNoDataValue(-9999)
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
     assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
+
+
+###############################################################################
+# Test that gdal.AutoCreateWarpedVRT() errors out when the computed dimensions
+# are degenerate, instead of returning a dataset with zero lines. Here this is
+# triggered by a source crossing the antimeridian, whose extent in EPSG:3857
+# becomes globe-wide in X while staying small in Y.
+# Cf https://github.com/OSGeo/gdal/issues/15266
+
+
+@gdaltest.enable_exceptions()
+def test_vrtwarp_autocreatewarpedvrt_degenerate_output(tmp_vsimem):
+
+    filename = tmp_vsimem / "dateline.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 16, 16, 1, gdal.GDT_UInt8)
+    ds.SetGeoTransform([179.9, 0.02, 0, 1, 0, -0.02])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    with pytest.raises(Exception, match="Computed dimensions are invalid"):
+        gdal.AutoCreateWarpedVRT(gdal.Open(filename), None, "EPSG:3857")
 
 
 ###############################################################################
