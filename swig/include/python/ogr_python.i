@@ -496,6 +496,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
   %}
 
+%feature("pythonappend") GetSpatialFilter %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetStyleTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
 }
 
 %extend OGRFeatureShadow {
