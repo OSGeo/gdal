@@ -400,7 +400,7 @@ def test_gdalalg_raster_shift_longitude_input_spans_antimeridian(alg, tmp_vsimem
 
     dst_dat = dst_ds.ReadAsMaskedArray()[0,]
 
-    # (180, 180.22) mapped to (-180, 179.78) (11 pixels)
+    # (180, 180.22) mapped to (-180, -179.78) (11 pixels)
     np.testing.assert_array_equal(
         dst_dat[:11], np.array([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
     )
