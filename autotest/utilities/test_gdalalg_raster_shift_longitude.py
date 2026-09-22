@@ -374,3 +374,39 @@ def test_gdalalg_raster_shift_longitude_xmin_offset_too_large(alg, tmp_vsimem):
 
     with pytest.raises(Exception, match="Failed to compute pixel offset"):
         alg.Run()
+
+
+def test_gdalalg_raster_shift_longitude_input_spans_antimeridian(alg, tmp_vsimem):
+
+    nx = 16
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", nx, 1, 1, gdal.GDT_Byte)
+    src_ds.SetGeoTransform((179.9, 0.02, 0, 1, 0, -0.02))  # x: 179.9 -> 180.22
+    src_ds.WriteArray((np.arange(nx) + 1).reshape(1, nx))
+
+    alg["input"] = src_ds
+    alg["output-format"] = "MEM"
+    alg["output-nodata"] = 255
+    alg["min-x"] = -180
+    alg["max-x"] = 180
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+
+    xmin, xmax, ymin, ymax = dst_ds.GetExtent()
+    assert xmin == pytest.approx(-180)
+    assert xmax == pytest.approx(180)
+
+    dst_dat = dst_ds.ReadAsMaskedArray()[0,]
+
+    # (180, 180.22) mapped to (-180, -179.78) (11 pixels)
+    np.testing.assert_array_equal(
+        dst_dat[:11], np.array([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+    )
+
+    # (179.9, 180) stays in place (5 pixels)
+    np.testing.assert_array_equal(dst_dat[-5:], np.array([1, 2, 3, 4, 5]))
+
+    # everything else is NoData
+    assert np.all(dst_dat.mask[11:-5])

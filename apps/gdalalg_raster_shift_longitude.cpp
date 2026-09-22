@@ -147,7 +147,13 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         }
         const int nSrcXOff = static_cast<int>(dfSrcXOff);
 
-        if (nSrcXOff < 0)
+        const int nColumnsWanted = nDstXSize - nDstXOff;
+        const int nColumnsAvailable = nSrcXOff < 0 ? 0
+                                      : nSrcXOff > nSrcXSize
+                                          ? 0
+                                          : nSrcXSize - nSrcXOff;
+
+        if (nColumnsAvailable == 0)
         {
             const double dfMissingRangeMinX =
                 NormalizeLongitude(dfDstChunkMinX);
@@ -171,18 +177,20 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
             continue;
         }
 
-        const int nColumnsWanted = nSrcXSize - nSrcXOff;
-        const int nColumnsAvailable = nDstXSize - nDstXOff;
-
         const GDALRasterWindow chunk{
             nSrcXOff, 0, std::min(nColumnsWanted, nColumnsAvailable), nYSize};
 
         CPLAssert(chunk.nXSize > 0);
 
-        const double dstChunkMaxX = dfDstChunkMinX + chunk.nXSize;
-        CPLDebug("ShiftLongitude", "Src %g - %g, Dst %g - %g", dfDstChunkMinX,
-                 dstChunkMaxX, m_minX + chunk.nXOff * srcGT.xscale,
-                 m_minX + (chunk.nXOff + chunk.nXSize) * srcGT.xscale);
+        const double dfDstChunkMaxX =
+            m_minX + (nDstXOff + chunk.nXSize) * srcGT.xscale;
+        const double dfSrcChunkMinX = dfSrcMinX + chunk.nXOff * srcGT.xscale;
+        const double dfSrcChunkMaxX =
+            dfSrcMinX + (nSrcXOff + chunk.nXSize) * srcGT.xscale;
+
+        CPLDebug("ShiftLongitude", "Src %g - %g, Dst %g - %g", dfSrcChunkMinX,
+                 dfSrcChunkMaxX, m_minX + nDstXOff * srcGT.xscale,
+                 dfDstChunkMaxX);
 
         aosSrcWindows.push_back(chunk);
         nDstXOff += chunk.nXSize;
