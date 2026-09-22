@@ -1027,6 +1027,85 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
                  callback_data=None,
                  buf_obj=None):
 
+      """
+      Low-level function that reads data from the band into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
+      Used as an alternative to :py:meth:`ReadAsArray` in specialized situations where NumPy is not available.
+      
+      The bytearray can be converted into a list of standard Python numeric types using `struct.unpack <https://docs.python.org/3/library/struct.html#struct.unpack>`_ or `memoryview.tolist <https://docs.python.org/3/builtins/stdtypes.html#memoryview.tolist>`_.
+      
+      Parameters
+      ----------
+      xoff : float, default=0
+       The pixel offset to left side of the region of the band to
+       be read. This would be zero to start from the left side.
+      yoff : float, default=0
+       The line offset to top side of the region of the band to
+       be read. This would be zero to start from the top side.
+      xsize : float, optional
+         The number of pixels to read in the x direction. By default,
+         equal to the number of columns in the raster.
+      ysize : float, optional
+         The number of rows to read in the y direction. By default,
+         equal to the number of rows in the raster.
+      buf_xsize : int, optional
+         The number of columns in the returned array. If not equal
+         to ``xsize``, the returned values will be determined
+         by ``resample_alg``.
+      buf_ysize : int, optional
+         The number of rows in the returned array. If not equal
+         to ``ysize``, the returned values will be determined
+         by ``resample_alg``.
+      buf_type : int, optional
+         The data type of the returned array
+      buf_pixel_space : int
+         Number of bytes between successive pixel values written to the buffer.
+         Defaults to the size of ``buf_type``.
+      buf_line_space : int, optional
+         Number of bytes between the start of successive scanlines written to the buffer. 
+         Defaults to the size of ``buf_type`` times ``buf_xsize``.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+         Specifies the resampling algorithm to use when the size of
+         the read window and the buffer are not equal.
+      operate_in_buf_type : bool, default = True
+         Whether the data type used for the operations (typically non-nearest-neighbour
+         resampling) should be buf_type (operate_in_buf_type=True) or the
+         data type of the band (operate_in_buf_type=False)
+      callback : callable, optional
+         A progress callback function
+      callback_data : any, optional
+         Optional data to be passed to callback function
+      buf_obj : bytearray or memoryview, optional
+         Optional buffer into which data should be read. If not provided,
+         a new buffer of appropriate size will be allocated.
+      
+      Returns
+      -------
+      bytearray, or ``buf_obj`` if provided
+          
+      Examples
+      --------
+      >>> import array
+      >>> # create a 2x2 raster with 2 bands
+      >>> ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 2, eType=gdal.GDT_Int16)
+      >>> # set the raster values. 'h' indicates 16-bit signed integer, see https://docs.python.org/3/library/struct.html#struct-format-strings
+      >>> ds.GetRasterBand(1).WriteRaster(0, 0, 2, 2, array.array('h', [1, 2, 3, 4]))
+      0
+      >>> ds.GetRasterBand(2).WriteRaster(0, 0, 2, 2, array.array('h', [5, 6, 7, 8]))
+      0
+      >>> # read entire raster into a new buffer
+      >>> memoryview(ds.ReadRaster()).cast('h').tolist()
+      [1, 2, 3, 4, 5, 6, 7, 8]
+      >>> # read bands into an existing buffer in pixel-interleaved format
+      >>> buf = memoryview(bytearray(16))
+      >>> ds.GetRasterBand(1).ReadRaster(buf_pixel_space = 4, buf_obj = buf)
+      <memory at 0x7eab253265c0>
+      >>> ds.GetRasterBand(2).ReadRaster(buf_pixel_space = 4, buf_obj = buf[2:])
+      <memory at 0x7eab25326800>
+      >>> buf.cast('h').tolist()
+      [1, 5, 2, 6, 3, 7, 4, 8]
+      
+      """
+
       if xsize is None:
           xsize = self.XSize
       if ysize is None:
@@ -1130,7 +1209,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
            equal to the number of columns in the raster.
       win_ysize : float, optional
            The number of rows to read in the y direction. By default,
-           equal to the number of bands in the raster.
+           equal to the number of rows in the raster.
       buf_xsize : int, optional
            The number of columns in the returned array. If not equal
            to ``win_xsize``, the returned values will be determined
@@ -1692,21 +1771,21 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
              equal to the number of columns in the raster.
         ysize : float, optional
              The number of rows to read in the y direction. By default,
-             equal to the number of bands in the raster.
-        buf_xsize : int, optional
-             The number of columns in the returned array. If not equal
-             to ``win_xsize``, the returned values will be determined
-             by ``resample_alg``.
-        buf_ysize : int, optional
-             The number of rows in the returned array. If not equal
-             to ``win_ysize``, the returned values will be determined
-             by ``resample_alg``.
-        buf_type : int, optional
-             The data type of the returned array
+             equal to the number of rows in the raster.
         buf_obj : np.ndarray, optional
              Optional buffer into which values will be read. If ``buf_obj``
              is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
              should generally not be specified.
+        buf_xsize : int, optional
+             The number of columns in the returned array. If not equal
+             to ``xsize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_ysize : int, optional
+             The number of rows in the returned array. If not equal
+             to ``ysize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_type : int, optional
+             The data type of the returned array
         resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
              Specifies the resampling algorithm to use when the size of
              the read window and the buffer are not equal.
@@ -1718,6 +1797,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             A progress callback function
         callback_data : any, optional
             Optional data to be passed to callback function
+        interleave : str, default = 'band'
+            Whether data should be returned in band-interleaved or
+            pixel-interleaved form.
         band_list : list, optional
             Indexes of bands from which data should be read. By default,
             data will be read from all bands.
@@ -1897,6 +1979,13 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                    callback=None,
                    callback_data=None,
                    buf_obj=None):
+
+        """
+        Low-level function that reads data from all bands into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
+        
+        See :py:meth:`Band.ReadRaster` for more usage information and a description of the parameters.
+        
+        """
 
         if xsize is None:
             xsize = self.RasterXSize
