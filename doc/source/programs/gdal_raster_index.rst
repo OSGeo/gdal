@@ -24,12 +24,17 @@ Description
 
 :program:`gdal raster index` creates a vector dataset with a record for each
 input raster file, an attribute containing the filename, and a polygon geometry
-outlining the raster.
-This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a
+outlining the raster. This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a
 raster tileindex
 
 See :ref:`gdal_driver_gti_create` for an extension of this command
-that create files to be used as input for the :ref:`GTI <raster.gti>` driver.
+that creates files to be used as input for the :ref:`GTI <raster.gti>` driver.
+
+.. note::
+
+    Use :program:`gdal raster index` to create a vector spatial index of a
+    collection of individual raster datasets. If you want to use the collection as a single
+    raster, including combining overlapping inputs, see :ref:`gdal_raster_mosaic`.
 
 The following options are available:
 
@@ -46,7 +51,7 @@ Program-Specific Options
 
     .. versionadded:: 3.13
 
-    Base URL for STAC-GeoParquet the ``href`` property of the `id` property in
+    Base URL for the ``href`` property of the `id` property in
     a STAC-GeoParquet index.
 
 .. option:: --filename-filter <FILENAME-FILTER>
@@ -63,13 +68,13 @@ Program-Specific Options
 
     .. versionadded:: 3.13
 
-    Name of metadata item used to set STAC-GeoParquet  `id` property. Defaults to ``id``.
+    Name of metadata item used to set the STAC-GeoParquet `id` property. Defaults to ``id``.
 
 .. option:: --id-method filename|md5|metadata-item
 
     .. versionadded:: 3.13
 
-    How to derive STAC-GeoParquet `id` property
+    Name of method used to derive STAC-GeoParquet `id` property
 
     - ``filename`` (the default): only the filename (without directory, but including extension) is used
 
@@ -137,7 +142,7 @@ Program-Specific Options
 
 .. option:: --source-crs-format auto|WKT|EPSG|PROJ
 
-    The format in which the CRS of each tile must be written. Types can be
+    The format in which the CRS of each tile must be written. The available values are
     ``auto``, ``WKT``, ``EPSG``, ``PROJ``.
     This option should be used together with :option:`--source-crs-field-name`.
 
@@ -166,8 +171,8 @@ Standard Options
 
     .. option:: --update
 
-        Whether the output dataset must be opened in update mode. Implies that
-        it already exists.
+        Whether the output dataset must be opened in update mode.
+        Implies that the output dataset already exists.
 
 .. Return status code
 .. ------------------
