@@ -22,19 +22,27 @@ Synopsis
 Description
 -----------
 
-This program builds a mosaic of a list of input GDAL datasets, that can be
-either a virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
-or in a more conventional raster format such as GeoTIFF.
+This program builds a mosaic of a list of input GDAL datasets, either as a
+virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
+or as a materialized raster in a conventional raster format such as GeoTIFF.
 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
 names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
-Alternatively if a input dataset name is prefixed by the `@` character, it will
+Alternatively, if an input dataset name is prefixed by the `@` character, it will
 be assumed to contain the list of actual dataset names (one per line) to use
 as input datasets.
 
 :program:`gdal raster mosaic` does some checks to ensure that all files that will be put
-in the resulting file have similar characteristics: number of bands, projection, color
+in the resulting file have similar characteristics: number of bands, color
 interpretation, etc. If not, files that do not match the common characteristics will be skipped.
+
+All inputs must share the same CRS, and a mismatch causes an error rather than
+the file being skipped. When inputs are in different CRSs, create a :ref:`GTI <raster.gti>`
+tile index instead, and set the target CRS, resolution and resampling method when
+creating it. The GTI driver then reprojects each source directly from its native CRS
+into the target CRS when pixels are read. Setting these when creating the index,
+rather than reprojecting it afterwards, avoids resampling the data twice and the
+associated quality loss. See :example:`gdal-driver-gti-create-reproject`.
 
 Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
 be specified (:option:`--pixel-function`) to calculate pixel values from
@@ -47,7 +55,13 @@ is not taken into account to do alpha compositing (so a source with alpha=0
 appearing on top of another source will override its content). This might be
 changed in later versions.
 
-Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
+Starting with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
+
+.. note::
+
+    Use :program:`gdal raster mosaic` when you want to convert a collection of
+    rasters into a single raster, handling any overlaps using a pixel function.
+    If you instead need a spatial index of a collection of individual raster datasets, see :ref:`gdal_raster_index`.
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
@@ -66,15 +80,15 @@ Program-Specific Options
 
 .. option:: --add-alpha
 
-    Adds an alpha mask band to the output when the source raster have none. Mainly useful for RGB sources (or grey-level sources).
+    Adds an alpha mask band to the output when the source rasters have none. Mainly useful for RGB sources (or grey-level sources).
     The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
-    255 in areas with source raster. The effect is that a RGBA viewer will render
+    255 in areas with source raster. The effect is that an RGBA viewer will render
     the areas without source rasters as transparent and areas with source rasters as opaque.
 
 .. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
-    If input bands not set all bands will be added to the output.
+    If input bands are not set, all bands will be added to the output.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>
@@ -87,7 +101,7 @@ Program-Specific Options
 
 .. option:: --hide-nodata
 
-    Even if any band contains nodata value, giving this option makes the output band
+    Even if any band contains a nodata value, giving this option makes the output band
     not report the NoData. Useful when you want to control the background color of
     the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
     dataset which doesn't report nodata value but is transparent in areas with no
@@ -145,8 +159,7 @@ Program-Specific Options
 
 .. option:: --target-aligned-pixels
 
-    (target aligned pixels) align
-    the coordinates of the extent of the output file to the values of the :option:`--resolution`,
+    Align the coordinates of the extent of the output file to the values of the :option:`--resolution`,
     such that the aligned extent includes the minimum extent.
     Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
