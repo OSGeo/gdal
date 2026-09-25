@@ -28,20 +28,21 @@ or as a materialized raster in a conventional raster format such as GeoTIFF.
 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
 names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
-Alternatively if an input dataset name is prefixed by the `@` character, it will
+Alternatively, if an input dataset name is prefixed by the `@` character, it will
 be assumed to contain the list of actual dataset names (one per line) to use
 as input datasets.
 
 :program:`gdal raster mosaic` does some checks to ensure that all files that will be put
-in the resulting file have similar characteristics: number of bands, projection, color
+in the resulting file have similar characteristics: number of bands, color
 interpretation, etc. If not, files that do not match the common characteristics will be skipped.
 
-:program:`gdal raster mosaic` requires all inputs to share the same CRS. When
-inputs are in different CRSs, create a :ref:`GTI <raster.gti>` tile index
-instead, and set the target CRS, resolution and resampling method when
-creating it. The GTI driver then reprojects each source directly from its
-native CRS into the target CRS when pixels are read. This avoids unnecessary
-double resampling and associated quality loss. See :example:`gdal-driver-gti-create-reproject`.
+All inputs must share the same CRS, and a mismatch causes an error rather than
+the file being skipped. When inputs are in different CRSs, create a :ref:`GTI <raster.gti>`
+tile index instead, and set the target CRS, resolution and resampling method when
+creating it. The GTI driver then reprojects each source directly from its native CRS
+into the target CRS when pixels are read. Setting these when creating the index,
+rather than reprojecting it afterwards, avoids resampling the data twice and the
+associated quality loss. See :example:`gdal-driver-gti-create-reproject`.
 
 Starting with GDAL 3.12, a function (e.g., ``min``, ``mean``, ``median``) can
 be specified (:option:`--pixel-function`) to calculate pixel values from
@@ -81,13 +82,13 @@ Program-Specific Options
 
     Adds an alpha mask band to the output when the source rasters have none. Mainly useful for RGB sources (or grey-level sources).
     The alpha band is filled on-the-fly with the value 0 in areas without any source raster, and with value
-    255 in areas with source raster. The effect is that a RGBA viewer will render
+    255 in areas with source raster. The effect is that an RGBA viewer will render
     the areas without source rasters as transparent and areas with source rasters as opaque.
 
 .. option:: -b, --band <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
-    If input bands are not set all bands will be added to the output.
+    If input bands are not set, all bands will be added to the output.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
 .. option:: --bbox <xmin>,<ymin>,<xmax>,<ymax>

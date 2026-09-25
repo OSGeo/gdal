@@ -25,7 +25,7 @@ Description
 :program:`gdal raster index` creates a vector dataset with a record for each
 input raster file, an attribute containing the filename, and a polygon geometry
 outlining the raster. This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a
-raster tileindex
+raster tileindex.
 
 See :ref:`gdal_driver_gti_create` for an extension of this command
 that creates files to be used as input for the :ref:`GTI <raster.gti>` driver.
@@ -51,7 +51,7 @@ Program-Specific Options
 
     .. versionadded:: 3.13
 
-    Base URL for the ``href`` property of the `id` property in
+    Base URL for the ``href`` property of the ``id`` property in
     a STAC-GeoParquet index.
 
 .. option:: --filename-filter <FILENAME-FILTER>
@@ -68,13 +68,13 @@ Program-Specific Options
 
     .. versionadded:: 3.13
 
-    Name of metadata item used to set the STAC-GeoParquet `id` property. Defaults to ``id``.
+    Name of metadata item used to set the STAC-GeoParquet ``id`` property. Defaults to ``id``.
 
 .. option:: --id-method filename|md5|metadata-item
 
     .. versionadded:: 3.13
 
-    Name of method used to derive STAC-GeoParquet `id` property
+    Name of method used to derive STAC-GeoParquet ``id`` property
 
     - ``filename`` (the default): only the filename (without directory, but including extension) is used
 
