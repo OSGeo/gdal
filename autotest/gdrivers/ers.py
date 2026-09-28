@@ -312,3 +312,16 @@ def test_ers_recursive_opening():
 def test_ers_open_data_file_ecw():
 
     assert gdal.Open("data/ers/references_ecw.ers")
+
+
+###############################################################################
+# Test reading a file with CoordinateType = RAW
+
+
+def test_ers_coordinatetype_raw():
+
+    ds = gdal.Open("data/ers/mag4014.ers")
+
+    gt = ds.GetGeoTransform()
+
+    assert gt == (-301100, 200, 0, -69400 + 200 * 165, 0, -200)
