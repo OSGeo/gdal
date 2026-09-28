@@ -274,12 +274,12 @@ static void TruncateUTF8ToMaxChar(std::string &osStr, size_t maxCharCount)
         // Is it first byte of a UTF-8 character?
         if ((osStr[i] & 0xc0) != 0x80)
         {
-            ++nCharacterCount;
             if (nCharacterCount == maxCharCount)
             {
-                osStr.resize(i + 1);
+                osStr.resize(i);
                 break;
             }
+            ++nCharacterCount;
         }
     }
 }
