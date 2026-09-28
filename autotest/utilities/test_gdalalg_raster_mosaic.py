@@ -611,3 +611,15 @@ def test_gdalalg_raster_mosaic_pipeline():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.GetRasterBand(1).Checksum() == 7
+
+
+def test_gdalalg_raster_mosaic_missing_pixel_function_arg(tmp_vsimem):
+
+    with pytest.raises(
+        Exception, match="reclassify must be called with 'mapping' argument"
+    ):
+        gdal.alg.raster.mosaic(
+            input="../gcore/data/byte.tif",
+            pixel_function="reclassify",
+            output=tmp_vsimem / "out.tif",
+        )
