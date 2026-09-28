@@ -14,7 +14,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 np = pytest.importorskip("numpy")
 gdaltest.importorskip_gdal_array()
@@ -38,6 +38,7 @@ def create_ds(
     dt=gdal.GDT_Int32,
     bands=1,
     nodata=None,
+    epsg=None,
 ):
 
     nx = round((xmax - xmin) / dx)
@@ -47,6 +48,10 @@ def create_ds(
 
     ds = gdal.GetDriverByName("MEM").Create("", nx, ny, bands, eType=dt)
     ds.SetGeoTransform((xmin, dx, 0, ymax, 0, -dy))
+
+    if epsg is not None:
+        ds.SetSpatialRef(osr.SpatialReference(epsg=epsg))
+
     for i in range(bands):
         ds.GetRasterBand(i + 1).WriteArray(data)
         if nodata is not None:
@@ -58,7 +63,7 @@ def create_ds(
 def test_gdalalg_raster_shift_longitude_1(alg):
     # Shift (0, 360) to (-180, 180)
 
-    src_ds = create_ds(xmin=0, xmax=360)
+    src_ds = create_ds(xmin=0, xmax=360, epsg=4326)
     src_data = src_ds.ReadAsArray()
 
     alg["input"] = src_ds
@@ -71,6 +76,7 @@ def test_gdalalg_raster_shift_longitude_1(alg):
     dst_ds = alg.Output()
 
     assert dst_ds.GetGeoTransform() == (-180, 1, 0, 90, 0, -1)
+    assert dst_ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
     assert dst_ds.RasterXSize == 360
     assert dst_ds.RasterYSize == 180
     assert dst_ds.GetRasterBand(1).DataType == gdal.GDT_Int32
