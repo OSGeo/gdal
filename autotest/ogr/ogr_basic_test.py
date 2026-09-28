@@ -983,6 +983,32 @@ def test_feature_defn_use_after_layer_del():
 
 
 ###############################################################################
+# check field defn access after the feature defn owning it has been released
+
+
+def test_field_defn_use_after_layer_del():
+    with ogr.Open("data/poly.shp") as ds:
+        fld_defn = ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0)
+        geom_fld_defn = ds.GetLayer(0).GetLayerDefn().GetGeomFieldDefn(0)
+        prec = geom_fld_defn.GetCoordinatePrecision()
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
+    assert prec.GetXYResolution() == 0.0
+
+
+def test_field_defn_use_after_feature_del():
+    with ogr.Open("data/poly.shp") as ds:
+        feat = ds.GetLayer(0).GetNextFeature()
+        fld_defn = feat.GetFieldDefnRef(0)
+        geom_fld_defn = feat.GetGeomFieldDefnRef(0)
+        del feat
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
+
+
+###############################################################################
 # Test CreateDataSource context manager
 
 
