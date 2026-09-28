@@ -157,12 +157,14 @@ def test_gdalalg_vector_rename_layer_max_length():
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_ds.CreateLayer("éven")
+    src_ds.CreateLayer("noël")
 
     with gdal.alg.vector.rename_layer(
         input=src_ds, output="", output_format="MEM", max_length=3
     ) as alg:
         ds = alg.Output()
         assert ds.GetLayer(0).GetName() == "éve"
+        assert ds.GetLayer(1).GetName() == "noë"
 
 
 def test_gdalalg_vector_rename_layer_unique():
@@ -184,6 +186,8 @@ def test_gdalalg_vector_rename_layer_unique_max_length():
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_ds.CreateLayer("sâme_name")
     src_ds.CreateLayer("sâme_name")
+    src_ds.CreateLayer("aébc")
+    src_ds.CreateLayer("aébc")
 
     with gdal.alg.vector.rename_layer(
         input=src_ds, output="", output_format="MEM", max_length=5
@@ -191,6 +195,8 @@ def test_gdalalg_vector_rename_layer_unique_max_length():
         ds = alg.Output()
         assert ds.GetLayer(0).GetName() == "sâm_1"
         assert ds.GetLayer(1).GetName() == "sâm_2"
+        assert ds.GetLayer(2).GetName() == "aé_1"
+        assert ds.GetLayer(3).GetName() == "aé_2"
 
 
 def test_gdalalg_vector_rename_layer_unique_max_length_impossible():
