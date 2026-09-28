@@ -33,11 +33,10 @@ be assumed to contain the list of actual dataset names (one per line) to use
 as input datasets.
 
 :program:`gdal raster mosaic` does some checks to ensure that all files that will be put
-in the resulting file have similar characteristics: number of bands, color
-interpretation, etc. If not, files that do not match the common characteristics will be skipped.
+in the resulting file have similar characteristics: number of bands, data type, CRS, color
+interpretation, etc. If not, an error will be produced and the program will exit.
 
-All inputs must share the same CRS, and a mismatch causes an error rather than
-the file being skipped. When inputs are in different CRSs, create a :ref:`GTI <raster.gti>`
+To create a mosaic from inputs with different CRSs, create a :ref:`GTI <raster.gti>`
 tile index instead, and set the target CRS, resolution and resampling method when
 creating it. The GTI driver then reprojects each source directly from its native CRS
 into the target CRS when pixels are read. Setting these when creating the index,
