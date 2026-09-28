@@ -81,6 +81,7 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/heic");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/heif.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "heic");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "heic heif");
 #ifdef HAS_CUSTOM_FILE_READER
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 #endif
