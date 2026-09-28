@@ -98,9 +98,9 @@ def test_rmf_7():
     tst.testCreateCopy(check_srs=1, check_gt=1, vsimem=1)
 
 
-def test_rmf_8():
+def test_rmf_8(tmp_path):
 
-    tst = gdaltest.GDALTest("rmf", "rmf/rgbsmall.rsw", 2, 21053)
+    tst = gdaltest.GDALTest("rmf", "rmf/rgbsmall.rsw", 2, 21053, tmpdir=tmp_path)
 
     tst.testCreateCopy(check_srs=1, check_gt=1)
 
@@ -659,19 +659,19 @@ def test_rmf_30(tmp_path):
 # Check compressed write
 
 
-def test_rmf_31a():
+def test_rmf_31a(tmp_path):
 
     tst = gdaltest.GDALTest(
-        "rmf", "small_world.tif", 1, 30111, options=["COMPRESS=NONE"]
+        "rmf", "small_world.tif", 1, 30111, options=["COMPRESS=NONE"], tmpdir=tmp_path
     )
 
     tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
-def test_rmf_31b():
+def test_rmf_31b(tmp_path):
 
     tst = gdaltest.GDALTest(
-        "rmf", "small_world.tif", 1, 30111, options=["COMPRESS=LZW"]
+        "rmf", "small_world.tif", 1, 30111, options=["COMPRESS=LZW"], tmpdir=tmp_path
     )
 
     tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
@@ -698,10 +698,15 @@ def test_rmf_31c(tmp_path):
     assert cs in (expected_cs1, expected_cs2, expected_cs_jpeg9e)
 
 
-def test_rmf_31d():
+def test_rmf_31d(tmp_path):
 
     tst = gdaltest.GDALTest(
-        "rmf", "rmf/t100.mtw", 1, 6388, options=["MTW=YES", "COMPRESS=RMF_DEM"]
+        "rmf",
+        "rmf/t100.mtw",
+        1,
+        6388,
+        options=["MTW=YES", "COMPRESS=RMF_DEM"],
+        tmpdir=tmp_path,
     )
 
     tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
@@ -776,7 +781,12 @@ def test_rmf_31e(tmp_path, monkeypatch):
     tst_ds = None
 
     tst = gdaltest.GDALTest(
-        "rmf", "../" + tst_name, 1, cs, options=["MTW=YES", "COMPRESS=RMF_DEM"]
+        "rmf",
+        "../" + tst_name,
+        1,
+        cs,
+        options=["MTW=YES", "COMPRESS=RMF_DEM"],
+        tmpdir=tmp_path,
     )
 
     tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)

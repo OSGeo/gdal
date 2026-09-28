@@ -66,8 +66,8 @@ init_list = [
     ],
 )
 @pytest.mark.require_driver("BMP")
-def test_bmp_create(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("BMP", filename, 1, checksum)
+def test_bmp_create(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest("BMP", filename, 1, checksum, tmpdir=tmp_path)
     getattr(ut, testfunction)()
 
 

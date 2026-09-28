@@ -67,9 +67,9 @@ def test_dted_2():
 # Create simple copy and check.
 
 
-def test_dted_3():
+def test_dted_3(tmp_path):
 
-    tst = gdaltest.GDALTest("DTED", "n43.dt0", 1, 49187)
+    tst = gdaltest.GDALTest("DTED", "n43.dt0", 1, 49187, tmpdir=tmp_path)
 
     prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
@@ -80,9 +80,9 @@ def test_dted_3():
 # Read subwindow.  Tests the tail recursion problem.
 
 
-def test_dted_4():
+def test_dted_4(tmp_path):
 
-    tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 305, 5, 5, 5, 5)
+    tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 305, 5, 5, 5, 5, tmpdir=tmp_path)
     tst.testOpen()
 
 

@@ -62,9 +62,14 @@ init_list = [
     init_list,
     ids=[tup[0].split(".")[0] for tup in init_list],
 )
-def test_aaigrid_createcopy(filename, checksum):
+def test_aaigrid_createcopy(filename, checksum, tmp_path):
     ut = gdaltest.GDALTest(
-        "AAIGrid", "../gcore/data/" + filename, 1, checksum, filename_absolute=True
+        "AAIGrid",
+        "../gcore/data/" + filename,
+        1,
+        checksum,
+        filename_absolute=True,
+        tmpdir=tmp_path,
     )
     ut.testCreateCopy()
 
@@ -131,9 +136,9 @@ def test_aaigrid_comma():
 # Create simple copy and check.
 
 
-def test_aaigrid_3():
+def test_aaigrid_3(tmp_path):
 
-    tst = gdaltest.GDALTest("AAIGRID", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("AAIGRID", "byte.tif", 1, 4672, tmpdir=tmp_path)
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
@@ -223,10 +228,12 @@ def test_aaigrid_6bis():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_aaigrid_7():
+def test_aaigrid_7(tmp_path):
 
     with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
-        tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
+        tst = gdaltest.GDALTest(
+            "AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481, tmpdir=tmp_path
+        )
 
         tst.testCreateCopy(check_gt=1)
 
@@ -235,9 +242,9 @@ def test_aaigrid_7():
 # Test creating an in memory copy.
 
 
-def test_aaigrid_8():
+def test_aaigrid_8(tmp_path):
 
-    tst = gdaltest.GDALTest("AAIGRID", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("AAIGRID", "byte.tif", 1, 4672, tmpdir=tmp_path)
 
     tst.testCreateCopy(vsimem=1)
 
