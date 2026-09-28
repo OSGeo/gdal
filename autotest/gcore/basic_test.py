@@ -1029,6 +1029,60 @@ def test_ovr_band_use_after_dataset_close():
         ovr.Checksum()
 
 
+def test_sample_ovr_band_use_after_dataset_close():
+    with gdal.Open("data/byte_with_ovr.tif") as ds:
+        ovr = ds.GetRasterBand(1).GetSampleOverview(0)
+
+    # Make sure ds.__exit__() invalidation has propagated to sample overviews
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Band_Checksum', argument 1 of type 'GDALRasterBandShadow \*'",
+    ):
+        ovr.Checksum()
+
+
+@pytest.mark.require_driver("HFA")
+def test_rat_use_after_dataset_close():
+    with gdal.Open("data/rat.img") as ds:
+        rat = ds.GetRasterBand(1).GetDefaultRAT()
+
+    # Make sure ds.__exit__() invalidation has propagated to the RAT
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'RasterAttributeTable_GetRowCount', argument 1 of type 'GDALRasterAttributeTableShadow \*'",
+    ):
+        rat.GetRowCount()
+
+
+@pytest.mark.require_driver("BMP")
+def test_color_table_use_after_dataset_close():
+    with gdal.Open("data/8bit_pal.bmp") as ds:
+        ct = ds.GetRasterBand(1).GetRasterColorTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the color table
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'ColorTable_GetCount', argument 1 of type 'GDALColorTableShadow \*'",
+    ):
+        ct.GetCount()
+
+
+def test_band_dataset_use_after_dataset_close():
+    with gdal.Open("data/byte.tif") as ds:
+        band_ds = ds.GetRasterBand(1).GetDataset()
+
+    # Make sure ds.__exit__() invalidation has propagated to Band.GetDataset()
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Dataset_RasterXSize_get', argument 1 of type 'GDALDatasetShadow \*'",
+    ):
+        assert band_ds.RasterXSize
+
+
 @pytest.mark.slow()
 def test_checksum_more_than_2billion_pixels():
 
