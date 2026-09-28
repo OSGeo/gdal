@@ -285,6 +285,7 @@ class GDALZonalStatsImpl
         MAX_CENTER_X,
         MAX_CENTER_Y,
         MEAN,
+        MEDIAN,
         MIN,
         MIN_CENTER_X,
         MIN_CENTER_Y,
@@ -426,6 +427,17 @@ class GDALZonalStatsImpl
                              stat.c_str());
                     return false;
                 }
+
+                case MEDIAN:
+                    if (m_options.pixels == GDALZonalStatsOptions::FRACTIONAL)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Median cannot be calculated with fractional "
+                                 "pixel coverage.");
+                        return false;
+                    }
+                    m_stats_options.calc_median = true;
+                    break;
 
                 case COVERAGE:
                     m_stats_options.store_coverage_fraction = true;
@@ -671,6 +683,8 @@ class GDALZonalStatsImpl
                 return "max_center_y";
             case MEAN:
                 return "mean";
+            case MEDIAN:
+                return "median";
             case MIN:
                 return "min";
             case MIN_CENTER_X:
@@ -740,6 +754,7 @@ class GDALZonalStatsImpl
             case MAX_CENTER_X:
             case MAX_CENTER_Y:
             case MEAN:
+            case MEDIAN:
             case MIN:
             case MIN_CENTER_X:
             case MIN_CENTER_Y:
@@ -838,6 +853,10 @@ class GDALZonalStatsImpl
         if (auto iField = GetFieldIndex(iBand, MEAN); iField != -1)
         {
             feature.SetField(iField, stats.mean());
+        }
+        if (auto iField = GetFieldIndex(iBand, MEDIAN); iField != -1)
+        {
+            feature.SetField(iField, stats.median());
         }
         if (auto iField = GetFieldIndex(iBand, MIN); iField != -1)
         {

@@ -1364,3 +1364,76 @@ def test_gdalalg_raster_zonal_stats_zones_nodata(zonal):
     f = lyr.GetNextFeature()
     assert f["value"] == 0
     assert f["count"] == 398
+
+
+@pytest.mark.parametrize("include_values", (True, False))
+def test_gdalalg_raster_zonal_stats_median(zonal, pixels, include_values):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    zones_ds = gdal.GetDriverByName("MEM").Create(
+        "", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_Byte
+    )
+    zones_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    zones_ds.SetSpatialRef(src_ds.GetSpatialRef())
+
+    # zone 1 : 3 pixels
+    zones_ds.WriteRaster(1, 1, 3, 1, struct.pack("BBB", 1, 1, 1))
+
+    # zone 2: 4 pixels
+    zones_ds.WriteRaster(1, 15, 4, 1, struct.pack("BBBB", 2, 2, 2, 2))
+
+    # zone 3: 1 pixel
+    zones_ds.WriteRaster(0, 0, 1, 1, struct.pack("B", 3))
+
+    # zone 4: 2 pixels
+    zones_ds.WriteRaster(1, 2, 2, 1, struct.pack("BB", 4, 4))
+
+    zonal["input"] = src_ds
+    zonal["zones"] = zones_ds
+    zonal["stat"] = ["median"] + (["values"] if include_values else [])
+    zonal["pixels"] = pixels
+    zonal["output-format"] = "MEM"
+    zonal["output-layer"] = "myresult"
+
+    if pixels == "fractional":
+        with pytest.raises(Exception, match="Median cannot be calculated"):
+            zonal.Run()
+        return
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+    lyr = out_ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 5
+
+    f = lyr.GetNextFeature()
+    assert f["value"] == 0
+
+    # odd number of values
+    f = lyr.GetNextFeature()
+    assert f["value"] == 1
+    if include_values:
+        assert f["values"] == [132, 107, 123]
+    assert f["median"] == 123
+
+    # even number of values
+    f = lyr.GetNextFeature()
+    assert f["value"] == 2
+    if include_values:
+        assert f["values"] == [148, 156, 123, 107]
+    assert f["median"] == 0.5 * (123 + 148)
+
+    # single value
+    f = lyr.GetNextFeature()
+    assert f["value"] == 3
+    if include_values:
+        assert f["values"] == [107]
+    assert f["median"] == 107
+
+    # two values
+    f = lyr.GetNextFeature()
+    assert f["value"] == 4
+    if include_values:
+        assert f["values"] == [132, 140]
+    assert f["median"] == 0.5 * (132 + 140)

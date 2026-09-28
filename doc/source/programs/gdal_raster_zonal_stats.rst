@@ -72,6 +72,8 @@ Supported stats
       - Cell center y-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
     * - mean
       - Mean value of cells that intersect the polygon, weighted by the percent of each cell that is covered.
+    * - median
+      - Median value of cells that intersect the polygon. Does not take into account the percent of each cell that is covered; cannot be used with :option:`--pixels=fractional`.
     * - min
       - Minimum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account.
     * - min_center_x
