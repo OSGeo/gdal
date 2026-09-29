@@ -15,6 +15,7 @@
 #include "cpl_vsi_virtual.h"
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 
 #include <algorithm>
