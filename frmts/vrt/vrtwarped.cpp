@@ -265,6 +265,21 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
         return nullptr;
     }
 
+    if (nDstPixels <= 0 || nDstLines <= 0)
+    {
+        // Can happen when the extent of the source in the target CRS is
+        // degenerate, for example when the source crosses the antimeridian
+        // and the suggested longitude span covers the whole globe, so that
+        // the suggested latitude span rounds down to zero line.
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Suggested output size is %d x %d. The extent of the source "
+                 "in the target CRS is degenerate.",
+                 nDstPixels, nDstLines);
+        GDALDestroyTransformer(psWO->pTransformerArg);
+        GDALDestroyWarpOptions(psWO);
+        return nullptr;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Update the transformer to include an output geotransform        */
     /*      back to pixel/line coordinates.                                 */
@@ -377,6 +392,15 @@ GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
 {
     VALIDATE_POINTER1(hSrcDS, "GDALCreateWarpedVRT", nullptr);
     VALIDATE_POINTER1(psOptions, "GDALCreateWarpedVRT", nullptr);
+
+    if (nPixels <= 0 || nLines <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Attempt to create %dx%d warped VRT is illegal, sizes must "
+                 "be larger than zero.",
+                 nPixels, nLines);
+        return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create the VRTDataset and populate it with bands.               */

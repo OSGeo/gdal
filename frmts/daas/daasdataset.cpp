@@ -1186,6 +1186,15 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
 
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
+    if (nXSize <= 0 || nYSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Suggested size in specified TARGET_SRS is %d x %d",
+                 nXSize, nYSize);
+        CSLDestroy(papszTO);
+        return false;
+    }
+
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
     m_osSRSValue = std::move(osTargetEPSGCode);
