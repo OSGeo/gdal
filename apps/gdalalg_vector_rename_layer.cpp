@@ -382,10 +382,10 @@ bool GDALVectorRenameLayerAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 if (m_maxLength > 0 && nNameLen + osSuffix.size() >
                                            static_cast<size_t>(m_maxLength))
                 {
-                    if (nNameLen > osSuffix.size())
+                    if (static_cast<size_t>(m_maxLength) > osSuffix.size())
                     {
                         TruncateUTF8ToMaxChar(osName,
-                                              nNameLen - osSuffix.size());
+                                              m_maxLength - osSuffix.size());
                         osName += osSuffix;
                     }
                     else if (bUniquenessPossible)
