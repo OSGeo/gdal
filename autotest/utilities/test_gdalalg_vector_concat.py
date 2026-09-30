@@ -477,6 +477,6 @@ def test_gdalalg_vector_concat_write_failure(tmp_path):
 
     alg = get_alg()
     alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
-    alg["output"] = str(tmp_path / "does_not_exist" / "out.gpkg")
-    with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
-        assert not alg.Run()
+    alg["output"] = tmp_path / "does_not_exist" / "out.shp"
+    with pytest.raises(Exception, match="Failed to create file"):
+        alg.Run()
