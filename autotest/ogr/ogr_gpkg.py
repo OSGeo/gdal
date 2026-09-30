@@ -5416,6 +5416,35 @@ def test_ogr_gpkg_savepoint(tmp_vsimem):
 
 
 ###############################################################################
+# Test SAVEPOINTS are erased after a COMMIT (issue GH #15294)
+
+
+def test_ogr_gpkg_savepoint_erased_after_commit(tmp_vsimem):
+    filename = tmp_vsimem / "ogr_gpkg_savepoint_erased_after_commit.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "foo"
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    ds.ExecuteSQL("BEGIN")
+    ds.ExecuteSQL("SAVEPOINT pt")
+    # Modify the feature
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    f["str"] = "bar"
+    lyr.SetFeature(f)
+    ds.ExecuteSQL("COMMIT")
+    ds.ExecuteSQL("BEGIN")
+    # This raised a runtime error before the patch that fixed GH #15294
+    # RuntimeError: sqlite3_exec(ROLLBACK TO SAVEPOINT pt) failed: no such savepoint: pt
+    ds.ExecuteSQL("ROLLBACK")
+
+
+###############################################################################
 # Test that we don't open file handles behind the back of sqlite3
 
 

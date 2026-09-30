@@ -4045,6 +4045,7 @@ OGRErr OGRSQLiteBaseDataSource::SoftCommitTransaction()
     m_nSoftTransactionLevel--;
     if (m_nSoftTransactionLevel == 0)
     {
+        m_aosSavepoints.clear();
         eErr = DoTransactionCommand("COMMIT");
     }
 
