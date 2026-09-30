@@ -257,14 +257,20 @@ def test_gdalalg_vector_check_geometry_point(alg):
 
 
 @pytest.mark.parametrize(
-    "wkt",
+    "wkt,valid",
     (
-        "POINT (3 NaN)",
-        "LINESTRING (8 0, 2 NaN)",
-        "POLYGON ((0 0, 1 0, 1 NaN 0 1, 0 0))",
+        ("POINT (3 NaN)", False),
+        ("LINESTRING (8 0, 2 NaN)", False),
+        ("POLYGON ((0 0, 1 0, 1 NaN, 0 1, 0 0))", False),
+        ("POINT Z (3 5 NaN)", True),
+        ("POINT M (3 5 NaN)", True),
+        ("LINESTRING Z (8 0 NaN, 2 6 4)", True),
+        ("LINESTRING M (8 0 NaN, 2 6 4)", True),
+        ("POLYGON Z ((0 0 6, 1 0 NaN, 1 1 NaN, 0 1 NaN, 0 0 NaN))", True),
+        ("POLYGON M ((0 0 6, 1 0 NaN, 1 1 NaN, 0 1 NaN, 0 0 NaN))", True),
     ),
 )
-def test_gdalalg_vector_check_geometry_nan(alg, wkt):
+def test_gdalalg_vector_check_geometry_nan_inf(alg, wkt, valid):
 
     # can only construct using WKT; calling AddPoint with a NaN value yields POINT EMPTY
     alg["input"] = gdaltest.wkt_ds(wkt)
@@ -276,11 +282,15 @@ def test_gdalalg_vector_check_geometry_nan(alg, wkt):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
-    assert dst_lyr.GetFeatureCount() == 1
 
-    dst_feat = dst_lyr.GetNextFeature()
+    if valid:
+        assert dst_lyr.GetFeatureCount() == 0
+    else:
+        assert dst_lyr.GetFeatureCount() == 1
 
-    assert dst_feat["error"] == "Invalid Coordinate"
+        dst_feat = dst_lyr.GetNextFeature()
+
+        assert dst_feat["error"] == "Invalid Coordinate"
 
 
 def test_gdalalg_vector_check_geometry_point_inf(alg):
@@ -295,7 +305,6 @@ def test_gdalalg_vector_check_geometry_point_inf(alg):
     src_lyr.CreateFeature(src_feat)
 
     alg["input"] = src_ds
-
     alg["output"] = ""
     alg["output-format"] = "stream"
 
@@ -308,6 +317,33 @@ def test_gdalalg_vector_check_geometry_point_inf(alg):
     dst_feat = dst_lyr.GetNextFeature()
 
     assert dst_feat["error"] == "Invalid Coordinate"
+
+
+@pytest.mark.parametrize("geom_type", (ogr.wkbPoint25D, ogr.wkbPointM))
+def test_gdalalg_vector_check_geometry_point_inf_zm(alg, geom_type):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("point", geom_type=geom_type)
+    src_feat = ogr.Feature(src_lyr.GetLayerDefn())
+    src_geom = ogr.Geometry(geom_type)
+
+    if geom_type == ogr.wkbPoint25D:
+        src_geom.AddPoint(3, 5, float("inf"))
+    else:
+        src_geom.AddPointM(3, 5, float("inf"))
+
+    src_feat.SetGeometry(src_geom)
+    src_lyr.CreateFeature(src_feat)
+
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg["output"].GetDataset()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetFeatureCount() == 0
 
 
 def test_gdalalg_vector_check_geometry_geometry_collection(alg):
