@@ -8020,7 +8020,7 @@ GDALAlgorithmArgH GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg,
  * @param pszArgName Argument name. Must NOT be null.
  * @return a NULL terminated list of names, which must be destroyed with
  * CSLDestroy()
- * @since 3.11
+ * @since 3.13
  */
 char **GDALAlgorithmGetArgDependencies(GDALAlgorithmH hAlg,
                                        const char *pszArgName)
