@@ -24,12 +24,20 @@ import sys
 import gdaltest
 import pytest
 
+from osgeo import gdal, osr
+
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
 
-from osgeo import gdal, osr
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    # warping with GCPs may invoke GDALFillNodata, which writes to CPL_TMPDIR
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "warp"):
+        yield
+
 
 ###############################################################################
 # Verify that we always getting the same image when warping.
