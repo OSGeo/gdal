@@ -270,7 +270,7 @@ def test_gdalalg_vector_check_geometry_point(alg):
         ("POLYGON M ((0 0 6, 1 0 NaN, 1 1 NaN, 0 1 NaN, 0 0 NaN))", True),
     ),
 )
-def test_gdalalg_vector_check_geometry_nan_inf(alg, wkt, valid):
+def test_gdalalg_vector_check_geometry_nan(alg, wkt, valid):
 
     # can only construct using WKT; calling AddPoint with a NaN value yields POINT EMPTY
     alg["input"] = gdaltest.wkt_ds(wkt)
@@ -295,7 +295,7 @@ def test_gdalalg_vector_check_geometry_nan_inf(alg, wkt, valid):
 
 def test_gdalalg_vector_check_geometry_point_inf(alg):
 
-    # can only construct using WKT; WKT parser does not accept inf
+    # can only construct using AddPoint; WKT parser does not accept inf
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("point", geom_type=ogr.wkbPoint)
     src_feat = ogr.Feature(src_lyr.GetLayerDefn())
