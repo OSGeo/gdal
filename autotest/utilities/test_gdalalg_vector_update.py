@@ -189,6 +189,24 @@ def test_gdalalg_vector_update_by_fid():
     assert f["some_field"] == "foo"
 
 
+def test_gdalalg_vector_update_src_without_geometry_field():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("src")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateFeature(ogr.Feature(src_lyr.GetLayerDefn()))
+
+    dst_ds = gdal.GetDriverByName("MEM").CreateVector("dst")
+    dst_lyr = dst_ds.CreateLayer("test")
+    f = ogr.Feature(dst_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    dst_lyr.CreateFeature(f)
+
+    assert gdal.alg.vector.update(input=src_ds, output=dst_ds)
+
+    assert dst_lyr.GetFeatureCount() == 1
+    assert dst_lyr.GetNextFeature().GetGeometryRef() is not None
+
+
 @pytest.mark.parametrize("mode", ["merge", "update-only", "append-only"])
 def test_gdalalg_vector_update_mode(mode):
 
