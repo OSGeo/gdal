@@ -272,7 +272,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
         // and the suggested longitude span covers the whole globe, so that
         // the suggested latitude span rounds down to zero line.
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Suggested output size is %d x %d. The extent of the source "
+                 "Computed output size is %d x %d. The extent of the source "
                  "in the target CRS is degenerate.",
                  nDstPixels, nDstLines);
         GDALDestroyTransformer(psWO->pTransformerArg);

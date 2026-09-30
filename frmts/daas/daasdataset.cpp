@@ -1189,8 +1189,8 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
     if (nXSize <= 0 || nYSize <= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Suggested size in specified TARGET_SRS is %d x %d",
-                 nXSize, nYSize);
+                 "Computed size in specified TARGET_SRS is %d x %d", nXSize,
+                 nYSize);
         CSLDestroy(papszTO);
         return false;
     }

@@ -768,7 +768,9 @@ def test_vrtwarp_autocreatewarpedvrt_degenerate_output(tmp_vsimem):
     ds.SetSpatialRef(srs)
     ds = None
 
-    with pytest.raises(Exception, match="The extent of the source in the target CRS is degenerate"):
+    with pytest.raises(
+        Exception, match="The extent of the source in the target CRS is degenerate"
+    ):
         gdal.AutoCreateWarpedVRT(gdal.Open(filename), None, "EPSG:3857")
 
 
