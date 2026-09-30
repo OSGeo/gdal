@@ -242,7 +242,7 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                  ++iField)
             {
                 const int nSrcFieldIdx = srcKeyFieldIndices[iField];
-                if (!poSrcFeature->IsFieldSet(nSrcFieldIdx))
+                if (!poSrcFeature->IsFieldSetAndNotNull(nSrcFieldIdx))
                 {
                     bSkip = true;
                     break;
