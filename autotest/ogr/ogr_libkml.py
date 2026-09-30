@@ -2148,7 +2148,7 @@ def test_ogr_libkml_gx_track_without_when():
 
 
 ###############################################################################
-# Test writing a layer name stating with a underscore
+# Test writing a layer name starting with a underscore
 
 
 def test_ogr_libkml_write_layer_name_underscore(tmp_vsimem):

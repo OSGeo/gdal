@@ -35,7 +35,7 @@ of the command line or put in a text file (one filename per line) for very long 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used, even on files located
 on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
 
-Stating with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
+Starting with GDAL 3.12, this command can also be used as the first step of :ref:`gdal_raster_pipeline`.
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
