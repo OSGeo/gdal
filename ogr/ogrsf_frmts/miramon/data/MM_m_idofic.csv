@@ -1,6 +1,7 @@
 PSIDGEODES;ID_GEODES;NOTA_CAT;NOTA_SPA;NOTA_ENG
 ESRI:102022;Albers_Equal_Area-Africa-WGS84;;;
 ESRI:102025;Albers_Equal_Area-Asia_North-WGS84;;;
+ESRI:102028;Albers_Equal_Area-Asia_South-WGS84;https://epsg.io/102028;https://epsg.io/102028;https://epsg.io/102028
 EPSG:5070;Albers_Equal_Area-N_America-NAD83;https://epsg.io/5070;https://epsg.io/5070;https://epsg.io/5070
 Azimuthal_Equidistant;Azimuthal_Equidistant-0-90-WGS84;;;
 EPSG:4088;Cilindrical_Equidistant-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
@@ -305,7 +306,7 @@ EPSG:4261;lat/long-Merchich;;;
 EPSG:4267;lat/long-NAD27-BC;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:4269;lat/long-NAD83-General;;;
 NAD83;lat/long-NAD83-General;;;
-GCS_North_American_1983;lat/long-NAD83-General;;;
+GCS_North_American_1983;lat/long-NAD83-General;Trobat en fitxer .prj d'una capa de https://catalog.data.gov;Encontrado en un fichero .prj de una capa de https://catalog.data.gov;Found in .prj file of a layer from https://catalog.data.gov
 EPSG:4275;lat/long-NTF;;;
 EPSG:4190;lat/long-PosGAR98;;;
 EPSG:4081;lat/long-REGCAN95;;;
