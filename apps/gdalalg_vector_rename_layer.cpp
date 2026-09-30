@@ -274,12 +274,12 @@ static void TruncateUTF8ToMaxChar(std::string &osStr, size_t maxCharCount)
         // Is it first byte of a UTF-8 character?
         if ((osStr[i] & 0xc0) != 0x80)
         {
-            ++nCharacterCount;
             if (nCharacterCount == maxCharCount)
             {
-                osStr.resize(i + 1);
+                osStr.resize(i);
                 break;
             }
+            ++nCharacterCount;
         }
     }
 }
@@ -382,10 +382,10 @@ bool GDALVectorRenameLayerAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 if (m_maxLength > 0 && nNameLen + osSuffix.size() >
                                            static_cast<size_t>(m_maxLength))
                 {
-                    if (nNameLen > osSuffix.size())
+                    if (static_cast<size_t>(m_maxLength) > osSuffix.size())
                     {
                         TruncateUTF8ToMaxChar(osName,
-                                              nNameLen - osSuffix.size());
+                                              m_maxLength - osSuffix.size());
                         osName += osSuffix;
                     }
                     else if (bUniquenessPossible)
