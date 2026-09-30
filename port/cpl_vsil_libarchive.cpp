@@ -126,7 +126,7 @@ struct VSILibArchiveClientData
             poClientData->m_abyBuffer.size()));
     }
 
-    static la_int64_t seekCkb(struct archive *, void *pClientData,
+    static la_int64_t seekCbk(struct archive *, void *pClientData,
                               la_int64_t offset, int whence)
     {
         auto poClientData = static_cast<VSILibArchiveClientData *>(pClientData);
@@ -150,7 +150,7 @@ struct VSILibArchiveClientData
 static int VSILibArchiveReadOpen(struct archive *pArchive,
                                  const char *pszFilename)
 {
-    archive_read_set_seek_callback(pArchive, VSILibArchiveClientData::seekCkb);
+    archive_read_set_seek_callback(pArchive, VSILibArchiveClientData::seekCbk);
     return archive_read_open(pArchive, new VSILibArchiveClientData(pszFilename),
                              VSILibArchiveClientData::openCbk,
                              VSILibArchiveClientData::readCbk,

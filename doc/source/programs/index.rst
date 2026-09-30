@@ -121,8 +121,9 @@ Raster commands
    gdal_raster_scale
    gdal_raster_select
    gdal_raster_set_type
-   gdal_raster_slope
+   gdal_raster_shift_longitude
    gdal_raster_sieve
+   gdal_raster_slope
    gdal_raster_stack
    gdal_raster_tile
    gdal_raster_tpi
@@ -175,6 +176,7 @@ Raster commands
     - :ref:`gdal_raster_scale`: Scale the values of the bands of a raster dataset.
     - :ref:`gdal_raster_select`: Select a subset of bands from a raster dataset.
     - :ref:`gdal_raster_set_type`: Modify the data type of bands of a raster dataset
+    - :ref:`gdal_raster_shift_longitude`: Shift the longitude values of a raster dataset.
     - :ref:`gdal_raster_sieve`: Remove small raster polygons.
     - :ref:`gdal_raster_slope`: Generate a slope map.
     - :ref:`gdal_raster_stack`: Combine together input bands into a multi-band output, either virtual (VRT) or materialized.
@@ -205,6 +207,7 @@ Vector commands
    gdal_vector_clean_coverage
    gdal_vector_clip
    gdal_vector_combine
+   gdal_vector_compare
    gdal_vector_concat
    gdal_vector_concave_hull
    gdal_vector_convert
@@ -252,6 +255,7 @@ Vector commands
     - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
     - :ref:`gdal_vector_combine`: Combine geometries into collections
+    - :ref:`gdal_vector_compare`: Compare two vector datasets
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_concave_hull`: Compute the concave hull of geometries of a vector dataset
     - :ref:`gdal_vector_convert`: Convert a vector dataset

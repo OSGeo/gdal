@@ -29,6 +29,8 @@ From GDAL 3.13 to GDAL 3.14
 
     * :cpp:func:`GDALRasterBand::ComputeStatistics` takes an additional
       ``CSLConstList papszOptions`` parameter.
+    * :cpp:func:`GDALDataset::TestCapability` and :cpp:func:`OGRLayer::TestCapability`
+      now return a ``bool`` instead of a ``int``.
 
 - Changes impacting Python users:
 

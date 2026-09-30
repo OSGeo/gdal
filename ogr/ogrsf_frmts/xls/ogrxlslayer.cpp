@@ -313,7 +313,7 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRXLSLayer::TestCapability(const char *pszCap) const
+bool OGRXLSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

@@ -2705,14 +2705,15 @@ def test_tiff_ovr_external_mask_update(tmp_vsimem):
         },
     ],
 )
-def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
+def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options, tmp_vsimem):
 
-    filename = "/vsimem/test_tiff_ovr_issue_4932_src.tif"
+    filename = tmp_vsimem / "test_tiff_ovr_issue_4932_src.tif"
     ds = gdal.Translate(
         filename,
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
+    config_options["CPL_TMPDIR"] = tmp_vsimem
     with gdaltest.config_options(config_options):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
@@ -2721,8 +2722,6 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate(config_options):
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 36766
     ds = None
-
-    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################

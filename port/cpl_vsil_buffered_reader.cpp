@@ -15,7 +15,7 @@
 // The intent of this class is to be a wrapper around an underlying virtual
 // handle and add very basic caching of last read bytes, so that a backward
 // seek of a few bytes doesn't require a seek on the underlying virtual handle.
-// This enable us to improve dramatically the performance of CPLReadLine2L() on
+// This enables us to improve dramatically the performance of CPLReadLine2L() on
 // a gzip file.
 
 #include "cpl_port.h"

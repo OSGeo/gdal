@@ -139,7 +139,7 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
                                                  : nullptr;
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, ODsCCurveGeometries) ||
             EQUAL(pszCap, ODsCMeasuredGeometries) ||

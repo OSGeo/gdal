@@ -1047,6 +1047,57 @@ TEST_F(test_gdal, GDALIsValueExactAs_C_func)
 #pragma warning(pop)
 #endif
 
+// Test GDALGetDAtaTypeMinMaxAsDouble()
+TEST_F(test_gdal, GDALGetDataTypeMinMaxAsDouble)
+{
+    double dfMin, dfMax;
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_UInt8, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, 0.0);
+    EXPECT_EQ(dfMax, 255.0);
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Int8, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, -128.0);
+    EXPECT_EQ(dfMax, 127.0);
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_UInt16, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, 0.0);
+    EXPECT_EQ(dfMax, 65535.0);
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Int16, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, -32768.0);
+    EXPECT_EQ(dfMax, 32767.0);
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_UInt32, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, 0.0);
+    EXPECT_EQ(dfMax, 4294967295.0);
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Int32, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, -2147483648.0);
+    EXPECT_EQ(dfMax, 2147483647.0);
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Float16, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, cpl::NumericLimits<GFloat16>::lowest());
+    EXPECT_EQ(dfMax, cpl::NumericLimits<GFloat16>::max());
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Float32, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, std::numeric_limits<float>::lowest());
+    EXPECT_EQ(dfMax, std::numeric_limits<float>::max());
+
+    EXPECT_TRUE(GDALGetDataTypeMinMaxAsDouble(GDT_Float64, &dfMin, &dfMax));
+    EXPECT_EQ(dfMin, std::numeric_limits<double>::lowest());
+    EXPECT_EQ(dfMax, std::numeric_limits<double>::max());
+
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_Int64, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_UInt64, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_CInt16, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_CInt32, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_CFloat16, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_CFloat32, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_CFloat64, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_Unknown, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(GDT_TypeCount, &dfMin, &dfMax));
+    EXPECT_FALSE(GDALGetDataTypeMinMaxAsDouble(static_cast<GDALDataType>(150),
+                                               &dfMin, &dfMax));
+}
+
 // Test GDALDataTypeIsInteger()
 TEST_F(test_gdal, GDALDataTypeIsInteger)
 {

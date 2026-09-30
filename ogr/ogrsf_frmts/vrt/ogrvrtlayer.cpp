@@ -2033,7 +2033,7 @@ OGRErr OGRVRTLayer::SetAttributeFilter(const char *pszNewQuery)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTLayer::TestCapability(const char *pszCap) const
+bool OGRVRTLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && nFeatureCount >= 0 &&

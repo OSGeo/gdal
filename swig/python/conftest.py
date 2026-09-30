@@ -76,6 +76,9 @@ class GDALOutputChecker(doctest.OutputChecker):
         if "# no-check" in want:
             return True
 
+        if want.startswith("<memory at") and got.startswith("<memory at"):
+            return True
+
         want = self._strip_comments(want)
 
         return base_checker.check_output(want, got, flags)

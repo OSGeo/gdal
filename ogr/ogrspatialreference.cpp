@@ -4224,7 +4224,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         if (strstr(pszDefinition, "datum_ensemble") != nullptr)
         {
             // PROJ < 9.0.1 doesn't like a datum_ensemble whose member have
-            // a unknown id.
+            // an unknown id.
             CPLJSONDocument oCRSDoc;
             if (!oCRSDoc.LoadMemory(pszDefinition))
                 return OGRERR_CORRUPT_DATA;

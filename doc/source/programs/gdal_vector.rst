@@ -23,6 +23,8 @@ Available sub-commands
 ----------------------
 
 - :ref:`gdal_vector_clip`
+- :ref:`gdal_vector_combine`
+- :ref:`gdal_vector_compare`
 - :ref:`gdal_vector_concat`
 - :ref:`gdal_vector_convert`
 - :ref:`gdal_vector_create`

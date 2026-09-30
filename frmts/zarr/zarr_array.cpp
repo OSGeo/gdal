@@ -3046,14 +3046,14 @@ static void ParseSpatialConventions(
     if (iDimNameX == 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "spatial:dimensions[%d] = %s is a unknown "
+                 "spatial:dimensions[%d] = %s is an unknown "
                  "Zarr dimension",
                  static_cast<int>(aosSpatialDimensions.size() - 1), pszNameX);
     }
     if (iDimNameY == 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "spatial_dimensions[%d] = %s is a unknown "
+                 "spatial_dimensions[%d] = %s is an unknown "
                  "Zarr dimension",
                  static_cast<int>(aosSpatialDimensions.size() - 2), pszNameY);
     }

@@ -4249,7 +4249,7 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability(const char *pszCap) const
+bool OGROSMDataSource::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, ODsCRandomLayerRead);
 }
@@ -4321,7 +4321,7 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

@@ -1148,24 +1148,38 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Look for the geotransform.                                      */
     /* -------------------------------------------------------------------- */
-    if (poHeader->Find("RasterInfo.RegistrationCoord.Eastings", nullptr))
+    if (const char *pszEastings =
+            poHeader->Find("RasterInfo.RegistrationCoord.Eastings", nullptr))
     {
-        poDS->bGotTransform = TRUE;
-        poDS->m_gt.xorig = CPLAtof(
-            poHeader->Find("RasterInfo.RegistrationCoord.Eastings", ""));
+        poDS->bGotTransform = true;
+        poDS->m_gt.xorig = CPLAtof(pszEastings);
         poDS->m_gt.xscale =
             CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", "1.0"));
         poDS->m_gt.xrot = 0.0;
         poDS->m_gt.yorig = CPLAtof(
             poHeader->Find("RasterInfo.RegistrationCoord.Northings", ""));
-        poDS->m_gt.yrot = 0.0;
         poDS->m_gt.yscale =
             -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", "1.0"));
+        poDS->m_gt.yrot = 0.0;
+    }
+    else if (const char *pszMetersX = poHeader->Find(
+                 "RasterInfo.RegistrationCoord.MetersX", nullptr))
+    {
+        poDS->bGotTransform = true;
+        poDS->m_gt.xorig = CPLAtof(pszMetersX);
+        poDS->m_gt.xscale =
+            CPLAtof(poHeader->Find("RasterInfo.CellInfo.Xdimension", "1.0"));
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig =
+            CPLAtof(poHeader->Find("RasterInfo.RegistrationCoord.MetersY", ""));
+        poDS->m_gt.yscale =
+            -CPLAtof(poHeader->Find("RasterInfo.CellInfo.Ydimension", "1.0"));
+        poDS->m_gt.yrot = 0.0;
     }
     else if (poHeader->Find("RasterInfo.RegistrationCoord.Latitude", nullptr) &&
              poHeader->Find("RasterInfo.CellInfo.Xdimension", nullptr))
     {
-        poDS->bGotTransform = TRUE;
+        poDS->bGotTransform = true;
         poDS->m_gt.xorig = ERSDMS2Dec(
             poHeader->Find("RasterInfo.RegistrationCoord.Longitude", ""));
         poDS->m_gt.xscale =

@@ -838,7 +838,7 @@ static std::unique_ptr<GDALDataset> CreateOutputDataset(
     const std::vector<double> &adfInitVals, const char *pszNoData)
 {
     bool bFirstLayer = true;
-    const bool bBoundsSpecifiedByUser = CPL_TO_BOOL(sEnvelop.IsInit());
+    const bool bBoundsSpecifiedByUser = sEnvelop.IsInit();
 
     for (unsigned int i = 0; i < ahLayers.size(); i++)
     {

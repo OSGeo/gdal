@@ -528,7 +528,7 @@ int OCTCoordinateTransformationOptionsSetOperation(
  *
  * An accuracy of 0 is valid and means a coordinate operation made only of one
  * or several conversions (map projections, unit conversion, etc.) Operations
- * involving ballpark transformations have a unknown accuracy, and will be
+ * involving ballpark transformations have an unknown accuracy, and will be
  * filtered out by any dfAccuracy >= 0 value.
  *
  * If this option is specified with PROJ < 8, the OGR_CT_OP_SELECTION

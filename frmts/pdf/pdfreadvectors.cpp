@@ -210,7 +210,7 @@ void PDFDataset::InitMapOperators()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFDataset::TestCapability(const char *) const
+bool PDFDataset::TestCapability(const char *) const
 {
     return FALSE;
 }

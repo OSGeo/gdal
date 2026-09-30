@@ -76,7 +76,7 @@ class OGRGmtLayer final : public OGRLayer,
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -114,7 +114,7 @@ class OGRGmtDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 #endif /* ndef OGRGMT_H_INCLUDED */

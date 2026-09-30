@@ -112,7 +112,7 @@ int VSIUploadOnCloseHandle::Close()
     if (m_fpTemp == nullptr)
         return -1;
 
-    // Copy temporary files to m_poWritableHandle
+    // Copy temporary file to m_poWritableHandle
     if (m_fpTemp->Seek(0, SEEK_END) != 0)
     {
         m_fpTemp.reset();

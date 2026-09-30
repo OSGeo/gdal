@@ -364,7 +364,7 @@ const OGRLayer *OGRFlatGeobufDataset::GetLayer(int iLayer) const
     return m_apoLayers[iLayer]->GetLayer();
 }
 
-int OGRFlatGeobufDataset::TestCapability(const char *pszCap) const
+bool OGRFlatGeobufDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_bCreate && (m_bIsDir || m_apoLayers.empty());

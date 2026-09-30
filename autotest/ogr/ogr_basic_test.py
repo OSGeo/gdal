@@ -447,7 +447,7 @@ def test_ogr_basic_9():
 # Run test_ogrsf -all_drivers
 
 
-def test_ogr_basic_10():
+def test_ogr_basic_10(tmp_path):
 
     import test_cli_utilities
 
@@ -458,7 +458,9 @@ def test_ogr_basic_10():
     # under UBSAN.
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
-        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES"
+        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES --config CPL_TMPDIR {}".format(
+            tmp_path
+        )
     )
 
     assert "INFO" in ret
@@ -981,6 +983,32 @@ def test_feature_defn_use_after_layer_del():
 
 
 ###############################################################################
+# check field defn access after the feature defn owning it has been released
+
+
+def test_field_defn_use_after_layer_del():
+    with ogr.Open("data/poly.shp") as ds:
+        fld_defn = ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0)
+        geom_fld_defn = ds.GetLayer(0).GetLayerDefn().GetGeomFieldDefn(0)
+        prec = geom_fld_defn.GetCoordinatePrecision()
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
+    assert prec.GetXYResolution() == 0.0
+
+
+def test_field_defn_use_after_feature_del():
+    with ogr.Open("data/poly.shp") as ds:
+        feat = ds.GetLayer(0).GetNextFeature()
+        fld_defn = feat.GetFieldDefnRef(0)
+        geom_fld_defn = feat.GetGeomFieldDefnRef(0)
+        del feat
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
+
+
+###############################################################################
 # Test CreateDataSource context manager
 
 
@@ -1382,3 +1410,73 @@ def test_ogr_setpoint_grows_geometry():
     assert g.GetPointCount() == 16
 
     g.SetPointZM(20, 1, 1, 1, 1)
+
+
+###############################################################################
+# Test that objects borrowed from a Dataset are invalidated when it closes
+
+
+def test_field_domain_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        ds.AddFieldDomain(
+            ogr.CreateRangeFieldDomain(
+                "dom", "", ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True
+            )
+        )
+        dom = ds.GetFieldDomain("dom")
+
+    # Make sure ds.__exit__() invalidation has propagated to the field domain
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'FieldDomain_GetName', argument 1 of type 'OGRFieldDomainShadow \*'",
+    ):
+        dom.GetName()
+
+
+def test_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        ds.SetStyleTable(st)
+        style_table = ds.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the style table
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'StyleTable_Find', argument 1 of type 'OGRStyleTableShadow \*'",
+    ):
+        style_table.Find("style")
+
+
+def test_layer_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        lyr = ds.CreateLayer("lyr")
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        lyr.SetStyleTable(st)
+        style_table = lyr.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer style table
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'StyleTable_Find', argument 1 of type 'OGRStyleTableShadow \*'",
+    ):
+        style_table.Find("style")
+
+
+def test_spatial_filter_use_after_dataset_close():
+    with gdal.OpenEx("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(0, 0, 1, 1)
+        filter_geom = lyr.GetSpatialFilter()
+
+    # Make sure ds.__exit__() invalidation has propagated to the spatial filter
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Geometry_ExportToWkt', argument 1 of type 'OGRGeometryShadow \*'",
+    ):
+        filter_geom.ExportToWkt()

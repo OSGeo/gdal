@@ -449,7 +449,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FGdbDataSource::TestCapability(const char *pszCap) const
+bool FGdbDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return TRUE;
@@ -500,7 +500,7 @@ class OGRFGdbSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

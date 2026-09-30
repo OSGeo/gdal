@@ -124,7 +124,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         return poLayer->GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return poLayer->TestCapability(pszCap);
     }
@@ -1385,7 +1385,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
 
                 const auto IsValidCRSName = [](const char *pszStr)
                 {
-                    // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
+                    // EPSG:404000 is a GeoServer joke to indicate an unknown SRS
                     // https://osgeo-org.atlassian.net/browse/GEOS-8993
                     return !EQUAL(pszStr, "EPSG:404000") &&
                            !EQUAL(pszStr, "urn:ogc:def:crs:EPSG::404000");

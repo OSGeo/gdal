@@ -447,7 +447,7 @@ bool SetupCache(std::string &cache, bool clear)
         }
         else
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                      db.c_str(), errno);
             return false;
         }
@@ -575,7 +575,7 @@ CPLErr SearchCache(const std::string &cache, const std::string &url,
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (!f)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                  db.c_str(), errno);
         return CE_Failure;
     }
@@ -624,7 +624,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     VSILFILE *f = VSIFOpenL(db.c_str(), "a");
     if (!f)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                  db.c_str(), errno);
         return CE_Failure;
     }

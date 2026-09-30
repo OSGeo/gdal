@@ -195,7 +195,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
         bPreservePrecision = bFlag;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -221,7 +221,7 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
     void ResetReading() override;
     GIntBig GetFeatureCount(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -282,7 +282,7 @@ class OGRMySQLDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

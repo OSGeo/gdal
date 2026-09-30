@@ -198,7 +198,7 @@ def test_ogr_xlsx_test_ogrsf_update(tmp_path):
 # Test write support
 
 
-def test_ogr_xlsx_5():
+def test_ogr_xlsx_5(tmp_path):
 
     import test_cli_utilities
 
@@ -207,14 +207,16 @@ def test_ogr_xlsx_5():
 
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path()
-        + " -f XLSX tmp/test.xlsx data/xlsx/test.xlsx"
+        + " -f XLSX "
+        + str(tmp_path / "test.xlsx")
+        + " data/xlsx/test.xlsx"
     )
 
-    ds = ogr.Open("tmp/test.xlsx")
+    ds = ogr.Open(str(tmp_path / "test.xlsx"))
     ogr_xlsx_check(ds)
     ds = None
 
-    os.unlink("tmp/test.xlsx")
+    os.unlink(str(tmp_path / "test.xlsx"))
 
 
 ###############################################################################
@@ -244,13 +246,13 @@ def test_ogr_xlsx_6():
 # Test update support
 
 
-def test_ogr_xlsx_7():
+def test_ogr_xlsx_7(tmp_path):
 
-    if os.path.exists("tmp/ogr_xlsx_7.xlsx"):
-        gdal.Unlink("tmp/ogr_xlsx_7.xlsx")
-    shutil.copy("data/xlsx/test.xlsx", "tmp/ogr_xlsx_7.xlsx")
+    if os.path.exists(tmp_path / "ogr_xlsx_7.xlsx"):
+        gdal.Unlink(str(tmp_path / "ogr_xlsx_7.xlsx"))
+    shutil.copy("data/xlsx/test.xlsx", str(tmp_path / "ogr_xlsx_7.xlsx"))
 
-    ds = gdal.Open("tmp/ogr_xlsx_7.xlsx", gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(str(tmp_path / "ogr_xlsx_7.xlsx"), gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -262,7 +264,7 @@ def test_ogr_xlsx_7():
     assert ds.FlushCache() == gdal.CE_None
     ds = None
 
-    ds = ogr.Open("tmp/ogr_xlsx_7.xlsx")
+    ds = ogr.Open(str(tmp_path / "ogr_xlsx_7.xlsx"))
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -274,7 +276,7 @@ def test_ogr_xlsx_7():
     feat = None
     ds = None
 
-    os.unlink("tmp/ogr_xlsx_7.xlsx")
+    os.unlink(str(tmp_path / "ogr_xlsx_7.xlsx"))
 
 
 ###############################################################################

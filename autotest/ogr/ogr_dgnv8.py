@@ -47,7 +47,7 @@ def test_ogr_dgnv8_2():
 # Run test_ogrsf
 
 
-def test_ogr_dgnv8_3():
+def test_ogr_dgnv8_3(tmp_path):
 
     import test_cli_utilities
 
@@ -60,11 +60,13 @@ def test_ogr_dgnv8_3():
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
-    shutil.copy("data/dgnv8/test_dgnv8.dgn", "tmp/test_dgnv8.dgn")
+    shutil.copy("data/dgnv8/test_dgnv8.dgn", tmp_path / "test_dgnv8.dgn")
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " tmp/test_dgnv8.dgn"
+        test_cli_utilities.get_test_ogrsf_path()
+        + " "
+        + str(tmp_path / "test_dgnv8.dgn")
     )
-    os.unlink("tmp/test_dgnv8.dgn")
+    os.unlink(str(tmp_path / "test_dgnv8.dgn"))
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
@@ -73,9 +75,9 @@ def test_ogr_dgnv8_3():
 # Test creation code
 
 
-def test_ogr_dgnv8_4():
+def test_ogr_dgnv8_4(tmp_path):
 
-    tmp_dgn = "tmp/ogr_dgnv8_4.dgn"
+    tmp_dgn = str(tmp_path / "ogr_dgnv8_4.dgn")
     gdal.VectorTranslate(tmp_dgn, "data/dgnv8/test_dgnv8.dgn", format="DGNv8")
 
     tmp_csv = "/vsimem/ogr_dgnv8_4.csv"
@@ -99,9 +101,9 @@ def test_ogr_dgnv8_4():
 # Test creation options
 
 
-def test_ogr_dgnv8_5():
+def test_ogr_dgnv8_5(tmp_path):
 
-    tmp_dgn = "tmp/ogr_dgnv8_5.dgn"
+    tmp_dgn = str(tmp_path / "ogr_dgnv8_5.dgn")
     options = [
         "APPLICATION=application",
         "TITLE=title",
@@ -128,7 +130,7 @@ def test_ogr_dgnv8_5():
     assert got_md == options
     ds = None
 
-    tmp2_dgn = "tmp/ogr_dgnv8_5_2.dgn"
+    tmp2_dgn = str(tmp_path / "ogr_dgnv8_5_2.dgn")
     ogr.GetDriverByName("DGNv8").CreateDataSource(
         tmp2_dgn, options=["SEED=" + tmp_dgn, "TITLE=another_title"]
     )

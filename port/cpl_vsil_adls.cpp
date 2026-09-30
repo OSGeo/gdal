@@ -1101,7 +1101,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
                 }
                 else
                 {
-                    CPLDebug(GetDebugKey(), "Ignorizing metadata item %s",
+                    CPLDebug(GetDebugKey(), "Ignoring metadata item %s",
                              *papszIter);
                 }
             }
@@ -1294,7 +1294,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath,
     VSIStatBufL sStat;
     if (VSIStatL(oldpath, &sStat) != 0)
     {
-        CPLDebug(GetDebugKey(), "%s is not a object", oldpath);
+        CPLDebug(GetDebugKey(), "%s is not an object", oldpath);
         errno = ENOENT;
         return -1;
     }

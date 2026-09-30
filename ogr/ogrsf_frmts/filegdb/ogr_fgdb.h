@@ -153,7 +153,7 @@ class FGdbLayer final : public FGdbBaseLayer
         return m_pFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     // Access the XML directly. The 2 following methods are not currently used
     // by the driver, but can be used by external code for specific purposes.
@@ -213,7 +213,7 @@ class FGdbResultLayer final : public FGdbBaseLayer
         return m_pFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
   protected:
     FGdbDataSource *m_pDS;
@@ -260,7 +260,7 @@ class FGdbDataSource final : public GDALDataset
                          const char *pszDialect) override;
     void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFieldDomain *
     GetFieldDomain(const std::string &name) const override;
@@ -379,4 +379,4 @@ CPL_C_START
 void CPL_DLL RegisterOGRFileGDB();
 CPL_C_END
 
-#endif /* ndef _OGR_PG_H_INCLUDED */
+#endif /* ndef OGR_FGDB_H_INCLUDED */

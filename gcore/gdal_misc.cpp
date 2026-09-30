@@ -44,6 +44,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_typetraits.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_geos.h"
@@ -1060,6 +1061,119 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
         case GDT_TypeCount:
             break;
     }
+    return true;
+}
+
+/************************************************************************/
+/*                   GDALGetDataTypeMinMaxAsDouble()                    */
+/************************************************************************/
+
+/**
+ * \brief Get the minimum and maximum values that can be stored in the
+ * specified data type, if those values can also be exactly stored in a double.
+ *
+ * @param eType type to check.
+ * @param pdfMin optional pointer to double where the minimum value will be stored
+ * @param pdfMax optional pointer to double where the maximum value will be stored
+ *
+ * @return true if the min/max values for the specified data type can be stored
+ * exactly in a double, false otherwise.
+ * @since GDAL 3.14
+ */
+bool GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
+                                   double *pdfMax)
+{
+    if (static_cast<int>(eType) >= static_cast<int>(GDT_TypeCount))
+    {
+        return false;
+    }
+
+    double dfMin, dfMax;
+
+    switch (eType)
+    {
+        case GDT_Int8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::max());
+            break;
+        case GDT_UInt8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::max());
+            break;
+        case GDT_Int16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::max());
+            break;
+        case GDT_UInt16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::max());
+            break;
+        case GDT_Int32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::max());
+            break;
+        case GDT_UInt32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::max());
+            break;
+        case GDT_Float16:
+            dfMin = static_cast<double>(cpl::NumericLimits<GFloat16>::lowest());
+            dfMax = static_cast<double>(cpl::NumericLimits<GFloat16>::max());
+            break;
+        case GDT_Float32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::lowest());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::max());
+            break;
+        case GDT_Float64:
+            dfMin = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::lowest();
+            dfMax = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::max();
+            break;
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Int64:
+        case GDT_UInt64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            return false;
+    }
+
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
     return true;
 }
 
@@ -3830,7 +3944,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
     /* ==================================================================== */
 
     // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
-    // detects and warns about a unknown config option.
+    // detects and warns about an unknown config option.
     for (iArg = 1; iArg < nArgc; iArg++)
     {
         if (EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&

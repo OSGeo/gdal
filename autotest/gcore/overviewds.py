@@ -243,41 +243,42 @@ def test_overviewds_5(tmp_path):
     shutil.copy("data/sstgeo.tif", tmp_path)
     shutil.copy("data/sstgeo.vrt", tmp_path)
 
-    ds = gdal.Open(tmp_path / "sstgeo.vrt")
-    geoloc_md = ds.GetMetadata("GEOLOCATION")
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
 
-    tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
-    _, ref_pnt = tr.TransformPoint(0, 20, 10)
+        ds = gdal.Open(tmp_path / "sstgeo.vrt")
+        geoloc_md = ds.GetMetadata("GEOLOCATION")
 
-    ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    ds = None
+        tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
+        _, ref_pnt = tr.TransformPoint(0, 20, 10)
 
-    ds = gdal.Open(tmp_path / "sstgeo.vrt", open_options=["OVERVIEW_LEVEL=0"])
-    got_md = ds.GetMetadata("GEOLOCATION")
+        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds = None
 
-    for key in geoloc_md:
-        assert ds.GetMetadataItem(key, "GEOLOCATION") == got_md[key]
-        if key == "PIXEL_OFFSET" or key == "LINE_OFFSET":
-            assert float(got_md[key]) == pytest.approx(
-                myfloat(geoloc_md[key]) * 2, abs=1e-1
-            )
-        elif key == "PIXEL_STEP" or key == "LINE_STEP":
-            assert float(got_md[key]) == pytest.approx(
-                myfloat(geoloc_md[key]) / 2, abs=1e-1
-            )
-        elif got_md[key] != geoloc_md[key]:
-            print(got_md[key])
-            print(geoloc_md[key])
-            pytest.fail(key)
+        ds = gdal.Open(tmp_path / "sstgeo.vrt", open_options=["OVERVIEW_LEVEL=0"])
+        got_md = ds.GetMetadata("GEOLOCATION")
 
-    # Really check that the transformer works
-    tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
-    expected_xyz = (20.0 / 2, 10.0 / 2, 0)
-    _, pnt = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
+        for key in geoloc_md:
+            assert ds.GetMetadataItem(key, "GEOLOCATION") == got_md[key]
+            if key == "PIXEL_OFFSET" or key == "LINE_OFFSET":
+                assert float(got_md[key]) == pytest.approx(
+                    myfloat(geoloc_md[key]) * 2, abs=1e-1
+                )
+            elif key == "PIXEL_STEP" or key == "LINE_STEP":
+                assert float(got_md[key]) == pytest.approx(
+                    myfloat(geoloc_md[key]) / 2, abs=1e-1
+                )
+            elif got_md[key] != geoloc_md[key]:
+                print(got_md[key])
+                print(geoloc_md[key])
+                pytest.fail(key)
 
-    for i in range(3):
-        assert pnt[i] == pytest.approx(expected_xyz[i], abs=0.5)
-    ds = None
+        # Really check that the transformer works
+        tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
+        expected_xyz = (20.0 / 2, 10.0 / 2, 0)
+        _, pnt = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
+
+        for i in range(3):
+            assert pnt[i] == pytest.approx(expected_xyz[i], abs=0.5)
 
 
 ###############################################################################

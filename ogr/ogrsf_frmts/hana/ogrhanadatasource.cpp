@@ -1706,7 +1706,7 @@ OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaDataSource::TestCapability(const char *capabilities) const
+bool OGRHanaDataSource::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, ODsCCreateLayer))
         return updateMode_;

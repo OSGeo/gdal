@@ -69,13 +69,14 @@ def _has_geoheif_support():
 
 
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
-def test_heif_exif_endian(endianness):
+def test_heif_exif_endian(endianness, tmp_path):
     if not _has_hevc_decoding_support():
         pytest.skip("no HEVC decoding support")
 
     filename = "data/heif/byte_exif_%s.heic" % endianness
+    gdal.CopyFile(filename, tmp_path / "in.heic")
     gdal.ErrorReset()
-    ds = gdal.Open(filename)
+    ds = gdal.Open(tmp_path / "in.heic")
     assert gdal.GetLastErrorMsg() == ""
     assert ds
     assert ds.RasterXSize == 64
@@ -98,7 +99,6 @@ def test_heif_exif_endian(endianness):
         assert "xpacket" in ds.GetMetadata("xml:XMP")[0]
 
     ds = None
-    gdal.Unlink(filename + ".aux.xml")
 
 
 def test_heif_thumbnail():

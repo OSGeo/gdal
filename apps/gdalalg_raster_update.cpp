@@ -131,7 +131,7 @@ bool GDALRasterUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &stepCtxt)
     if (std::isfinite(m_errorThreshold))
     {
         aosOptions.AddString("-et");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_errorThreshold));
+        aosOptions.AddString(m_errorThreshold);
     }
 
     if (poClipGeom)

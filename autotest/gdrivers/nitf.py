@@ -50,9 +50,9 @@ def hex_string(s):
 # Write/Read test of simple byte reference data.
 
 
-def test_nitf_1():
+def test_nitf_1(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -60,9 +60,9 @@ def test_nitf_1():
 # Write/Read test of simple 16bit reference data.
 
 
-def test_nitf_2():
+def test_nitf_2(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "int16.tif", 1, 4672)
+    tst = gdaltest.GDALTest("NITF", "int16.tif", 1, 4672, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -70,9 +70,9 @@ def test_nitf_2():
 # Write/Read RGB image with lat/long georeferencing, and verify.
 
 
-def test_nitf_3():
+def test_nitf_3(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349)
+    tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 
@@ -316,7 +316,12 @@ def test_nitf_9(tmp_path):
     )
 
     tst = gdaltest.GDALTest(
-        "NITF", tmp_path / "nitf9.ntf", 2, expected_cs, filename_absolute=1
+        "NITF",
+        tmp_path / "nitf9.ntf",
+        2,
+        expected_cs,
+        filename_absolute=1,
+        tmpdir=tmp_path,
     )
     tst.testCreateCopy()
 
@@ -638,9 +643,11 @@ def test_nitf_21():
 # Write/Read test of simple int32 reference data.
 
 
-def test_nitf_22():
+def test_nitf_22(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/int32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/int32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -648,9 +655,11 @@ def test_nitf_22():
 # Write/Read test of simple float32 reference data.
 
 
-def test_nitf_23():
+def test_nitf_23(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/float32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/float32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -658,9 +667,11 @@ def test_nitf_23():
 # Write/Read test of simple float64 reference data.
 
 
-def test_nitf_24():
+def test_nitf_24(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/float64.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/float64.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -668,9 +679,11 @@ def test_nitf_24():
 # Write/Read test of simple uint16 reference data.
 
 
-def test_nitf_25():
+def test_nitf_25(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint16.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/uint16.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -678,9 +691,11 @@ def test_nitf_25():
 # Write/Read test of simple uint32 reference data.
 
 
-def test_nitf_26():
+def test_nitf_26(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint32.tif", 1, 4672)
+    tst = gdaltest.GDALTest(
+        "NITF", "../../gcore/data/uint32.tif", 1, 4672, tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -1367,9 +1382,11 @@ def test_nitf_33(tmp_path):
 
 
 @pytest.mark.require_driver("DTED")
-def test_nitf_34():
+def test_nitf_34(tmp_path):
 
-    tst = gdaltest.GDALTest("NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"])
+    tst = gdaltest.GDALTest(
+        "NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"], tmpdir=tmp_path
+    )
     tst.testCreateCopy()
 
 
@@ -1652,15 +1669,11 @@ def test_nitf_41(not_jpeg_9b):
     if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
         pytest.skip("12bit jpeg not available")
 
-    gdal.Unlink("data/nitf/U_4017A.NTF.aux.xml")
-
-    ds = gdal.Open("data/nitf/U_4017A.NTF")
-    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
-    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
-    assert stats[2] >= 2385 and stats[2] <= 2386
-    ds = None
-
-    gdal.Unlink("data/nitf/U_4017A.NTF.aux.xml")
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdal.Open("data/nitf/U_4017A.NTF")
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+        stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+        assert stats[2] >= 2385 and stats[2] <= 2386
 
 
 ###############################################################################
@@ -6124,9 +6137,11 @@ def test_nitf_online_1():
         "NITF21_CGM_ANNO_Uncompressed_unmasked.ntf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "NITF",
-        "tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf",
+        f"{tmp_dir}/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf",
         1,
         13123,
         filename_absolute=1,
@@ -6147,7 +6162,9 @@ def test_nitf_online_2():
         "http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf", "U_0001a.ntf"
     )
 
-    ds = gdal.Open("tmp/cache/U_0001a.ntf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/U_0001a.ntf")
 
     md = ds.GetMetadata("SUBDATASETS")
     assert "SUBDATASET_1_NAME" in md, "missing SUBDATASET_1_NAME metadata"
@@ -6164,8 +6181,10 @@ def test_nitf_online_3():
         "http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf", "U_0001a.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "NITF_IM:3:tmp/cache/U_0001a.ntf", 1, 23463, filename_absolute=1
+        "NITF", f"NITF_IM:3:{tmp_dir}/U_0001a.ntf", 1, 23463, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6181,8 +6200,10 @@ def test_nitf_online_4():
         "http://download.osgeo.org/gdal/data/nitf/cadrg/001zc013.on1", "001zc013.on1"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # check that the RPF attribute metadata was carried through.
-    ds = gdal.Open("tmp/cache/001zc013.on1")
+    ds = gdal.Open(f"{tmp_dir}/001zc013.on1")
     md = ds.GetMetadata()
     assert (
         md["NITF_RPF_CurrencyDate"] == "19950720"
@@ -6193,7 +6214,7 @@ def test_nitf_online_4():
     ds = None
 
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/001zc013.on1", 1, 53960, filename_absolute=1
+        "NITF", f"{tmp_dir}/001zc013.on1", 1, 53960, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6209,8 +6230,10 @@ def test_nitf_online_5():
         "http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr", "overview.ovr"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/overview.ovr", 1, 60699, filename_absolute=1
+        "NITF", f"{tmp_dir}/overview.ovr", 1, 60699, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6226,8 +6249,10 @@ def test_nitf_online_6():
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4001b.ntf", "U_4001b.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/U_4001b.ntf", 1, 60030, filename_absolute=1
+        "NITF", f"{tmp_dir}/U_4001b.ntf", 1, 60030, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6246,7 +6271,9 @@ def test_nitf_online_7():
             filename,
         )
 
-        ds = gdal.Open("tmp/cache/" + filename)
+        tmp_dir = gdaltest.get_cache_dir()
+
+        ds = gdal.Open(tmp_dir + "/" + filename)
         assert ds.RasterCount == 6
 
         checksums = [48385, 48385, 40551, 54223, 48385, 33094]
@@ -6281,8 +6308,10 @@ def test_nitf_online_8():
         "ns3301j.nsf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/ns3301j.nsf", 1, 56861, filename_absolute=1
+        "NITF", f"{tmp_dir}/ns3301j.nsf", 1, 56861, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6299,8 +6328,10 @@ def test_nitf_online_9():
         "ns3304a.nsf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/ns3304a.nsf", 1, 32419, filename_absolute=1
+        "NITF", f"{tmp_dir}/ns3304a.nsf", 1, 32419, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6317,9 +6348,11 @@ def test_nitf_online_10():
         "ns3119b.nsf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Shut up the warning about missing image segment
     with gdal.quiet_errors():
-        ds = gdal.Open("tmp/cache/ns3119b.nsf")
+        ds = gdal.Open(f"{tmp_dir}/ns3119b.nsf")
 
     mdCGM = ds.GetMetadata("CGM")
 
@@ -6368,7 +6401,9 @@ def test_nitf_online_11():
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_1122a.ntf", "U_1122a.ntf"
     )
 
-    ds = gdal.Open("tmp/cache/U_1122a.ntf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/U_1122a.ntf")
 
     mdTEXT = ds.GetMetadata("TEXT")
 
@@ -6401,8 +6436,10 @@ def test_nitf_online_12():
         "http://download.osgeo.org/gdal/data/nitf/bugs/i_3430a.ntf", "i_3430a.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/i_3430a.ntf", 1, 38647, filename_absolute=1
+        "NITF", f"{tmp_dir}/i_3430a.ntf", 1, 38647, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6418,8 +6455,10 @@ def test_nitf_online_13():
         "http://download.osgeo.org/gdal/data/nitf/u_3054a.ntf", "u_3054a.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Shut up the warning about missing image segment
-    ds = gdal.Open("NITF_IM:2:tmp/cache/u_3054a.ntf")
+    ds = gdal.Open(f"NITF_IM:2:{tmp_dir}/u_3054a.ntf")
 
     mdCGM = ds.GetMetadata("CGM")
     md = ds.GetMetadata()
@@ -6467,8 +6506,10 @@ def test_nitf_online_14(not_jpeg_9b):
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4020h.ntf", "U_4020h.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.remove("tmp/cache/U_4020h.ntf.aux.xml")
+        os.remove(f"{tmp_dir}/U_4020h.ntf.aux.xml")
     except OSError:
         pass
 
@@ -6478,14 +6519,14 @@ def test_nitf_online_14(not_jpeg_9b):
     if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
         pytest.skip("12bit jpeg not available")
 
-    ds = gdal.Open("tmp/cache/U_4020h.ntf")
+    ds = gdal.Open(f"{tmp_dir}/U_4020h.ntf")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 2607 and stats[2] <= 2608
     ds = None
 
     try:
-        os.remove("tmp/cache/U_4020h.ntf.aux.xml")
+        os.remove(f"{tmp_dir}/U_4020h.ntf.aux.xml")
     except OSError:
         pass
 
@@ -6503,6 +6544,8 @@ def nitf_online_15(driver_to_test, expected_cs=1054):
         "p0_01a.ntf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
@@ -6512,7 +6555,7 @@ def nitf_online_15(driver_to_test, expected_cs=1054):
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
     try:
-        ds = gdal.Open("tmp/cache/p0_01a.ntf")
+        ds = gdal.Open(f"{tmp_dir}/p0_01a.ntf")
         assert ds.GetRasterBand(1).Checksum() == expected_cs
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
@@ -6532,6 +6575,8 @@ def nitf_online_16(driver_to_test):
         "file9_jp2_2places.ntf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
@@ -6541,7 +6586,7 @@ def nitf_online_16(driver_to_test):
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
     try:
-        ds = gdal.Open("tmp/cache/file9_jp2_2places.ntf")
+        ds = gdal.Open(f"{tmp_dir}/file9_jp2_2places.ntf")
         # JPEG2000 driver
         if ds.RasterCount == 3:
             assert ds.GetRasterBand(1).Checksum() == 48954
@@ -6574,6 +6619,8 @@ def nitf_online_17(driver_to_test):
         "file9_j2c.ntf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     jp2_drv = gdal.GetDriverByName(driver_to_test)
 
     if jp2_drv is None:
@@ -6582,7 +6629,7 @@ def nitf_online_17(driver_to_test):
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
 
-    ds = gdal.Open("tmp/cache/file9_j2c.ntf")
+    ds = gdal.Open(f"{tmp_dir}/file9_j2c.ntf")
     if ds.RasterCount == 1:
         assert ds.GetRasterBand(1).Checksum() == 47664
         assert ds.GetRasterBand(1).GetRasterColorTable() is not None
@@ -6605,7 +6652,9 @@ def test_nitf_online_18():
         "http://download.osgeo.org/gdal/data/nitf/bugs/bug3337.ntf", "bug3337.ntf"
     )
 
-    ds = gdal.Open("tmp/cache/bug3337.ntf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/bug3337.ntf")
 
     gt = ds.GetGeoTransform()
     prj = ds.GetProjection()
@@ -6653,8 +6702,10 @@ def test_nitf_online_19():
         "http://download.osgeo.org/gdal/data/nitf/0000M033.GN3", "0000M033.GN3"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/0000M033.GN3", 1, 38928, filename_absolute=1
+        "NITF", f"{tmp_dir}/0000M033.GN3", 1, 38928, filename_absolute=1
     )
 
     tst.testOpen(
@@ -6681,10 +6732,12 @@ def test_nitf_online_20():
         "http://download.osgeo.org/gdal/data/nitf/0000M033.GN3", "0000M033.GN3"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # check that the RPF attribute metadata was carried through.
     # Special case where the reported size of the attribute subsection is
     # smaller than really available
-    ds = gdal.Open("tmp/cache/0000M033.GN3")
+    ds = gdal.Open(f"{tmp_dir}/0000M033.GN3")
     md = ds.GetMetadata()
     assert (
         md["NITF_RPF_CurrencyDate"] == "19941201"
@@ -6705,7 +6758,9 @@ def test_nitf_online_21():
         "ns3321a.nsf",
     )
 
-    ds = gdal.Open("tmp/cache/ns3321a.nsf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/ns3321a.nsf")
     md = ds.GetMetadata()
     ds = None
 
@@ -6725,7 +6780,9 @@ def test_nitf_online_22():
         "U_0001C.NTF",
     )
 
-    ds = gdal.Open("NITF_IM:1:tmp/cache/U_0001C.NTF")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"NITF_IM:1:{tmp_dir}/U_0001C.NTF")
     md = ds.GetMetadata()
     ds = None
 
@@ -6747,7 +6804,7 @@ def test_nitf_online_22():
             item[1],
         )
 
-    ds = gdal.Open("NITF_IM:2:tmp/cache/U_0001C.NTF")
+    ds = gdal.Open(f"NITF_IM:2:{tmp_dir}/U_0001C.NTF")
     md = ds.GetMetadata()
     ds = None
 
@@ -6769,7 +6826,7 @@ def test_nitf_online_22():
             item[1],
         )
 
-    ds = gdal.Open("NITF_IM:3:tmp/cache/U_0001C.NTF")
+    ds = gdal.Open(f"NITF_IM:3:{tmp_dir}/U_0001C.NTF")
     md = ds.GetMetadata()
     ds = None
 
@@ -6791,7 +6848,7 @@ def test_nitf_online_22():
             item[1],
         )
 
-    ds = gdal.Open("NITF_IM:4:tmp/cache/U_0001C.NTF")
+    ds = gdal.Open(f"NITF_IM:4:{tmp_dir}/U_0001C.NTF")
     md = ds.GetMetadata()
     ds = None
 
@@ -6824,8 +6881,10 @@ def test_nitf_online_23():
         "http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf", "U_3058b.ntf"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "NITF", "tmp/cache/U_3058b.ntf", 1, 44748, filename_absolute=1
+        "NITF", f"{tmp_dir}/U_3058b.ntf", 1, 44748, filename_absolute=1
     )
 
     tst.testOpen()
@@ -6845,14 +6904,16 @@ def test_nitf_online_24():
         "http://www.falconview.org/trac/FalconView/downloads/17", "ECRG_Sample.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/ECRG_Sample.zip")
+        os.stat(f"{tmp_dir}/ECRG_Sample.zip")
     except OSError:
         pytest.skip()
 
     with gdal.config_option("NITF_OPEN_UNDERLYING_DS", "NO"):
         ds = gdal.Open(
-            "/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/clfc/2/000000009s0013.lf2"
+            f"/vsizip/{tmp_dir}/ECRG_Sample.zip/ECRG_Sample/EPF/clfc/2/000000009s0013.lf2"
         )
     assert ds is not None
     xml_tre = ds.GetMetadata("xml:TRE")[0]
@@ -6879,9 +6940,11 @@ def test_nitf_online_25():
         "Case1_HRE10G324642N1170747W_Uxx.hr5",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "NITF",
-        "tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5",
+        f"{tmp_dir}/Case1_HRE10G324642N1170747W_Uxx.hr5",
         1,
         7099,
         filename_absolute=1,
@@ -6889,7 +6952,7 @@ def test_nitf_online_25():
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5")
+    ds = gdal.Open(f"{tmp_dir}/Case1_HRE10G324642N1170747W_Uxx.hr5")
     xml_tre = ds.GetMetadata("xml:TRE")[0]
     ds = None
 

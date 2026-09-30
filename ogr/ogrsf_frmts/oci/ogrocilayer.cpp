@@ -844,7 +844,7 @@ int OGROCILayer::GetOrdinalPoint(int iOrdinal, int nDimension, double *pdfX,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCILayer::TestCapability(const char *pszCap) const
+bool OGROCILayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

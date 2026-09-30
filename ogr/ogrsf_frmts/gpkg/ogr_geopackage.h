@@ -329,7 +329,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
@@ -636,7 +636,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     OGRFeature *GetNextFeature() override;
     const char *GetFIDColumn() const override;
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -857,7 +857,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRwkbGeometryType GetGeomType() const override;
     const char *GetGeometryColumn() const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
@@ -1073,7 +1073,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
     OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -1138,7 +1138,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
         return OGRGeoPackageLayer::GetFeatureCount(bForce);
     }
 
-    int BaseTestCapability(const char *pszCap) const override
+    bool BaseTestCapability(const char *pszCap) const override
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);
     }

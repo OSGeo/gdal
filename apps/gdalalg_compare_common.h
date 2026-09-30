@@ -65,6 +65,10 @@ class GDALCompareCommon
     static bool BinaryComparison(GDALAlgorithm *alg,
                                  std::vector<std::string> &aosReport,
                                  GDALDataset *poRefDS, GDALDataset *poInputDS);
+
+    static void MetadataComparison(std::vector<std::string> &aosReport,
+                                   const std::string &metadataDomain,
+                                   CSLConstList aosRef, CSLConstList aosInput);
 };
 
 //! @endcond

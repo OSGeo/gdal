@@ -142,7 +142,7 @@ void FGdbResultLayer::ResetReading()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FGdbResultLayer::TestCapability(const char *) const
+bool FGdbResultLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

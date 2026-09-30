@@ -328,7 +328,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 
 /** Wait for completion of part or whole jobs.
  *
- * @param nMaxRemainingJobs Maximum number of pendings jobs that are allowed
+ * @param nMaxRemainingJobs Maximum number of pending jobs that are allowed
  *                          in the queue after this method has completed. Might
  * be 0 to wait for all jobs.
  */
@@ -628,7 +628,7 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
 
 /** Wait for completion of part or whole jobs.
  *
- * @param nMaxRemainingJobs Maximum number of pendings jobs that are allowed
+ * @param nMaxRemainingJobs Maximum number of pending jobs that are allowed
  *                          in the queue after this method has completed. Might
  * be 0 to wait for all jobs.
  */

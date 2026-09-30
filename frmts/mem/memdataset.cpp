@@ -1217,7 +1217,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                             nRasterYSize, /* bOwnData = */ false));
                     poMaskBand->m_bIsMask = true;
                     poNewBand->poMask.reset(std::move(poMaskBand));
-                    poNewBand->nMaskFlags = poSrcMaskBand->nMaskFlags;
+                    poNewBand->nMaskFlags = poSrcMEMBand->nMaskFlags;
                 }
             }
 
@@ -3392,7 +3392,7 @@ OGRErr MEMDataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int MEMDataset::TestCapability(const char *pszCap) const
+bool MEMDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||

@@ -303,7 +303,7 @@ class OGCAPITiledLayer final
                              const OGRGeometry *poGeom) override;
 
     OGRFeature *GetFeature(GIntBig nFID) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -2816,7 +2816,7 @@ OGRErr OGCAPITiledLayer::ISetSpatialFilter(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGCAPITiledLayer::TestCapability(const char *pszCap) const
+bool OGCAPITiledLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead))
         return true;

@@ -124,7 +124,7 @@ GDALExtendedDataTypeCreateCompound(const char *pszName, size_t nTotalSize,
 
 /** Release the GDAL in-memory object associated with a GDALExtendedDataTypeH.
  *
- * Note: when applied on a object coming from a driver, this does not
+ * Note: when applied on an object coming from a driver, this does not
  * destroy the object in the file, database, etc...
  */
 void GDALExtendedDataTypeRelease(GDALExtendedDataTypeH hEDT)
@@ -364,7 +364,7 @@ GDALEDTComponentH GDALEDTComponentCreate(const char *pszName, size_t nOffset,
 
 /** Release the GDAL in-memory object associated with a GDALEDTComponentH.
  *
- * Note: when applied on a object coming from a driver, this does not
+ * Note: when applied on an object coming from a driver, this does not
  * destroy the object in the file, database, etc...
  */
 void GDALEDTComponentRelease(GDALEDTComponentH hComp)

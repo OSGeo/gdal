@@ -86,7 +86,7 @@ class OGRGMLLayer final : public OGRLayer
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -190,7 +190,7 @@ class OGRGMLDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     VSILFILE *GetOutputFP() const
     {

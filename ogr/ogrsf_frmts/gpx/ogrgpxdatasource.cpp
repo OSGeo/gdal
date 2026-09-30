@@ -76,7 +76,7 @@ OGRGPXDataSource::~OGRGPXDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPXDataSource::TestCapability(const char *pszCap) const
+bool OGRGPXDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

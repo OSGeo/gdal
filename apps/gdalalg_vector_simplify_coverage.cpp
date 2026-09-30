@@ -76,7 +76,7 @@ class GDALVectorSimplifyCoverageOutputLayer final
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastFeatureCount))
         {

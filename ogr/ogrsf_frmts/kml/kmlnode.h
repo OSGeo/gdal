@@ -109,4 +109,4 @@ class KMLNode
 
 #endif  // HAVE_EXPAT
 
-#endif /* KMLNODE_H_INCLUDED */
+#endif /* OGR_KMLNODE_H_INCLUDED */

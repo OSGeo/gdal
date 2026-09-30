@@ -186,7 +186,7 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
                                  static_cast<int>(1)) -
             LEAPS_THROUGH_END_OF(EPOCH_YEAR - 1);
 
-    // Now add the secondes, minutes and hours to the number of days
+    // Now add the seconds, minutes and hours to the number of days
     // since EPOCH.
     return brokendowntime->tm_sec + brokendowntime->tm_min * SECSPERMIN +
            brokendowntime->tm_hour * SECSPERHOUR + days * SECSPERDAY;

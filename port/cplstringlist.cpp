@@ -473,6 +473,22 @@ CPLStringList &CPLStringList::AddString(const std::string &newString)
 /************************************************************************/
 /*                             AddString()                              */
 /************************************************************************/
+
+/**
+ * Create a new string from a number and add it to the list.
+ *
+ * @param dfNumber the number to convert to a string.
+ * @return a reference to the CPLStringList on which it was invoked.
+ */
+
+CPLStringList &CPLStringList::AddString(double dfNumber)
+{
+    return AddString(CPLSPrintf("%.17g", dfNumber));
+}
+
+/************************************************************************/
+/*                             AddString()                              */
+/************************************************************************/
 /**
  * Add a string to the list.
  *
@@ -1029,7 +1045,7 @@ const char *CPLStringList::FetchNameValueDef(const char *pszName,
  *
  * @param nInsertAtLineNo the line to insert at, zero to insert at front.
  * @param pszNewLine to the line to insert, the ownership of this string
- * will be taken over the by the object.  It must have been allocated on the
+ * will be taken over by the object.  It must have been allocated on the
  * heap.
  */
 

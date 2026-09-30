@@ -193,7 +193,7 @@ jobs:
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}   # zizmor: ignore[secrets-outside-env]
           password: ${{ secrets.DOCKERHUB_TOKEN }}   # zizmor: ignore[secrets-outside-env]
@@ -383,7 +383,7 @@ jobs:
             ${TEST_CMD}
 
       - name: Coveralls
-        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         if: ${{ matrix.id == 'coverage' }}
         with:
           format: lcov

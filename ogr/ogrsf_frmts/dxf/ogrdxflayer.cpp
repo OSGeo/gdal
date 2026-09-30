@@ -3830,7 +3830,7 @@ OGRFeature *OGRDXFLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFLayer::TestCapability(const char *pszCap) const
+bool OGRDXFLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

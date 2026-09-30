@@ -328,8 +328,8 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (!m_resolution.empty())
     {
         aosOptions.AddString("-tr");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[1]));
+        aosOptions.AddString(m_resolution[0]);
+        aosOptions.AddString(m_resolution[1]);
     }
     if (!m_size.empty())
     {
@@ -340,10 +340,10 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (!m_bbox.empty())
     {
         aosOptions.AddString("-te");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));
+        aosOptions.AddString(m_bbox[0]);
+        aosOptions.AddString(m_bbox[1]);
+        aosOptions.AddString(m_bbox[2]);
+        aosOptions.AddString(m_bbox[3]);
     }
     if (!m_bboxCrs.empty())
     {
@@ -415,7 +415,7 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (std::isfinite(m_errorThreshold))
     {
         aosOptions.AddString("-et");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_errorThreshold));
+        aosOptions.AddString(m_errorThreshold);
     }
 
     bool bOK = false;

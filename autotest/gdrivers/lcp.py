@@ -409,7 +409,7 @@ def test_lcp_6():
 #  Test create copy that copies data over
 
 
-def test_lcp_7():
+def test_lcp_7(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -420,17 +420,11 @@ def test_lcp_7():
     for i in [5, 7, 8, 10]:
         src_ds = mem_drv.Create("/vsimem/lcptest", 10, 20, i, gdal.GDT_Int16)
         assert src_ds is not None
-        dst_ds = lcp_drv.CreateCopy("tmp/lcp_7.lcp", src_ds, False, co)
+        dst_ds = lcp_drv.CreateCopy(tmp_path / "lcp_7.lcp", src_ds, False, co)
         assert dst_ds is not None, i
         dst_ds = None
     src_ds = None
     dst_ds = None
-
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_7." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
@@ -438,7 +432,7 @@ def test_lcp_7():
 
 
 @gdaltest.disable_exceptions()
-def test_lcp_8():
+def test_lcp_8(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -449,22 +443,17 @@ def test_lcp_8():
         for i in [0, 1, 2, 3, 4, 6, 9, 11]:
             src_ds = mem_drv.Create("", 10, 10, i, gdal.GDT_Int16)
             assert src_ds is not None
-            dst_ds = lcp_drv.CreateCopy("tmp/lcp_8.lcp", src_ds, False, co)
+            dst_ds = lcp_drv.CreateCopy(tmp_path / "lcp_8.lcp", src_ds, False, co)
             src_ds = None
             assert dst_ds is None, i
             dst_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_8." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy
 
 
-def test_lcp_9():
+def test_lcp_9(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -479,21 +468,16 @@ def test_lcp_9():
         0, 0, 10, 20, array.array("H", [i for i in range(200)])
     )
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
-    lcp_ds = lcp_drv.CreateCopy("tmp/lcp_9.lcp", src_ds, False, co)
+    lcp_ds = lcp_drv.CreateCopy(tmp_path / "lcp_9.lcp", src_ds, False, co)
     assert lcp_ds is not None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_9." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_10():
+def test_lcp_10(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -504,25 +488,19 @@ def test_lcp_10():
 
     for option in ["METERS", "FEET"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "ELEVATION_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_10.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_10.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(1).GetMetadataItem("ELEVATION_UNIT_NAME")
         assert units.lower() == option.lower()
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_10." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_11():
+def test_lcp_11(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -533,25 +511,19 @@ def test_lcp_11():
 
     for option in ["DEGREES", "PERCENT"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "SLOPE_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_11.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_11.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(2).GetMetadataItem("SLOPE_UNIT_NAME")
         assert units.lower() == option.lower()
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_11." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_12():
+def test_lcp_12(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -562,24 +534,19 @@ def test_lcp_12():
 
     for option in ["GRASS_CATEGORIES", "AZIMUTH_DEGREES", "GRASS_DEGREES"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "ASPECT_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_12.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_12.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(3).GetMetadataItem("ASPECT_UNIT_NAME")
         assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_12." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_13():
+def test_lcp_13(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -590,25 +557,19 @@ def test_lcp_13():
 
     for option in ["PERCENT", "CATEGORIES"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CANOPY_COV_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_13.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_13.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(5).GetMetadataItem("CANOPY_COV_UNIT_NAME")
         assert units.lower()[:10] == option.lower()[:10]
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_13." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_14():
+def test_lcp_14(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -619,25 +580,19 @@ def test_lcp_14():
 
     for option in ["METERS", "FEET", "METERS_X_10", "FEET_X_10"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CANOPY_HT_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_14.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_14.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(6).GetMetadataItem("CANOPY_HT_UNIT_NAME")
         assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_14." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_15():
+def test_lcp_15(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -648,25 +603,19 @@ def test_lcp_15():
 
     for option in ["METERS", "FEET", "METERS_X_10", "FEET_X_10"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CBH_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_15.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_15.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(7).GetMetadataItem("CBH_UNIT_NAME")
         assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "prj", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_15." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
 
-def test_lcp_16():
+def test_lcp_16(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -685,18 +634,12 @@ def test_lcp_16():
         ]
     ):
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CBD_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_16.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_16.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(8).GetMetadataItem("CBD_UNIT_NAME")
         assert units.lower() == answers[i].lower()
         lcp_ds = None
     src_ds = None
-
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_16." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
@@ -705,7 +648,7 @@ def test_lcp_16():
 #  documentation.  Docs say mg/ha * 10 and tn/ac * 10, metadata is not * 10.
 
 
-def test_lcp_17():
+def test_lcp_17(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -717,25 +660,19 @@ def test_lcp_17():
     answers = ["mg/ha", "t/ac"]
     for i, option in enumerate(["MG_PER_HECTARE_X_10", "TONS_PER_ACRE_X_10"]):
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "DUFF_UNIT=%s" % option]
-        lcp_ds = drv.CreateCopy("tmp/lcp_17.lcp", src_ds, False, co)
+        lcp_ds = drv.CreateCopy(tmp_path / "lcp_17.lcp", src_ds, False, co)
         assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(9).GetMetadataItem("DUFF_UNIT_NAME")
         assert units.lower() == answers[i].lower()
         lcp_ds = None
     src_ds = None
 
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_17." + ext)
-        except OSError:
-            pass
-
 
 ###############################################################################
 #  Test create copy and make sure creation options work.
 
 
-def test_lcp_18():
+def test_lcp_18(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -745,24 +682,19 @@ def test_lcp_18():
     assert src_ds is not None
 
     co = ["LATITUDE=45", "LINEAR_UNIT=METER"]
-    lcp_ds = drv.CreateCopy("tmp/lcp_18.lcp", src_ds, False, co)
+    lcp_ds = drv.CreateCopy(tmp_path / "lcp_18.lcp", src_ds, False, co)
     assert lcp_ds is not None
     assert lcp_ds.GetMetadataItem("LATITUDE") == "45"
 
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_18." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make sure creation options work.
 
 
-def test_lcp_19():
+def test_lcp_19(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -772,24 +704,19 @@ def test_lcp_19():
     assert src_ds is not None
 
     co = ["LATITUDE=0", "LINEAR_UNIT=FOOT"]
-    lcp_ds = drv.CreateCopy("tmp/lcp_19.lcp", src_ds, False, co)
+    lcp_ds = drv.CreateCopy(tmp_path / "lcp_19.lcp", src_ds, False, co)
     assert lcp_ds is not None
     assert lcp_ds.GetMetadataItem("LINEAR_UNIT") == "Feet"
 
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_19." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make sure DESCRIPTION co works
 
 
-def test_lcp_20():
+def test_lcp_20(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -800,23 +727,18 @@ def test_lcp_20():
 
     desc = "test description"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER", "DESCRIPTION=%s" % desc]
-    lcp_ds = drv.CreateCopy("tmp/lcp_20.lcp", src_ds, False, co)
+    lcp_ds = drv.CreateCopy(tmp_path / "lcp_20.lcp", src_ds, False, co)
     assert lcp_ds is not None
     assert lcp_ds.GetMetadataItem("DESCRIPTION") == desc
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_20." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make data is copied over via checksums
 
 
-def test_lcp_21():
+def test_lcp_21(tmp_path):
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
     drv = gdal.GetDriverByName("LCP")
@@ -829,7 +751,7 @@ def test_lcp_21():
         src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, 3, 3, struct.pack("h" * 9, *data))
 
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
-    lcp_ds = drv.CreateCopy("tmp/lcp_21.lcp", src_ds, False, co)
+    lcp_ds = drv.CreateCopy(tmp_path / "lcp_21.lcp", src_ds, False, co)
     assert lcp_ds is not None
     assert [
         src_ds.GetRasterBand(i + 1).Checksum() for i in range(src_ds.RasterCount)
@@ -837,18 +759,13 @@ def test_lcp_21():
 
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_21." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
 #  Test create copy and make data is copied over via numpy comparison.
 
 
-def test_lcp_22():
+def test_lcp_22(tmp_path):
 
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
@@ -865,7 +782,7 @@ def test_lcp_22():
         src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, 3, 3, struct.pack("h" * 9, *data))
 
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
-    lcp_ds = drv.CreateCopy("tmp/lcp_22.lcp", src_ds, False, co)
+    lcp_ds = drv.CreateCopy(tmp_path / "lcp_22.lcp", src_ds, False, co)
     assert lcp_ds is not None
     for i in range(10):
         src_data = src_ds.GetRasterBand(i + 1).ReadAsArray()
@@ -873,11 +790,6 @@ def test_lcp_22():
         assert numpy.array_equal(src_data, dst_data), i
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_22." + ext)
-        except OSError:
-            pass
 
 
 ###############################################################################
@@ -885,7 +797,7 @@ def test_lcp_22():
 
 
 @gdaltest.disable_exceptions()
-def test_lcp_23():
+def test_lcp_23(tmp_path):
 
     mem_drv = gdal.GetDriverByName("MEM")
     assert mem_drv is not None
@@ -910,13 +822,8 @@ def test_lcp_23():
             co = [
                 "%s=%s" % (option, bad),
             ]
-            lcp_ds = drv.CreateCopy("tmp/lcp_23.lcp", src_ds, False, co)
+            lcp_ds = drv.CreateCopy(tmp_path / "lcp_23.lcp", src_ds, False, co)
             assert lcp_ds is None
 
     src_ds = None
     lcp_ds = None
-    for ext in ["lcp", "lcp.aux.xml"]:
-        try:
-            os.remove("tmp/lcp_23." + ext)
-        except OSError:
-            pass

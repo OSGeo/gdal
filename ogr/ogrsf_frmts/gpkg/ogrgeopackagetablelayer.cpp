@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogrlayerarrow.h"
+#include "ogrlibjsonutils.h"
 #include "ogrsqliteutility.h"
 #include "cpl_md5.h"
 #include "cpl_multiproc.h"  // CPLSleep()
@@ -316,6 +317,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         const OGRFieldDefn *poFieldDefn =
             poFeatureDefn->GetFieldDefnUnsafe(iField);
         int err = SQLITE_OK;
+        bool bBound = false;
+        char *pszValToFree = nullptr;
 
         if (!poFeature->IsFieldNullUnsafe(iField))
         {
@@ -471,7 +474,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                              : "");
                                 if (m_bTruncateFields)
                                 {
-                                    pszVal = CPLForceToASCII(pszVal, -1, '_');
+                                    pszValToFree =
+                                        CPLForceToASCII(pszVal, -1, '_');
+                                    pszVal = pszValToFree;
                                     destructorType = CPLFree;
                                 }
                             }
@@ -520,14 +525,56 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                         {
                             destructorType = SQLITE_STATIC;
                         }
+
+                        // If the field subtype is JSON and the current value cannot
+                        // be parsed as a valid JSON, encode it as a JSON string.
+                        if (poFieldDefn->GetSubType() == OFSTJSON)
+                        {
+                            json_object *poObjProp = nullptr;
+                            std::string osValue(pszVal);
+                            if (!OGRJSonParse(
+                                    osValue.c_str(), &poObjProp, false,
+                                    static_cast<int>(osValue.length() + 1)))
+                            {
+                                CPLErrorOnce(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Field %s is declared as JSON but the "
+                                    "value is not a valid JSON. Storing as "
+                                    "string.",
+                                    poFieldDefn->GetNameRef());
+                                // Escape and quote
+                                osValue = CPLJSONObject(pszVal).Format(
+                                    CPLJSONObject::PrettyFormat::Plain);
+                            }
+                            else
+                            {
+                                osValue = json_object_to_json_string(poObjProp);
+                            }
+                            err = sqlite3_bind_text(
+                                poStmt, nColCount++, osValue.c_str(),
+                                static_cast<int>(osValue.size()),
+                                SQLITE_TRANSIENT);
+                            bBound = true;
+                            json_object_put(poObjProp);
+                            CPLFree(pszValToFree);
+                            pszValToFree = nullptr;
+                            CPL_IGNORE_RET_VAL(pszValToFree);
+                            destructorType = SQLITE_TRANSIENT;
+                            pszVal = "";
+                            nValLengthBytes = 0;
+                        }
                     }
                     else
                     {
                         pszVal = poFeature->GetFieldAsString(iField);
                     }
 
-                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal,
-                                            nValLengthBytes, destructorType);
+                    if (!bBound)
+                    {
+                        err =
+                            sqlite3_bind_text(poStmt, nColCount++, pszVal,
+                                              nValLengthBytes, destructorType);
+                    }
                     break;
                 }
             }
@@ -715,7 +762,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
         }
         for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
-            if (i == m_iFIDAsRegularColumnIndex)
+            const auto *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+            if (i == m_iFIDAsRegularColumnIndex || poFieldDefn->IsGenerated())
                 continue;
             if (!bBindUnsetFields && !poFeature->IsFieldSet(i))
                 continue;
@@ -729,12 +777,11 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
                 osSQLBack += ", ";
             }
 
-            osSQLBack += CPLSPrintf(
-                "\"%s\" = excluded.\"%s\"",
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str(),
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str());
+            const std::string osEscapedColName =
+                SQLEscapeName(poFieldDefn->GetNameRef());
+            osSQLBack +=
+                CPLSPrintf("\"%s\" = excluded.\"%s\"", osEscapedColName.c_str(),
+                           osEscapedColName.c_str());
         }
 #if SQLITE_VERSION_NUMBER >= 3035000L
         osSQLBack += " RETURNING \"";
@@ -4403,7 +4450,7 @@ void OGRGeoPackageTableLayer::RecomputeExtent()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
+bool OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -6809,7 +6856,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsNullable() != poNewFieldDefn->IsNullable())
     {
         nActualFlags |= ALTER_NULLABLE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (!poNewFieldDefn->IsNullable())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
     }
     if ((nFlagsIn & ALTER_DEFAULT_FLAG) != 0 &&
@@ -6827,7 +6875,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsUnique() != poNewFieldDefn->IsUnique())
     {
         nActualFlags |= ALTER_UNIQUE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (poNewFieldDefn->IsUnique())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
     if ((nFlagsIn & ALTER_DOMAIN_FLAG) != 0 &&
@@ -6878,7 +6927,13 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    const bool bUseRenameColumn =
+        (nActualFlags == ALTER_NAME_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG));
+#else
     const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
+#endif
     if (bUseRenameColumn)
         bUseRewriteSchemaMethod = false;
 
@@ -6919,6 +6974,26 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         }
     }
 
+    bool bUseRecreateTableMethod =
+        !bUseRenameColumn && !bUseRewriteSchemaMethod;
+
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    if (eErr == OGRERR_NONE &&
+        (nActualFlags == ALTER_NULLABLE_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG)))
+    {
+        eErr =
+            SQLCommand(m_poDS->GetDB(),
+                       CPLString().Printf(
+                           "ALTER TABLE \"%s\" ALTER COLUMN \"%s\" %s NOT NULL",
+                           SQLEscapeName(m_pszTableName).c_str(),
+                           SQLEscapeName(osOldColName).c_str(),
+                           poNewFieldDefn->IsNullable() ? "DROP" : "SET"));
+        bUseRecreateTableMethod = false;
+        bUseRewriteSchemaMethod = false;
+    }
+#endif
+
     if (bUseRenameColumn)
     {
         if (eErr == OGRERR_NONE)
@@ -6934,7 +7009,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                     .c_str());
         }
     }
-    else if (!bUseRewriteSchemaMethod)
+    else if (bUseRecreateTableMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -6950,7 +7025,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
         }
     }
-    else
+    else if (bUseRewriteSchemaMethod)
     {
         /* --------------------------------------------------------------------
          */

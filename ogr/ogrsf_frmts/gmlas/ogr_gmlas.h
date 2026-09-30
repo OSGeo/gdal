@@ -1410,7 +1410,7 @@ class OGRGMLASDataSource final : public GDALDataset
                                        double *pdfProgressPct,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
@@ -1569,7 +1569,7 @@ class OGRGMLASLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

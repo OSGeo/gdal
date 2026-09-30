@@ -44,7 +44,7 @@ struct _CPLXMLNode;
 
 /* OGRGeomCoordinatePrecisionH */
 
-/** Value for a unknown coordinate precision. */
+/** Value for an unknown coordinate precision. */
 #define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
 
 OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);

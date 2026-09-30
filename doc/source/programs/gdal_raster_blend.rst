@@ -209,7 +209,7 @@ The following blending operators are available:
 
     * transform back (Hue,Saturation,:math:`output_{V}`) to RGB.
 
-    If the the alpha channel of the input dataset is present, it is preserved unchanged.
+    If the alpha channel of the input dataset is present, it is preserved unchanged.
 
 - ``multiply`` multiplies the input and overlay colors.
     The resulting color is always at least as dark as either of the two

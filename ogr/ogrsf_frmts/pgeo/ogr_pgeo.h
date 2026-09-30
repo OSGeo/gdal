@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef OGR_ODBC_H_INCLUDED
-#define OGR_ODBC_H_INCLUDED
+#ifndef OGR_PGEO_H_INCLUDED
+#define OGR_PGEO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
@@ -77,7 +77,7 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const char *GetFIDColumn() const override;
     const char *GetGeometryColumn() const override;
@@ -115,7 +115,7 @@ class OGRPGeoTableLayer final : public OGRPGeoLayer
     OGRErr SetAttributeFilter(const char *) override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -153,7 +153,7 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -201,7 +201,7 @@ class OGRPGeoDataSource final : public GDALDataset
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -228,4 +228,4 @@ class OGRPGeoDataSource final : public GDALDataset
     }
 };
 
-#endif /* ndef _OGR_PGeo_H_INCLUDED */
+#endif /* ndef OGR_PGEO_H_INCLUDED */

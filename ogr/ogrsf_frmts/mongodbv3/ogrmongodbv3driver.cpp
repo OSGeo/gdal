@@ -96,7 +96,7 @@ class OGRMongoDBv3Dataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int iLayer) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 };
@@ -182,7 +182,7 @@ class OGRMongoDBv3Layer final : public OGRLayer
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poFieldIn, int) override;
@@ -2149,7 +2149,7 @@ OGRErr OGRMongoDBv3Layer::IUpdateFeature(OGRFeature *poFeature,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMongoDBv3Layer::TestCapability(const char *pszCap) const
+bool OGRMongoDBv3Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
     {
@@ -2675,7 +2675,7 @@ OGRErr OGRMongoDBv3Dataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMongoDBv3Dataset::TestCapability(const char *pszCap) const
+bool OGRMongoDBv3Dataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
@@ -2715,7 +2715,7 @@ class OGRMongoDBv3SingleFeatureLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

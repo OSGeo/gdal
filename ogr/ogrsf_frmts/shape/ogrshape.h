@@ -266,7 +266,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                               const OGRGeomFieldDefn *poNewGeomFieldDefn,
                               int nFlagsIn) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -352,7 +352,7 @@ class OGRShapeDataSource final : public GDALDataset
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr DeleteLayer(int iLayer) override;
 
     char **GetFileList() override;

@@ -2092,7 +2092,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             osName != "storage_transformers" && osName != "attributes")
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "%s array definition contains a unknown member (%s). "
+                     "%s array definition contains an unknown member (%s). "
                      "Interpretation of the array might be wrong.",
                      osZarrayFilename.c_str(), osName.c_str());
         }

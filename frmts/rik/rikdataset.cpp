@@ -968,7 +968,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
         if (header.iBitsPerPixel != 8)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "File %s has unsupported number of bits per pixel.\n",
+                     "File %s has unsupported number of bits per pixel.",
                      poOpenInfo->pszFilename);
             return nullptr;
         }
@@ -984,8 +984,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
             header.iOptions != 0x0D)    // ZLIB
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "File %s. Unknown map options.\n",
-                     poOpenInfo->pszFilename);
+                     "File %s. Unknown map options.", poOpenInfo->pszFilename);
             return nullptr;
         }
     }
@@ -1026,7 +1025,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!offsets)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "File %s. Unable to allocate offset table.\n",
+                 "File %s. Unable to allocate offset table.",
                  poOpenInfo->pszFilename);
         return nullptr;
     }
@@ -1038,7 +1037,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
         if (VSIFEofL(poOpenInfo->fpL))
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
-                     "File %s. Read past end of file.\n",
+                     "File %s. Read past end of file.",
                      poOpenInfo->pszFilename);
             CPLFree(offsets);
             return nullptr;
@@ -1061,7 +1060,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (header.iVertBlocks == 0)
         {
-            CPLError(CE_Failure, CPLE_OpenFailed, "File %s too short.\n",
+            CPLError(CE_Failure, CPLE_OpenFailed, "File %s too short.",
                      poOpenInfo->pszFilename);
             CPLFree(offsets);
             return nullptr;
@@ -1104,8 +1103,8 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (VSIFEofL(poOpenInfo->fpL))
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "File %s. Read past end of file.\n", poOpenInfo->pszFilename);
+        CPLError(CE_Failure, CPLE_OpenFailed, "File %s. Read past end of file.",
+                 poOpenInfo->pszFilename);
         CPLFree(offsets);
         return nullptr;
     }
@@ -1134,8 +1133,8 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 if (!y)
                 {
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "File %s too short.\n", poOpenInfo->pszFilename);
+                    CPLError(CE_Failure, CPLE_OpenFailed, "File %s too short.",
+                             poOpenInfo->pszFilename);
                     CPLFree(offsets);
                     return nullptr;
                 }
@@ -1148,7 +1147,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (!y)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
-                             "File %s. Corrupt offset table.\n",
+                             "File %s. Corrupt offset table.",
                              poOpenInfo->pszFilename);
                     CPLFree(offsets);
                     return nullptr;

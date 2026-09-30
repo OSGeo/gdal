@@ -2082,7 +2082,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGDataSource::TestCapability(const char *pszCap) const
+bool OGRPGDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
@@ -2852,7 +2852,7 @@ class OGRPGNoResetResultLayer final : public OGRPGLayer
 
     void ResetReading() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -2959,7 +2959,7 @@ class OGRPGMemLayerWrapper final : public OGRLayer
         return poMemLayer->GetLayerDefn();
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

@@ -188,7 +188,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         for (double burnValue : m_burnValues)
         {
             aosOptions.AddString("-burn");
-            aosOptions.AddString(CPLSPrintf("%.17g", burnValue));
+            aosOptions.AddString(burnValue);
         }
     }
 
@@ -271,7 +271,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
         aosOptions.AddString("-a_nodata");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_nodata));
+        aosOptions.AddString(m_nodata);
     }
 
     if (m_initValues.size())
@@ -279,7 +279,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         for (double initValue : m_initValues)
         {
             aosOptions.AddString("-init");
-            aosOptions.AddString(CPLSPrintf("%.17g", initValue));
+            aosOptions.AddString(initValue);
         }
     }
 
@@ -294,10 +294,10 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
         aosOptions.AddString("-te");
-        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MinX));
-        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MinY));
-        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MaxX));
-        aosOptions.AddString(CPLSPrintf("%.17g", sExtent.MaxY));
+        aosOptions.AddString(sExtent.MinX);
+        aosOptions.AddString(sExtent.MinY);
+        aosOptions.AddString(sExtent.MaxX);
+        aosOptions.AddString(sExtent.MaxY);
 
         const auto poSRS = poLikeDS->GetSpatialRef();
         if (poSRS)
@@ -336,7 +336,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString("-te");
             for (double targetExtent : m_targetExtent)
             {
-                aosOptions.AddString(CPLSPrintf("%.17g", targetExtent));
+                aosOptions.AddString(targetExtent);
             }
         }
 
@@ -380,7 +380,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-tr");
         for (double targetResolution : m_targetResolution)
         {
-            aosOptions.AddString(CPLSPrintf("%.17g", targetResolution));
+            aosOptions.AddString(targetResolution);
         }
     }
     else if (m_targetSize.size())

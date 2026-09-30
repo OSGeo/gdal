@@ -91,7 +91,7 @@ OGRFeature *OGRPGDumpLayer::GetNextFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-int OGRPGDumpLayer::TestCapability(const char *pszCap) const
+bool OGRPGDumpLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField) ||
         EQUAL(pszCap, OLCCreateGeomField) ||

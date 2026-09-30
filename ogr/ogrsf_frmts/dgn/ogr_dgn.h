@@ -30,7 +30,7 @@ class OGRDGNLayer final : public OGRLayer
     int iNextShapeId{};
 
     DGNHandle hDGN{};
-    int bUpdate{};
+    bool bUpdate{};
 
     char *pszLinkFormat{};
 
@@ -52,7 +52,7 @@ class OGRDGNLayer final : public OGRLayer
 
   public:
     OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName, DGNHandle hDGN,
-                int bUpdate);
+                bool bUpdate);
     ~OGRDGNLayer() override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
@@ -72,7 +72,7 @@ class OGRDGNLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
@@ -114,7 +114,7 @@ class OGRDGNDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const std::string &GetEncoding() const
     {

@@ -44,9 +44,9 @@ def test_png_1():
 # Test lossless copying.
 
 
-def test_png_2():
+def test_png_2(tmp_path):
 
-    tst = gdaltest.GDALTest("PNG", "png/test.png", 1, 57921)
+    tst = gdaltest.GDALTest("PNG", "png/test.png", 1, 57921, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
@@ -87,9 +87,9 @@ def test_png_3():
 # Test RGB mode creation and reading.
 
 
-def test_png_4():
+def test_png_4(tmp_path):
 
-    tst = gdaltest.GDALTest("PNG", "rgbsmall.tif", 3, 21349)
+    tst = gdaltest.GDALTest("PNG", "rgbsmall.tif", 3, 21349, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
@@ -108,9 +108,9 @@ def test_png_5():
 # Test RGBA 16bit mode creation and reading.
 
 
-def test_png_6():
+def test_png_6(tmp_path):
 
-    tst = gdaltest.GDALTest("PNG", "png/rgba16.png", 4, 4873)
+    tst = gdaltest.GDALTest("PNG", "png/rgba16.png", 4, 4873, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
@@ -120,23 +120,21 @@ def test_png_6():
 # This is handled via the tRNS block in PNG.
 
 
-def test_png_7():
+def test_png_7(tmp_path):
 
     drv = gdal.GetDriverByName("PNG")
     srcds = gdal.Open("data/png/tbbn2c16.png")
 
-    dstds = drv.CreateCopy("tmp/png7.png", srcds)
+    dstds = drv.CreateCopy(tmp_path / "png7.png", srcds)
     srcds = None
 
-    dstds = gdal.Open("tmp/png7.png")
+    dstds = gdal.Open(tmp_path / "png7.png")
     md = dstds.GetMetadata()
     dstds = None
 
     assert md["NODATA_VALUES"] == "32639 32639 32639", "NODATA_VALUES wrong"
 
     dstds = None
-
-    drv.Delete("tmp/png7.png")
 
 
 ###############################################################################

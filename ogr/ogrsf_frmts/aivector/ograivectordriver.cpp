@@ -91,7 +91,7 @@ static GDALDataset *OGRAIVectorOpen(GDALOpenInfo *poOpenInfo)
             return poFeature;
         }
 
-        int TestCapability(const char *) const override
+        bool TestCapability(const char *) const override
         {
             return false;
         }

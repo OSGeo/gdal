@@ -102,8 +102,9 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
         if (!cpl::ends_with(m_source, "/*") && !cpl::ends_with(m_source, "\\*"))
         {
-            VSIErrorReset();
             const auto nOldErrorNum = VSIGetLastErrorNo();
+            VSIErrorReset();
+
             VSIStatBufL statBufSrc;
             bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
             if (!srcExists)
@@ -136,9 +137,10 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
         else
         {
-            m_source.resize(m_source.size() - 2);
-            VSIErrorReset();
             const auto nOldErrorNum = VSIGetLastErrorNo();
+            VSIErrorReset();
+
+            m_source.resize(m_source.size() - 2);
             VSIStatBufL statBufSrc;
             bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
             if (!srcExists)
@@ -155,9 +157,10 @@ bool GDALVSICopyAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     }
     else
     {
-        VSIStatBufL statBufSrc;
-        VSIErrorReset();
         const auto nOldErrorNum = VSIGetLastErrorNo();
+        VSIErrorReset();
+
+        VSIStatBufL statBufSrc;
         bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
         if (!srcExists)
         {

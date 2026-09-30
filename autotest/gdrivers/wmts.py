@@ -12,7 +12,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import shutil
 import struct
 
 import gdaltest
@@ -50,11 +49,6 @@ def wmts_setup():
     if lst:
         for f in lst:
             gdal.Unlink("/vsimem/" + f)
-
-    try:
-        shutil.rmtree("tmp/wmts_cache")
-    except OSError:
-        pass
 
 
 ###############################################################################

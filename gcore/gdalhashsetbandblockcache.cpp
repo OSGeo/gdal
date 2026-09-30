@@ -62,7 +62,7 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
     CPLErr FlushCache() override;
     CPLErr AdoptBlock(GDALRasterBlock *) override;
     GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
-                                          int nYBlockYOff) override;
+                                          int nYBlockOff) override;
     CPLErr UnreferenceBlock(GDALRasterBlock *poBlock) override;
     CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
                       int bWriteDirtyBlock) override;

@@ -642,7 +642,7 @@ class OGRS101Dataset final : public GDALDataset
         return *m_poReader;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static void UnloadDriver(GDALDriver *);
@@ -666,7 +666,7 @@ class OGRS101Layer /* non final */ : public OGRLayer
 
     void ResetReading() override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce) override;
 

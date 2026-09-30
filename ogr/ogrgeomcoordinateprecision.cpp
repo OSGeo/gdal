@@ -58,7 +58,7 @@ void OGRGeomCoordinatePrecisionDestroy(
 /** Get the X/Y resolution of a OGRGeomCoordinatePrecision
  *
  * @param hGeomCoordPrec OGRGeomCoordinatePrecision instance (must not be null)
- * @return the the X/Y resolution of a OGRGeomCoordinatePrecision or
+ * @return the X/Y resolution of a OGRGeomCoordinatePrecision or
  * OGR_GEOM_COORD_PRECISION_UNKNOWN
  * @since GDAL 3.9
  */
@@ -77,7 +77,7 @@ double OGRGeomCoordinatePrecisionGetXYResolution(
 /** Get the Z resolution of a OGRGeomCoordinatePrecision
  *
  * @param hGeomCoordPrec OGRGeomCoordinatePrecision instance (must not be null)
- * @return the the Z resolution of a OGRGeomCoordinatePrecision or
+ * @return the Z resolution of a OGRGeomCoordinatePrecision or
  * OGR_GEOM_COORD_PRECISION_UNKNOWN
  * @since GDAL 3.9
  */
@@ -96,7 +96,7 @@ double OGRGeomCoordinatePrecisionGetZResolution(
 /** Get the M resolution of a OGRGeomCoordinatePrecision
  *
  * @param hGeomCoordPrec OGRGeomCoordinatePrecision instance (must not be null)
- * @return the the M resolution of a OGRGeomCoordinatePrecision or
+ * @return the M resolution of a OGRGeomCoordinatePrecision or
  * OGR_GEOM_COORD_PRECISION_UNKNOWN
  * @since GDAL 3.9
  */

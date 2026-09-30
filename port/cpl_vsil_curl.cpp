@@ -114,7 +114,7 @@ int VSICurlUninstallReadCbk(VSILFILE * /* fp */)
 
 constexpr const char *const VSICURL_PREFIXES[] = {"/vsicurl/", "/vsicurl?"};
 
-/***********************************************************ù************/
+/************************************************************************/
 /*                    VSICurlAuthParametersChanged()                    */
 /************************************************************************/
 
@@ -1780,7 +1780,7 @@ retry:
                 if (!bRetryWithGet && osVerb == "HEAD" && response_code == 403)
                 {
                     CPLDebug(poFS->GetDebugKey(),
-                             "Redirected to a AWS S3 signed URL. Retrying "
+                             "Redirected to an AWS S3 signed URL. Retrying "
                              "with GET request instead of HEAD since the URL "
                              "might be valid only for GET");
                     bRetryWithGet = true;

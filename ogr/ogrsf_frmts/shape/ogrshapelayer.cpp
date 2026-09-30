@@ -1793,7 +1793,7 @@ OGRErr OGRShapeLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRShapeLayer::TestCapability(const char *pszCap) const
+bool OGRShapeLayer::TestCapability(const char *pszCap) const
 
 {
     if (!const_cast<OGRShapeLayer *>(this)->TouchLayer())
@@ -1816,8 +1816,8 @@ int OGRShapeLayer::TestCapability(const char *pszCap) const
         {
             const_cast<OGRShapeLayer *>(this)->InitializeIndexSupport(
                 m_osFullName.c_str());
-            return m_poAttrQuery->CanUseIndex(
-                const_cast<OGRShapeLayer *>(this));
+            return CPL_TO_BOOL(
+                m_poAttrQuery->CanUseIndex(const_cast<OGRShapeLayer *>(this)));
         }
         return TRUE;
     }

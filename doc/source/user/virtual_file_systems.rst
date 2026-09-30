@@ -521,7 +521,7 @@ Starting with GDAL 3.6, the following configuration options control the TCP keep
 
 Starting with GDAL 3.7, the following configuration options control support for SSL client certificates:
 
-- :config:`GDAL_HTTP_SSLCERT` = filename. Filename of the the SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
+- :config:`GDAL_HTTP_SSLCERT` = filename. Filename of the SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
 - :config:`GDAL_HTTP_SSLCERTTYPE` = string. Format of the SSL certificate: "PEM" or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
 - :config:`GDAL_HTTP_SSLKEY` = filename. Private key file for TLS and SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html
 - :config:`GDAL_HTTP_KEYPASSWD` = string. Passphrase to private key. Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html

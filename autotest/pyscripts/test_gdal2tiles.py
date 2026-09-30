@@ -296,7 +296,7 @@ def test_gdal2tiles_py_invalid_srs(script_path, tmp_path):
     ret2 = test_py_scripts.run_py_script(
         script_path,
         "gdal2tiles",
-        f"-q --zoom=0-1 --s_srs EPSG:4326 {input_vrt}",
+        f"-q --zoom=0-1 --s_srs EPSG:4326 {input_vrt} {output_dir}",
     )
 
     assert "ERROR ret code" not in ret2

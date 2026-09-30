@@ -472,7 +472,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_GFld_SetIgnored().
  *
- * This method should not be called on a object returned with
+ * This method should not be called on an object returned with
  * OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead, the
  * OGRLayer::SetIgnoredFields() method should be called.
  *
@@ -489,7 +489,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  *
  * This method is the same as the C++ method OGRGeomFieldDefn::SetIgnored().
  *
- * This method should not be called on a object returned with
+ * This method should not be called on an object returned with
  * OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead, the
  * OGRLayer::SetIgnoredFields() method should be called.
  *

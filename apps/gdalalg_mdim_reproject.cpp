@@ -154,7 +154,6 @@ GDALMdimReprojectGroup::GDALMdimReprojectGroup(
         }
         else if (poSrcArray->GetDimensionCount() == 1)
         {
-            m_aosArrayNames.push_back(osName);
             const auto &poDim = poSrcArray->GetDimensions()[0];
             if (poDim->GetName() == osName)
             {
@@ -163,6 +162,7 @@ GDALMdimReprojectGroup::GDALMdimReprojectGroup(
             else
             {
                 oMapArrayDims[poDim->GetName()].first = true;
+                m_aosArrayNames.push_back(osName);
                 m_oMapArrays[osName] = std::move(poSrcArray);
             }
         }

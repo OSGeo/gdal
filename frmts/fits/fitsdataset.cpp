@@ -108,7 +108,7 @@ class FITSDataset final : public GDALPamDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 };
@@ -210,7 +210,7 @@ class FITSLayer final : public OGRLayer,
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
@@ -877,7 +877,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSLayer::TestCapability(const char *pszCap) const
+bool FITSLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -1906,7 +1906,7 @@ FITSDataset::~FITSDataset()
                         // types, the GDAL Metadata mechanism works only with
                         // string values. Prior to about 2003-05-02, this driver
                         // would attempt to guess the value type from the
-                        // metadata value string amd then would use the
+                        // metadata value string and then would use the
                         // appropriate type-specific FITS keyword update
                         // routine. This was found to be troublesome (e.g. a
                         // numeric version string with leading zeros would be
@@ -2346,7 +2346,7 @@ OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int FITSDataset::TestCapability(const char *pszCap) const
+bool FITSDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;

@@ -230,7 +230,7 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMiraMonDataSource::TestCapability(const char *pszCap) const
+bool OGRMiraMonDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

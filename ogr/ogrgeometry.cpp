@@ -8383,7 +8383,7 @@ OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
  *
  * @param eType Input geometry type
  *
- * @return the the non-collection type that be contained in the passed geometry
+ * @return the non-collection type that be contained in the passed geometry
  * type or wkbUnknown
  *
  * @since GDAL 3.11

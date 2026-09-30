@@ -392,7 +392,7 @@ GIntBig OGRNTFRasterLayer::GetFeatureCount(CPL_UNUSED int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNTFRasterLayer::TestCapability(const char *pszCap) const
+bool OGRNTFRasterLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

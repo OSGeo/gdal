@@ -68,25 +68,25 @@ Program-Specific Options
         kernel size can be any odd number between 3 and 99):
 
         .. math::
-            \begin{align}
+            \begin{aligned}
                 \begin{bmatrix} 1 & 1 & 1\\ 1 & 1 & 1 \\ 1 & 1 & 1 \end{bmatrix}
-            \end{align}
+            \end{aligned}
 
         For method ``mean``, this corresponds to a box blur filter.
 
       * ``u`` corresponding to an horizontal derivative with coefficients:
 
         .. math::
-            \begin{align}
+            \begin{aligned}
                 \begin{bmatrix} 0 & 0 & 0\\ -0.5 & 0 & 0.5 \\ 0 & 0 & 0 \end{bmatrix}
-            \end{align}
+            \end{aligned}
 
       * ``v`` corresponding to a vertical derivative with coefficients:
 
         .. math::
-            \begin{align}
+            \begin{aligned}
                 \begin{bmatrix} 0 & -0.5 & 0\\ 0 & 0 & 0 \\ 0 & 0.5 & 0 \end{bmatrix}
-            \end{align}
+            \end{aligned}
 
        ``edge1``, ``edge2``, ``sharpen``, ``u`` and ``v`` are only supported for a kernel size equal to 3.
 

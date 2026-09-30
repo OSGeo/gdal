@@ -2240,7 +2240,7 @@ void OGRGeoRSSLayer::LoadSchema()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoRSSLayer::TestCapability(const char *pszCap) const
+bool OGRGeoRSSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

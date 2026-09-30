@@ -20,7 +20,7 @@
  * \file cpl_list.h
  *
  * Simplest list implementation.  List contains only pointers to stored
- * objects, not objects itself. All operations regarding allocation and
+ * objects, not objects themselves. All operations regarding allocation and
  * freeing memory for objects should be performed by the caller.
  *
  */
@@ -35,7 +35,7 @@ struct _CPLList
 {
     /*! Pointer to the data object. Should be allocated and freed by the
      * caller.
-     * */
+     */
     void *pData;
     /*! Pointer to the next element in list. NULL, if current element is the
      * last one.

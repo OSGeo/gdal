@@ -62,7 +62,7 @@ void EarlySetConfigOptions(int argc, char **argv)
     // registered for the --format or --formats options.
 
     // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
-    // detects and warns about a unknown config option.
+    // detects and warns about an unknown config option.
     for (int i = 1; i < argc; i++)
     {
         if (EQUAL(argv[i], "--config") && i + 1 < argc)

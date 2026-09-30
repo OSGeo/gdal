@@ -694,6 +694,15 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(EQUAL(oCopy[2], "xyz"));
 }
 
+TEST_F(test_cpl, CPLStringList_AddDouble)
+{
+    CPLStringList oCSL;
+    oCSL.AddString(M_PI);
+
+    const double dfPi = CPLStrtod(oCSL[0], nullptr);
+    ASSERT_EQ(dfPi, M_PI);
+}
+
 // Test CSLRemoveStrings() with the special values of nFirstLineToDelete
 // documented as meaning "remove the nNumToRemove last strings".
 TEST_F(test_cpl, CSLRemoveStrings_last_strings)
@@ -3228,10 +3237,10 @@ TEST_F(test_cpl, CPLAutoClose)
 
     {
         AutoCloseTest *p1 = AutoCloseTest::Create();
-        CPL_AUTO_CLOSE_WARP(p1, AutoCloseTest::Destroy);
+        CPL_AUTO_CLOSE_WRAP(p1, AutoCloseTest::Destroy);
 
         AutoCloseTest *p2 = AutoCloseTest::Create();
-        CPL_AUTO_CLOSE_WARP(p2, AutoCloseTest::Destroy);
+        CPL_AUTO_CLOSE_WRAP(p2, AutoCloseTest::Destroy);
     }
     ASSERT_EQ(counter, 400);
 }
@@ -4140,6 +4149,74 @@ TEST_F(test_cpl, CPLQuadTree)
             ASSERT_EQ(nFeatureCount, 0);
         }
     }
+
+    CPLQuadTreeDestroy(hTree);
+}
+
+// Removing features must not degrade the tree structure: features inserted
+// after removals should still descend and split, not accumulate in the
+// bucket of a node whose subnodes were partially destroyed.
+TEST_F(test_cpl, CPLQuadTreeRemoveThenReinsert)
+{
+    CPLRectObj globalbounds;
+    globalbounds.minx = 0;
+    globalbounds.miny = 0;
+    globalbounds.maxx = 1;
+    globalbounds.maxy = 1;
+
+    CPLQuadTree *hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
+
+    static constexpr int N = 32;
+    const auto featRect = [](int i)
+    {
+        CPLRectObj rect;
+        rect.minx = (0.25 + (i % N)) / N;
+        rect.miny = (0.25 + (i / N)) / N;
+        rect.maxx = rect.minx + 0.5 / N;
+        rect.maxy = rect.miny + 0.5 / N;
+        return rect;
+    };
+    // offset by 1 so no feature handle is nullptr
+    const auto feat = [](int i)
+    { return reinterpret_cast<void *>(static_cast<uintptr_t>(i + 1)); };
+
+    for (int i = 0; i < N * N; i++)
+    {
+        CPLRectObj rect = featRect(i);
+        CPLQuadTreeInsertWithBounds(hTree, feat(i), &rect);
+    }
+
+    // Empty out the left half of the domain, then reinsert the same
+    // features.
+    for (int i = 0; i < N * N; i++)
+    {
+        if (i % N < N / 2)
+        {
+            CPLRectObj rect = featRect(i);
+            CPLQuadTreeRemove(hTree, feat(i), &rect);
+        }
+    }
+    for (int i = 0; i < N * N; i++)
+    {
+        if (i % N < N / 2)
+        {
+            CPLRectObj rect = featRect(i);
+            CPLQuadTreeInsertWithBounds(hTree, feat(i), &rect);
+        }
+    }
+
+    int nFeatureCount = 0;
+    int nNodeCount = 0;
+    int nMaxDepth = 0;
+    int nMaxBucketCapacity = 0;
+    CPLQuadTreeGetStats(hTree, &nFeatureCount, &nNodeCount, &nMaxDepth,
+                        &nMaxBucketCapacity);
+    EXPECT_EQ(nFeatureCount, N * N);
+    EXPECT_LE(nMaxBucketCapacity, 16);
+
+    int nSearchCount = 0;
+    CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nSearchCount));
+    EXPECT_EQ(nSearchCount, N * N);
 
     CPLQuadTreeDestroy(hTree);
 }

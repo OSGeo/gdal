@@ -60,20 +60,20 @@ def test_roipac_2():
 # Verify this can be exported losslessly.
 
 
-def test_roipac_3():
+def test_roipac_3(tmp_path):
 
     tst = gdaltest.GDALTest("roi_pac", "roipac/srtm.dem", 1, 64074)
-    tst.testCreateCopy(check_gt=1, new_filename="strm.tst.dem")
+    tst.testCreateCopy(check_gt=1, new_filename=tmp_path / "strm.tst.dem")
 
 
 ###############################################################################
 # Verify VSIF*L capacity
 
 
-def test_roipac_4():
+def test_roipac_4(tmp_path):
 
     tst = gdaltest.GDALTest("roi_pac", "roipac/srtm.dem", 1, 64074)
-    tst.testCreateCopy(check_gt=1, new_filename="strm.tst.dem", vsimem=1)
+    tst.testCreateCopy(check_gt=1, new_filename=tmp_path / "strm.tst.dem", vsimem=1)
 
 
 ###############################################################################
@@ -94,8 +94,8 @@ def test_roipac_5():
 # Test .flg
 
 
-def test_roipac_6():
+def test_roipac_6(tmp_path):
 
     tst = gdaltest.GDALTest("roi_pac", "byte.tif", 1, 4672)
     with gdal.quiet_errors():
-        tst.testCreateCopy(check_gt=1, new_filename="byte.flg", vsimem=1)
+        tst.testCreateCopy(check_gt=1, new_filename=tmp_path / "byte.flg", vsimem=1)

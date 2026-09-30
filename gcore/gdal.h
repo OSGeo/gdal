@@ -95,6 +95,8 @@ double CPL_DLL GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                                          int *pbClamped, int *pbRounded);
 bool CPL_DLL GDALIsValueExactAs(double dfValue, GDALDataType eDT);
 bool CPL_DLL GDALIsValueInRangeOf(double dfValue, GDALDataType eDT);
+bool CPL_DLL GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
+                                           double *pdfMax);
 GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType(GDALDataType);
 int CPL_DLL CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
                                                       GDALDataType eTypeTo);
@@ -1256,7 +1258,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
  */
 #define GDAL_OF_INTERNAL 0x80
 
-/** Let GDAL decide if a array-based or hashset-based storage strategy for
+/** Let GDAL decide if an array-based or hashset-based storage strategy for
  * cached blocks must be used.
  *
  * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
@@ -1266,7 +1268,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
  */
 #define GDAL_OF_DEFAULT_BLOCK_ACCESS 0
 
-/** Use a array-based storage strategy for cached blocks.
+/** Use an array-based storage strategy for cached blocks.
  *
  * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
  * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive.

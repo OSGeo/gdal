@@ -27,6 +27,10 @@
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_write.h"
 
+#include "gdalalg_mdim_info.h"
+#include "gdalalg_mdim_read.h"
+#include "gdalalg_mdim_write.h"
+
 #include "gdalalg_raster_as_features.h"
 #include "gdalalg_raster_compare.h"
 #include "gdalalg_raster_contour.h"
@@ -393,11 +397,24 @@ void GDALPipelineStepAlgorithm::AddMdimInputArgs(bool openForMixedMdimVector,
 
 void GDALPipelineStepAlgorithm::AddMdimOutputArgs(bool hiddenForCLI)
 {
+    // Same requirements as the ones checked by GDALMultiDimTranslate(), which
+    // writes to a classic raster driver when the driver has no
+    // multidimensional creation capability.
+    const std::vector<std::string> requiredCapabilities =
+        m_constructorOptions.mdimOutputAcceptsClassicRaster
+            ? std::vector<
+                  std::string>{GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER,
+                               GDAL_DCAP_CREATE
+                               "|" GDAL_DCAP_CREATECOPY
+                               "|" GDAL_DCAP_CREATE_MULTIDIMENSIONAL
+                               "|" GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL}
+            : std::vector<std::string>{GDAL_DCAP_CREATE_MULTIDIMENSIONAL};
+
     m_outputFormatArg =
         &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
                              /* bGDALGAllowed = */ true)
               .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                               {GDAL_DCAP_CREATE_MULTIDIMENSIONAL})
+                               requiredCapabilities)
               .SetHiddenForCLI(hiddenForCLI))
              .SetAvailableInPipelineStep(false);
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER,
@@ -426,6 +443,8 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         std::unique_ptr<GDALPipelineStepAlgorithm> readAlg;
         if (GetInputType() == GDAL_OF_RASTER)
             readAlg = std::make_unique<GDALRasterReadAlgorithm>();
+        else if (GetInputType() == GDAL_OF_MULTIDIM_RASTER)
+            readAlg = std::make_unique<GDALMdimReadAlgorithm>();
         else
             readAlg = std::make_unique<GDALVectorReadAlgorithm>();
         for (auto &arg : readAlg->GetArgs())
@@ -448,6 +467,13 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 writeAlg = std::make_unique<GDALRasterCompareAlgorithm>();
             else
                 writeAlg = std::make_unique<GDALRasterWriteAlgorithm>();
+        }
+        else if (GetOutputType() == GDAL_OF_MULTIDIM_RASTER)
+        {
+            if (GetName() == GDALMdimInfoAlgorithm::NAME)
+                writeAlg = std::make_unique<GDALMdimInfoAlgorithm>();
+            else
+                writeAlg = std::make_unique<GDALMdimWriteAlgorithm>();
         }
         else
         {

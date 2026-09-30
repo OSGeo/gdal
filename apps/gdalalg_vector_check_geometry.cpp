@@ -95,7 +95,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
     ~GDALInvalidLocationLayer() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }

@@ -488,7 +488,7 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
                              bool bStringsAsUTF8);
     ~OGRSQLiteExecuteSQLLayer() override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/
@@ -527,7 +527,7 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return m_bStringsAsUTF8;

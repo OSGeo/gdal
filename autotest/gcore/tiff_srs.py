@@ -293,7 +293,7 @@ def test_tiff_srs_angular_units():
 
 
 ###############################################################################
-# Test writing and reading a unknown datum but with a known ellipsoid
+# Test writing and reading an unknown datum but with a known ellipsoid
 
 
 def test_tiff_custom_datum_known_ellipsoid():

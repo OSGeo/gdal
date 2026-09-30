@@ -32,7 +32,7 @@
 
 CPL_C_START
 
-/** Type of a callback function to load a ADBC driver. */
+/** Type of a callback function to load an ADBC driver. */
 typedef uint8_t (*GDALAdbcLoadDriverFunc)(const char *driver_name,
                                           const char *entrypoint, int version,
                                           void *driver, void *error);

@@ -1,4 +1,4 @@
-/* See md5.cpp for explanation and copyright information.  */
+/* See cpl_md5.cpp for explanation and copyright information.  */
 
 #ifndef CPL_MD5_H
 #define CPL_MD5_H

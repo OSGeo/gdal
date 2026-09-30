@@ -8710,7 +8710,7 @@ Enhancements:
  * gdal_viewshed: use -cc 1.0 as default for non-Earth CRS (#6278)
  * nearblack: skip erosion when pixel at edge is valid
  * gdal_grid: produce north-up images
- * gdal_grid: add validation of algorithm parameters and warn when a unknown parameter is specified
+ * gdal_grid: add validation of algorithm parameters and warn when an unknown parameter is specified
  * gdal_grid: add a nSizeOfStructure leading structure member in GDALGridXXXXOptions structure, as a way to detect ABI issues when adding new parameters
 
 Bugfixes:

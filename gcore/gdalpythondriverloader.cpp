@@ -314,7 +314,7 @@ class PythonPluginLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
 
     GIntBig GetFeatureCount(int bForce) override;
@@ -535,14 +535,14 @@ const char *PythonPluginLayer::GetName() const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PythonPluginLayer::TestCapability(const char *pszCap) const
+bool PythonPluginLayer::TestCapability(const char *pszCap) const
 {
     GIL_Holder oHolder(false);
     if (PyObject_HasAttrString(m_poLayer, "test_capability"))
     {
         PyObject *poObj = PyObject_GetAttrString(m_poLayer, "test_capability");
         if (ErrOccurredEmitCPLError())
-            return 0;
+            return false;
         PyObject *pyArgs = PyTuple_New(1);
         PyTuple_SetItem(pyArgs, 0, PyUnicode_FromString(pszCap));
         PyObject *pRet = PyObject_Call(poObj, pyArgs, nullptr);
@@ -551,17 +551,17 @@ int PythonPluginLayer::TestCapability(const char *pszCap) const
         if (ErrOccurredEmitCPLError())
         {
             Py_DecRef(pRet);
-            return 0;
+            return false;
         }
-        int nRes = static_cast<int>(PyLong_AsLong(pRet));
+        bool bRes = PyLong_AsLong(pRet) != 0;
         Py_DecRef(pRet);
         if (ErrOccurredEmitCPLError())
         {
-            return 0;
+            return false;
         }
-        return nRes;
+        return bRes;
     }
-    return 0;
+    return false;
 }
 
 /************************************************************************/

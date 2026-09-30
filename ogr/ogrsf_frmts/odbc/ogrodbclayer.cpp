@@ -341,7 +341,7 @@ OGRFeature *OGRODBCLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCLayer::TestCapability(const char *) const
+bool OGRODBCLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

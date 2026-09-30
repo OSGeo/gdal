@@ -473,7 +473,7 @@ int OGRODBCDataSource::OpenTable(const char *pszNewName, const char *pszGeomCol)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCDataSource::TestCapability(const char *) const
+bool OGRODBCDataSource::TestCapability(const char *) const
 {
     return FALSE;
 }

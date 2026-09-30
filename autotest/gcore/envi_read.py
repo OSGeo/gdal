@@ -2,7 +2,7 @@
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test basic read support for a all datatypes from an ENVI file.
+# Purpose:  Test basic read support for all datatypes from an ENVI file.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 # See also: gdrivers/envi.py for a driver focused on coordinate system support.

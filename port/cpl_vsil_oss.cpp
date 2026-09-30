@@ -172,7 +172,7 @@ const char *VSIOSSFSHandler::GetOptions()
         "  <Option name='OSS_ENDPOINT' type='string' "
         "description='Default endpoint' default='oss-us-east-1.aliyuncs.com'/>"
         "  <Option name='VSIOSS_CHUNK_SIZE' type='int' "
-        "description='Size in MB for chunks of files that are uploaded. The"
+        "description='Size in MB for chunks of files that are uploaded. The "
         "default value of 50 MB allows for files up to 500 GB each' "
         "default='50' min='1' max='1000'/>" +
         VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");

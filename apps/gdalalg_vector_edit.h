@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_EDIT_INCLUDED
-#define GDALALG_RASTER_EDIT_INCLUDED
+#ifndef GDALALG_VECTOR_EDIT_INCLUDED
+#define GDALALG_VECTOR_EDIT_INCLUDED
 
 #include "gdalvectorpipelinestepalgorithm.h"
 
@@ -62,4 +62,4 @@ class GDALVectorEditAlgorithmStandalone final : public GDALVectorEditAlgorithm
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_EDIT_INCLUDED */
+#endif /* GDALALG_VECTOR_EDIT_INCLUDED */

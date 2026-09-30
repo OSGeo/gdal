@@ -42,7 +42,7 @@ pytestmark = pytest.mark.require_driver("PNG")
 # Test writing and reading of ICC profile in CreateCopy()
 
 
-def test_png_copy_icc():
+def test_png_copy_icc(tmp_path):
 
     f = open("data/sRGB.icc", "rb")
     data = f.read()
@@ -54,10 +54,12 @@ def test_png_copy_icc():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
+    ds = driver_tiff.Create(
+        tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options
+    )
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.png", ds)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test.png", ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -65,30 +67,27 @@ def test_png_copy_icc():
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.png.aux.xml")
+        os.stat(tmp_path / "icc_test.png.aux.xml")
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.png.aux.xml")
+        os.stat(tmp_path / "icc_test.png.aux.xml")
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with GetMetadataItem()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.png.aux.xml")
+        os.stat(tmp_path / "icc_test.png.aux.xml")
 
     assert source_icc_profile == icc
-
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.png")
 
 
 def cvtTuple2String(t):
@@ -99,7 +98,7 @@ def cvtTuple2String(t):
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def test_png_copy_options_icc():
+def test_png_copy_options_icc(tmp_path):
 
     f = open("data/sRGB.icc", "rb")
     data = f.read()
@@ -111,10 +110,10 @@ def test_png_copy_options_icc():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver_tiff.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test.png", ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -122,22 +121,19 @@ def test_png_copy_options_icc():
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.png")
-
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
 
 
-def test_png_copy_options_colorimetric_data():
+def test_png_copy_options_colorimetric_data(tmp_path):
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -152,10 +148,10 @@ def test_png_copy_options_colorimetric_data():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver_tiff.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test.png", ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -180,7 +176,7 @@ def test_png_copy_options_colorimetric_data():
     assert float(md["PNG_GAMMA"]) == 1.5
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -204,15 +200,12 @@ def test_png_copy_options_colorimetric_data():
 
     assert float(md["PNG_GAMMA"]) == 1.5
 
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.png")
-
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
 
 
-def test_png_copy_colorimetric_data():
+def test_png_copy_colorimetric_data(tmp_path):
     # sRGB values
     source_primaries = [(0.64, 0.33, 1.0), (0.3, 0.6, 1.0), (0.15, 0.06, 1.0)]
     source_whitepoint = (0.31271, 0.32902, 1.0)
@@ -228,12 +221,14 @@ def test_png_copy_colorimetric_data():
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
+    ds = driver_tiff.Create(
+        tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options
+    )
     ds = None
-    ds = gdal.Open("tmp/icc_test.tiff")
+    ds = gdal.Open(tmp_path / "icc_test.tiff")
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options2)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test.png", ds, options=options2)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -258,7 +253,7 @@ def test_png_copy_colorimetric_data():
     assert float(md["PNG_GAMMA"]) == 1.5
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -281,25 +276,22 @@ def test_png_copy_colorimetric_data():
             )
 
     assert float(md["PNG_GAMMA"]) == 1.5
-
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.png")
 
 
 ###############################################################################
 # Test sRGB
 
 
-def test_png_sRGB():
+def test_png_sRGB(tmp_path):
     # Create dummy file
     options = ["SOURCE_ICC_PROFILE_NAME=sRGB"]
 
     driver = gdal.GetDriverByName("PNG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver_tiff.Create(tmp_path / "icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.png", ds, options=options)
+    ds2 = driver.CreateCopy(tmp_path / "icc_test.png", ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -307,15 +299,9 @@ def test_png_sRGB():
     assert md["SOURCE_ICC_PROFILE_NAME"] == "sRGB"
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.png")
+    ds2 = gdal.Open(tmp_path / "icc_test.png")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE_NAME"] == "sRGB"
-
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.png")
-
-
-############################################################################

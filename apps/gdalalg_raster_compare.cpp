@@ -17,7 +17,6 @@
 #include "gdal_priv.h"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <limits>
 #include <type_traits>
@@ -1200,101 +1199,6 @@ void GDALRasterCompareAlgorithm::BandComparison(
         MetadataComparison(aosReport, "(band default metadata domain)",
                            poRefBand->GetMetadata(),
                            poInputBand->GetMetadata());
-    }
-}
-
-/************************************************************************/
-/*           GDALRasterCompareAlgorithm::MetadataComparison()           */
-/************************************************************************/
-
-void GDALRasterCompareAlgorithm::MetadataComparison(
-    std::vector<std::string> &aosReport, const std::string &metadataDomain,
-    CSLConstList aosRef, CSLConstList aosInput)
-{
-    std::map<std::string, std::string> oMapRef;
-    std::map<std::string, std::string> oMapInput;
-
-    std::array<const char *, 3> ignoredKeys = {
-        "backend",   // from gdalcompare.py. Not sure why
-        "ERR_BIAS",  // RPC optional key
-        "ERR_RAND",  // RPC optional key
-    };
-
-    for (const auto &[key, value] : cpl::IterateNameValue(aosRef))
-    {
-        const char *pszKey = key;
-        const auto eq = [pszKey](const char *s)
-        { return strcmp(pszKey, s) == 0; };
-        auto it = std::find_if(ignoredKeys.begin(), ignoredKeys.end(), eq);
-        if (it == ignoredKeys.end())
-        {
-            oMapRef[key] = value;
-        }
-    }
-
-    for (const auto &[key, value] : cpl::IterateNameValue(aosInput))
-    {
-        const char *pszKey = key;
-        const auto eq = [pszKey](const char *s)
-        { return strcmp(pszKey, s) == 0; };
-        auto it = std::find_if(ignoredKeys.begin(), ignoredKeys.end(), eq);
-        if (it == ignoredKeys.end())
-        {
-            oMapInput[key] = value;
-        }
-    }
-
-    const auto strip = [](const std::string &s)
-    {
-        const auto posBegin = s.find_first_not_of(' ');
-        if (posBegin == std::string::npos)
-            return std::string();
-        const auto posEnd = s.find_last_not_of(' ');
-        return s.substr(posBegin, posEnd - posBegin + 1);
-    };
-
-    for (const auto &sKeyValuePair : oMapRef)
-    {
-        const auto oIter = oMapInput.find(sKeyValuePair.first);
-        if (oIter == oMapInput.end())
-        {
-            aosReport.push_back("Reference metadata " + metadataDomain +
-                                " contains key '" + sKeyValuePair.first +
-                                "' but input metadata does not.");
-        }
-        else
-        {
-            // this will always have the current date set
-            if (sKeyValuePair.first == "NITF_FDT")
-                continue;
-
-            std::string ref = oIter->second;
-            std::string input = sKeyValuePair.second;
-            if (metadataDomain == GDAL_MDD_RPC)
-            {
-                // _RPC.TXT files and in-file have a difference
-                // in white space that is not otherwise meaningful.
-                ref = strip(ref);
-                input = strip(input);
-            }
-            if (ref != input)
-            {
-                aosReport.push_back(
-                    "Reference metadata " + metadataDomain + " has value '" +
-                    ref + "' for key '" + sKeyValuePair.first +
-                    "' but input metadata has value '" + input + "'.");
-            }
-        }
-    }
-
-    for (const auto &sKeyValuePair : oMapInput)
-    {
-        if (!cpl::contains(oMapRef, sKeyValuePair.first))
-        {
-            aosReport.push_back("Input metadata " + metadataDomain +
-                                " contains key '" + sKeyValuePair.first +
-                                "' but reference metadata does not.");
-        }
     }
 }
 

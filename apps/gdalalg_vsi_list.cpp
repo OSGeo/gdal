@@ -250,9 +250,10 @@ bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)
     if (m_format.empty())
         m_format = IsCalledFromCommandLine() ? "text" : "json";
 
-    VSIStatBufL sStat;
-    VSIErrorReset();
     const auto nOldErrorNum = VSIGetLastErrorNo();
+    VSIErrorReset();
+
+    VSIStatBufL sStat;
     if (VSIStatL(m_filename.c_str(), &sStat) != 0)
     {
         if (nOldErrorNum != VSIGetLastErrorNo())

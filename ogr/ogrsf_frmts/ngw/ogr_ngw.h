@@ -210,7 +210,7 @@ class OGRNGWLayer final : public OGRLayer
                       bool bForce) override;
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -316,7 +316,7 @@ class OGRNGWDataset final : public GDALDataset
     }
 
     const OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;

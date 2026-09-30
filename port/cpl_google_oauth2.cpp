@@ -420,7 +420,7 @@ char **GOA2GetAccessTokenFromServiceAccount(const char *pszPrivateKey,
     // JWT header '{"alg":"RS256","typ":"JWT"}' encoded in Base64
     const char *pszB64JWTHeader = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9";
     const char *pszAud = CPLGetConfigOption(
-        "GO2A_AUD", "https://www.googleapis.com/oauth2/v4/token");
+        "GOA2_AUD", "https://www.googleapis.com/oauth2/v4/token");
 
     CPLString osClaim;
     osClaim = "{\"iss\": \"";

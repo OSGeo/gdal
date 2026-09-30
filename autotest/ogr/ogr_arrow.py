@@ -239,10 +239,10 @@ def test_ogr_arrow_test_ogrsf_test_ipc_streamable():
     ],
 )
 def test_ogr_arrow_write_from_another_dataset(
-    use_vsi, batch_size, fid, write_gdal_footer, format, open_as_stream
+    tmp_path, use_vsi, batch_size, fid, write_gdal_footer, format, open_as_stream
 ):
 
-    outfilename = "/vsimem/out" if use_vsi else "tmp/out"
+    outfilename = "/vsimem/out" if use_vsi else str(tmp_path / "out")
     try:
         layerCreationOptions = ["FORMAT=" + format]
         if batch_size:

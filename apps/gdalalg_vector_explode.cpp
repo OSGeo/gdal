@@ -254,7 +254,7 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
         GDALVectorPipelineOutputLayer::ResetReading();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastGetExtent) ||
             EQUAL(pszCap, OLCFastGetExtent3D) ||
@@ -455,11 +455,11 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
                         poSrcGeom.reset(
                             poSrcFeature->StealGeometry(iGeomField));
                     }
-                    else
+                    else if (const OGRGeometry *poFirstGeom =
+                                 apoOutFeatures.front()->GetGeomFieldRef(
+                                     iGeomField))
                     {
-                        poSrcGeom.reset(apoOutFeatures.front()
-                                            ->GetGeomFieldRef(iGeomField)
-                                            ->clone());
+                        poSrcGeom.reset(poFirstGeom->clone());
                     }
 
                     poDstFeature->SetGeomField(iGeomField,
@@ -539,6 +539,7 @@ bool GDALVectorExplodeAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 *poSrcLayer,
                 std::make_unique<GDALVectorPipelinePassthroughLayer>(
                     *poSrcLayer));
+            continue;
         }
 
         const auto *poLayerDefn = poSrcLayer->GetLayerDefn();

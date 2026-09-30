@@ -11,7 +11,7 @@ def collect_config_options(filename):
     i = -1
     len_lines = len(lines)
 
-    func_names = ["CPLGetConfigOption"]
+    func_names = ["CPLGetConfigOption", "CPLTestConfigOption"]
     if os.path.basename(filename) == "gt_overview.cpp":
         func_names.append("GetOptionValue")
 
@@ -34,6 +34,8 @@ def collect_config_options(filename):
                 elif pos_start < len(l) and l[pos_start] == '"':
                     pos_end = l.find('"', pos_start + 1)
                     if pos_end + 1 < len(l) and l[pos_end + 1] == ",":
+                        option = l[pos_start + 1 : pos_end]
+                    elif func_name == "CPLTestConfigOption" and pos_end > 0:
                         option = l[pos_start + 1 : pos_end]
                     else:
                         print("Skipping", l)

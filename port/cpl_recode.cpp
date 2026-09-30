@@ -197,7 +197,7 @@ char CPL_DLL *CPLRecodeFromWChar(const wchar_t *pwszSource,
  *
  * Convert a 8bit, multi-byte per character input string into a wide
  * character (wchar_t) string.  The only guaranteed supported source encodings
- * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8869_1 (LATIN1).  The only
+ * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8859_1 (LATIN1).  The only
  * guaranteed supported destination encoding is CPL_ENC_UCS2.  Other source
  * and destination encodings may be supported depending on the underlying
  * implementation.

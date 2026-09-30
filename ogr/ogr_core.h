@@ -80,7 +80,7 @@ extern "C++"
 #endif
         /** Return whether the object has been initialized, that is, is non
          * empty */
-        int IsInit() const
+        bool IsInit() const
         {
             return MinX != std::numeric_limits<double>::infinity();
         }
@@ -250,7 +250,7 @@ extern "C++"
 #endif
         /** Return whether the object has been initialized, that is, is non
          * empty */
-        int IsInit() const
+        bool IsInit() const
         {
             return MinX != std::numeric_limits<double>::infinity();
         }

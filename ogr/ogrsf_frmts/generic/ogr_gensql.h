@@ -121,7 +121,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;

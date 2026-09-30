@@ -43,6 +43,6 @@ init_list = [("byte.tif", 4672), ("uint16.tif", 4672)]
     ],
 )
 @pytest.mark.require_driver("PNM")
-def test_pnm_create(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("PNM", filename, 1, checksum)
+def test_pnm_create(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest("PNM", filename, 1, checksum, tmpdir=tmp_path)
     getattr(ut, testfunction)()

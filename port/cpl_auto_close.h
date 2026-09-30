@@ -27,7 +27,7 @@
  *     GDALDatasetH hDset = GDALOpen(path,GA_ReadOnly);
  *     CPLAutoClose<GDALDatasetH,void(*)(void*)>
  * autoclosehDset(hDset,GDALClose); Or: GDALDatasetH hDset =
- * GDALOpen(path,GA_ReadOnly); CPL_AUTO_CLOSE_WARP(hDset,GDALClose);
+ * GDALOpen(path,GA_ReadOnly); CPL_AUTO_CLOSE_WRAP(hDset,GDALClose);
  */
 template <typename _Ty, typename _Dx> class CPLAutoClose
 {
@@ -63,7 +63,7 @@ template <typename _Ty, typename _Dx> class CPLAutoClose
     }
 };
 
-#define CPL_AUTO_CLOSE_WARP(hObject, closeFunc)                                \
+#define CPL_AUTO_CLOSE_WRAP(hObject, closeFunc)                                \
     CPLAutoClose<decltype(hObject), decltype(closeFunc) *>                     \
     tAutoClose##hObject(hObject, closeFunc)
 

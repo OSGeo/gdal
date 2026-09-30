@@ -101,9 +101,9 @@ Start a Conda-enabled PowerShell console and assuming there is a ``c:\\dev`` dir
     conda create --yes --name gdal
     conda activate gdal
     conda install --yes --quiet -c conda-forge compilers cmake curl libiconv icu python swig numpy `
-        pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
+        zlib lxml setuptools
     # --only-deps only installs the dependencies of the listed packages, not the packages themselves
-    conda install --yes --quiet -c conda-forge --only-deps `
+    conda install --yes --quiet -c gdal-master -c conda-forge --only-deps `
         libgdal libgdal-hdf4 libgdal-hdf5 libgdal-netcdf libgdal-pdf libgdal-jp2openjpeg
 
 .. note::
@@ -141,6 +141,10 @@ the commands below from a Conda-enabled PowerShell console:
 .. code-block:: ps1
 
     cd c:\dev\gdal\build
+
+    # install the Python dependencies for autotest
+    python -m pip install -r ../autotest/requirements.txt
+
     # set environment variables, see section below
     ..\scripts\setdevenv.ps1
     # check the version
@@ -167,30 +171,32 @@ This can be done by sourcing the following from the build directory:
 
 (with adjustments to the above path if the build directory is not a subdirectory of the GDAL source root).
 
-For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently assumes a Release build).
+For Windows, a similar ``scripts/setdevenv.bat`` script exists.
 
 .. code-block:: console
 
     cd c:\dev\gdal\build
-    ..\scripts\setdevenv.bat
+    ..\scripts\setdevenv.bat              REM uses "Release" (default)
+    ..\scripts\setdevenv.bat Debug        REM uses "Debug"
 
 Alternatively, on Windows, you can set up a PowerShell development environment using the ``scripts/setdevenv.ps1`` script:
 
 .. code-block:: ps1
 
     cd c:\dev\gdal\build
-    ..\scripts\setdevenv.ps1
+    ..\scripts\setdevenv.ps1                    # uses "Release" (default)
+    ..\scripts\setdevenv.ps1 RelWithDebInfo     # uses "RelWithDebInfo"
 
 To verify that environment variables have been set correctly, you can check the version of a GDAL binary:
 
 .. code-block:: bash
 
-    gdalinfo --version
-    # GDAL 3.13.0dev-8c3cf3de02, released 2025/11/14
+    gdal --version
+    # GDAL 3.14.0dev-b0b8dcc320-dirty, released 2026/09/04
 
 and the Python bindings:
 
 .. code-block:: bash
 
-    python3 -c 'from osgeo import gdal; print(gdal.__version__)'
-    # 3.11.0dev-c4a2e0b926-dirty
+    python -c 'from osgeo import gdal; print(gdal.__version__)'
+    # 3.14.0dev-b0b8dcc320-dirty

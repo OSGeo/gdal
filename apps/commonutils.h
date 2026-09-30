@@ -98,9 +98,9 @@ int ArgIsNumeric(const char *pszArg);
 
 bool GDALPatternMatch(const char *input, const char *pattern);
 
-// those values shouldn't be changed, because overview levels >= 0 are meant
+// Those values shouldn't be changed, because overview levels >= 0 are meant
 // to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
-// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
+// automatically selected minus (OVR_LEVEL_AUTO - ovr_level).
 constexpr int OVR_LEVEL_AUTO = -2;
 constexpr int OVR_LEVEL_NONE = -1;
 

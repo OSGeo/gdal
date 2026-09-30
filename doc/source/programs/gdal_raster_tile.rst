@@ -157,7 +157,7 @@ Program-Specific Options
      located.
 
    - ``fork`` is a variant of ``spawn``, using the system call ``fork``, without
-     executing the the :program:`gdal` binary. Such method is not available on
+     executing the :program:`gdal` binary. Such method is not available on
      Windows. On Unix systems where it is available, this method is not recommended
      to be used on multithreaded processes, especially the ones where other threads
      are doing GDAL operation, since it can potentially cause deadlocks.

@@ -113,18 +113,18 @@ bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     aosOptions.AddString("-b");
-    aosOptions.AddString(CPLSPrintf("%d", m_band));
+    aosOptions.AddString(m_band);
     aosOptions.AddString("-z");
-    aosOptions.AddString(CPLSPrintf("%.17g", m_zfactor));
+    aosOptions.AddString(m_zfactor);
     if (!std::isnan(m_xscale))
     {
         aosOptions.AddString("-xscale");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_xscale));
+        aosOptions.AddString(m_xscale);
     }
     if (!std::isnan(m_yscale))
     {
         aosOptions.AddString("-yscale");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_yscale));
+        aosOptions.AddString(m_yscale);
     }
     if (m_variant == "multidirectional")
     {
@@ -139,7 +139,7 @@ bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     else
     {
         aosOptions.AddString("-az");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_azimuth));
+        aosOptions.AddString(m_azimuth);
     }
     if (m_variant == "Igor")
     {
@@ -153,7 +153,7 @@ bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     else
     {
         aosOptions.AddString("-alt");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_altitude));
+        aosOptions.AddString(m_altitude);
     }
     aosOptions.AddString("-alg");
     aosOptions.AddString(m_gradientAlg.c_str());

@@ -13,7 +13,7 @@
 #include "ogr_api.h"
 
 bool CPL_DLL OGRJSonParse(const char *pszText, json_object **ppoObj,
-                          bool bVerboseError = true);
+                          bool bVerboseError = true, int nInputLength = -1);
 
 json_object CPL_DLL *CPL_json_object_object_get(struct json_object *obj,
                                                 const char *key);

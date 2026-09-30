@@ -618,8 +618,8 @@ void PDFDataset::InitOverviews()
         double dfDPI = m_dfDPI;
         while (nXSize > minSize || nYSize > minSize)
         {
-            nXSize = (nXSize + 1) / 2;
-            nYSize = (nYSize + 1) / 2;
+            nXSize = nXSize / 2 + (nXSize % 2);
+            nYSize = nYSize / 2 + (nYSize % 2);
             dfDPI /= 2;
 
             GDALOpenInfo oOpenInfo(GetDescription(), GA_ReadOnly);

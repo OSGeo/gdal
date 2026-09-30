@@ -144,16 +144,18 @@ def test_gdalalg_raster_materialize_manual_output(tmp_path):
 
 
 @pytest.mark.require_driver("GDALG")
-def test_gdalalg_raster_materialize_read_from_gdalg():
-    with gdal.Open(
-        json.dumps(
-            {
-                "type": "gdal_streamed_alg",
-                "command_line": "gdal pipeline read ../gcore/data/byte.tif ! materialize",
-            }
-        )
-    ) as ds:
-        assert ds.GetRasterBand(1).Checksum() == 4672
+def test_gdalalg_raster_materialize_read_from_gdalg(tmp_path):
+
+    with gdal.config_option("CPL_TMPDIR", str(tmp_path)):
+        with gdal.Open(
+            json.dumps(
+                {
+                    "type": "gdal_streamed_alg",
+                    "command_line": "gdal pipeline read ../gcore/data/byte.tif ! materialize",
+                }
+            )
+        ) as ds:
+            assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 @pytest.mark.require_driver("GDALG")

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 import test_cli_utilities
 
@@ -21,15 +22,19 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_external"):
+        yield
+
+
 def test_gdalalg_external_pipeline_simple_raster(tmp_vsimem, tmp_path):
     gdal_path = test_cli_utilities.get_gdal_path()
 
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} raster reproject --dst-crs=EPSG:4326 <INPUT> <OUTPUT>" ! write {tmp_vsimem}/out.tif'
         ):
@@ -148,9 +153,7 @@ def test_gdalalg_external_pipeline_raster_and_clip(tmp_vsimem, tmp_path):
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --like ../gcore/data/byte.tif ! write {tmp_vsimem}/out.tif'
         ):
@@ -175,9 +178,7 @@ def test_gdalalg_external_pipeline_vector_and_clip_raster(tmp_vsimem, tmp_path):
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif'
         ):
@@ -204,9 +205,7 @@ def test_gdalalg_external_pipeline_vector_and_clip_raster_with_tee(
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! tee [ write {tmp_vsimem}/out.shp ] ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif'
         ):
@@ -236,9 +235,7 @@ def test_gdalalg_external_pipeline_vector_and_clip_raster_from_inner_pipeline(
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input [ read {poly_tif} ] --like _PIPE_ ! write {tmp_vsimem}/out.tif'
         ):
@@ -261,9 +258,7 @@ def test_gdalalg_external_pipeline_raster_and_clip_vector(tmp_vsimem, tmp_path):
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input {byte_shp} --like _PIPE_ ! write {tmp_vsimem}/out.shp'
         ):
@@ -288,9 +283,7 @@ def test_gdalalg_external_pipeline_raster_and_clip_vector_from_inner_pipeline(
     gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
     before = gdal.ReadDir(tmp_vsimem / "temp_files")
     before_tmp_path = gdal.ReadDir(tmp_path)
-    with gdal.config_options(
-        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
-    ):
+    with gdal.config_options({"GDAL_ENABLE_EXTERNAL": "YES"}):
         with gdal.alg.pipeline(
             pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input [ read {byte_shp} ] --like _PIPE_ ! write {tmp_vsimem}/out.shp'
         ):

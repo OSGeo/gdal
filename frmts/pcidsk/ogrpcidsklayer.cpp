@@ -431,7 +431,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature(GIntBig nFID)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPCIDSKLayer::TestCapability(const char *pszCap) const
+bool OGRPCIDSKLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

@@ -2391,7 +2391,7 @@ inline GIntBig OGRArrowWriterLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-inline int OGRArrowWriterLayer::TestCapability(const char *pszCap) const
+inline bool OGRArrowWriterLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCCreateGeomField))
         return m_poSchema == nullptr;

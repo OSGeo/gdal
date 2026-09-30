@@ -527,6 +527,7 @@ extern "C++"
 #if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
         CPLStringList &AddString(std::string_view newString);
 #endif
+        CPLStringList &AddString(double adfNumber);
         CPLStringList &AddStringDirectly(char *pszNewString);
 
         /** Add a string to the list */
@@ -926,7 +927,7 @@ extern "C++"
      *
      * @param papszList List to iterate over.
      * @param bReturnNullKeyIfNotNameValue When this is set to true, if a string
-     * contained in the list if not of the form name=value, then the value of
+     * contained in the list is not of the form name=value, then the value of
      * the iterator will be (nullptr, string).
      *
      * @since GDAL 3.9

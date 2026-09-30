@@ -458,8 +458,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     // This method should only be overloaded by GDALProxyRasterBand
     virtual GDALRasterBlock *
-    TryGetLockedBlockRef(int nXBlockOff,
-                         int nYBlockYOff) CPL_WARN_UNUSED_RESULT;
+    TryGetLockedBlockRef(int nXBlockOff, int nYBlockOff) CPL_WARN_UNUSED_RESULT;
 
     // This method should only be overloaded by GDALProxyRasterBand
     virtual CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,

@@ -20,9 +20,9 @@ import pytest
 # Create simple copy and check.
 
 
-def test_sigdem_copy_check_prj():
+def test_sigdem_copy_check_prj(tmp_path):
 
-    tst = gdaltest.GDALTest("SIGDEM", "byte.tif", 1, 4672)
+    tst = gdaltest.GDALTest("SIGDEM", "byte.tif", 1, 4672, tmpdir=tmp_path)
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
@@ -37,10 +37,12 @@ def test_sigdem_copy_check_prj():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_sigdem_non_square():
+def test_sigdem_non_square(tmp_path):
 
     with gdaltest.config_option("GDAL_VRT_RAWRASTERBAND_ALLOWED_SOURCE", "ALL"):
-        tst = gdaltest.GDALTest("SIGDEM", "sigdem/nonsquare_nad27_utm11.vrt", 1, 12481)
+        tst = gdaltest.GDALTest(
+            "SIGDEM", "sigdem/nonsquare_nad27_utm11.vrt", 1, 12481, tmpdir=tmp_path
+        )
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 

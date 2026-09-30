@@ -53,7 +53,7 @@ class OGRAVCLayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -115,7 +115,7 @@ class OGRAVCBinLayer final : public OGRAVCLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -142,7 +142,7 @@ class OGRAVCBinDataSource final : public OGRAVCDataSource
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     AVCE00ReadPtr GetInfo()
     {
@@ -220,7 +220,7 @@ class OGRAVCE00DataSource final : public OGRAVCDataSource
 
     using GDALDataset::GetLayer;
     const OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRSpatialReference *DSGetSpatialRef() override;
 };
 

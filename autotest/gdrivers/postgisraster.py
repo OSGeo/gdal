@@ -172,10 +172,12 @@ def test_postgisraster_compare_small_world():
 #
 
 
-def test_postgisraster_test_utm_open():
+def test_postgisraster_test_utm_open(tmp_path):
+
+    gdal.CopyFile("data/utm.tif", tmp_path / "utm.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/utm.tif")
+    src_ds = gdal.Open(tmp_path / "utm.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -202,10 +204,12 @@ def test_postgisraster_test_utm_open():
 #
 
 
-def test_postgisraster_test_small_world_open_b1():
+def test_postgisraster_test_small_world_open_b1(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -234,10 +238,12 @@ def test_postgisraster_test_small_world_open_b1():
 #
 
 
-def test_postgisraster_test_small_world_open_b2():
+def test_postgisraster_test_small_world_open_b2(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -266,10 +272,12 @@ def test_postgisraster_test_small_world_open_b2():
 #
 
 
-def test_postgisraster_test_small_world_open_b3():
+def test_postgisraster_test_small_world_open_b3(tmp_path):
+
+    gdal.CopyFile("data/small_world.tif", tmp_path / "small_world.tif")
 
     # First open tif file
-    src_ds = gdal.Open("data/small_world.tif")
+    src_ds = gdal.Open(tmp_path / "small_world.tif")
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -692,3 +700,39 @@ def test_gdal_subdataset_modify_filename(subdataset_component, new_path):
         assert info is None
     else:
         assert info.ModifyPathComponent("dbname='xxxx'") == new_path
+
+
+# Test min/max from stats
+def test_postgisraster_test_minmax():
+
+    with gdal.quiet_errors():
+        ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema, update=1)
+        ds.ExecuteSQL("DELETE TABLE IF EXISTS gis_schema.small_world_no_overviews")
+        ds.ExecuteSQL(
+            "CREATE TABLE gis_schema.small_world_no_overviews (rid serial primary key, rast raster)"
+        )
+        ds.ExecuteSQL(
+            "INSERT INTO gis_schema.small_world_no_overviews (rast) SELECT rast FROM gis_schema.small_world"
+        )
+        ds.ExecuteSQL(
+            "SELECT AddRasterConstraints('gis_schema'::name, 'small_world_no_overviews'::name, 'rast'::name)"
+        )
+        ds.ExecuteSQL("ANALYZE gis_schema.small_world_no_overviews")
+
+    ds = gdal.Open(
+        gdaltest.postgisraster_connection_string
+        + "table='small_world_no_overviews' mode=2"
+    )
+    min = ds.GetRasterBand(1).GetMinimum()
+    max = ds.GetRasterBand(1).GetMaximum()
+    assert min == 0.0 and max == 255.0
+
+
+# Test get statistics
+def test_postgisraster_test_gestatistics():
+
+    ds = gdal.Open(
+        gdaltest.postgisraster_connection_string + "table='small_world' mode=2"
+    )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
+    assert [int(i) for i in stats] == [0, 255, 50, 67]

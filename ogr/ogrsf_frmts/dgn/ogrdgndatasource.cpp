@@ -85,7 +85,7 @@ bool OGRDGNDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNDataSource::TestCapability(const char *pszCap) const
+bool OGRDGNDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -323,7 +323,7 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRDGNLayer *poLayer = new OGRDGNLayer(this, pszLayerName, hDGN, TRUE);
+    OGRDGNLayer *poLayer = new OGRDGNLayer(this, pszLayerName, hDGN, true);
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */

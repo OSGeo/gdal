@@ -165,7 +165,7 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTigerLayer::TestCapability(const char *pszCap) const
+bool OGRTigerLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

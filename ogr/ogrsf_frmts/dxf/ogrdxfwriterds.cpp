@@ -134,7 +134,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFWriterDS::TestCapability(const char *pszCap) const
+bool OGRDXFWriterDS::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

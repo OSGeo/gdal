@@ -66,4 +66,4 @@ class GDALRasterNeighborsAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_CALC_INCLUDED */
+#endif /* GDALALG_RASTER_NEIGHBORS_INCLUDED */

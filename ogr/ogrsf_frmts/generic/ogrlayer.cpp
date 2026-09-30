@@ -1219,10 +1219,8 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
     {
         // One time initialization
         m_poPrivate->m_bConvertGeomsIfNecessaryAlreadyCalled = true;
-        m_poPrivate->m_bSupportsCurve =
-            CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
-        m_poPrivate->m_bSupportsM =
-            CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
+        m_poPrivate->m_bSupportsCurve = TestCapability(OLCCurveGeometries);
+        m_poPrivate->m_bSupportsM = TestCapability(OLCMeasuredGeometries);
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_APPLY_GEOM_SET_PRECISION", "FALSE")))
         {
@@ -3144,7 +3142,7 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 /************************************************************************/
 
 /**
- \fn int OGRLayer::TestCapability( const char * pszCap ) const;
+ \fn bool OGRLayer::TestCapability( const char * pszCap ) const;
 
  \brief Test if this layer supported the named capability.
 
@@ -7451,13 +7449,17 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             progress_counter += 1.0;
         }
 
-        OGRGeometry *y_geom = y->StealGeometry();
+        std::unique_ptr<OGRGeometry> y_geom(y->StealGeometry());
+        if (!y_geom)
+            continue;
+        y_geom = convert_geometry(std::move(y_geom), bPromoteToMulti,
+                                  eOutputGeometryType);
         if (!y_geom)
             continue;
         OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
         if (mapMethod)
             z->SetFieldsFrom(y.get(), mapMethod);
-        z->SetGeometryDirectly(y_geom);
+        z->SetGeometryDirectly(y_geom.release());
         ret = pLayerResult->CreateFeature(z.get());
         if (ret != OGRERR_NONE)
         {

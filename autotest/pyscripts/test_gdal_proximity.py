@@ -72,7 +72,8 @@ def test_gdal_proximity_1(script_path, tmp_path):
     _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_proximity",
-        test_py_scripts.get_data_path("alg") + f"pat.tif {output_tif}",
+        test_py_scripts.get_data_path("alg")
+        + f"pat.tif {output_tif} --config CPL_TMPDIR tmp",
         return_stderr=True,
     )
     assert "UseExceptions" not in err

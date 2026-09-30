@@ -89,6 +89,13 @@ combine
 
 Details for options can be found in :ref:`gdal_vector_combine`.
 
+compare
+*******
+
+.. program-output:: gdal vector pipeline --help-doc=compare
+
+Details for options can be found in :ref:`gdal_vector_compare`.
+
 concave-hull
 ************
 

@@ -402,7 +402,8 @@ def test_gdalalg_vector_explode_geometry_multiple_multipart_and_null(alg):
     assert features[2].GetGeomFieldRef(1) is None
 
 
-def test_gdalalg_vector_explode_geometry_null(alg):
+@pytest.mark.parametrize("explode_geometry", (True, False))
+def test_gdalalg_vector_explode_geometry_null(alg, explode_geometry):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer(
@@ -416,7 +417,8 @@ def test_gdalalg_vector_explode_geometry_null(alg):
 
     alg["input"] = src_ds
     alg["field"] = "ALL"
-    alg["geometry-field"] = "ALL"
+    if explode_geometry:
+        alg["geometry-field"] = "ALL"
     alg["output-format"] = "MEM"
 
     assert alg.Run()
@@ -538,6 +540,8 @@ def test_gdalalg_vector_explode_active_layer(alg):
     assert alg.Run()
 
     out_ds = alg["output"].GetDataset()
+
+    assert out_ds.GetLayerCount() == 2
 
     out_lyr = out_ds.GetLayer(0)
     assert out_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbPoint

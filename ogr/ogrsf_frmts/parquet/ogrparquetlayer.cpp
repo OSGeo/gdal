@@ -850,7 +850,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRParquetLayerBase::TestCapability(const char *pszCap) const
+bool OGRParquetLayerBase::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
@@ -2721,7 +2721,7 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRParquetLayer::TestCapability(const char *pszCap) const
+bool OGRParquetLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

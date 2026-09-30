@@ -4,7 +4,7 @@ Geometry Validity
 =================
 
 Several functions and utilities in GDAL deal with the concepts of "valid" and "invalid" geometries. 
-Validity in this context refers to the `OGR Simple Features standard <https://www.ogc.org/standards/sfa/>`__.
+Validity in this context refers to the `OGC Simple Features standard <https://www.ogc.org/standards/sfa/>`__.
 Incorrect results may be obtained when invalid geometries are used in spatial algorithms such as intersection testing/computation.
 
 Geometry validity can be checked using the :ref:`gdal_vector_check_geometry` command-line utility or the API functions :cpp:func:`OGRGeometry::IsValid` (C++) and :py:meth:`ogr.Geometry.IsValid` (Python).
@@ -17,13 +17,14 @@ Validity checking
 ^^^^^^^^^^^^^^^^^
 
 GDAL relies on the `GEOS <https://libgeos.org>`__ library to check the validity of geometries. 
-This library is widely used by open source geospatial software, so geometries considered valid by GDAL should be considered valid by QGIS, PostGIS, shapely, etc.
+This library is widely used by open source geospatial software, so geometries considered valid by GDAL should be considered valid by QGIS, PostGIS, Shapely, and other software that uses GEOS.
 Still, some geometries considered valid by GEOS may not be considered valid in other software.
 The following limitations apply to validity testing:
 
-- GEOS does not enforce any particular ring orientation for polygon shells and holes, and permits repeated points within a ring.
+- GEOS does not enforce any particular ring orientation for polygon shells and holes, and permits repeated consecutive vertices within a ring.
 
-- GEOS considers only two dimensions when checking geometry validity. For example, if two elements of a MultiPolygon occupy the same space but with different Z values, they will still be considered invalid by GEOS and therefore GDAL.
+- GEOS considers only two dimensions when checking geometry validity. For example, if two elements of a MultiPolygon occupy the same XY space, they will be considered invalid by GEOS
+  (and therefore GDAL) even if they have different Z values.
 
 - Curved geometries are approximated as linear geometries before being evaluated by GEOS. Linearized geometries may be valid where the original geometries are not, and vice-versa.
 

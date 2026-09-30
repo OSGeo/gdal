@@ -2405,7 +2405,7 @@ GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,
     VSILFILE *fp = VSIFOpenL(pszPDFFilename, "wb");
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.",
                  pszPDFFilename);
         return nullptr;
     }

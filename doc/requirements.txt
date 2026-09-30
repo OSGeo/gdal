@@ -4,6 +4,7 @@ breathe
 fsspec
 numpy
 sphinx
+sphinx-copybutton
 sphinx-tabs
 # Required minimum version for allowing manpage builds
 # Cf https://github.com/sphinx-toolbox/sphinx-toolbox/pull/205

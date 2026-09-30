@@ -57,8 +57,8 @@ init_list = [
     ],
 )
 @pytest.mark.require_driver("HDF4Image")
-def test_hdf4_write(filename, checksum, testfunction, rank):
+def test_hdf4_write(filename, checksum, testfunction, rank, tmp_path):
     ut = gdaltest.GDALTest(
-        "HDF4Image", filename, 1, checksum, options=["RANK=%d" % rank]
+        "HDF4Image", filename, 1, checksum, options=["RANK=%d" % rank], tmpdir=tmp_path
     )
     getattr(ut, testfunction)()

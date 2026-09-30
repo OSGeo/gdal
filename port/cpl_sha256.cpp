@@ -742,7 +742,7 @@ GByte *CPL_RSA_SHA256_Sign(const char *pszPrivateKey, const void *pabyData,
     CPL_IGNORE_RET_VAL(nDataLen);
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CPLRSASHA256Sign() not implemented: "
+             "CPL_RSA_SHA256_Sign() not implemented: "
              "GDAL must be built against libcrypto++ or libcrypto (openssl)");
     return nullptr;
 }

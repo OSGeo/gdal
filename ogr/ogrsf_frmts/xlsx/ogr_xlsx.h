@@ -90,7 +90,7 @@ class OGRXLSXLayer final : public OGRMemLayer
         OGRMemLayer::ResetReading();
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     const CPLString &GetFilename() const
     {
@@ -290,7 +290,7 @@ class OGRXLSXDataSource final : public GDALDataset
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

@@ -109,7 +109,7 @@ class GDALVectorExplodeCollectionsAlgorithmLayer final
         return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||

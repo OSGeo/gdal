@@ -142,7 +142,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
               GSpacing nLineSpace, GSpacing nBandSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
-    /* This method should only be be overloaded by GDALProxyDataset */
+    /* This method should only be overloaded by GDALProxyDataset */
     virtual CPLErr
     BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                        int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -808,7 +808,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     Features GetFeatures();
 
-    virtual int TestCapability(const char *) const;
+    virtual bool TestCapability(const char *) const;
 
     virtual std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const;

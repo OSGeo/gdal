@@ -37,10 +37,12 @@ def validate_xml(filename):
         force_download=True,
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
-    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
+    with open(f"{tmp_dir}/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
         data = f.read().replace(b"|[-]|", b"|[\\-]|")
-    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
+    with open(f"{tmp_dir}/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
         f.write(data)
 
     gdaltest.download_or_skip(
@@ -63,9 +65,13 @@ def validate_xml(filename):
     )
 
     # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
-    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb") as f:
+    with open(
+        f"{tmp_dir}/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb"
+    ) as f:
         data = f.read().replace(b"|[-]|", b"|[\\-]|")
-    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb") as f:
+    with open(
+        f"{tmp_dir}/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb"
+    ) as f:
         f.write(data)
 
     # for GDAL 3.4 / PDS4_PDS_1G00
@@ -156,7 +162,7 @@ def validate_xml(filename):
         open_options=[
             "VALIDATE=YES",
             "FAIL_IF_VALIDATION_ERROR=YES",
-            "CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>",
+            f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>{tmp_dir}</Directory></SchemaCache></Configuration>",
         ],
     )
     return ds is not None

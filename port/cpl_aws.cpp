@@ -770,7 +770,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
     // Get credentials from sts AssumeRoleWithWebIdentity
     std::string osExpiration;
     {
-        const std::string osSTS_asuume_role_with_web_identity_URL =
+        const std::string osSTS_assume_role_with_web_identity_URL =
             osStsRootUrl +
             "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal"
             "&Version=2011-06-15&RoleArn=" +
@@ -780,7 +780,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
         CPLPushErrorHandler(CPLQuietErrorHandler);
 
         CPLHTTPResult *psResult = CPLHTTPFetch(
-            osSTS_asuume_role_with_web_identity_URL.c_str(), nullptr);
+            osSTS_assume_role_with_web_identity_URL.c_str(), nullptr);
         CPLPopErrorHandler();
         if (psResult)
         {
@@ -821,7 +821,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
         gnGlobalExpiration = nExpirationUnix;
-        CPLDebug(AWS_DEBUG_KEY, "Storing AIM credentials until %s",
+        CPLDebug(AWS_DEBUG_KEY, "Storing IAM credentials until %s",
                  osExpiration.c_str());
     }
     return !osAccessKeyId.empty() && !osSecretAccessKey.empty() &&
@@ -1068,7 +1068,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
         gosGlobalSecretAccessKey = osSecretAccessKey;
         gosGlobalSessionToken = osSessionToken;
         gnGlobalExpiration = nExpirationUnix;
-        CPLDebug(AWS_DEBUG_KEY, "Storing AIM credentials until %s",
+        CPLDebug(AWS_DEBUG_KEY, "Storing IAM credentials until %s",
                  osExpiration.c_str());
     }
     return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
@@ -2609,7 +2609,7 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
     if (!osCanonicalQueryString.empty())
         osCanonicalQueryString = osCanonicalQueryString.substr(1);
 
-    // If accessing a AWS account from a AWS VM, check that
+    // If accessing an AWS account from an AWS VM, check that
     // AWS is still a sponsor, and if not, make some (kind) noise.
     if ((m_eCredentialsSource != AWSCredentialsSource::UNINITIALIZED &&
          m_eCredentialsSource != AWSCredentialsSource::NO_SIGN_REQUEST &&

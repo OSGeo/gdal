@@ -19,6 +19,7 @@ import os.path
 import shutil
 import struct
 import sys
+import tempfile
 
 import gdaltest
 import pytest
@@ -48,22 +49,17 @@ def has_write_support():
 
     ds = gdal.Open("data/ecw/jrc.ecw")
     if ds:
-        out_ds = ecw_drv.CreateCopy("tmp/jrc_out.ecw", ds, options=["TARGET=75"])
-        if out_ds:
-            out_ds = None
-            gdaltest.b_ecw_has_write_support = True
+        with tempfile.TemporaryDirectory() as tmp_path:
+            out_ds = ecw_drv.CreateCopy(
+                os.path.join(tmp_path, "jrc_out.ecw"), ds, options=["TARGET=75"]
+            )
+            if out_ds:
+                out_ds = None
+                gdaltest.b_ecw_has_write_support = True
 
-            try:
-                os.remove("tmp/jrc_out.ecw")
-            except OSError:
-                pass
-            try:
-                os.remove("tmp/jrc_out.ecw.aux.xml")
-            except OSError:
-                pass
-        else:
-            if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
-                pytest.fail("ECW creation failed for unknown reason")
+            else:
+                if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
+                    pytest.fail("ECW creation failed for unknown reason")
 
     return gdaltest.b_ecw_has_write_support
 
@@ -851,7 +847,7 @@ def test_ecw_26(tmp_path):
 # Check that we can use .j2w world files (#4651)
 
 
-def test_ecw_27():
+def test_ecw_27(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
@@ -1948,7 +1944,7 @@ def RemoveDriverMetadata(md):
     return md
 
 
-def test_ecw_45():
+def test_ecw_45(tmp_path):
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
@@ -2034,7 +2030,7 @@ def test_ecw_45():
 # Test non nearest upsampling
 
 
-def test_ecw_46():
+def test_ecw_46(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
@@ -2201,12 +2197,12 @@ def test_ecw_read_uint32_jpeg2000():
 # Test unsupported XML SRS
 
 
-def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_vsimem):
+def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
-    filename = str(tmp_vsimem / "out.jp2")
+    filename = str(tmp_path / "out.jp2")
     # There is no EPSG code and Albers Equal Area is not supported by OGRSpatialReference::exportToXML()
     wkt = """PROJCRS["Africa_Albers_Equal_Area_Conic",
     BASEGEOGCRS["WGS 84",
@@ -2269,14 +2265,16 @@ def test_ecw_online_1():
         "7sisters200.j2k",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 32316 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/7sisters200.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/7sisters200.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/7sisters200.j2k")
+    ds = gdal.Open(f"{tmp_dir}/7sisters200.j2k")
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2292,12 +2290,16 @@ def test_ecw_online_2():
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 1292 on my PC
-    tst = gdaltest.GDALTest("JP2ECW", "tmp/cache/gcp.jp2", 1, None, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "JP2ECW", f"{tmp_dir}/gcp.jp2", 1, None, filename_absolute=1
+    )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/gcp.jp2")
+    ds = gdal.Open(f"{tmp_dir}/gcp.jp2")
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
@@ -2323,15 +2325,17 @@ def ecw_online_3():
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 16481 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne1.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne1.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne1.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne1.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne1.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
     print(ds.GetRasterBand(1).Checksum())
     print(ds_ref.GetRasterBand(1).Checksum())
@@ -2362,15 +2366,17 @@ def test_ecw_online_4():
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 53054 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne2.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne2.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne2.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne2.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne2.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
     #    print(ds.GetRasterBand(1).Checksum())
     #    print(ds_ref.GetRasterBand(1).Checksum())
@@ -2391,7 +2397,9 @@ def test_ecw_online_5():
         "http://download.osgeo.org/gdal/data/ecw/red_flower.ecw", "red_flower.ecw"
     )
 
-    ds = gdal.Open("tmp/cache/red_flower.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/red_flower.ecw")
 
     if gdaltest.ecw_drv.major_version == 3:
         exp_mean, exp_stddev = (112.801, 52.0431)
@@ -2455,7 +2463,9 @@ def test_ecw_online_7():
         "sandiego2m_null.ecw",
     )
 
-    ds = gdal.Open("tmp/cache/sandiego2m_null.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/sandiego2m_null.ecw")
     if gdaltest.ecw_drv.major_version == 3:
         expected_band_count = 3
     else:

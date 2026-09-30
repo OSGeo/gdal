@@ -19,24 +19,30 @@ try:
 except OSError:
     pass
 
+
 # Must to be launched from pam.py/pam_11()
 # Test creating a new proxydb
-if len(sys.argv) == 2 and sys.argv[1] == "-test1":
+if len(sys.argv) == 4 and sys.argv[1] == "-test1":
 
     import shutil
 
     from osgeo import gdal
 
+    temp_dir = sys.argv[3]
+
     try:
-        shutil.rmtree("tmppamproxydir")
+        shutil.rmtree(os.path.join(temp_dir, "tmppamproxydir"))
     except OSError:
         pass
-    os.mkdir("tmppamproxydir")
 
-    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmppamproxydir")
+    os.mkdir(os.path.join(temp_dir, "tmppamproxydir"))
+
+    tmpdirreadonly = sys.argv[2]
+
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(temp_dir, "tmppamproxydir"))
 
     # Compute statistics. They should be saved in the  .aux.xml in the proxyDB
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     gdal.ErrorReset()
     ds = None
@@ -46,13 +52,20 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
         sys.exit(1)
 
     # Check that the .aux.xml in the proxyDB exists
-    filelist = gdal.ReadDir("tmppamproxydir")
-    if "000000_tmpdirreadonly_byte.tif.aux.xml" not in filelist:
+    filelist = gdal.ReadDir(os.path.join(temp_dir, "tmppamproxydir"))
+    aux_xml = None
+    for filename in filelist:
+        if filename.startswith("000000_") and filename.endswith(
+            "tmpdirreadonly_byte.tif.aux.xml"
+        ):
+            aux_xml = os.path.join(temp_dir, "tmppamproxydir", filename)
+    if not aux_xml:
         print("did not get find 000000_tmpdirreadonly_byte.tif.aux.xml on filesystem")
+        print(filelist)
         sys.exit(1)
 
     # Test altering a value to check that the file will be used
-    f = open("tmppamproxydir/000000_tmpdirreadonly_byte.tif.aux.xml", "w")
+    f = open(aux_xml, "w")
     f.write("""<PAMDataset>
   <PAMRasterBand band="1">
     <Metadata>
@@ -65,7 +78,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
 </PAMDataset>""")
     f.close()
 
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
     filelist = ds.GetFileList()
     if len(filelist) != 2:
         print(
@@ -81,18 +94,24 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
     ds = None
 
     # Check that proxy overviews work
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
     gdal.PushErrorHandler()
     assert ds.BuildOverviews("NEAR", overviewlist=[2]) == gdal.CE_None
     gdal.PopErrorHandler()
     ds = None
 
-    filelist = gdal.ReadDir("tmppamproxydir")
-    if "000001_tmpdirreadonly_byte.tif.ovr" not in filelist:
+    filelist = gdal.ReadDir(os.path.join(temp_dir, "tmppamproxydir"))
+    ovr_filename = None
+    for filename in filelist:
+        if filename.startswith("000001_") and filename.endswith(
+            "tmpdirreadonly_byte.tif.ovr"
+        ):
+            ovr_filename = os.path.join(temp_dir, "tmppamproxydir", filename)
+    if not ovr_filename:
         print("did not get find 000001_tmpdirreadonly_byte.tif.ovr")
         sys.exit(1)
 
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
     filelist = ds.GetFileList()
     if len(filelist) != 3:
         print(
@@ -113,13 +132,16 @@ if len(sys.argv) == 2 and sys.argv[1] == "-test1":
 
 # Must to be launched from pam.py/pam_11()
 # Test loading an existing proxydb
-if len(sys.argv) == 2 and sys.argv[1] == "-test2":
+if len(sys.argv) == 4 and sys.argv[1] == "-test2":
 
     from osgeo import gdal
 
-    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmppamproxydir")
+    temp_dir = sys.argv[3]
 
-    ds = gdal.Open("tmpdirreadonly/byte.tif")
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", os.path.join(temp_dir, "tmppamproxydir"))
+
+    tmpdirreadonly = sys.argv[2]
+    ds = gdal.Open(f"{tmpdirreadonly}/byte.tif")
     filelist = ds.GetFileList()
     if len(filelist) != 3:
         print(

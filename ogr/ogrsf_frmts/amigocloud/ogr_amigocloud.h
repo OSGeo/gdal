@@ -114,7 +114,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
         return osFIDColName.c_str();
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -172,7 +172,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -268,7 +268,7 @@ class OGRAmigoCloudDataSource final : public GDALDataset
     const OGRLayer *GetLayer(int) const override;
     OGRLayer *GetLayerByName(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

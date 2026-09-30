@@ -27,11 +27,13 @@
 /************************************************************************/
 
 GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
-    : GDALMdimPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                    ConstructorOptions()
-                                        .SetStandaloneStep(true)
-                                        .SetInputDatasetMaxCount(1)
-                                        .SetAddDefaultArguments(false))
+    : GDALMdimPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(true)
+              .SetInputDatasetMaxCount(1)
+              .SetAddDefaultArguments(false)
+              .SetMdimOutputAcceptsClassicRaster(true))
 {
     AddMdimInputArgs(false, false, /* acceptRaster = */ true);
     AddProgressArg();

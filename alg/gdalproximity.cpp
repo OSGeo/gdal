@@ -180,7 +180,7 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
     pszOpt = CSLFetchNameValue(papszOptions, "NODATA");
     if (pszOpt != nullptr)
     {
-        fNoDataValue = static_cast<float>(CPLAtof(pszOpt));
+        fNoDataValue = static_cast<float>(CPLStrtod(pszOpt, nullptr));
     }
     else
     {

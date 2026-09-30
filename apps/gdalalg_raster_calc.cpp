@@ -1028,7 +1028,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (!pair)
             {
                 ReportError(CE_Failure, CPLE_NotSupported,
-                            "'%s' is a unknown builtin function", pszFunction);
+                            "'%s' is an unknown builtin function", pszFunction);
                 return false;
             }
             if (aosTokens.size() == 2)

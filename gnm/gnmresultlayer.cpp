@@ -88,7 +88,7 @@ GIntBig OGRGNMWrappedResultLayer::GetFeatureCount(int bForce)
     return poLayer->GetFeatureCount(bForce);
 }
 
-int OGRGNMWrappedResultLayer::TestCapability(const char *pszCap) const
+bool OGRGNMWrappedResultLayer::TestCapability(const char *pszCap) const
 {
     return poLayer->TestCapability(pszCap);
 }

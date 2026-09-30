@@ -409,25 +409,40 @@ static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
         {
             bRemoved |= CPLQuadTreeRemoveInternal(psNode->apSubNode[i],
                                                   hFeature, psBounds);
+        }
+    }
 
-            if (psNode->apSubNode[i]->nFeatures == 0 &&
-                psNode->apSubNode[i]->nNumSubNodes == 0)
+    /* -------------------------------------------------------------------- */
+    /*      Only collapse the subnodes when all of them are empty leaves:   */
+    /*      the node then becomes a leaf again and may re-split on a later  */
+    /*      insertion. Destroying an individual empty subnode would leave a */
+    /*      quadrant hole: features falling in it can neither descend nor   */
+    /*      trigger a split (splitting requires a node without subnodes),   */
+    /*      so they would pile up in this node's bucket forever, degrading  */
+    /*      every search overlapping it to a linear scan.                   */
+    /* -------------------------------------------------------------------- */
+    if (psNode->nNumSubNodes != 0)
+    {
+        bool bAllSubNodesEmpty = true;
+        for (int i = 0; i < psNode->nNumSubNodes; i++)
+        {
+            if (psNode->apSubNode[i] &&
+                (psNode->apSubNode[i]->nFeatures != 0 ||
+                 psNode->apSubNode[i]->nNumSubNodes != 0))
             {
-                CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
-                if (i < psNode->nNumSubNodes - 1)
-                {
-#ifdef CSA_BUILD
-                    for (int j = 0; j < psNode->nNumSubNodes - 1 - i; ++j)
-                        psNode->apSubNode[i + j] = psNode->apSubNode[i + j + 1];
-#else
-                    memmove(psNode->apSubNode + i, psNode->apSubNode + i + 1,
-                            (psNode->nNumSubNodes - 1 - i) *
-                                sizeof(QuadTreeNode *));
-#endif
-                }
-                i--;
-                psNode->nNumSubNodes--;
+                bAllSubNodesEmpty = false;
+                break;
             }
+        }
+        if (bAllSubNodesEmpty)
+        {
+            for (int i = 0; i < psNode->nNumSubNodes; i++)
+            {
+                if (psNode->apSubNode[i])
+                    CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
+                psNode->apSubNode[i] = nullptr;
+            }
+            psNode->nNumSubNodes = 0;
         }
     }
 

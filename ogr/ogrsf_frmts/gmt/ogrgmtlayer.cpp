@@ -630,6 +630,16 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                     }
                     break;
 
+                    case wkbMultiPoint:
+                    {
+                        OGRMultiPoint *poMP = poGeom->toMultiPoint();
+                        OGRPoint oPoint(dfX, dfY);
+                        if (nDim == 3)
+                            oPoint.setZ(dfZ);
+                        poMP->addGeometry(&oPoint);
+                    }
+                    break;
+
                     default:
                         CPLAssert(false);
                 }
@@ -983,7 +993,7 @@ OGRErr OGRGmtLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGmtLayer::TestCapability(const char *pszCap) const
+bool OGRGmtLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

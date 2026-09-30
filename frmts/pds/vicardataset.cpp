@@ -145,7 +145,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
 
     OGRFeature *GetNextFeature() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }

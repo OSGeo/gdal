@@ -3049,7 +3049,7 @@ OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRElasticLayer::TestCapability(const char *pszCap) const
+bool OGRElasticLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

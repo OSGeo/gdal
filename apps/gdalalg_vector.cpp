@@ -21,6 +21,7 @@
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_combine.h"
+#include "gdalalg_vector_compare.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_concave_hull.h"
 #include "gdalalg_vector_convert.h"
@@ -79,6 +80,7 @@ GDALVectorAlgorithm::GDALVectorAlgorithm()
     RegisterSubAlgorithm<GDALVectorCleanCoverageAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorClipAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorCombineAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCompareAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConcatAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConcaveHullAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();

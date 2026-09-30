@@ -187,7 +187,7 @@ class GDALRasterAsFeaturesLayer final
         }
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return EQUAL(pszCap, OLCFastFeatureCount) &&
                m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&

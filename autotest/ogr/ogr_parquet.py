@@ -635,10 +635,10 @@ def test_ogr_parquet_test_ogrsf_all_geoms_with_arrow_dataset():
     [(False, None, None, True), (False, None, None, "ONLY"), (True, 2, "fid", False)],
 )
 def test_ogr_parquet_write_from_another_dataset(
-    use_vsi, row_group_size, fid, use_parquet_geo_types
+    tmp_path, use_vsi, row_group_size, fid, use_parquet_geo_types
 ):
 
-    outfilename = "/vsimem/out.parquet" if use_vsi else "tmp/out.parquet"
+    outfilename = "/vsimem/out.parquet" if use_vsi else str(tmp_path / "out.parquet")
     layerCreationOptions = []
     if row_group_size:
         layerCreationOptions.append("ROW_GROUP_SIZE=" + str(row_group_size))
@@ -2983,7 +2983,7 @@ def test_ogr_parquet_check_geom_column_schema_metadata():
 
 ###############################################################################
 # Check that we recognize the geometry field just from the presence of
-# a ARROW:extension:name == ogc.wkb column on it
+# an ARROW:extension:name == ogc.wkb column on it
 
 
 def test_ogr_parquet_recognize_geo_from_arrow_extension_name():

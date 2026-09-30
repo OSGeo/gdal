@@ -138,15 +138,15 @@ jobs:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
             gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
-      - uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
@@ -170,7 +170,7 @@ jobs:
           path: |
             dist/*
       - name: Publish gdal-utils bdist_wheel to PyPI
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
@@ -187,7 +187,7 @@ jobs:
           path: |
             dist/*
       - name: Publish gdal sdist to PyPI
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
@@ -241,7 +241,7 @@ jobs:
               }
             }
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -285,7 +285,7 @@ jobs:
         tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
     steps:
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

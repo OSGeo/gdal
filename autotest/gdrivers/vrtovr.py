@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 
 import gdaltest
@@ -310,16 +311,21 @@ def test_vrtovr_external_ovr_has_priority_over_implicit(tmp_vsimem):
 # Test with anonymous VRT
 
 
-def test_vrtovr_anonymous_vrt():
+def test_vrtovr_anonymous_vrt(tmp_path):
 
-    gdal.GetDriverByName("GTiff").Create(".ovr", 1, 1)
-
+    old_cwd = os.getcwd()
+    os.chdir(tmp_path)
     try:
-        ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
-        vrt_ds = gdal.Translate("", ds, format="VRT")
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        gdal.GetDriverByName("GTiff").Create(".ovr", 1, 1)
+
+        try:
+            ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+            vrt_ds = gdal.Translate("", ds, format="VRT")
+            assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        finally:
+            gdal.Unlink(".ovr")
     finally:
-        gdal.Unlink(".ovr")
+        os.chdir(old_cwd)
 
 
 ###############################################################################

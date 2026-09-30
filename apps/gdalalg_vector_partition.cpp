@@ -1208,7 +1208,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 asSingleField[0].nIdx = 0;
                 for (auto &poFeature : *poSQLLayer)
                 {
-                    const auto sPair = BuildKey(asFields, poFeature.get());
+                    const auto sPair = BuildKey(asSingleField, poFeature.get());
                     const std::string &osKey = sPair.first;
                     oSetKeys.insert(osKey);
 #ifdef DEBUG_VERBOSE

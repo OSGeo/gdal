@@ -79,7 +79,7 @@ const OGRLayer *OGRParquetWriterDataset::GetLayer(int idx) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRParquetWriterDataset::TestCapability(const char *pszCap) const
+bool OGRParquetWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_poLayer == nullptr;

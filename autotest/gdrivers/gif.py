@@ -20,14 +20,6 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("GIF")
 
 
-@pytest.fixture(autouse=True)
-def setup_and_cleanup_test():
-
-    yield
-
-    gdaltest.clean_tmp()
-
-
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.
 
@@ -53,10 +45,10 @@ def test_gif_2():
 # Test lossless copying.
 
 
-def test_gif_3():
+def test_gif_3(tmp_path):
 
     tst = gdaltest.GDALTest(
-        "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"]
+        "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"], tmpdir=tmp_path
     )
 
     tst.testCreateCopy()
@@ -101,11 +93,11 @@ def test_gif_5():
 # Verify nodata support
 
 
-def test_gif_6():
+def test_gif_6(tmp_path):
 
     src_ds = gdal.Open("../gcore/data/nodata_byte.tif")
 
-    new_ds = gdaltest.gif_drv.CreateCopy("tmp/nodata_byte.gif", src_ds)
+    new_ds = gdaltest.gif_drv.CreateCopy(tmp_path / "nodata_byte.gif", src_ds)
     assert new_ds is not None, "Create copy operation failure"
 
     bnd = new_ds.GetRasterBand(1)
@@ -115,7 +107,7 @@ def test_gif_6():
     new_ds = None
     src_ds = None
 
-    new_ds = gdal.Open("tmp/nodata_byte.gif")
+    new_ds = gdal.Open(tmp_path / "nodata_byte.gif")
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 4440, "Wrong checksum"
@@ -127,32 +119,31 @@ def test_gif_6():
     bnd = None
     new_ds = None
 
-    gdaltest.gif_drv.Delete("tmp/nodata_byte.gif")
-
 
 ###############################################################################
 # Confirm reading with the BIGGIF driver.
 
 
-def test_gif_7():
+def test_gif_7(tmp_path):
 
-    # Move the GIF driver after the BIGGIF driver.
-    try:
-        drv = gdal.GetDriverByName("GIF")
-        drv.Deregister()
-        drv.Register()
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        # Move the GIF driver after the BIGGIF driver.
+        try:
+            drv = gdal.GetDriverByName("GIF")
+            drv.Deregister()
+            drv.Register()
 
-        tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
-        tst.testOpen()
+            tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
+            tst.testOpen()
 
-        ds = gdal.Open("data/gif/bug407.gif")
-        assert ds is not None
+            ds = gdal.Open("data/gif/bug407.gif")
+            assert ds is not None
 
-        assert ds.GetDriver().ShortName == "BIGGIF"
-    finally:
-        drv = gdal.GetDriverByName("BIGGIF")
-        drv.Deregister()
-        drv.Register()
+            assert ds.GetDriver().ShortName == "BIGGIF"
+        finally:
+            drv = gdal.GetDriverByName("BIGGIF")
+            drv.Deregister()
+            drv.Register()
 
 
 ###############################################################################

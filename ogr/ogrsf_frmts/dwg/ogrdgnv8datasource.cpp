@@ -145,7 +145,7 @@ int OGRDGNV8DataSource::Open(const char *pszFilename, bool bUpdate)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNV8DataSource::TestCapability(const char *pszCap) const
+bool OGRDGNV8DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

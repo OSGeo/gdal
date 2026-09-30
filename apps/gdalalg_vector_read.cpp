@@ -56,7 +56,7 @@ class GDALVectorPipelineReadOutputDataset final
 
     OGRLayer *GetLayer(int idx) const override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     void ResetReading() override;
 
@@ -112,7 +112,7 @@ OGRLayer *GDALVectorPipelineReadOutputDataset::GetLayer(int idx) const
 /*        GDALVectorPipelineReadOutputDataset::TestCapability()         */
 /************************************************************************/
 
-int GDALVectorPipelineReadOutputDataset::TestCapability(
+bool GDALVectorPipelineReadOutputDataset::TestCapability(
     const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCRandomLayerRead))
