@@ -10,8 +10,10 @@ add_gdal_driver(
           zarr_v3_codec_abstract_compressor.cpp
           zarr_v3_codec_blosc.cpp
           zarr_v3_codec_bytes.cpp
+          zarr_v3_codec_cast_value.cpp
           zarr_v3_codec_crc32c.cpp
           zarr_v3_codec_gzip.cpp
+          zarr_v3_codec_scale_offset.cpp
           zarr_v3_codec_sequence.cpp
           zarr_v3_codec_sharding.cpp
           zarr_v3_codec_transpose.cpp
