@@ -24,7 +24,9 @@ from osgeo import gdal, osr
 
 @pytest.fixture(scope="module", autouse=True)
 def set_cpl_tmpdir(tmp_path_factory):
-    yield gdaltest.set_cpl_tmpdir(tmp_path_factory, "geoloc")
+    # warping with GCPs may invoke GDALFillNodata, which writes to CPL_TMPDIR
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "warp"):
+        yield
 
 
 ###############################################################################
