@@ -21,13 +21,13 @@ from osgeo import gdal, osr
 # Test a trivial case.
 
 
-def test_reproject_1():
+def test_reproject_1(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
     dst_ds = drv.Create(
-        "tmp/byte.tif", src_ds.RasterXSize, src_ds.RasterYSize, gdal.GDT_UInt8
+        tmp_path / "byte.tif", src_ds.RasterXSize, src_ds.RasterYSize, gdal.GDT_UInt8
     )
     dst_ds.SetProjection(src_ds.GetProjectionRef())
     dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
@@ -39,18 +39,14 @@ def test_reproject_1():
 
     dst_ds = None
 
-    drv.Delete("tmp/byte.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
 # Test a real reprojection case.
 
 
-def test_reproject_2():
+def test_reproject_2(tmp_path):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32611)
@@ -61,7 +57,7 @@ def test_reproject_2():
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
-    dst_ds = drv.Create("tmp/byte_4326.tif", 22, 18, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "byte_4326.tif", 22, 18, gdal.GDT_UInt8)
     dst_ds.SetGeoTransform(
         [
             -117.641169915168746,
@@ -80,11 +76,7 @@ def test_reproject_2():
 
     dst_ds = None
 
-    drv.Delete("tmp/byte_4326.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################

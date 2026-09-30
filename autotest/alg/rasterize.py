@@ -70,10 +70,7 @@ def test_rasterize_1():
 
     expected = 6452
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_1.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
     _, maxval = target_ds.GetRasterBand(3).ComputeRasterMinMax()
     assert maxval == 255
@@ -123,10 +120,7 @@ def test_rasterize_2():
 
     expected = 121
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_2.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
 
 ###############################################################################
@@ -176,10 +170,7 @@ def test_rasterize_3():
 
     expected = 15037
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_3.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
 
 ###############################################################################
@@ -231,10 +222,7 @@ def test_rasterize_4():
     # Check results.
     expected = 16265
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_4.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
 
 ###############################################################################
@@ -298,10 +286,7 @@ def test_rasterize_5():
 
     expected = 13022
     checksum = target_ds.GetRasterBand(2).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_5.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
     _, maxval = target_ds.GetRasterBand(1).ComputeRasterMinMax()
     assert maxval == 255
@@ -466,10 +451,7 @@ def test_rasterize_7():
 
     expected = 1
     checksum = target_ds.GetRasterBand(1).Checksum()
-    if checksum != expected:
-        print(checksum)
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_7.tif", target_ds)
-        pytest.fail("Did not get expected image checksum")
+    assert checksum == expected
 
 
 ###############################################################################

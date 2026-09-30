@@ -293,11 +293,11 @@ def test_applyverticalshiftgrid_5():
 
 
 @pytest.mark.require_driver("GTX")
-def test_applyverticalshiftgrid_6():
+def test_applyverticalshiftgrid_6(tmp_path):
 
     drv = gdal.GetDriverByName("GTX")
     grid_ds = drv.Create(
-        "tmp/applyverticalshiftgrid_6.gtx", 1440, 721, 1, gdal.GDT_Float32
+        tmp_path / "applyverticalshiftgrid_6.gtx", 1440, 721, 1, gdal.GDT_Float32
     )
     grid_ds.SetGeoTransform([-180.125, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
@@ -308,12 +308,10 @@ def test_applyverticalshiftgrid_6():
         "../gcore/data/byte.tif",
         format="MEM",
         srcSRS="EPSG:32611",
-        dstSRS="+proj=utm +zone=11 +datum=WGS84 +geoidgrids=./tmp/applyverticalshiftgrid_6.gtx +vunits=m +no_defs",
+        dstSRS=f"+proj=utm +zone=11 +datum=WGS84 +geoidgrids={tmp_path}/applyverticalshiftgrid_6.gtx +vunits=m +no_defs",
     )
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
-
-    gdal.Unlink("tmp/applyverticalshiftgrid_6.gtx")
 
 
 ###############################################################################
@@ -321,11 +319,11 @@ def test_applyverticalshiftgrid_6():
 
 
 @pytest.mark.require_driver("GTX")
-def test_applyverticalshiftgrid_7():
+def test_applyverticalshiftgrid_7(tmp_path):
 
     drv = gdal.GetDriverByName("GTX")
     grid_ds = drv.Create(
-        "tmp/applyverticalshiftgrid_7.gtx", 700, 721, 1, gdal.GDT_Float32
+        tmp_path / "applyverticalshiftgrid_7.gtx", 700, 721, 1, gdal.GDT_Float32
     )
     grid_ds.SetGeoTransform([-150 + 360, 0.25, 0, 90.125, 0, -0.25])
     grid_ds.GetRasterBand(1).Fill(10)
@@ -336,9 +334,7 @@ def test_applyverticalshiftgrid_7():
         "../gcore/data/byte.tif",
         format="MEM",
         srcSRS="EPSG:32611",
-        dstSRS="+proj=utm +zone=11 +datum=WGS84 +geoidgrids=./tmp/applyverticalshiftgrid_7.gtx +vunits=m +no_defs",
+        dstSRS=f"+proj=utm +zone=11 +datum=WGS84 +geoidgrids={tmp_path}/applyverticalshiftgrid_7.gtx +vunits=m +no_defs",
     )
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4783
-
-    gdal.Unlink("tmp/applyverticalshiftgrid_7.gtx")

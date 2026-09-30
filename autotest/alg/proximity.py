@@ -27,13 +27,13 @@ def set_cpl_tmpdir(tmp_path_factory):
 # Test a fairly default case.
 
 
-def test_proximity_1():
+def test_proximity_1(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/pat.tif")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/proximity_1.tif", 25, 25, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "proximity_1.tif", 25, 25, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(src_band, dst_band)
@@ -44,25 +44,20 @@ def test_proximity_1():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/proximity_1.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
 # Try several options
 
 
-def test_proximity_2():
+def test_proximity_2(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/pat.tif")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/proximity_2.tif", 25, 25, 1, gdal.GDT_Float32)
+    dst_ds = drv.Create(tmp_path / "proximity_2.tif", 25, 25, 1, gdal.GDT_Float32)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(
@@ -77,25 +72,20 @@ def test_proximity_2():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/proximity_2.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
 # Try input nodata option
 
 
-def test_proximity_3():
+def test_proximity_3(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/pat.tif")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/proximity_3.tif", 25, 25, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "proximity_3.tif", 25, 25, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.ComputeProximity(
@@ -110,9 +100,4 @@ def test_proximity_3():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/proximity_3.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
