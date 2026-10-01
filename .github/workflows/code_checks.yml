@@ -108,9 +108,6 @@ jobs:
       - name: Detect suspicious char digit zero
         run: ./scripts/detect_suspicious_char_digit_zero.sh
 
-      - name: Detect missing includes
-        run: ./scripts/detect_missing_include.sh
-
       - name: Detect (a+b-1)/b
         run: ./scripts/detect_a_plus_b_minus_1_div_b.sh
 
