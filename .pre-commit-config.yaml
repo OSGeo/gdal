@@ -17,6 +17,17 @@ repos:
                   autotest/gdrivers/data/rst
               )
 
+        -   id: detect-missing-includes
+            name: Check C++ files for missing includes
+            entry: python3 scripts/detect_missing_includes.py
+            language: python
+            files: \.(h|cpp|hpp)$
+            exclude: >
+              (?x)^(
+                  third_party/|
+                  fuzzers/
+              )
+
     -   repo: https://github.com/sphinx-contrib/sphinx-lint
         rev: v1.0.2
         hooks:

@@ -11,6 +11,7 @@
 
 #include "gdal_minmax_element.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <random>
 
