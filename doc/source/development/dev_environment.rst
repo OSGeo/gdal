@@ -71,7 +71,7 @@ Building on Windows with Conda dependencies and Visual Studio
 This approach is less appropriate for Debug builds of GDAL, than other methods, such as using vcpkg.
 
 A minimal Windows build configuration utilizing Conda is provided within the GitHub Actions workflow
-defined in :source_file:.github/workflows/cmake_builds.yml - see the ``build-windows-conda`` job.
+defined in :source_file:`.github/workflows/cmake_builds.yml` - see the ``build-windows-conda`` job.
 
 Install git
 +++++++++++

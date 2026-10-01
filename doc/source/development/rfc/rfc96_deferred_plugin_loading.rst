@@ -211,7 +211,7 @@ libgdal, even when the driver is built as a plugin.
     endif()
     gdal_standard_includes(gdal_FOO)
 
-A typical :file:`mydrivercore.h`` header will declare the identify method:
+A typical :file:`mydrivercore.h` header will declare the identify method:
 
 .. code-block:: cpp
 

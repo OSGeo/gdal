@@ -628,7 +628,7 @@ and should be preferred (see above):
       :choices: <filename>
 
       Tells the driver to the
-      user-defined field mappings. The lco:`MAPPING`
+      user-defined field mappings. The :lco:`MAPPING`
       layer creation option should be used instead.
 
 -  .. config:: ES_BULK
