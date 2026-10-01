@@ -17,6 +17,16 @@ repos:
                   autotest/gdrivers/data/rst
               )
 
+    -   repo: https://github.com/sphinx-contrib/sphinx-lint
+        rev: v1.0.2
+        hooks:
+          -   id: sphinx-lint
+              args: [--disable=trailing-whitespace]
+              exclude: >
+                (?x)^(
+                    autotest/gdrivers/data/rst
+                )
+
     -   repo: https://github.com/psf/black
         rev: 26.1.0
         hooks:
