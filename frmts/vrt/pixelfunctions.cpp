@@ -3969,7 +3969,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
     if constexpr (std::is_same_v<Kernel, MeanKernel>)
     {
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int16 to accumulate
             nSources <= std::numeric_limits<int16_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -4069,7 +4069,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int32 to accumulate
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -4138,7 +4138,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt16 && eBufType == GDT_UInt16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
@@ -4192,7 +4192,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_Int16 && eBufType == GDT_Int16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
