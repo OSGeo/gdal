@@ -344,10 +344,12 @@ def test_warp_11():
 # Test warping an empty RGBA with bilinear resampling
 
 
-def test_warp_12():
+def test_warp_12(tmp_path):
+
+    gdal.CopyFile("data/empty_rb.vrt", tmp_path / "empty_rb.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -355,20 +357,22 @@ def test_warp_12():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "empty_rb.vrt", 4, 0)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "empty_rb.vrt", 4, 0, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/empty.tif")
 
 
 # Test warping an empty RGBA with cubic resampling
 
 
-def test_warp_13():
+def test_warp_13(tmp_path):
+
+    gdal.CopyFile("data/empty_rc.vrt", tmp_path / "empty_rc.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -376,20 +380,22 @@ def test_warp_13():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "empty_rc.vrt", 4, 0)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "empty_rc.vrt", 4, 0, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/empty.tif")
 
 
 # Test warping an empty RGBA with cubic spline resampling
 
 
-def test_warp_14():
+def test_warp_14(tmp_path):
+
+    gdal.CopyFile("data/empty_rcs.vrt", tmp_path / "empty_rcs.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/empty.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "empty.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -397,20 +403,22 @@ def test_warp_14():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "empty_rcs.vrt", 4, 0)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "empty_rcs.vrt", 4, 0, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/empty.tif")
 
 
 # Test GWKNearestFloat with transparent source alpha band
 
 
-def test_warp_15():
+def test_warp_15(tmp_path):
+
+    gdal.CopyFile("data/test_nearest_float.vrt", tmp_path / "test_nearest_float.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -418,20 +426,22 @@ def test_warp_15():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "test_nearest_float.vrt", 4, 0)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "test_nearest_float.vrt", 4, 0, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/test.tif")
 
 
 # Test GWKNearestFloat with opaque source alpha band
 
 
-def test_warp_16():
+def test_warp_16(tmp_path):
+
+    gdal.CopyFile("data/test_nearest_float.vrt", tmp_path / "test_nearest_float.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -439,20 +449,22 @@ def test_warp_16():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "test_nearest_float.vrt", 4, 4921)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "test_nearest_float.vrt", 4, 4921, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/test.tif")
 
 
 # Test GWKNearestShort with transparent source alpha band
 
 
-def test_warp_17():
+def test_warp_17(tmp_path):
+
+    gdal.CopyFile("data/test_nearest_short.vrt", tmp_path / "test_nearest_short.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -460,20 +472,22 @@ def test_warp_17():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "test_nearest_short.vrt", 4, 0)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "test_nearest_short.vrt", 4, 0, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/test.tif")
 
 
 # Test GWKNearestShort with opaque source alpha band
 
 
-def test_warp_18():
+def test_warp_18(tmp_path):
+
+    gdal.CopyFile("data/test_nearest_short.vrt", tmp_path / "test_nearest_short.vrt")
 
     tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = tiff_drv.Create("tmp/test.tif", 20, 20, 4)
+    ds = tiff_drv.Create(tmp_path / "test.tif", 20, 20, 4)
     ds.GetRasterBand(1).Fill(255)
     ds.GetRasterBand(2).Fill(0)
     ds.GetRasterBand(3).Fill(0)
@@ -481,11 +495,11 @@ def test_warp_18():
     ds = None
 
     # The alpha channel must be empty
-    tst = gdaltest.GDALTest("VRT", "test_nearest_short.vrt", 4, 4921)
+    tst = gdaltest.GDALTest(
+        "VRT", tmp_path / "test_nearest_short.vrt", 4, 4921, filename_absolute=True
+    )
 
     tst.testOpen()
-
-    tiff_drv.Delete("tmp/test.tif")
 
 
 # Test all data types and resampling methods for very small images
@@ -554,23 +568,26 @@ def test_warp_20():
 # Test overviews on warped VRT files
 
 
-def test_warp_21():
+def test_warp_21(tmp_path):
 
-    shutil.copy("data/utmsmall_near.vrt", "tmp/warp_21.vrt")
+    shutil.copy("../gcore/data/utmsmall.tif", tmp_path / "utmsmall.tif")
 
-    ds = gdal.Open("tmp/warp_21.vrt", gdal.GA_Update)
+    with open(tmp_path / "warp_21.vrt", "w") as f:
+        contents = open("data/utmsmall_near.vrt").read()
+        contents = contents.replace("../../gcore/data/utmsmall.tif", "utmsmall.tif")
+        f.write(contents)
+
+    ds = gdal.Open(tmp_path / "warp_21.vrt", gdal.GA_Update)
     ds.BuildOverviews("NEAR", overviewlist=[2])
     ds = None
 
-    ds = gdal.Open("tmp/warp_21.vrt")
+    ds = gdal.Open(tmp_path / "warp_21.vrt")
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         pytest.skip()
 
     ds.GetRasterBand(1).GetOverview(0).Checksum()
 
     ds = None
-
-    os.remove("tmp/warp_21.vrt")
 
 
 ###############################################################################
@@ -626,7 +643,7 @@ def test_warp_22(tmpdir, option1, option2):
 # Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
 
 
-def test_warp_23():
+def test_warp_23(tmp_path):
 
     gcp1 = gdal.GCP()
     gcp1.GCPPixel = 3213
@@ -681,7 +698,7 @@ def test_warp_23():
     sr.ImportFromEPSG(4326)
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "tmp/test3582.tif", 70, 170, 4, options=["SPARSE_OK=YES"]
+        tmp_path / "test3582.tif", 70, 170, 4, options=["SPARSE_OK=YES"]
     )
     for i, gcp in enumerate(gcps):
         gcps[i].GCPPixel = gcp.GCPPixel / 10
@@ -689,9 +706,7 @@ def test_warp_23():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    assert gdal.Warp("", "tmp/test3582.tif", format="MEM") is not None
-
-    os.remove("tmp/test3582.tif")
+    assert gdal.Warp("", tmp_path / "test3582.tif", format="MEM") is not None
 
 
 ###############################################################################
@@ -726,24 +741,25 @@ def test_warp_25():
 # Test serializing and deserializing TPS transformer
 
 
-def test_warp_26():
+def test_warp_26(tmp_path):
 
     gdal.Translate(
-        "tmp/warp_25_gcp.vrt",
+        tmp_path / "warp_25_gcp.vrt",
         "../gcore/data/byte.tif",
         options="-of VRT -gcp 0 0 0 20 -gcp 0 20 0  0 "
         "-gcp 20 0 20 20 -gcp 20 20 20 0",
     )
-    gdal.Warp("tmp/warp_25_warp.vrt", "tmp/warp_25_gcp.vrt", options="-of VRT -tps")
+    gdal.Warp(
+        tmp_path / "warp_25_warp.vrt",
+        tmp_path / "warp_25_gcp.vrt",
+        options="-of VRT -tps",
+    )
 
-    ds = gdal.Open("tmp/warp_25_warp.vrt")
+    ds = gdal.Open(tmp_path / "warp_25_warp.vrt")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     assert cs == 4672, "did not get expected checksum"
-
-    os.unlink("tmp/warp_25_gcp.vrt")
-    os.unlink("tmp/warp_25_warp.vrt")
 
 
 ###############################################################################
@@ -756,7 +772,7 @@ def warp_27_progress_callback(pct, message, user_data):
     return 1  # 1 to continue, 0 to stop
 
 
-def test_warp_27():
+def test_warp_27(tmp_path):
 
     # Open source dataset
     src_ds = gdal.Open("../gcore/data/byte.tif")
@@ -784,7 +800,7 @@ def test_warp_27():
 
     # Now create the true target dataset
     dst_ds = gdal.GetDriverByName("GTiff").Create(
-        "tmp/warp_27.tif", dst_xsize, dst_ysize, src_ds.RasterCount
+        tmp_path / "warp_27.tif", dst_xsize, dst_ysize, src_ds.RasterCount
     )
     dst_ds.SetProjection(dst_wkt)
     dst_ds.SetGeoTransform(dst_gt)
@@ -809,21 +825,20 @@ def test_warp_27():
     # Done !
     dst_ds = None
 
-    # Check that we have the same result as produced by 'gdalwarp -rb -t_srs EPSG:4326 ../gcore/data/byte.tif tmp/warp_27.tif'
-    ds = gdal.Open("tmp/warp_27.tif")
+    # Check that we have the same result as produced by 'gdalwarp -rb -t_srs EPSG:4326 ../gcore/data/byte.tif warp_27.tif'
+    ds = gdal.Open(tmp_path / "warp_27.tif")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     ds = gdal.Warp(
-        "tmp/warp_27_ref.tif", "../gcore/data/byte.tif", options="-rb -t_srs EPSG:4326"
+        tmp_path / "warp_27_ref.tif",
+        "../gcore/data/byte.tif",
+        options="-rb -t_srs EPSG:4326",
     )
     ref_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     assert cs == ref_cs
-
-    gdal.Unlink("tmp/warp_27.tif")
-    gdal.Unlink("tmp/warp_27_ref.tif")
 
 
 ###############################################################################
@@ -1077,10 +1092,10 @@ def test_warp_37():
 # Test a warp with GCPs on the *destination* image.
 
 
-def test_warp_38():
+def test_warp_38(tmp_path):
 
     # Create an output file with GCPs.
-    out_file = "tmp/warp_38.tif"
+    out_file = tmp_path / "warp_38.tif"
     ds = gdal.GetDriverByName("GTiff").Create(out_file, 50, 50, 3)
 
     gcp_list = [
@@ -1107,17 +1122,15 @@ def test_warp_38():
     exp_cs = 30546
     assert cs == exp_cs
 
-    os.unlink(out_file)
-
 
 ###############################################################################
 # Test a warp with GCPs for TPS on the *destination* image.
 
 
-def test_warp_39():
+def test_warp_39(tmp_path):
 
     # Create an output file with GCPs.
-    out_file = "tmp/warp_39.tif"
+    out_file = tmp_path / "warp_39.tif"
     ds = gdal.GetDriverByName("GTiff").Create(out_file, 50, 50, 3)
 
     gcp_list = [
@@ -1142,17 +1155,15 @@ def test_warp_39():
     exp_cs = 30546
     assert cs == exp_cs
 
-    os.unlink(out_file)
-
 
 ###############################################################################
 # Test a warp with GCPs for homography on the *destination* image.
 
 
-def test_warp_homography():
+def test_warp_homography(tmp_path):
 
     # Create an output file with GCPs.
-    out_file = "tmp/warp_homography.tif"
+    out_file = tmp_path / "warp_homography.tif"
     ds = gdal.GetDriverByName("GTiff").Create(out_file, 50, 50, 3)
 
     gcp_list = [

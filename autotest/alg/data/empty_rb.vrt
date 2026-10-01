@@ -14,7 +14,7 @@
     <ResampleAlg>Bilinear</ResampleAlg>
     <WorkingDataType>Byte</WorkingDataType>
     <Option name="INIT_DEST">0</Option>
-    <SourceDataset relativeToVRT="1">../tmp/empty.tif</SourceDataset>
+    <SourceDataset relativeToVRT="1">empty.tif</SourceDataset>
     <Transformer>
       <ApproxTransformer>
         <MaxError>0.125</MaxError>
