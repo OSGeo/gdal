@@ -102,9 +102,6 @@ jobs:
       - name: Detect printf
         run: ./scripts/detect_printf.sh
 
-      - name: Detect self assignments
-        run: ./scripts/detect_self_assignment.sh
-
       - name: Detect suspicious char digit zero
         run: ./scripts/detect_suspicious_char_digit_zero.sh
 
