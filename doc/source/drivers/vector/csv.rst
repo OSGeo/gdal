@@ -252,7 +252,7 @@ In fact we can get the same output with simply:
 ::
 
     ogrinfo -sql "SELECT MakeLine(geometry) FROM test GROUP BY way_id" \
-    -oo X_POSSIBLE_NAMES=x -oo Y_POSSIBLE_NAMES=y -dialect SQLite test.csv	
+    -oo X_POSSIBLE_NAMES=x -oo Y_POSSIBLE_NAMES=y -dialect SQLite test.csv
 
 
 VSI Virtual File System API support
@@ -308,7 +308,7 @@ The following open options are supported:
       original columns where the guessing is active, and the guessed type
       is different from string. The name of the original columns will be
       suffixed with "_original". This flag should be used only when
-      ..oo::`AUTODETECT_TYPE=YES`.
+      :oo:`AUTODETECT_TYPE=YES`.
 
 -  .. oo:: AUTODETECT_WIDTH
       :choices: YES, NO, STRING_ONLY
