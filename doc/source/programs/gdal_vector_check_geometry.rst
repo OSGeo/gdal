@@ -130,8 +130,8 @@ Examples
                 --lco GEOMETRY=AS_WKT \
                 --lco SEPARATOR=TAB \
                 /vsistdout/
-       # WKT	error
-       # MULTIPOINT ((35.6210871060001 23.1392929140001))	Ring Self-intersection
+       # WKT                                                 error
+       # MULTIPOINT ((35.6210871060001 23.1392929140001))    Ring Self-intersection
 
 .. example::
    :title: Check all layers in an ESRI File Geodatabase and write error locations to a GeoPackage

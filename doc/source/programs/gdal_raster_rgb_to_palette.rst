@@ -99,7 +99,8 @@ Standard Options
 Examples
 --------
 
-.. example:: Convert a TIFF file into a paletted PNG image
+.. example:: 
+   :title: Convert a TIFF file into a paletted PNG image
 
    .. code-block:: bash
 

@@ -7,6 +7,16 @@ repos:
             language: python
             files: \.(h|cpp|hpp|c)$
 
+        -   id: check-rst-files
+            name: Check RST files for errors
+            entry: python3 scripts/check_doc_rst_errors.py
+            language: python
+            files: \.rst$
+            exclude: >
+              (?x)^(
+                  autotest/gdrivers/data/rst
+              )
+
     -   repo: https://github.com/psf/black
         rev: 26.1.0
         hooks:

@@ -207,8 +207,10 @@ Examples
 
         gdal vector rasterize -b 1,2,3 --burn 255,0,0 -l mask mask.shp work.tif
 
-.. example:: Burn a shapefile into a raster using a specific where condition to select features
-    :title: The following would burn all "class A" buildings into the output elevation file, pulling the top elevation from the ROOF_H attribute.
+.. example:: 
+    :title: Burn a shapefile into a raster using a specific where condition to select features
+    
+    The following would burn all "class A" buildings into the output elevation file, pulling the top elevation from the ROOF_H attribute.
 
     .. code-block:: bash
 
