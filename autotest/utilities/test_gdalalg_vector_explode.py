@@ -614,3 +614,43 @@ def test_gdalalg_vector_explode_pipeline_layer_interleaved(tmp_vsimem):
         f = lyr.GetNextFeature()
         assert f["osm_id"] == "1"
         assert f["highway"] == "motorway"
+
+
+@pytest.mark.parametrize("explode_geometry", (True, False))
+def test_gdalalg_vector_explode_attribute_filter_skips_first_part(
+    alg, explode_geometry
+):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer(
+        "test", geom_type=ogr.wkbPoint, srs=osr.SpatialReference(epsg=4326)
+    )
+    src_lyr.CreateField(ogr.FieldDefn("int_array", ogr.OFTIntegerList))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["int_array"] = [10, 20, 30]
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    src_lyr.CreateFeature(f)
+
+    alg["input"] = src_ds
+    alg["field"] = "int_array"
+    if explode_geometry:
+        alg["geometry-field"] = "ALL"
+    alg["index-field"] = "idx"
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    out_lyr.SetAttributeFilter("idx = 2")
+
+    if explode_geometry:
+        with pytest.raises(Exception, match="is not a collection"):
+            out_lyr.GetNextFeature()
+    else:
+        features = [f for f in out_lyr]
+        assert len(features) == 1
+        assert features[0]["int_array"] == 30
+        assert features[0].GetGeometryRef().ExportToWkt() == "POINT (1 2)"

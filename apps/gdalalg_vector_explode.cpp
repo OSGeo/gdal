@@ -424,9 +424,9 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
                     }
                     else
                     {
-                        if (iDstFeature > 1 &&
-                            apoOutFeatures.front()->GetGeomFieldRef(
-                                iGeomField) != nullptr)
+                        const OGRGeometry *poSrcSingleGeom =
+                            poSrcFeature->GetGeomFieldRef(iGeomField);
+                        if (iDstFeature > 0 && poSrcSingleGeom != nullptr)
                         {
                             CPLError(
                                 CE_Failure, CPLE_AppDefined,
@@ -439,8 +439,8 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
                             return false;
                         }
 
-                        poDstGeom.reset(
-                            poSrcFeature->StealGeometry(iGeomField));
+                        if (poSrcSingleGeom)
+                            poDstGeom.reset(poSrcSingleGeom->clone());
                     }
 
                     poDstFeature->SetGeomField(iGeomField,
@@ -448,22 +448,8 @@ class GDALVectorExplodeLayer final : public GDALVectorPipelineOutputLayer
                 }
                 else
                 {
-                    std::unique_ptr<OGRGeometry> poSrcGeom;
-
-                    if (apoOutFeatures.empty())
-                    {
-                        poSrcGeom.reset(
-                            poSrcFeature->StealGeometry(iGeomField));
-                    }
-                    else if (const OGRGeometry *poFirstGeom =
-                                 apoOutFeatures.front()->GetGeomFieldRef(
-                                     iGeomField))
-                    {
-                        poSrcGeom.reset(poFirstGeom->clone());
-                    }
-
-                    poDstFeature->SetGeomField(iGeomField,
-                                               std::move(poSrcGeom));
+                    poDstFeature->SetGeomField(
+                        iGeomField, poSrcFeature->GetGeomFieldRef(iGeomField));
                 }
             }
 
