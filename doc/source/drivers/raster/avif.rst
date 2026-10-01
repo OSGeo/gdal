@@ -117,7 +117,7 @@ The following creation options are supported:
       :choices: 444, 422, 420
       :default: 444
 
-      Type of `chroma subsampling <https://en.wikipedia.org/wiki/Chroma_subsampling>`
+      Type of `chroma subsampling <https://en.wikipedia.org/wiki/Chroma_subsampling>`__
       to apply to YUV channels for RGB or RGBA images (it is ignored for single
       band of single band + alpha images)
       4:4:4 corresponds to full horizontal and vertical resolution for chrominance
