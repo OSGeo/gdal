@@ -28,6 +28,16 @@ repos:
                   fuzzers/
               )
 
+        -   id: detect-self-assignments
+            name: Check for self-assignment statements
+            entry: python3 scripts/detect_self_assignment.py
+            language: python
+            files: \.(h|cpp|hpp|c)$
+            exclude: >
+              (?x)^(
+                  autotest/cpp
+              )
+
     -   repo: https://github.com/sphinx-contrib/sphinx-lint
         rev: v1.0.2
         hooks:
