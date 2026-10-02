@@ -2977,19 +2977,29 @@ int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
 /*                          OGR2SQLITE_Setup()                          */
 /************************************************************************/
 
+#ifndef _WIN32
+extern const struct sqlite3_api_routines OGRSQLITE_static_routines;
+#endif
+
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
                                    OGRSQLiteDataSource *poSQLiteDS)
 {
     if (sqlite3_api == nullptr)
     {
-        // Unlikely to happen. One theoretical possibility would be that:
+        // This can happen when a thread opens a SQLite dataset while another one is uninitializing libspatialite:
         // - thread A calls OGR2SQLITE_Register(), which calls sqlite3_auto_extension((void (*)(void))OGR2SQLITE_static_register)
-        // - thread B calls sqlite3_reset_auto_extension()
+        // - thread B calls OGRSQLiteBaseDataSource::FinishSpatialite() -> spatialite_cleanup_ex() -> sqlite3_reset_auto_extension()
         // - thread A opens a sqlite3 handle (which normally would have caused OGR2SQLITE_static_register() to be called, and setting the sqlite3_api static variable, without prior B intervention.
         // - thread A calls us (OGR2SQLITE_Setup()) with sqlite3_api still set to its initial nullptr value
+
+#ifndef _WIN32
+        // In this case, we initialize sqlite3_api to the static OGRSQLITE_static_routines
+        SQLITE_EXTENSION_INIT2(&OGRSQLITE_static_routines);
+#else
         CPLError(CE_Failure, CPLE_AppDefined,
                  "OGR2SQLITE_Setup() failed due to sqlite3_api == nullptr");
         return nullptr;
+#endif
     }
     OGR2SQLITEModule *poModule = new OGR2SQLITEModule();
     poModule->Setup(poDS, poSQLiteDS);
@@ -3089,10 +3099,6 @@ int sqlite3_extension_init(sqlite3 *hDB, char **pzErrMsg,
 /************************************************************************/
 /*                     OGR2SQLITE_static_register()                     */
 /************************************************************************/
-
-#ifndef _WIN32
-extern const struct sqlite3_api_routines OGRSQLITE_static_routines;
-#endif
 
 int OGR2SQLITE_static_register(sqlite3 *hDB, char **pzErrMsg, void *_pApi)
 {
