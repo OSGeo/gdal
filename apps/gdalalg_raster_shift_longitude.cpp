@@ -148,6 +148,7 @@ bool GDALRasterShiftLongitudeAlgorithm::RunStep(GDALPipelineStepRunContext &)
         const int nSrcXOff = static_cast<int>(dfSrcXOff);
 
         const int nColumnsWanted = nDstXSize - nDstXOff;
+        // cppcheck-suppress duplicateExpression
         const int nColumnsAvailable = nSrcXOff < 0 ? 0
                                       : nSrcXOff > nSrcXSize
                                           ? 0
