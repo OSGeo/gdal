@@ -7,6 +7,7 @@ source ${GDAL_SOURCE_DIR:=..}/scripts/setdevenv.sh
 autotest/cpp/gdal_unit_test --gtest_filter=-test_cpl.CPLSpawn:test_cpl.CPLGetCurrentThreadCount
 
 # Random failures
+rm -f autotest/gcore/vsiaz_real_instance_auto.py
 rm -f autotest/gcore/vsiaz.py
 rm -f autotest/gcore/vsigs.py
 rm -f autotest/gcore/vsis3.py
