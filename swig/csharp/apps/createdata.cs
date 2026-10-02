@@ -256,22 +256,34 @@ class CreateData
         if (feat.GetStyleString() != null)
             Console.WriteLine("  Style = " + feat.GetStyleString());
 
-        using (Geometry geom = feat.GetGeometryRef())
-        using (Envelope env = new Envelope())
-            if (geom != null)
+        using Geometry geom = feat.GetGeometryRef();
+        using Envelope env = new Envelope();
+        if (geom != null)
+        {
+            Console.WriteLine("  " + geom.GetGeometryName() +
+                "(" + geom.GetGeometryType() + ")");
+
+            geom.GetEnvelope(env);
+            Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
+                env.MinY + "," + env.MaxY);
+
+            string geom_wkt;
+            geom.ExportToWkt(out geom_wkt);
+
+            Console.WriteLine("  " + geom_wkt);
+            Console.WriteLine();
+
+            using Geometry envelopePoly = Ogr.CreateGeometryFromEnvelope(env);
+            byte[] wkbBts = new byte[envelopePoly.WkbLongSize];
+            envelopePoly.ExportToIsoWkb(wkbBts);
+            using Geometry envelopePoly2 = Geometry.CreateFromWkb(wkbBts);
+            envelopePoly.ExportToWkt(out string env_wkt);
+            envelopePoly2.ExportToWkt(out string env_wkt2);
+            if (env_wkt != env_wkt2)
             {
-                Console.WriteLine("  " + geom.GetGeometryName() +
-                    "(" + geom.GetGeometryType() + ")");
-
-                geom.GetEnvelope(env);
-                Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
-                    env.MinY + "," + env.MaxY);
-
-                string geom_wkt;
-                geom.ExportToWkt(out geom_wkt);
-                Console.WriteLine("  " + geom_wkt);
-
-                Console.WriteLine("");
+                Console.WriteLine("Envelope WKT mismatch: " + env_wkt + " vs " + env_wkt2);
+                Environment.Exit(-1);
             }
+        }
     }
 }
