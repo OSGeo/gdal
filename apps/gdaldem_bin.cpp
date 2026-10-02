@@ -109,10 +109,11 @@ MAIN_START(argc, argv)
     if (bUsageError)
         Usage(osProcessingMode);
 
-    const int nRetCode = hOutDS ? 0 : 1;
+    int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hSrcDataset);
-    GDALClose(hOutDS);
+    if (GDALClose(hOutDS) != CE_None)
+        nRetCode = 1;
 
     GDALDestroy();
 
