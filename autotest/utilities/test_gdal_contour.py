@@ -675,3 +675,19 @@ def test_gdal_contour_fl_and_i__polygonize(gdal_contour_path, testdata_tif, tmp_
             )
             i = i + 1
             feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test that a write failure is reflected in the exit code
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.skipif(not os.path.exists("/dev/full"), reason="requires /dev/full")
+@pytest.mark.parametrize("polygonize", [False, True])
+def test_gdal_contour_write_error(gdal_contour_path, testdata_tif, polygonize):
+
+    options = "-p -amin elev -amax elev2" if polygonize else "-a elev"
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_contour_path} -i 10 {options} -f GeoJSON {testdata_tif} /vsistdout_redirect//dev/full"
+    )
+    assert "ERROR ret code" in err
