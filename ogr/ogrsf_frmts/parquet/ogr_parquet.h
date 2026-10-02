@@ -114,6 +114,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         m_oFeatureIdxRemappingIter{};
     //! Feature index among the potentially restricted set of selected row groups
     int64_t m_nFeatureIdxSelected = 0;
+    std::shared_ptr<arrow::RecordBatch> m_poPendingBatch{};
     std::vector<int> m_anRequestedParquetColumns{};  // only valid when
                                                      // m_bIgnoredFields is set
     CPLStringList m_aosFeatherMetadata{};
