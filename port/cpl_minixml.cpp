@@ -1275,7 +1275,7 @@ char *CPLSerializeXMLTree(const CPLXMLNode *psNode)
 /************************************************************************/
 
 #ifdef DEBUG
-static CPLXMLNode *psDummyStaticNode;
+[[maybe_unused]] static CPLXMLNode *psDummyStaticNode;
 #endif
 
 /**
