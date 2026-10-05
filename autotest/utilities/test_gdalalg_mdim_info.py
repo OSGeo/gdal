@@ -180,7 +180,14 @@ def test_gdalalg_mdim_info_all_options():
 def test_gdalalg_mdim_info_binary(gdal_path):
 
     out = gdaltest.runexternal(f"{gdal_path} mdim info ../gdrivers/data/netcdf/byte.nc")
-    assert json.loads(out) == {
+
+    info = json.loads(out)
+
+    # make PROJ 9.9.0 output equivalent to previous versions (#15250)
+    srs = info["arrays"]["Band1"]["srs"]
+    srs["wkt"] = srs["wkt"].replace("(E)", "easting").replace("(N)", "northing")
+
+    assert info == {
         "arrays": {
             "Band1": {
                 "attributes": {
