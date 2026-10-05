@@ -8381,7 +8381,7 @@ OGRFeature *GDALDataset::GetNextFeature(OGRLayer **ppoBelongingLayer,
             if (pdfProgressPct)
                 *pdfProgressPct = dfPct;
             if (pfnProgress)
-                pfnProgress(dfPct, "", nullptr);
+                pfnProgress(dfPct, "", pProgressData);
         }
 
         if (ppoBelongingLayer != nullptr)
