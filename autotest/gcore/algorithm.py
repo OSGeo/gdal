@@ -655,3 +655,41 @@ def test_gdalalgorithm_check_quiet():
             assert alg.GetArg("quiet"), alg.GetName()
 
     check(gdal.GetGlobalAlgorithmRegistry()["gdal"])
+
+
+###############################################################################
+# check that we don't accidentally introduce new argument names that are
+# similar to existing ones
+
+
+def test_gdalalgorithm_arg_names():
+
+    arg_names = {}
+
+    def collect_arg_names(alg, name_root=""):
+        alg_name = f"{name_root} {alg.GetName()}" if name_root else alg.GetName()
+
+        usage = json.loads(alg.GetUsageAsJSON())
+
+        for arg in usage["input_arguments"] + usage["output_arguments"]:
+            if arg["name"] not in arg_names:
+                arg_names[arg["name"]] = []
+            arg_names[arg["name"]].append(alg_name)
+
+        if alg.HasSubAlgorithms():
+            for subalg in alg.GetSubAlgorithmNames():
+                collect_arg_names(alg[subalg], alg_name)
+
+    root = gdal.GetGlobalAlgorithmRegistry()["gdal"]
+    collect_arg_names(root)
+
+    with open("reference_arg_names.txt") as argfile:
+        expected_arg_names = set([arg.strip() for arg in argfile])
+
+    errors = []
+
+    for arg_name, algorithms in arg_names.items():
+        if arg_name not in expected_arg_names:
+            errors.append(f"--{arg_name} (used by {', '.join(algorithms)})")
+
+    assert errors == []
