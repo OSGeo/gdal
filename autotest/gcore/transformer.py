@@ -453,7 +453,8 @@ def test_transformer_7():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_8(tmp_vsimem):
+@pytest.mark.parametrize("method", ["near", "bilinear", "cubic"])
+def test_transformer_8(tmp_vsimem, method):
 
     ds = gdal.Open("data/rpc.vrt")
 
@@ -469,28 +470,27 @@ def test_transformer_8(tmp_vsimem):
     ds_dem.GetRasterBand(1).Fill(-32768)
     ds_dem = None
 
-    for method in ["near", "bilinear", "cubic"]:
-        tr = gdal.Transformer(
-            ds,
-            None,
-            [
-                "METHOD=RPC",
-                f"RPC_DEM={tmp_vsimem}/dem.tif",
-                "RPC_DEMINTERPOLATION=%s" % method,
-            ],
-        )
+    tr = gdal.Transformer(
+        ds,
+        None,
+        [
+            "METHOD=RPC",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
+            "RPC_DEMINTERPOLATION=%s" % method,
+        ],
+    )
 
-        success, pnt = tr.TransformPoint(0, 20, 10, 0)
+    success, pnt = tr.TransformPoint(0, 20, 10, 0)
 
-        if success:
-            print(success, pnt)
-            pytest.fail("got wrong forward transform result.")
+    if success:
+        print(success, pnt)
+        pytest.fail("got wrong forward transform result.")
 
-        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
-        if success:
-            print(success, pnt)
-            pytest.fail("got wrong reverse transform result.")
+    if success:
+        print(success, pnt)
+        pytest.fail("got wrong reverse transform result.")
 
 
 ###############################################################################
@@ -501,7 +501,8 @@ def test_transformer_8(tmp_vsimem):
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_9(tmp_vsimem):
+@pytest.mark.parametrize("method", ["near", "bilinear", "cubic"])
+def test_transformer_9(tmp_vsimem, method):
 
     ds = gdal.Open("data/rpc.vrt")
 
@@ -529,26 +530,25 @@ def test_transformer_9(tmp_vsimem):
     ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
     ds_dem = None
 
-    for method in ["near", "bilinear", "cubic"]:
-        tr = gdal.Transformer(
-            ds,
-            None,
-            [
-                "METHOD=RPC",
-                f"RPC_DEM={tmp_vsimem}/dem.tif",
-                "RPC_DEMINTERPOLATION=%s" % method,
-            ],
-        )
+    tr = gdal.Transformer(
+        ds,
+        None,
+        [
+            "METHOD=RPC",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
+            "RPC_DEMINTERPOLATION=%s" % method,
+        ],
+    )
 
-        points = [(125.64828521533849, 39.869345204440144)] * 10
-        pnt, success = tr.TransformPoints(1, points)
-        assert success[0], method
-        pnt_optimized = pnt[0]
+    points = [(125.64828521533849, 39.869345204440144)] * 10
+    pnt, success = tr.TransformPoints(1, points)
+    assert success[0], method
+    pnt_optimized = pnt[0]
 
-        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
-        assert success, method
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    assert success, method
 
-        assert pnt == pnt_optimized, method
+    assert pnt == pnt_optimized, method
 
 
 ###############################################################################
