@@ -4215,26 +4215,22 @@ BuildGetArrowStreamOptions(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
 
     auto poSrcDS = poSrcLayer->GetDataset();
     auto poDstDS = poDstLayer->GetDataset();
-    if (poSrcDS && poDstDS)
+    auto poSrcDriver = poSrcDS ? poSrcDS->GetDriver() : nullptr;
+    auto poDstDriver = poDstDS ? poDstDS->GetDriver() : nullptr;
+
+    const auto IsArrowNativeDriver = [](GDALDriver *poDriver)
     {
-        auto poSrcDriver = poSrcDS->GetDriver();
-        auto poDstDriver = poDstDS->GetDriver();
+        return poDriver && (EQUAL(poDriver->GetDescription(), "ARROW") ||
+                            EQUAL(poDriver->GetDescription(), "PARQUET") ||
+                            EQUAL(poDriver->GetDescription(), "ADBC"));
+    };
 
-        const auto IsArrowNativeDriver = [](GDALDriver *poDriver)
-        {
-            return EQUAL(poDriver->GetDescription(), "ARROW") ||
-                   EQUAL(poDriver->GetDescription(), "PARQUET") ||
-                   EQUAL(poDriver->GetDescription(), "ADBC");
-        };
-
-        if (poSrcDriver && poDstDriver && !IsArrowNativeDriver(poSrcDriver) &&
-            !IsArrowNativeDriver(poDstDriver))
-        {
-            // For non-Arrow-native drivers, request DateTime as string, to
-            // allow mix of timezones
-            aosOptionsGetArrowStream.SetNameValue(GAS_OPT_DATETIME_AS_STRING,
-                                                  "YES");
-        }
+    if (!IsArrowNativeDriver(poSrcDriver) && !IsArrowNativeDriver(poDstDriver))
+    {
+        // For non-Arrow-native drivers, request DateTime as string, to
+        // allow mix of timezones
+        aosOptionsGetArrowStream.SetNameValue(GAS_OPT_DATETIME_AS_STRING,
+                                              "YES");
     }
 
     return aosOptionsGetArrowStream;
