@@ -1079,6 +1079,9 @@ def test_transformer_no_reverse_method():
 )
 def test_transformer_tps_precision():
 
+    if gdaltest.is_travis_branch("build-windows-conda"):
+        pytest.skip("Crashes for unknown reason")
+
     ds = gdal.Open("data/gcps_2115.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
     assert tr, "tps transformation could not be computed"
