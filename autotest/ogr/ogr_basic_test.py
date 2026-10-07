@@ -1478,3 +1478,51 @@ def test_spatial_filter_use_after_dataset_close():
         match=r"in method 'Geometry_ExportToWkt', argument 1 of type 'OGRGeometryShadow \*'",
     ):
         filter_geom.ExportToWkt()
+
+
+def test_relationship_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        ds.AddRelationship(
+            gdal.Relationship(
+                "rel", "origin_table", "dest_table", gdal.GRC_MANY_TO_MANY
+            )
+        )
+        rel = ds.GetRelationship("rel")
+
+    # Make sure ds.__exit__() invalidation has propagated to the relationship
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Relationship_GetName', argument 1 of type 'GDALRelationshipShadow \*'",
+    ):
+        rel.GetName()
+
+
+@pytest.mark.parametrize("include_pct", (False, True))
+def test_dataset_get_next_feature_layer_use_after_dataset_close(include_pct):
+    with gdal.OpenEx("data/poly.shp") as ds:
+        if include_pct:
+            _, lyr, _ = ds.GetNextFeature(include_pct=True)
+        else:
+            _, lyr = ds.GetNextFeature()
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Layer_GetName', argument 1 of type 'OGRLayerShadow \*'",
+    ):
+        lyr.GetName()
+
+
+def test_create_layer_from_geom_field_defn_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        lyr = ds.CreateLayerFromGeomFieldDefn("test", ogr.GeomFieldDefn())
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Layer_GetName', argument 1 of type 'OGRLayerShadow \*'",
+    ):
+        lyr.GetName()
