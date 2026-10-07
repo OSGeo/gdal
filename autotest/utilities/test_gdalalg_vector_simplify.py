@@ -57,7 +57,7 @@ def test_gdalalg_vector_simplify():
     out_lyr.SetAttributeFilter(None)
     assert out_lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
     assert out_lyr.TestCapability(ogr.OLCRandomWrite) == 0
-    assert out_lyr.GetExtent() == (0, 2, 0, 1)
+    assert out_lyr.GetExtent() == (0, 2, 0, 0)
     assert out_lyr.GetFeature(0).GetFID() == 0
     assert out_lyr.GetFeature(-1) is None
 
