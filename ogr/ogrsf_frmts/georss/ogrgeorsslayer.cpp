@@ -971,11 +971,8 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of GeoRSS file failed : %s "
-                     "at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+                     "XML parsing of GeoRSS file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
     } while (!nDone && !bStopParsing && this->nFeatureTabLength == 0);
@@ -1782,12 +1779,9 @@ void OGRGeoRSSLayer::LoadSchema()
         if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "XML parsing of GeoRSS file failed : %s at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(oSchemaParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(oSchemaParser)),
-                static_cast<int>(XML_GetCurrentColumnNumber(oSchemaParser)));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of GeoRSS file failed: %s",
+                     OGRExpatGetParseError(oSchemaParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;

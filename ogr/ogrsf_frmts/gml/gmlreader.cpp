@@ -504,12 +504,8 @@ GMLFeature *GMLReader::NextFeatureExpat()
         {
             // Defer emission of the error message until we have to return
             // nullptr
-            m_osErrorMessage.Printf(
-                "XML parsing of GML file failed : %s "
-                "at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(oParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+            m_osErrorMessage.Printf("XML parsing of GML file failed : %s",
+                                    OGRExpatGetParseError(oParser));
             m_bStopParsing = true;
         }
         if (!m_bStopParsing)
