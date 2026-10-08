@@ -1379,11 +1379,8 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of %s file failed : %s at line %d, column %d",
-                     pszSheetFilename,
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     "XML parsing of %s file failed: %s", pszSheetFilename,
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -1568,11 +1565,8 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE *fpSharedStrings)
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of %s file failed : %s at line %d, column %d",
-                     "sharedStrings.xml",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     "XML parsing of sharedStrings.xml file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -1651,12 +1645,10 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
         nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of %s file failed : %s at line %d, column %d",
-                     "xl/_rels/workbook.xml.rels",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "XML parsing of xl/_rels/workbook.xml.rels file failed: %s",
+                OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -1757,10 +1749,8 @@ void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE *fpWorkbook)
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of %s file failed : %s at line %d, column %d",
-                     "workbook.xml", XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     "XML parsing of workbook.xml file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -1925,10 +1915,8 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE *fpStyles)
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of %s file failed : %s at line %d, column %d",
-                     "styles.xml", XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     "XML parsing of styles.xml file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
