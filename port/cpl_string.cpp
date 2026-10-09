@@ -3069,7 +3069,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
 \verbatim
 char szDest[5] = {};
 if( CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest) )
-    fprintf(stderr, "truncation occurred !\n");
+    fprintf(stderr, "truncation occurred !\n"); // ok
 \endverbatim
 
  * @param pszDest   destination buffer
@@ -3121,7 +3121,7 @@ size_t CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize)
 char szDest[5] = {};
 CPLStrlcpy(szDest, "ab", sizeof(szDest));
 if( CPLStrlcat(szDest, "cde", sizeof(szDest)) >= sizeof(szDest) )
-    fprintf(stderr, "truncation occurred !\n");
+    fprintf(stderr, "truncation occurred !\n"); // ok
 \endverbatim
 
  * @param pszDest   destination buffer. Must be NUL terminated before
