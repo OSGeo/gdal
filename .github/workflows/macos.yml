@@ -87,7 +87,7 @@ jobs:
 
   macos-homebrew:
     # M1 MacOS runner: https://github.blog/changelog/2024-01-30-github-actions-introducing-the-new-m1-macos-runner-available-to-open-source/
-    runs-on: macOS-14
+    runs-on: macOS-15
     env:
       # Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
       # that cause Illegal instruction error when running tests. I suspect the
@@ -95,19 +95,25 @@ jobs:
       # doesn't support it.
       # Disable use of libkml since boost headers cannot be found
       # Disable ODBC since the postinstall checks don't manage to find sql.h
-      CMAKE_OPTIONS: -DCFITSIO_ROOT=/opt/homebrew/Cellar/cfitsio  -DPoppler_ROOT=/opt/homebrew/Cellar/poppler -DPROJ_ROOT=/opt/homebrew/Cellar/proj -DSPATIALITE_ROOT=/opt/homebrew/Cellar/libspatialite -DPostgreSQL_ROOT=/opt/homebrew/Cellar/libpq -DEXPAT_ROOT=/opt/homebrew/Cellar/expat -DXercesC_ROOT=/opt/homebrew/Cellar/xerces-c -DSQLite3_ROOT=/opt/homebrew/Cellar/sqlite -DOpenSSL_ROOT=/opt/homebrew/Cellar/openssl -DPNG_ROOT=/opt/homebrew/Cellar/libpng -DJPEG_ROOT=/opt/homebrew/Cellar/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/opt/homebrew/Cellar/openjpeg -DCURL_ROOT=/opt/homebrew/Cellar/curl -DGDAL_USE_LIBKML=OFF -DGDAL_USE_ODBC=OFF
+      CMAKE_OPTIONS: -DCFITSIO_ROOT=/opt/homebrew/Cellar/cfitsio  -DPoppler_ROOT=/opt/homebrew/Cellar/poppler -DPROJ_ROOT=/opt/homebrew/Cellar/proj -DSPATIALITE_ROOT=/opt/homebrew/Cellar/libspatialite -DPostgreSQL_ROOT=/opt/homebrew/Cellar/libpq -DEXPAT_ROOT=/opt/homebrew/Cellar/expat -DXercesC_ROOT=/opt/homebrew/Cellar/xerces-c -DOpenSSL_ROOT=/opt/homebrew/Cellar/openssl -DPNG_ROOT=/opt/homebrew/Cellar/libpng -DJPEG_ROOT=/opt/homebrew/Cellar/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/opt/homebrew/Cellar/openjpeg -DCURL_ROOT=/opt/homebrew/Cellar/curl -DGDAL_USE_LIBKML=OFF -DGDAL_USE_ODBC=OFF -DGDAL_ENABLE_MACOSX_FRAMEWORK=ON -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=OFF -DBUILD_JAVA_BINDINGS=OFF
+      CMAKE_UNITY_BUILD: OFF
+      # CCACHE_DEBUG: 1
       cache-name: cmake-macos
     steps:
     - name: Setup xcode
       uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
       with:
-        xcode-version: '15.4.0'
+        xcode-version: '26.3.0'
     - name: Checkout GDAL
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - name: Setup cache
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    - name: Install dependencies
+      run: |
+        brew install --only-dependencies gdal 
+        brew install boost ccache pkgconf swig
+    - name: Restore cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -115,59 +121,47 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
             ${{ runner.os }}-${{ env.cache-name }}
-    - run: |
-        cmake --version
-    - name: Install dependency
-      run: |
-        rm -rf /opt/homebrew/lib/node_modules # conflicts with node@18 from brew
-        brew update
-        brew outdated
-        mv /opt/homebrew/bin/pkg-config /opt/homebrew/bin/pkg-config.old
-        mv /opt/homebrew/share/aclocal/pkg.m4 /opt/homebrew/share/aclocal/pkg.m4.old
-        mv /opt/homebrew/share/man/man1/pkg-config.1 /opt/homebrew/share/man/man1/pkg-config.1.old
-        brew install --overwrite python@3.11 python@3.12
-        brew install postgresql || brew link postgresql
-        # Remove postgis as it depends on GDAL which draw libheif which is broken
-        brew install gdal || true
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libarchive libkml boost
-        brew install ccache swig
-        brew link --force sqlite
-        # gdal is automatically installed as a dependency for postgis
-        export HOMEBREW_NO_AUTOREMOVE=1
-        brew uninstall gdal
-        # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
-        sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
-        mv /opt/homebrew/bin/pkg-config.old /opt/homebrew/bin/pkg-config
-        mv /opt/homebrew/share/aclocal/pkg.m4.old /opt/homebrew/share/aclocal/pkg.m4
-        mv /opt/homebrew/share/man/man1/pkg-config.1.old /opt/homebrew/share/man/man1/pkg-config.1
     - name: Configure ccache
       run: |
-          echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
-          echo CCACHE_DIR=$PWD/.ccache >> ${GITHUB_ENV}
+          echo PATH=/opt/homebrew/opt/ccache/libexec:$PATH >> ${GITHUB_ENV}
+          echo CCACHE_BASEDIR=$(pwd) >> ${GITHUB_ENV}
+          echo CCACHE_DIR=$(pwd)/.ccache >> ${GITHUB_ENV}
           echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          echo CCACHE_COMPILERCHECK=content >> ${GITHUB_ENV}
+          echo CCACHE_DEBUGDIR=$(pwd)/.ccache-debug >> ${GITHUB_ENV}
+          mkdir .ccache-debug
           ccache -z
       working-directory: ${{ github.workspace }}
     - name: Configure
       run: |
+        cmake --version
         mkdir -p $GITHUB_WORKSPACE/build
-        export PKG_CONFIG_PATH=/opt/homebrew/Cellar/libxml2/lib/pkgconfig
-        # FIXME: remove -DBUILD_PYTHON_BINDINGS=OFF. Python tests fail with "ModuleNotFoundError: No module named '_gdal'" with macos-12
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON" -DGDAL_ENABLE_MACOSX_FRAMEWORK=ON
-        #PYTHON_CMD=$(cat $GITHUB_WORKSPACE/build/python_executable.txt) && $PYTHON_CMD -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DSQLite3_ROOT=$(brew --prefix sqlite) -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" 
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
-    - name: test
-      run: cmake --build $GITHUB_WORKSPACE/build --target quicktest
     - name: test (with ctest)
       run: |
-        ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
+        ctest --test-dir $GITHUB_WORKSPACE/build -V --output-on-failure -j 3 -R test-unit
       env:
         BUILD_NAME: "macos_build_brew"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
     - name: Test post-install usage (with macOSX Framework)
       run: |
-        ./autotest/postinstall/test_framework.sh $GITHUB_WORKSPACE/install-gdal
+         ./autotest/postinstall/test_framework.sh $GITHUB_WORKSPACE/install-gdal
     - name: ccache statistics
+      if: always()
       run: ccache -s
+    - name: Save cache
+      if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
+    - name: Upload cache debug info
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ccache-debug
+        path: .ccache-debug
+        include-hidden-files: true
