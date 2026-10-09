@@ -3042,6 +3042,7 @@ sig
 Sightlines
 signedness
 Simmon
+Simularia
 sinc
 sizeBytes
 sizeKnown
