@@ -3539,7 +3539,7 @@ def test_ogr_shape_82(shape_ds):
         "podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj "
         "furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska "
         "obuvi. Smolenskaja oblast, p. Monastyrshhina, ulica Sovetskaja, "
-        "d. 38.	Rabotaet ponedelnik – chetverg s 9.00 do 18.00, pjatnica s "
+        "d. 38. Rabotaet ponedelnik – chetverg s 9.00 do 18.00, pjatnica s "
         "10.00 do 17.00, vyhodnoj: subbota"
     )
     result_en = (

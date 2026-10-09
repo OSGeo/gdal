@@ -123,7 +123,7 @@ def gdal_polygonize(
                     gdal.Unlink(dst_filename)
 
     # =============================================================================
-    # 	Create output file.
+    # Create output file.
     # =============================================================================
     if dst_ds is None:
         drv = ogr.GetDriverByName(driver_name)

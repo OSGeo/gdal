@@ -96,9 +96,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Detect tabulations
-        run: ./scripts/detect_tabulations.sh
-
       - name: Detect suspicious char digit zero
         run: ./scripts/detect_suspicious_char_digit_zero.sh
 

@@ -122,7 +122,7 @@ def gdal_sieve(
     quiet: bool = False,
 ):
     # =============================================================================
-    # 	Verify we have next gen bindings with the sievefilter method.
+    # Verify we have next gen bindings with the sievefilter method.
     # =============================================================================
     try:
         gdal.SieveFilter

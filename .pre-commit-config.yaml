@@ -98,6 +98,26 @@ repos:
                   autotest/cpp
               )
 
+        -   id: detect-tabs
+            name: Detect tab characters
+            entry: python3 scripts/detect_tabs.py
+            language: python
+            files: CMakeLists.txt|\.(h|hpp|cpp|py|cmake)$
+            exclude: >
+              (?x)^(
+                  cmake/modules/thirdparty/|
+                  frmts/gif/giflib/|
+                  frmts/gtiff/libgeotiff/|
+                  frmts/gtiff/libtiff/|
+                  frmts/grib/degrib/|
+                  frmts/hdf4/hdf-eos/|
+                  frmts/jpeg/libjpeg/|
+                  frmts/pcraster/libcsf/|
+                  ogr/ogrsf_frmts/geojson/libjson/|
+                  ogr/ogrsf_frmts/pmtiles/pmtiles/|
+                  port/cpl_mem_cache.h
+              )
+
     -   repo: https://github.com/sphinx-contrib/sphinx-lint
         rev: v1.0.2
         hooks:
