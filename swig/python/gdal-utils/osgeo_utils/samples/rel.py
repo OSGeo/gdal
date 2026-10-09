@@ -44,13 +44,13 @@ def Usage():
         "  -dx xsize         X and Y dimensions (in meters) of one pixel on the ground"
     )
     print("  -dy ysize         (taken from the geotransform matrix by default)")
-    print("  -r range	       Dynamic range for output image (default 255)")
-    print("  -b band	       Select a band number to convert (default 1)")
-    print("  -ot type	       Data type of the output dataset")
+    print("  -r range          Dynamic range for output image (default 255)")
+    print("  -b band           Select a band number to convert (default 1)")
+    print("  -ot type          Data type of the output dataset")
     print("                    (Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/")
     print("                     CInt16/CInt32/CFloat32/CFloat64, default is Byte)")
-    print("  infile	       Name of the input file")
-    print("  outfile	       Name of the output file")
+    print("  infile            Name of the input file")
+    print("  outfile           Name of the output file")
     print("")
     return 2
 
