@@ -17,6 +17,66 @@ repos:
                   autotest/gdrivers/data/rst
               )
 
+        -   id: detect-printf
+            name: Check C/C++ files for printf statements
+            entry: python3 scripts/detect_printf.py " printf"
+            language: python
+            files: \.(c|h|cpp|hpp)$
+            exclude: >
+              (?x)^(
+                  alg/internal_libqhull/|
+                  apps/|
+                  autotest/|
+                  ogr/generate_encoding|
+                  ogr/ogrsf_frmts/dgn/dgndump.cpp|
+                  ogr/ogrsf_frmts/ntf/ntfdump.cpp|
+                  ogr/ogrsf_frmts/oci/fastload.cpp|
+                  ogr/ogrsf_frmts/oci/ocitest.cpp|
+                  ogr/ogrsf_frmts/ods/testparser.cpp|
+                  ogr/ogrsf_frmts/osm/osm2osm.cpp|
+                  ogr/ogrsf_frmts/s57/s57dump.cpp|
+                  ogr/ogrsf_frmts/sqlite/test_load_virtual_ogr.c|
+                  ogr/test_geo_utils|
+                  frmts/aigrid/aitest.c|
+                  frmts/ceos/ceostest.c|
+                  frmts/envisat/dumpgeo.c|
+                  frmts/envisat/envisat_dump.c|
+                  frmts/grib/degrib|
+                  frmts/gtiff/libtiff/|
+                  frmts/hfa/hfatest|
+                  frmts/iso8211/8211createfromxml.cpp|
+                  frmts/iso8211/8211dump.cpp|
+                  frmts/iso8211/8211view.cpp|
+                  frmts/iso8211/timetest.cpp|
+                  frmts/nitf/nitfdump.c|
+                  frmts/png/libpng/|
+                  frmts/zlib/|
+                  perftests/|
+                  third_party/
+              )
+
+        -   id: detect-fprintf
+            name: Check C/C++ files for printf statements
+            entry: python3 scripts/detect_printf.py "fprintf(stderr"
+            language: python
+            files: \.(cpp)$
+            exclude: >
+              (?x)^(
+                  apps/|
+                  autotest/|
+                  frmts/grib/degrib|
+                  frmts/iso8211/8211createfromxml.cpp|
+                  frmts/iso8211/8211dump.cpp|
+                  frmts/iso8211/8211view.cpp|
+                  fuzzers/|
+                  perftests/|
+                  port/cpl_error.cpp|
+                  port/cpl_multiproc.cpp|
+                  port/vsipreload.cpp|
+                  swig/|
+                  third_party/
+              )
+
         -   id: detect-missing-includes
             name: Check C++ files for missing includes
             entry: python3 scripts/detect_missing_includes.py
