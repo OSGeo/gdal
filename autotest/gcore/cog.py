@@ -2310,3 +2310,25 @@ def test_cog_create_float32(tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "tmp.tif")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
     assert ds.GetRasterBand(1).ComputeRasterMinMax(False) == (1.5, 1.5)
+
+
+###############################################################################
+
+
+def test_cog_webmercator_near_longitude_zero(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src.tif", 2048, 2048) as ds:
+        ds.SetSpatialRef(osr.SpatialReference(epsg=3857))
+        ds.SetGeoTransform(
+            [0, 9.554628535646771, 0, 6339992.874085659, 0, -9.554628535646771]
+        )
+        ds.BuildOverviews("NONE", [2])
+
+    src_ds = gdal.Open(tmp_vsimem / "src.tif")
+    gdal.GetDriverByName("COG").CreateCopy(
+        tmp_vsimem / "out.tif",
+        src_ds,
+        options=["TILING_SCHEME=GoogleMapsCompatible", "OVERVIEWS=FORCE_USE_EXISTING"],
+    )
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
