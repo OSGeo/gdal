@@ -5199,3 +5199,83 @@ def test_ogr_parquet_read_gh_14610():
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["OGR_GEOMETRY"])
     assert lyr.GetNextFeature()
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/15119
+# Case where non-consecutive row groups are selected and Arrow stream is read
+# with post-filtering on FID
+
+
+def test_ogr_parquet_read_gh_15119(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_parquet_read_gh_15119.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        lyr = ds.CreateLayer(
+            "test",
+            srs=srs,
+            geom_type=ogr.wkbPoint,
+            options=["ROW_GROUP_SIZE=5"],
+        )
+        lyr.CreateField(ogr.FieldDefn("MY_ID", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+
+        my_id = 0
+
+        # Row group 0: x in [0, 4] -> FIDs 0..4
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
+            lyr.CreateFeature(f)
+
+        # Row group 1: x in [100, 104] -> FIDs 5..9
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({100 + i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
+            lyr.CreateFeature(f)
+
+        # Row group 2: x in [0, 4] -> FIDs 10..14
+        for i in range(5):
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT ({i} 0)"))
+            f.SetField("MY_ID", my_id)
+            my_id += 1
+            lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        # Spatial filter selects row groups 0 and 2 (x in [0, 4]), and skips
+        # row group 1 (x in [100, 104]). The attribute filter only rejects
+        # part of row group 2 (FIDs 13, 14), so it cannot be resolved purely
+        # from row-group statistics and requires row-level post-filtering,
+        # which is what exercises the fixed FID computation.
+        lyr.SetSpatialFilterRect(-1, -1, 5, 1)
+        lyr.SetAttributeFilter("FID <= 12")
+
+        # GetNextFeature() returns features with FIDs 0..4 and 10..12
+        features = [(f.GetFID(), f["MY_ID"]) for f in lyr]
+        assert features == [
+            (0, 0),
+            (1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 4),
+            (10, 10),
+            (11, 11),
+            (12, 12),
+        ]
+
+        # GetArrowStream() with post-filtering across the skipped row group
+        # must return the same set of features. Without the fix, the FID
+        # used to evaluate the attribute filter is desynchronized once the
+        # remapping jump occurs within a single Arrow batch, which wrongly
+        # keeps FIDs 13 and 14.
+        lyr.ResetReading()
+        stream = lyr.GetArrowStreamAsNumPy()
+        my_ids = []
+        for batch in stream:
+            my_ids.extend(batch["MY_ID"].tolist())
+        assert my_ids == [0, 1, 2, 3, 4, 10, 11, 12]
