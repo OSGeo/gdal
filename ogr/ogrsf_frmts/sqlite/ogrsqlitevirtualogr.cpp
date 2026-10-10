@@ -2982,11 +2982,12 @@ OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
 {
     if (sqlite3_api == nullptr)
     {
-        // Unlikely to happen. One theoretical possibility would be that:
-        // - thread A calls OGR2SQLITE_Register(), which calls sqlite3_auto_extension((void (*)(void))OGR2SQLITE_static_register)
-        // - thread B calls sqlite3_reset_auto_extension()
-        // - thread A opens a sqlite3 handle (which normally would have caused OGR2SQLITE_static_register() to be called, and setting the sqlite3_api static variable, without prior B intervention.
-        // - thread A calls us (OGR2SQLITE_Setup()) with sqlite3_api still set to its initial nullptr value
+        // This used to happen when spatialite_cleanup_ex() called
+        // sqlite3_reset_auto_extension(). We now hold a mutex to prevent
+        // that, but user code or another library can still do it.
+        // If it becomes a problem again, try adding a call to
+        // SQLITE_EXTENSION_INIT2(&OGRSQLITE_static_routines) here, like in
+        // https://github.com/OSGeo/gdal/pull/15257.
         CPLError(CE_Failure, CPLE_AppDefined,
                  "OGR2SQLITE_Setup() failed due to sqlite3_api == nullptr");
         return nullptr;
