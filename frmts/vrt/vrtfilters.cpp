@@ -588,8 +588,11 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                             const float *pfData = pafSrcData + iIndex +
                                                   iII * nIStride +
                                                   iJJ * nJStride;
-                            if (bHasNoData &&
-                                (*pfData == fNoData || std::isnan(*pfData)))
+                            if (std::isnan(*pfData))
+                            {
+                                continue;
+                            }
+                            if (bHasNoData && *pfData == fNoData)
                             {
                                 continue;
                             }
@@ -638,12 +641,15 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                         }
                     }
 
+                    const float fEmptyResult =
+                        bHasNoData ? fNoData
+                                   : std::numeric_limits<float>::quiet_NaN();
+
                     float fResult;
                     if (bMax || bMin || bMode)
                     {
-                        fResult = nValidCount  ? static_cast<float>(dfRes)
-                                  : bHasNoData ? fNoData
-                                               : 0.0f;
+                        fResult = nValidCount ? static_cast<float>(dfRes)
+                                              : fEmptyResult;
                     }
                     else if (bStdDev)
                     {
@@ -651,8 +657,7 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                             nValidCount
                                 ? static_cast<float>(sqrt(
                                       dfM2 / static_cast<double>(nValidCount)))
-                            : bHasNoData ? fNoData
-                                         : 0.0f;
+                                : fEmptyResult;
                     }
                     else if (bMedian)
                     {
@@ -683,12 +688,12 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                             fResult = static_cast<float>(dfRes);
                         }
                         else
-                            fResult = bHasNoData ? fNoData : 0.0f;
+                            fResult = fEmptyResult;
                     }
                     else if (!m_bNormalized)
                         fResult = static_cast<float>(dfSum);
                     else if (nValidCount == 0 || dfKernSum == 0.0)
-                        fResult = bHasNoData ? fNoData : 0.0f;
+                        fResult = fEmptyResult;
                     else
                         fResult = static_cast<float>(dfSum / dfKernSum);
                     pafDstData[iIndex] = fResult;
