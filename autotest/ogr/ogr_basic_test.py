@@ -1236,6 +1236,37 @@ def test_geom_use_after_feature_delete_2(arg_type):
         geom.ExportToWkt()
 
 
+def test_subgeom_use_after_feature_delete():
+
+    feat = ogr.Feature(ogr.FeatureDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))"))
+    poly = feat.GetGeometryRef().GetGeometryRef(0)
+    ring = poly.GetGeometryRef(0)
+
+    del feat
+
+    with pytest.raises(Exception):
+        poly.ExportToWkt()
+
+    with pytest.raises(Exception):
+        ring.GetPointCount()
+
+
+def test_subgeom_use_after_geom_destroy():
+
+    geom = ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))")
+    poly = geom.GetGeometryRef(0)
+    ring = poly.GetGeometryRef(0)
+
+    geom.Destroy()
+
+    with pytest.raises(Exception):
+        poly.ExportToWkt()
+
+    with pytest.raises(Exception):
+        ring.GetPointCount()
+
+
 def test_geom_use_after_transfer_to_feature_1(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_vsimem / "test.shp")
