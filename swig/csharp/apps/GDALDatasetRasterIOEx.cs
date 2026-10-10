@@ -46,16 +46,15 @@ class GDALReadDirect
         System.Environment.Exit(-1);
     }
 
-    public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
+    public static bool ProgressFunc(double Complete, string Message, TestData Data)
     {
-        Console.Write("Processing ... " + Complete * 100 + "% Completed.");
-        if (Message != IntPtr.Zero)
-            Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
-        if (Data != IntPtr.Zero)
-            Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringUni(Data));
+        Console.Write("\e[G\e[KProcessing ... " + Complete * 100 + "% Completed.");
+        if (Message != null)
+            Console.Write(" Message:" + Message);
+        if (Data != null)
+            Console.Write(" Data1:" + Data.Text1 + " Data2:" + Data.Text2);
 
-        Console.WriteLine("");
-        return 1;
+        return true;
     }
 
     private static RIOResampleAlg resampleAlg = RIOResampleAlg.GRIORA_NearestNeighbour;
@@ -291,21 +290,12 @@ class GDALReadDirect
 
             using (RasterIOExtraArg arg = new RasterIOExtraArg())
             {
-                GCHandle handle = GCHandle.Alloc("Test data", GCHandleType.Pinned);
-                try
-                {
-                    arg.nVersion = argVersion;
-                    arg.eResampleAlg = resampleAlg;
-                    arg.pfnProgress = new Gdal.GDALProgressFuncDelegate(ProgressFunc);
-                    arg.pProgressData = handle.AddrOfPinnedObject();  // or IntPtr.Zero if not data to be added;
-                    arg.bFloatingPointWindowValidity = 0;
-                    ds.ReadRaster(xOff, yOff, width, height, buf, imageWidth, imageHeight, dataType,
-                        channelCount, bandMap, pixelSpace, stride, 1, arg);
-                }
-                finally
-                {
-                    handle.Free();
-                }
+                arg.nVersion = argVersion;
+                arg.eResampleAlg = resampleAlg;
+                arg.SetProgressDelegate(ProgressFunc, new TestData("First Message", "Second Message"));
+                arg.bFloatingPointWindowValidity = 0;
+                ds.ReadRaster(xOff, yOff, width, height, buf, imageWidth, imageHeight, dataType,
+                    channelCount, bandMap, pixelSpace, stride, 1, arg);
             }
         }
         finally
@@ -314,6 +304,8 @@ class GDALReadDirect
         }
 
         bitmap.Save(filename);
-        ct.Dispose();
+        ct?.Dispose();
     }
 }
+
+record TestData(string Text1, string Text2);

@@ -14,6 +14,7 @@
  *****************************************************************************/
 
 using System;
+using System.Linq;
 using System.Globalization;
 
 using OSGeo.GDAL;
@@ -94,21 +95,54 @@ class GDALWrite
 
                 byte[] buffers = new byte[w * h * 3];
 
-                for (int i = 0; i < w; i++)
+                for (int y = 0; y < h; y++)
                 {
-                    for (int j = 0; j < h; j++)
+                    for (int x = 0; x < w; x++)
                     {
-                        buffers[(i * w + j)] = (byte)(256 - i * 256 / w);
-                        buffers[w * h + (i * w + j)] = 0;
-                        buffers[2 * w * h + (i * w + j)] = (byte)(i * 256 / w);
+                        //red
+                        buffers[(y * w + x)] = ToByte(256 * x * (h - y) / (w * h));
+                        //green
+                        buffers[w * h + (y * w + x)] = ToByte(256 - 256 * (w - x) * y / (w * h));
+                        //blue
+                        buffers[2 * w * h + (y * w + x)] = ToByte(Random.Shared.Next(0, 256));
                     }
                 }
 
-                int[] iBandMap = { 1, 2, 3 };
-                ds.WriteRaster(0, 0, w, h, buffers, w, h, 3, iBandMap, 0, 0, 0);
-
+                ds.WriteRaster(0, 0, w, h, buffers, w, h, 3);
                 ds.FlushCache();
+
+                for (int i = 1; i <= ds.RasterCount; i++)
+                {
+                    using var band = ds.GetRasterBand(i);
+                    Console.WriteLine($"Band {i} Histogram (0   ->  255)");
+                    Console.WriteLine($"================================");
+                    DrawHistogram(band);
+                    Console.WriteLine();
+                }
             }
+        }
+    }
+
+    private static byte ToByte(double value, int min = byte.MinValue, int max = byte.MaxValue)
+        => value < min ? (byte)min : value > max ? (byte)max : (byte)value;
+
+    private static void DrawHistogram(Band band)
+    {
+        const int height = 22;
+        const int width = 32;
+        const char block = '█';
+        int[] histogram = new int[width];
+        band.GetHistogram(histogram: histogram, approx_ok: false);
+
+        double value = histogram.Max();
+        double vStep = value / height;
+        for (int y = 0; y < height; y++, value -= vStep)
+        {
+            for (int x = 0; x < histogram.Length; x++)
+            {
+                Console.Write(histogram[x] >= value ? block : ' ');
+            }
+            Console.WriteLine();
         }
     }
 }
