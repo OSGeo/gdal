@@ -102,7 +102,7 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
             EQUAL(pszCap, OLCZGeometries) ||
             (EQUAL(pszCap, OLCFastFeatureCount) && !m_opts.m_skip &&
              !m_poAttrQuery && !m_poFilterGeom) ||
-            EQUAL(pszCap, OLCFastGetExtent) || EQUAL(pszCap, OLCStringsAsUTF8))
+            EQUAL(pszCap, OLCStringsAsUTF8))
         {
             return m_srcLayer.TestCapability(pszCap);
         }

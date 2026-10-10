@@ -68,12 +68,6 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
-                      bool bForce) override
-    {
-        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
-    }
-
     OGRFeature *GetFeature(GIntBig nFID) override
     {
         auto poSrcFeature =
@@ -87,7 +81,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
     {
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
-            EQUAL(pszCap, OLCZGeometries) || EQUAL(pszCap, OLCFastGetExtent) ||
+            EQUAL(pszCap, OLCZGeometries) ||
             (EQUAL(pszCap, OLCFastFeatureCount) && !m_poAttrQuery &&
              !m_poFilterGeom) ||
             EQUAL(pszCap, OLCStringsAsUTF8))

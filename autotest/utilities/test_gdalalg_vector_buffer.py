@@ -107,3 +107,28 @@ def test_gdalalg_vector_buffer(input_wkt, options, output_wkt):
     assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef() is None
+
+
+def test_gdalalg_vector_buffer_extent():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+
+    for wkt in ("POINT (0 0)", "POINT (10 0)"):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+        src_lyr.CreateFeature(f)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["distance"] = 5
+    alg["endcap-style"] = "square"
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+    assert out_lyr.GetExtent() == (-5, 15, -5, 5)
