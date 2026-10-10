@@ -81,7 +81,8 @@ MAIN_START(argc, argv)
     int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);
-    GDALClose(hOutDS);
+    if (GDALClose(hOutDS) != CE_None)
+        nRetCode = 1;
     GDALGridOptionsFree(psOptions);
 
     OGRCleanupAll();

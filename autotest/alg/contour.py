@@ -734,3 +734,52 @@ def test_contour_polygonize_sawtooth_ring():
 
     total = sum(f.GetGeometryRef().GetArea() for f in (below, above))
     assert total == pytest.approx(width * height, rel=0.02)
+
+
+###############################################################################
+# Test that a failure to write contour features is reported through the
+# return code, and not only as a logged error
+
+
+@pytest.mark.require_driver("ESRI Shapefile")
+@pytest.mark.parametrize("polygonize", [False, True])
+def test_contour_write_error(tmp_path, polygonize):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_Float32)
+    src_ds.SetGeoTransform([0, 1, 0, 10, 0, -1])
+    values = [float(10 * (i % 10)) for i in range(100)]
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 10, 10, struct.pack("f" * 100, *values))
+
+    if polygonize:
+        geom_type = ogr.wkbMultiPolygon
+        options = ["LEVEL_INTERVAL=10", "POLYGONIZE=YES", "ELEV_FIELD_MIN=0"]
+    else:
+        geom_type = ogr.wkbLineString
+        options = ["LEVEL_INTERVAL=10", "ELEV_FIELD=0"]
+
+    def create_shapefile(filename):
+        with ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename) as ds:
+            lyr = ds.CreateLayer("contour", geom_type=geom_type)
+            lyr.CreateField(ogr.FieldDefn("elev", ogr.OFTReal))
+
+    # Sanity check: on a writable layer, contours are generated.
+    ok_filename = str(tmp_path / "ok.shp")
+    create_shapefile(ok_filename)
+    with ogr.Open(ok_filename, update=1) as ds:
+        lyr = ds.GetLayer(0)
+        with gdal.ExceptionMgr(useExceptions=False):
+            ret = gdal.ContourGenerateEx(src_ds.GetRasterBand(1), lyr, options=options)
+        assert ret == gdal.CE_None
+        assert lyr.GetFeatureCount() > 0
+
+    # On a read-only layer, every CreateFeature() fails. With exceptions
+    # enabled the logged errors are already turned into an exception, so
+    # disable them to check the return code itself.
+    ko_filename = str(tmp_path / "ko.shp")
+    create_shapefile(ko_filename)
+    with ogr.Open(ko_filename) as ds:
+        lyr = ds.GetLayer(0)
+        with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+            ret = gdal.ContourGenerateEx(src_ds.GetRasterBand(1), lyr, options=options)
+        assert ret != gdal.CE_None
+        assert lyr.GetFeatureCount() == 0
