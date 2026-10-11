@@ -822,14 +822,9 @@ bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
             return false;
 
         case XML_STATUS_ERROR:
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Parsing of LV BAG file failed : %s at line %d, "
-                "column %d",
-                XML_ErrorString(XML_GetErrorCode(oParser.get())),
-                static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
-                static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())));
-
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of LV BAG file failed: %s",
+                     OGRExpatGetParseError(oParser.get()));
             delete m_poFeature;
             m_poFeature = nullptr;
             return true;

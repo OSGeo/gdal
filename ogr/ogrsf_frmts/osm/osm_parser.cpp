@@ -2606,14 +2606,9 @@ static OSMRetCode XML_ProcessBlock(OSMContext *psCtxt)
 
         if (eErr == XML_STATUS_ERROR)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "XML parsing of OSM file failed : %s "
-                "at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(psCtxt->hXMLParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(psCtxt->hXMLParser)),
-                static_cast<int>(
-                    XML_GetCurrentColumnNumber(psCtxt->hXMLParser)));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of OSM file failed: %s",
+                     OGRExpatGetParseError(psCtxt->hXMLParser));
             psCtxt->bStopParsing = true;
         }
         psCtxt->nWithoutEventCounter++;

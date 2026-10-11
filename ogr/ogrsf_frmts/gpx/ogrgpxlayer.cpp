@@ -1019,11 +1019,8 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         if (XML_Parse(m_oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of GPX file failed : "
-                     "%s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(m_oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(m_oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(m_oParser)));
+                     "XML parsing of GPX file failed: %s",
+                     OGRExpatGetParseError(m_oParser));
             m_bStopParsing = true;
             break;
         }
@@ -1880,13 +1877,9 @@ void OGRGPXLayer::LoadExtensionsSchema()
         if (XML_Parse(m_oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "XML parsing of GPX file failed : "
-                "%s at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(m_oSchemaParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(m_oSchemaParser)),
-                static_cast<int>(XML_GetCurrentColumnNumber(m_oSchemaParser)));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of GPX file failed: %s",
+                     OGRExpatGetParseError(m_oSchemaParser));
             m_bStopParsing = true;
             break;
         }
