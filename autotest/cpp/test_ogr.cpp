@@ -2025,6 +2025,38 @@ TEST_F(test_ogr, OGRGeometry_exportToWkt)
     CPLFree(pszWKT);
 }
 
+// Test that rounding in OGRGeometry::exportToWkt() never turns a non-zero
+// coordinate that fits in the default 15 decimals into 0 (#15317)
+TEST_F(test_ogr, OGRGeometry_exportToWkt_small_values_not_zeroed)
+{
+    const struct
+    {
+        double dfX;
+        const char *pszExpected;
+    } asTests[] = {
+        {1e-15, "POINT (0.000000000000001 1.0)"},
+        {5e-15, "POINT (0.000000000000005 1.0)"},
+        {1e-14, "POINT (0.00000000000001 1.0)"},
+        {-1e-14, "POINT (-0.00000000000001 1.0)"},
+        {1.5e-14, "POINT (0.000000000000015 1.0)"},
+        {9.9e-14, "POINT (0.000000000000099 1.0)"},
+        // Unchanged behavior
+        {1e-13, "POINT (0.0000000000001 1.0)"},
+        {1e-16, "POINT (0.0 1.0)"},
+        {0.12345000000001, "POINT (0.12345 1.0)"},
+    };
+
+    for (const auto &sTest : asTests)
+    {
+        char *pszWKT = nullptr;
+        OGRPoint p(sTest.dfX, 1);
+        p.exportToWkt(&pszWKT);
+        ASSERT_TRUE(pszWKT != nullptr);
+        EXPECT_STREQ(pszWKT, sTest.pszExpected);
+        CPLFree(pszWKT);
+    }
+}
+
 // Test OGRGeometry::clone()
 TEST_F(test_ogr, OGRGeometry_clone)
 {
