@@ -1769,27 +1769,41 @@ bool CPLHasPathTraversal(const char *pszFilename)
 
 bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
 {
+
+    auto isSeparator = [pszFilename](int idx) -> bool
+    { return pszFilename[idx] == '/' || pszFilename[idx] == '\\'; };
+
+    auto countSeparators = [pszFilename, &isSeparator](int idx) -> int
+    {
+        int pos = 0;
+        while (isSeparator(idx + pos))
+            ++pos;
+        return pos;
+    };
+
     size_t nNestLevel = 0;
     int i = 0;
-    if (pszFilename[0] == '.' &&
-        (pszFilename[1] == '/' || pszFilename[1] == '\\'))
-        i += 2;
-    else if (pszFilename[0] == '/' || pszFilename[0] == '\\')
-        ++i;
+
+    // Skip initial separators
+    if (pszFilename[0] == '.' && isSeparator(1))
+    {
+        i += 1 /* the dot */ + countSeparators(1);
+    }
+    else if (const int sepCount = countSeparators(0); sepCount > 0)
+    {
+        i += sepCount;
+    }
+
     for (; pszFilename[i]; ++i)
     {
-        if (pszFilename[i] == '/' || pszFilename[i] == '\\')
+        if (const int sepCount = countSeparators(i); sepCount > 0)
         {
-            if (pszFilename[i + 1] == '/' || pszFilename[i + 1] == '\\')
-            {
-                continue;
-            }
+            i += sepCount - 1;
             if (pszFilename[i + 1] != 0)
                 ++nNestLevel;
         }
         else if (pszFilename[i] == '.' && pszFilename[i + 1] == '.' &&
-                 (pszFilename[i + 2] == '/' || pszFilename[i + 2] == '\\' ||
-                  pszFilename[i + 2] == 0))
+                 (isSeparator(i + 2) || pszFilename[i + 2] == 0))
         {
             if (nNestLevel == 0)
             {
