@@ -1773,7 +1773,7 @@ bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
     auto isSeparator = [pszFilename](int idx) -> bool
     { return pszFilename[idx] == '/' || pszFilename[idx] == '\\'; };
 
-    auto countSeparators = [pszFilename, &isSeparator](int idx) -> int
+    auto countSeparators = [&isSeparator](int idx) -> int
     {
         int pos = 0;
         while (isSeparator(idx + pos))
