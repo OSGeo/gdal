@@ -113,18 +113,26 @@ class GDALRasterAsFeaturesLayer final
         // TODO: Handle Int64, UInt64
         m_ds.GetGeoTransform(m_gt);
 
-        int nBands = m_ds.GetRasterCount();
-        m_bands.resize(nBands);
-        for (int i = 1; i <= nBands; i++)
+        if (options.bands.empty())
         {
-            m_bands[i - 1] = i;
+            const int nBands = m_ds.GetRasterCount();
+            m_bands.resize(nBands);
+            for (int i = 1; i <= nBands; i++)
+            {
+                m_bands[i - 1] = i;
+            }
+        }
+        else
+        {
+            m_bands = std::move(options.bands);
         }
 
         // TODO: Handle per-band NoData values
-        if (nBands > 0)
+        if (!m_bands.empty())
         {
             int hasNoData;
-            double noData = m_ds.GetRasterBand(1)->GetNoDataValue(&hasNoData);
+            double noData =
+                m_ds.GetRasterBand(m_bands[0])->GetNoDataValue(&hasNoData);
             if (hasNoData)
             {
                 m_noData = noData;
