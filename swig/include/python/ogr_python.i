@@ -857,6 +857,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     def _invalidate_geom_refs(self):
         if hasattr(self, '_geom_references'):
             for geom in self._geom_references:
+                geom._invalidate_geom_refs()
                 geom.this = None
 
 %}
@@ -994,8 +995,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %extend OGRGeometryShadow {
 %pythoncode %{
   def Destroy(self):
+    self._invalidate_geom_refs()
     self.__swig_destroy__(self)
     self.thisown = 0
+
+  _add_geom_ref = Feature._add_geom_ref
+  _invalidate_geom_refs = Feature._invalidate_geom_refs
 
   def __str__(self):
     return self.ExportToIsoWkt()
@@ -1025,6 +1030,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %feature("pythonappend") GetGeometryRef %{
     if val is not None:
         val._parent_geom = self
+        self._add_geom_ref(val)
 %}
 
 }
