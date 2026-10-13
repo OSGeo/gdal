@@ -424,8 +424,8 @@ class netCDFVID final
     virtualVIDToVar(int virtualID);  // converts a virtual var ID to a real ID
     netCDFVDimension &
     virtualDIDToDim(int virtualID);  // converts a virtual dim ID to a real ID
-    int nameToVirtualVID(const std::string &name);
-    int nameToVirtualDID(const std::string &name);
+    int nameToVirtualVID(const std::string &name) const;
+    int nameToVirtualDID(const std::string &name) const;
 
     bool virtualVarNameDefined(const std::string &nm)
     {

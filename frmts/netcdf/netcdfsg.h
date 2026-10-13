@@ -161,7 +161,7 @@ class SGeometry_Reader
      * returns a size, indicating the amount of geometries
      * contained in the variable
      */
-    size_t get_geometry_count();
+    size_t get_geometry_count() const;
 
     /* const char* SGeometry_Reader::getContainerName()
      * Returns the container name as a string
@@ -189,7 +189,7 @@ class SGeometry_Reader
      * this point should NOT be explicitly freed.
      *
      */
-    Point &operator[](size_t ind);
+    Point &operator[](size_t ind) const;
 
     /* std::vector<int>& getNodeCoordVars
      * Returns a vector with the node coord vars in X, Y, Z (if present) order
@@ -393,7 +393,7 @@ void inPlaceSerialize_LineString(SGeometry_Reader *ge, int node_count,
 void inPlaceSerialize_PolygonExtOnly(SGeometry_Reader *ge, int node_count,
                                      size_t seek_begin,
                                      std::vector<unsigned char> &buffer);
-void inPlaceSerialize_Polygon(SGeometry_Reader *ge, std::vector<int> &pnc,
+void inPlaceSerialize_Polygon(SGeometry_Reader *ge, const std::vector<int> &pnc,
                               int ring_count, size_t seek_begin,
                               std::vector<unsigned char> &buffer);
 

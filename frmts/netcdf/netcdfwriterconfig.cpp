@@ -13,7 +13,7 @@
 #include "netcdfdataset.h"
 
 bool netCDFWriterConfiguration::SetNameValue(
-    CPLXMLNode *psNode, std::map<CPLString, CPLString> &oMap)
+    const CPLXMLNode *psNode, std::map<CPLString, CPLString> &oMap)
 {
     const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszValue = CPLGetXMLValue(psNode, "value", nullptr);
@@ -104,7 +104,7 @@ bool netCDFWriterConfiguration::Parse(const char *pszFilename)
     return true;
 }
 
-bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
+bool netCDFWriterConfigAttribute::Parse(const CPLXMLNode *psNode)
 {
     const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszValue = CPLGetXMLValue(psNode, "value", nullptr);
@@ -127,7 +127,7 @@ bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
     return true;
 }
 
-bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
+bool netCDFWriterConfigField::Parse(const CPLXMLNode *psNode)
 {
     const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
@@ -171,7 +171,7 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
     return true;
 }
 
-bool netCDFWriterConfigLayer::Parse(CPLXMLNode *psNode)
+bool netCDFWriterConfigLayer::Parse(const CPLXMLNode *psNode)
 {
     const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
