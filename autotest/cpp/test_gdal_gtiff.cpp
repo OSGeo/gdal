@@ -271,4 +271,29 @@ TEST_F(test_gdal_gtiff, image_structure_pam)
     EXPECT_EQ(poDS->GetMetadataItem("foo", "IMAGE_STRUCTURE"), nullptr);
 }
 
+// Test loading GTRasterTypeGeoKey to AREA_OR_POINT metadata item
+TEST_F(test_gdal_gtiff, load_aop_to_metadata)
+{
+    struct File {
+        std::string name;
+        const char* expectedAopValue;
+    };
+
+    std::vector<File> files{
+        { "aop_area_nopam.tif", GDALMD_AOP_AREA },
+        { "aop_area_pam_srs.tif", GDALMD_AOP_AREA },
+        { "aop_point_nopam.tif", GDALMD_AOP_POINT },
+        { "aop_point_pam_srs.tif", GDALMD_AOP_POINT }
+    };
+
+    for (const auto &file : files) {
+        GDALDatasetUniquePtr poDS(GDALDataset::FromHandle(GDALDataset::Open(
+            (data_ + SEP + file.name).c_str())));
+        ASSERT_TRUE(poDS);
+
+        EXPECT_STREQ(poDS->GetMetadataItem(GDALMD_AREA_OR_POINT),
+                     file.expectedAopValue);
+    }
+}
+
 }  // namespace
