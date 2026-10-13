@@ -5570,6 +5570,7 @@ def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
 
             if GDAL_DISABLE_READDIR_ON_OPEN == "EMPTY_DIR":
                 assert rat is None
+                assert "data/gtiff/testrat.tif.vat.dbf" not in ds.GetFileList()
                 return
 
             assert rat
@@ -5626,7 +5627,8 @@ def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
             assert rat
             assert rat.GetColumnCount() == 9
 
-            assert "data/gtiff/testrat.tif.vat.dbf" in ds.GetFileList()
+            if GDAL_DISABLE_READDIR_ON_OPEN == "NO":
+                assert "data/gtiff/testrat.tif.vat.dbf" in ds.GetFileList()
 
 
 ###############################################################################
