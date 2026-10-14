@@ -205,3 +205,26 @@ def test_gdalalg_vector_make_point_no_input_layer(make_point):
 
     with pytest.raises(Exception, match="No input vector layer"):
         make_point.Run()
+
+
+def test_gdalalg_vector_make_point_pipeline_filter():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    src_lyr.CreateField(ogr.FieldDefn("x", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("y", ogr.OFTReal))
+    for i in range(1, 4):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["id"] = i
+        f["x"] = i
+        f["y"] = i
+        src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline="read ! make-point --x x --y y ! filter --bbox 1.5,1.5,2.5,2.5",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert [f["id"] for f in lyr] == [2]
