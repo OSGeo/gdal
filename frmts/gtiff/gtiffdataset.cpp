@@ -1479,7 +1479,7 @@ char **GTiffDataset::GetFileList()
     }
 
     std::string osVATDBF = m_osFilename + ".vat.dbf";
-    if (CPLCheckForFile(&osVATDBF[0], oOvManager.GetSiblingFiles()))
+    if (CPLCheckForFile(&osVATDBF[0], GetSiblingFiles()))
     {
         aosFiles.AddString(osVATDBF.c_str());
     }
