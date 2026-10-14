@@ -11642,3 +11642,53 @@ def test_ogr_gpkg_spatialite_after_create(tmp_vsimem):
     with ds.ExecuteSQL("SELECT ST_Buffer(geom, 1) FROM test") as sql_lyr:
         f = sql_lyr.GetNextFeature()
         assert f.GetGeometryRef() is not None
+
+
+################################################################################
+
+
+def test_feature_count_after_failed_transaction(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "test.gpkg")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
+    # Create a UNIQUE constraint on int_field
+    ds.ExecuteSQL("CREATE UNIQUE INDEX unique_index ON test(int_field)")
+    ds.ExecuteSQL("BEGIN")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    f.SetField("int_field", 1)
+    lyr.CreateFeature(f)
+
+    # Add a feature that violates the UNIQUE constraint
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
+    f.SetField("int_field", 1)  # This violates the UNIQUE constraint
+    n = lyr.GetFeatureCount()
+    assert n == 1, f"Expected feature count 1, got {n}"
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        lyr.CreateFeature(f)
+    n = lyr.GetFeatureCount()
+    assert n == 1, f"Expected feature count 1, got {n}"
+    ds.ExecuteSQL("ROLLBACK")
+
+    # Get count from ogr_gpkg_contents table, which should be 0 after rollback
+    with ds.ExecuteSQL(
+        "SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'test'"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        n = f.GetField(0)
+        assert n == 0, f"Expected feature count 0, got {n}"
+
+    n = lyr.GetFeatureCount()
+    assert n == 0, f"Expected feature count 0, got {n}"
+
+    ds = None
+    lyr = None
+
+    # Re-check the feature count after reopening the dataset
+    ds = ogr.Open(tmp_vsimem / "test.gpkg")
+    lyr = ds.GetLayer(0)
+    n = lyr.GetFeatureCount()
+    assert n == 0, f"Expected feature count 0, got {n}"
