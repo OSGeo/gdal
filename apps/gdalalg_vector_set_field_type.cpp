@@ -190,7 +190,8 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
     {
         if (m_passThrough)
         {
-            apoOutFeatures.push_back(std::move(poSrcFeature));
+            if (PassesFilters(poSrcFeature.get()))
+                apoOutFeatures.push_back(std::move(poSrcFeature));
         }
         else
         {
@@ -212,7 +213,8 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
             else
             {
                 poDstFeature->SetFID(poSrcFeature->GetFID());
-                apoOutFeatures.push_back(std::move(poDstFeature));
+                if (PassesFilters(poDstFeature.get()))
+                    apoOutFeatures.push_back(std::move(poDstFeature));
             }
         }
 
