@@ -1478,9 +1478,8 @@ char **GTiffDataset::GetFileList()
         aosFiles.AddString(m_pszXMLFilename);
     }
 
-    const std::string osVATDBF = m_osFilename + ".vat.dbf";
-    CSLConstList papszSiblingFiles = GetSiblingFiles();
-    if (CSLFindString(papszSiblingFiles, CPLGetFilename(osVATDBF.c_str())) >= 0)
+    std::string osVATDBF = m_osFilename + ".vat.dbf";
+    if (CPLCheckForFile(&osVATDBF[0], oOvManager.GetSiblingFiles()))
     {
         aosFiles.AddString(osVATDBF.c_str());
     }
