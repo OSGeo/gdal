@@ -5565,12 +5565,18 @@ def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
         "GDAL_DISABLE_READDIR_ON_OPEN", GDAL_DISABLE_READDIR_ON_OPEN
     ):
         with gdal.Open("data/gtiff/testrat.tif") as ds:
-            band = ds.GetRasterBand(1)
-            rat = band.GetDefaultRAT()
 
             if GDAL_DISABLE_READDIR_ON_OPEN == "EMPTY_DIR":
-                assert rat is None
+                assert "data/gtiff/testrat.tif.vat.dbf" not in ds.GetFileList()
+                assert ds.GetRasterBand(1).GetDefaultRAT() is None
                 return
+
+            # check that the rat file is present in the file-list even if it has
+            # not been loaded/accessed yet
+            assert "data/gtiff/testrat.tif.vat.dbf" in ds.GetFileList()
+
+            band = ds.GetRasterBand(1)
+            rat = band.GetDefaultRAT()
 
             assert rat
             assert rat.GetColumnCount() == 9

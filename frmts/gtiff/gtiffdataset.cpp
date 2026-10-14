@@ -1478,9 +1478,8 @@ char **GTiffDataset::GetFileList()
         aosFiles.AddString(m_pszXMLFilename);
     }
 
-    const std::string osVATDBF = m_osFilename + ".vat.dbf";
-    VSIStatBufL sStat;
-    if (VSIStatL(osVATDBF.c_str(), &sStat) == 0)
+    std::string osVATDBF = m_osFilename + ".vat.dbf";
+    if (CPLCheckForFile(&osVATDBF[0], GetSiblingFiles()))
     {
         aosFiles.AddString(osVATDBF.c_str());
     }
