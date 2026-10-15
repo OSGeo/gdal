@@ -52,28 +52,31 @@ set _vcver_=%1
 set _clver_=1600
 set _vstoolset_=v100
 
-if "%_vcver_%"=="17.0" (
-	set _clver_=1930
-	set _vstoolset_=v143
+if "%_vcver_%"=="18.0" (
+    set _clver_=1950
+    set _vstoolset_=v145
+) else if "%_vcver_%"=="17.0" (
+    set _clver_=1930
+    set _vstoolset_=v143
 ) else if "%_vcver_%"=="15.0" (
-	set _clver_=1910
-	set _vstoolset_=v141
+    set _clver_=1910
+    set _vstoolset_=v141
 ) else if "%_vcver_%"=="14.0" (
-	set _clver_=1900
-	set _vstoolset_=v140
-) else ( if "%_vcver_%"=="12.0" (
-	set _clver_=1800
-	set _vstoolset_=v120
-) else ( if "%_vcver_%"=="11.0" (
-	set _clver_=1700
-	set _vstoolset_=v110
-) else ( if "%_vcver_%"=="10.0" (
-	set _clver_=1600
-	set _vstoolset_=v100
+    set _clver_=1900
+    set _vstoolset_=v140
+) else if "%_vcver_%"=="12.0" (
+    set _clver_=1800
+    set _vstoolset_=v120
+) else if "%_vcver_%"=="11.0" (
+    set _clver_=1700
+    set _vstoolset_=v110
+) else if "%_vcver_%"=="10.0" (
+    set _clver_=1600
+    set _vstoolset_=v100
 ) else (
     echo Wrong value for parameter 1. See usage:
 	goto :usage
-))))
+)
 
 ::  *********************
 ::  Get Platform
