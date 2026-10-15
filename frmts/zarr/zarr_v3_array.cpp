@@ -384,9 +384,58 @@ bool ZarrV3Array::AllocateWorkingBuffers(
 /*                     ZarrV3Array::LoadBlockData()                     */
 /************************************************************************/
 
+static void ExtractSubArray(const GByte *pabySrc,
+                            const std::vector<size_t> &anSrcStart,
+                            const std::vector<GPtrDiff_t> &anSrcStrideElts,
+                            const std::vector<size_t> &anCount, GByte *pabyDst,
+                            const std::vector<GPtrDiff_t> &anDstStrideElts,
+                            size_t nDTSize);
+
 bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices,
                                 bool &bMissingBlockOut) const
 {
+    // Serial read-modify-write operations must see newer pending shard bytes.
+    // The concurrent overload only reads persisted shards.
+    if (!m_oShardWriteCache.empty())
+    {
+        const size_t nDims = GetDimensionCount();
+        std::vector<uint64_t> anShardIndices(nDims);
+        for (size_t i = 0; i < nDims; ++i)
+            anShardIndices[i] = blockIndices[i] / m_anCountInnerBlockInOuter[i];
+
+        const auto oIt =
+            m_oShardWriteCache.find(BuildChunkFilename(anShardIndices.data()));
+        if (oIt != m_oShardWriteCache.end())
+        {
+            std::vector<size_t> anStart(nDims);
+            std::vector<size_t> anCount(nDims);
+            std::vector<GPtrDiff_t> anSrcStride(nDims);
+            std::vector<GPtrDiff_t> anDstStride(nDims);
+            GPtrDiff_t nSrcStride = 1;
+            GPtrDiff_t nDstStride = 1;
+            for (size_t i = nDims; i > 0;)
+            {
+                --i;
+                anStart[i] = static_cast<size_t>(
+                    (blockIndices[i] % m_anCountInnerBlockInOuter[i]) *
+                    m_anInnerBlockSize[i]);
+                anCount[i] = static_cast<size_t>(m_anInnerBlockSize[i]);
+                anSrcStride[i] = nSrcStride;
+                anDstStride[i] = nDstStride;
+                nSrcStride *= static_cast<GPtrDiff_t>(m_anOuterBlockSize[i]);
+                nDstStride *= static_cast<GPtrDiff_t>(m_anInnerBlockSize[i]);
+            }
+            const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                                       m_aoDtypeElts.back().nativeSize;
+            m_abyRawBlockData.resize(m_nInnerBlockSizeBytes);
+            ExtractSubArray(oIt->second.abyShardBuffer.data(), anStart,
+                            anSrcStride, anCount, m_abyRawBlockData.data(),
+                            anDstStride, nSourceSize);
+            DecodeBlockData(m_abyRawBlockData, m_abyDecodedBlockData);
+            bMissingBlockOut = false;
+            return true;
+        }
+    }
     return LoadBlockData(blockIndices,
                          false,  // use mutex
                          m_poCodecs.get(), m_abyRawBlockData,
@@ -582,6 +631,23 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
         }
     }
 
+    DecodeBlockData(abyRawBlockData, abyDecodedBlockData);
+
+    return true;
+
+#undef m_abyRawBlockData
+#undef m_abyDecodedBlockData
+#undef m_poCodecs
+}
+
+/************************************************************************/
+/*                    ZarrV3Array::DecodeBlockData()                    */
+/************************************************************************/
+
+void ZarrV3Array::DecodeBlockData(
+    const ZarrByteVectorQuickResize &abyRawBlockData,
+    ZarrByteVectorQuickResize &abyDecodedBlockData) const
+{
     if (!abyDecodedBlockData.empty())
     {
         const size_t nSourceSize =
@@ -597,12 +663,6 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
             DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
         }
     }
-
-    return true;
-
-#undef m_abyRawBlockData
-#undef m_abyDecodedBlockData
-#undef m_poCodecs
 }
 
 /************************************************************************/
@@ -628,6 +688,9 @@ bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                       GDALGetNumThreads()))
                 return false;
         }
+        else if (!CheckValidAndErrorOutIfNot() || !FlushDirtyBlock() ||
+                 !FlushShardCache())
+            return false;
     }
     return ZarrArray::IRead(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
@@ -641,7 +704,8 @@ bool ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
                                        const size_t *count,
                                        int nMaxThreads) const
 {
-    if (!CheckValidAndErrorOutIfNot() || !FlushDirtyBlock())
+    if (!CheckValidAndErrorOutIfNot() || !FlushDirtyBlock() ||
+        !FlushShardCache())
         return false;
 
     const size_t nDims = m_aoDims.size();
@@ -1739,8 +1803,10 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
             {
                 m_oChunkCache.clear();
 
-                if (!FlushDirtyBlock())
+                if (!FlushDirtyBlock() || !FlushShardCache())
                     return false;
+
+                m_anCachedBlockIndices.clear();
 
                 CPLDebug("Zarr", "Using %d threads for writing", nThreads);
                 auto poJobQueue = wtp->CreateJobQueue();

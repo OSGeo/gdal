@@ -8475,6 +8475,58 @@ def _create_sharded_array(path, dims, shard, inner, dtype=gdal.GDT_Float32, opts
     return ds, ar
 
 
+@pytest.mark.parametrize(
+    "sharded,existing_chunks,num_threads,followup",
+    [
+        (False, False, "2", "close"),
+        (False, True, "2", "strided_read"),
+        (False, True, "2", "partial_write"),
+        (False, True, None, "partial_write"),
+        (True, False, "2", "close"),
+        (True, True, "2", "strided_read"),
+        (True, True, "2", "partial_write"),
+        (True, True, None, "close"),
+    ],
+)
+def test_zarr_v3_threaded_write_cache_coherence(
+    tmp_path, sharded, existing_chunks, num_threads, followup
+):
+    filename = tmp_path / "out.zarr"
+    options = (
+        ["BLOCKSIZE=8,8", "SHARD_CHUNK_SHAPE=4,4"] if sharded else ["BLOCKSIZE=4,4"]
+    )
+    _write_byte_array(
+        filename,
+        (16, 16),
+        bytes([3] * 256) if existing_chunks else None,
+        options,
+        nodata=0,
+    )
+    expected = bytearray([9] * 256)
+    with gdal.config_option("GDAL_NUM_THREADS", num_threads):
+        with _open_array(filename, update=True) as ar:
+            for value, start in ((7, [1, 1]), (8, [5, 5])):
+                assert (
+                    ar.Write(bytes([value]), array_start_idx=start, count=[1, 1])
+                    == gdal.CE_None
+                )
+            assert ar.Write(expected) == gdal.CE_None
+            if followup == "strided_read":
+                assert ar.Read(
+                    array_start_idx=[4, 4], count=[2, 2], array_step=[2, 2]
+                ) == bytes([9] * 4)
+            elif followup == "partial_write":
+                assert (
+                    ar.Write(bytes([6]), array_start_idx=[5, 4], count=[1, 1])
+                    == gdal.CE_None
+                )
+                expected[5 * 16 + 4] = 6
+            ar = None
+
+    with _open_array(filename) as ar:
+        assert ar.Read() == expected
+
+
 @pytest.mark.parametrize("compress", ["NONE", "ZSTD"])
 def test_zarr_write_sharded(tmp_path, compress):
     """Write a sharded Zarr v3 array and verify round-trip."""
@@ -8599,6 +8651,124 @@ def test_zarr_write_sharded_read_modify_write(tmp_path):
     assert got_orig == [
         float(r * ncols + c) for r in range(inner_y) for c in range(inner_x)
     ]
+
+
+@pytest.mark.parametrize(
+    "existing_shards,advise_read,num_threads,step",
+    [
+        (False, False, 1, 1),
+        (False, True, 2, 1),
+        (True, False, 2, 1),
+        (True, True, 1, 1),
+        (False, False, 2, 2),
+        (True, False, 1, 2),
+        (False, True, 2, -1),
+        (True, True, 2, -1),
+    ],
+)
+def test_zarr_write_sharded_read_same_handle(
+    tmp_path, existing_shards, advise_read, num_threads, step
+):
+    filename = tmp_path / "out.zarr"
+    _write_byte_array(
+        filename,
+        (32, 32),
+        bytes([3] * 1024) if existing_shards else None,
+        ["BLOCKSIZE=16,16", "SHARD_CHUNK_SHAPE=8,8"],
+        nodata=0,
+    )
+    expected = bytearray([3 if existing_shards else 0] * 1024)
+    indices, read_args = _strided_read_args(step, 32)
+
+    def strided(data):
+        return bytes(data[y * 32 + x] for y in indices for x in indices)
+
+    with gdal.config_option("GDAL_NUM_THREADS", str(num_threads)):
+        with _open_array(filename, update=True) as ar:
+            assert ar.Read(**read_args) == strided(expected)
+            for values in (bytes([7] * 49), bytes(range(1, 50)), bytes([11] * 49)):
+                for start in (1, 17):
+                    assert (
+                        ar.Write(values, array_start_idx=[start, start], count=[7, 7])
+                        == gdal.CE_None
+                    )
+                    for y in range(7):
+                        offset = (start + y) * 32 + start
+                        expected[offset : offset + 7] = values[y * 7 : y * 7 + 7]
+                if advise_read:
+                    assert (
+                        ar.AdviseRead(options=[f"NUM_THREADS={num_threads}"])
+                        == gdal.CE_None
+                    )
+                assert ar.Read(**read_args) == strided(expected)
+            ar = None
+
+    with _open_array(filename) as ar:
+        assert ar.Read() == expected
+
+
+@pytest.mark.parametrize(
+    "num_threads,step,operation",
+    [
+        (threads, step, operation)
+        for threads in (None, "2")
+        for step, operation in (
+            (None, "read"),
+            (None, "advise"),
+            (2, "read"),
+            (-1, "read"),
+        )
+    ]
+    + [("2", None, "write")],
+)
+def test_zarr_write_sharded_read_flush_failure(tmp_path, num_threads, step, operation):
+    filename = tmp_path / "out.zarr"
+    _write_byte_array(
+        filename,
+        (8, 8),
+        bytes([3] * 64),
+        ["BLOCKSIZE=4,4", "SHARD_CHUNK_SHAPE=2,2"],
+        nodata=0,
+    )
+    shard = filename / "data/c/0/0"
+    mode = shard.stat().st_mode
+    advise_options = [f"NUM_THREADS={num_threads}"] if num_threads else []
+    read_options = _strided_read_args(step or 1, 8)[1]
+    with gdal.config_option("GDAL_NUM_THREADS", num_threads):
+        with _open_array(filename, update=True) as ar:
+            try:
+                shard.chmod(0o444)
+                if os.access(shard, os.W_OK):
+                    pytest.skip("cannot make shard read-only")
+                assert (
+                    ar.Write(bytes([7]), array_start_idx=[2, 2], count=[1, 1])
+                    == gdal.CE_None
+                )
+                with gdaltest.error_raised(
+                    gdal.CE_Failure, match="Cannot create shard file"
+                ):
+                    if operation == "advise":
+                        assert ar.AdviseRead(options=advise_options) == gdal.CE_Failure
+                    elif operation == "write":
+                        assert ar.Write(bytes([9] * 64)) == gdal.CE_Failure
+                    else:
+                        assert ar.Read(**read_options) is None
+            finally:
+                shard.chmod(mode)
+            expected = bytearray([3] * 64)
+            if operation == "write":
+                expected[:] = bytes([9] * 64)
+                assert ar.Write(expected) == gdal.CE_None
+            else:
+                assert (
+                    ar.Write(bytes([7]), array_start_idx=[2, 2], count=[1, 1])
+                    == gdal.CE_None
+                )
+                expected[2 * 8 + 2] = 7
+            assert ar.Read() == expected
+            ar = None
+    with _open_array(filename) as ar:
+        assert ar.Read() == expected
 
 
 def test_zarr_write_sharded_explicit_nodata(tmp_path):

@@ -1449,6 +1449,9 @@ class ZarrV3Array final : public ZarrArray
                        ZarrByteVectorQuickResize &abyDecodedBlockData,
                        bool &bMissingBlockOut) const;
 
+    void DecodeBlockData(const ZarrByteVectorQuickResize &abyRawBlockData,
+                         ZarrByteVectorQuickResize &abyDecodedBlockData) const;
+
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
