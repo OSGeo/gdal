@@ -1729,7 +1729,6 @@ bool CPLHasPathTraversal(const char *pszFilename)
 {
     const std::string osFilename(pszFilename);
     size_t nPos = osFilename.find("..");
-    size_t idx = 0;
     const size_t nSize = osFilename.size();
 
     while (nPos != std::string::npos)
@@ -1755,8 +1754,7 @@ bool CPLHasPathTraversal(const char *pszFilename)
                          pszFilename);
             }
         }
-        idx = nPos + 2;
-        nPos = osFilename.find("..", idx);
+        nPos = osFilename.find("..", nPos + 2);
     }
 
     return false;
