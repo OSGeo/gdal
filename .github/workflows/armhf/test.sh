@@ -34,5 +34,4 @@ GCORE_K+=" and not test_tiff_write_compression_create_and_createcopy"
 GCORE_K+=" and not test_vsigzip_multi_thread"
 
 pytest autotest/gcore -o faulthandler_timeout=300 -k "$GCORE_K"
-pytest autotest/gdrivers/zarr*.py
 

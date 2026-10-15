@@ -25,7 +25,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_NO_SIGN_REQUEST", // from cpl_aws.cpp
    "AWS_PROFILE", // from cpl_aws.cpp
    "AWS_REGION", // from cpl_aws.cpp
-   "AWS_REQUEST_PAYER", // from cpl_aws.cpp, icechunkrepo.cpp
+   "AWS_REQUEST_PAYER", // from cpl_aws.cpp
    "AWS_ROLE_ARN", // from cpl_aws.cpp
    "AWS_ROLE_SESSION_NAME", // from cpl_aws.cpp
    "AWS_S3_ENDPOINT", // from cpl_aws.cpp
@@ -238,7 +238,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "FORCE_BLOCKSIZE", // from hfaopen.cpp
    "GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM", // from gdalalg_abstract_pipeline.cpp
    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", // from JPEG_band.cpp, jpgdataset.cpp
-   "GDAL_ALLOW_REMOTE_RESOURCE_TO_ACCESS_LOCAL_FILE", // from vsikerchunk.cpp
    "GDAL_BAG_BLOCK_SIZE", // from bagdataset.cpp
    "GDAL_BAG_MAX_SIZE_VARRES_MAP", // from bagdataset.cpp
    "GDAL_BAND_BLOCK_CACHE", // from gdalrasterband.cpp
@@ -356,7 +355,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", // from netcdfdataset.cpp
    "GDAL_NETCDF_VERIFY_DIMS", // from netcdfdataset.cpp
    "GDAL_NO_COSTLY_OVERVIEW", // from rasterio.cpp
-   "GDAL_NUM_THREADS", // from gdal_thread_pool.cpp, gdalalgorithm.cpp, zarr_array.cpp
+   "GDAL_NUM_THREADS", // from gdal_thread_pool.cpp, gdalalgorithm.cpp
    "GDAL_OGCAPI_TILEMATRIXSET_LIMITS", // from gdalogcapidataset.cpp
    "GDAL_ONE_BIG_READ", // from jp2kakdataset.cpp, jpipkakdataset.cpp, mrsiddataset.cpp, rawdataset.cpp, wcsdataset.cpp
    "GDAL_OPEN_AFTER_COPY", // from jpgdataset.cpp, pngdataset.cpp
@@ -446,8 +445,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
    "GDAL_WMS_MAX_CONNECTIONS", // from gdalogcapidataset.cpp
    "GDAL_XML_VALIDATION", // from gdaltileindexdataset.cpp, ogrgmlasconf.cpp, ogrvrtdriver.cpp, pdfcreatefromcomposition.cpp
-   "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", // from zarr_v3_codec_sharding.cpp
-   "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", // from zarr_array.cpp
    "GDALCUTLINE_SKIP_CONTAINMENT_TEST", // from gdalcutline.cpp
    "GDALWARP_DENSIFY_CUTLINE", // from gdalwarp_lib.cpp
    "GDALWARP_DUMP_WKT_TO_FILE", // from gdalwarp_lib.cpp
@@ -568,7 +565,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "HFA_USE_RRD", // from hfaband.cpp
    "HFA_WRITE_PE_STRING", // from hfaopen.cpp
    "HOME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
-   "ICECHUNK_ALLOW_LOCAL_CHUNK_LOCATION", // from vsiicechunk.cpp
    "IDB_OGR_FID", // from ogridblayer.cpp
    "IDRISIDIR", // from IdrisiDataset.cpp
    "INTERLEAVE_OVERVIEW", // from gt_overview.cpp
@@ -1092,10 +1088,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "VSICURL_PC_SAS_TOKEN_URL", // from cpl_vsil_curl.cpp
    "VSICURL_PC_URL_SIGNING", // from cpl_vsil_curl.cpp
    "VSICURL_QUERY_STRING", // from cpl_vsil_curl.cpp
-   "VSIKERCHUNK_CACHE_DIR", // from vsikerchunk_json_ref.cpp
-   "VSIKERCHUNK_FOR_TESTS", // from vsikerchunk_json_ref.cpp
-   "VSIKERCHUNK_USE_CACHE", // from vsikerchunk_json_ref.cpp
-   "VSIKERCHUNK_USE_STREAMING_PARSER", // from vsikerchunk_json_ref.cpp
    "VSIS3_COPYFILE_USE_STREAMING_SOURCE", // from cpl_vsil_s3.cpp
    "VSIS3_EARTHDATA_CREDENTIALS_URL", // from cpl_nasa_earthdata.cpp
    "VSIS3_SIMULATE_THREADING", // from cpl_vsil_s3.cpp
@@ -1112,8 +1104,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "WEBP_LOSSLESS_OVERVIEW", // from gt_overview.cpp
    "WMS_INFO_FORMAT", // from minidriver_wms.cpp
    "XDG_CACHE_HOME", // from gdal_misc.cpp, gdalwmscache.cpp
-   "ZARR_ALLOW_BIG_TILE_SIZE", // from zarr_v2_array.cpp, zarr_v3_array.cpp
-   "ZARR_VLEN_STRING_MAX_LENGTH", // from zarr_v3_array.cpp, zarr_v3_group.cpp
    "ZLEVEL_OVERVIEW", // from gt_overview.cpp
    "ZMAP_EMIT_EOL_AT_END_OF_COLUMN", // from zmapdataset.cpp
    "ZMAP_PIXEL_IS_POINT", // from zmapdataset.cpp

@@ -88,7 +88,6 @@ Raster drivers
    heif
    hf2
    hfa
-   icechunk
    idrisi
    ilwis
    iris
@@ -185,7 +184,6 @@ Raster drivers
    wms
    wmts
    xyz
-   zarr
    zmap
 
 .. below is an allow-list for spelling checker.

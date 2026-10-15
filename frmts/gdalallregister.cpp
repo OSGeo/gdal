@@ -303,9 +303,6 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_XLS_DRIVER)
     DeclareDeferredOGRXLSPlugin();
 #endif
-#if defined(DEFERRED_ZARR_DRIVER)
-    DeclareDeferredZarrPlugin();
-#endif
 #if defined(DEFERRED_ICECHUNK_DRIVER)
     DeclareDeferredIcechunkPlugin();
 #endif
@@ -810,14 +807,6 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_raw
     GDALRegister_raw_with_sidecar();
-#endif
-
-#ifdef FRMT_zarr
-    GDALRegister_Zarr();
-#endif
-
-#ifdef FRMT_icechunk
-    GDALRegister_Icechunk();
 #endif
 
 #ifdef FRMT_rcm

@@ -423,7 +423,6 @@ Blosc
 
 `Blosc <https://github.com/Blosc/c-blosc>`_ is a library which offers
 a meta-compression, with different backends (LZ4, Snappy, Zlib, Zstd, etc.).
-It is used by the :ref:`raster.zarr` driver.
 
 .. option:: BLOSC_INCLUDE_DIR
 
@@ -1249,7 +1248,6 @@ LibLZMA
 
 `LibLZMA <https://tukaani.org/xz/>`_ is a compression library which offers
 the lossless LZMA2 compression algorithm.
-It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
 
 .. option:: LIBLZMA_INCLUDE_DIR
 
@@ -1314,7 +1312,6 @@ LZ4
 
 `LZ4 <https://github.com/lz4/lz4>`_ is a compression library which offers
 the lossless LZ4 compression algorithm.
-It is used by the :ref:`raster.zarr` driver.
 
 .. option:: LZ4_INCLUDE_DIR
 
@@ -1661,45 +1658,6 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 .. option:: ARROW_USE_STATIC_LIBRARIES=ON/OFF
 
     Control whether to use statically built Arrow libraries. Defaults to OFF when Parquet is found.
-
-
-``Pcodec``
-**********
-
-The `Pcodec <https://github.com/pcodec/pcodec>`_ library is an optional
-dependency for the :ref:`raster.zarr` driver.
-
-See :ref:`raster.zarr.pcodec` for details.
-
-.. option:: GDAL_USE_PCODEC=ON/OFF
-
-    Control whether to use ``pcodec``.
-    Defaults to ON when the ``pcodec`` C library (``cpcodec``) is found automatically,
-    or by setting ``PCODEC_C_INCLUDE_DIR`` and ``PCODEC_C_LIBRARY``.
-
-    If an already built ``cpcodec`` library is not available, ``GDAL_USE_PCODEC``
-    can be explicitly set to ON to download ``pcodec`` sources using ``git``.
-    This requires a Rust toolchain to be available.
-
-.. option:: PCODEC_C_INCLUDE_DIR
-
-    Path to an include directory with the ``pcodec.h`` header file.
-
-.. option:: PCODEC_C_LIBRARY
-
-    Path to a shared or static library file with ``cpcodec`` in its name.
-
-.. option:: CORROSION_SOURCE_DIR
-
-    Path to a checkout of https://github.com/corrosion-rs/corrosion.git
-
-.. option:: PCODEC_SOURCE_DIR
-
-    Path to a checkout of https://github.com/pcodec/pcodec.git
-
-``PCODEC_C_INCLUDE_DIR`` and ``PCODEC_C_LIBRARY`` are used in priority over
-``CORROSION_SOURCE_DIR`` and ``PCODEC_SOURCE_DIR``.
-
 
 PCRE2
 *****
@@ -2112,7 +2070,7 @@ ZSTD
 
 `ZSTD <https://github.com/facebook/zstd>`_ is a compression library which offers
 the lossless ZStd compression algorithm (faster than Deflate/ZIP, but incompatible
-with it). It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
+with it). It is used by the internal libtiff library.
 
 .. option:: ZSTD_INCLUDE_DIR
 

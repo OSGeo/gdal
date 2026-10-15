@@ -26,7 +26,7 @@ Description
 from a list of input GDAL multidimensional datasets,
 that can be either a virtual mosaic in the
 :ref:`Multidimensional VRT (Virtual Dataset) <vrt_multidimensional>` format,
-or in a more conventional multidimensional format such as :ref:`raster.netcdf` or :ref:`raster.zarr`.
+or in a more conventional multidimensional format such as :ref:`raster.netcdf`.
 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
 names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
