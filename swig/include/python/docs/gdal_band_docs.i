@@ -6,6 +6,31 @@ Python proxy of a :cpp:class:`GDALRasterBand`.
 
 %extend GDALRasterBandShadow {
 
+%feature("docstring")  AdviseRead "
+
+Advise upcoming reads. See :cpp:func:`GDALRasterBand::AdviseRead`.
+
+Parameters
+----------
+xoff, yoff : int
+    Pixel and line offsets of the source window.
+xsize, ysize : int
+    Width and height of the source window.
+buf_xsize, buf_ysize : int, optional
+    Future buffer dimensions, defaulting to ``xsize`` and ``ysize``.
+    Smaller dimensions advise a downsampled read.
+buf_type : int, optional
+    Buffer ``GDT_*`` type, defaulting to the band's type.
+options : dict or list, optional
+    Driver-specific options.
+
+Returns
+-------
+int
+    :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
+
+";
+
 %feature("docstring")  Checksum "
 
 Computes a checksum from a region of a RasterBand.

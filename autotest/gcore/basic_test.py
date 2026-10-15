@@ -1399,3 +1399,34 @@ def test_basic_config_option_null_override():
 
     with gdal.config_option("MY_ENV_VAR_GDAL_TEST", None, thread_local=False):
         assert gdal.GetConfigOption("MY_ENV_VAR_GDAL_TEST") is None
+
+
+###############################################################################
+# Test buf_xsize/buf_ysize/buf_type arguments of Band/Dataset.AdviseRead()
+
+
+def test_basic_advise_read_buf_size():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 100, 80, 2, gdal.GDT_Int16)
+
+    for obj in (ds, ds.GetRasterBand(1)):
+        assert obj.AdviseRead(0, 0, 100, 80, buf_xsize=None, buf_type=None) == 0
+        assert obj.AdviseRead(0, 0, 100, 80, buf_xsize=50, buf_ysize=40) == 0
+        assert obj.AdviseRead(0, 0, 100, 80, 50, 40, gdal.GDT_Float32) == 0
+
+    assert ds.AdviseRead(0, 0, 100, 80, 50, 40, gdal.GDT_Byte, [2]) == gdal.CE_None
+
+
+@gdaltest.enable_exceptions()
+def test_basic_advise_read_buf_size_errors():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 100, 80)
+    band = ds.GetRasterBand(1)
+
+    for obj in (band, ds):
+        with pytest.raises(Exception, match="Invalid value for GDALDataType"):
+            obj.AdviseRead(0, 0, 100, 80, buf_type=999)
+    with pytest.raises(Exception, match="does not exist"):
+        ds.AdviseRead(0, 0, 100, 80, band_list=[2])
+    with pytest.raises(Exception):
+        band.AdviseRead(0, 0, 100, 80, buf_xsize="a")

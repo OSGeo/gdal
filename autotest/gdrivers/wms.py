@@ -1202,6 +1202,51 @@ def test_wms_force_opening_url(tmp_vsimem, webserver_port):
         gdal.Open(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
 
 
+@pytest.mark.require_curl
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize("object_type", ["band", "dataset"])
+@pytest.mark.parametrize("buf_size", [None, 32])
+@gdaltest.enable_exceptions()
+def test_wms_advise_read_buf_size(tmp_path, webserver_port, object_type, buf_size):
+
+    tile_path = tmp_path / "tile.tif"
+    with gdal.GetDriverByName("GTiff").Create(tile_path, 32, 32, 1) as tile:
+        tile.GetRasterBand(1).Fill(7)
+    tile_bytes = tile_path.read_bytes()
+
+    xml = f"""<GDAL_WMS>
+<Service name="TMS"><ServerUrl>http://localhost:{webserver_port}/${{z}}/${{x}}/${{y}}.tif</ServerUrl></Service>
+<DataWindow>
+<UpperLeftX>0</UpperLeftX><UpperLeftY>128</UpperLeftY>
+<LowerRightX>128</LowerRightX><LowerRightY>0</LowerRightY>
+<TileLevel>2</TileLevel><TileCountX>1</TileCountX><TileCountY>1</TileCountY>
+</DataWindow>
+<Projection>EPSG:3857</Projection><BlockSizeX>32</BlockSizeX><BlockSizeY>32</BlockSizeY>
+<BandsCount>1</BandsCount><OverviewCount>2</OverviewCount><AdviseRead>true</AdviseRead>
+<Cache><Path>{tmp_path / "cache"}</Path></Cache>
+</GDAL_WMS>"""
+
+    handler = webserver.NonSequentialMockedHttpHandler()
+    level, tile_count = (2, 4) if buf_size is None else (0, 1)
+    for x in range(tile_count):
+        for y in range(tile_count):
+            handler.add(
+                "GET",
+                f"/{level}/{x}/{y}.tif",
+                200,
+                {"Content-Type": "image/tiff"},
+                tile_bytes,
+            )
+
+    with gdal.Open(xml) as ds:
+        obj = ds.GetRasterBand(1) if object_type == "band" else ds
+        kwargs = (
+            {} if buf_size is None else {"buf_xsize": buf_size, "buf_ysize": buf_size}
+        )
+        with webserver.install_http_handler(handler):
+            assert obj.AdviseRead(0, 0, 128, 128, **kwargs) == gdal.CE_None
+
+
 @pytest.mark.network
 @pytest.mark.require_curl
 @pytest.mark.require_driver("JPEG")

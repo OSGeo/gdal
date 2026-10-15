@@ -604,8 +604,11 @@ public:
 
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
-#endif
+%apply (int *optional_int) { (int*) };
+%apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
+#else
 %apply (int *optional_int) { (GDALDataType *buf_type) };
+#endif
 #if defined(SWIGCSHARP)
 %apply int PINNED[] {int *pband_list};
 #else
@@ -635,6 +638,9 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                  band_list, pband_list, options);
 }
 %clear (GDALDataType *buf_type);
+#ifdef SWIGPYTHON
+%clear (int*);
+#endif
 #if defined(SWIGCSHARP)
 %clear int *pband_list;
 #else
