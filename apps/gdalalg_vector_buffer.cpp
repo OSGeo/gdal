@@ -99,6 +99,21 @@ class GDALVectorBufferAlgorithmLayer final
         return m_poFeatureDefn.get();
     }
 
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        if (IsSelectedGeomField(iGeomField))
+            return OGRLayer::IGetExtent(iGeomField, psExtent, bForce);
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastGetExtent))
+            return false;
+        return GDALVectorGeomOneToOneAlgorithmLayer::TestCapability(pszCap);
+    }
+
   protected:
     using GDALVectorGeomOneToOneAlgorithmLayer::TranslateFeature;
 
