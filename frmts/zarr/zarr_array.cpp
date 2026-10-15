@@ -2210,6 +2210,9 @@ bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
 std::shared_ptr<GDALMDArray>
 ZarrArray::OpenBlockPresenceCache(bool bCanCreate) const
 {
+    if (m_bUpdatable && !bCanCreate)
+        return nullptr;
+
     if (m_bHasTriedBlockCachePresenceArray)
         return m_poBlockCachePresenceArray;
     m_bHasTriedBlockCachePresenceArray = true;

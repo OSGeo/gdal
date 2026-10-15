@@ -473,6 +473,8 @@ The following dataset open options are available:
       work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
       /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
 
+      The cached listing is used only for read-only handles and is not automatically refreshed when the source changes. After modifying a dataset, close existing readers and delete the corresponding .gmac files, including any stored in :config:`GDAL_PAM_PROXY_DIR`, before opening it read-only again. Setting ``CACHE_TILE_PRESENCE=NO`` does not disable an existing listing.
+
 -  .. oo:: CACHE_KERCHUNK_JSON
       :choices: YES, NO
       :default: NO

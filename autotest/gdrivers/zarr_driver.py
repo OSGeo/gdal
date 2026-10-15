@@ -4163,6 +4163,68 @@ def test_zarr_cache_tile_presence(tmp_path, format, GDAL_NUM_THREADS):
         read_content_altered()
 
 
+@pytest.mark.require_driver("netCDF")
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize("open_options", [[], ["CACHE_TILE_PRESENCE=YES"]])
+@pytest.mark.parametrize("advise_read", [False, True])
+def test_zarr_cache_tile_presence_update(tmp_path, format, open_options, advise_read):
+
+    filename = tmp_path / "test.zarr"
+
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        filename, options=["FORMAT=" + format]
+    ) as ds:
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("x", None, None, 8)
+        ar = rg.CreateMDArray(
+            "test",
+            [dim],
+            gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
+            ["BLOCKSIZE=2", "COMPRESS=NONE"],
+        )
+        assert ar.Write(b"\x0b", array_start_idx=[0], count=[1]) == gdal.CE_None
+        ar = rg = dim = None
+
+    with gdal.OpenEx(
+        filename, gdal.OF_MULTIDIM_RASTER, open_options=["CACHE_TILE_PRESENCE=YES"]
+    ) as ds:
+        assert ds.GetRootGroup().OpenMDArray("test") is not None
+    cache_filename = (
+        filename
+        / "test"
+        / (".zarray.gmac" if format == "ZARR_V2" else "zarr.json.gmac")
+    )
+    assert cache_filename.exists()
+
+    # Reopen between partial writes, then exercise the retained listing on a read.
+    reads = []
+    for index, value in ((4, b"G"), (5, b"H"), (None, None)):
+        with gdal.OpenEx(
+            filename,
+            gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE,
+            open_options=open_options,
+        ) as ds:
+            ar = ds.GetRootGroup().OpenMDArray("test")
+            if index is not None:
+                assert (
+                    ar.Write(value, array_start_idx=[index], count=[1]) == gdal.CE_None
+                )
+            elif advise_read:
+                assert ar.AdviseRead(options=["NUM_THREADS=2"]) == gdal.CE_None
+            reads.append(ar.Read())
+            ar = None
+    assert cache_filename.exists()
+
+    # Remove the stale listing only after mutation to check retained source data.
+    cache_filename.unlink()
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("test")
+    expected = b"\x0b\x00\x00\x00GH\x00\x00"
+    assert ar.Read() == expected
+    assert reads == [b"\x0b\x00\x00\x00G\x00\x00\x00", expected, expected]
+
+
 @pytest.mark.parametrize("compression", ["NONE", "GZIP"])
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
 def test_zarr_advise_read(tmp_path, compression, format):
