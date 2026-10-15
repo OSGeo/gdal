@@ -957,7 +957,7 @@ def test_zarr_read_array_attributes():
         "int64array": [1234567890123, -1234567890123],
         "intdoublearray": [1, 2.5],
         "mixedstrintarray": ["foo", 1],
-        "null": "",
+        "null": None,
         "obj": {},
         "str": "foo",
         "strarray": ["foo", "bar"],
@@ -2964,6 +2964,75 @@ def test_zarr_create_array_bad_compressor(tmp_vsimem, format):
             )
             is None
         )
+
+
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize("object_type", ["group", "array"])
+def test_zarr_attribute_json_values_and_literal_names(tmp_path, format, object_type):
+    filename = tmp_path / "test.zarr"
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        filename, options=["FORMAT=" + format, "CREATE_ZMETADATA=NO"]
+    ) as ds:
+        rg = ds.GetRootGroup()
+        if object_type == "array":
+            ar = rg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            assert ar.SetNoDataValueDouble(0) == gdal.CE_None
+            ar = None
+        rg = None
+
+    attributes = {
+        "custom/path": "keep",
+        "/leading": 7,
+        "trailing/": 1.25,
+        "double//slash": [1, 2],
+        "strings/path": ["a", "b"],
+        "json/path": {"nested/key": None},
+        "null/path": None,
+        "text-null": "null",
+        "empty-string": "",
+        "delete/key": "remove",
+    }
+    target = filename if object_type == "group" else filename / "ar"
+    metadata_path = target / ("zarr.json" if format == "ZARR_V3" else ".zattrs")
+    if format == "ZARR_V3":
+        metadata = json.loads(metadata_path.read_text())
+        metadata["attributes"] = attributes
+    else:
+        metadata = attributes
+    metadata_path.write_text(json.dumps(metadata))
+
+    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE) as ds:
+        rg = ds.GetRootGroup()
+        obj = rg if object_type == "group" else rg.OpenMDArray("ar")
+        attr = obj.GetAttribute("custom/path")
+        assert attr.Write("updated") == gdal.CE_None
+        attr = None
+        assert obj.DeleteAttribute("delete/key") == gdal.CE_None
+        attr = obj.CreateAttribute(
+            "new/null", [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON)
+        )
+        assert attr.Write(" \t null\n") == gdal.CE_None
+        attr = obj.CreateAttribute(
+            "new/json", [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON)
+        )
+        assert attr.Write({"literal/key": None}) == gdal.CE_None
+        attr = obj = rg = None
+
+    expected = dict(attributes)
+    expected["custom/path"] = "updated"
+    del expected["delete/key"]
+    expected.update({"new/null": None, "new/json": {"literal/key": None}})
+    rewritten = json.loads(metadata_path.read_text())
+    assert (rewritten["attributes"] if format == "ZARR_V3" else rewritten) == expected
+    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        obj = rg if object_type == "group" else rg.OpenMDArray("ar")
+        assert {attr.GetName() for attr in obj.GetAttributes()} == set(expected)
+        assert obj.GetAttribute("custom/path").Read() == "updated"
+        assert obj.GetAttribute("null/path").Read() is None
+        assert obj.GetAttribute("text-null").Read() == "null"
+        assert obj.GetAttribute("empty-string").Read() == ""
+        obj = rg = None
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])

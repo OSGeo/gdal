@@ -114,7 +114,7 @@ bool ZarrV3Array::Flush()
 
     CPLJSONObject oAttrs;
     if (m_oAttrGroup.IsModified() || m_bUnitModified || m_bOffsetModified ||
-        m_bScaleModified || m_bSRSModified)
+        m_bScaleModified || m_bSRSModified || m_bDefinitionModified)
     {
         m_bNew = false;
 
@@ -152,7 +152,7 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     }
     oRoot.Add("shape", oShape);
 
-    oRoot.Add("data_type", m_dtype.ToString());
+    oRoot.Add("data_type", m_dtype);
 
     {
         CPLJSONObject oChunkGrid;

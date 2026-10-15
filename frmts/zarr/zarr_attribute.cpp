@@ -271,7 +271,9 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                 const GInt64 arrayStep = 0;
                 const GPtrDiff_t bufferStride = 0;
                 const std::string str = item.ToString();
-                const char *c_str = str.c_str();
+                const char *c_str = itemType == CPLJSONObject::Type::Null
+                                        ? nullptr
+                                        : str.c_str();
                 poAttr->Write(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                               poAttr->GetDataType(), &c_str);
             }
@@ -294,6 +296,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
     const auto attrs = m_poGroup->GetAttributes(nullptr);
     for (const auto &attr : attrs)
     {
+        CPLJSONObject oValue;
         const auto &oType = attr->GetDataType();
         if (oType.GetClass() == GEDTC_STRING)
         {
@@ -305,18 +308,23 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                 {
                     CPLJSONDocument oDoc;
                     if (oType.GetSubType() == GEDTST_JSON &&
-                        oDoc.LoadMemory(pszStr))
+                        CPLString(pszStr).Trim() == "null")
                     {
-                        o.Add(attr->GetName(), oDoc.GetRoot());
+                        oValue.AddNull("value");
+                    }
+                    else if (oType.GetSubType() == GEDTST_JSON &&
+                             oDoc.LoadMemory(pszStr))
+                    {
+                        oValue.Add("value", oDoc.GetRoot());
                     }
                     else
                     {
-                        o.Add(attr->GetName(), pszStr);
+                        oValue.Add("value", pszStr);
                     }
                 }
                 else
                 {
-                    o.AddNull(attr->GetName());
+                    oValue.AddNull("value");
                 }
             }
             else if (anDims.size() == 1)
@@ -327,7 +335,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                 {
                     arr.Add(list[i]);
                 }
-                o.Add(attr->GetName(), arr);
+                oValue.Add("value", arr);
             }
             else
             {
@@ -347,18 +355,18 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                     eDT == GDT_Int64)
                 {
                     const int64_t nVal = attr->ReadAsInt64();
-                    o.Add(attr->GetName(), static_cast<GInt64>(nVal));
+                    oValue.Add("value", static_cast<GInt64>(nVal));
                 }
                 else if (eDT == GDT_UInt8 || eDT == GDT_UInt16 ||
                          eDT == GDT_UInt32 || eDT == GDT_UInt64)
                 {
                     const int64_t nVal = attr->ReadAsInt64();
-                    o.Add(attr->GetName(), static_cast<uint64_t>(nVal));
+                    oValue.Add("value", static_cast<uint64_t>(nVal));
                 }
                 else
                 {
                     const double dfVal = attr->ReadAsDouble();
-                    o.Add(attr->GetName(), dfVal);
+                    oValue.Add("value", dfVal);
                 }
             }
             else if (anDims.size() == 1)
@@ -390,7 +398,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                         arr.Add(dfVal);
                     }
                 }
-                o.Add(attr->GetName(), arr);
+                oValue.Add("value", arr);
             }
             else
             {
@@ -400,6 +408,9 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                     attr->GetName().c_str());
             }
         }
+        const auto children = oValue.GetChildren();
+        if (!children.empty())
+            o.AddNoSplitName(attr->GetName(), children.front());
     }
     return o;
 }
