@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_enumerate.h"
+#include "cpl_error_internal.h"
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
@@ -617,7 +618,16 @@ bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     // so that the base-class block-by-block loop hits memory, not HTTP.
     if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
     {
-        PreloadShardedBlocks(arrayStartIdx, count);
+        std::vector<GUInt64> anPrefetchStartIdx;
+        std::vector<size_t> anPrefetchCount;
+        if (GetPrefetchRegion(arrayStartIdx, count, arrayStep,
+                              anPrefetchStartIdx, anPrefetchCount))
+        {
+            if (!PreloadShardedBlocks(anPrefetchStartIdx.data(),
+                                      anPrefetchCount.data(),
+                                      GDALGetNumThreads()))
+                return false;
+        }
     }
     return ZarrArray::IRead(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
@@ -627,12 +637,16 @@ bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                 ZarrV3Array::PreloadShardedBlocks()                  */
 /************************************************************************/
 
-void ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
-                                       const size_t *count) const
+bool ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
+                                       const size_t *count,
+                                       int nMaxThreads) const
 {
+    if (!CheckValidAndErrorOutIfNot() || !FlushDirtyBlock())
+        return false;
+
     const size_t nDims = m_aoDims.size();
     if (nDims == 0)
-        return;
+        return true;
 
     // Calculate needed block index range
     std::vector<uint64_t> anBlockMin(nDims), anBlockMax(nDims);
@@ -646,7 +660,7 @@ void ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
     }
 
     if (nTotalBlocks <= 1)
-        return;  // single block — no batching benefit
+        return true;  // single block — no batching benefit
 
     CPLDebugOnly("ZARR", "PreloadShardedBlocks: %" PRIu64 " blocks to batch",
                  static_cast<uint64_t>(nTotalBlocks));
@@ -722,7 +736,7 @@ lbl_next:
     }
 
     if (aShardWork.empty())
-        return;
+        return true;
 
     const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
                                            nullptr};
@@ -736,10 +750,11 @@ lbl_next:
                                               ZarrV3CodecSequence *poCodecs,
                                               std::mutex &oMutex)
     {
+        const auto nErrorBefore = CPLGetErrorCounter();
         VSIVirtualHandleUniquePtr fp(
             VSIFOpenEx2L(work.posFilename->c_str(), "rb", 0, apszOpenOptions));
         if (!fp)
-            return;
+            return nErrorBefore == CPLGetErrorCounter();
 
         const auto &aBlocks = *work.paBlocks;
         std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
@@ -751,7 +766,7 @@ lbl_next:
         std::vector<ZarrByteVectorQuickResize> aResults;
         if (!poCodecs->BatchDecodePartial(fp.get(), work.posFilename->c_str(),
                                           anRequests, aResults))
-            return;
+            return false;
 
         // Type-convert outside mutex (CPU-bound, thread-local data)
         std::vector<ZarrByteVectorQuickResize> aDecoded;
@@ -791,9 +806,8 @@ lbl_next:
             }
             m_oChunkCache[aBlocks[i].anBlockIndices] = std::move(cachedBlock);
         }
+        return true;
     };
-
-    const int nMaxThreads = GDALGetNumThreads();
 
     const int nShards = static_cast<int>(aShardWork.size());
     std::mutex oMutex;
@@ -805,8 +819,11 @@ lbl_next:
     if (!wtp)
     {
         for (const auto &work : aShardWork)
-            ProcessOneShard(work, m_poCodecs.get(), oMutex);
-        return;
+        {
+            if (!ProcessOneShard(work, m_poCodecs.get(), oMutex))
+                return false;
+        }
+        return true;
     }
 
     CPLDebugOnly("ZARR",
@@ -818,14 +835,24 @@ lbl_next:
     for (int i = 0; i < nShards; ++i)
         apoCodecs[i] = m_poCodecs->Clone();
 
+    CPLErrorAccumulator oErrorAccumulator;
+    std::atomic<bool> bSuccess{true};
     auto poQueue = wtp->CreateJobQueue();
     for (int i = 0; i < nShards; ++i)
     {
-        poQueue->SubmitJob([&work = aShardWork[i], pCodecs = apoCodecs[i].get(),
-                            &oMutex, &ProcessOneShard]()
-                           { ProcessOneShard(work, pCodecs, oMutex); });
+        poQueue->SubmitJob(
+            [&work = aShardWork[i], pCodecs = apoCodecs[i].get(), &oMutex,
+             &ProcessOneShard, &bSuccess, &oErrorAccumulator]()
+            {
+                auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
+                CPL_IGNORE_RET_VAL(oAccumulator);
+                if (!ProcessOneShard(work, pCodecs, oMutex))
+                    bSuccess = false;
+            });
     }
     poQueue->WaitCompletion();
+    ZarrReplayErrors(oErrorAccumulator);
+    return bSuccess;
 }
 
 /************************************************************************/
@@ -840,8 +867,11 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
     // of the per-block LoadBlockData path below.
     if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
     {
-        PreloadShardedBlocks(arrayStartIdx, count);
-        return true;
+        return PreloadShardedBlocks(
+            arrayStartIdx, count,
+            GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                              GDAL_DEFAULT_MAX_THREAD_COUNT,
+                              /* bDefaultAllCPUs=*/true));
     }
 
     std::vector<uint64_t> anIndicesCur;
@@ -876,8 +906,8 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         JobStruct &operator=(JobStruct &&) = default;
 
         const ZarrV3Array *poArray = nullptr;
+        CPLErrorAccumulator *poErrorAccumulator = nullptr;
         bool *pbGlobalStatus = nullptr;
-        int *pnRemainingThreads = nullptr;
         const std::vector<uint64_t> *panReqBlocksIndices = nullptr;
         size_t nFirstIdx = 0;
         size_t nLastIdxNotIncluded = 0;
@@ -885,8 +915,8 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
     std::vector<JobStruct> asJobStructs;
 
+    CPLErrorAccumulator oErrorAccumulator;
     bool bGlobalStatus = true;
-    int nRemainingThreads = nThreads;
     // Check for very highly overflow in below loop
     assert(static_cast<size_t>(nThreads) <
            std::numeric_limits<size_t>::max() / nReqBlocks);
@@ -896,8 +926,8 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
     {
         JobStruct jobStruct;
         jobStruct.poArray = this;
+        jobStruct.poErrorAccumulator = &oErrorAccumulator;
         jobStruct.pbGlobalStatus = &bGlobalStatus;
-        jobStruct.pnRemainingThreads = &nRemainingThreads;
         jobStruct.panReqBlocksIndices = &anReqBlocksIndices;
         jobStruct.nFirstIdx = static_cast<size_t>(i * nReqBlocks / nThreads);
         jobStruct.nLastIdxNotIncluded = std::min(
@@ -909,6 +939,10 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
     {
         const JobStruct *jobStruct =
             static_cast<const JobStruct *>(pThreadData);
+
+        auto oAccumulator =
+            jobStruct->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
 
         const auto poArray = jobStruct->poArray;
         const size_t l_nDims = poArray->GetDimensionCount();
@@ -928,7 +962,7 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
             {
                 std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
                 if (!(*jobStruct->pbGlobalStatus))
-                    return;
+                    break;
             }
 
             const uint64_t *blockIndices =
@@ -967,34 +1001,28 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                                  blockIndices + l_nDims};
             poArray->m_oChunkCache[cacheKey] = std::move(cachedBlock);
         }
-
-        std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-        (*jobStruct->pnRemainingThreads)--;
     };
 
+    auto poQueue = wtp->CreateJobQueue();
     // Start jobs
     for (int i = 0; i < nThreads; i++)
     {
-        if (!wtp->SubmitJob(JobFunc, &asJobStructs[i]))
+        if (!poQueue->SubmitJob(JobFunc, &asJobStructs[i]))
         {
             std::lock_guard<std::mutex> oLock(m_oMutex);
             bGlobalStatus = false;
-            nRemainingThreads = i;
             break;
         }
     }
 
     // Wait for all jobs to be finished
-    while (true)
-    {
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            if (nRemainingThreads == 0)
-                break;
-        }
-        wtp->WaitEvent();
-    }
+    poQueue->WaitCompletion();
 
+    // A partial cache does not cover the whole requested window.
+    if (!bGlobalStatus)
+        m_anCachedAdviseReadStart.clear();
+
+    ZarrReplayErrors(oErrorAccumulator);
     return bGlobalStatus;
 }
 

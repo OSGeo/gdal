@@ -19,6 +19,7 @@ import os
 import shutil
 import struct
 import sys
+from contextlib import contextmanager
 
 import gdaltest
 import pytest
@@ -4303,8 +4304,7 @@ def test_zarr_iread_auto_parallel(tmp_path, format):
         # Full read
         assert ar.Read() == expected_full
 
-        # Strided read (step > 1): verifies adjusted count passed to
-        # IAdviseRead covers the full element range, not just count elements.
+        # Strided reads do not prefetch chunks in the gaps.
         assert (
             ar.Read(
                 array_start_idx=[0, 0],
@@ -4411,6 +4411,7 @@ def test_zarr_advise_read_cache_preserved(tmp_path, format):
     # Reference read without threads
     ds = gdal.Open(filename)
     expected = ds.ReadRaster()
+    expected_unaligned = ds.ReadRaster(5, 5, 50, 40)
     ds = None
 
     with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
@@ -4427,10 +4428,263 @@ def test_zarr_advise_read_cache_preserved(tmp_path, format):
             ):
                 p.unlink()
 
+        # An unaligned read's implicit AdviseRead() keeps the cache too
+        assert ds.ReadRaster(5, 5, 50, 40) == expected_unaligned
         got = ds.ReadRaster()
         ds = None
 
     assert got == expected
+
+
+@contextmanager
+def _open_array(path, update=False):
+    with gdal.OpenEx(
+        path, gdal.OF_MULTIDIM_RASTER | (gdal.OF_UPDATE if update else 0)
+    ) as ds:
+        group = ds.GetRootGroup()
+        yield group.OpenMDArray(group.GetMDArrayNames()[0])
+
+
+def _strided_read_args(step, size):
+    indices = range(0, size, step) if step > 0 else range(size - 1, -1, step)
+    return indices, dict(
+        array_start_idx=[indices[0]] * 2,
+        count=[len(indices)] * 2,
+        array_step=[step] * 2,
+    )
+
+
+def _write_byte_array(
+    path, shape, values, options, format="ZARR_V3", nodata=None, overviews=None
+):
+    if "COMPRESS=ZSTD" in options and "zstd" not in gdal.GetDriverByName(
+        "ZARR"
+    ).GetMetadataItem("COMPRESSORS"):
+        pytest.skip("zstd compressor not available")
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        path, options=["FORMAT=" + format]
+    ) as ds:
+        rg = ds.GetRootGroup()
+        dims = [rg.CreateDimension(n, None, None, size) for n, size in zip("YX", shape)]
+        ar = rg.CreateMDArray(
+            "data", dims, gdal.ExtendedDataType.Create(gdal.GDT_UInt8), options
+        )
+        if nodata is not None:
+            assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
+        if values is not None:
+            assert ar.Write(values) == gdal.CE_None
+        if overviews:
+            assert ar.BuildOverviews("NEAREST", overviews) == gdal.CE_None
+        ar = rg = dims = None
+
+
+@pytest.mark.parametrize(
+    "corruption,num_threads,use_exceptions",
+    [
+        ("missing", 2, False),
+        ("index", 1, False),
+        ("index", 2, True),
+        ("chunk", 1, True),
+        ("chunk", 2, False),
+    ],
+)
+def test_zarr_advise_read_sharded_failure(
+    tmp_vsimem, corruption, num_threads, use_exceptions
+):
+    filename = tmp_vsimem / "test.zarr"
+    expected = bytearray(range(1, 17))
+    _write_byte_array(
+        filename,
+        (4, 4),
+        expected,
+        ["COMPRESS=ZSTD", "BLOCKSIZE=2,2", "SHARD_CHUNK_SHAPE=1,1"],
+        nodata=0,
+    )
+
+    shard = filename / "data/c/0/0"
+    with gdal.VSIFile(shard, "rb") as f:
+        shard_data = f.read()
+    if corruption == "missing":
+        gdal.Unlink(shard)
+        for i in (0, 1, 4, 5):
+            expected[i] = 0
+    else:
+        gdal.FileFromMemBuffer(
+            shard, b"bad" if corruption == "index" else b"bad" + shard_data[3:]
+        )
+
+    message = (
+        "shard file too small"
+        if corruption == "index"
+        else "Error while retrieving decompressed size of ZSTD frame"
+    )
+    with gdal.config_option("GDAL_NUM_THREADS", str(num_threads)):
+        with _open_array(filename) as ar, gdal.ExceptionMgr(
+            useExceptions=use_exceptions
+        ):
+            for _ in range(2):
+                gdal.ErrorReset()
+                if corruption == "missing":
+                    assert ar.AdviseRead() == gdal.CE_None
+                elif use_exceptions:
+                    with pytest.raises(RuntimeError, match=message):
+                        ar.AdviseRead()
+                else:
+                    with gdaltest.error_raised(gdal.CE_Failure, match=message):
+                        assert ar.AdviseRead() == gdal.CE_Failure
+                if corruption != "missing":
+                    assert gdal.GetLastErrorType() == gdal.CE_Failure
+                    assert gdal.GetLastErrorNo() == gdal.CPLE_AppDefined
+
+            if corruption != "missing":
+                gdal.FileFromMemBuffer(shard, shard_data)
+                assert ar.AdviseRead() == gdal.CE_None
+            gdal.RmdirRecursive(filename / "data/c")
+            assert ar.Read() == expected
+
+
+@pytest.mark.parametrize(
+    "format,sharded", [("ZARR_V2", False), ("ZARR_V3", False), ("ZARR_V3", True)]
+)
+@pytest.mark.parametrize("step,num_threads", [(3, None), (-3, "2")])
+@gdaltest.enable_exceptions()
+def test_zarr_strided_read_skips_corrupt_chunks(
+    tmp_vsimem, format, sharded, step, num_threads
+):
+    filename = tmp_vsimem / "test.zarr"
+    options = (
+        ["BLOCKSIZE=1,3", "SHARD_CHUNK_SHAPE=1,1", "COMPRESS=GZIP"]
+        if sharded
+        else ["BLOCKSIZE=1,1"]
+    )
+    _write_byte_array(
+        filename, (2, 6), bytes(range(1, 13)), options, format, nodata=255
+    )
+
+    if sharded:
+        shard = filename / "data/c/0/0"
+        with gdal.VSIFile(shard, "rb") as f:
+            data = bytearray(f.read())
+        offset, size = struct.unpack_from("<QQ", data, len(data) - 52 + 16)
+        data[offset : offset + size] = b"X" * size
+        gdal.FileFromMemBuffer(shard, data)
+    else:
+        chunk = filename / "data" / ("0.1" if format == "ZARR_V2" else "c/0/1")
+        gdal.FileFromMemBuffer(chunk, b"")
+
+    with gdal.config_option("GDAL_NUM_THREADS", num_threads), _open_array(
+        filename
+    ) as ar:
+        gdal.ErrorReset()
+        with gdaltest.error_raised(gdal.CE_None):
+            assert ar.Read(
+                array_start_idx=[0, 0 if step > 0 else 3],
+                count=[1, 2],
+                array_step=[1, step],
+            ) == (bytes([1, 4]) if step > 0 else bytes([4, 1]))
+        assert gdal.GetLastErrorType() == gdal.CE_None
+
+
+@pytest.mark.parametrize(
+    "format,sharded", [("ZARR_V2", False), ("ZARR_V3", False), ("ZARR_V3", True)]
+)
+@pytest.mark.parametrize("step", [2, -2])
+def test_zarr_strided_read_prefetches_touched_chunks(tmp_vsimem, format, sharded, step):
+    filename = tmp_vsimem / "test.zarr"
+    options = (
+        ["BLOCKSIZE=8,8", "SHARD_CHUNK_SHAPE=4,4"] if sharded else ["BLOCKSIZE=4,4"]
+    )
+    _write_byte_array(filename, (8, 8), bytes(range(64)), options, format)
+
+    idx, read_args = _strided_read_args(step, 8)
+    expected = bytes(y * 8 + x for y in idx for x in idx)
+    with gdal.config_option("GDAL_NUM_THREADS", "2"), _open_array(filename) as ar:
+        assert ar.Read(**read_args) == expected
+        # Served from the prefetched chunks, not from storage.
+        gdal.RmdirRecursive(filename)
+        assert ar.Read(**read_args) == expected
+
+
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize(
+    "mode", ["missing", "corrupted", "exceptions", "warning_after_error"]
+)
+def test_zarr_advise_read_cache_after_incomplete_chunk(tmp_vsimem, format, mode):
+    """A failed multithreaded prefetch reports its error every time without
+    caching its window, and a repaired chunk can then be prefetched. Missing
+    chunks are valid fill-value chunks and are cached normally."""
+
+    filename = tmp_vsimem / "test.zarr"
+    expected = bytearray(i % 251 for i in range(256 * 256))
+    _write_byte_array(
+        filename, (256, 256), expected, ["BLOCKSIZE=16,16"], format, nodata=0
+    )
+
+    # Corrupt the last chunk so that its worker has already cached chunks
+    # before reporting failure, independently of the thread scheduling.
+    chunk = filename / "data" / ("15.15" if format == "ZARR_V2" else "c/15/15")
+    with gdal.VSIFile(chunk, "rb") as f:
+        chunk_data = f.read()
+    if mode == "missing":
+        gdal.Unlink(chunk)
+        for y in range(240, 256):
+            expected[y * 256 + 240 : (y + 1) * 256] = bytes(16)
+    else:
+        gdal.FileFromMemBuffer(chunk, b"corrupted")
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+    ar = ds.GetRootGroup().OpenMDArray("data")
+
+    def advise():
+        return ar.AdviseRead(options=["NUM_THREADS=4"])
+
+    errors = []
+
+    def handler(level, number, message):
+        errors.append((level, number, message))
+        if level == gdal.CE_Failure:
+            gdal.Error(gdal.CE_Warning, gdal.CPLE_AppDefined, "warning")
+
+    with gdal.ExceptionMgr(useExceptions=mode == "exceptions"):
+        for _ in range(2):
+            gdal.ErrorReset()
+            if mode == "missing":
+                assert advise() == gdal.CE_None
+                continue
+            if mode == "exceptions":
+                with pytest.raises(RuntimeError, match="has not expected size"):
+                    advise()
+            elif mode == "warning_after_error":
+                errors.clear()
+                with gdaltest.error_handler(handler):
+                    assert advise() == gdal.CE_Failure
+                assert errors == [
+                    (gdal.CE_Failure, gdal.CPLE_AppDefined, gdal.GetLastErrorMsg()),
+                    (gdal.CE_Warning, gdal.CPLE_AppDefined, "warning"),
+                ]
+            else:
+                with gdaltest.error_raised(gdal.CE_Failure, match=str(chunk)):
+                    assert advise() == gdal.CE_Failure
+            assert gdal.GetLastErrorType() == gdal.CE_Failure
+            assert gdal.GetLastErrorNo() == gdal.CPLE_AppDefined
+            assert "has not expected size" in gdal.GetLastErrorMsg()
+            assert str(chunk) in gdal.GetLastErrorMsg()
+
+    if mode != "missing":
+        gdal.FileFromMemBuffer(chunk, chunk_data)
+        assert advise() == gdal.CE_None
+
+    # A successful retry (or a valid missing chunk) populates the cache.
+    gdal.Unlink(filename / "data" / ("0.0" if format == "ZARR_V2" else "c/0/0"))
+    assert ar.Read() == expected
+
+    ds.GetRootGroup().DeleteMDArray("data")
+    with gdaltest.error_raised(gdal.CE_Failure, match="has been deleted"):
+        assert advise() == gdal.CE_Failure
+    with gdal.ExceptionMgr(useExceptions=True), pytest.raises(
+        RuntimeError, match="has been deleted"
+    ):
+        advise()
 
 
 def test_zarr_read_invalid_nczarr_dim(tmp_vsimem):
@@ -6519,8 +6773,8 @@ def test_zarr_read_simple_sharding_read_errors(tmp_vsimem):
             except Exception as e:
                 error_msgs += str(e) + "\n"
 
-    assert "DecodePartial(): cannot decode chunk 0" in error_msgs
-    assert "cannot decode chunk" in error_msgs
+    assert "Error while retrieving decompressed size of ZSTD frame" in error_msgs
+    assert "BatchDecodePartial: cannot decode chunk" in error_msgs
 
 
 ###############################################################################

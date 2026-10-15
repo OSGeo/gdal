@@ -12,6 +12,7 @@
 
 #include "zarr_v3_codec.h"
 
+#include "cpl_error_internal.h"
 #include "cpl_mem_cache.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
@@ -1264,11 +1265,16 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
             const auto nExpectedDecodedChunkSize =
                 nDTSize * MultiplyElements(anCount);
 
+            const auto nErrorBefore = CPLGetErrorCounter();
             if (!m_poCodecSequence->Decode(aCompressed[i]))
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "BatchDecodePartial: cannot decode chunk %" PRIu64,
-                         static_cast<uint64_t>(anInnerChunkIndices[iReq]));
+                if (CPLGetErrorCounter() == nErrorBefore ||
+                    CPLGetLastErrorType() != CE_Failure)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "BatchDecodePartial: cannot decode chunk %" PRIu64,
+                             static_cast<uint64_t>(anInnerChunkIndices[iReq]));
+                }
                 return false;
             }
 
@@ -1293,6 +1299,7 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
                  nThreads, nChunks);
 
     {
+        CPLErrorAccumulator oErrorAccumulator;
         bool bGlobalOK = true;
         std::mutex oMutex;
 
@@ -1312,8 +1319,12 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
 
             poJobQueue->SubmitJob(
                 [iFirst, iEnd, t, &aDataRanges, &anRequests, &aCompressed,
-                 &aResults, &apoCodecs, &bGlobalOK, &oMutex, nDTSize]()
+                 &aResults, &apoCodecs, &bGlobalOK, &oMutex, &oErrorAccumulator,
+                 &anInnerChunkIndices, nDTSize]()
                 {
+                    auto oAccumulator =
+                        oErrorAccumulator.InstallForCurrentScope();
+                    CPL_IGNORE_RET_VAL(oAccumulator);
                     for (int i = iFirst; i < iEnd; ++i)
                     {
                         {
@@ -1327,9 +1338,30 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
                         const auto nExpected =
                             nDTSize * MultiplyElements(anCount);
 
-                        if (!apoCodecs[t]->Decode(aCompressed[i]) ||
-                            aCompressed[i].size() != nExpected)
+                        const auto nErrorBefore = CPLGetErrorCounter();
+                        const bool bDecoded =
+                            apoCodecs[t]->Decode(aCompressed[i]);
+                        if (!bDecoded || aCompressed[i].size() != nExpected)
                         {
+                            if (!bDecoded &&
+                                (CPLGetErrorCounter() == nErrorBefore ||
+                                 CPLGetLastErrorType() != CE_Failure))
+                            {
+                                CPLError(CE_Failure, CPLE_NotSupported,
+                                         "BatchDecodePartial: cannot decode "
+                                         "chunk %" PRIu64,
+                                         static_cast<uint64_t>(
+                                             anInnerChunkIndices[iReq]));
+                            }
+                            else if (bDecoded)
+                            {
+                                CPLError(CE_Failure, CPLE_NotSupported,
+                                         "BatchDecodePartial: decoded size "
+                                         "%" PRIu64 " != expected %" PRIu64,
+                                         static_cast<uint64_t>(
+                                             aCompressed[i].size()),
+                                         static_cast<uint64_t>(nExpected));
+                            }
                             std::lock_guard<std::mutex> oLock(oMutex);
                             bGlobalOK = false;
                             return;
@@ -1341,16 +1373,9 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
                 });
         }
         poJobQueue->WaitCompletion();
-
-        if (!bGlobalOK)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "BatchDecodePartial: parallel decode failed");
-            return false;
-        }
+        ZarrReplayErrors(oErrorAccumulator);
+        return bGlobalOK;
     }
-
-    return true;
 }
 
 /************************************************************************/

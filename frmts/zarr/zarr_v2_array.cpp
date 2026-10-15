@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_error_internal.h"
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
@@ -798,8 +799,8 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         JobStruct &operator=(JobStruct &&) = default;
 
         const ZarrV2Array *poArray = nullptr;
+        CPLErrorAccumulator *poErrorAccumulator = nullptr;
         bool *pbGlobalStatus = nullptr;
-        int *pnRemainingThreads = nullptr;
         const std::vector<uint64_t> *panReqBlocksIndices = nullptr;
         size_t nFirstIdx = 0;
         size_t nLastIdxNotIncluded = 0;
@@ -807,8 +808,8 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
     std::vector<JobStruct> asJobStructs;
 
+    CPLErrorAccumulator oErrorAccumulator;
     bool bGlobalStatus = true;
-    int nRemainingThreads = nThreads;
     // Check for very highly overflow in below loop
     assert(static_cast<size_t>(nThreads) <
            std::numeric_limits<size_t>::max() / nReqBlocks);
@@ -818,8 +819,8 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
     {
         JobStruct jobStruct;
         jobStruct.poArray = this;
+        jobStruct.poErrorAccumulator = &oErrorAccumulator;
         jobStruct.pbGlobalStatus = &bGlobalStatus;
-        jobStruct.pnRemainingThreads = &nRemainingThreads;
         jobStruct.panReqBlocksIndices = &anReqBlocksIndices;
         jobStruct.nFirstIdx = static_cast<size_t>(i * nReqBlocks / nThreads);
         jobStruct.nLastIdxNotIncluded = std::min(
@@ -831,6 +832,10 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
     {
         const JobStruct *jobStruct =
             static_cast<const JobStruct *>(pThreadData);
+
+        auto oAccumulator =
+            jobStruct->poErrorAccumulator->InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(oAccumulator);
 
         const auto poArray = jobStruct->poArray;
         const size_t l_nDims = poArray->GetDimensionCount();
@@ -847,7 +852,7 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
             {
                 std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
                 if (!(*jobStruct->pbGlobalStatus))
-                    return;
+                    break;
             }
 
             const uint64_t *blockIndices =
@@ -887,34 +892,28 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                                  blockIndices + l_nDims};
             poArray->m_oChunkCache[cacheKey] = std::move(cachedBlock);
         }
-
-        std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-        (*jobStruct->pnRemainingThreads)--;
     };
 
+    auto poQueue = wtp->CreateJobQueue();
     // Start jobs
     for (int i = 0; i < nThreads; i++)
     {
-        if (!wtp->SubmitJob(JobFunc, &asJobStructs[i]))
+        if (!poQueue->SubmitJob(JobFunc, &asJobStructs[i]))
         {
             std::lock_guard<std::mutex> oLock(m_oMutex);
             bGlobalStatus = false;
-            nRemainingThreads = i;
             break;
         }
     }
 
     // Wait for all jobs to be finished
-    while (true)
-    {
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            if (nRemainingThreads == 0)
-                break;
-        }
-        wtp->WaitEvent();
-    }
+    poQueue->WaitCompletion();
 
+    // A partial cache does not cover the whole requested window.
+    if (!bGlobalStatus)
+        m_anCachedAdviseReadStart.clear();
+
+    ZarrReplayErrors(oErrorAccumulator);
     return bGlobalStatus;
 }
 
