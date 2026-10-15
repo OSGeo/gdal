@@ -1826,7 +1826,8 @@ lbl_next_depth:
         auto &abyBlock = m_abyDecodedBlockData.empty() ? m_abyRawBlockData
                                                        : m_abyDecodedBlockData;
 
-        if (!blockIndices.empty() && blockIndices == m_anCachedBlockIndices)
+        if (!blockIndices.empty() && blockIndices == m_anCachedBlockIndices &&
+            !m_bCachedBlockEmpty)
         {
             if (!m_bCachedBlockValid)
                 return false;
@@ -1839,54 +1840,49 @@ lbl_next_depth:
             m_anCachedBlockIndices = blockIndices;
             m_bCachedBlockValid = true;
 
-            if (bWriteWholeBlock)
-            {
-                if (bPartialBlock)
-                {
-                    DeallocateDecodedBlockData();
-                    memset(&abyBlock[0], 0, abyBlock.size());
-                }
-            }
-            else
+            bool bEmptyBlock = bWriteWholeBlock && bPartialBlock;
+            if (!bWriteWholeBlock)
             {
                 // If we don't write the whole tile, we need to fetch a
                 // potentially existing one.
-                bool bEmptyBlock = false;
                 m_bCachedBlockValid =
                     LoadBlockData(blockIndices.data(), bEmptyBlock);
                 if (!m_bCachedBlockValid)
                 {
                     return false;
                 }
+            }
 
-                if (bEmptyBlock)
+            if (bEmptyBlock)
+            {
+                DeallocateDecodedBlockData();
+
+                if (m_pabyNoData == nullptr)
                 {
-                    DeallocateDecodedBlockData();
-
-                    if (m_pabyNoData == nullptr)
+                    memset(&abyBlock[0], 0, abyBlock.size());
+                }
+                else
+                {
+                    const size_t nElts = abyBlock.size() / nCacheDTSize;
+                    GByte *dstPtr = &abyBlock[0];
+                    if (m_oType.GetClass() == GEDTC_NUMERIC)
                     {
-                        memset(&abyBlock[0], 0, abyBlock.size());
+                        GDALCopyWords64(m_pabyNoData,
+                                        m_oType.GetNumericDataType(), 0, dstPtr,
+                                        m_oType.GetNumericDataType(),
+                                        static_cast<int>(m_oType.GetSize()),
+                                        static_cast<GPtrDiff_t>(nElts));
                     }
                     else
                     {
-                        const size_t nElts = abyBlock.size() / nCacheDTSize;
-                        GByte *dstPtr = &abyBlock[0];
-                        if (m_oType.GetClass() == GEDTC_NUMERIC)
+                        for (size_t i = 0; i < nElts; ++i)
                         {
-                            GDALCopyWords64(
-                                m_pabyNoData, m_oType.GetNumericDataType(), 0,
-                                dstPtr, m_oType.GetNumericDataType(),
-                                static_cast<int>(m_oType.GetSize()),
-                                static_cast<GPtrDiff_t>(nElts));
-                        }
-                        else
-                        {
-                            for (size_t i = 0; i < nElts; ++i)
-                            {
+                            if (m_abyDecodedBlockData.empty())
+                                EncodeElt(m_aoDtypeElts, m_pabyNoData, dstPtr);
+                            else
                                 GDALExtendedDataType::CopyValue(
                                     m_pabyNoData, m_oType, dstPtr, m_oType);
-                                dstPtr += nCacheDTSize;
-                            }
+                            dstPtr += nCacheDTSize;
                         }
                     }
                 }

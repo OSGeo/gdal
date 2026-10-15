@@ -181,7 +181,19 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     {
         char *pStr = nullptr;
         memcpy(&pStr, m_pabyNoData, sizeof(pStr));
-        oRoot.Add("fill_value", pStr ? pStr : "");
+        if (m_dtype.GetString("name") == "null_terminated_bytes")
+        {
+            const char *pszValue = pStr ? pStr : "";
+            char *pszEncoded =
+                CPLBase64Encode(static_cast<int>(strlen(pszValue)),
+                                reinterpret_cast<const GByte *>(pszValue));
+            oRoot.Add("fill_value", pszEncoded);
+            CPLFree(pszEncoded);
+        }
+        else
+        {
+            oRoot.Add("fill_value", pStr ? pStr : "");
+        }
     }
     else if (m_pabyNoData == nullptr)
     {
@@ -1243,10 +1255,12 @@ bool ZarrV3Array::FlushDirtyBlockSharded() const
             }
             else
             {
-                for (size_t i = 0; i < nShardElements; ++i)
+                EncodeElt(m_aoDtypeElts, m_pabyNoData,
+                          entry.abyShardBuffer.data());
+                for (size_t i = 1; i < nShardElements; ++i)
                 {
                     memcpy(entry.abyShardBuffer.data() + i * nSourceSize,
-                           m_pabyNoData, nSourceSize);
+                           entry.abyShardBuffer.data(), nSourceSize);
                 }
             }
         }
@@ -2398,9 +2412,23 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     }
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
-        const auto osFillValue = oFillValue.ToString();
+        auto osFillValue = oFillValue.ToString();
         if (oType.GetClass() == GEDTC_STRING)
         {
+            if (oDtype.GetString("name") == "null_terminated_bytes")
+            {
+                const int nBytes = CPLBase64DecodeInPlace(
+                    reinterpret_cast<GByte *>(osFillValue.data()));
+                osFillValue.resize(nBytes);
+                while (!osFillValue.empty() && osFillValue.back() == '\0')
+                    osFillValue.pop_back();
+                if (osFillValue.find('\0') != std::string::npos)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Unsupported embedded NUL bytes in fill_value");
+                    return nullptr;
+                }
+            }
             abyNoData.resize(oType.GetSize());
             char *pDstStr = CPLStrdup(osFillValue.c_str());
             char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);

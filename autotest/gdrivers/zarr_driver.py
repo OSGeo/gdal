@@ -19,6 +19,7 @@ import os
 import shutil
 import struct
 import sys
+from contextlib import contextmanager
 
 import gdaltest
 import pytest
@@ -4502,6 +4503,15 @@ def test_zarr_advise_read_cache_preserved(tmp_path, format):
     assert got == expected
 
 
+@contextmanager
+def _open_array(path, update=False):
+    with gdal.OpenEx(
+        path, gdal.OF_MULTIDIM_RASTER | (gdal.OF_UPDATE if update else 0)
+    ) as ds:
+        group = ds.GetRootGroup()
+        yield group.OpenMDArray(group.GetMDArrayNames()[0])
+
+
 def test_zarr_read_invalid_nczarr_dim(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
@@ -4776,6 +4786,129 @@ def test_zarr_resize(tmp_vsimem, format, create_z_metadata):
         )
 
     check()
+
+
+def _write_array_metadata(
+    path,
+    dtype,
+    fill_value,
+    *,
+    shape=(2,),
+    chunks=None,
+    format="ZARR_V3",
+    codecs=None,
+    attributes=None,
+):
+    path.mkdir(exist_ok=True)
+    shape = list(shape)
+    chunks = chunks if chunks is not None else shape
+    metadata = dict(shape=shape, fill_value=fill_value)
+    if format == "ZARR_V2":
+        metadata.update(
+            zarr_format=2,
+            chunks=chunks,
+            dtype=dtype,
+            order="C",
+            compressor=None,
+            filters=None,
+        )
+        name = ".zarray"
+    else:
+        metadata.update(
+            zarr_format=3,
+            node_type="array",
+            data_type=dtype,
+            chunk_grid={"name": "regular", "configuration": {"chunk_shape": chunks}},
+            chunk_key_encoding={"name": "default"},
+            codecs=codecs if codecs is not None else [{"name": "bytes"}],
+        )
+        if attributes is not None:
+            metadata["attributes"] = attributes
+        name = "zarr.json"
+    (path / name).write_text(json.dumps(metadata))
+    return metadata
+
+
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize("array_type,fill_value", [("h", -7), ("f", "NaN")])
+@pytest.mark.parametrize(
+    "shape,expected",
+    [
+        ([2], [11, 12, None, None]),
+        ([2, 3], [11, 12, 13, None, 14, 15, 16, None] + [None] * 8),
+    ],
+)
+def test_zarr_resize_partial_chunk_fill_value(
+    tmp_path, format, array_type, fill_value, shape, expected
+):
+    filename = tmp_path / "test.zarr"
+    chunks = [4] * len(shape)
+    dtype = {"h": ("<i2", "int16"), "f": ("<f4", "float32")}[array_type]
+    _write_array_metadata(
+        filename,
+        dtype[format == "ZARR_V3"],
+        fill_value,
+        shape=shape,
+        chunks=chunks,
+        format=format,
+        codecs=[{"name": "bytes", "configuration": {"endian": "little"}}],
+    )
+    with _open_array(filename, update=True) as ar:
+        values = array.array(array_type, range(11, 11 + math.prod(shape)))
+        assert ar.Write(values) == gdal.CE_None
+    with _open_array(filename, update=True) as ar:
+        assert ar.Resize(chunks) == gdal.CE_None
+    fill = float(fill_value) if array_type == "f" else fill_value
+    with _open_array(filename) as ar:
+        actual = array.array(array_type, ar.Read())
+    # Compare as strings since NaN != NaN
+    assert str(actual) == str(
+        array.array(array_type, [fill if v is None else v for v in expected])
+    )
+
+
+@pytest.mark.parametrize(
+    "data_type,codec",
+    [
+        ("string", "vlen-utf8"),
+        (
+            {"name": "null_terminated_bytes", "configuration": {"length_bytes": 8}},
+            "bytes",
+        ),
+    ],
+)
+@pytest.mark.parametrize("read_first", [False, True])
+@pytest.mark.parametrize("partial_chunk", [False, True])
+def test_zarr_partial_string_chunk_padding_fill_value(
+    tmp_path, data_type, codec, read_first, partial_chunk
+):
+    filename = tmp_path / "test.zarr"
+    shape = [2] if partial_chunk else [4]
+    metadata = _write_array_metadata(
+        filename,
+        data_type,
+        base64.b64encode(b"fill").decode("ascii") if codec == "bytes" else "fill",
+        shape=shape,
+        chunks=[4],
+        codecs=[{"name": codec}],
+    )
+    with _open_array(filename, update=True) as ar:
+        if read_first:
+            assert ar.Read() == ["fill"] * shape[0]
+        if partial_chunk:
+            assert ar.Write(["first", "second"]) == gdal.CE_None
+        else:
+            assert ar.Write(["new"], array_start_idx=[1], count=[1]) == gdal.CE_None
+    if partial_chunk:
+        metadata["shape"] = [4]
+        (filename / "zarr.json").write_text(json.dumps(metadata))
+    with _open_array(filename) as ar:
+        expected = (
+            ["first", "second", "fill", "fill"]
+            if partial_chunk
+            else ["fill", "new", "fill", "fill"]
+        )
+        assert ar.Read() == expected
 
 
 @pytest.mark.parametrize("create_z_metadata", [True, False])
@@ -6085,6 +6218,22 @@ def test_zarr_write_UTM31N_and_EGM96_height(tmp_vsimem):
     with gdal.Open(tmp_filename) as ds:
         srs = ds.GetSpatialRef()
         assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+
+
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_partial_write_after_reading_missing_chunk(tmp_path, format):
+    filename = tmp_path / "test.zarr"
+    _write_array_metadata(
+        filename, "|i1" if format == "ZARR_V2" else "int8", -7, shape=[4], format=format
+    )
+    with _open_array(filename, update=True) as ar:
+        assert ar.Read() == bytes(array.array("b", [-7] * 4))
+        assert (
+            ar.Write(array.array("b", [11]), array_start_idx=[1], count=[1])
+            == gdal.CE_None
+        )
+    with _open_array(filename) as ar:
+        assert ar.Read() == bytes(array.array("b", [-7, 11, -7, -7]))
 
 
 ###############################################################################
@@ -8250,8 +8399,138 @@ def test_zarr_v3_read_fixed_length_string_dtypes(
     assert ar.Read() == expected_values
 
 
+@pytest.mark.parametrize("has_chunk", [False, True])
+@pytest.mark.parametrize(
+    "type_name,value,fill_value",
+    [
+        ("null_terminated_bytes", "abcdefg", ""),
+        ("fixed_length_utf32", "é水😀", ""),
+        ("fixed_length_utf32", "é水😀", "f"),
+        ("null_terminated_bytes", "abc", ""),
+        ("null_terminated_bytes", "abc", "f"),
+        ("null_terminated_bytes", "abc", "Zg=="),
+        ("null_terminated_bytes", "abc", "é"),
+        ("null_terminated_bytes", "abc", "f\0"),
+        ("null_terminated_bytes", "abc", "\0"),
+        ("fixed_length_utf32", "abc", "f"),
+        ("string", "abc", "Zg=="),
+    ],
+)
+def test_zarr_v3_string_fill_roundtrip(
+    tmp_path, type_name, value, fill_value, has_chunk
+):
+    filename = tmp_path / "test.zarr"
+    if type_name == "string":
+        data_type = type_name
+        codecs = [{"name": "vlen-utf8"}]
+        chunk = struct.pack("<III", 2, 0, len(value.encode("utf-8"))) + value.encode(
+            "utf-8"
+        )
+    else:
+        length_bytes = 8 if type_name == "null_terminated_bytes" else 16
+        data_type = {"name": type_name, "configuration": {"length_bytes": length_bytes}}
+        codecs = [{"name": "bytes", "configuration": {"endian": "little"}}]
+        encoding = "ascii" if type_name == "null_terminated_bytes" else "utf-32-le"
+        chunk = bytes(length_bytes) + value.encode(encoding).ljust(length_bytes, b"\0")
+
+    def encode(fill):
+        if type_name != "null_terminated_bytes":
+            return fill
+        return base64.b64encode(fill.encode("utf-8")).decode("ascii")
+
+    # Trailing NUL bytes of a null_terminated_bytes fill_value are padding
+    fill = fill_value.rstrip("\0")
+    attributes = {
+        "description": "keep",
+        "scale_factor": 2.0,
+        "custom": {"values": [1, 2]},
+        "nothing": None,
+        "custom/path": "literal",
+    }
+    metadata = _write_array_metadata(
+        filename, data_type, encode(fill_value), codecs=codecs, attributes=attributes
+    )
+    if has_chunk:
+        (filename / "c").mkdir()
+        (filename / "c/0").write_bytes(chunk)
+    expected = ["", value] if has_chunk else [fill] * 2
+    for size in (4, 5):
+        with _open_array(filename, update=True) as ar:
+            assert ar.Read() == expected
+            assert ar.Resize([size]) == gdal.CE_None
+        expected += [fill] * (size - len(expected))
+        rewritten = json.loads((filename / "zarr.json").read_text())
+        assert rewritten["shape"] == [size]
+        assert rewritten["fill_value"] == encode(fill)
+        for key in ("data_type", "codecs", "attributes"):
+            assert rewritten[key] == metadata[key]
+        if has_chunk:
+            assert (filename / "c/0").read_bytes() == chunk
+        with _open_array(filename) as ar:
+            assert ar.Read() == expected
+
+    if has_chunk:
+        with _open_array(filename, update=True) as ar:
+            assert ar.Write(["X"], array_start_idx=[0], count=[1]) == gdal.CE_None
+        expected[0] = "X"
+    with _open_array(filename) as ar:
+        assert ar.Read() == expected
+
+
+@pytest.mark.parametrize("native_fill", [b"a\0b", b"\0a"])
+@gdaltest.enable_exceptions()
+def test_zarr_v3_s8_fill_embedded_null_bytes(tmp_path, native_fill):
+    filename = tmp_path / "test.zarr"
+    data_type = {"name": "null_terminated_bytes", "configuration": {"length_bytes": 8}}
+    _write_array_metadata(
+        filename, data_type, base64.b64encode(native_fill).decode("ascii")
+    )
+    original = (filename / "zarr.json").read_bytes()
+    with pytest.raises(Exception, match="embedded NUL bytes.*fill_value"):
+        with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE) as ds:
+            rg = ds.GetRootGroup()
+            rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert (filename / "zarr.json").read_bytes() == original
+
+
 ###############################################################################
 # Test Zarr v3 sharded fixed-length string array
+
+
+@pytest.mark.parametrize(
+    "type_name,length_bytes,fill_value",
+    [
+        ("null_terminated_bytes", 5, "fill"),
+        ("null_terminated_bytes", 16, "fill"),
+        ("fixed_length_utf32", 16, "水"),
+    ],
+)
+def test_zarr_write_sharded_string_fill(tmp_path, type_name, length_bytes, fill_value):
+    filename = tmp_path / "test.zarr"
+    filename.mkdir()
+    with open("data/zarr/v3/sharded_null_terminated_bytes.zarr/ar/zarr.json") as f:
+        metadata = json.load(f)
+    metadata["data_type"] = {
+        "name": type_name,
+        "configuration": {"length_bytes": length_bytes},
+    }
+    metadata["fill_value"] = (
+        base64.b64encode(fill_value.encode()).decode()
+        if type_name == "null_terminated_bytes"
+        else fill_value
+    )
+    metadata["codecs"][0]["configuration"]["codecs"][0]["configuration"] = {
+        "endian": "little"
+    }
+    (filename / "zarr.json").write_text(json.dumps(metadata))
+    expected = ["new", fill_value, "last", fill_value]
+    with _open_array(filename, update=True) as ar:
+        assert ar.Read() == [fill_value] * 4
+        for index, value in ((0, "new"), (2, "last")):
+            assert ar.Write([value], array_start_idx=[index], count=[1]) == gdal.CE_None
+        assert ar.Read() == expected
+    with _open_array(filename) as ar:
+        assert ar.Read() == expected
 
 
 def test_zarr_v3_read_sharded_null_terminated_bytes():
