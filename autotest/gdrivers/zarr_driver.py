@@ -4433,6 +4433,30 @@ def test_zarr_advise_read_cache_preserved(tmp_path, format):
     assert got == expected
 
 
+def _write_byte_array(
+    path, shape, values, options, format="ZARR_V3", nodata=None, overviews=None
+):
+    if "COMPRESS=ZSTD" in options and "zstd" not in gdal.GetDriverByName(
+        "ZARR"
+    ).GetMetadataItem("COMPRESSORS"):
+        pytest.skip("zstd compressor not available")
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        path, options=["FORMAT=" + format]
+    ) as ds:
+        rg = ds.GetRootGroup()
+        dims = [rg.CreateDimension(n, None, None, size) for n, size in zip("YX", shape)]
+        ar = rg.CreateMDArray(
+            "data", dims, gdal.ExtendedDataType.Create(gdal.GDT_UInt8), options
+        )
+        if nodata is not None:
+            assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
+        if values is not None:
+            assert ar.Write(values) == gdal.CE_None
+        if overviews:
+            assert ar.BuildOverviews("NEAREST", overviews) == gdal.CE_None
+        ar = rg = dims = None
+
+
 def test_zarr_read_invalid_nczarr_dim(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "test.zarr", 0)
@@ -8841,6 +8865,73 @@ def test_zarr_build_overviews_classic_bridge(tmp_vsimem):
     ovr_band = band.GetOverview(0)
     assert ovr_band.XSize == 32 and ovr_band.YSize == 32
     assert len(ds.GetSubDatasets()) == 1
+
+
+###############################################################################
+# Test that a downsampled read served by an overview does not advise a read of
+# the full resolution array (https://github.com/OSGeo/gdal/issues/15380)
+
+
+def test_zarr_downsampled_read_does_not_advise_full_resolution(tmp_vsimem):
+
+    path = tmp_vsimem / "test.zarr"
+
+    values = bytes(i % 251 for i in range(256 * 256))
+    _write_byte_array(path, (256, 256), values, ["BLOCKSIZE=64,64"], overviews=[4])
+
+    ds = gdal.Open(path)
+    # Opening the overview warns about its null fill_value
+    with gdal.quiet_errors():
+        expected = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+
+    # Any fetch of a full resolution chunk now fails
+    for y in range(4):
+        for x in range(4):
+            gdal.FileFromMemBuffer(path / "data" / "c" / str(y) / str(x), b"corrupt")
+
+    with gdaltest.error_raised(gdal.CE_None):
+        assert ds.GetRasterBand(1).ReadRaster(buf_xsize=64, buf_ysize=64) == expected
+        # gdal_translate -outsize issues an AdviseRead() on the source
+        out_ds = gdal.Translate(tmp_vsimem / "out.tif", ds, width=64, height=64)
+        assert out_ds.ReadRaster() == expected
+
+
+###############################################################################
+# gdalwarp reads the source at full resolution, so its AdviseRead() must not
+# be redirected to an overview
+
+
+def test_zarr_warp_without_overviews_does_not_advise_overview(tmp_vsimem):
+
+    path = tmp_vsimem / "test.zarr"
+
+    values = bytes(1 + i % 250 for i in range(256 * 256))
+    _write_byte_array(path, (256, 256), values, ["BLOCKSIZE=64,64"], overviews=[4])
+
+    ds = gdal.Open(path)
+    # Opening the overview warns about its null fill_value
+    with gdal.quiet_errors():
+        ovr = ds.GetRasterBand(1).GetOverview(0)
+
+    with gdaltest.config_option("GDAL_NUM_THREADS", "2"):
+        out_ds = gdal.Warp(
+            "",
+            ds,
+            format="MEM",
+            width=64,
+            height=64,
+            overviewLevel="NONE",
+            transformerOptions=[
+                "SRC_METHOD=NO_GEOTRANSFORM",
+                "DST_METHOD=NO_GEOTRANSFORM",
+            ],
+        )
+    assert 0 not in out_ds.ReadRaster()
+
+    # Had the warp AdviseRead() prefetched the overview, its chunk would
+    # still be served from the AdviseRead() cache
+    gdal.Unlink(path / "ovr_4x" / "data" / "c" / "0" / "0")
+    assert ovr.ReadRaster() == b"\x00" * (64 * 64)
 
 
 ###############################################################################

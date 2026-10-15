@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "gdal_cpp_functions.h"
 #include "gdal_multidim.h"
 #include "gdal_pam.h"
 #include "gdal_pam_multidim.h"
@@ -728,8 +729,7 @@ CPLErr GDALRasterBandFromArray::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 CPLErr GDALRasterBandFromArray::AdviseRead(int nXOff, int nYOff, int nXSize,
                                            int nYSize, int nBufXSize,
-                                           int nBufYSize,
-                                           GDALDataType /*eBufType*/,
+                                           int nBufYSize, GDALDataType eBufType,
                                            CSLConstList papszOptions)
 {
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
@@ -739,6 +739,20 @@ CPLErr GDALRasterBandFromArray::AdviseRead(int nXOff, int nYOff, int nXSize,
         nBufXSize, nBufYSize, 1, &nBand);
     if (eErr != CE_None || bStopProcessing)
         return eErr;
+
+    // When downsampling, advise the overview that will serve the request
+    // rather than the full resolution array.
+    if ((nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0)
+    {
+        const int nOverview = GDALBandGetBestOverviewLevel2(
+            this, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nullptr);
+        if (nOverview >= 0)
+        {
+            return GetOverview(nOverview)->AdviseRead(
+                nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eBufType,
+                papszOptions);
+        }
+    }
 
     const auto &poArray(l_poDS->m_poArray);
     std::vector<GUInt64> anArrayStartIdx = m_anOffset;
