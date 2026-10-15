@@ -5763,7 +5763,17 @@ TEST_F(test_cpl, CPLHasPathTraversal)
     EXPECT_TRUE(CPLHasPathTraversal("a/../"));
     EXPECT_TRUE(CPLHasPathTraversal("a/.."));
     EXPECT_TRUE(CPLHasPathTraversal("a\\..\\b"));
+    EXPECT_TRUE(CPLHasPathTraversal(".."));
+    EXPECT_TRUE(CPLHasPathTraversal("../"));
+    EXPECT_TRUE(CPLHasPathTraversal("/../"));
+    EXPECT_TRUE(CPLHasPathTraversal("/.."));
     EXPECT_FALSE(CPLHasPathTraversal("a/b"));
+    EXPECT_FALSE(CPLHasPathTraversal("./a/b"));
+    // Test issue GH #15360
+    EXPECT_TRUE(CPLHasPathTraversal(".//../etc/passwd"));
+    EXPECT_TRUE(CPLHasPathTraversal("a../../../etc/passwd"));
+    EXPECT_TRUE(CPLHasPathTraversal(".../../../etc/passwd"));
+    EXPECT_TRUE(CPLHasPathTraversal("a..b/../../etc/passwd"));
     {
         CPLConfigOptionSetter oSetter("CPL_ENABLE_PATH_TRAVERSAL_DETECTION",
                                       "NO", true);
@@ -5793,7 +5803,11 @@ TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
     // Test issue GH #15360
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("././../etc/passwd"));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal(".//../etc/passwd"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a../../../etc/passwd"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal(".../../../etc/passwd"));
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a..b/../../etc/passwd"));
 }
 
 TEST_F(test_cpl, cpl_enumerate)
