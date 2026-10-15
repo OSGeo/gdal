@@ -202,7 +202,8 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         }
         if (m_unsetFID)
             poSrcFeature->SetFID(OGRNullFID);
-        apoOutFeatures.push_back(std::move(poSrcFeature));
+        if (PassesFilters(poSrcFeature.get()))
+            apoOutFeatures.push_back(std::move(poSrcFeature));
     }
 
     int TestCapability(const char *pszCap) const override

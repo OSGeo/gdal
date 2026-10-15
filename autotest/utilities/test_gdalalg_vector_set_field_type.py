@@ -486,3 +486,23 @@ def test_gdalalg_set_field_type_pipeline_fuse_in_open_not_supported(tmp_vsimem):
         assert lyr_defn.GetFieldDefn(0).GetType() == ogr.OFTDate
         assert lyr_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger64
         assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTInteger
+
+
+@pytest.mark.parametrize("field_type", ["Integer", "Integer64"])
+def test_gdalalg_set_field_type_pipeline_filter(field_type):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    for i in range(1, 4):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["id"] = i
+        src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline=f'read ! set-field-type --field-name id --field-type {field_type} ! filter --where "id = 2"',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert [f["id"] for f in lyr] == [2]

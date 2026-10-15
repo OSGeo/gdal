@@ -244,7 +244,8 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     poDstFeature->SetFrom(poSrcFeature.get());
     poDstFeature->SetGeometry(std::move(poGeom));
 
-    apoOutFeatures.push_back(std::move(poDstFeature));
+    if (PassesFilters(poDstFeature.get()))
+        apoOutFeatures.push_back(std::move(poDstFeature));
 }
 
 }  // namespace
