@@ -1678,6 +1678,14 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                          const GDALExtendedDataType &bufferDataType,
                          const void *pSrcBuffer)
 {
+    if (m_dtype.ToString() == "string" && m_poCodecs &&
+        m_poCodecs->SupportsPartialDecoding())
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "Writing sharded variable-length string arrays is not supported");
+        return false;
+    }
 
     // Multithreading writing if window is aligned on chunk boundaries.
     if (m_oType == bufferDataType && m_oType.GetClass() == GEDTC_NUMERIC)

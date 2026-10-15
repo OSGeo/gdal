@@ -85,7 +85,7 @@ Sharding support
 
 `Zarr v3 sharding <https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html>`__
 is supported since GDAL 3.13. Write support involves setting the
-:co:`SHARD_CHUNK_SHAPE` array creation option.
+:co:`SHARD_CHUNK_SHAPE` array creation option. Writing sharded variable-length string arrays is not supported; such writes fail before changing the array. Fixed-width string arrays support sharded writes.
 
 Multiscales (overviews / pyramids)
 ----------------------------------

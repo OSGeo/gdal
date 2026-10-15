@@ -2089,6 +2089,34 @@ def test_zarr_create_array(tmp_vsimem, datatype, nodata, format):
                 assert ar.GetNoDataValueAsRaw() is None
 
 
+def test_zarr_v3_sharded_string_write_rejected(tmp_path):
+    filename = tmp_path / "test.zarr"
+    with gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        filename, options=["FORMAT=ZARR_V3"]
+    ) as ds:
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("x", None, None, 4)
+        ar = rg.CreateMDArray(
+            "ar",
+            [dim],
+            gdal.ExtendedDataType.CreateString(10),
+            ["BLOCKSIZE=4", "SHARD_CHUNK_SHAPE=2"],
+        )
+        metadata = (filename / "ar" / "zarr.json").read_bytes()
+        initial = ar.Read()
+        with gdal.quiet_errors():
+            assert (
+                ar.Write(["written"], array_start_idx=[0], count=[1]) == gdal.CE_Failure
+            )
+        assert (
+            "Writing sharded variable-length string arrays is not supported"
+            in gdal.GetLastErrorMsg()
+        )
+        assert ar.Read() == initial
+    assert (filename / "ar" / "zarr.json").read_bytes() == metadata
+    assert not (filename / "ar" / "c").exists()
+
+
 @pytest.mark.parametrize(
     "array_name",
     [
