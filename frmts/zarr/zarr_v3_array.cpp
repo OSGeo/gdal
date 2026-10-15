@@ -21,12 +21,150 @@
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <charconv>
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <map>
 #include <set>
+
+namespace
+{
+
+// Xarray's V3 encoding stores floating point _FillValue components as
+// base64-encoded little-endian doubles, independently of storage fill_value.
+std::string EncodeNoDataDouble(double dfValue)
+{
+    CPL_LSBPTR64(&dfValue);
+    char *pszEncoded = CPLBase64Encode(
+        sizeof(dfValue), reinterpret_cast<const GByte *>(&dfValue));
+    const std::string osEncoded(pszEncoded);
+    CPLFree(pszEncoded);
+    return osEncoded;
+}
+
+bool DecodeNoDataDouble(const CPLJSONObject &oValue, double &dfValue)
+{
+    const auto eType = oValue.GetType();
+    if (eType == CPLJSONObject::Type::Integer ||
+        eType == CPLJSONObject::Type::Long ||
+        eType == CPLJSONObject::Type::Double)
+    {
+        dfValue = oValue.ToDouble();
+        return true;
+    }
+    if (eType != CPLJSONObject::Type::String)
+        return false;
+    const auto osValue = oValue.ToString();
+    std::vector<GByte> abyValue(osValue.begin(), osValue.end());
+    abyValue.push_back(0);
+    if (CPLBase64DecodeInPlace(abyValue.data()) != sizeof(dfValue))
+        return false;
+    memcpy(&dfValue, abyValue.data(), sizeof(dfValue));
+    CPL_LSBPTR64(&dfValue);
+    // The decoder is deliberately permissive; reject malformed encodings.
+    return EncodeNoDataDouble(dfValue) == osValue;
+}
+
+bool ReadV3NoData(const std::shared_ptr<ZarrV3Array> &poArray,
+                  CPLJSONObject &oAttrs, const GDALExtendedDataType &oType,
+                  const CPLJSONObject &oDtype, bool bUseFillValueAsNoData,
+                  const std::vector<GByte> &abyFillValue)
+{
+    const auto oValue = oAttrs["_FillValue"];
+    if (!oValue.IsValid())
+    {
+        if (bUseFillValueAsNoData && !abyFillValue.empty())
+            poArray->RegisterNoDataFromFillValue(abyFillValue.data());
+        return true;
+    }
+    const auto eJSONType = oValue.GetType();
+    const auto eDT = oType.GetNumericDataType();
+    std::vector<GByte> abyNoData(oType.GetSize());
+    bool bOK = false;
+    if (oType.GetClass() == GEDTC_STRING)
+    {
+        if (eJSONType == CPLJSONObject::Type::String)
+        {
+            // RegisterNoDataValue copies the string while the owner is alive.
+            const std::string osValue = oValue.ToString();
+            const char *pszValue = osValue.c_str();
+            poArray->RegisterNoDataValue(&pszValue);
+            bOK = true;
+        }
+    }
+    else if (oDtype.ToString() == "bool")
+    {
+        if (eJSONType == CPLJSONObject::Type::Boolean)
+        {
+            abyNoData[0] = oValue.ToBool() ? 1 : 0;
+            bOK = true;
+        }
+    }
+    else if (GDALDataTypeIsInteger(eDT))
+    {
+        if (eJSONType == CPLJSONObject::Type::Integer ||
+            eJSONType == CPLJSONObject::Type::Long)
+        {
+            const auto osValue = oValue.ToString();
+            const auto ParseInt64 = [&](auto nValue)
+            {
+                const auto result = std::from_chars(
+                    osValue.data(), osValue.data() + osValue.size(), nValue);
+                bOK = result.ec == std::errc() &&
+                      result.ptr == osValue.data() + osValue.size();
+                memcpy(abyNoData.data(), &nValue, sizeof(nValue));
+            };
+            if (eDT == GDT_Int64)
+                ParseInt64(int64_t{0});
+            else if (eDT == GDT_UInt64)
+                ParseInt64(uint64_t{0});
+            else
+            {
+                const double dfValue = oValue.ToDouble();
+                int bClamped = false;
+                int bRounded = false;
+                GDALAdjustValueToDataType(eDT, dfValue, &bClamped, &bRounded);
+                bOK = !bClamped && !bRounded;
+                GDALCopyWords(&dfValue, GDT_Float64, 0, abyNoData.data(), eDT,
+                              0, 1);
+            }
+        }
+    }
+    else if (GDALDataTypeIsComplex(eDT))
+    {
+        double adfValue[2] = {};
+        const auto oArray = oValue.ToArray();
+        bOK = eJSONType == CPLJSONObject::Type::Array && oArray.Size() == 2 &&
+              DecodeNoDataDouble(oArray[0], adfValue[0]) &&
+              DecodeNoDataDouble(oArray[1], adfValue[1]);
+        if (bOK)
+            GDALCopyWords(adfValue, GDT_CFloat64, 0, abyNoData.data(), eDT, 0,
+                          1);
+    }
+    else
+    {
+        double dfValue = 0;
+        bOK = DecodeNoDataDouble(oValue, dfValue);
+        if (bOK)
+            GDALCopyWords(&dfValue, GDT_Float64, 0, abyNoData.data(), eDT, 0,
+                          1);
+    }
+    if (!bOK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid _FillValue for Zarr V3 array %s",
+                 poArray->GetFullName().c_str());
+        return false;
+    }
+    if (oType.GetClass() != GEDTC_STRING)
+        poArray->RegisterNoDataValue(abyNoData.data());
+    oAttrs.Delete("_FillValue");
+    return true;
+}
+
+}  // namespace
 
 /************************************************************************/
 /*                      ZarrV3Array::ZarrV3Array()                      */
@@ -43,6 +181,48 @@ ZarrV3Array::ZarrV3Array(
       ZarrArray(poSharedResource, poParent, osName, aoDims, oType, aoDtypeElts,
                 anOuterBlockSize, anInnerBlockSize)
 {
+    std::vector<GByte> abyDefault(oType.GetSize());
+    const auto eDT = oType.GetNumericDataType();
+    if (eDT == GDT_Float16 || eDT == GDT_Float32 || eDT == GDT_Float64)
+    {
+        const double dfNaN = std::numeric_limits<double>::quiet_NaN();
+        GDALCopyWords(&dfNaN, GDT_Float64, 0, abyDefault.data(), eDT, 0, 1);
+    }
+    const char *pszEmpty = "";
+    RegisterFillValue(oType.GetClass() == GEDTC_STRING
+                          ? static_cast<const void *>(&pszEmpty)
+                          : abyDefault.data());
+}
+
+void ZarrV3Array::SerializeNoData(CPLJSONObject &oAttrs) const
+{
+    if (!m_pabyNoData || m_bNoDataFromFillValue)
+        return;
+    const auto eDT = m_oType.GetNumericDataType();
+    if (m_oType.GetClass() == GEDTC_STRING)
+    {
+        const char *pszValue = nullptr;
+        memcpy(&pszValue, m_pabyNoData, sizeof(pszValue));
+        oAttrs.Add("_FillValue", pszValue ? pszValue : "");
+    }
+    else if (m_dtype.ToString() == "bool")
+        oAttrs.Add("_FillValue", *m_pabyNoData != 0);
+    else if (GDALDataTypeIsInteger(eDT))
+        SerializeNumericFillValue(oAttrs, m_pabyNoData, "_FillValue");
+    else
+    {
+        double adfValue[2] = {};
+        GDALCopyWords(m_pabyNoData, eDT, 0, adfValue, GDT_CFloat64, 0, 1);
+        if (GDALDataTypeIsComplex(eDT))
+        {
+            CPLJSONArray oArray;
+            oArray.Add(EncodeNoDataDouble(adfValue[0]));
+            oArray.Add(EncodeNoDataDouble(adfValue[1]));
+            oAttrs.Add("_FillValue", oArray);
+        }
+        else
+            oAttrs.Add("_FillValue", EncodeNoDataDouble(adfValue[0]));
+    }
 }
 
 /************************************************************************/
@@ -74,6 +254,46 @@ std::shared_ptr<ZarrV3Array> ZarrV3Array::Create(
 ZarrV3Array::~ZarrV3Array()
 {
     ZarrV3Array::Flush();
+    m_oType.FreeDynamicMemory(m_abyFillValue.data());
+}
+
+void ZarrV3Array::RegisterFillValue(const void *pRawFillValue)
+{
+    if (!m_abyFillValue.empty())
+        m_oType.FreeDynamicMemory(m_abyFillValue.data());
+    m_abyFillValue.assign(m_oType.GetSize(), 0);
+    GDALExtendedDataType::CopyValue(pRawFillValue, m_oType,
+                                    m_abyFillValue.data(), m_oType);
+}
+
+std::shared_ptr<GDALAttribute> ZarrV3Array::CreateAttribute(
+    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
+{
+    if (osName == "_FillValue")
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "Use the nodata setter to set the reserved _FillValue attribute");
+        return nullptr;
+    }
+    return ZarrArray::CreateAttribute(osName, anDimensions, oDataType,
+                                      papszOptions);
+}
+
+bool ZarrV3Array::SetRawNoDataValue(const void *pRawNoData)
+{
+    if (pRawNoData && m_dtype.ToString() == "bool" &&
+        *static_cast<const GByte *>(pRawNoData) > 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Nodata for a boolean array must be 0 or 1");
+        return false;
+    }
+    if (!ZarrArray::SetRawNoDataValue(pRawNoData))
+        return false;
+    m_bNoDataFromFillValue = false;
+    return true;
 }
 
 /************************************************************************/
@@ -177,10 +397,10 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         oConfiguration.Add("separator", m_osDimSeparator);
     }
 
-    if (m_oType.GetClass() == GEDTC_STRING && m_pabyNoData != nullptr)
+    if (m_oType.GetClass() == GEDTC_STRING)
     {
         char *pStr = nullptr;
-        memcpy(&pStr, m_pabyNoData, sizeof(pStr));
+        memcpy(&pStr, m_abyFillValue.data(), sizeof(pStr));
         if (m_dtype.GetString("name") == "null_terminated_bytes")
         {
             const char *pszValue = pStr ? pStr : "";
@@ -195,28 +415,19 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
             oRoot.Add("fill_value", pStr ? pStr : "");
         }
     }
-    else if (m_pabyNoData == nullptr)
-    {
-        if (m_oType.GetNumericDataType() == GDT_Float16 ||
-            m_oType.GetNumericDataType() == GDT_Float32 ||
-            m_oType.GetNumericDataType() == GDT_Float64)
-        {
-            oRoot.Add("fill_value", "NaN");
-        }
-        else
-        {
-            oRoot.AddNull("fill_value");
-        }
-    }
     else
     {
-        if (m_oType.GetNumericDataType() == GDT_CFloat16 ||
-            m_oType.GetNumericDataType() == GDT_CFloat32 ||
-            m_oType.GetNumericDataType() == GDT_CFloat64)
+        if (m_dtype.ToString() == "bool")
+        {
+            oRoot.Add("fill_value", GetStorageFillAsDouble() != 0);
+        }
+        else if (m_oType.GetNumericDataType() == GDT_CFloat16 ||
+                 m_oType.GetNumericDataType() == GDT_CFloat32 ||
+                 m_oType.GetNumericDataType() == GDT_CFloat64)
         {
             double adfNoDataValue[2];
-            GDALCopyWords(m_pabyNoData, m_oType.GetNumericDataType(), 0,
-                          adfNoDataValue, GDT_CFloat64, 0, 1);
+            GDALCopyWords(m_abyFillValue.data(), m_oType.GetNumericDataType(),
+                          0, adfNoDataValue, GDT_CFloat64, 0, 1);
             CPLJSONArray oArray;
             for (int i = 0; i < 2; ++i)
             {
@@ -235,7 +446,7 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         }
         else
         {
-            SerializeNumericNoData(oRoot);
+            SerializeNumericFillValue(oRoot, m_abyFillValue.data());
         }
     }
 
@@ -244,7 +455,10 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         oRoot.Add("codecs", m_poCodecs->GetJSon());
     }
 
-    oRoot.Add("attributes", oAttrs);
+    auto oSerializedAttrs = oAttrs;
+    oSerializedAttrs.Delete("_FillValue");
+    SerializeNoData(oSerializedAttrs);
+    oRoot.Add("attributes", oSerializedAttrs);
 
     // Set dimension_names
     if (!m_aoDims.empty())
@@ -1246,21 +1460,21 @@ bool ZarrV3Array::FlushDirtyBlockSharded() const
         }
         else
         {
-            if (m_pabyNoData == nullptr ||
-                (m_oType.GetClass() == GEDTC_NUMERIC &&
-                 GetNoDataValueAsDouble() == 0.0))
+            std::vector<GByte> abyNativeFill(nSourceSize);
+            EncodeElt(m_aoDtypeElts, m_abyFillValue.data(),
+                      abyNativeFill.data());
+            if (std::all_of(abyNativeFill.begin(), abyNativeFill.end(),
+                            [](GByte byValue) { return byValue == 0; }))
             {
                 memset(entry.abyShardBuffer.data(), 0,
                        entry.abyShardBuffer.size());
             }
             else
             {
-                EncodeElt(m_aoDtypeElts, m_pabyNoData,
-                          entry.abyShardBuffer.data());
-                for (size_t i = 1; i < nShardElements; ++i)
+                for (size_t i = 0; i < nShardElements; ++i)
                 {
                     memcpy(entry.abyShardBuffer.data() + i * nSourceSize,
-                           entry.abyShardBuffer.data(), nSourceSize);
+                           abyNativeFill.data(), nSourceSize);
                 }
             }
         }
@@ -1622,7 +1836,10 @@ bool ZarrV3Array::WriteChunksThreadSafe(
         // during compression.
         abyDst.resize(nDstSize);
         if (bPartialChunk)
-            memset(abyDst.data(), 0, nDstSize);
+            GDALCopyWords64(m_abyFillValue.data(), m_oType.GetNumericDataType(),
+                            0, abyDst.data(), m_oType.GetNumericDataType(),
+                            static_cast<int>(nDTSize),
+                            static_cast<GPtrDiff_t>(nDstSize / nDTSize));
 
         ExtractSubArray(static_cast<const GByte *>(pSrcBuffer), anSrcStart,
                         anSrcStrideElts, anCount, abyDst.data(),
@@ -2650,8 +2867,13 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     poArray->SetDimSeparator(osDimSeparator);
     if (!abyNoData.empty())
     {
-        poArray->RegisterNoDataValue(abyNoData.data());
+        poArray->RegisterFillValue(abyNoData.data());
     }
+    if (!ReadV3NoData(poArray, oAttributes, oType, oDtype,
+                      CPLFetchBool(m_poSharedResource->GetOpenOptions(),
+                                   "USE_FILL_VALUE_AS_NODATA", false),
+                      abyNoData))
+        return nullptr;
     poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
     // Expose extension data type configuration as structural info

@@ -78,6 +78,15 @@ the correct driver to open the Zarr store:
 - :file:`.zgroup`
 - :file:`.zarray`
 
+Fill values and nodata
+----------------------
+
+For Zarr V3, ``fill_value`` defines the value read from unwritten chunks. It does not imply that this value is nodata. GDAL uses the optional ``_FillValue`` attribute to identify nodata, following the `Xarray Zarr encoding convention <https://docs.xarray.dev/en/stable/internals/zarr-encoding-spec.html>`__. Arrays without this attribute have no nodata value, so zero remains valid data. GDAL-created arrays use zero as the storage fill for integer and complex types, an empty string for strings, and NaN for floating point types.
+
+Setting or deleting nodata changes ``_FillValue`` without changing the storage fill or the values of existing and unwritten chunks. Floating point nodata attributes use base64-encoded little-endian doubles; complex nodata attributes use two such components. Integer, boolean and string nodata attributes use the corresponding JSON scalar type. The ``_FillValue`` attribute is reserved in the GDAL API; use the nodata setters and deletion methods to change it.
+
+This differs from earlier GDAL versions, which interpreted the Zarr V3 storage fill as nodata. Use :oo:`USE_FILL_VALUE_AS_NODATA=YES` to restore that interpretation when ``_FillValue`` is absent. An explicit ``_FillValue`` always takes precedence. Zarr V2 behavior is unchanged: its storage fill is also interpreted as nodata.
+
 Sharding support
 ----------------
 
@@ -457,6 +466,13 @@ The following dataset open options are available:
 
       Whether to use consolidated metadata (from :file:`.zmetadata` for Zarr V2,
       or root :file:`zarr.json` for Zarr V3)
+
+-  .. oo:: USE_FILL_VALUE_AS_NODATA
+      :choices: YES, NO
+      :default: NO
+      :since: 3.14
+
+      For Zarr V3 arrays without an explicit ``_FillValue`` attribute, whether to interpret the storage ``fill_value`` as nodata. This restores the behavior of earlier GDAL versions. Explicit ``_FillValue`` attributes take precedence. Inferred nodata is not written to the array on unrelated metadata changes. This option has no effect on Zarr V2 arrays.
 
 -  .. oo:: CACHE_TILE_PRESENCE
       :choices: YES, NO

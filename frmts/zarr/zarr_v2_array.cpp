@@ -199,7 +199,7 @@ bool ZarrV2Array::Serialize()
         {
             case GEDTC_NUMERIC:
             {
-                SerializeNumericNoData(oRoot);
+                SerializeNumericFillValue(oRoot, m_pabyNoData);
                 break;
             }
 

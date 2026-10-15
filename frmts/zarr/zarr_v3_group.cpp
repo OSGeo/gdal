@@ -1289,6 +1289,13 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     if (oCodecs.Size() > 0)
     {
         std::vector<GByte> abyNoData;
+        const auto eDT = oDataType.GetNumericDataType();
+        if (eDT == GDT_Float16 || eDT == GDT_Float32 || eDT == GDT_Float64)
+        {
+            abyNoData.resize(oDataType.GetSize());
+            const double dfNaN = std::numeric_limits<double>::quiet_NaN();
+            GDALCopyWords(&dfNaN, GDT_Float64, 0, abyNoData.data(), eDT, 0, 1);
+        }
         poCodecs = ZarrV3Array::SetupCodecs(
             GetFullName() + "/" + osName, oCodecs, anOuterBlockSize,
             anInnerBlockSize, aoDtypeElts.back(), abyNoData);

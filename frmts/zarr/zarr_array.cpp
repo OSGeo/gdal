@@ -752,34 +752,40 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
 }
 
 /************************************************************************/
-/*                 ZarrArray::SerializeNumericNoData()                  */
+/*                ZarrArray::SerializeNumericFillValue()                */
 /************************************************************************/
 
-void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
+void ZarrArray::SerializeNumericFillValue(CPLJSONObject &oRoot,
+                                          const void *pRawValue,
+                                          const char *pszKey) const
 {
     if (m_oType.GetNumericDataType() == GDT_Int64)
     {
-        const auto nVal = GetNoDataValueAsInt64();
-        oRoot.Add("fill_value", static_cast<GInt64>(nVal));
+        int64_t nVal;
+        memcpy(&nVal, pRawValue, sizeof(nVal));
+        oRoot.Add(pszKey, static_cast<GInt64>(nVal));
     }
     else if (m_oType.GetNumericDataType() == GDT_UInt64)
     {
-        const auto nVal = GetNoDataValueAsUInt64();
-        oRoot.Add("fill_value", static_cast<uint64_t>(nVal));
+        uint64_t nVal;
+        memcpy(&nVal, pRawValue, sizeof(nVal));
+        oRoot.Add(pszKey, static_cast<uint64_t>(nVal));
     }
     else
     {
-        const double dfVal = GetNoDataValueAsDouble();
+        double dfVal;
+        GDALCopyWords(pRawValue, m_oType.GetNumericDataType(), 0, &dfVal,
+                      GDT_Float64, 0, 1);
         if (std::isnan(dfVal))
-            oRoot.Add("fill_value", "NaN");
+            oRoot.Add(pszKey, "NaN");
         else if (dfVal == std::numeric_limits<double>::infinity())
-            oRoot.Add("fill_value", "Infinity");
+            oRoot.Add(pszKey, "Infinity");
         else if (dfVal == -std::numeric_limits<double>::infinity())
-            oRoot.Add("fill_value", "-Infinity");
+            oRoot.Add(pszKey, "-Infinity");
         else if (GDALDataTypeIsInteger(m_oType.GetNumericDataType()))
-            oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
+            oRoot.Add(pszKey, static_cast<GInt64>(dfVal));
         else
-            oRoot.Add("fill_value", dfVal);
+            oRoot.Add(pszKey, dfVal);
     }
 }
 
@@ -1113,6 +1119,8 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
+    const auto *pabyFillValue = GetRawFillValue();
+
     if (!CheckValidAndErrorOutIfNot())
         return false;
 
@@ -1369,10 +1377,11 @@ lbl_next_depth:
         if (bEmptyChunk && bBothAreNumericDT && abyTargetNoData.empty())
         {
             abyTargetNoData.resize(nBufferDTSize);
-            if (m_pabyNoData)
+            if (pabyFillValue)
             {
-                GDALExtendedDataType::CopyValue(
-                    m_pabyNoData, m_oType, &abyTargetNoData[0], bufferDataType);
+                GDALExtendedDataType::CopyValue(pabyFillValue, m_oType,
+                                                &abyTargetNoData[0],
+                                                bufferDataType);
                 bNoDataIsZero = true;
                 for (size_t i = 0; i < abyTargetNoData.size(); ++i)
                 {
@@ -1449,7 +1458,7 @@ lbl_next_depth:
                             CPLAssert(false);
                         }
                     }
-                    else if (m_pabyNoData)
+                    else if (pabyFillValue)
                     {
                         if (bBothAreNumericDT)
                         {
@@ -1480,8 +1489,9 @@ lbl_next_depth:
                         }
                         else
                         {
-                            GDALExtendedDataType::CopyValue(
-                                m_pabyNoData, m_oType, dst_ptr, bufferDataType);
+                            GDALExtendedDataType::CopyValue(pabyFillValue,
+                                                            m_oType, dst_ptr,
+                                                            bufferDataType);
                         }
                     }
                     else
@@ -1677,6 +1687,8 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                        const GDALExtendedDataType &bufferDataType,
                        const void *pSrcBuffer)
 {
+    const auto *pabyFillValue = GetRawFillValue();
+
     if (!CheckValidAndErrorOutIfNot())
         return false;
 
@@ -1857,7 +1869,7 @@ lbl_next_depth:
             {
                 DeallocateDecodedBlockData();
 
-                if (m_pabyNoData == nullptr)
+                if (pabyFillValue == nullptr)
                 {
                     memset(&abyBlock[0], 0, abyBlock.size());
                 }
@@ -1867,7 +1879,7 @@ lbl_next_depth:
                     GByte *dstPtr = &abyBlock[0];
                     if (m_oType.GetClass() == GEDTC_NUMERIC)
                     {
-                        GDALCopyWords64(m_pabyNoData,
+                        GDALCopyWords64(pabyFillValue,
                                         m_oType.GetNumericDataType(), 0, dstPtr,
                                         m_oType.GetNumericDataType(),
                                         static_cast<int>(m_oType.GetSize()),
@@ -1878,10 +1890,10 @@ lbl_next_depth:
                         for (size_t i = 0; i < nElts; ++i)
                         {
                             if (m_abyDecodedBlockData.empty())
-                                EncodeElt(m_aoDtypeElts, m_pabyNoData, dstPtr);
+                                EncodeElt(m_aoDtypeElts, pabyFillValue, dstPtr);
                             else
                                 GDALExtendedDataType::CopyValue(
-                                    m_pabyNoData, m_oType, dstPtr, m_oType);
+                                    pabyFillValue, m_oType, dstPtr, m_oType);
                             dstPtr += nCacheDTSize;
                         }
                     }
@@ -2155,10 +2167,18 @@ lbl_next_depth:
 /*                      ZarrArray::IsEmptyBlock()                       */
 /************************************************************************/
 
+double ZarrArray::GetStorageFillAsDouble() const
+{
+    double dfValue = 0;
+    GDALCopyWords(GetRawFillValue(), m_oType.GetNumericDataType(), 0, &dfValue,
+                  GDT_Float64, 0, 1);
+    return dfValue;
+}
+
 bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
 {
-    if (m_pabyNoData == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
-                                    GetNoDataValueAsDouble() == 0.0))
+    if (GetRawFillValue() == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
+                                         GetStorageFillAsDouble() == 0.0))
     {
         const size_t nBytes = abyBlock.size();
         size_t i = 0;
@@ -2185,7 +2205,7 @@ bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
         const size_t nElts = abyBlock.size() / nDTSize;
         const auto eDT = m_oType.GetNumericDataType();
         return GDALBufferHasOnlyNoData(
-            abyBlock.data(), GetNoDataValueAsDouble(),
+            abyBlock.data(), GetStorageFillAsDouble(),
             nElts,        // nWidth
             1,            // nHeight
             nElts,        // nLineStride
