@@ -29,7 +29,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature ("compactdefaultargs");
 #endif
 
