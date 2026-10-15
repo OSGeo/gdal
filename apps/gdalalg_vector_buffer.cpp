@@ -107,7 +107,7 @@ class GDALVectorBufferAlgorithmLayer final
         return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
     }
 
-    bool TestCapability(const char *pszCap) const override
+    int TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastGetExtent))
             return false;
