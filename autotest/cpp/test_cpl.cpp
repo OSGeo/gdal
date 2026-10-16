@@ -5792,6 +5792,8 @@ TEST_F(test_cpl, CPLHasUnbalancedPathTraversal)
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../.."));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a/../b/../../"));
     EXPECT_TRUE(CPLHasUnbalancedPathTraversal("a\\..\\..\\"));
+    // Test issue GH #15360
+    EXPECT_TRUE(CPLHasUnbalancedPathTraversal(".//../etc/passwd"));
 }
 
 TEST_F(test_cpl, cpl_enumerate)
