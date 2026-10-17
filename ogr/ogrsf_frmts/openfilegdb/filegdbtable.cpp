@@ -1120,7 +1120,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             OGRField sDefault;
             OGR_RawField_SetUnset(&sDefault);
-            if (flags & FileGDBField::MASK_EDITABLE)
+            // Non-editable fields may also carry a default value (e.g.
+            // ASSOCIATIONSTATUS in Utility Network tables)
+            if ((flags & FileGDBField::MASK_EDITABLE) || defaultValueLength > 0)
             {
                 /* Default value */
                 /* Found on PreNIS.gdb/a0000000d.gdbtable */
