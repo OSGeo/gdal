@@ -146,4 +146,27 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster slope n43.dt0 out.tif --overwrite
+        gdal raster slope n43.dt0 out.tif --overwrite
+
+.. example::
+   :title: Write a Shapefile of possible DEM anomalies
+
+   This example uses :ref:`gdal_raster_pipeline` to check for possible
+   anomalies in a 1-degree tile of the 
+   `Copernicus GLO-30 digital elevation model <https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM>`__.
+   Pixels where the slope exceeds 500% are written as point features to a
+   Shapefile for further investigation. Because the DEM is distributed in
+   geographic coordinates, it is first projected to UTM for slope calculation.
+
+   .. code-block:: bash
+
+        gdal pipeline \ 
+          read Copernicus_DSM_COG_10_N59_00_E006_00_DEM.tif ! \
+          reproject --output-crs "+proj=utm +zone=32" --output-nodata nan ! \
+          slope --unit percent ! \
+          reclassify --mapping "[500,inf)=1; DEFAULT=NO_DATA" ! \
+          as-features --geometry-type point --skip-nodata ! \
+          write /tmp/anom.shp
+
+
+
