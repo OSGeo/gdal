@@ -1799,7 +1799,10 @@ PythonPluginDriver::~PythonPluginDriver()
     if (m_hMutex)
         CPLDestroyMutex(m_hMutex);
 
-    if (m_poPlugin)
+    // On Windows, GDALDestroy() can be called after Python has been
+    // finalized (see CleanupPythonDrivers()), so do not attempt any
+    // Python related action.
+    if (m_poPlugin && Py_IsInitialized())
     {
         GIL_Holder oHolder(false);
         Py_DecRef(m_poPlugin);

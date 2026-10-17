@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+import subprocess
+import sys
 
 import gdaltest
 import pytest
@@ -145,3 +148,23 @@ def test_pythondrivers_missing_identify():
 
     with gdaltest.config_option("GDAL_SKIP", "MISSING_IDENTIFY"):
         gdal.AllRegister()
+
+
+###############################################################################
+# Check that Python doesn't crash on exit after a Python driver has been used.
+# On Windows, GDAL is unloaded after Python has already shut down.
+
+
+def test_pythondrivers_no_crash_at_exit():
+    env = os.environ.copy()
+    env["GDAL_PYTHON_DRIVER_PATH"] = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "pydrivers"
+    )
+    code = (
+        "from osgeo import gdal; gdal.UseExceptions(); "
+        "ds = gdal.OpenEx('DUMMY:'); assert ds; ds = None"
+    )
+    ret = subprocess.run(
+        [sys.executable, "-c", code], env=env, capture_output=True, text=True
+    )
+    assert ret.returncode == 0, ret.stderr
