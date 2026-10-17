@@ -1769,6 +1769,7 @@ class GRIBArray final : public GDALPamMDArray
 std::vector<std::string> GRIBGroup::GetMDArrayNames(CSLConstList) const
 {
     std::vector<std::string> ret;
+    ret.reserve(m_poArrays.size());
     for (const auto &array : m_poArrays)
     {
         ret.push_back(array->GetName());
