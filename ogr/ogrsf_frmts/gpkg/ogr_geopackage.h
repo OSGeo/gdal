@@ -848,6 +848,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     /************************************************************************/
     /* OGR API methods */
 
+    void FinishRollbackTransaction(const std::string &osSavepointName) override;
+
     const char *GetName() const override
     {
         return GetDescription();
