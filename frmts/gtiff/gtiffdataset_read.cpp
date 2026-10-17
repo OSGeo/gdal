@@ -4037,7 +4037,7 @@ static void GTiffDatasetSetAreaOrPointMD(GTIF *hGTIF,
 
 void GTiffDataset::LoadMDAreaOrPoint()
 {
-    if (m_bLookedForProjection || m_bLookedForMDAreaOrPoint ||
+    if (m_bLookedForMDAreaOrPoint ||
         m_oGTiffMDMD.GetMetadataItem(GDALMD_AREA_OR_POINT) != nullptr)
         return;
 
