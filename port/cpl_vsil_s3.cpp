@@ -5409,6 +5409,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
     std::vector<std::string> aosTags;
+    aosTags.reserve(nPartIdsCount);
     for (size_t i = 0; i < nPartIdsCount; ++i)
         aosTags.emplace_back(apszPartIds[i]);
     return CompleteMultipart(pszFilename, pszUploadId, aosTags, nTotalSize,

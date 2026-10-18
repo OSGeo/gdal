@@ -4463,6 +4463,7 @@ void GTiffDataset::ApplyPamInfo()
 
                     m_aoGCPs.clear();
                     const size_t nNewGCPCount = adfSourceGCPs.size() / 2;
+                    m_aoGCPs.reserve(nNewGCPCount);
                     for (size_t i = 0; i < nNewGCPCount; ++i)
                     {
                         m_aoGCPs.emplace_back(
@@ -6137,6 +6138,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         {
             m_aoGCPs.clear();
             const int nNewGCPCount = nCount / 6;
+            m_aoGCPs.reserve(nNewGCPCount);
             for (int iGCP = 0; iGCP < nNewGCPCount; ++iGCP)
             {
                 m_aoGCPs.emplace_back(CPLSPrintf("%d", iGCP + 1), "",
