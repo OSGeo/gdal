@@ -2735,6 +2735,14 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
     return OGRERR_NONE;
 }
 
+void OGRGeoPackageTableLayer::FinishRollbackTransaction(
+    const std::string &osSavepointName)
+{
+    OGRGeoPackageLayer::FinishRollbackTransaction(osSavepointName);
+    // Invalidate feature count
+    m_nTotalFeatureCount = -1;
+}
+
 OGRErr OGRGeoPackageTableLayer::ICreateFeature(OGRFeature *poFeature)
 {
     return CreateOrUpsertFeature(poFeature, /* bUpsert=*/false);
