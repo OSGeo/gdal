@@ -201,8 +201,7 @@ void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
     pnc_dimID = INVALID_DIM_ID;
     intring_varID = INVALID_VAR_ID;
 
-    int err_code;
-    err_code = nc_inq_varname(ncID, containerVar_realID, container_name);
+    int err_code = nc_inq_varname(ncID, containerVar_realID, container_name);
     NCDF_ERR(err_code);
     if (err_code != NC_NOERR)
     {
@@ -264,14 +263,13 @@ void ncLayer_SG_Metadata::initializeNewContainer(int containerVID)
     }
 
     // Node coordinates Var Definitions
-    int new_varID;
     CPLStringList aosNcoord(CSLTokenizeString2(node_coord_names, " ", 0));
 
     if (aosNcoord.size() < 2)
         throw SGWriter_Exception();
 
     // first it's X
-    new_varID =
+    int new_varID =
         ncdf.nc_def_vvar(aosNcoord[0], NC_DOUBLE, 1, &node_coordinates_dimID);
     ncdf.nc_put_vatt_text(new_varID, CF_AXIS, CF_SG_X_AXIS);
 
@@ -435,8 +433,9 @@ void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature &ft)
                 this->interiorRingDetected = true;
             }
 
-            ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Int_Transaction(
-                intring_varID, interior_ring_fl)));
+            ncb.enqueue_transaction(
+                std::make_unique<OGR_SGFS_NC_Int_Transaction>(
+                    intring_varID, interior_ring_fl));
         }
 
         if (this->writableType == POLYGON || this->writableType == MULTILINE ||
@@ -444,8 +443,9 @@ void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature &ft)
         {
             int pnc_writable =
                 static_cast<int>(ft.getPerPartNodeCount()[part_no]);
-            ncb.enqueue_transaction(MTPtr(
-                new OGR_SGFS_NC_Int_Transaction(pnc_varID, pnc_writable)));
+            ncb.enqueue_transaction(
+                std::make_unique<OGR_SGFS_NC_Int_Transaction>(pnc_varID,
+                                                              pnc_writable));
             this->next_write_pos_pnc++;
         }
 
@@ -457,19 +457,21 @@ void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature &ft)
 
             // Write each node coordinate
             double x = write_pt.getX();
-            ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(
-                node_coordinates_varIDs[0], x)));
+            ncb.enqueue_transaction(
+                std::make_unique<OGR_SGFS_NC_Double_Transaction>(
+                    node_coordinates_varIDs[0], x));
 
             double y = write_pt.getY();
-            ncb.enqueue_transaction(MTPtr(new OGR_SGFS_NC_Double_Transaction(
-                node_coordinates_varIDs[1], y)));
+            ncb.enqueue_transaction(
+                std::make_unique<OGR_SGFS_NC_Double_Transaction>(
+                    node_coordinates_varIDs[1], y));
 
             if (this->node_coordinates_varIDs.size() > 2)
             {
                 double z = write_pt.getZ();
                 ncb.enqueue_transaction(
-                    MTPtr(new OGR_SGFS_NC_Double_Transaction(
-                        node_coordinates_varIDs[2], z)));
+                    std::make_unique<OGR_SGFS_NC_Double_Transaction>(
+                        node_coordinates_varIDs[2], z));
             }
         }
 
@@ -480,8 +482,8 @@ void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature &ft)
     if (this->writableType != POINT)
     {
         int ncount_add = static_cast<int>(ft.getTotalNodeCount());
-        ncb.enqueue_transaction(MTPtr(
-            new OGR_SGFS_NC_Int_Transaction(node_count_varID, ncount_add)));
+        ncb.enqueue_transaction(std::make_unique<OGR_SGFS_NC_Int_Transaction>(
+            node_count_varID, ncount_add));
         this->next_write_pos_node_count++;
 
         // Special case: The "empty" MultiPolygon type
@@ -494,7 +496,7 @@ void ncLayer_SG_Metadata::writeSGeometryFeature(SGeometry_Feature &ft)
             (ft.getType() == POLYGON || ft.getType() == MULTIPOLYGON))
         {
             ncb.enqueue_transaction(
-                MTPtr(new OGR_SGFS_NC_Int_Transaction(pnc_varID, 0)));
+                std::make_unique<OGR_SGFS_NC_Int_Transaction>(pnc_varID, 0));
             this->next_write_pos_pnc++;
         }
     }
@@ -818,7 +820,7 @@ void OGR_NCScribe::log_transaction()
 }
 
 // WBufferManager
-bool WBufferManager::isOverQuota()
+bool WBufferManager::isOverQuota() const
 {
     unsigned long long sum = 0;
     for (size_t s = 0; s < bufs.size(); s++)
@@ -890,20 +892,19 @@ void WTransactionLog::startRead()
     this->log = VSIFOpenL(wlogName.c_str(), "r");
 }
 
-void WTransactionLog::push(MTPtr t)
+void WTransactionLog::push(const MTPtr &t) const
 {
     t->appendToLog(this->log);
 }
 
-MTPtr WTransactionLog::pop()
+MTPtr WTransactionLog::pop() const
 {
     if (log == nullptr)
         return MTPtr(nullptr);
 
     int varId;
     nc_type ntype;
-    size_t itemsread;
-    itemsread = VSIFReadL(&varId, sizeof(int), 1, log);
+    size_t itemsread = VSIFReadL(&varId, sizeof(int), 1, log);
     itemsread &= VSIFReadL(&ntype, sizeof(nc_type), 1, log);
 
     // If one of the two reads failed, then return nullptr
@@ -972,15 +973,15 @@ MTPtr WTransactionLog::pop()
             // case: its a standard CHAR op
             if (!op)
             {
-                return MTPtr(new OGR_SGFS_NC_Char_Transaction(
-                    varId, &data[0]));  // data is copied so okay!
+                return std::make_unique<OGR_SGFS_NC_Char_Transaction>(
+                    varId, &data[0]);  // data is copied so okay!
             }
 
             // case: its a CHARA op, additional processing
             else
             {
-                return MTPtr(
-                    new OGR_SGFS_NC_CharA_Transaction(varId, &data[0]));
+                return std::make_unique<OGR_SGFS_NC_CharA_Transaction>(
+                    varId, &data[0]);
             }
         }
 
@@ -1005,8 +1006,8 @@ MTPtr WTransactionLog::pop()
             if (!readcheck)
                 return MTPtr();  // read failure
 
-            return MTPtr(new OGR_SGFS_NC_String_Transaction(
-                varId, &data[0]));  // data is copied so okay!
+            return std::make_unique<OGR_SGFS_NC_String_Transaction>(
+                varId, &data[0]);  // data is copied so okay!
         }
 
         default:
@@ -1031,10 +1032,9 @@ int write_Geometry_Container(
 {
 
     int write_var_id;
-    int err_code;
 
     // Define geometry container variable
-    err_code =
+    int err_code =
         nc_def_var(ncID, name.c_str(), NC_FLOAT, 0, nullptr, &write_var_id);
     // todo: exception handling of err_code
     NCDF_ERR(err_code);
