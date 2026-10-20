@@ -118,7 +118,7 @@ Supporter
 
     .. container:: horizontal-logo
 
-        `UAV4GEO <https://uav4geo.com/>`__
+        `WebODM <https://webodm.org/>`__
 
     .. container:: horizontal-logo
 
