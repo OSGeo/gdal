@@ -258,3 +258,22 @@ def test_gdalalg_vector_edit_pipeline_output_layer_multiple_input_layers():
         lyr = ds.GetLayer(1)
         assert lyr.GetDescription() == "b"
         assert lyr.GetLayerDefn().GetName() == "b"
+
+
+def test_gdalalg_vector_edit_pipeline_filter():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    for i in range(1, 4):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["id"] = i
+        src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline='read ! edit --metadata foo=bar ! filter --where "id = 2"',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert [f["id"] for f in lyr] == [2]

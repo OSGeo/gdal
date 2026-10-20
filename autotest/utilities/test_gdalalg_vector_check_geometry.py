@@ -600,3 +600,20 @@ def test_gdalalg_vector_check_geometry_test_ogrsf(tmp_path, polys):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_check_geometry_pipeline_filter():
+
+    src_ds = gdaltest.wkt_ds(
+        [
+            "POLYGON ((0 0, 10 0, 0 10, 10 10, 0 0))",
+            "POLYGON ((100 0, 110 0, 100 10, 110 10, 100 0))",
+        ]
+    )
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds, pipeline="read ! check-geometry ! filter --bbox 100,0,110,10"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert [f.GetFID() for f in lyr] == [2]

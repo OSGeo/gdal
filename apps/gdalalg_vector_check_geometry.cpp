@@ -292,7 +292,8 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                     poSrcFeature.get(), m_srcFieldMap.data(), false, false);
             }
             poErrorFeature->SetFID(poSrcFeature->GetFID());
-            apoOutputFeatures.push_back(std::move(poErrorFeature));
+            if (PassesFilters(poErrorFeature.get()))
+                apoOutputFeatures.push_back(std::move(poErrorFeature));
         }
     }
 
