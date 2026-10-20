@@ -27,7 +27,7 @@ fi
 
 echo "CONDA_SUBDIR=${CONDA_PLAT}-${ARCH}" >> $GITHUB_ENV
 
-rattler-build build --recipe recipe/recipe_patched.yaml  --output-dir packages -m ".ci_support/${CONDA_PLAT}_${ARCH}_.yaml"
+rattler-build build --recipe recipe/recipe_patched.yaml  --output-dir packages -m ".ci_support/${CONDA_PLAT}_${ARCH}_channel_sourcesconda-forge.yaml"
 conda create -y -n test -c ./packages/${CONDA_PLAT}-${ARCH} python libgdal gdal
 conda deactivate
 

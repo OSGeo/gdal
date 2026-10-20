@@ -120,6 +120,10 @@ Supporter
 
         `UAV4GEO <https://uav4geo.com/>`__
 
+    .. container:: horizontal-logo
+
+        `Equator Studios <https://equatorstudios.com/>`__
+
 
 .. raw:: html
 

@@ -396,11 +396,11 @@ class WTransactionLog
 
     void startLog();   // always call this first to open the file
     void startRead();  // then call this before reading it
-    void push(MTPtr);
+    void push(const MTPtr &) const;
 
     // read mode
-    MTPtr
-    pop();  // to test for EOF, test to see if pointer returned is null ptr
+    MTPtr pop()
+        const;  // to test for EOF, test to see if pointer returned is null ptr
 
     // construction, destruction
     explicit WTransactionLog(const std::string &logName);
@@ -586,7 +586,7 @@ class WBufferManager
     std::vector<WBuffer *> bufs;
 
   public:
-    bool isOverQuota();
+    bool isOverQuota() const;
 
     void adjustLimit(unsigned long long lim)
     {

@@ -104,6 +104,17 @@ void roundup(std::string &s)
         s = '-' + s;
 }
 
+// Whether s[0, nEnd) contains a non-zero digit.
+bool hasNonZeroDigit(const std::string &s, size_t nEnd)
+{
+    for (size_t i = 0; i < nEnd; ++i)
+    {
+        if (s[i] >= '1' && s[i] <= '9')
+            return true;
+    }
+    return false;
+}
+
 // This attempts to eliminate what is likely binary -> decimal representation
 // error or the result of low-order rounding with calculations.  The result
 // may be more visually pleasing and takes up fewer places.
@@ -145,8 +156,10 @@ void intelliround(std::string &s)
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
+    // Neither trim may remove the only non-zero digits: that would turn a
+    // value that fits in the requested precision, such as 1e-14, into 0.
     if (s[len - 2] == '0' && s[len - 3] == '0' && s[len - 4] == '0' &&
-        s[len - 5] == '0' && s[len - 6] == '0')
+        s[len - 5] == '0' && s[len - 6] == '0' && hasNonZeroDigit(s, len - 1))
     {
         s.pop_back();
     }
@@ -163,7 +176,7 @@ void intelliround(std::string &s)
              (nCountBeforeDot >= 6 || s[len - 5] == '0') &&
              (nCountBeforeDot >= 7 || s[len - 6] == '0') &&
              (nCountBeforeDot >= 8 || s[len - 7] == '0') && s[len - 8] == '0' &&
-             s[len - 9] == '0')
+             s[len - 9] == '0' && hasNonZeroDigit(s, len - 8))
     {
         s.resize(s.size() - 8);
     }

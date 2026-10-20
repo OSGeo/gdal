@@ -278,7 +278,7 @@ class netCDFWriterConfigAttribute
     CPLString m_osType;
     CPLString m_osValue;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigField
@@ -289,7 +289,7 @@ class netCDFWriterConfigField
     CPLString m_osMainDim;
     std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigLayer
@@ -301,7 +301,7 @@ class netCDFWriterConfigLayer
     std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
     std::map<CPLString, netCDFWriterConfigField> m_oFields;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfiguration
@@ -319,7 +319,7 @@ class netCDFWriterConfiguration
     }
 
     bool Parse(const char *pszFilename);
-    static bool SetNameValue(CPLXMLNode *psNode,
+    static bool SetNameValue(const CPLXMLNode *psNode,
                              std::map<CPLString, CPLString> &oMap);
 };
 
@@ -694,9 +694,10 @@ class netCDFLayer final : public OGRLayer
 
     OGRFeature *GetNextRawFeature();
     double Get1DVarAsDouble(int nVarId, nc_type nVarType, size_t nIndex,
-                            const NCDFNoDataUnion &noDataVal, bool *pbIsNoData);
-    CPLErr GetFillValue(int nVarID, char **ppszValue);
-    CPLErr GetFillValue(int nVarID, double *pdfValue);
+                            const NCDFNoDataUnion &noDataVal,
+                            bool *pbIsNoData) const;
+    CPLErr GetFillValue(int nVarID, char **ppszValue) const;
+    CPLErr GetFillValue(int nVarID, double *pdfValue) const;
     void GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData);
     void GetNoDataValueForDouble(int nVarId, NCDFNoDataUnion *puNoData);
     void GetNoDataValue(int nVarId, nc_type nVarType,
@@ -706,7 +707,7 @@ class netCDFLayer final : public OGRLayer
     OGRFeature *buildSGeometryFeature(size_t featureInd);
     void netCDFWriteAttributesFromConf(
         int cdfid, int varid,
-        const std::vector<netCDFWriterConfigAttribute> &aoAttributes);
+        const std::vector<netCDFWriterConfigAttribute> &aoAttributes) const;
 
   protected:
     bool FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,

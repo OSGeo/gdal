@@ -1727,27 +1727,36 @@ const char *CPLLaunderForFilename(const char *pszName,
 
 bool CPLHasPathTraversal(const char *pszFilename)
 {
-    const char *pszDotDot = strstr(pszFilename, "..");
-    if (pszDotDot &&
-        (pszDotDot == pszFilename ||
-         pszFilename[pszDotDot - pszFilename - 1] == '/' ||
-         pszFilename[pszDotDot - pszFilename - 1] == '\\') &&
-        (pszDotDot[2] == 0 || pszDotDot[2] == '/' || pszDotDot[2] == '\\'))
+    const std::string osFilename(pszFilename);
+    size_t nPos = osFilename.find("..");
+    const size_t nSize = osFilename.size();
+
+    while (nPos != std::string::npos)
     {
-        if (CPLTestBool(CPLGetConfigOption(
-                "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", "YES")))
+        const bool isTraversal = nSize == 2 || osFilename[nPos + 2] == '/' ||
+                                 osFilename[nPos + 2] == '\\' ||
+                                 (nPos > 0 && (osFilename[nPos - 1] == '/' ||
+                                               osFilename[nPos - 1] == '\\'));
+        if (isTraversal)
         {
-            CPLDebug("CPL", "Path traversal detected for %s", pszFilename);
-            return true;
+            if (CPLTestBool(CPLGetConfigOption(
+                    "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", "YES")))
+            {
+                CPLDebug("CPL", "Path traversal detected for %s", pszFilename);
+                return true;
+            }
+            else
+            {
+                CPLDebug("CPL",
+                         "Path traversal detected for %s but ignored given "
+                         "that CPL_ENABLE_PATH_TRAVERSAL_DETECTION is "
+                         "disabled",
+                         pszFilename);
+            }
         }
-        else
-        {
-            CPLDebug("CPL",
-                     "Path traversal detected for %s but ignored given that "
-                     "CPL_ENABLE_PATH_TRAVERSAL_DETECTION is disabled",
-                     pszFilename);
-        }
+        nPos = osFilename.find("..", nPos + 2);
     }
+
     return false;
 }
 
@@ -1775,10 +1784,10 @@ bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
 
     auto countSeparators = [&isSeparator](int idx) -> int
     {
-        int pos = 0;
-        while (isSeparator(idx + pos))
-            ++pos;
-        return pos;
+        int cnt = 0;
+        while (isSeparator(idx + cnt))
+            ++cnt;
+        return cnt;
     };
 
     size_t nNestLevel = 0;
@@ -1798,16 +1807,27 @@ bool CPLHasUnbalancedPathTraversal(const char *pszFilename)
     {
         if (const int sepCount = countSeparators(i); sepCount > 0)
         {
+            const int currentIdx = i;
             i += sepCount - 1;
-            if (pszFilename[i + 1] != 0)
+
+            // Rule out final '/' and '\', './' and '.\' as they don't increase the nesting level
+            const bool isFinalSeparator = pszFilename[i + 1] == 0;
+            const bool isDotSlash =
+                (currentIdx - 1 >= 0 && pszFilename[currentIdx - 1] == '.') &&
+                (currentIdx - 2 < 0 || pszFilename[currentIdx - 2] != '.');
+
+            if (!isFinalSeparator && !isDotSlash)
+            {
                 ++nNestLevel;
+            }
         }
         else if (pszFilename[i] == '.' && pszFilename[i + 1] == '.' &&
                  (isSeparator(i + 2) || pszFilename[i + 2] == 0))
         {
             if (nNestLevel == 0)
             {
-                CPLDebug("CPL", "Path traversal detected for %s", pszFilename);
+                CPLDebug("CPL", "Unbalanced path traversal detected for %s",
+                         pszFilename);
                 return true;
             }
             if (pszFilename[i + 2] == 0)
