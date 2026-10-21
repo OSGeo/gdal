@@ -943,6 +943,47 @@ def test_hdf5_multidim_getrawblockinfo_big_endian():
 
 
 ###############################################################################
+# Test GetRawBlockInfo() on file with missing chunk(s)
+
+
+def test_hdf5_multidim_getrawblockinfo_sparse():
+
+    fname = "data/hdf5/sparse_2d.h5"
+
+    if False:
+        import h5py
+        import numpy as np
+
+        with h5py.File(fname, "w") as f:
+            dset = f.create_dataset("test", shape=(21, 16), chunks=(3, 4), dtype="i4")
+            dset[6:8, 8:10] = np.array([[1, 2], [3, 4]])
+            dset[17:19, 2:4] = np.array([[5, 6], [7, 8]])
+
+    ds = gdal.OpenEx(fname, gdal.OF_MULTIDIM_RASTER)
+    var = ds.GetRootGroup().OpenMDArray("test")
+    info = var.GetRawBlockInfo([2, 2])
+
+    with open(fname, "rb") as f:
+        f.seek(info.GetOffset())
+        dat = f.read(info.GetSize())
+
+        assert memoryview(dat).cast("i").tolist() == [
+            1,
+            2,
+            0,
+            0,
+            3,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
+
+
+###############################################################################
 # Test reading a compound data type made of 2 Float16 values
 
 

@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <numeric>
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
@@ -2054,9 +2055,7 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     // Compute the block index from the coordinates
     hsize_t nBlockIdx = 0;
     hsize_t nMult = 1;
-#ifdef HAVE_H5Dchunk_iter
     std::vector<uint64_t> anBlockCount(anBlockSize.size());
-#endif
     for (size_t nDimIdx = anBlockSize.size(); nDimIdx > 0;)
     {
         --nDimIdx;
@@ -2073,9 +2072,7 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                      static_cast<unsigned>(nDimIdx));
             return false;
         }
-#ifdef HAVE_H5Dchunk_iter
         anBlockCount[nDimIdx] = nBlockCount;
-#endif
         nBlockIdx += panBlockCoordinates[nDimIdx] * nMult;
         nMult *= nBlockCount;
     }
@@ -2200,18 +2197,54 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     }
 #endif
 
-    std::vector<hsize_t> anOffset(GetDimensionCount());
-    unsigned nFilterMask = 0;
-    haddr_t nChunkOffset = 0;
-    hsize_t nChunkSize = 0;
-    if (H5Dget_chunk_info(m_hArray, m_hDataSpace, nBlockIdx, anOffset.data(),
-                          &nFilterMask, &nChunkOffset, &nChunkSize) < 0)
+    hsize_t nActualChunks = 0;
+    if (H5Dget_num_chunks(m_hArray, m_hDataSpace, &nActualChunks) < 0)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "GetRawBlockInfo() failed: array %s: H5Dget_chunk_info() failed",
+            "GetRawBlockInfo() failed: array %s: H5Dget_num_chunks() failed",
             GetName().c_str());
         return false;
+    }
+    const auto nExpectedChunks = std::accumulate(
+        anBlockCount.begin(), anBlockCount.end(), 1ul, std::multiplies<>());
+    const bool bSparse = nExpectedChunks != nActualChunks;
+
+    unsigned nFilterMask = 0;
+    haddr_t nChunkOffset = 0;
+    hsize_t nChunkSize = 0;
+
+    if (bSparse)
+    {
+        std::vector<hsize_t> anCoordOffsets(GetDimensionCount());
+        for (size_t i = 0; i < GetDimensionCount(); i++)
+        {
+            anCoordOffsets[i] = panBlockCoordinates[i] * anBlockSize[i];
+        }
+        if (H5Dget_chunk_info_by_coord(m_hArray, anCoordOffsets.data(),
+                                       &nFilterMask, &nChunkOffset,
+                                       &nChunkSize) < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "H5Dget_chunk_info_by_coord() failed",
+                     GetName().c_str());
+            return false;
+        }
+    }
+    else
+    {
+        std::vector<hsize_t> anOffset(GetDimensionCount());
+        if (H5Dget_chunk_info(m_hArray, m_hDataSpace, nBlockIdx,
+                              anOffset.data(), &nFilterMask, &nChunkOffset,
+                              &nChunkSize) < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: H5Dget_chunk_info() "
+                     "failed",
+                     GetName().c_str());
+            return false;
+        }
     }
 
     info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
