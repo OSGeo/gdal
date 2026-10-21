@@ -1120,7 +1120,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             OGRField sDefault;
             OGR_RawField_SetUnset(&sDefault);
-            // If defaultValueLength is greater than 0, 
+            // Default value
+            // Found on PreNIS.gdb/a0000000d.gdbtable
+            // If defaultValueLength is greater than 0,
             // read the default value from the buffer.
             if (defaultValueLength > 0)
             {
