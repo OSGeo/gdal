@@ -118,7 +118,7 @@ const char *OGRS57DataSource::GetOption(const char *pszOption)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57DataSource::TestCapability(const char *pszCap) const
+bool OGRS57DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))

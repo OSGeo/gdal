@@ -3160,6 +3160,28 @@ def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_driver("FlatGeobuf")
+def test_ogr2ogr_lib_arrow_datetime_timezone_flatgeobuf(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.fgb")
+    with ogr.GetDriverByName("FlatGeobuf").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer(
+            "test", geom_type=ogr.wkbNone, options=["SPATIAL_INDEX=NO"]
+        )
+        src_lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56+12:30")
+        src_lyr.CreateFeature(f)
+
+    dst_ds = gdal.VectorTranslate("", src_filename, format="MEM")
+    f = dst_ds.GetLayer(0).GetNextFeature()
+    assert f.GetField("dt") == "2022/05/31 12:34:56+1230"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
 

@@ -64,7 +64,7 @@ OGRVFKLayer::~OGRVFKLayer()
 
   \param pszCap capability name
 */
-int OGRVFKLayer::TestCapability(const char *pszCap) const
+bool OGRVFKLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCRandomRead))
     {

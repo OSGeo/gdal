@@ -56,7 +56,11 @@ constexpr const char *GAAC_ADVANCED = "Advanced";
 constexpr const char *GAAC_ESOTERIC = "Esoteric";
 
 /** Argument metadata item that applies to the "input-format" and
- * "output-format" argument */
+ * "output-format" argument.
+ *
+ * All the values of the list must be met by the driver. A single value may
+ * express alternatives separated by '|', of which at least one must be met,
+ * e.g. GDAL_DCAP_RASTER "|" GDAL_DCAP_MULTIDIM_RASTER. */
 constexpr const char *GAAMDI_REQUIRED_CAPABILITIES = "required_capabilities";
 
 /** Argument metadata item that applies to "output-format" argument */
@@ -561,6 +565,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     //! @cond Doxygen_Suppress
     GDALAlgorithmArgDecl &SetChoices()
     {
+        m_choicesSet = true;
         return *this;
     }
 
@@ -575,6 +580,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
                                 bool>::type = true>
     GDALAlgorithmArgDecl &SetChoices(T &&first, U &&...rest)
     {
+        if (m_choicesSet)
+        {
+            m_choices.clear();
+            m_choicesSet = false;
+        }
         m_choices.push_back(std::forward<T>(first));
         SetChoices(std::forward<U>(rest)...);
         return *this;
@@ -586,6 +596,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     GDALAlgorithmArgDecl &SetChoices(const std::vector<std::string> &choices)
     {
         m_choices = choices;
+        m_choicesSet = true;
         return *this;
     }
 
@@ -650,6 +661,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     //! @cond Doxygen_Suppress
     GDALAlgorithmArgDecl &SetHiddenChoices()
     {
+        m_hiddenChoicesSet = true;
         return *this;
     }
 
@@ -661,6 +673,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
     template <typename T, typename... U>
     GDALAlgorithmArgDecl &SetHiddenChoices(T &&first, U &&...rest)
     {
+        if (m_hiddenChoicesSet)
+        {
+            m_hiddenChoices.clear();
+            m_hiddenChoicesSet = false;
+        }
         m_hiddenChoices.push_back(std::forward<T>(first));
         SetHiddenChoices(std::forward<U>(rest)...);
         return *this;
@@ -1106,7 +1123,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
      * - std::string for GAAT_STRING
      * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
-     * - std::vector<double for GAAT_REAL_LIST
+     * - std::vector<double> for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
      * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
@@ -1243,6 +1260,8 @@ class CPL_DLL GDALAlgorithmArgDecl final
     double m_maxVal = std::numeric_limits<double>::quiet_NaN();
     bool m_minValIsIncluded = false;
     bool m_maxValIsIncluded = false;
+    bool m_choicesSet = false;
+    bool m_hiddenChoicesSet = false;
     int m_minCharCount = 0;
     int m_maxCharCount = std::numeric_limits<int>::max();
     GDALArgDatasetType m_datasetType =
@@ -1414,7 +1433,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_decl.GetHiddenChoices();
     }
 
-    /** Return auto completion choices, if a auto completion function has been
+    /** Return auto completion choices, if an auto completion function has been
      * registered.
      */
     inline std::vector<std::string>
@@ -1596,7 +1615,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * - std::string for GAAT_STRING
      * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
-     * - std::vector<double for GAAT_REAL_LIST
+     * - std::vector<double> for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
      * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
@@ -2429,7 +2448,7 @@ class CPL_DLL GDALAlgorithmRegistry
 /** GDAL algorithm.
  *
  * An algorithm declares its name, description, help URL.
- * It also defined arguments or (mutual exclusion) sub-algorithms.
+ * It also defines arguments for sub-algorithms.
  *
  * It can be used from the command line with the ParseCommandLineArguments()
  * method, or users can iterate over the available arguments with the GetArgs()
@@ -2579,7 +2598,7 @@ class CPL_DLL GDALAlgorithmRegistry
     }
 
     /** Set hint before calling ParseCommandLineArguments() that it must
-     * try to be be graceful when possible, e.g. accepting
+     * try to be graceful when possible, e.g. accepting
      * "gdal raster convert in.tif out.tif --co"
      */
     void SetParseForAutoCompletion()
@@ -2842,7 +2861,7 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_subAlgRegistry.Register<MyAlgorithm>();
     }
 
-    /** Register a sub-algoritm by its AlgInfo structure.
+    /** Register a sub-algorithm by its AlgInfo structure.
      */
     bool RegisterSubAlgorithm(const GDALAlgorithmRegistry::AlgInfo &info)
     {
@@ -3157,7 +3176,7 @@ class CPL_DLL GDALAlgorithmRegistry
         GDALG_OK,
         /** GDALG output requested but an error has occurred. */
         GDALG_ERROR,
-        /** GDALG output not requeste. RunImpl() must be run. */
+        /** GDALG output not requested. RunImpl() must be run. */
         NOT_GDALG,
     };
 

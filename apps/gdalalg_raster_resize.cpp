@@ -101,8 +101,8 @@ bool GDALRasterResizeAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (!m_resolution.empty())
     {
         aosOptions.AddString("-tr");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[1]));
+        aosOptions.AddString(m_resolution[0]);
+        aosOptions.AddString(m_resolution[1]);
     }
     if (!m_resampling.empty())
     {

@@ -47,7 +47,7 @@ OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(
     m_poFeatureDefn->AddFieldDefn(&oFieldType);
 }
 
-int OGRXODRLayerRoadMark::TestCapability(const char *pszCap) const
+bool OGRXODRLayerRoadMark::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

@@ -273,6 +273,15 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 poSrcDS, poDstDS.get(), false, nullptr, nullptr, nullptr) !=
             CE_None)
             return nullptr;
+
+        if (strcmp(pszFilename, "") != 0)
+        {
+            if (poDstDS->FlushCache(true) != CE_None)
+            {
+                poDstDS.reset();
+            }
+        }
+
         if (pfnProgress)
             pfnProgress(1.0, "", pProgressData);
         return poDstDS.release();
@@ -488,9 +497,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     if (strcmp(pszFilename, "") != 0)
     {
-        CPLErrorReset();
-        poVRTDS->FlushCache(true);
-        if (CPLGetLastErrorType() != CE_None)
+        if (poVRTDS->FlushCache(true) != CE_None)
         {
             poVRTDS.reset();
         }

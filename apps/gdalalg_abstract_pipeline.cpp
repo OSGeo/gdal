@@ -745,7 +745,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                 if (!subAlg)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
-                                "'%s' is a unknown sub-algorithm of '%s'",
+                                "'%s' is an unknown sub-algorithm of '%s'",
                                 arg.c_str(), curStep.alg->GetName().c_str());
                     return false;
                 }

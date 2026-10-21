@@ -506,7 +506,7 @@ void OGRSQLiteViewLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteViewLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteViewLayer::TestCapability(const char *pszCap) const
 
 {
     if (HasLayerDefnError())

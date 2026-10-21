@@ -72,8 +72,8 @@ def test_ogr_idf_1():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr_idf_1_with_temp_sqlite_db():
-    options = {"OGR_IDF_TEMP_DB_THRESHOLD": "0"}
+def test_ogr_idf_1_with_temp_sqlite_db(tmp_path):
+    options = {"OGR_IDF_TEMP_DB_THRESHOLD": "0", "CPL_TMPDIR": tmp_path}
     with gdaltest.config_options(options):
         return test_ogr_idf_1()
 

@@ -125,7 +125,7 @@ class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -149,7 +149,7 @@ class OGRLVBAGDataSource final : public GDALDataset
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 #endif  // ndef OGR_LVBAG_H_INCLUDED

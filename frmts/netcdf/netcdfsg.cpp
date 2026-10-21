@@ -193,11 +193,11 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
      */
 
     // Create bound list
-    size_t rc = 0;
     bound_list.push_back(0);  // start with 0
 
     if (node_counts.size() > 0)
     {
+        size_t rc = 0;
         for (size_t i = 0; i < node_counts.size() - 1; i++)
         {
             rc = rc + node_counts[i];
@@ -428,7 +428,7 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
     this->ncid = ncId;
 }
 
-Point &SGeometry_Reader::operator[](size_t index)
+Point &SGeometry_Reader::operator[](size_t index) const
 {
     for (int order = 0; order < touple_order; order++)
     {
@@ -451,7 +451,7 @@ Point &SGeometry_Reader::operator[](size_t index)
     return *(this->pt_buffer);
 }
 
-size_t SGeometry_Reader::get_geometry_count()
+size_t SGeometry_Reader::get_geometry_count() const
 {
     if (type == POINT)
     {
@@ -966,7 +966,7 @@ void inPlaceSerialize_LineString(SGeometry_Reader *ge, int node_count,
 
     if (t == wkbNone)
         throw SG_Exception_BadFeature();
-    uint32_t nc = (uint32_t)node_count;
+    uint32_t nc = static_cast<uint32_t>(node_count);
 
     add_to_buffer(buffer, order);
     add_to_buffer(buffer, t);
@@ -1016,7 +1016,7 @@ void inPlaceSerialize_PolygonExtOnly(SGeometry_Reader *ge, int node_count,
     }
 }
 
-void inPlaceSerialize_Polygon(SGeometry_Reader *ge, std::vector<int> &pnc,
+void inPlaceSerialize_Polygon(SGeometry_Reader *ge, const std::vector<int> &pnc,
                               int ring_count, size_t seek_begin,
                               std::vector<unsigned char> &buffer)
 {

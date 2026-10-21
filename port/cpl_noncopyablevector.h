@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef CPL_NONCOPYABLEVECOTR_H_INCLUDED
-#define CPL_NONCOPYABLEVECOTR_H_INCLUDED
+#ifndef CPL_NONCOPYABLEVECTOR_H_INCLUDED
+#define CPL_NONCOPYABLEVECTOR_H_INCLUDED
 
 #include <vector>
 
@@ -41,4 +41,4 @@ template <class T> struct NonCopyableVector : public std::vector<T>
 
 }  // namespace cpl
 
-#endif  // CPL_NONCOPYABLEVECOTR_H_INCLUDED
+#endif  // CPL_NONCOPYABLEVECTOR_H_INCLUDED

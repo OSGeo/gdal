@@ -114,3 +114,23 @@ Examples
     .. code-block:: bash
 
         gdal raster polygonize input.tif polygonize.shp
+
+
+.. example::
+   :title: Create polygons only for pixels having a specific value
+
+   In some cases, we may want to only polygonize pixels with certain values.
+   Because NoData values are not polygonized, we can use a pipeline with
+   :ref:`gdal_raster_reclassify` to convert unwanted pixel values to NoData. If
+   the input raster does not have a NoData value, we will first need to set one
+   with :ref:`gdal_raster_edit`. Here, pixels having a value of 132 are
+   retained as-is, and all other pixels set to the NoData value of 255.
+
+   .. code-block:: bash
+
+      gdal pipeline ! \
+          read byte.tif ! \
+          edit --nodata 255 ! \
+          reclassify --mapping "132=PASS_THROUGH; DEFAULT=NO_DATA" ! \
+          polygonize ! \
+          write out.shp

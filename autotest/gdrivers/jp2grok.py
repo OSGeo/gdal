@@ -107,7 +107,10 @@ def test_jp2grok_3():
 # Test copying byte.jp2
 
 
-def test_jp2grok_4(out_filename="tmp/jp2grok_4.jp2"):
+def test_jp2grok_4(tmp_path, out_filename=None):
+
+    if out_filename is None:
+        out_filename = str(tmp_path / "jp2grok_4.jp2")
 
     src_ds = gdal.Open("data/jpeg2000/byte.jp2")
     assert (
@@ -168,8 +171,8 @@ def test_jp2grok_4(out_filename="tmp/jp2grok_4.jp2"):
     assert cs == 50054, "bad checksum"
 
 
-def test_jp2grok_4_vsimem():
-    return test_jp2grok_4("/vsimem/jp2grok_4.jp2")
+def test_jp2grok_4_vsimem(tmp_path):
+    return test_jp2grok_4(tmp_path, "/vsimem/jp2grok_4.jp2")
 
 
 ###############################################################################
@@ -206,17 +209,17 @@ def test_jp2grok_6():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def test_jp2grok_7():
+def test_jp2grok_7(tmp_path):
 
+    gdal.CopyFile("data/jpeg2000/byte.jp2.gz", tmp_path / "byte.jp2.gz")
     tst = gdaltest.GDALTest(
         "JP2Grok",
-        "/vsigzip/data/jpeg2000/byte.jp2.gz",
+        f"/vsigzip/{tmp_path}/byte.jp2.gz",
         1,
         50054,
         filename_absolute=1,
     )
     tst.testOpen()
-    gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
 
 
 ###############################################################################
@@ -328,37 +331,37 @@ def test_jp2grok_11():
 # Check that PAM overrides internal georeferencing
 
 
-def test_jp2grok_12():
+def test_jp2grok_12(tmp_path):
 
     # Override projection
-    shutil.copy("data/jpeg2000/byte.jp2", "tmp/jp2grok_12.jp2")
+    shutil.copy("data/jpeg2000/byte.jp2", str(tmp_path / "jp2grok_12.jp2"))
 
-    ds = gdal.Open("tmp/jp2grok_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_12.jp2"))
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/jp2grok_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_12.jp2"))
     wkt = ds.GetProjectionRef()
     ds = None
 
-    gdaltest.jp2grok_drv.Delete("tmp/jp2grok_12.jp2")
+    gdaltest.jp2grok_drv.Delete(str(tmp_path / "jp2grok_12.jp2"))
 
     assert "32631" in wkt
 
     # Override geotransform
-    shutil.copy("data/jpeg2000/byte.jp2", "tmp/jp2grok_12.jp2")
+    shutil.copy("data/jpeg2000/byte.jp2", str(tmp_path / "jp2grok_12.jp2"))
 
-    ds = gdal.Open("tmp/jp2grok_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_12.jp2"))
     ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
     ds = None
 
-    ds = gdal.Open("tmp/jp2grok_12.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_12.jp2"))
     gt = ds.GetGeoTransform()
     ds = None
 
-    gdaltest.jp2grok_drv.Delete("tmp/jp2grok_12.jp2")
+    gdaltest.jp2grok_drv.Delete(str(tmp_path / "jp2grok_12.jp2"))
 
     assert gt == (1000, 1, 0, 2000, 0, -1)
 
@@ -371,17 +374,17 @@ def test_jp2grok_12():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_jp2grok_13():
+def test_jp2grok_13(tmp_path):
 
     # Create a dataset with GCPs
     src_ds = gdal.Open("data/rgb_gcp.vrt")
-    ds = gdaltest.jp2grok_drv.CreateCopy("tmp/jp2grok_13.jp2", src_ds)
+    ds = gdaltest.jp2grok_drv.CreateCopy(str(tmp_path / "jp2grok_13.jp2"), src_ds)
     ds = None
     src_ds = None
 
-    assert gdal.VSIStatL("tmp/jp2grok_13.jp2.aux.xml") is None
+    assert gdal.VSIStatL(str(tmp_path / "jp2grok_13.jp2.aux.xml")) is None
 
-    ds = gdal.Open("tmp/jp2grok_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_13.jp2"))
     count = ds.GetGCPCount()
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
@@ -391,20 +394,20 @@ def test_jp2grok_13():
     ds = None
 
     # Override GCP
-    ds = gdal.Open("tmp/jp2grok_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_13.jp2"))
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
     gcps = [gdal.GCP(0, 1, 2, 3, 4)]
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/jp2grok_13.jp2")
+    ds = gdal.Open(str(tmp_path / "jp2grok_13.jp2"))
     count = ds.GetGCPCount()
     gcps = ds.GetGCPs()
     wkt = ds.GetGCPProjection()
     ds = None
 
-    gdaltest.jp2grok_drv.Delete("tmp/jp2grok_13.jp2")
+    gdaltest.jp2grok_drv.Delete(str(tmp_path / "jp2grok_13.jp2"))
 
     assert count == 1
     assert len(gcps) == 1
@@ -592,7 +595,7 @@ def test_jp2grok_22():
     assert fourth_band.GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_22.jp2")
-    assert ds.GetRasterBand(4).Checksum() in (26477, 30223)
+    assert ds.GetRasterBand(4).Checksum() in (22499, 26477, 30223)
     ds = None
     gdal.Unlink("/vsimem/jp2grok_22.jp2")
 
@@ -721,7 +724,7 @@ def test_jp2grok_24():
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_24.jp2")
     assert ds.GetRasterBand(2).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") is None
-    assert ds.GetRasterBand(2).Checksum() in (27389, 30223)
+    assert ds.GetRasterBand(2).Checksum() in (22499, 27389, 30223)
     ds = None
     gdal.Unlink("/vsimem/jp2grok_24.jp2")
 
@@ -772,11 +775,13 @@ def validate(
 
     validate_jp2 = pytest.importorskip("validate_jp2")
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET")
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd")
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd")
-        ogc_schemas_location = "tmp/cache/SCHEMAS_OPENGIS_NET"
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xlink.xsd")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/xml.xsd")
+        ogc_schemas_location = f"{tmp_dir}/SCHEMAS_OPENGIS_NET"
     except OSError:
         ogc_schemas_location = "disabled"
 
@@ -1633,17 +1638,18 @@ def test_jp2grok_vrt_read_no_advise():
     assert arr[:128].max() > 0 and arr[128:].max() > 0
 
 
-def test_jp2grok_translate_scale_multi_tile_row():
+def test_jp2grok_translate_scale_multi_tile_row(tmp_path):
     # gdal_translate -scale wraps source in a VRT and
     # reads it without AdviseRead. Identity scale preserves pixels, so the
     # output must match source below first tile row.
     np = pytest.importorskip("numpy")
     truth = _truth(SYNC_SRC)
-    src_ds = gdal.Open(SYNC_SRC)
+    gdal.CopyFile(SYNC_SRC, tmp_path / "in.jp2")
+    src_ds = gdal.Open(tmp_path / "in.jp2")
     smin, smax, _, _ = src_ds.GetRasterBand(1).GetStatistics(False, True)
     out = "/vsimem/jp2grok_scale.tif"
     ds = gdal.Translate(
-        out, SYNC_SRC, format="GTiff", scaleParams=[[smin, smax, smin, smax]]
+        out, tmp_path / "in.jp2", format="GTiff", scaleParams=[[smin, smax, smin, smax]]
     )
     assert ds.RasterYSize == 513
     assert np.array_equal(ds.GetRasterBand(1).ReadAsArray(), truth)

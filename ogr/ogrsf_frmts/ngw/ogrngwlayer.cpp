@@ -851,7 +851,7 @@ const OGRFeatureDefn *OGRNGWLayer::GetLayerDefn() const
 /*
  * TestCapability()
  */
-int OGRNGWLayer::TestCapability(const char *pszCap) const
+bool OGRNGWLayer::TestCapability(const char *pszCap) const
 {
     const_cast<OGRNGWLayer *>(this)->FetchPermissions();
     if (EQUAL(pszCap, OLCRandomRead))

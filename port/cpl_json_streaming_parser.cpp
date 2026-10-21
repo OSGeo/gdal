@@ -562,7 +562,7 @@ bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
                 {
                     if (nPos > m_nMaxStringSize)
                     {
-                        return EmitException("Too many characters in number");
+                        return EmitException("Too many characters in string");
                     }
                     if (!m_aeObjectState.empty() &&
                         m_aeObjectState.back() == IN_KEY)
@@ -587,7 +587,7 @@ bool CPLJSonStreamingParser::Parse(std::string_view sStr, bool bFinished)
             {
                 if (m_osToken.size() == m_nMaxStringSize)
                 {
-                    return EmitException("Too many characters in number");
+                    return EmitException("Too many characters in string");
                 }
 
                 char ch = *pStr;

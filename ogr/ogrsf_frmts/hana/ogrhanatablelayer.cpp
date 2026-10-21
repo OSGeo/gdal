@@ -1112,7 +1112,7 @@ void OGRHanaTableLayer::ResetReading()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRHanaTableLayer::TestCapability(const char *capabilities) const
+bool OGRHanaTableLayer::TestCapability(const char *capabilities) const
 {
     if (EQUAL(capabilities, OLCRandomRead))
     {

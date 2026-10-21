@@ -642,7 +642,6 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
             it.key = nullptr;
             it.val = nullptr;
             it.entry = nullptr;
-            CPLString osNativeData;
             bHasProperties = false;
             json_object_object_foreachC(poNativeJSon, it)
             {

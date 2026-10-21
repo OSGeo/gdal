@@ -619,12 +619,12 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteSelectLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteSelectLayer::TestCapability(const char *pszCap) const
 {
     return m_poBehavior->TestCapability(pszCap);
 }
 
-int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(
+bool OGRSQLiteSelectLayerCommonBehaviour::TestCapability(
     const char *pszCap) const
 
 {

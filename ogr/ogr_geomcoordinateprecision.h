@@ -38,7 +38,7 @@ class OGRSpatialReference;
  */
 struct CPL_DLL OGRGeomCoordinatePrecision
 {
-    /** Constant for a UNKNOWN resolution. */
+    /** Constant for an UNKNOWN resolution. */
     static constexpr double UNKNOWN = 0;
 
     /** Resolution for the coordinate precision of the X and Y coordinates.

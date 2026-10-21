@@ -255,7 +255,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAmigoCloudLayer::TestCapability(const char *pszCap) const
+bool OGRAmigoCloudLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

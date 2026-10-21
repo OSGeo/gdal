@@ -152,7 +152,7 @@ int OGRILI1DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRILI1DataSource::TestCapability(const char *pszCap) const
+bool OGRILI1DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCurveGeometries))

@@ -52,7 +52,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates ccache \
-            git make ninja-build cmake unzip libtool automake \
+            git make ninja-build cmake unzip \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
             rsync
@@ -74,7 +74,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libspatialite-dev${APT_ARCH_SUFFIX} \
        libmuparser-dev${APT_ARCH_SUFFIX} \
        cargo${APT_ARCH_SUFFIX} \
-       autoconf automake sqlite3 bash-completion swig
+       sqlite3 bash-completion swig
 
 RUN mkdir proj gdal
 

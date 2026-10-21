@@ -24,7 +24,7 @@
 /************************************************************************/
 
 OGRDGNLayer::OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName,
-                         DGNHandle hDGNIn, int bUpdateIn)
+                         DGNHandle hDGNIn, bool bUpdateIn)
     : m_poDS(poDS), poFeatureDefn(new OGRFeatureDefn(pszName)), iNextShapeId(0),
       hDGN(hDGNIn), bUpdate(bUpdateIn)
 {
@@ -905,7 +905,7 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNLayer::TestCapability(const char *pszCap) const
+bool OGRDGNLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

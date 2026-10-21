@@ -92,7 +92,7 @@ class GDALVectorReadLimitedLayer final
         m_srcLayer.ResetReading();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
     }
@@ -117,7 +117,7 @@ class GDALVectorReadLimitedDataset final : public GDALVectorOutputDataset
     {
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, ODsCMeasuredGeometries) ||
             EQUAL(pszCap, ODsCZGeometries))

@@ -60,7 +60,7 @@ class OGRIdrisiLayer final : public OGRLayer,
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,

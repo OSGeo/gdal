@@ -871,7 +871,7 @@ Networking options
       :choices: <filename>
       :since: 3.7
 
-      Filename of the the SSL client certificate. See https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
+      Filename of the SSL client certificate. See https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
 
 -  .. config:: GDAL_HTTP_SSLCERTTYPE
       :choices: PEM, DER
@@ -1169,4 +1169,3 @@ List of configuration options and where they are documented
 
 .. config_index::
    :types: config
-

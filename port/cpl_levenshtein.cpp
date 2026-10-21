@@ -34,7 +34,7 @@ size_t CPLLevenshteinDistance(const char *word1, const char *word2,
                                          : std::numeric_limits<size_t>::max();
     }
 
-    // Verification matrix i.e. 2D array which will store the calculated distance.
+    // Verification matrix, i.e., 2D array which will store the calculated distance.
     const size_t dimFastSize = size2 + 1;
     std::vector<unsigned short> verif;
     try
@@ -62,7 +62,7 @@ size_t CPLLevenshteinDistance(const char *word1, const char *word2,
         for (size_t j = 1; j <= size2; j++)
         {
             // Sets the modification cost.
-            // 0 means no modification (i.e. equal letters) and 1 means that a modification is needed (i.e. unequal letters).
+            // 0 means no modification (i.e., equal letters) and 1 means that a modification is needed (i.e., unequal letters).
             const int cost = (word2[j - 1] == word1[i - 1]) ? 0 : 1;
 
             // Sets the current position of the matrix as the minimum value between a (deletion), b (insertion) and c (substitution).

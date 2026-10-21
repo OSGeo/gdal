@@ -280,7 +280,7 @@ uint64 BlockDir::GetLayerSize(uint32 iLayer) const
  *
  * @param iLayer The index of the block layer.
  *
- * @return If the the specified block layer is valid.
+ * @return If the specified block layer is valid.
  */
 bool BlockDir::IsLayerValid(uint32 iLayer) const
 {
@@ -469,7 +469,7 @@ void BlockDir::CreateFreeBlocks(uint32 nBlockCount)
 /************************************************************************/
 
 /**
- * Adds the the specified block list to the free block layer.
+ * Adds the specified block list to the free block layer.
  *
  * @note Only the blocks which are allocated will be added to the
  *       free block layer.

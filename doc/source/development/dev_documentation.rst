@@ -113,7 +113,7 @@ A reStructuredText document is written in plain text.  Without the need for comp
      - ``**bold**`` (double asterisk)
      - **bold**
    * - Monospace
-     - `` ``monospace`` `` (double back quote)
+     - ````monospace```` (double back quote)
      - ``monospace``
 
 .. warning:: Use of the basic markup above is **not recommended**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.

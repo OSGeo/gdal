@@ -435,11 +435,8 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
             XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of JML file failed : %s "
-                     "at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(poParser.get())),
-                     (int)XML_GetCurrentLineNumber(poParser.get()),
-                     (int)XML_GetCurrentColumnNumber(poParser.get()));
+                     "XML parsing of JML file failed: %s",
+                     OGRExpatGetParseError(poParser.get()));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -502,13 +499,9 @@ void OGRJMLLayer::LoadSchema()
         if (XML_Parse(poParser.get(), aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "XML parsing of JML file failed : %s at line %d, "
-                "column %d",
-                XML_ErrorString(XML_GetErrorCode(poParser.get())),
-                static_cast<int>(XML_GetCurrentLineNumber(poParser.get())),
-                static_cast<int>(XML_GetCurrentColumnNumber(poParser.get())));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of JML file failed: %s",
+                     OGRExpatGetParseError(poParser.get()));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -806,7 +799,7 @@ void OGRJMLLayer::endElementLoadSchemaCbk(const char * /* pszName */)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLLayer::TestCapability(const char *pszCap) const
+bool OGRJMLLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

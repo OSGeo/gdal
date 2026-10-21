@@ -49,7 +49,8 @@ Standard Options
 Examples
 --------
 
-.. example:: Check if a GeoPackage file is conformant
+.. example:: 
+   :title: Check if a GeoPackage file is conformant
 
    .. code-block:: bash
 

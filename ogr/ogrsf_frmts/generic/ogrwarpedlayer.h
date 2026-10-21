@@ -96,7 +96,7 @@ class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = true) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr) override;

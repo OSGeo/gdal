@@ -95,6 +95,32 @@ Additional details are typically provided in the accompanying error message.
       However plugin ogr_Parquet.dll is not available in your installation.You may install it with
       'conda install -c gdal-master libgdal-arrow-parquet'
 
+.. example::
+   :title: Computed source window falls completely outside source raster extent
+
+   This error occurs when the specified bounding box does not intersect the source raster extent.
+
+   A common cause is specifying the bounding box coordinates in the wrong order.
+   GDAL's ``--bbox`` expects coordinates in ``xmin,ymin,xmax,ymax`` order.
+   For a geographic CRS such as EPSG:4326 this corresponds to ``longitude_min,latitude_min,longitude_max,latitude_max``.
+   Be careful when copying extents from other software or data sources. For example, WMS 1.3.0
+   ``BBOX`` values for EPSG:4326 list latitude before longitude.
+
+   Other causes include specifying a bounding box in the wrong CRS or specifying an extent that genuinely lies outside the source raster.
+
+   The numbers in the error message are the computed pixel window (``xoff yoff xsize ysize``).
+   Compare the offsets with the raster width and height reported by :ref:`gdal_raster_info`.
+   In the example below, :file:`france.tif` is 10974 × 4011 pixels, so offsets of 474391 and 469132
+   place the window far outside the raster. Negative offsets mean the window lies to the left of,
+   or above the raster.
+
+   .. code-block:: console
+
+      $ gdal raster clip france.tif --bbox=49.00,2.36,49.01,2.37 --bbox-crs=EPSG:4326 output.tif
+      ERROR 1: Computed source window 474391 469132 101 101 falls completely outside source raster extent.
+      $ gdal raster clip france.tif --bbox=2.36,49.00,2.37,49.01 --bbox-crs=EPSG:4326 output.tif
+      0...10...20...30...40...50...60...70...80...90...100 - done.
+
 ERROR 2 Out of Memory Error
 +++++++++++++++++++++++++++
 

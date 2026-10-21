@@ -859,7 +859,7 @@ int VSIMove(const char *oldpath, const char *newpath,
     VSIStatBufL sStat;
     if (VSIStatL(oldpath, &sStat) != 0)
     {
-        CPLDebug("VSI", "%s is not a object", oldpath);
+        CPLDebug("VSI", "%s is not an object", oldpath);
         errno = ENOENT;
         return -1;
     }
@@ -1087,7 +1087,7 @@ int VSICopyFileRestartable(const char *pszSource, const char *pszTarget,
 /**
  * \brief Synchronize a source file/directory with a target file/directory.
  *
- * This is a analog of the 'rsync' utility. In the current implementation,
+ * This is an analog of the 'rsync' utility. In the current implementation,
  * rsync would be more efficient for local file copying, but VSISync() main
  * interest is when the source or target is a remote
  * file system like /vsis3/ or /vsigs/, in which case it can take into account
@@ -3196,7 +3196,7 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  *
  * @param nRanges number of ranges to read.
  * @param ppData array of nRanges buffer into which the data should be read
- *               (ppData[i] must be at list panSizes[i] bytes).
+ *               (ppData[i] must be at least panSizes[i] bytes).
  * @param panOffsets array of nRanges offsets at which the data should be read.
  * @param panSizes array of nRanges sizes of objects to read (in bytes).
  * @param fp file handle opened with VSIFOpenL().

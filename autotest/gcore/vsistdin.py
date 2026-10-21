@@ -23,12 +23,14 @@ from osgeo import gdal
 # Test on a small file
 
 
-def test_vsistdin_1():
+def test_vsistdin_1(tmp_path):
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
     src_ds = gdal.Open("data/byte.tif")
-    ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/vsistdin_1_src.tif", src_ds)
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_path / "vsistdin_1_src.tif", src_ds
+    )
     ds = None
     cs = src_ds.GetRasterBand(1).Checksum()
     src_ds = None
@@ -36,43 +38,45 @@ def test_vsistdin_1():
     # Should work on both Unix and Windows
     os.system(
         test_cli_utilities.get_gdal_translate_path()
-        + " /vsistdin/ tmp/vsistdin_1_out.tif -q < tmp/vsistdin_1_src.tif"
+        + f" /vsistdin/ {tmp_path}/vsistdin_1_out.tif -q < {tmp_path}/vsistdin_1_src.tif"
     )
 
-    gdal.Unlink("tmp/vsistdin_1_src.tif")
+    gdal.Unlink(f"{tmp_path}/vsistdin_1_src.tif")
 
-    ds = gdal.Open("tmp/vsistdin_1_out.tif")
+    ds = gdal.Open(f"{tmp_path}/vsistdin_1_out.tif")
     assert ds is not None
     assert ds.GetRasterBand(1).Checksum() == cs
     ds = None
 
-    gdal.Unlink("tmp/vsistdin_1_out.tif")
+    gdal.Unlink(f"{tmp_path}/vsistdin_1_out.tif")
 
 
 ###############################################################################
 # Test on a bigger file (> 1 MB)
 
 
-def test_vsistdin_2():
+def test_vsistdin_2(tmp_path):
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    ds = gdal.GetDriverByName("GTiff").Create("tmp/vsistdin_2_src.tif", 2048, 2048)
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_path / "vsistdin_2_src.tif", 2048, 2048
+    )
     ds = None
 
     # Should work on both Unix and Windows
     os.system(
         test_cli_utilities.get_gdal_translate_path()
-        + " /vsistdin/ tmp/vsistdin_2_out.tif -q < tmp/vsistdin_2_src.tif"
+        + f" /vsistdin/ {tmp_path}/vsistdin_2_out.tif -q < {tmp_path}/vsistdin_2_src.tif"
     )
 
-    gdal.Unlink("tmp/vsistdin_2_src.tif")
+    gdal.Unlink(f"{tmp_path}/vsistdin_2_src.tif")
 
-    ds = gdal.Open("tmp/vsistdin_2_out.tif")
+    ds = gdal.Open(f"{tmp_path}/vsistdin_2_out.tif")
     assert ds is not None
     ds = None
 
-    gdal.Unlink("tmp/vsistdin_2_out.tif")
+    gdal.Unlink(f"{tmp_path}/vsistdin_2_out.tif")
 
 
 ###############################################################################
@@ -95,11 +99,11 @@ def test_vsistdin_3():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_vsistdin_4():
+def test_vsistdin_4(tmp_path):
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    f = open("tmp/vsistdin_4_src.vrt", "wt")
+    f = open(tmp_path / "vsistdin_4_src.vrt", "wt")
     f.write("""<VRTDataset rasterXSize="20" rasterYSize="20">
   %s
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</SRS>
@@ -117,31 +121,31 @@ def test_vsistdin_4():
     # Should work on both Unix and Windows
     os.system(
         test_cli_utilities.get_gdal_translate_path()
-        + " /vsistdin/ tmp/vsistdin_4_out.tif -q < tmp/vsistdin_4_src.vrt"
+        + f" /vsistdin/ {tmp_path}/vsistdin_4_out.tif -q < {tmp_path}/vsistdin_4_src.vrt"
     )
 
-    gdal.Unlink("tmp/vsistdin_4_src.vrt")
+    gdal.Unlink(f"{tmp_path}/vsistdin_4_src.vrt")
 
-    ds = gdal.Open("tmp/vsistdin_4_out.tif")
+    ds = gdal.Open(f"{tmp_path}/vsistdin_4_out.tif")
     assert ds is not None
     ds = None
 
-    gdal.Unlink("tmp/vsistdin_4_out.tif")
+    gdal.Unlink(f"{tmp_path}/vsistdin_4_out.tif")
 
 
 ###############################################################################
 
 
 @gdaltest.disable_exceptions()
-def test_vsistdin_5():
+def test_vsistdin_5(tmp_path):
 
-    f = open("tmp/test_vsistdin_5.bin", "wb")
+    f = open(tmp_path / "test_vsistdin_5.bin", "wb")
     f.write(b"0123456789" * (1024 * 1024))
     f.close()
 
     with gdaltest.config_options(
         {
-            "CPL_VSISTDIN_FILE": "tmp/test_vsistdin_5.bin",
+            "CPL_VSISTDIN_FILE": f"{tmp_path}/test_vsistdin_5.bin",
             "CPL_VSISTDIN_RESET_POSITION": "YES",
             "CPL_VSISTDIN_FILE_CLOSE": "YES",
         }
@@ -172,7 +176,7 @@ def test_vsistdin_5():
 
     with gdaltest.config_options(
         {
-            "CPL_VSISTDIN_FILE": "tmp/test_vsistdin_5.bin",
+            "CPL_VSISTDIN_FILE": f"{tmp_path}/test_vsistdin_5.bin",
             "CPL_VSISTDIN_RESET_POSITION": "YES",
             "CPL_VSISTDIN_FILE_CLOSE": "YES",
         }
@@ -187,7 +191,7 @@ def test_vsistdin_5():
 
     with gdaltest.config_options(
         {
-            "CPL_VSISTDIN_FILE": "tmp/test_vsistdin_5.bin",
+            "CPL_VSISTDIN_FILE": f"{tmp_path}/test_vsistdin_5.bin",
             "CPL_VSISTDIN_RESET_POSITION": "YES",
             "CPL_VSISTDIN_FILE_CLOSE": "YES",
         }
@@ -202,7 +206,7 @@ def test_vsistdin_5():
 
     with gdaltest.config_options(
         {
-            "CPL_VSISTDIN_FILE": "tmp/test_vsistdin_5.bin",
+            "CPL_VSISTDIN_FILE": f"{tmp_path}/test_vsistdin_5.bin",
             "CPL_VSISTDIN_RESET_POSITION": "YES",
             "CPL_VSISTDIN_FILE_CLOSE": "YES",
         }
@@ -218,4 +222,4 @@ def test_vsistdin_5():
             assert gdal.VSIFReadL(3, 1, f) == b""
         gdal.VSIFCloseL(f)
 
-    os.unlink("tmp/test_vsistdin_5.bin")
+    os.unlink(f"{tmp_path}/test_vsistdin_5.bin")

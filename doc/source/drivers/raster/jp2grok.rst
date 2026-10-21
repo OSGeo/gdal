@@ -11,7 +11,7 @@ JP2Grok -- JPEG2000 driver based on Grok library
 .. versionadded:: 3.13
 
 This driver is an implementation of a JPEG2000 reader/writer based on the
-`Grok <https://github.com/GrokImageCompression/grok>`__ library.
+`Grok <https://github.com/GrokImageCompression/grok>`__ library (AGPL-3.0 licensed).
 
 The driver uses the VSI Virtual File API, so it can read JPEG2000
 compressed NITF files. It also supports native S3 access through Grok's

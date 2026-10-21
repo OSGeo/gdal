@@ -496,6 +496,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
   %}
 
+%feature("pythonappend") GetSpatialFilter %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetStyleTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
 }
 
 %extend OGRFeatureShadow {
@@ -847,6 +857,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     def _invalidate_geom_refs(self):
         if hasattr(self, '_geom_references'):
             for geom in self._geom_references:
+                geom._invalidate_geom_refs()
                 geom.this = None
 
 %}
@@ -927,6 +938,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     self._add_geom_ref(val)
 %}
 
+%feature("pythonappend") GetFieldDefnRef %{
+    if val is not None:
+        val._parent_feature = self
+%}
+
+%feature("pythonappend") GetGeomFieldDefnRef %{
+    if val is not None:
+        val._parent_feature = self
+%}
+
 %feature("shadow") SetField %{
     # With several override, SWIG cannot dispatch automatically unicode strings
     # to the right implementation, so we have to do it at hand
@@ -974,8 +995,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %extend OGRGeometryShadow {
 %pythoncode %{
   def Destroy(self):
+    self._invalidate_geom_refs()
     self.__swig_destroy__(self)
     self.thisown = 0
+
+  _add_geom_ref = Feature._add_geom_ref
+  _invalidate_geom_refs = Feature._invalidate_geom_refs
 
   def __str__(self):
     return self.ExportToIsoWkt()
@@ -1005,6 +1030,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %feature("pythonappend") GetGeometryRef %{
     if val is not None:
         val._parent_geom = self
+        self._add_geom_ref(val)
 %}
 
 }
@@ -1026,6 +1052,11 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     name = property(GetName, SetName)
     srs = property(GetSpatialRef, SetSpatialRef)
 }
+
+%feature("pythonappend") GetCoordinatePrecision %{
+    if val is not None:
+        val._parent_geom_field_defn = self
+%}
 }
 
 %extend OGRFeatureDefnShadow {
@@ -1040,6 +1071,16 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %feature("pythonprepend") GetFieldDefn %{
     if type(args[0]) is str:
         args = (self.GetFieldIndex(args[0]), )
+%}
+
+%feature("pythonappend") GetFieldDefn %{
+    if val is not None:
+        val._parent_defn = self
+%}
+
+%feature("pythonappend") GetGeomFieldDefn %{
+    if val is not None:
+        val._parent_defn = self
 %}
 }
 

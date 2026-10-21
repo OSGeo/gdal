@@ -809,7 +809,7 @@ int VFKDataBlock::LoadGeometryPoint()
     int i_idxX = GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                  m_pszName);
         return nInvalid;
     }
@@ -839,7 +839,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
         cpl::down_cast<VFKDataBlock *>(m_poReader->GetDataBlock("SOBR"));
     if (nullptr == poDataBlockPoints)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.",
                  m_pszName);
         return 0;
     }
@@ -850,7 +850,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
     int idxPCB = GetPropertyIndex("PORADOVE_CISLO_BODU");
     if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                  m_pszName);
         return 0;
     }
@@ -916,7 +916,7 @@ int VFKDataBlock::LoadGeometryLineStringHP()
         cpl::down_cast<VFKDataBlock *>(m_poReader->GetDataBlock("SBP"));
     if (nullptr == poDataBlockLines)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.",
                  m_pszName);
         return nInvalid;
     }
@@ -930,7 +930,7 @@ int VFKDataBlock::LoadGeometryLineStringHP()
         poDataBlockLines->GetPropertyIndex("PORADOVE_CISLO_BODU");
     if (idxId < 0 || idxMy_Id < 0 || idxPCB < 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                  m_pszName);
         return nInvalid;
     }
@@ -986,7 +986,7 @@ int VFKDataBlock::LoadGeometryPolygon()
     int nInvalid = 0;
     if (nullptr == poDataBlockLines1 || nullptr == poDataBlockLines2)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.",
                  m_pszName);
         return nInvalid;
     }
@@ -996,7 +996,7 @@ int VFKDataBlock::LoadGeometryPolygon()
     int idxId = GetPropertyIndex("ID");
     if (idxId < 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                  m_pszName);
         return nInvalid;
     }
@@ -1012,7 +1012,7 @@ int VFKDataBlock::LoadGeometryPolygon()
         idxPar2 = poDataBlockLines1->GetPropertyIndex("PAR_ID_2");
         if (idxPar1 < 0 || idxPar2 < 0)
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                      m_pszName);
             return nInvalid;
         }
@@ -1024,7 +1024,7 @@ int VFKDataBlock::LoadGeometryPolygon()
         idxOb = poDataBlockLines2->GetPropertyIndex("OB_ID");
         if (idxIdOb < 0 || idxBud < 0 || idxOb < 0)
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).",
                      m_pszName);
             return nInvalid;
         }

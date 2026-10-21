@@ -76,7 +76,8 @@ The :program:`gdalsrsinfo` utility reports information about a given SRS from on
 Example
 -------
 
-.. example:: Default output
+.. example::
+   :title: Default output
 
    .. command-output:: gdalsrsinfo EPSG:4326
 

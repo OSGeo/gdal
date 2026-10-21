@@ -83,8 +83,8 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (!std::isnan(m_srcMin))
     {
         CPLAssert(!std::isnan(m_srcMax));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_srcMin));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_srcMax));
+        aosOptions.AddString(m_srcMin);
+        aosOptions.AddString(m_srcMax);
     }
 
     CPLAssert((std::isnan(m_dstMax) && std::isnan(m_dstMin)) ||
@@ -96,15 +96,15 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
             aosOptions.AddString("NaN");
             aosOptions.AddString("NaN");
         }
-        aosOptions.AddString(CPLSPrintf("%.17g", m_dstMin));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_dstMax));
+        aosOptions.AddString(m_dstMin);
+        aosOptions.AddString(m_dstMax);
     }
 
     if (!std::isnan(m_exponent))
     {
         aosOptions.AddString(m_band > 0 ? CPLSPrintf("-exponent_%d", m_band)
                                         : "-exponent");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_exponent));
+        aosOptions.AddString(m_exponent);
     }
     else if (!m_noClip)
     {

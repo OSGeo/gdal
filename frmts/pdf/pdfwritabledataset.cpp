@@ -119,7 +119,7 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFWritableVectorDataset::TestCapability(const char *pszCap) const
+bool PDFWritableVectorDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -332,7 +332,7 @@ CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)
     VSILFILE *fp = VSIFOpenL(GetDescription(), "wb");
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.",
                  GetDescription());
         return CE_Failure;
     }

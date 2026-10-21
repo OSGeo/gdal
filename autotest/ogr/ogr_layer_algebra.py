@@ -483,6 +483,10 @@ def test_algebra_update_2(A, B, C):
         "Layer.Update returned " + str(C.GetFeatureCount()) + " features"
     )
 
+    assert [f.GetGeometryRef().GetGeometryType() for f in C] == [
+        ogr.wkbMultiPolygon
+    ] * 3
+
 
 def test_algebra_update_3(D1, D2, C):
 

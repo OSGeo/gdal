@@ -527,6 +527,22 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
         </VRTDataset>
             """)
 
+    for lut in ["", ","]:
+        with pytest.raises(Exception, match="must have at least one entry"):
+            gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
+        <Input>
+            <SourceFilename>{src_filename}</SourceFilename>
+        </Input>
+        <ProcessingSteps>
+            <Step>
+                <Algorithm>LUT</Algorithm>
+                <Argument name="lut_1">{lut}</Argument>
+                <Argument name="lut_2">1.5:10,2.5:20</Argument>
+            </Step>
+        </ProcessingSteps>
+        </VRTDataset>
+            """)
+
     with pytest.raises(Exception, match="Invalid band in argument 'lut_3'"):
         gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>

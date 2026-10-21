@@ -319,7 +319,7 @@ The following open options are supported:
 
 -  .. oo:: MULTI_LOAD_COUNT
 
-      See Layer Create Options comments on :lco:MULTI_LOAD_COUNT`.
+      See Layer Create Options comments on :lco:`MULTI_LOAD_COUNT`.
 
 -  .. oo:: WORKSPACE
 

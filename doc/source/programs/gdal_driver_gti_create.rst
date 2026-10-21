@@ -241,3 +241,35 @@ Examples
    .. code-block:: bash
 
        gdal driver gti create --ot Byte --resolution=60,60 --band-count=3 --color-interpretation=Red,Green,Blue *.tif tile_index.gti.gpkg
+
+.. example::
+   :title: Create a tile index from rasters in different coordinate reference systems
+   :id: gdal-driver-gti-create-reproject
+
+   Create a tile index from JPEG2000 files in different CRSs, using EPSG:4326 as
+   the target CRS for on-the-fly reprojection. The resampling method used by the
+   :ref:`GTI <raster.gti>` driver is stored as the ``RESAMPLING`` layer metadata
+   item using :option:`--metadata`.
+
+   .. code-block:: bash
+
+       gdal driver gti create --output-crs=EPSG:4326 --resolution=0.0001,0.0001 --metadata=RESAMPLING=cubic *.jp2 tile_index.gti.gpkg
+
+   The GTI dataset can then be processed with :ref:`gdal_raster_clip` or
+   :ref:`gdal_raster_convert`. Avoid subsequently using
+   :ref:`gdal_raster_reproject`, as this would resample the data a second time
+   and may reduce quality.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+         gdal pipeline read tile_index.gti.gpkg \
+             ! clip --bbox=2.36,49.00,2.37,49.01 --bbox-crs=EPSG:4326 \
+             ! write clipped.tif --output-format COG --creation-option COMPRESS=DEFLATE
+
+      .. code-tab:: powershell
+
+         gdal pipeline read tile_index.gti.gpkg `
+             ! clip --bbox=2.36,49.00,2.37,49.01 --bbox-crs=EPSG:4326 `
+             ! write clipped.tif --output-format COG --creation-option COMPRESS=DEFLATE

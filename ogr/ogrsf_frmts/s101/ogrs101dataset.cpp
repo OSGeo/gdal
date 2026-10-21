@@ -158,7 +158,7 @@ OGRLayer *OGRS101Dataset::GetLayer(int i) const
 /*                    OGRS101Layer::TestCapability()                    */
 /************************************************************************/
 
-int OGRS101Dataset::TestCapability(const char *pszCap) const
+bool OGRS101Dataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCZGeometries))
     {

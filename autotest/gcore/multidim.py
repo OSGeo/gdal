@@ -379,7 +379,7 @@ def test_multidim_getresampled_error_single_dim():
         ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
 
 
-def test_multidim_getresampled_error_too_large_y():
+def test_multidim_getresampled_error_too_large_y(tmp_path):
 
     drv = gdal.GetDriverByName("MEM")
     mem_ds = drv.CreateMultiDimensional("myds")
@@ -390,8 +390,9 @@ def test_multidim_getresampled_error_too_large_y():
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
     new_dimY = rg.CreateDimension("Ynew", None, None, 4 * 1000 * 1000 * 1000)
-    with pytest.raises(Exception, match="Too big size for Y dimension"):
-        ar.GetResampled([new_dimY, None], gdal.GRIORA_NearestNeighbour, None)
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        with pytest.raises(Exception, match="Too big size for Y dimension"):
+            ar.GetResampled([new_dimY, None], gdal.GRIORA_NearestNeighbour, None)
 
 
 def test_multidim_getresampled_error_too_large_x():

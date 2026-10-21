@@ -78,7 +78,7 @@ namespace pcr {
   \param     v Pointer to the value to be tested.
   \return    True if the value pointed to by v is a missing value.
 */
-  template<typename T> static bool isMV(T* v) {
+  template<typename T> static inline bool isMV(T* v) {
     return isMV(*v);
   }
 
@@ -121,7 +121,7 @@ template<> inline bool isMV(std::string const& string)
     \brief     Sets the value pointed to by v to a missing value.
     \param     v Pointer to the value to be set.
   */
-  template<typename T> static void setMV(T *v) {
+  template<typename T> static inline void setMV(T *v) {
     setMV(*v);
   }
 

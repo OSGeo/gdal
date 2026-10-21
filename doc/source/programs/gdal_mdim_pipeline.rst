@@ -37,7 +37,7 @@ Synopsis
 A pipeline chains several steps, separated with the `!` (exclamation mark) character.
 The first step must be ``read`` or ``mosaic``, and the last one ``write``, ``info`` or ``compare``.
 Each step has its own positional or non-positional arguments.
-Apart from ``read``, ``mosaic``, ``info`, ``info`` or ``compare``,
+Apart from ``read``, ``mosaic``, ``info``, or ``compare``,
 all other steps can potentially be used several times in a pipeline.
 
 Potential steps are:

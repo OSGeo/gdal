@@ -220,7 +220,7 @@ def test_mem_md_array_single_dim():
     assert myarray.Write([1, 1 << 31]) == gdal.CE_None
     assert struct.unpack("B" * 2, myarray.Read()) == (1, 255)
 
-    # Test writing a array
+    # Test writing an array
     for typecode, in_ar, out_tuple in [
         ("B", [1, 2], (1, 2)),
         ("b", [-128, 127], (0, 127)),

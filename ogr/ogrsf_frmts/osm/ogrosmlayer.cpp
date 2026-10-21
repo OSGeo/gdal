@@ -270,7 +270,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature(OGROSMLayer **ppoNewCurLayer,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMLayer::TestCapability(const char *pszCap) const
+bool OGROSMLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastGetExtent))
     {

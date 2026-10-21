@@ -2647,6 +2647,41 @@ static void OptimizedMinOrMaxSSE2(const void *const *papoSources, int nSources,
     }
 }
 
+/************************************************************************/
+/*                    NaNAwareMinOrMaxFloat/Double()                    */
+/************************************************************************/
+
+static inline __m128 NaNAwareMinOrMaxFloat(__m128 x, __m128 y, bool bMin)
+{
+    const __m128 xIsNaN = _mm_cmpunord_ps(x, x);
+    const __m128 yIsNaN = _mm_cmpunord_ps(y, y);
+    const __m128 xx =
+        _mm_or_ps(_mm_andnot_ps(xIsNaN, x), _mm_and_ps(xIsNaN, y));
+    const __m128 yy =
+        _mm_or_ps(_mm_andnot_ps(yIsNaN, y), _mm_and_ps(yIsNaN, x));
+    return bMin ? _mm_min_ps(xx, yy) : _mm_max_ps(xx, yy);
+}
+
+static inline __m128d NaNAwareMinOrMaxDouble(__m128d x, __m128d y, bool bMin)
+{
+    const __m128d xIsNaN = _mm_cmpunord_pd(x, x);
+    const __m128d yIsNaN = _mm_cmpunord_pd(y, y);
+    const __m128d xx =
+        _mm_or_pd(_mm_andnot_pd(xIsNaN, x), _mm_and_pd(xIsNaN, y));
+    const __m128d yy =
+        _mm_or_pd(_mm_andnot_pd(yIsNaN, y), _mm_and_pd(yIsNaN, x));
+    return bMin ? _mm_min_pd(xx, yy) : _mm_max_pd(xx, yy);
+}
+
+template <class T> static inline T NaNAwareMinOrMax(T x, T y, bool bMin)
+{
+    if (std::isnan(x))
+        return y;
+    if (std::isnan(y))
+        return x;
+    return bMin ? std::min(x, y) : std::max(x, y);
+}
+
 // clang-format off
 namespace
 {
@@ -2741,8 +2776,8 @@ struct SSEWrapperMinFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_ps(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, true); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
 struct SSEWrapperMaxFloat
@@ -2752,8 +2787,8 @@ struct SSEWrapperMaxFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_ps(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, false); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
 struct SSEWrapperMinDouble
@@ -2763,8 +2798,8 @@ struct SSEWrapperMinDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_pd(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, true); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
 struct SSEWrapperMaxDouble
@@ -2774,8 +2809,8 @@ struct SSEWrapperMaxDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_pd(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, false); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
 }  // namespace
@@ -3357,6 +3392,38 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
 
     return CE_None;
 }  // ReclassifyPixelFunc
+
+struct CountKernel
+{
+    static constexpr const char *pszName = "count";
+
+    int nCount = 0;
+
+    void Reset()
+    {
+        nCount = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double)
+    {
+        ++nCount;
+    }
+
+    static bool HasValue()
+    {
+        return true;
+    }
+
+    double GetValue() const
+    {
+        return nCount;
+    }
+};
 
 struct MeanKernel
 {
@@ -3948,7 +4015,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
     if constexpr (std::is_same_v<Kernel, MeanKernel>)
     {
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int16 to accumulate
             nSources <= std::numeric_limits<int16_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -4048,7 +4115,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int32 to accumulate
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -4117,7 +4184,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt16 && eBufType == GDT_UInt16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
@@ -4171,7 +4238,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_Int16 && eBufType == GDT_Int16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
@@ -4455,5 +4522,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("area", AreaPixelFunc,
                                         pszAreaPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("count", BasicPixelFunc<CountKernel>,
+                                        pszBasicPixelFuncMetadata);
     return CE_None;
 }

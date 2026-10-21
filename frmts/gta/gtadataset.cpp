@@ -837,7 +837,7 @@ CPLErr GTADataset::ReadBlock(int nBlockXOff, int nBlockYOff)
             }
             catch (gta::exception &e)
             {
-                CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
+                CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s", e.what());
                 return CE_Failure;
             }
         }
@@ -871,7 +871,7 @@ CPLErr GTADataset::ReadBlock(int nBlockXOff, int nBlockYOff)
         }
         catch (gta::exception &e)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
+            CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s", e.what());
             return CE_Failure;
         }
 
@@ -902,7 +902,7 @@ CPLErr GTADataset::WriteBlock()
     }
     catch (gta::exception &e)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
+        CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s", e.what());
         return CE_Failure;
     }
 
@@ -1046,7 +1046,7 @@ GDALPamDataset *GTADataset::OpenPAM(GDALOpenInfo *poOpenInfo)
     }
     catch (gta::exception &e)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "GTA error: %s\n", e.what());
+        CPLError(CE_Failure, CPLE_OpenFailed, "GTA error: %s", e.what());
         delete poDS;
         return nullptr;
     }
@@ -1657,7 +1657,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     }
     catch (gta::exception &e)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "GTA error: %s\n", e.what());
+        CPLError(CE_Failure, CPLE_NotSupported, "GTA error: %s", e.what());
         VSIFree(peGTATypes);
         return nullptr;
     }
@@ -1670,7 +1670,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     GTAIO oGTAIO;
     if (oGTAIO.open(pszFilename, "w") != 0)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot create GTA file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot create GTA file %s.",
                  pszFilename);
         return nullptr;
     }
@@ -1733,7 +1733,7 @@ static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     }
     catch (gta::exception &e)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "GTA write error: %s\n", e.what());
+        CPLError(CE_Failure, CPLE_FileIO, "GTA write error: %s", e.what());
         VSIFree(pLine);
         return nullptr;
     }

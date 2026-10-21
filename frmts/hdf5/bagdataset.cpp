@@ -129,7 +129,7 @@ class BAGDataset final : public GDALPamDataset
     hid_t m_hVarresMetadataDataType = -1;
     hid_t m_hVarresMetadataDataspace = -1;
     hid_t m_hVarresMetadataNative = -1;
-    std::map<int, BAGRefinementGrid> m_oMapRefinemendGrids{};
+    std::map<int, BAGRefinementGrid> m_oMapRefinementGrids{};
 
     CPLStringList m_aosSubdatasets{};
 
@@ -2485,7 +2485,7 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
     m_hVarresMetadataDataType = poParentDS->m_hVarresMetadataDataType;
     m_hVarresMetadataDataspace = poParentDS->m_hVarresMetadataDataspace;
     m_hVarresMetadataNative = poParentDS->m_hVarresMetadataNative;
-    // m_oMapRefinemendGrids;
+    // m_oMapRefinementGrids;
 
     // m_aosSubdatasets;
 
@@ -3369,8 +3369,8 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
     }
     else if (bOpenSuperGrid)
     {
-        auto oIter = m_oMapRefinemendGrids.find(nY * m_nLowResWidth + nX);
-        if (oIter == m_oMapRefinemendGrids.end())
+        auto oIter = m_oMapRefinementGrids.find(nY * m_nLowResWidth + nX);
+        if (oIter == m_oMapRefinementGrids.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid subdataset");
             return false;
@@ -3473,7 +3473,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
         SetPhysicalFilename(osFilename);
 
-        m_oMapRefinemendGrids.clear();
+        m_oMapRefinementGrids.clear();
     }
 
     // Setup/check for pam .aux.xml.
@@ -3524,7 +3524,7 @@ class BAGTrackingListLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }
@@ -4028,7 +4028,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
     }
 
     // We could potentially go beyond but we'd need to make sure that
-    // m_oMapRefinemendGrids is indexed by a int64_t
+    // m_oMapRefinementGrids is indexed by a int64_t
     if (m_nLowResWidth > std::numeric_limits<int>::max() / m_nLowResHeight)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too many refinement grids");
@@ -4434,7 +4434,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                             continue;
                         }
 
-                        if (static_cast<int>(m_oMapRefinemendGrids.size()) ==
+                        if (static_cast<int>(m_oMapRefinementGrids.size()) ==
                             nMaxSizeMap)
                         {
                             CPLError(
@@ -4450,7 +4450,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
                         try
                         {
-                            m_oMapRefinemendGrids[y * m_nLowResWidth + x] =
+                            m_oMapRefinementGrids[y * m_nLowResWidth + x] =
                                 rgrid;
                         }
                         catch (const std::exception &e)
@@ -4532,10 +4532,10 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
     }
 
-    if (!bOK || m_oMapRefinemendGrids.empty())
+    if (!bOK || m_oMapRefinementGrids.empty())
     {
         m_aosSubdatasets.Clear();
-        m_oMapRefinemendGrids.clear();
+        m_oMapRefinementGrids.clear();
         return false;
     }
 

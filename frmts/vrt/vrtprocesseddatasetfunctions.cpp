@@ -521,6 +521,12 @@ static CPLErr LUTInit(const char * /*pszFuncName*/, void * /*pUserData*/,
                 adfInputValues.push_back(CPLAtof(aosTokens2[0]));
                 adfOutputValues.push_back(CPLAtof(aosTokens2[1]));
             }
+            if (adfInputValues.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Argument '%s' must have at least one entry", pszKey);
+                return CE_Failure;
+            }
             oMap[nBand - 1] = std::pair(std::move(adfInputValues),
                                         std::move(adfOutputValues));
         }

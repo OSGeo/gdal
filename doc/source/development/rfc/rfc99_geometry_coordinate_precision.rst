@@ -171,7 +171,7 @@ Corresponding additions at the C API level:
 
 .. code-block:: c
 
-    /** Value for a unknown coordinate precision. */
+    /** Value for an unknown coordinate precision. */
     #define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
 
     /** Opaque type for OGRGeomCoordinatePrecision */

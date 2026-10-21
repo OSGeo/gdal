@@ -136,7 +136,7 @@ class OGRGPXLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -225,7 +225,7 @@ class OGRGPXDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     VSILFILE *GetOutputFP()
     {

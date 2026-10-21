@@ -310,7 +310,7 @@ class OGRHanaTableLayer final : public OGRHanaLayer
         return tableName_.c_str();
     }
 
-    int TestCapability(const char *capabilities) const override;
+    bool TestCapability(const char *capabilities) const override;
 
     OGRErr ICreateFeature(OGRFeature *feature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -364,7 +364,7 @@ class OGRHanaResultLayer final : public OGRHanaLayer
     explicit OGRHanaResultLayer(OGRHanaDataSource *datasource,
                                 const char *query);
 
-    int TestCapability(const char *capabilities) const override;
+    bool TestCapability(const char *capabilities) const override;
 };
 
 }  // namespace OGRHANA
@@ -468,7 +468,7 @@ class OGRHanaDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *capabilities) const override;
+    bool TestCapability(const char *capabilities) const override;
 
     OGRLayer *ExecuteSQL(const char *sqlCommand, OGRGeometry *spatialFilter,
                          const char *dialect) override;

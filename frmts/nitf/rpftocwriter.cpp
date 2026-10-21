@@ -653,10 +653,11 @@ static bool RPFTOCCollectFrames(
         const std::string osDataSeriesCode(osFilenamePart.substr(9, 2));
         if (!RPFCADRGIsKnownDataSeriesCode(osDataSeriesCode.c_str()))
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Data series code '%s' in %s extension is a unknown CADRG "
-                     "series code",
-                     osDataSeriesCode.c_str(), osFullFilename.c_str());
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Data series code '%s' in %s extension is an unknown CADRG "
+                "series code",
+                osDataSeriesCode.c_str(), osFullFilename.c_str());
         }
 
         int nThisScale = nReciprocalScale;

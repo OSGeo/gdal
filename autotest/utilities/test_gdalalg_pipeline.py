@@ -22,6 +22,12 @@ import test_cli_utilities
 from osgeo import gdal, ogr
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_pipeline"):
+        yield
+
+
 def get_pipeline_alg():
     return gdal.GetGlobalAlgorithmRegistry()["pipeline"]
 
@@ -930,7 +936,7 @@ def test_gdalalg_pipeline_nested_errors():
         )
 
     with pytest.raises(
-        Exception, match="'not_existing' is a unknown sub-algorithm of 'overview'"
+        Exception, match="'not_existing' is an unknown sub-algorithm of 'overview'"
     ):
         gdal.Run(
             "pipeline",

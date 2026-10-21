@@ -235,7 +235,7 @@ void OGRIdrisiLayer::ResetReading()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIdrisiLayer::TestCapability(const char *pszCap) const
+bool OGRIdrisiLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

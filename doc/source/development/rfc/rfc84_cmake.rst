@@ -136,7 +136,7 @@ The addition of the CMake build system, being mostly an addition during the tran
 phase where it will be available alongside the existing build systems, should
 moderately impact existent files. However, it is likely that there will be some
 improvements that affect C++ files (for example, to use consistently ``#include <project/header.h>``
-style of inclusion instead of the``#include <header.h>`` with ``-I${include_prefix}/project``
+style of inclusion instead of the ``#include <header.h>`` with ``-I${include_prefix}/project``
 pattern sometimes used) and the GNUmakefile/makefile.vc files.
 
 We may use of PRIVATE linking of vendored and intermediate libraries to hide

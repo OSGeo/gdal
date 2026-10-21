@@ -23,13 +23,13 @@ from osgeo import gdal
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_sieve_1():
+def test_sieve_1(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 4)
@@ -40,12 +40,7 @@ def test_sieve_1():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/sieve_1.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
@@ -53,13 +48,13 @@ def test_sieve_1():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_sieve_2():
+def test_sieve_2(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_2.tif", 5, 7, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "sieve_2.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 8)
@@ -70,12 +65,7 @@ def test_sieve_2():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/sieve_2.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
@@ -83,13 +73,13 @@ def test_sieve_2():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_sieve_3():
+def test_sieve_3(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/unmergeable.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_3.tif", 5, 7, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "sieve_3.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 8)
@@ -101,12 +91,7 @@ def test_sieve_3():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/sieve_3.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
@@ -114,13 +99,13 @@ def test_sieve_3():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_sieve_4():
+def test_sieve_4(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_2634.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_4.tif", 10, 8, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "sieve_4.tif", 10, 8, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, None, dst_band, 2, 4)
@@ -131,12 +116,7 @@ def test_sieve_4():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/sieve_4.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################
@@ -145,13 +125,13 @@ def test_sieve_4():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_sieve_5():
+def test_sieve_5(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
 
-    dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
+    dst_ds = drv.Create(tmp_path / "sieve_1.tif", 5, 7, 1, gdal.GDT_UInt8)
     dst_band = dst_ds.GetRasterBand(1)
 
     gdal.SieveFilter(src_band, dst_band.GetMaskBand(), dst_band, 2, 4)
@@ -162,12 +142,7 @@ def test_sieve_5():
     dst_band = None
     dst_ds = None
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/sieve_1.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected
 
 
 ###############################################################################

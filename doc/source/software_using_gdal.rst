@@ -107,6 +107,7 @@ Proprietary license / Other
 - `Mirone  <http://joa-quim.pt/mirone/main.html>`_  Matlab based package for geospatial, oceanographic and geophysical analysis of grids
 - `MyGeodata Cloud  <https://mygeodata.cloud/>`_  Online converter of GDAL raster and OGR vector formats
 - `OPALS  <https://opals.geo.tuwien.ac.at/html/stable/index.html>`_ Orientation and Processing of Airborne Laser Scanning Data
+- `RasterScope <https://rasterscope.simularia.it/>`_ A native macOS viewer for raster data as air quality and meteorological model outputs, by Simularia.
 - `Procura  <http://www.michellcomputing.co.uk/procura.html>`_ Landholding inspection system developed for the UK Homes and Communities Agency. GDAL is used for checking out background mapping.
 - `ScanMagic  <https://www.scanex.ru/en/software/vizualizatsiya-i-katalogizatsiya/scan-magic/>`_ Win32 application for visualization, analysis and processing of remote sensing data.
 - `Scalable Algorithmics (SCALGO)  <https://scalgo.com>`_  Software for efficiently constructing and performing computations on very large raster and TIN terrain models.

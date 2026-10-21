@@ -33,13 +33,13 @@ def test_bsb_1():
 # Test CreateCopy
 
 
-def test_bsb_2():
+def test_bsb_2(tmp_path):
 
     md = gdal.GetDriverByName("BSB").GetMetadata()
     if "DMD_CREATIONDATATYPES" not in md:
         pytest.skip()
 
-    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321)
+    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 

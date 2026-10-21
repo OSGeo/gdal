@@ -42,7 +42,7 @@ void OGRS101Layer::ResetReading()
 /*                    OGRS101Layer::TestCapability()                    */
 /************************************************************************/
 
-int OGRS101Layer::TestCapability(const char *pszCap) const
+bool OGRS101Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -54,7 +54,7 @@ int OGRS101Layer::TestCapability(const char *pszCap) const
     {
         const auto poSRS = GetSpatialRef();
         if (poSRS)
-            return poSRS->IsCompound();
+            return CPL_TO_BOOL(poSRS->IsCompound());
     }
 
     return false;

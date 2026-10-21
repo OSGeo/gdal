@@ -3365,6 +3365,9 @@ def test_ogr_geom_GT_IsSurface(gt, res):
         (ogr.wkbCurvePolygon, ogr.wkbMultiSurface),
         (ogr.wkbLineString, ogr.wkbMultiLineString),
         (ogr.wkbPolygon, ogr.wkbMultiPolygon),
+        (ogr.wkbTriangle, ogr.wkbMultiPolygon),
+        (ogr.wkbPolyhedralSurface, ogr.wkbMultiSurface),
+        (ogr.wkbTIN, ogr.wkbMultiSurface),
     ],
 )
 def test_ogr_geom_GT_GetCollection(gt, res):

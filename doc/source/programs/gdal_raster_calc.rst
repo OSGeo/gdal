@@ -253,3 +253,19 @@ Examples
            calc --calc "3.28084 * X" ! \
            contour --interval 10 ! \
            write contours_feet.shp
+
+.. example::
+   :title: Calculate the difference of each band from the mean
+
+       Given a netCDF file with mean monthly temperatures for the month of November over 86 years, this command
+       outputs an 86-band :ref:`raster.vrt` expressing the temperature as a difference from the mean temperature. The
+       :option:`--flatten` option indicates that the ``avg`` function should be applied to all bands as an aggregate,
+       rather than to each band individually.
+
+       .. code-block:: bash
+         
+           gdal raster calc \
+               --input era5_t2m_nov.nc \
+               --output era5_t2m_nov_anom.vrt \
+               --calc "X - avg(X)" \
+               --flatten

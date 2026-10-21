@@ -21,6 +21,14 @@ import pytest
 
 from osgeo import gdal, osr
 
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    # warping with GCPs may invoke GDALFillNodata, which writes to CPL_TMPDIR
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "warp"):
+        yield
+
+
 ###############################################################################
 # Verify warped result.
 
@@ -29,9 +37,9 @@ from osgeo import gdal, osr
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_geoloc_1():
+def test_geoloc_1(tmp_path):
 
-    tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034)
+    tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034, tmpdir=tmp_path)
     tst.testOpen(check_filelist=False)
 
 

@@ -21,6 +21,12 @@ def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["viewshed"]
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_viewshed"):
+        yield
+
+
 @pytest.fixture()
 def viewshed_input(tmp_path):
 

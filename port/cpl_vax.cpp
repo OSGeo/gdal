@@ -173,7 +173,7 @@ void CPLIEEEToVaxDouble(void *dbl)
     }
 
     /* -------------------------------------------------------------------- */
-    /*      In the case of of underflow return zero                         */
+    /*      In the case of underflow return zero                         */
     /* -------------------------------------------------------------------- */
     else if ((exponent < 0) || (exponent == 0 && sign == 0))
     {

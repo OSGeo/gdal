@@ -81,7 +81,7 @@ const OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRFeatherWriterDataset::TestCapability(const char *pszCap) const
+bool OGRFeatherWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_poLayer == nullptr;

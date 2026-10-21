@@ -16,7 +16,7 @@ monochrome, 8-bit pseudocoloured and 24-bit RGB images only. Even
 grayscale images must be saved in pseudocolour form.
 
 This driver supports reading almost any type of the BMP files and could
-write ones which should be supported on any Windows system. Only single-
+write ones which should be supported on any Windows system. Only single-band
 or three- band files could be saved in BMP file. Input values will be
 resampled to 8 bit.
 

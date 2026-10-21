@@ -104,7 +104,7 @@ class GDALVectorSQLAlgorithmDataset final : public GDALDataset
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, ODsCCurveGeometries) ||
             EQUAL(pszCap, ODsCMeasuredGeometries) ||
@@ -267,7 +267,8 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
             {
                 ReportError(CE_Warning, CPLE_AppDefined,
                             "Execution of the SQL statement '%s' returned a "
-                            "result set. It will be ignored. You may silence "
+                            "result set, but no output dataset was specified. "
+                            "The result set will be ignored. You may silence "
                             "this warning with the 'quiet' argument.",
                             sql.c_str());
             }

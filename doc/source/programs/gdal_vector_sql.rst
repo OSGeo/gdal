@@ -159,3 +159,36 @@ Examples
             ! read in.shp `
             ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" `
             ! info --features
+
+.. example::
+   :title: Filter features from a polygon dataset that intersect a point in a separate dataset
+
+   This example uses the spatial operations provided by the SQLite dialect to select polygons
+   that intersect at least one point feature in a separate dataset. Because :program:`gdal vector sql`
+   operates on a single dataset, the two input datasets are first combined using :ref:`gdal_vector_concat`.
+
+   .. code-block:: bash
+
+       gdal vector pipeline ! \
+           concat polys.shp points.shp \
+               --mode stack ! \
+           sql --sql "SELECT * FROM polys WHERE EXISTS (SELECT 1 FROM points WHERE ST_Intersects(polys.geometry, points.geometry))" \
+               --dialect sqlite ! \
+           write polys_filtered.shp
+
+.. example::
+   :title: Use a pipeline to calculate the length of a GPS track and write to stdout
+
+   This example uses the ``ST_Length`` function to calculate the length of a layer with
+   a single feature. To calculate a length in meters, the layer is first projected to
+   a suitable coordinate reference system.
+
+   .. code-block:: console
+
+       $ gdal vector pipeline ! \
+            read out.gpx ! \ 
+            reproject --output-crs EPSG:32145 ! \
+            sql "SELECT ST_Length(geometry) FROM tracks" --dialect sqlite ! \
+            write /vsistdout/ --output-format CSV --lco HEADER=NO
+       10716.7409690568
+

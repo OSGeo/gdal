@@ -153,28 +153,29 @@ def test_transformer_homography():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_4():
+def test_transformer_4(tmp_path):
 
-    ds = gdal.Open("data/sstgeo.vrt")
-    tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
+    with gdal.config_option("CPL_TMPDIR", tmp_path):
+        ds = gdal.Open("data/sstgeo.vrt")
+        tr = gdal.Transformer(ds, None, ["METHOD=GEOLOC_ARRAY"])
 
-    success, pnt = tr.TransformPoint(0, 20, 10)
+        success, pnt = tr.TransformPoint(0, 20, 10)
 
-    assert (
-        success
-        and pnt[0] == pytest.approx(-81.961341857910156, abs=0.000001)
-        and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001)
-        and pnt[2] == 0
-    ), "got wrong forward transform result."
+        assert (
+            success
+            and pnt[0] == pytest.approx(-81.961341857910156, abs=0.000001)
+            and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001)
+            and pnt[2] == 0
+        ), "got wrong forward transform result."
 
-    success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+        success, pnt = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert (
-        success
-        and pnt[0] == pytest.approx(20, abs=0.000001)
-        and pnt[1] == pytest.approx(10, abs=0.000001)
-        and pnt[2] == 0
-    ), "got wrong reverse transform result."
+        assert (
+            success
+            and pnt[0] == pytest.approx(20, abs=0.000001)
+            and pnt[1] == pytest.approx(10, abs=0.000001)
+            and pnt[2] == 0
+        ), "got wrong reverse transform result."
 
 
 ###############################################################################
@@ -185,7 +186,7 @@ def test_transformer_4():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_5():
+def test_transformer_5(tmp_vsimem):
 
     ds = gdal.Open("data/rpc.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_PIXEL_ERROR_THRESHOLD=0.05"])
@@ -248,7 +249,7 @@ def test_transformer_5():
     # Test RPC_DEM and RPC_HEIGHT_SCALE options
 
     # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
-    ds_dem = gdal.GetDriverByName("GTiff").Create("/vsimem/dem.tif", 100, 100, 1)
+    ds_dem = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "dem.tif", 100, 100, 1)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32652)
     ds_dem.SetProjection(sr.ExportToWkt())
@@ -257,7 +258,7 @@ def test_transformer_5():
     ds_dem = None
 
     tr = gdal.Transformer(
-        ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", "RPC_DEM=/vsimem/dem.tif"]
+        ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", f"RPC_DEM={tmp_vsimem}/dem.tif"]
     )
 
     success, pnt = tr.TransformPoint(0, 20.5, 10.5, 0)
@@ -299,7 +300,7 @@ def test_transformer_5():
         [
             "METHOD=RPC",
             "RPC_HEIGHT_SCALE=2",
-            "RPC_DEM=/vsimem/dem.tif",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
             "RPC_DEMINTERPOLATION=cubic",
         ],
     )
@@ -330,7 +331,7 @@ def test_transformer_5():
         [
             "METHOD=RPC",
             "RPC_HEIGHT_SCALE=2",
-            "RPC_DEM=/vsimem/dem.tif",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
             "RPC_DEMINTERPOLATION=near",
         ],
     )
@@ -355,7 +356,7 @@ def test_transformer_5():
 
     # Test outside DEM extent : default behaviour --> error
     tr = gdal.Transformer(
-        ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", "RPC_DEM=/vsimem/dem.tif"]
+        ds, None, ["METHOD=RPC", "RPC_HEIGHT_SCALE=2", f"RPC_DEM={tmp_vsimem}/dem.tif"]
     )
 
     success, pnt = tr.TransformPoint(0, 40000, 0, 0)
@@ -367,7 +368,7 @@ def test_transformer_5():
     tr = None
 
     # Test outside DEM extent with RPC_DEM_MISSING_VALUE=0
-    ds_dem = gdal.GetDriverByName("GTiff").Create("/vsimem/dem.tif", 100, 100, 1)
+    ds_dem = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "dem.tif", 100, 100, 1)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32652)
     ds_dem.SetProjection(sr.ExportToWkt())
@@ -380,7 +381,7 @@ def test_transformer_5():
         [
             "METHOD=RPC",
             "RPC_HEIGHT_SCALE=2",
-            "RPC_DEM=/vsimem/dem.tif",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
             "RPC_DEM_MISSING_VALUE=0",
         ],
     )
@@ -400,8 +401,6 @@ def test_transformer_5():
     ), "got wrong reverse transform result."
 
     tr = None
-
-    gdal.Unlink("/vsimem/dem.tif")
 
 
 ###############################################################################
@@ -454,13 +453,14 @@ def test_transformer_7():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_8():
+@pytest.mark.parametrize("method", ["near", "bilinear", "cubic"])
+def test_transformer_8(tmp_vsimem, method):
 
     ds = gdal.Open("data/rpc.vrt")
 
     # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
     ds_dem = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_Int16
+        tmp_vsimem / "dem.tif", 100, 100, 1, gdal.GDT_Int16
     )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32652)
@@ -470,30 +470,27 @@ def test_transformer_8():
     ds_dem.GetRasterBand(1).Fill(-32768)
     ds_dem = None
 
-    for method in ["near", "bilinear", "cubic"]:
-        tr = gdal.Transformer(
-            ds,
-            None,
-            [
-                "METHOD=RPC",
-                "RPC_DEM=/vsimem/dem.tif",
-                "RPC_DEMINTERPOLATION=%s" % method,
-            ],
-        )
+    tr = gdal.Transformer(
+        ds,
+        None,
+        [
+            "METHOD=RPC",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
+            "RPC_DEMINTERPOLATION=%s" % method,
+        ],
+    )
 
-        success, pnt = tr.TransformPoint(0, 20, 10, 0)
+    success, pnt = tr.TransformPoint(0, 20, 10, 0)
 
-        if success:
-            print(success, pnt)
-            pytest.fail("got wrong forward transform result.")
+    if success:
+        print(success, pnt)
+        pytest.fail("got wrong forward transform result.")
 
-        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
-        if success:
-            print(success, pnt)
-            pytest.fail("got wrong reverse transform result.")
-
-    gdal.Unlink("/vsimem/dem.tif")
+    if success:
+        print(success, pnt)
+        pytest.fail("got wrong reverse transform result.")
 
 
 ###############################################################################
@@ -504,13 +501,14 @@ def test_transformer_8():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_9():
+@pytest.mark.parametrize("method", ["near", "bilinear", "cubic"])
+def test_transformer_9(tmp_vsimem, method):
 
     ds = gdal.Open("data/rpc.vrt")
 
     # (long,lat)=(125.64828521533849 39.869345204440144) -> (Easting,Northing)=(213324.662167036 4418634.47813677) in EPSG:32652
     ds_dem = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_UInt8
+        tmp_vsimem / "dem.tif", 100, 100, 1, gdal.GDT_UInt8
     )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -532,28 +530,25 @@ def test_transformer_9():
     ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
     ds_dem = None
 
-    for method in ["near", "bilinear", "cubic"]:
-        tr = gdal.Transformer(
-            ds,
-            None,
-            [
-                "METHOD=RPC",
-                "RPC_DEM=/vsimem/dem.tif",
-                "RPC_DEMINTERPOLATION=%s" % method,
-            ],
-        )
+    tr = gdal.Transformer(
+        ds,
+        None,
+        [
+            "METHOD=RPC",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
+            "RPC_DEMINTERPOLATION=%s" % method,
+        ],
+    )
 
-        points = [(125.64828521533849, 39.869345204440144)] * 10
-        pnt, success = tr.TransformPoints(1, points)
-        assert success[0], method
-        pnt_optimized = pnt[0]
+    points = [(125.64828521533849, 39.869345204440144)] * 10
+    pnt, success = tr.TransformPoints(1, points)
+    assert success[0], method
+    pnt_optimized = pnt[0]
 
-        success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
-        assert success, method
+    success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
+    assert success, method
 
-        assert pnt == pnt_optimized, method
-
-    gdal.Unlink("/vsimem/dem.tif")
+    assert pnt == pnt_optimized, method
 
 
 ###############################################################################
@@ -565,11 +560,11 @@ def test_transformer_9():
     reason="VRT driver open missing",
 )
 @pytest.mark.require_driver("GTX")
-def test_transformer_10():
+def test_transformer_10(tmp_path, tmp_vsimem):
 
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName("GTX").Create(
-        "tmp/fake.gtx", 10, 10, 1, gdal.GDT_Float32
+        tmp_path / "fake.gtx", 10, 10, 1, gdal.GDT_Float32
     )
     out_ds.SetGeoTransform([-180, 36, 0, 90, 0, -18])
     sr = osr.SpatialReference()
@@ -580,7 +575,7 @@ def test_transformer_10():
 
     # Create a fake DEM
     ds_dem = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/dem.tif", 100, 100, 1, gdal.GDT_UInt8
+        tmp_vsimem / "dem.tif", 100, 100, 1, gdal.GDT_UInt8
     )
     ds_dem.SetGeoTransform(
         [
@@ -599,11 +594,11 @@ def test_transformer_10():
     ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
     ds_dem = None
 
-    ds_dem = gdal.Open("/vsimem/dem.tif")
-    vrt_dem = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/dem.vrt", ds_dem)
+    ds_dem = gdal.Open(tmp_vsimem / "dem.tif")
+    vrt_dem = gdal.GetDriverByName("VRT").CreateCopy(tmp_vsimem / "dem.vrt", ds_dem)
     ds_dem = None
 
-    vrt_dem.SetProjection("""COMPD_CS["WGS 84 + my_height",
+    vrt_dem.SetProjection(f"""COMPD_CS["WGS 84 + my_height",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -616,7 +611,7 @@ def test_transformer_10():
         AUTHORITY["EPSG","4326"]],
     VERT_CS["my_height",
         VERT_DATUM["my_height",0,
-            EXTENSION["PROJ4_GRIDS","./tmp/fake.gtx"]],
+            EXTENSION["PROJ4_GRIDS","{tmp_path}/fake.gtx"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Up",UP]]]""")
@@ -624,7 +619,7 @@ def test_transformer_10():
 
     ds = gdal.Open("data/rpc.vrt")
 
-    tr = gdal.Transformer(ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/dem.vrt"])
+    tr = gdal.Transformer(ds, None, ["METHOD=RPC", f"RPC_DEM={tmp_vsimem}/dem.vrt"])
     success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
     assert (
         success
@@ -636,7 +631,11 @@ def test_transformer_10():
     tr = gdal.Transformer(
         ds,
         None,
-        ["METHOD=RPC", "RPC_DEM=/vsimem/dem.vrt", "RPC_DEM_APPLY_VDATUM_SHIFT=FALSE"],
+        [
+            "METHOD=RPC",
+            f"RPC_DEM={tmp_vsimem}/dem.vrt",
+            "RPC_DEM_APPLY_VDATUM_SHIFT=FALSE",
+        ],
     )
     success, pnt = tr.TransformPoint(1, 125.64828521533849, 39.869345204440144, 0)
 
@@ -646,10 +645,6 @@ def test_transformer_10():
         and pnt[1] == pytest.approx(1.6460100520871492, abs=1e-5)
         and pnt[2] == 0
     ), "got wrong result."
-
-    gdal.GetDriverByName("GTX").Delete("tmp/fake.gtx")
-    gdal.Unlink("/vsimem/dem.tif")
-    gdal.Unlink("/vsimem/dem.vrt")
 
 
 ###############################################################################
@@ -826,7 +821,7 @@ def test_transformer_13():
 # Test inverse RPC transform when iterations do oscillations (#6377)
 
 
-def test_transformer_14():
+def test_transformer_14(tmp_vsimem):
     ds = gdal.GetDriverByName("MEM").Create("", 4032, 2688)
     rpc = [
         "MIN_LAT=0",
@@ -851,7 +846,10 @@ def test_transformer_14():
     ds.SetMetadata(rpc, "RPC")
 
     with gdal.config_options(
-        {"RPC_INVERSE_VERBOSE": "YES", "RPC_INVERSE_LOG": "/vsimem/transformer_14.csv"}
+        {
+            "RPC_INVERSE_VERBOSE": "YES",
+            "RPC_INVERSE_LOG": f"{tmp_vsimem}/transformer_14.csv",
+        }
     ):
         tr = gdal.Transformer(
             ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
@@ -866,21 +864,18 @@ def test_transformer_14():
         and pnt[1] == pytest.approx(-4.1346931131054286e-05, abs=1e-7)
     )
 
-    f = gdal.VSIFOpenL("/vsimem/transformer_14.csvt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "transformer_14.csvt", "rb")
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode("ASCII")
         gdal.VSIFCloseL(f)
     assert content.startswith("Integer,Real,Real,Real,String,Real,Real")
 
-    f = gdal.VSIFOpenL("/vsimem/transformer_14.csv", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "transformer_14.csv", "rb")
     if f is not None:
         content = gdal.VSIFReadL(1, 1000, f).decode("ASCII")
         gdal.VSIFCloseL(f)
     assert content.startswith("""iter,long,lat,height,WKT,error_pixel_x,error_pixel_y
 0,""")
-
-    gdal.Unlink("/vsimem/transformer_14.csvt")
-    gdal.Unlink("/vsimem/transformer_14.csv")
 
 
 ###############################################################################
@@ -892,7 +887,7 @@ def test_transformer_14():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_15():
+def test_transformer_15(tmp_vsimem):
 
     ds = gdal.GetDriverByName("MEM").Create("", 6600, 4400)
     rpc = [
@@ -915,20 +910,20 @@ def test_transformer_15():
 
     sr = osr.SpatialReference()
     sr.SetWellKnownGeogCS("WGS84")
-    demE179 = gdal.GetDriverByName("GTiff").Create("/vsimem/demE179.tif", 10, 10)
+    demE179 = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "demE179.tif", 10, 10)
     demE179.SetProjection(sr.ExportToWkt())
     demE179.SetGeoTransform([179, 0.1, 0, 0.5, 0, -0.1])
     demE179.GetRasterBand(1).Fill(50)
-    demW180 = gdal.GetDriverByName("GTiff").Create("/vsimem/demW180.tif", 10, 10)
+    demW180 = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "demW180.tif", 10, 10)
     demW180.SetProjection(sr.ExportToWkt())
     demW180.SetGeoTransform([-180, 0.1, 0, 0.5, 0, -0.1])
     demW180.GetRasterBand(1).Fill(50)
-    gdal.BuildVRT("/vsimem/transformer_15_dem.vrt", [demE179, demW180])
+    gdal.BuildVRT(tmp_vsimem / "transformer_15_dem.vrt", [demE179, demW180])
     demE179 = None
     demW180 = None
 
     tr = gdal.Transformer(
-        ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/transformer_15_dem.vrt"]
+        ds, None, ["METHOD=RPC", f"RPC_DEM={tmp_vsimem}/transformer_15_dem.vrt"]
     )
     success, pnt = tr.TransformPoint(0, 0, 0)
     assert (
@@ -958,7 +953,7 @@ def test_transformer_15():
     ds.SetMetadata(rpc, "RPC")
 
     tr = gdal.Transformer(
-        ds, None, ["METHOD=RPC", "RPC_DEM=/vsimem/transformer_15_dem.vrt"]
+        ds, None, ["METHOD=RPC", f"RPC_DEM={tmp_vsimem}/transformer_15_dem.vrt"]
     )
     success, pnt = tr.TransformPoint(0, 6600, 4400)
     assert (
@@ -981,10 +976,6 @@ def test_transformer_15():
         and pnt_forward[1] == pytest.approx(4400, abs=0.1)
     ), "got wrong reverse transform result."
 
-    gdal.Unlink("/vsimem/demE179.tif")
-    gdal.Unlink("/vsimem/demW180.tif")
-    gdal.Unlink("/vsimem/transformer_15_dem.vrt")
-
 
 ###############################################################################
 # Test approximate sub-transformers in GenImgProjTransformer
@@ -995,19 +986,19 @@ def test_transformer_15():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_16():
+def test_transformer_16(tmp_vsimem):
 
     gdal.Translate(
-        "/vsimem/transformer_16.tif",
+        tmp_vsimem / "transformer_16.tif",
         "data/byte.tif",
         options="-gcp 0 0 440720.000 3751320.000 -gcp 0 20 440720.000 3750120.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 -a_srs EPSG:26711",
     )
     gdal.Warp(
-        "/vsimem/transformer_16.vrt",
-        "/vsimem/transformer_16.tif",
+        tmp_vsimem / "transformer_16.vrt",
+        tmp_vsimem / "transformer_16.tif",
         options="-of VRT -t_srs EPSG:4326 -et 0 -to SRC_APPROX_ERROR_IN_SRS_UNIT=6.05 -to SRC_APPROX_ERROR_IN_PIXEL=0.1 -to REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT=6.1 -to REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT=0.0001",
     )
-    f = gdal.VSIFOpenL("/vsimem/transformer_16.vrt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "transformer_16.vrt", "rb")
     if f is not None:
         content = gdal.VSIFReadL(1, 10000, f).decode("ASCII")
         gdal.VSIFCloseL(f)
@@ -1017,11 +1008,9 @@ def test_transformer_16():
         and "<MaxErrorForward>0.0001</MaxErrorForward>" in content
         and "<MaxErrorReverse>6.1</MaxErrorReverse>" in content
     )
-    ds = gdal.Translate("", "/vsimem/transformer_16.vrt", format="MEM")
+    ds = gdal.Translate("", tmp_vsimem / "transformer_16.vrt", format="MEM")
     assert ds.GetRasterBand(1).Checksum() == 4727
     ds = None
-    gdal.Unlink("/vsimem/transformer_16.tif")
-    gdal.Unlink("/vsimem/transformer_16.vrt")
 
 
 ###############################################################################
@@ -1089,6 +1078,9 @@ def test_transformer_no_reverse_method():
     reason="VRT driver open missing",
 )
 def test_transformer_tps_precision():
+
+    if gdaltest.is_travis_branch("build-windows-conda"):
+        pytest.skip("Crashes for unknown reason")
 
     ds = gdal.Open("data/gcps_2115.vrt")
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
@@ -1173,9 +1165,9 @@ def test_transformer_image_no_srs():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_transformer_dem_overrride_srs():
+def test_transformer_dem_overrride_srs(tmp_vsimem):
     ds = gdal.Open("data/rpc.vrt")
-    ds_dem = gdal.GetDriverByName("GTiff").Create("/vsimem/dem.tif", 100, 100, 1)
+    ds_dem = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "dem.tif", 100, 100, 1)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32652)
     ds_dem.SetProjection(sr.ExportToWkt())
@@ -1188,7 +1180,7 @@ def test_transformer_dem_overrride_srs():
         [
             "METHOD=RPC",
             "RPC_HEIGHT_SCALE=2",
-            "RPC_DEM=/vsimem/dem.tif",
+            f"RPC_DEM={tmp_vsimem}/dem.tif",
             "RPC_DEM_SRS=EPSG:32652+5773",
         ],
     )
@@ -1206,8 +1198,6 @@ def test_transformer_dem_overrride_srs():
         and pnt[0] == pytest.approx(0.5, abs=0.05)
         and pnt[1] == pytest.approx(0.5, abs=0.05)
     ), "got wrong reverse transform result."
-
-    gdal.Unlink("/vsimem/dem.tif")
 
 
 ###############################################################################
@@ -1334,6 +1324,8 @@ def test_transformer_validate_options():
         or gdaltest.is_travis_branch("build-windows-minimum")
     ):
         pytest.skip("Crashes for unknown reason")
+
+    pytest.importorskip("lxml")
 
     from lxml import etree
 

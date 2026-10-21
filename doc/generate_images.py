@@ -2,9 +2,15 @@ import os
 import pathlib
 
 import geopandas as gpd
+import matplotlib.pyplot as pyplot
+
+pyplot.rcParams["svg.fonttype"] = (
+    "none"  # out text as text (only withs without path_Effects)
+)
+pyplot.rcParams["svg.hashsalt"] = "gdal"  # stable element IDs across builds
+
 import matplotlib.colors
 import matplotlib.patheffects as pe
-import matplotlib.pyplot as pyplot
 import numpy as np
 import pytest
 
@@ -14,7 +20,7 @@ IMAGE_ROOT = os.path.join(os.path.dirname(__file__), "images")
 DATA_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "data"))
 
 GDAL_GREEN_BLUE = matplotlib.colors.ListedColormap(["#71c9f1", "#359946"])
-
+SVG_METADATA = {"Date": None, "Creator": None, "Format": None, "Type": None}
 
 gdal.UseExceptions()
 matplotlib.use("Agg")  # use a non-GUI backend
@@ -28,7 +34,7 @@ def print_cell_values(ax, data):
             ax.text(
                 x + 0.5,
                 y + 0.5,
-                "NoData" if not has_data else f"{z}",
+                "NoData" if not has_data else f"{z:0.2f}".rstrip("0").rstrip("."),
                 va="center",
                 ha="center",
                 fontweight="bold",
@@ -805,3 +811,50 @@ def test_gdal_raster_blend_3band_overlay(operator):
         overwrite=True,
     )
     alg.Finalize()
+
+
+def test_gdal_raster_proximity_1():
+
+    data = np.ma.masked_array(
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [1, 2, 0, 0, 0],
+                [3, 0, 0, 0, 0],
+                [-1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ]
+        ),
+        False,
+    )
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(15, 6))
+
+    for x in (ax, ax2):
+        x.set_aspect("equal", adjustable="box")
+        x.set_xticks([], [])
+        x.set_yticks([], [])
+        x.grid(color="black", linewidth=2)
+        x.invert_yaxis()
+
+    ds = gdal_array.OpenArray(data)
+
+    with gdal.alg.raster.proximity(
+        input=ds,
+        output="",
+        output_format="MEM",
+        max_distance=3,
+    ) as alg:
+        data_out = alg.Output().ReadAsMaskedArray()
+
+    ax.pcolormesh(data, cmap=pyplot.get_cmap("Set3_r"))
+    print_cell_values(ax, data)
+    ax2.pcolormesh(data_out, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax2, data_out)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_proximity_1.svg",
+        bbox_inches="tight",
+        transparent=True,
+        metadata=SVG_METADATA,
+    )

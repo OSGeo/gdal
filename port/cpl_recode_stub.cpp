@@ -76,8 +76,10 @@ static bool bHaveWarned1 = false;
 static bool bHaveWarned2 = false;
 static bool bHaveWarned3 = false;
 static bool bHaveWarned4 = false;
+#ifdef _WIN32
 static bool bHaveWarned5 = false;
 static bool bHaveWarned6 = false;
+#endif
 
 /************************************************************************/
 /*                   CPLClearRecodeStubWarningFlags()                   */
@@ -89,8 +91,10 @@ void CPLClearRecodeStubWarningFlags()
     bHaveWarned2 = false;
     bHaveWarned3 = false;
     bHaveWarned4 = false;
+#ifdef _WIN32
     bHaveWarned5 = false;
     bHaveWarned6 = false;
+#endif
 }
 
 /************************************************************************/
@@ -805,7 +809,7 @@ static unsigned utf8towc(const char *src, unsigned srclen, wchar_t *dst,
 
     Errors in the UTF-8 are converted as individual bytes, same as
     utf8decode() does. This allows ISO-8859-1 text mistakenly identified
-    as UTF-8 to be printed correctly (and possibly CP1512 on Windows).
+    as UTF-8 to be printed correctly (and possibly CP1252 on Windows).
 
     \a src points at the UTF-8, and \a srclen is the number of bytes to
     convert.

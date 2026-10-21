@@ -152,7 +152,7 @@ void OGRMSSQLSpatialDataSource::OGRMSSQLDecodeVersionString(MSSQLVer *psVersion,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap) const
+bool OGRMSSQLSpatialDataSource::TestCapability(const char *pszCap) const
 
 {
 #if (ODBCVER >= 0x0300)

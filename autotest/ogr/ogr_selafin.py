@@ -29,6 +29,12 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "ogr_selafin"):
+        yield
+
+
 ###############################################################################
 # Create Selafin datasource
 

@@ -204,3 +204,4 @@ Examples
    .. code-block:: bash
 
       gdal raster create --like prototype.tif --resolution=50%,50% output.tif
+

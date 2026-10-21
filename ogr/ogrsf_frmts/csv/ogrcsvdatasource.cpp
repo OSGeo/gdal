@@ -438,7 +438,7 @@ OGRCSVDataSource::~OGRCSVDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCSVDataSource::TestCapability(const char *pszCap) const
+bool OGRCSVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

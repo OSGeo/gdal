@@ -653,6 +653,10 @@ def launch(fork_process=None, handler=None):
 
 def server_stop(process, port):
 
+    if process is None:
+        # launch() failed
+        return
+
     if isinstance(process, GDAL_ThreadedHttpServer):
         process.stop()
         return

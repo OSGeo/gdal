@@ -26,9 +26,11 @@ def test_gff_1():
         12088,
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "GFF",
-        "tmp/cache/MiniSAR20050519p0001image008.gff",
+        f"{tmp_dir}/MiniSAR20050519p0001image008.gff",
         1,
         -1,
         filename_absolute=1,

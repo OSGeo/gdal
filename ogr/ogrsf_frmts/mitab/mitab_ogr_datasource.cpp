@@ -452,7 +452,7 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTABDataSource::TestCapability(const char *pszCap) const
+bool OGRTABDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

@@ -1020,7 +1020,7 @@ void OGRLIBKMLLayer::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLLayer::TestCapability(const char *pszCap) const
+bool OGRLIBKMLLayer::TestCapability(const char *pszCap) const
 {
     int result = FALSE;
 

@@ -155,9 +155,8 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &)
                     OGRCreateCoordinateTransformation(poSrcLayerCRS, &oDstCRS));
                 auto poReversedCT =
                     std::unique_ptr<OGRCoordinateTransformation>(
-                        OGRCreateCoordinateTransformation(&oDstCRS,
-                                                          poSrcLayerCRS));
-                ret = (poCT != nullptr) && (poReversedCT != nullptr);
+                        poCT ? poCT->GetInverse() : nullptr);
+                ret = (poCT != nullptr);
                 if (ret)
                 {
                     reprojectedDataset->AddLayer(

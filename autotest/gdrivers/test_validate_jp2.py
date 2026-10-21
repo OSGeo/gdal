@@ -63,9 +63,11 @@ def setup_and_cleanup():
 
 def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET")
-        ogc_schemas_location = "tmp/cache/SCHEMAS_OPENGIS_NET"
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
+        ogc_schemas_location = f"{tmp_dir}/SCHEMAS_OPENGIS_NET"
     except OSError:
         ogc_schemas_location = "disabled"
 

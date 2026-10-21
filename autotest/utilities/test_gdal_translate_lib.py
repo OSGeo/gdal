@@ -830,7 +830,7 @@ def test_gdal_translate_lib_projwin_invalid_error_if_window_outside_source():
 
 
 ###############################################################################
-# Test translate with a MEM source to a anonymous VRT
+# Test translate with a MEM source to an anonymous VRT
 
 
 def test_gdal_translate_lib_104():
@@ -912,7 +912,7 @@ def test_gdal_translate_lib_colorinterp():
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
 
-    # More bands specified than available and a unknown color interpretation
+    # More bands specified than available and an unknown color interpretation
     with gdal.quiet_errors():
         ds = gdal.Translate(
             "",

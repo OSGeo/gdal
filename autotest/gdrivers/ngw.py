@@ -64,7 +64,6 @@ def startup_and_cleanup():
         )
 
     gdaltest.ngw_ds = None
-    gdaltest.clean_tmp()
 
     try:
         shutil.rmtree("gdalwmscache")

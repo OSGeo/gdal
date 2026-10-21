@@ -66,13 +66,12 @@ netCDFLayer::~netCDFLayer()
 
 void netCDFLayer::netCDFWriteAttributesFromConf(
     int cdfid, int varid,
-    const std::vector<netCDFWriterConfigAttribute> &aoAttributes)
+    const std::vector<netCDFWriterConfigAttribute> &aoAttributes) const
 {
-    for (size_t i = 0; i < aoAttributes.size(); i++)
+    for (const auto &oAtt : aoAttributes)
     {
         try
         {
-            const netCDFWriterConfigAttribute &oAtt = aoAttributes[i];
             int status = NC_NOERR;
             if (oAtt.m_osValue.empty())
             {
@@ -131,9 +130,8 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
 
     long long newbufsize = 0;
     const char *memorySizeLimitation =
-        CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
-    std::string memorySizeLimitation_s = std::string(memorySizeLimitation);
-    if (memorySizeLimitation_s != "")
+        CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", nullptr);
+    if (memorySizeLimitation && memorySizeLimitation[0] != '\0')
     {
         newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
     }
@@ -486,10 +484,10 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
                                           poLayerConfig->m_aoAttributes);
         }
 
-        for (size_t i = 0; i < aoAutoVariables.size(); i++)
+        for (const auto &[osVar, nVarId] : aoAutoVariables)
         {
             const netCDFWriterConfigField *poConfig = nullptr;
-            CPLString osLookup = "__" + aoAutoVariables[i].first;
+            CPLString osLookup = "__" + osVar;
             std::map<CPLString, netCDFWriterConfigField>::const_iterator oIter;
             if (m_poLayerConfig != nullptr &&
                 (oIter = m_poLayerConfig->m_oFields.find(osLookup)) !=
@@ -505,8 +503,7 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
 
             if (poConfig != nullptr)
             {
-                netCDFWriteAttributesFromConf(m_nLayerCDFId,
-                                              aoAutoVariables[i].second,
+                netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarId,
                                               poConfig->m_aoAttributes);
             }
         }
@@ -629,7 +626,7 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
 /*                            GetFillValue()                            */
 /************************************************************************/
 
-CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
+CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue) const
 {
     if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, ppszValue) ==
         CE_None)
@@ -637,7 +634,7 @@ CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", ppszValue);
 }
 
-CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
+CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue) const
 {
     if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, pdfValue) == CE_None)
         return CE_None;
@@ -845,7 +842,7 @@ void netCDFLayer::ResetReading()
 double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
                                      size_t nIndex,
                                      const NCDFNoDataUnion &noDataVal,
-                                     bool *pbIsNoData)
+                                     bool *pbIsNoData) const
 {
     double dfVal = 0;
     if (nVarType == NC_DOUBLE)
@@ -2793,7 +2790,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int netCDFLayer::TestCapability(const char *pszCap) const
+bool netCDFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_poDS->GetAccess() == GA_Update;

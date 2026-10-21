@@ -74,9 +74,11 @@ def test_ogr_gpsbabel_2():
 # Test writing
 
 
-def test_ogr_gpsbabel_3():
+def test_ogr_gpsbabel_3(tmp_path):
 
-    ds = ogr.GetDriverByName("GPSBabel").CreateDataSource("GPSBabel:nmea:tmp/nmea.txt")
+    ds = ogr.GetDriverByName("GPSBabel").CreateDataSource(
+        f"GPSBabel:nmea:{tmp_path}/nmea.txt"
+    )
     lyr = ds.CreateLayer("track_points", geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -98,11 +100,11 @@ def test_ogr_gpsbabel_3():
     lyr = None
     ds = None
 
-    f = open("tmp/nmea.txt", "rt")
+    f = open(tmp_path / "nmea.txt", "rt")
     res = f.read()
     f.close()
 
-    gdal.Unlink("tmp/nmea.txt")
+    gdal.Unlink(tmp_path / "nmea.txt")
 
     assert not (
         res.find("$GPRMC") == -1 or res.find("$GPGGA") == -1 or res.find("$GPGSA") == -1

@@ -216,7 +216,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void *GetInternalHandle(const char *) override;
 
@@ -288,7 +288,7 @@ class IOGRSQLiteSelectLayer /* non final */
     virtual OGRFeature *BaseGetNextFeature() = 0;
     virtual OGRErr BaseSetAttributeFilter(const char *pszQuery) = 0;
     virtual GIntBig BaseGetFeatureCount(int bForce) = 0;
-    virtual int BaseTestCapability(const char *) const = 0;
+    virtual bool BaseTestCapability(const char *) const = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
                                  bool bForce) = 0;
     virtual bool ValidateGeometryFieldIndexForSetSpatialFilter(
@@ -329,7 +329,7 @@ class OGRSQLiteSelectLayerCommonBehaviour final
     GIntBig GetFeatureCount(int);
     OGRErr SetSpatialFilter(int iGeomField, const OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
-    int TestCapability(const char *) const;
+    bool TestCapability(const char *) const;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce);
 };
 
@@ -355,7 +355,7 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/

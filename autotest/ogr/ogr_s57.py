@@ -297,7 +297,9 @@ def test_ogr_s57_online_1():
 
     gdaltest.download_or_skip("ftp://sdg.ivs90.nl/ENC/1R5MK050.000", "1R5MK050.000")
 
-    ds = ogr.Open("tmp/cache/1R5MK050.000")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"{tmp_dir}/1R5MK050.000")
     assert ds is not None
 
     lyr = ds.GetLayerByName("BUISGL")
@@ -347,13 +349,15 @@ def test_ogr_s57_online_4():
         "http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip", "sample.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/ENC_ROOT/JP34NC94.000")
+        os.stat(f"{tmp_dir}/ENC_ROOT/JP34NC94.000")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/sample.zip")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/sample.zip")
             try:
-                os.stat("tmp/cache/ENC_ROOT/JP34NC94.000")
+                os.stat(f"{tmp_dir}/ENC_ROOT/JP34NC94.000")
             except OSError:
                 pytest.skip()
         except OSError:
@@ -362,7 +366,7 @@ def test_ogr_s57_online_4():
     with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
     ):
-        ds = ogr.Open("tmp/cache/ENC_ROOT/JP34NC94.000")
+        ds = ogr.Open(f"{tmp_dir}/ENC_ROOT/JP34NC94.000")
     lyr = ds.GetLayerByName("LNDMRK")
     for feat in lyr:
         feat.NOBJNM

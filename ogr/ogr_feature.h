@@ -708,7 +708,7 @@ class CPL_DLL OGRFeatureDefn
     virtual OGRErr ReorderFieldDefns(const int *panMap);
 
     /**
-     * @brief StealGeomFieldDefn takes ownership of the the geometry field definition at index
+     * @brief StealGeomFieldDefn takes ownership of the geometry field definition at index
      *        detaching it from the feature definition.
      * This is an advanced method designed to be only used for driver implementations.
      * @param iField index of the geometry field definition to detach.
@@ -1378,6 +1378,9 @@ class CPL_DLL OGRFeature
 
     OGRFeature *Clone() const CPL_WARN_UNUSED_RESULT;
     virtual bool Equal(const OGRFeature *poFeature) const;
+
+    static bool IsSameFieldValue(const OGRFeature *poFeature1, int nIdxField1,
+                                 const OGRFeature *poFeature2, int nIdxField2);
 
     int GetFieldCount() const
     {

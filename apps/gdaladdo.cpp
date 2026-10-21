@@ -212,14 +212,14 @@ static bool PartialRefreshFromSourceTimestamp(
     std::string osVRTOvr(std::string(poDS->GetDescription()) + ".ovr");
     if (VSIStatL(osVRTOvr.c_str(), &sStatOvr) != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s\n",
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s",
                  osVRTOvr.c_str());
         return false;
     }
     if (sStatOvr.st_mtime == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot get modification time of %s\n", osVRTOvr.c_str());
+                 "Cannot get modification time of %s", osVRTOvr.c_str());
         return false;
     }
 

@@ -48,7 +48,8 @@ Standard Options
 Examples
 --------
 
-.. example:: Check if a remote file is a valid COG file.
+.. example:: 
+   :title: Check if a remote file is a valid COG file.
 
    .. code-block:: bash
 

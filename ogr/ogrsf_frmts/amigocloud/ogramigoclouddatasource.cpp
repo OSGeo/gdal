@@ -66,7 +66,7 @@ std::string OGRAmigoCloudDataSource::GetUserAgentOption()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAmigoCloudDataSource::TestCapability(const char *pszCap) const
+bool OGRAmigoCloudDataSource::TestCapability(const char *pszCap) const
 
 {
     if (bReadWrite && EQUAL(pszCap, ODsCCreateLayer) && nLayers == 0)

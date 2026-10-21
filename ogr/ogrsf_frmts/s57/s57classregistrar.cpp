@@ -125,7 +125,7 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
     if (*pfp == nullptr)
     {
         if (bReportErr)
-            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open %s.\n",
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open %s.",
                      osFilename.c_str());
         return FALSE;
     }

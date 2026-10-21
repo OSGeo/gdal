@@ -26,7 +26,7 @@ static GDALAdbcLoadDriverFunc GDALAdbcLoadDriver = nullptr;
  * locate an up-to-date version of a driver or to bundle a driver not
  * available at the system level.
  *
- * Setting it to NULL resets to the the default behavior of the ADBC driver,
+ * Setting it to NULL resets to the default behavior of the ADBC driver,
  * which is use AdbcLoadDriver() from arrow-adbc/adbc_driver_manager.h or
  * to error if the OGR ADBC driver was not built against a system driver
  * manager.

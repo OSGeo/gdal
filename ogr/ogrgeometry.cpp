@@ -8314,9 +8314,9 @@ int OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType eSuperType)
  *
  * Handled conversions are : wkbNone->wkbNone, wkbPoint -> wkbMultiPoint,
  * wkbLineString->wkbMultiLineString,
- * wkbPolygon/wkbTriangle/wkbPolyhedralSurface/wkbTIN->wkbMultiPolygon,
+ * wkbPolygon/wkbTriangle->wkbMultiPolygon,
  * wkbCircularString->wkbMultiCurve, wkbCompoundCurve->wkbMultiCurve,
- * wkbCurvePolygon->wkbMultiSurface.
+ * wkbCurvePolygon/wkbPolyhedralSurface/wkbTIN->wkbMultiSurface.
  * In other cases, wkbUnknown is returned
  *
  * Passed Z, M, ZM flag is preserved.
@@ -8346,7 +8346,7 @@ OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
         eType = wkbMultiPolygon;
 
     else if (eFGType == wkbTriangle)
-        eType = wkbTIN;
+        eType = wkbMultiPolygon;
 
     else if (OGR_GT_IsCurve(eFGType))
         eType = wkbMultiCurve;
@@ -8383,7 +8383,7 @@ OGRwkbGeometryType OGR_GT_GetCollection(OGRwkbGeometryType eType)
  *
  * @param eType Input geometry type
  *
- * @return the the non-collection type that be contained in the passed geometry
+ * @return the non-collection type that be contained in the passed geometry
  * type or wkbUnknown
  *
  * @since GDAL 3.11

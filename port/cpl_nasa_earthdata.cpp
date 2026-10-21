@@ -366,7 +366,7 @@ CPLNasaEarthdataCredentialProvider::Get(const std::string &osFilename,
                                  ""));
     const char *pszEarthdataToken =
         VSIGetPathSpecificOption(osFilename.c_str(), "EARTHDATA_TOKEN", "");
-    const char *pszEarthdataUserame =
+    const char *pszEarthdataUsername =
         VSIGetPathSpecificOption(osFilename.c_str(), "EARTHDATA_USERNAME", "");
     const char *pszEarthdataPassword =
         VSIGetPathSpecificOption(osFilename.c_str(), "EARTHDATA_PASSWORD", "");
@@ -379,13 +379,13 @@ CPLNasaEarthdataCredentialProvider::Get(const std::string &osFilename,
     osCacheKey += '|';
     osCacheKey += pszEarthdataToken;
     osCacheKey += '|';
-    osCacheKey += pszEarthdataUserame;
+    osCacheKey += pszEarthdataUsername;
     osCacheKey += '|';
     osCacheKey += pszEarthdataPassword;
     if (!oCache.tryGet(osCacheKey, ret))
     {
         ret = Build(pszCredentialsURL, pszEarthdataHost, pszEarthdataToken,
-                    pszEarthdataUserame, pszEarthdataPassword);
+                    pszEarthdataUsername, pszEarthdataPassword);
         if (ret)
         {
             oCache.insert(osCacheKey, ret);

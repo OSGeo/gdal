@@ -72,6 +72,8 @@ Supported stats
       - Cell center y-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
     * - mean
       - Mean value of cells that intersect the polygon, weighted by the percent of each cell that is covered.
+    * - median
+      - Median value of cells that intersect the polygon. Does not take into account the percent of each cell that is covered; cannot be used with :option:`--pixels=fractional`.
     * - min
       - Minimum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account.
     * - min_center_x
@@ -141,7 +143,7 @@ Program-Specific Options
 
 .. option:: --strategy <STRATEGY>
 
-   Specifies the the processing strategy (``raster`` or ``feature``), when vector zones are used.
+   Specifies the processing strategy (``raster`` or ``feature``), when vector zones are used.
    In the default strategy (``--strategy feature``), GDAL will iterate over the features in the zone dataset, read the corresponding pixels from the raster, and write the statistics for that feature. This avoids the need to read the entire feature dataset into memory at once, but may cause the same pixels to be read multiple times if the polygon features are large or not ordered spatially. If ``--strategy raster`` is used, GDAL will iterate over chunks of the raster dataset, find corresponding polygon zones, and update the statistics for those features. (The size of the raster chunks can be controlled using :option:``--chunk-size``.) This ensures that raster pixels are only read once, but may cause the same features to be processed multiple times.
 
 .. option:: --weights <WEIGHTS>

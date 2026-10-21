@@ -630,8 +630,8 @@ static void CPLvDebug(const char *pszCategory,
         return;
 
     /* -------------------------------------------------------------------- */
-    /*      Dal -- always log a timestamp as the first part of the line     */
-    /*      to ensure one is looking at what one should be looking at!      */
+    /*      Always log a timestamp as the first part of the line            */
+    /*      to ensure one is looking at what one should be looking at.      */
     /* -------------------------------------------------------------------- */
 
     pszMessage[0] = '\0';
@@ -1233,7 +1233,7 @@ void CPLTurnFailureIntoWarning(int bOn)
  **********************************************************************/
 
 /**
- * Install custom error handle with user's data. This method is
+ * Install custom error handler with user's data. This method is
  * essentially CPLSetErrorHandler with an added pointer to pUserData.
  * The pUserData is not returned in the CPLErrorHandler, however, and
  * must be fetched via CPLGetErrorHandlerUserData.

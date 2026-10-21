@@ -55,21 +55,20 @@ def test_pnm_3():
 # Write Test RGB (PPM)
 
 
-def test_pnm_4():
+def test_pnm_4(tmp_path):
 
-    tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053)
+    tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
 
 @pytest.mark.parametrize("nbands", [1, 3])
 @gdaltest.disable_exceptions()
-def test_pnm_write_non_standard_extension(nbands):
+def test_pnm_write_non_standard_extension(tmp_path, nbands):
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        gdal.GetDriverByName("PNM").Create("foo.foo", 1, 1, nbands)
+        gdal.GetDriverByName("PNM").Create(tmp_path / "foo.foo", 1, 1, nbands)
     assert gdal.GetLastErrorType() != 0
-    gdal.Unlink("foo.foo")
 
 
 @gdaltest.disable_exceptions()

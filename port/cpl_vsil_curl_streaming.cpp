@@ -1061,7 +1061,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     {
         // For autotest purposes only !
         const char *pszSimulatedCurlError = CPLGetConfigOption(
-            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", nullptr);
+            "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR", nullptr);
         if (pszSimulatedCurlError)
             snprintf(m_szCurlErrBuf, sizeof(m_szCurlErrBuf), "%s",
                      pszSimulatedCurlError);

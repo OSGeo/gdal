@@ -169,7 +169,7 @@ class OGRVRTLayer final : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = TRUE) override;
@@ -255,7 +255,7 @@ class OGRVRTDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     char **GetFileList() override;
 

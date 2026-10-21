@@ -6,13 +6,24 @@ Automated testing
 
 GDAL includes a comprehensive test suite, implemented using a combination of Python (via pytest) and C++ (via gtest).
 
-After building GDAL using CMake, the complete test suite can be run using ``ctest -v --output-on-failure``. This will automatically set environment variables so that tests are run on the
-the built version of GDAL, rather than an installed system copy.
+After building GDAL using CMake (with the option ``-DBUILD_TESTING=ON`` which is enabled by default),
+the complete test suite can be run using ``ctest -V --output-on-failure``.
+This will automatically set environment variables so that tests are run on the built version of GDAL, rather than an installed system copy.
+
+See also the autotest :source_file:`autotest/README.md`.
+
+``pytest`` and the other test dependencies listed in :source_file:`autotest/requirements.txt` need to be installed,
+if not already added to the environment.
+
+.. code-block:: bash
+
+    # from within the build directory
+    python -m pip install -r ../autotest/requirements.txt
 
 Running a subset of tests using ``ctest``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The complete set of test suites known to ``ctest`` can be viewed running ``ctest -N``.
+The complete set of test suites known to ``ctest`` can be viewed by running ``ctest -N``.
 
 A subset of tests can be run using the ``-R`` argument to ``ctest``, which selects tests using a provided regular expression.
 For example, ``ctest -R autotest`` would run the Python-based tests.
@@ -34,11 +45,13 @@ can be done by running the following from the build directory:
 
     pytest autotest/gcore/vrt_read.py
 
-On Windows, the test files remain in the source tree, but the pytest configuration file ``pytest.ini`` is only available in the build directory. To accommodate this, the above command would be modified as follows:
+On Windows, the test files remain in the source tree, but the pytest configuration file ``pytest.ini`` is only available in the ``build/autotest`` directory.
+To accommodate this, the above command would be modified as follows:
 
-.. code-block:: bash
+.. code-block:: console
 
-    pytest -c pytest.ini ../autotest/gcore/vrt_read.py
+    # from within the build directory
+    pytest -c autotest/pytest.ini ../autotest/gcore/vrt_read.py
 
 A subset of tests within an individual test file can be run by providing a regular expression to the ``-k`` argument to ``pytest``.
 
@@ -54,7 +67,7 @@ example, to list tests containing "tiff" in the name:
     pytest --collect-only autotest -k tiff
 
 
-.. warning:: Not all Python tests can be run independently; some tests depend on state set by a previous tests in the same file.
+.. warning:: Not all Python tests can be run independently; some tests depend on state set by previous tests in the same file.
 
 
 Checking for memory leaks and access errors using Valgrind
@@ -119,7 +132,7 @@ Python-based tests should be preferred when possible, as productivity is higher
 in Python and there is no associated compilation time (compilation time affects
 feedback received from continuous integration).
 
-C/C++-based test should be reserved for C++-specific aspects that cannot be tested
+C/C++-based tests should be reserved for C++-specific aspects that cannot be tested
 with the SWIG Python bindings, which use the C interface. For example testing
 of C++ operators (copy/move constructors/assignment operators, iterator interfaces,
 etc.) or C/C++ functionality not mapped to SWIG (e.g. CPL utility functions/classes)
@@ -131,9 +144,11 @@ Python tests use the `pytest <https://docs.pytest.org/en/latest/>`__
 framework since :ref:`rfc-72`.
 
 Test cases should be written in a way where they are independent from other
-ones, so they can potentially be run in a isolated way or in parallel of other
+ones, so they can potentially be run in isolation or in parallel with other
 test cases. In particular temporary files should be created with a name that
-cannot conflict with other tests: preferably use pytest's ``tmp_path`` fixture <https://docs.pytest.org/en/7.1.x/how-to/tmp_path.html#the-tmp-path-fixture>`__.
+cannot conflict with other tests: preferably use pytest's
+`tmp_path <https://docs.pytest.org/en/latest/how-to/tmp_path.html#the-tmp-path-fixture>`__
+fixture.
 
 Use ``@pytest.mark.require_driver(driver_name)`` as an annotation for a test
 case that requires an optional driver to be present.
@@ -181,16 +196,16 @@ re-register it afterwards:
 
     @pytest.fixture(scope="module", autouse=True)
     def without_filegdb_driver():
-    # remove FileGDB driver before running tests
-    filegdb_driver = ogr.GetDriverByName("FileGDB")
-    if filegdb_driver is not None:
-        filegdb_driver.Deregister()
+        # remove FileGDB driver before running tests
+        filegdb_driver = ogr.GetDriverByName("FileGDB")
+        if filegdb_driver is not None:
+            filegdb_driver.Deregister()
 
-    yield
+        yield
 
-    if filegdb_driver is not None:
-        print("Reregistering FileGDB driver")
-        filegdb_driver.Register()
+        if filegdb_driver is not None:
+            print("Reregistering FileGDB driver")
+            filegdb_driver.Register()
 
 or a fixture that runs preliminary checks to discover if a driver has
 some optional capabilities, and skip a test case if not:
@@ -199,18 +214,18 @@ some optional capabilities, and skip a test case if not:
 
     @pytest.fixture()
     def require_auto_load_extension():
-    if ogr.GetDriverByName("SQLite") is None:
-        pytest.skip()
+        if ogr.GetDriverByName("SQLite") is None:
+            pytest.skip()
 
-    ds = ogr.Open(":memory:")
-    with gdaltest.error_handler():
-        sql_lyr = ds.ExecuteSQL("PRAGMA compile_options")
-    if sql_lyr:
-        for f in sql_lyr:
-            if f.GetField(0) == "OMIT_LOAD_EXTENSION":
-                ds.ReleaseResultSet(sql_lyr)
-                pytest.skip("SQLite3 built with OMIT_LOAD_EXTENSION")
-        ds.ReleaseResultSet(sql_lyr)
+        ds = ogr.Open(":memory:")
+        with gdaltest.error_handler():
+            sql_lyr = ds.ExecuteSQL("PRAGMA compile_options")
+        if sql_lyr:
+            for f in sql_lyr:
+                if f.GetField(0) == "OMIT_LOAD_EXTENSION":
+                    ds.ReleaseResultSet(sql_lyr)
+                    pytest.skip("SQLite3 built with OMIT_LOAD_EXTENSION")
+            ds.ReleaseResultSet(sql_lyr)
 
     def test_ogr_virtualogr_1(require_auto_load_extension):
         # Invalid syntax
@@ -231,7 +246,7 @@ NULL and dereferencing it unconditionally afterwards. The ASSERT_xxxx family
 of assertions should be used for such cases where early exit of the test case
 is desired.
 
-GoogleTest also offers capabilities for parametrized tests. For example:
+GoogleTest also offers capabilities for parameterized tests. For example:
 
 .. code-block:: c++
 
@@ -291,7 +306,7 @@ and C++ autotest tests.
 
 This is used by the `Coveralls GitHub Action <https://github.com/marketplace/actions/coveralls-github-action>`__
 to upload results to https://coveralls.io/github/OSGeo/gdal, for both push
-and pull requests events.
+and pull request events.
 
 A somewhat nicer looking output of line coverage results for the latest master
 build, generated by ``lcov``, is also available at

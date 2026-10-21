@@ -66,7 +66,8 @@ The following configuration options are supported:
 Examples
 --------
 
-.. example:: List Informix DataBlade layers on a different hos
+.. example::
+   :title: List Informix DataBlade layers on a different host
 
    .. code-block:: bash
    

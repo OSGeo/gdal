@@ -58,7 +58,8 @@ RUN apk add \
     sfcgal-dev \
     snappy-dev \
     sqlite-dev \
-    tiledb-dev \
+    # FIXME tiledb-dev is currently broken on alpine edge. Re-enable when it installs again.
+    # tiledb-dev \
     tiff-dev \
     unixodbc-dev \
     xerces-c-dev \
@@ -83,7 +84,7 @@ RUN wget https://www.python.org/ftp/python/3.14.0/Python-3.14.0.tar.xz && \
     ./configure --enable-shared --disable-gil --prefix=/usr && \
     make -j$(nproc) && \
     make -j$(nproc) install && \
-    cd .. \
+    cd .. && \
     rm -rf Python-3.14.0 Python-3.14.0.tar.xz
 
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages numpy setuptools pyarrow

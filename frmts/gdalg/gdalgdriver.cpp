@@ -95,7 +95,7 @@ class GDALGDataset final : public GDALProxyDataset
             ppoBelongingLayer, pdfProgressPct, pfnProgress, pProgressData);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return m_poUnderlyingDS->TestCapability(pszCap);
     }

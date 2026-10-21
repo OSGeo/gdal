@@ -142,7 +142,7 @@ static void VSIErrorV(VSIErrorNum err_no, const char *fmt, va_list args)
  **********************************************************************/
 
 /**
- * Report an VSI filesystem error.
+ * Report a VSI filesystem error.
  *
  * This function records an error in the filesystem that may or may not be
  * used in the future, for example converted into a CPLError. This allows

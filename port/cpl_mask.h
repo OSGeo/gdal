@@ -116,4 +116,4 @@ inline void CPLMaskMerge(GUInt32 *mask1, GUInt32 *mask2, std::size_t n)
 
 #endif  // __cplusplus
 
-#endif  // CPL_MASK_H
+#endif  // CPL_MASK_H_INCLUDED

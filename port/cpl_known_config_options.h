@@ -103,6 +103,9 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_CREATE_ZIP64", // from cpl_minizip_zip.cpp
    "CPL_CURL_ENABLE_VSIMEM", // from cpl_http.cpp, gdalhttp.cpp, ogrwfsjoinlayer.cpp, ogrwfslayer.cpp
    "CPL_CURL_GZIP", // from cpl_http.cpp, cpl_vsil_curl_streaming.cpp
+   "CPL_CURL_IGNORE_ERROR", // from cpl_http.cpp
+   "CPL_CURL_VERBOSE", // from cpl_http.cpp, cpl_vsil_curl.cpp
+   "CPL_CURL_VERBOSE_DATA_IN", // from cpl_http.cpp, cpl_vsil_curl.cpp
    "CPL_CURL_VSIMEM_PRINT_HEADERS", // from cpl_http.cpp
    "CPL_DEBUG", // from cpl_conv.cpp, cpl_error.cpp, e57driver.cpp, gdalinfo_bin.cpp, gdalsrsinfo.cpp, gdalwarp_bin.cpp, gmlutils.cpp
    "CPL_ENABLE_PATH_TRAVERSAL_DETECTION", // from cpl_path.cpp
@@ -127,7 +130,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_SOZIP_ENABLED", // from cpl_minizip_zip.cpp
    "CPL_SOZIP_MIN_FILE_SIZE", // from cpl_minizip_zip.cpp
    "CPL_TIMESTAMP", // from cpl_error.cpp
-   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
+   "CPL_TMPDIR", // from cogdriver.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, ogrvdvdatasource.cpp, wcsutils.cpp
    "CPL_VSI_MEM_MTIME", // from cpl_vsi_mem.cpp
    "CPL_VSIAZ_UNLINK_BATCH_SIZE", // from cpl_vsil_az.cpp
    "CPL_VSIGS_UNLINK_BATCH_SIZE", // from cpl_vsil_gs.cpp
@@ -144,12 +147,14 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "CPL_VSIL_CURL_MAX_RANGES", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_NON_CACHED", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_SLOW_GET_SIZE", // from cpl_vsil_curl.cpp, cpl_vsil_curl_streaming.cpp
-   "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", // from cpl_vsil_curl_streaming.cpp
+   "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR", // from cpl_vsil_curl_streaming.cpp
    "CPL_VSIL_CURL_USE_HEAD", // from cpl_vsil_curl.cpp
    "CPL_VSIL_CURL_USE_S3_REDIRECT", // from cpl_vsil_curl.cpp
    "CPL_VSIL_DEFLATE_CHUNK_SIZE", // from cpl_minizip_zip.cpp, cpl_vsil_gzip.cpp
    "CPL_VSIL_GZIP_SAVE_INFO", // from cpl_vsil_gzip.cpp
    "CPL_VSIL_GZIP_WRITE_PROPERTIES", // from cpl_vsil_gzip.cpp
+   "CPL_VSIL_NETWORK_STATS_ENABLED", // from cpl_vsil_curl.cpp
+   "CPL_VSIL_SHOW_NETWORK_STATS", // from cpl_vsil_curl.cpp
    "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", // from cpl_vsil_s3.cpp, ogrgeopackagedatasource.cpp, ogrlibkmldatasource.cpp, ogrsqlitedatasource.cpp
    "CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", // from cpl_vsil_gzip.cpp
    "CPL_VSIS3_CREATE_DIR_OBJECT", // from cpl_vsil_s3.cpp
@@ -486,7 +491,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GMLAS_XML_MAX_LEVEL", // from ogrgmlasreader.cpp
    "GMLJP2OVERRIDE", // from gdaljp2metadata.cpp, jp2opjlikedataset.cpp
    "GMT_USE_TAB", // from ogrgmtlayer.cpp
-   "GO2A_AUD", // from cpl_google_oauth2.cpp
+   "GOA2_AUD", // from cpl_google_oauth2.cpp
    "GOA2_AUTH_URL_TOKEN", // from cpl_google_oauth2.cpp
    "GOA2_CLIENT_ID", // from cpl_google_oauth2.cpp
    "GOA2_CLIENT_SECRET", // from cpl_google_oauth2.cpp
@@ -776,7 +781,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_MONGODB_SPAT_INDEX_TYPE", // from ogrmongodbv3driver.cpp
    "OGR_MULTIPATCH_OMIT_Z", // from ogrpgeogeometry.cpp
    "OGR_MVT_CLIP", // from ogrmvtdataset.cpp
-   "OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", // from ogrmvtdataset.cpp
+   "OGR_MVT_ENFORCE_EXTERNAL_RING_IS_CLOCKWISE", // from ogrmvtdataset.cpp
    "OGR_MVT_REMOVE_TEMP_FILE", // from ogrmvtdataset.cpp
    "OGR_MVT_REUSE_TEMP_FILE", // from ogrmvtdataset.cpp
    "OGR_OAPIF_ALLOW_CQL_TEXT", // from ogroapifdriver.cpp

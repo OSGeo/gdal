@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import shutil
 import struct
 
@@ -25,15 +26,23 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    fn = tmp_path_factory.mktemp("test_temp_dir")
+    return fn
+
+
 @pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
+def startup_and_cleanup(temp_dir):
 
     src_ds = gdal.Open("data/small_world.tif")
     src_data = src_ds.GetRasterBand(1).ReadRaster()
     gt = src_ds.GetGeoTransform()
     wkt = src_ds.GetProjectionRef()
     src_ds = None
-    pan_ds = gdal.GetDriverByName("GTiff").Create("tmp/small_world_pan.tif", 800, 400)
+    pan_ds = gdal.GetDriverByName("GTiff").Create(
+        f"{temp_dir}/small_world_pan.tif", 800, 400
+    )
     gt = [gt[i] for i in range(len(gt))]
     gt[1] *= 0.5
     gt[5] *= 0.5
@@ -44,9 +53,9 @@ def startup_and_cleanup():
 
     yield
 
-    gdal.GetDriverByName("GTiff").Delete("tmp/small_world_pan.tif")
-    if gdal.VSIStatL("tmp/small_world.tif"):
-        gdal.GetDriverByName("GTiff").Delete("tmp/small_world.tif")
+    gdal.GetDriverByName("GTiff").Delete(f"{temp_dir}/small_world_pan.tif")
+    if gdal.VSIStatL(f"{temp_dir}/small_world.tif"):
+        gdal.GetDriverByName("GTiff").Delete(f"{temp_dir}/small_world.tif")
     if gdal.VSIStatL("/vsimem/pan.tif"):
         gdal.GetDriverByName("GTiff").Delete("/vsimem/pan.tif")
     if gdal.VSIStatL("/vsimem/ms.tif"):
@@ -58,7 +67,7 @@ def startup_and_cleanup():
 
 
 @gdaltest.disable_exceptions()
-def test_vrtpansharpen_1():
+def test_vrtpansharpen_1(temp_dir):
 
     # Missing PansharpeningOptions
     with gdal.quiet_errors():
@@ -786,11 +795,11 @@ def test_vrtpansharpen_1():
     # Georeferencing of bottom-right corner of pan dataset and data/byte.tif do not match
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
             <PanchroBand>
-                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
             </PanchroBand>
             <SpectralBand dstBand="1">
@@ -808,7 +817,7 @@ def test_vrtpansharpen_1():
     gdal.ErrorReset()
     with gdal.quiet_errors():
         vrt_ds = gdal.Open(
-            """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+            f"""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <Algorithm>WeightedBrovey</Algorithm>
             <AlgorithmOptions>
@@ -818,7 +827,7 @@ def test_vrtpansharpen_1():
             <NumThreads>ALL_CPUS</NumThreads>
             <BitDepth>8</BitDepth>
             <PanchroBand>
-                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
             </PanchroBand>
             <SpectralBand>
@@ -849,13 +858,13 @@ def test_vrtpansharpen_1():
 # Nominal cases
 
 
-def test_vrtpansharpen_2():
+def test_vrtpansharpen_2(temp_dir):
 
-    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
+    shutil.copy("data/small_world.tif", os.path.join(temp_dir, "small_world.tif"))
 
     # Super verbose case
     vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        f"""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
     <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -876,7 +885,7 @@ def test_vrtpansharpen_2():
         <NumThreads>ALL_CPUS</NumThreads>
         <BitDepth>8</BitDepth>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
@@ -895,7 +904,10 @@ def test_vrtpansharpen_2():
 </VRTDataset>"""
     )
     assert vrt_ds is not None
-    assert vrt_ds.GetFileList() == ["tmp/small_world_pan.tif", "data/small_world.tif"]
+    assert vrt_ds.GetFileList() == [
+        f"{temp_dir}/small_world_pan.tif",
+        "data/small_world.tif",
+    ]
     assert vrt_ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") is None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     expected_cs = (
@@ -921,10 +933,10 @@ def test_vrtpansharpen_2():
     assert data == ref_data
 
     # Compact case
-    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
@@ -947,12 +959,12 @@ def test_vrtpansharpen_2():
 
     # Expose pan band too
     vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        f"""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
     <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
-            <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+            <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
             <SourceBand>1</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
@@ -974,7 +986,7 @@ def test_vrtpansharpen_2():
         <NumThreads>ALL_CPUS</NumThreads>
         <BitDepth>8</BitDepth>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="2">
@@ -1004,12 +1016,12 @@ def test_vrtpansharpen_2():
     # Same, but everything scrambled, and with spectral bands not in
     # the same dataset
     vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+        f"""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
     <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
-            <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+            <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
             <SourceBand>1</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
@@ -1031,7 +1043,7 @@ def test_vrtpansharpen_2():
         <NumThreads>ALL_CPUS</NumThreads>
         <BitDepth>8</BitDepth>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="3">
@@ -1043,7 +1055,7 @@ def test_vrtpansharpen_2():
                 <SourceBand>1</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="4">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
@@ -1063,30 +1075,30 @@ def test_vrtpansharpen_2():
 # Test with overviews
 
 
-def test_vrtpansharpen_3(tmp_vsimem):
+def test_vrtpansharpen_3(temp_dir):
 
-    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
+    shutil.copy("data/small_world.tif", os.path.join(temp_dir, "small_world.tif"))
 
-    ds = gdal.Open("tmp/small_world_pan.tif")
+    ds = gdal.Open(f"{temp_dir}/small_world_pan.tif")
     ds.BuildOverviews("CUBIC", [2])
     ds = None
 
-    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>2</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
@@ -1098,7 +1110,7 @@ def test_vrtpansharpen_3(tmp_vsimem):
 
     vrt_ds = None
 
-    ds = gdal.Open("tmp/small_world.tif")
+    ds = gdal.Open(f"{temp_dir}/small_world.tif")
     ds.BuildOverviews("CUBIC", [2])
     ds = None
 
@@ -1121,27 +1133,27 @@ def test_vrtpansharpen_3(tmp_vsimem):
     # Now test when the spatial extent of the PAN and MS datasets is different
     # and we create a in-memory VRT to make them consistent.
     gdal.Translate(
-        "tmp/small_world_pan_cropped.vrt",
-        "tmp/small_world_pan.tif",
+        f"{temp_dir}/small_world_pan_cropped.vrt",
+        f"{temp_dir}/small_world_pan.tif",
         options="-srcwin 10 10 780 380",
     )
 
-    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan_cropped.vrt</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan_cropped.vrt</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>2</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
@@ -1151,35 +1163,35 @@ def test_vrtpansharpen_3(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     vrt_ds = None
 
-    gdal.Unlink("tmp/small_world_pan_cropped.vrt")
-    gdal.Unlink("tmp/small_world_pan.tif.ovr")
-    gdal.Unlink("tmp/small_world.tif.ovr")
+    gdal.Unlink(f"{temp_dir}/small_world_pan_cropped.vrt")
+    gdal.Unlink(f"{temp_dir}/small_world_pan.tif.ovr")
+    gdal.Unlink(f"{temp_dir}/small_world.tif.ovr")
 
 
 ###############################################################################
 # Test RasterIO() with various buffer datatypes
 
 
-def test_vrtpansharpen_4():
+def test_vrtpansharpen_4(temp_dir):
 
-    shutil.copy("data/small_world.tif", "tmp/small_world.tif")
+    shutil.copy("data/small_world.tif", f"{temp_dir}/small_world.tif")
 
-    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="2">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>2</SourceBand>
         </SpectralBand>
         <SpectralBand dstBand="3">
-                <SourceFilename relativeToVRT="1">tmp/small_world.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world.tif</SourceFilename>
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
@@ -1210,7 +1222,7 @@ def test_vrtpansharpen_4():
 # Test RasterIO() with various band datatypes
 
 
-def test_vrtpansharpen_5():
+def test_vrtpansharpen_5(temp_dir):
 
     for dt in [
         gdal.GDT_Int16,
@@ -1252,7 +1264,7 @@ def test_vrtpansharpen_5():
             gdal.GetDataTypeName(dt),
         )
 
-        xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+        xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
                 <SourceFilename relativeToVRT="1"><![CDATA[<VRTDataset rasterXSize="800" rasterYSize="400">
@@ -1260,7 +1272,7 @@ def test_vrtpansharpen_5():
 <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
 <VRTRasterBand dataType="%s" band="1">
     <SimpleSource>
-    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+    <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
     <SourceBand>1</SourceBand>
     </SimpleSource>
 </VRTRasterBand>
@@ -1567,12 +1579,12 @@ def test_vrtpansharpen_7():
 # Test bands with different extents
 
 
-def test_vrtpansharpen_band_with_different_extents():
+def test_vrtpansharpen_band_with_different_extents(temp_dir):
 
-    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
-                <SourceFilename>tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename>{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
@@ -1594,7 +1606,7 @@ def test_vrtpansharpen_band_with_different_extents():
 
     gdal.Translate(
         "/vsimem/small_world_pan_extended.vrt",
-        "tmp/small_world_pan.tif",
+        f"{temp_dir}/small_world_pan.tif",
         options="-srcwin -100 -200 950 700",
     )
 
@@ -1660,16 +1672,16 @@ def test_vrtpansharpen_band_with_different_extents():
 # Test bands with different extents and positive geotransform[5] coefficient
 
 
-def test_vrtpansharpen_band_with_different_extents_positive_yres():
+def test_vrtpansharpen_band_with_different_extents_positive_yres(temp_dir):
 
     gdal.Warp(
         "/vsimem/small_world_pan_positive_yres.vrt",
-        "tmp/small_world_pan.tif",
+        f"{temp_dir}/small_world_pan.tif",
         options="-te -180 90 180 -90 -ts 800 400",
     )
     gdal.Warp(
         "/vsimem/small_world_ms_positive_yres.vrt",
-        "data/small_world.tif",
+        f"{temp_dir}/small_world.tif",
         options="-te -180 90 180 -90 -ts 400 200",
     )
 
@@ -1766,7 +1778,7 @@ def test_vrtpansharpen_band_with_different_extents_positive_yres():
 # Test SerializeToXML()
 
 
-def test_vrtpansharpen_8():
+def test_vrtpansharpen_8(temp_dir):
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -1789,9 +1801,9 @@ def test_vrtpansharpen_8():
         </SpectralBand>
     </PansharpeningOptions>
 </VRTDataset>"""
-    open("tmp/vrtpansharpen_8.vrt", "wt").write(xml)
+    open(f"{temp_dir}/vrtpansharpen_8.vrt", "wt").write(xml)
 
-    ds = gdal.Open("tmp/vrtpansharpen_8.vrt", gdal.GA_Update)
+    ds = gdal.Open(f"{temp_dir}/vrtpansharpen_8.vrt", gdal.GA_Update)
     expected_cs1 = ds.GetRasterBand(1).Checksum()
     expected_cs2 = ds.GetRasterBand(2).Checksum()
     expected_cs3 = ds.GetRasterBand(3).Checksum()
@@ -1799,13 +1811,13 @@ def test_vrtpansharpen_8():
     ds.SetMetadata(ds.GetMetadata())
     ds = None
 
-    ds = gdal.Open("tmp/vrtpansharpen_8.vrt")
+    ds = gdal.Open(f"{temp_dir}/vrtpansharpen_8.vrt")
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
     ds = None
 
-    gdal.Unlink("tmp/vrtpansharpen_8.vrt")
+    gdal.Unlink(f"{temp_dir}/vrtpansharpen_8.vrt")
 
     assert cs1 == expected_cs1 and cs2 == expected_cs2 and cs3 == expected_cs3
 
@@ -1814,14 +1826,14 @@ def test_vrtpansharpen_8():
 # Test NoData support
 
 
-def test_vrtpansharpen_9():
+def test_vrtpansharpen_9(temp_dir):
 
     # Explicit nodata
-    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <NoData>0</NoData>
         <PanchroBand>
-                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
         </PanchroBand>
         <SpectralBand dstBand="1">
@@ -1850,7 +1862,7 @@ def test_vrtpansharpen_9():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/small_world_pan_nodata.tif", 800, 400
     )
-    src_ds = gdal.Open("tmp/small_world_pan.tif")
+    src_ds = gdal.Open(f"{temp_dir}/small_world_pan.tif")
     ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.GetRasterBand(1).SetNoDataValue(0)
     ds.WriteRaster(0, 0, 800, 400, src_ds.ReadRaster())
@@ -2037,9 +2049,9 @@ def test_vrtpansharpen_10():
 
 
 @gdaltest.disable_exceptions()
-def test_vrtpansharpen_11():
+def test_vrtpansharpen_11(temp_dir):
 
-    pan_ds = gdal.Open("tmp/small_world_pan.tif")
+    pan_ds = gdal.Open(f"{temp_dir}/small_world_pan.tif")
     ms_ds = gdal.Open("data/small_world.tif")
 
     vrt_ds = gdal.CreatePansharpenedVRT(
@@ -2307,16 +2319,16 @@ def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
 # Test open options for input bands
 
 
-def test_vrtpansharpen_open_options_input_bands():
+def test_vrtpansharpen_open_options_input_bands(temp_dir):
     def my_handler(typ, errno, msg):
         msgs.append(msg)
 
     msgs = []
     with gdaltest.error_handler(my_handler):
-        gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <PanchroBand>
-                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                     <OpenOptions>
                        <OOI key="NUM_THREADS">foo</OOI>
                      </OpenOptions>
@@ -2341,10 +2353,10 @@ def test_vrtpansharpen_open_options_input_bands():
 
     msgs = []
     with gdaltest.error_handler(my_handler):
-        gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <PanchroBand>
-                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceFilename relativeToVRT="0">{temp_dir}/small_world_pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
             </PanchroBand>
             <SpectralBand dstBand="1">

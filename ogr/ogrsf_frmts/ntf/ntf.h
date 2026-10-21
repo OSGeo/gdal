@@ -483,7 +483,7 @@ class OGRNTFLayer final : public OGRLayer
     GIntBig GetFeatureCount(int);
 #endif
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     // special to NTF
     OGRFeature *FeatureTranslate(NTFFileReader *, NTFRecord **);
@@ -525,7 +525,7 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -570,7 +570,7 @@ class OGRNTFRasterLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -618,7 +618,7 @@ class OGRNTFDataSource final : public GDALDataset
 
     int GetLayerCount() const override;
     OGRLayer *GetLayer(int) const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     // Note: these are specific to NTF for now, but eventually might
     // might be available as part of a more object oriented approach to

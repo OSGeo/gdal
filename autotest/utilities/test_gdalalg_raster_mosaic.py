@@ -403,7 +403,7 @@ def test_gdalalg_raster_mosaic_tif_creation_options(tmp_vsimem):
         assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
 
 
-def test_gdalalg_raster_mosaic_inconsistent_characteristics():
+def test_gdalalg_raster_mosaic_inconsistent_crs():
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src1_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
@@ -424,6 +424,156 @@ def test_gdalalg_raster_mosaic_inconsistent_characteristics():
         match=re.escape(
             'expected "NAD83(CSRS) / New Brunswick Stereographic", got "NAD83(CSRS) / New Brunswick Stereographic + CGVD2013(CGG2013) height"'
         ),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_number_of_bands():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, bands=1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, bands=2)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("does not support heterogeneous band numbers"),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_color_interp():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, bands=3)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src1_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src1_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, bands=3)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+    src2_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_NIRBand)
+    src2_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
+    src2_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_GreenBand)
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("does not support heterogeneous band color interpretation"),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_data_type():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, eType=gdal.GDT_Int16)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, eType=gdal.GDT_Float32)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("does not support heterogeneous band data type"),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_color_table_size():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ct = gdal.ColorTable()
+    src1_ct.SetColorEntry(0, (255, 0, 0))
+    src1_ds.GetRasterBand(1).SetColorTable(src1_ct)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+    src2_ct = gdal.ColorTable()
+    src2_ct.SetColorEntry(0, (255, 0, 0))
+    src2_ct.SetColorEntry(1, (0, 255, 0))
+    src2_ct.SetColorEntry(2, (0, 0, 255))
+    src2_ds.GetRasterBand(1).SetColorTable(src2_ct)
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("different number of color table entries"),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_color_table_entry():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ct = gdal.ColorTable()
+    src1_ct.SetColorEntry(0, (255, 0, 0))
+    src1_ct.SetColorEntry(1, (0, 255, 0))
+    src1_ct.SetColorEntry(2, (0, 0, 255))
+    src1_ds.GetRasterBand(1).SetColorTable(src1_ct)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+    src2_ct = gdal.ColorTable()
+    src2_ct.SetColorEntry(0, (255, 0, 0))
+    src2_ct.SetColorEntry(1, (0, 255, 0))
+    src2_ct.SetColorEntry(2, (255, 0, 255))
+    src2_ds.GetRasterBand(1).SetColorTable(src2_ct)
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "different values than the first raster for some entries in the color table",
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_band_offset():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ds.GetRasterBand(1).SetOffset(1)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("heterogeneous band offset"),
+    ):
+        assert alg.Run()
+
+
+def test_gdalalg_raster_mosaic_different_band_scale():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src1_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
+    src1_ds.GetRasterBand(1).SetScale(4)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src2_ds.SetGeoTransform([1, 1, 0, 1, 0, -1])
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds]
+    alg["output-format"] = "stream"
+    with pytest.raises(
+        Exception,
+        match=re.escape("heterogeneous band scale"),
     ):
         assert alg.Run()
 
@@ -485,6 +635,53 @@ def test_gdalalg_raster_mosaic_pixel_function(pixfn, args):
         pytest.fail("Unexpected pixel function")
 
     assert alg.Finalize()
+
+
+def test_gdalalg_raster_mosaic_pixel_function_count():
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    # (0, 2) to (3, 4)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, eType=gdal.GDT_Int16)
+    src1_ds.SetGeoTransform([0, 1, 0, 4, 0, -1])
+
+    # (1, 3) to (4, 0)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, eType=gdal.GDT_Int16)
+    src2_ds.SetGeoTransform([1, 1, 0, 3, 0, -1])
+    src2_ds.GetRasterBand(1).Fill(2)
+
+    # (5, 0) to (6, 4)
+    src3_ds = gdal.GetDriverByName("MEM").Create("", 1, 4, eType=gdal.GDT_Int16)
+    src3_ds.SetGeoTransform([5, 1, 0, 4, 0, -1])
+
+    # (0, 2) to (2, 3)
+    src4_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, eType=gdal.GDT_Int16)
+    src4_ds.SetGeoTransform([0, 1, 0, 3, 0, -1])
+    src4_ds.GetRasterBand(1).SetNoDataValue(5)
+    src4_ds.WriteArray(np.array([[5, 1], [5, 1]]))
+
+    alg = get_mosaic_alg()
+    alg["input"] = [src1_ds, src2_ds, src3_ds, src4_ds]
+    alg["output-format"] = "stream"
+    alg["dst-nodata"] = [-999]
+    alg["pixel-function"] = "count"
+
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+
+    dst_values = ds.ReadAsMaskedArray()
+
+    assert not np.any(dst_values.mask)
+    np.testing.assert_array_equal(
+        dst_values,
+        [
+            [1, 1, 1, 0, 0, 1],
+            [1, 3, 2, 1, 0, 1],
+            [0, 2, 1, 1, 0, 1],
+            [0, 1, 1, 1, 0, 1],
+        ],
+    )
 
 
 def test_gdalalg_raster_mosaic_pixel_function_invalid():
@@ -564,3 +761,15 @@ def test_gdalalg_raster_mosaic_pipeline():
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.GetRasterBand(1).Checksum() == 7
+
+
+def test_gdalalg_raster_mosaic_missing_pixel_function_arg(tmp_vsimem):
+
+    with pytest.raises(
+        Exception, match="reclassify must be called with 'mapping' argument"
+    ):
+        gdal.alg.raster.mosaic(
+            input="../gcore/data/byte.tif",
+            pixel_function="reclassify",
+            output=tmp_vsimem / "out.tif",
+        )

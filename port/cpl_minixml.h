@@ -79,7 +79,7 @@ struct CPLXMLNode
      * used for !DOCTYPE lines, and the value would be the entire line.
      *
      * For CXT_Comment the value is all the literal text within the comment,
-     * but not including the comment start/end indicators ("<--" and "-->").
+     * but not including the comment start/end indicators ("<!--" and "-->").
      */
     char *pszValue;
 

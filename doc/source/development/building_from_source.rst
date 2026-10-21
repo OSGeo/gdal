@@ -394,7 +394,7 @@ need to be installed: ``blas blas-devel libblas libcblas liblapack liblapacke``
 Arrow
 *****
 
-The `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>` library
+The `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`__ library
 is required for the :ref:`vector.arrow` and :ref:`vector.parquet` drivers.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
@@ -409,7 +409,7 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 basisu
 ******
 
-The `Basis Universal <https://github.com/rouault/basis_universal/tree/cmake>` library
+The `Basis Universal <https://github.com/rouault/basis_universal/tree/cmake>`__ library
 is required for the :ref:`raster.basisu` and :ref:`raster.ktx2` drivers.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable or ``basisu_ROOT`` variable.
 
@@ -1100,7 +1100,7 @@ If not found, an internal copy of json-c can be used.
 JXL
 ***
 
-The `libjxl <https://github.com/libjxl/libjxl>` library used by the
+The `libjxl <https://github.com/libjxl/libjxl>`__ library used by the
 :ref:`raster.gtiff` driver, when built against internal libtiff.
 It can be detected with pkg-config.
 
@@ -1650,7 +1650,7 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 Parquet
 *******
 
-The Parquet component of the `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`
+The Parquet component of the `Apache Arrow C++ <https://github.com/apache/arrow/tree/master/cpp>`__
 library is required for the :ref:`vector.parquet` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
@@ -1697,8 +1697,8 @@ See :ref:`raster.zarr.pcodec` for details.
 
     Path to a checkout of https://github.com/pcodec/pcodec.git
 
-``PCODEC_C_INCLUDE_DIR`̀` and ``PCODEC_C_LIBRARY`` are used in priority over
-``CORROSION_SOURCE_DIR`̀` and ``PCODEC_SOURCE_DIR``.
+``PCODEC_C_INCLUDE_DIR`` and ``PCODEC_C_LIBRARY`` are used in priority over
+``CORROSION_SOURCE_DIR`` and ``PCODEC_SOURCE_DIR``.
 
 
 PCRE2
@@ -2025,7 +2025,7 @@ If not found, an internal copy of libtiff can be used.
 TileDB
 ******
 
-The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
+The `TileDB <https://github.com/TileDB-Inc/TileDB>`__ library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
 TileDB >= 2.15 is required since GDAL 3.9

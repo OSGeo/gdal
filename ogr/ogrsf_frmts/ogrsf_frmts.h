@@ -279,7 +279,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                        bool bForce = true) CPL_WARN_UNUSED_RESULT;
 
-    virtual int TestCapability(const char *) const = 0;
+    virtual bool TestCapability(const char *) const = 0;
 
     virtual OGRErr Rename(const char *pszNewName) CPL_WARN_UNUSED_RESULT;
 
@@ -618,7 +618,7 @@ class CPL_DLL OGRSFDriver : public GDALDriver
     virtual OGRDataSource *Open(const char *pszName, int bUpdate = FALSE)
         OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
-    virtual int TestCapability(const char *pszCap)
+    virtual bool TestCapability(const char *pszCap)
         OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *CreateDataSource(const char *pszName,

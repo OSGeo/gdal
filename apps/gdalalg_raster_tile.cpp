@@ -1699,10 +1699,10 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
             aosOptions.AddString("-q");
 
             aosOptions.AddString("-projwin");
-            aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-            aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
-            aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-            aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
+            aosOptions.AddString(dfMinX);
+            aosOptions.AddString(dfMaxY);
+            aosOptions.AddString(dfMaxX);
+            aosOptions.AddString(dfMinY);
 
             aosOptions.AddString("-outsize");
             aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
@@ -1719,10 +1719,10 @@ GenerateOverviewTile(GDALDataset &oSrcDS, GDALDriver *m_poDstDriver,
     else
     {
         aosOptions.AddString("-te");
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+        aosOptions.AddString(dfMinX);
+        aosOptions.AddString(dfMinY);
+        aosOptions.AddString(dfMaxX);
+        aosOptions.AddString(dfMaxY);
 
         aosOptions.AddString("-ts");
         aosOptions.AddString(CPLSPrintf("%d", tileMatrix.mTileWidth));
@@ -2201,8 +2201,8 @@ static void GenerateLeaflet(const std::string &osDirectory,
         substs["west"] = CPLSPrintf(pszFmt, dfWestLon);
         substs["north"] = CPLSPrintf(pszFmt, dfNorthLat);
         substs["east"] = CPLSPrintf(pszFmt, dfEastLon);
-        substs["centerlon"] = CPLSPrintf(pszFmt, (dfNorthLat + dfSouthLat) / 2);
-        substs["centerlat"] = CPLSPrintf(pszFmt, (dfWestLon + dfEastLon) / 2);
+        substs["centerlon"] = CPLSPrintf(pszFmt, (dfWestLon + dfEastLon) / 2);
+        substs["centerlat"] = CPLSPrintf(pszFmt, (dfNorthLat + dfSouthLat) / 2);
         substs["minzoom"] = CPLSPrintf("%d", nMinZoom);
         substs["maxzoom"] = CPLSPrintf("%d", nMaxZoom);
         substs["beginzoom"] = CPLSPrintf("%d", nMaxZoom);
@@ -2513,12 +2513,14 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         oProperties["proj:transform"] = {
             ovrTileMatrix.mResX,
             0.0,
-            ovrTileMatrix.mTopLeftX +
-                nOvrMinTileX * ovrTileMatrix.mTileWidth * ovrTileMatrix.mResX,
+            ovrTileMatrix.mTopLeftX + static_cast<double>(nOvrMinTileX) *
+                                          ovrTileMatrix.mTileWidth *
+                                          ovrTileMatrix.mResX,
             0.0,
             -ovrTileMatrix.mResY,
-            ovrTileMatrix.mTopLeftY +
-                nOvrMinTileY * ovrTileMatrix.mTileHeight * ovrTileMatrix.mResY,
+            ovrTileMatrix.mTopLeftY - static_cast<double>(nOvrMinTileY) *
+                                          ovrTileMatrix.mTileHeight *
+                                          ovrTileMatrix.mResY,
             0.0,
             0.0,
             0.0};
@@ -4704,11 +4706,10 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 aosOptions.AddString("-of");
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
-                aosOptions.AddString(CPLSPrintf("%.17g", srcGT[0]));
-                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
-                aosOptions.AddString(
-                    CPLSPrintf("%.17g", srcGT[0] + nSrcWidth * srcGT[1]));
-                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
+                aosOptions.AddString(srcGT[0]);
+                aosOptions.AddString(maxLat);
+                aosOptions.AddString(srcGT[0] + nSrcWidth * srcGT[1]);
+                aosOptions.AddString(minLat);
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(
@@ -5134,12 +5135,10 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-of");
         aosOptions.AddString("VRT");
         aosOptions.AddString("-a_ullr");
-        aosOptions.AddString(CPLSPrintf("%.17g", srcGTModif[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", srcGTModif[3]));
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", srcGTModif[0] + nSrcWidth * srcGTModif[1]));
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", srcGTModif[3] + nSrcHeight * srcGTModif[5]));
+        aosOptions.AddString(srcGTModif[0]);
+        aosOptions.AddString(srcGTModif[3]);
+        aosOptions.AddString(srcGTModif[0] + nSrcWidth * srcGTModif[1]);
+        aosOptions.AddString(srcGTModif[3] + nSrcHeight * srcGTModif[5]);
         if (oSRS_TMS.IsEmpty())
         {
             aosOptions.AddString("-a_srs");

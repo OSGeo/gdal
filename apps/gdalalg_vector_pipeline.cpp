@@ -20,6 +20,7 @@
 #include "gdalalg_vector_clean_coverage.h"
 #include "gdalalg_vector_clip.h"
 #include "gdalalg_vector_combine.h"
+#include "gdalalg_vector_compare.h"
 #include "gdalalg_vector_concat.h"
 #include "gdalalg_vector_concave_hull.h"
 #include "gdalalg_vector_convex_hull.h"
@@ -166,6 +167,10 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALVectorCheckCoverageAlgorithm>();
     registry.Register<GDALVectorCheckGeometryAlgorithm>();
     registry.Register<GDALVectorCombineAlgorithm>();
+
+    registry.Register<GDALVectorCompareAlgorithm>(
+        addSuffixIfNeeded(GDALVectorCompareAlgorithm::NAME));
+
     registry.Register<GDALVectorConcatAlgorithm>();
     registry.Register<GDALVectorConcaveHullAlgorithm>();
     registry.Register<GDALVectorConvexHullAlgorithm>();
@@ -461,7 +466,7 @@ GDALVectorOutputDataset::GDALVectorOutputDataset(GDALDataset *poSrcDS)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALVectorOutputDataset::TestCapability(const char *) const
+bool GDALVectorOutputDataset::TestCapability(const char *) const
 {
     return 0;
 }
@@ -517,7 +522,7 @@ OGRLayer *GDALVectorPipelineOutputDataset::GetLayer(int idx) const
 /*          GDALVectorPipelineOutputDataset::TestCapability()           */
 /************************************************************************/
 
-int GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap) const
+bool GDALVectorPipelineOutputDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCRandomLayerRead) ||
         EQUAL(pszCap, ODsCMeasuredGeometries) || EQUAL(pszCap, ODsCZGeometries))
@@ -687,7 +692,7 @@ OGRLayer *GDALVectorNonStreamingAlgorithmDataset::GetLayer(int idx) const
 /*       GDALVectorNonStreamingAlgorithmDataset::TestCapability()       */
 /************************************************************************/
 
-int GDALVectorNonStreamingAlgorithmDataset::TestCapability(
+bool GDALVectorNonStreamingAlgorithmDataset::TestCapability(
     const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCurveGeometries) ||

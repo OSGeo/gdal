@@ -159,7 +159,7 @@ GIntBig OGRILI1Layer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRILI1Layer::TestCapability(const char *pszCap) const
+bool OGRILI1Layer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCurveGeometries))
         return TRUE;

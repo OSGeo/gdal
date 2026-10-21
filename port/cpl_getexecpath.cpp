@@ -38,7 +38,7 @@
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable. Currently this only works on
- * Windows, Linux, MacOS, FreeBSD and netBSD platforms.  The returned path is UTF-8
+ * Windows, Linux, MacOS, FreeBSD and NetBSD platforms.  The returned path is UTF-8
  * encoded, and will be nul-terminated if success is reported.
  *
  * @param pszPathBuf the buffer into which the path is placed.

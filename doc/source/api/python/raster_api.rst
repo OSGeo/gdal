@@ -44,7 +44,7 @@ Dataset
 .. autoclass:: osgeo.gdal.Dataset
     :members:
     :undoc-members:
-    :exclude-members: thisown
+    :exclude-members: thisown, ReadRaster1
 
 .. autofunction:: osgeo.gdal.Open
 
@@ -58,7 +58,7 @@ Band
 .. autoclass:: osgeo.gdal.Band
     :members:
     :undoc-members:
-    :exclude-members: thisown
+    :exclude-members: thisown, ReadRaster1
 
 .. autofunction:: osgeo.gdal.RegenerateOverview
 

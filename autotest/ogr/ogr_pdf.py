@@ -250,7 +250,9 @@ def test_ogr_pdf_5():
 @pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
 def test_ogr_pdf_bezier_curve_and_polygon_holes():
 
-    with gdaltest.config_option("OGR_PDF_READ_NON_STRUCTURED", "YES"):
+    with gdaltest.config_options(
+        {"OGR_PDF_READ_NON_STRUCTURED": "YES", "GDAL_PAM_ENABLED": "NO"}
+    ):
         ds = ogr.Open("data/pdf/bezier_curve_and_polygon_holes.pdf")
     assert ds is not None
 
@@ -272,6 +274,8 @@ def test_ogr_pdf_online_1():
         "webmap_urbansample.pdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     expected_layers = [
         ["Cadastral Boundaries", ogr.wkbPolygon],
         ["Water Lines", ogr.wkbLineString],
@@ -286,7 +290,7 @@ def test_ogr_pdf_online_1():
         ["BPS - Water Sources", ogr.wkbPoint],
     ]
 
-    ds = ogr.Open("tmp/cache/webmap_urbansample.pdf")
+    ds = ogr.Open(f"{tmp_dir}/webmap_urbansample.pdf")
     assert ds is not None
 
     assert ds.GetLayerCount() == len(expected_layers)
@@ -321,6 +325,8 @@ def test_ogr_pdf_online_2():
         "https://download.osgeo.org/gdal/data/pdf/340711752_Azusa_FSTopo.pdf",
         "340711752_Azusa_FSTopo.pdf",
     )
+
+    tmp_dir = gdaltest.get_cache_dir()
 
     expected_layers = [
         ["Other_5", 0],
@@ -359,7 +365,7 @@ def test_ogr_pdf_online_2():
         ["Quadrangle_WoodlandUSGS_P", 0],
     ]
 
-    ds = ogr.Open("tmp/cache/340711752_Azusa_FSTopo.pdf")
+    ds = ogr.Open(f"{tmp_dir}/340711752_Azusa_FSTopo.pdf")
     assert ds is not None
 
     if ds.GetLayerCount() != len(expected_layers):
@@ -437,9 +443,11 @@ def test_ogr_pdf_arcgis_12_9():
         force_download="CI" in os.environ,
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # OGR_ORGANIZE_POLYGONS=SKIP to make the test as fast as possible
     with gdaltest.config_option("OGR_ORGANIZE_POLYGONS", "SKIP"):
-        ds = ogr.Open("tmp/cache/9130-3N+PARRAMATTA+RIVER.pdf")
+        ds = ogr.Open(f"{tmp_dir}/9130-3N+PARRAMATTA+RIVER.pdf")
     assert ds.GetLayerCount() == 66
     lyr = ds.GetLayer("Background")
     background_extent = lyr.GetExtent()

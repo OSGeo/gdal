@@ -267,7 +267,7 @@ OGRErr GNMGenericLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
     return m_poLayer->GetExtent(iGeomField, psExtent, bForce);
 }
 
-int GNMGenericLayer::TestCapability(const char *pszCapability) const
+bool GNMGenericLayer::TestCapability(const char *pszCapability) const
 {
     return m_poLayer->TestCapability(pszCapability);
 }

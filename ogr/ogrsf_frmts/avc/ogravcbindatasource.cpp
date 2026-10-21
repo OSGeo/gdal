@@ -144,7 +144,7 @@ int OGRAVCBinDataSource::Open(const char *pszNewName, int bTestOpen)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCBinDataSource::TestCapability(const char *) const
+bool OGRAVCBinDataSource::TestCapability(const char *) const
 {
     return FALSE;
 }

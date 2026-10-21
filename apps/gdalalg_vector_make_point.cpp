@@ -170,7 +170,7 @@ class GDALVectorMakePointAlgorithmLayer final
         return m_defn.get();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return m_srcLayer.TestCapability(pszCap);
     }
@@ -251,7 +251,8 @@ bool GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     poDstFeature->SetFrom(poSrcFeature.get());
     poDstFeature->SetGeometry(std::move(poGeom));
 
-    apoOutFeatures.push_back(std::move(poDstFeature));
+    if (PassesFilters(poDstFeature.get()))
+        apoOutFeatures.push_back(std::move(poDstFeature));
 
     return true;
 }

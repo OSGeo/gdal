@@ -141,7 +141,7 @@ class OGROSMLayer final : public OGRLayer
     }
 
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRFeature *GetNextFeature() override;
 
@@ -572,7 +572,7 @@ class OGROSMDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

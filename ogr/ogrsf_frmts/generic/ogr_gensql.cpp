@@ -735,7 +735,7 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGenSQLResultsLayer::TestCapability(const char *pszCap) const
+bool OGRGenSQLResultsLayer::TestCapability(const char *pszCap) const
 
 {
     const swq_select *psSelectInfo = m_pSelectInfo.get();

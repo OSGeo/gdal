@@ -3056,6 +3056,7 @@ GDALResampleConvolutionVertical_8cols(const T *pChunk, size_t nStride,
 }
 
 template <class T>
+[[maybe_unused]]
 static inline void GDALResampleConvolutionVertical_8cols(const T *, int,
                                                          const double *, int,
                                                          double *)

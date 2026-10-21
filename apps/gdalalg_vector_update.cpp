@@ -242,7 +242,7 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                  ++iField)
             {
                 const int nSrcFieldIdx = srcKeyFieldIndices[iField];
-                if (!poSrcFeature->IsFieldSet(nSrcFieldIdx))
+                if (!poSrcFeature->IsFieldSetAndNotNull(nSrcFieldIdx))
                 {
                     bSkip = true;
                     break;
@@ -316,6 +316,20 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 poDstFeature->SetFrom(poSrcFeature.get());
                 // restore FID unset by SetFrom()
                 poDstFeature->SetFID(nDstFID);
+                const int nDstGeomFieldCount =
+                    poDstFeature->GetGeomFieldCount();
+                for (int i = 0; i < nDstGeomFieldCount; ++i)
+                {
+                    const bool bHasSrcGeomField =
+                        nDstGeomFieldCount == 1
+                            ? poSrcFeature->GetGeomFieldCount() > 0
+                            : poSrcFeature->GetGeomFieldIndex(
+                                  poDstFeature->GetGeomFieldDefnRef(i)
+                                      ->GetNameRef()) >= 0;
+                    if (!bHasSrcGeomField)
+                        poDstFeature->SetGeomField(
+                            i, poDstFeatureOri->GetGeomFieldRef(i));
+                }
                 if (!poDstFeature->Equal(poDstFeatureOri.get()) &&
                     poDstLayer->SetFeature(poDstFeature.get()) != OGRERR_NONE)
                 {

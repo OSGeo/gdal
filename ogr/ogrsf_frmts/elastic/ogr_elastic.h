@@ -184,7 +184,7 @@ class OGRElasticLayer final : public OGRLayer
     const OGRFeatureDefn *GetLayerDefn() const override;
     const char *GetFIDColumn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce) override;
 
@@ -298,7 +298,7 @@ class OGRElasticAggregationLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRElasticAggregationLayer)
     GIntBig GetFeatureCount(int bForce) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -379,7 +379,7 @@ class OGRElasticDataSource final : public GDALDataset
                          const char *pszDialect) override;
     void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     bool UploadFile(const CPLString &url, const CPLString &data,
                     const CPLString &osVerb = CPLString());

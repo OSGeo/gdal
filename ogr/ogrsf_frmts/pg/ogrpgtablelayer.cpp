@@ -2290,7 +2290,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGTableLayer::TestCapability(const char *pszCap) const
+bool OGRPGTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (bUpdateAccess)

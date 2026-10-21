@@ -47,7 +47,7 @@ OGRAVCLayer::~OGRAVCLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCLayer::TestCapability(const char * /* pszCap */) const
+bool OGRAVCLayer::TestCapability(const char * /* pszCap */) const
 {
     return FALSE;
 }

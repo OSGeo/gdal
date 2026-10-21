@@ -125,7 +125,7 @@ class OGRGeoRSSLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce) override;
 
@@ -193,7 +193,7 @@ class OGRGeoRSSDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     VSILFILE *GetOutputFP()
     {

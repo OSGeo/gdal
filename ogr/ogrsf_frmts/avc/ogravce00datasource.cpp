@@ -171,7 +171,7 @@ int OGRAVCE00DataSource::CheckAddTable(AVCE00Section *psTblSection)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */) const
+bool OGRAVCE00DataSource::TestCapability(const char * /* pszCap */) const
 {
     return FALSE;
 }

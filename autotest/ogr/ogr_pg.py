@@ -4808,7 +4808,7 @@ def test_ogr_pg_83(pg_ds, geom_type, options, wkt, expected_wkt):
         "ogr_pg_83", geom_type=ogr.wkbNone, options=options + ["OVERWRITE=YES"]
     )
     # To force table creation to happen now so that following
-    # CreateGeomField() is done through a AddGeometryColumn() call
+    # CreateGeomField() is done through an AddGeometryColumn() call
     lyr.ResetReading()
     lyr.GetNextFeature()
     lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom", geom_type))

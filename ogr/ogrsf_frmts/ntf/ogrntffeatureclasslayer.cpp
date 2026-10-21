@@ -123,7 +123,7 @@ GIntBig OGRNTFFeatureClassLayer::GetFeatureCount(CPL_UNUSED int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRNTFFeatureClassLayer::TestCapability(const char *pszCap) const
+bool OGRNTFFeatureClassLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

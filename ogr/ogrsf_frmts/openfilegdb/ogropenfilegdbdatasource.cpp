@@ -1171,7 +1171,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
+bool OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCAddFieldDomain) ||
@@ -1368,7 +1368,7 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const char *GetFIDColumn() const override
     {
@@ -1553,7 +1553,7 @@ GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap) const
+bool OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCFastFeatureCount))

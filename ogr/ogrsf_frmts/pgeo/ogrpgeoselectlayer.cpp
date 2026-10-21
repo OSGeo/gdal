@@ -140,7 +140,7 @@ OGRFeature *OGRPGeoSelectLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGeoSelectLayer::TestCapability(const char *pszCap) const
+bool OGRPGeoSelectLayer::TestCapability(const char *pszCap) const
 
 {
     return OGRPGeoLayer::TestCapability(pszCap);

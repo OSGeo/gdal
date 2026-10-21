@@ -38,6 +38,19 @@ def test_gdalalg_mdim_pipeline_write(tmp_path):
         assert ds.GetRootGroup().OpenMDArray("Band1")
 
 
+@pytest.mark.require_driver("netCDF")
+def test_gdalalg_mdim_pipeline_write_classic_raster(tmp_path):
+
+    out = tmp_path / "out.tif"
+    with gdal.alg.mdim.pipeline(
+        pipeline=f"read ../gdrivers/data/netcdf/byte.nc ! write --output-format GTiff {out}"
+    ) as alg:
+        assert alg.Output().GetDriver().GetDescription() == "GTiff"
+
+    with gdal.Open(out) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4855
+
+
 def test_gdalalg_mdim_pipeline_help_doc():
 
     import gdaltest

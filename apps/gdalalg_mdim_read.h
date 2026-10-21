@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_READ_INCLUDED
-#define GDALALG_RASTER_READ_INCLUDED
+#ifndef GDALALG_MDIM_READ_INCLUDED
+#define GDALALG_MDIM_READ_INCLUDED
 
 #include "gdalmdimpipelinestepalgorithm.h"
 

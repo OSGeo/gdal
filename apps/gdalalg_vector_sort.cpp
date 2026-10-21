@@ -221,7 +221,7 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         return m_srcLayer.GetLayerDefn();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastFeatureCount) ||
             EQUAL(pszCap, OLCFastGetExtent) ||

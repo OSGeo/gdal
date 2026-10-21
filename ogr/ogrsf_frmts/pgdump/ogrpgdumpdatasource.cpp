@@ -706,7 +706,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPGDumpDataSource::TestCapability(const char *pszCap) const
+bool OGRPGDumpDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

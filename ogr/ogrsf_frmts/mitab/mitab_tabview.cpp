@@ -1119,7 +1119,7 @@ int TABView::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABView::TestCapability(const char *pszCap) const
+bool TABView::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

@@ -1458,9 +1458,11 @@ def test_ogr_shape_36():
 # Check that we can read from the root of a .tar.gz file
 
 
-def test_ogr_shape_37():
+def test_ogr_shape_37(tmp_vsimem):
 
-    ds = ogr.Open("/vsitar/data/shp/poly.tar.gz")
+    gdal.CopyFile("data/shp/poly.tar.gz", tmp_vsimem / "poly.tar.gz")
+
+    ds = ogr.Open(f"/vsitar/{tmp_vsimem}/poly.tar.gz")
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1491,7 +1493,6 @@ def test_ogr_shape_37():
     )
 
     ds = None
-    gdal.Unlink("data/shp/poly.tar.gz.properties")
 
 
 ###############################################################################
@@ -5507,7 +5508,7 @@ def test_ogr_shape_rename_layer(tmp_path):
 
 def test_ogr_shape_rename_layer_zip(tmp_vsimem):
 
-    outfilename = "tmp/test_rename.shp.zip"
+    outfilename = tmp_vsimem / "test_rename.shp.zip"
     gdal.VectorTranslate(outfilename, "data/poly.shp")
 
     ds = ogr.Open(outfilename, update=1)
@@ -6139,7 +6140,9 @@ def test_ogr_shape_read_huge_multipolygon():
         "pred_4G_TIM_dbm-90.zip",
     )
 
-    ds = ogr.Open("/vsizip/tmp/cache/pred_4G_TIM_dbm-90.zip/4G_TIM_dbm.shp")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"/vsizip/{tmp_dir}/pred_4G_TIM_dbm-90.zip/4G_TIM_dbm.shp")
     lyr = ds.GetLayer(0)
     start = time.time()
     f = lyr.GetNextFeature()
@@ -6262,3 +6265,22 @@ def test_ogr_shape_inconsistent_record_count(tmp_vsimem):
     assert lyr.GetFeatureCount() == 2
     lyr.GetNextFeature()
     lyr.GetNextFeature()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_dbf_invalid(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="exists, but cannot be opened. File likely corrupted"
+    ):
+        assert ogr.Open("data/shp/dbf-invalid.shp")
+
+    gdal.CopyFile("data/shp/dbf-invalid.dbf", tmp_vsimem / "dbf-invalid.dbf")
+
+    with pytest.raises(
+        Exception, match="exists, but cannot be opened. File likely corrupted"
+    ):
+        assert ogr.Open(tmp_vsimem / "dbf-invalid.dbf")

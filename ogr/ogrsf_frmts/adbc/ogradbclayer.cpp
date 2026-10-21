@@ -924,7 +924,7 @@ OGRErr OGRADBCLayer::ISetSpatialFilter(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRADBCLayer::TestCapability(const char *pszCap) const
+bool OGRADBCLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poAdapterLayer)
         const_cast<OGRADBCLayer *>(this)->BuildLayerDefn();

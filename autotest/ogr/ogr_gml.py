@@ -60,10 +60,12 @@ def have_gml_validation():
         "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip", "SCHEMAS_OPENGIS_NET.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = ogr.Open("data/gml/expected_gml_gml3.gml")
 
     with gdal.config_option(
-        "GDAL_OPENGIS_SCHEMAS", "/vsizip/./tmp/cache/SCHEMAS_OPENGIS_NET.zip"
+        "GDAL_OPENGIS_SCHEMAS", f"/vsizip/{tmp_dir}/SCHEMAS_OPENGIS_NET.zip"
     ):
         with ds.ExecuteSQL("SELECT ValidateSchema()") as lyr:
 
@@ -409,24 +411,31 @@ def test_ogr_gml_10(tmp_path):
 # Test reading a geometry element specified with <GeometryElementPath>
 
 
-def test_ogr_gml_11():
+def test_ogr_gml_11(tmp_path):
+
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gml", tmp_path / "testgeometryelementpath.gml"
+    )
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gfs", tmp_path / "testgeometryelementpath.gfs"
+    )
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testgeometryelementpath.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testgeometryelementpath.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testgeometryelementpath.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testgeometryelementpath.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testgeometryelementpath.gfs", "rb+")
+        f = open(tmp_path / "testgeometryelementpath.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testgeometryelementpath.gml")
+    ds = ogr.Open(tmp_path / "testgeometryelementpath.gml")
     lyr = ds.GetLayer(0)
     assert (
         lyr.GetGeometryColumn() == "location1container|location1"
@@ -522,31 +531,33 @@ def test_ogr_gml_14():
     for f in files:
         gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/gml/" + f, f)
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     with gdal.config_options(
         {
             "GML_SKIP_RESOLVE_ELEMS": "NONE",
-            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink1resolved.gml",
+            "GML_SAVE_RESOLVED_TO": f"{tmp_dir}/xlink1resolved.gml",
         }
     ):
         with gdal.quiet_errors():
-            gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+            gml_ds = ogr.Open(f"{tmp_dir}/xlink1.gml")
     gml_ds = None
 
     with gdal.config_options(
         {
             "GML_SKIP_RESOLVE_ELEMS": "gml:directedNode",
-            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink2resolved.gml",
+            "GML_SAVE_RESOLVED_TO": f"{tmp_dir}/xlink2resolved.gml",
         }
     ):
-        gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+        gml_ds = ogr.Open(f"{tmp_dir}/xlink1.gml")
         del gml_ds
 
     try:
-        fp = open("tmp/cache/xlink1resolved.gml", "r")
+        fp = open(f"{tmp_dir}/xlink1resolved.gml", "r")
         text = fp.read()
         fp.close()
-        os.remove("tmp/cache/xlink1resolved.gml")
-        fp = open("tmp/cache/expected1.gml", "r")
+        os.remove(f"{tmp_dir}/xlink1resolved.gml")
+        fp = open(f"{tmp_dir}/expected1.gml", "r")
         expectedtext = fp.read()
         fp.close()
     except (IOError, OSError):
@@ -555,11 +566,11 @@ def test_ogr_gml_14():
     assert text == expectedtext, "Problem with file 1"
 
     try:
-        fp = open("tmp/cache/xlink2resolved.gml", "r")
+        fp = open(f"{tmp_dir}/xlink2resolved.gml", "r")
         text = fp.read()
         fp.close()
-        os.remove("tmp/cache/xlink2resolved.gml")
-        fp = open("tmp/cache/expected2.gml", "r")
+        os.remove(f"{tmp_dir}/xlink2resolved.gml")
+        fp = open(f"{tmp_dir}/expected2.gml", "r")
         expectedtext = fp.read()
         fp.close()
     except (IOError, OSError):
@@ -1430,21 +1441,23 @@ def validate(filename):
     #    assert gdal.Open('GMLAS:' + filename, open_options=['VALIDATE=YES', 'FAIL_IF_VALIDATION_ERROR=YES']) is not None
     #    return
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.mkdir("tmp/cache/SCHEMAS_OPENGIS_NET")
+        os.mkdir(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
     except OSError:
         pass
 
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/gml")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/gml")
     except OSError:
         gdaltest.unzip(
-            "tmp/cache/SCHEMAS_OPENGIS_NET", "tmp/cache/SCHEMAS_OPENGIS_NET.zip"
+            f"{tmp_dir}/SCHEMAS_OPENGIS_NET", f"{tmp_dir}/SCHEMAS_OPENGIS_NET.zip"
         )
 
     ds = ogr.Open(filename)
 
-    with gdal.config_option("GDAL_OPENGIS_SCHEMAS", "./tmp/cache/SCHEMAS_OPENGIS_NET"):
+    with gdal.config_option("GDAL_OPENGIS_SCHEMAS", f"{tmp_dir}/SCHEMAS_OPENGIS_NET"):
         lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
 
     feat = lyr.GetNextFeature()
@@ -2360,24 +2373,27 @@ def test_ogr_gml_58c(tmp_path):
 # Test GFS conditions
 
 
-def test_ogr_gml_59():
+def test_ogr_gml_59(tmp_path):
+
+    gdal.CopyFile("data/gml/testcondition.gml", tmp_path / "testcondition.gml")
+    gdal.CopyFile("data/gml/testcondition.gfs", tmp_path / "testcondition.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testcondition.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testcondition.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testcondition.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testcondition.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testcondition.gfs", "rb+")
+        f = open(tmp_path / "testcondition.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testcondition.gml")
+    ds = ogr.Open(tmp_path / "testcondition.gml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     expected = [
@@ -2419,24 +2435,27 @@ def test_ogr_gml_60(tmp_path):
 # Test reading a element specified with a full path in <ElementPath>
 
 
-def test_ogr_gml_61():
+def test_ogr_gml_61(tmp_path):
+
+    gdal.CopyFile("data/gml/gmlsubfeature.gml", tmp_path / "gmlsubfeature.gml")
+    gdal.CopyFile("data/gml/gmlsubfeature.gfs", tmp_path / "gmlsubfeature.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/gmlsubfeature.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/gmlsubfeature.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "gmlsubfeature.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "gmlsubfeature.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/gmlsubfeature.gfs", "rb+")
+        f = open(tmp_path / "gmlsubfeature.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/gmlsubfeature.gml")
+    ds = ogr.Open(tmp_path / "gmlsubfeature.gml")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, "did not get expected geometry column name"
 

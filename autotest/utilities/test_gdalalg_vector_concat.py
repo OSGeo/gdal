@@ -471,3 +471,12 @@ def test_gdalalg_vector_concat_ds_take_ref(GDAL_VECTOR_CONCAT_MAX_OPENED_DATASET
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 20
     assert sum(1 for _ in lyr) == 20
+
+
+def test_gdalalg_vector_concat_write_failure(tmp_path):
+
+    alg = get_alg()
+    alg["input"] = ["../ogr/data/poly.shp", "../ogr/data/poly.shp"]
+    alg["output"] = tmp_path / "does_not_exist" / "out.shp"
+    with pytest.raises(Exception, match="Failed to create file"):
+        alg.Run()

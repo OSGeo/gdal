@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef CPL_JSON_STREAMIN_PARSER_H
-#define CPL_JSON_STREAMIN_PARSER_H
+#ifndef CPL_JSON_STREAMING_PARSER_H
+#define CPL_JSON_STREAMING_PARSER_H
 
 /*! @cond Doxygen_Suppress */
 
@@ -153,4 +153,4 @@ class CPL_DLL CPLJSonStreamingParser /* non final */
 
 /*! @endcond */
 
-#endif  // CPL_JSON_STREAMIN_PARSER_H
+#endif  // CPL_JSON_STREAMING_PARSER_H

@@ -156,7 +156,7 @@ struct CPL_DLL VSIVirtualHandle
      * Callers might use that threshold to optimize the efficiency of
      * AdviseRead().
      *
-     * A returned value of 0 indicates a unknown limit.
+     * A returned value of 0 indicates an unknown limit.
      * @since GDAL 3.9
      */
     virtual size_t GetAdviseReadTotalBytesLimit() const
@@ -234,7 +234,7 @@ struct CPL_DLL VSIVirtualHandle
 /*                        VSIVirtualHandleCloser                        */
 /************************************************************************/
 
-/** Helper close to use with a std:unique_ptr<VSIVirtualHandle>,
+/** Helper close to use with a std::unique_ptr<VSIVirtualHandle>,
  *  such as VSIVirtualHandleUniquePtr. */
 struct VSIVirtualHandleCloser
 

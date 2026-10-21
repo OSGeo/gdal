@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <map>
 
 #ifdef EMBED_RESOURCE_FILES

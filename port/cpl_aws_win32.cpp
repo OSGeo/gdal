@@ -57,8 +57,7 @@ static void FetchUUIDFunc(void *)
         if (FAILED(hResult))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to create connect to WMI server, HRESULT = %d",
-                     hResult);
+                     "Failed to connect to WMI server, HRESULT = %d", hResult);
             goto com_cleanup;
         }
 

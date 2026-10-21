@@ -53,7 +53,7 @@ OGRCARTODataSource::~OGRCARTODataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTODataSource::TestCapability(const char *pszCap) const
+bool OGRCARTODataSource::TestCapability(const char *pszCap) const
 
 {
     if (bReadWrite && EQUAL(pszCap, ODsCCreateLayer))

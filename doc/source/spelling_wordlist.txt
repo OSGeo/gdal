@@ -2073,9 +2073,10 @@ nn
 nNewSize
 nNumToRemove
 NOAA
-nodata
-noData
+NoData
 Nodata
+noData
+nodata
 NODATA
 NoDataFromMaskSource
 NoDataValue
@@ -3041,6 +3042,7 @@ sig
 Sightlines
 signedness
 Simmon
+Simularia
 sinc
 sizeBytes
 sizeKnown

@@ -556,7 +556,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMSSQLSpatialLayer::TestCapability(const char *) const
+bool OGRMSSQLSpatialLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

@@ -101,7 +101,7 @@ enum class AWSCredentialsSource
 {
     UNINITIALIZED,
     NO_SIGN_REQUEST,
-    REGULAR,       // credentials from env variables or ~/.aws/crediential
+    REGULAR,       // credentials from env variables or ~/.aws/credential
     EC2,           // credentials from EC2 private networking
     WEB_IDENTITY,  // credentials from Web Identity Token
                    // See

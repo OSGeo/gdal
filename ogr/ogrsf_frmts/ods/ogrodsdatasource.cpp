@@ -315,7 +315,7 @@ OGRErr OGRODSLayer::SetAttributeFilter(const char *pszQuery)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODSLayer::TestCapability(const char *pszCap) const
+bool OGRODSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -401,7 +401,7 @@ CPLErr OGRODSDataSource::Close(GDALProgressFunc, void *)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODSDataSource::TestCapability(const char *pszCap) const
+bool OGRODSDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -1437,11 +1437,8 @@ void OGRODSDataSource::AnalyseFile()
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of ODS file failed : %s at line %d, "
-                     "column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+                     "XML parsing of ODS file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -1620,11 +1617,8 @@ void OGRODSDataSource::AnalyseSettings()
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of styles.xml file failed : %s at line %d, "
-                     "column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     "XML parsing of styles.xml file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bStopParsing = true;
         }
         nWithoutEventCounter++;

@@ -75,7 +75,7 @@ class OGRDWGBlocksLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRFeature *GetNextUnfilteredFeature();
 
@@ -139,7 +139,7 @@ class OGRDWGLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRFeature *GetNextUnfilteredFeature();
 

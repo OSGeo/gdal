@@ -625,11 +625,11 @@ OGRErr OGRMySQLTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMySQLTableLayer::TestCapability(const char *pszCap) const
+bool OGRMySQLTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
-        return bHasFid;
+        return CPL_TO_BOOL(bHasFid);
 
     else if (EQUAL(pszCap, OLCFastFeatureCount))
         return TRUE;
@@ -641,16 +641,16 @@ int OGRMySQLTableLayer::TestCapability(const char *pszCap) const
         return TRUE;
 
     else if (EQUAL(pszCap, OLCCreateField))
-        return bUpdateAccess;
+        return CPL_TO_BOOL(bUpdateAccess);
 
     else if (EQUAL(pszCap, OLCDeleteFeature))
-        return bUpdateAccess;
+        return CPL_TO_BOOL(bUpdateAccess);
 
     else if (EQUAL(pszCap, OLCRandomWrite))
-        return bUpdateAccess;
+        return CPL_TO_BOOL(bUpdateAccess);
 
     else if (EQUAL(pszCap, OLCSequentialWrite))
-        return bUpdateAccess;
+        return CPL_TO_BOOL(bUpdateAccess);
 
     else if (EQUAL(pszCap, OLCMeasuredGeometries))
         return TRUE;

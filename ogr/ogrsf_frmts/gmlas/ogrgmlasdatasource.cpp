@@ -1053,7 +1053,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLASDataSource::TestCapability(const char *pszCap) const
+bool OGRGMLASDataSource::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, ODsCRandomLayerRead);
 }

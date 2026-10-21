@@ -74,7 +74,7 @@ def test_gdalalg_raster_as_features_specified_bands(alg, tmp_vsimem):
 
         f = lyr.GetFeature(2317)
 
-        assert "BAND_1" not in f
+        assert f.keys() == ["BAND_3", "BAND_2"]
         assert f["BAND_2"] == 156
         assert f["BAND_3"] == 43
 
@@ -93,6 +93,29 @@ def test_gdalalg_raster_as_features_skip_nodata(alg, tmp_vsimem):
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 380
+
+
+def test_gdalalg_raster_as_features_skip_nodata_specified_band(alg):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 0]]))
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteArray(np.array([[0, 2]]))
+
+    alg["input"] = src_ds
+    alg["output-format"] = "MEM"
+    alg["band"] = [2]
+    alg["skip-nodata"] = True
+
+    assert alg.Run()
+
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+    assert [f.items() for f in lyr] == [{"BAND_2": 2}]
 
 
 @pytest.mark.require_driver("GPKG")

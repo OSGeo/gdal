@@ -604,6 +604,17 @@ def test_ogr_mem_17():
     f = ds.GetNextFeature(include_layer=False)
     assert f is not None
 
+    ds.ResetReading()
+
+    def my_progress(pct, msg, user_data):
+        user_data[0] = pct
+        return 1
+
+    pct_array = [0]
+    f, lyr = ds.GetNextFeature(callback=my_progress, callback_data=pct_array)
+    assert f is not None and lyr.GetName() == "ogr_mem_1"
+    assert pct_array[0] == 0.25
+
 
 ###############################################################################
 
@@ -1736,7 +1747,7 @@ def test_ogr_mem_write_arrow_error_negative_fid():
 
 
 ###############################################################################
-# Test writing a ArrowArray into a OGR field whose types don't fully match
+# Test writing an ArrowArray into a OGR field whose types don't fully match
 
 
 @pytest.mark.parametrize("IF_FIELD_NOT_PRESERVED", [None, "ERROR"])

@@ -57,7 +57,7 @@ Exercise
 
 
 ==> :ref:`solution_calc`
- 
+
 
 Focal statistics
 ----------------
@@ -69,14 +69,14 @@ Compute the value of each pixel from its neighbors (focal statistics).
 Let's attempt edge detection with the ``edge1`` kernel:
 
 .. math::
-    \begin{align}
+    \begin{aligned}
         \begin{bmatrix} 0 & -1 & 0\\ -1 & 4 & -1 \\ 0 & -1 & 0 \end{bmatrix}
-    \end{align}
+    \end{aligned}
 
 
 ::
 
-    $ gdal raster neighbors s2_TER_10m.xml edge1.tif --kernel edge1 --overwrite 
+    $ gdal raster neighbors s2_TER_10m.xml edge1.tif --kernel edge1 --overwrite
 
 Result:
 
@@ -177,4 +177,4 @@ Bonus point for a pipeline avoiding the creation of the materialized :file:`admi
   .. hint:: Look at documented examples of :ref:`gdal raster zonal-stats <gdal_raster_zonal_stats>`
 
   ==> :ref:`solution_zonal_stats`
- 
+

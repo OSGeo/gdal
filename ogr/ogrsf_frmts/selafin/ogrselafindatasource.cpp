@@ -301,7 +301,7 @@ OGRSelafinDataSource::~OGRSelafinDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSelafinDataSource::TestCapability(const char *pszCap) const
+bool OGRSelafinDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return TRUE;

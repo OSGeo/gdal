@@ -65,4 +65,4 @@ class GDALMdimReprojectAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_REPROJECT_INCLUDED */
+#endif /* GDALALG_MDIM_REPROJECT_INCLUDED */

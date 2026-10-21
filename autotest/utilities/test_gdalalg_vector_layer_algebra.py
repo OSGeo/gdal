@@ -804,22 +804,23 @@ def test_gdal_vector_layer_algebra_pipeline(tmp_vsimem):
         assert f["method_b"] == "bar2"
         assert f.GetGeometryRef().ExportToWkt() == "POINT (-3 4)"
 
-    with gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg"
-    ) as alg:
-        out_ds = alg.Output()
-        check_out_ds(out_ds)
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        with gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg"
+        ) as alg:
+            out_ds = alg.Output()
+            check_out_ds(out_ds)
 
-    # No next usable step
-    with gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! edit"
-    ) as alg:
-        out_ds = alg.Output()
-        check_out_ds(out_ds)
+        # No next usable step
+        with gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! edit"
+        ) as alg:
+            out_ds = alg.Output()
+            check_out_ds(out_ds)
 
-    gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! write {tmp_vsimem}/out.gpkg"
-    )
+        gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! write {tmp_vsimem}/out.gpkg"
+        )
     with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
         check_out_ds(out_ds)
 

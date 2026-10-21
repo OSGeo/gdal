@@ -61,6 +61,25 @@ def src_ds(unique_constraint=False):
     return ds
 
 
+@pytest.mark.require_driver("GML")
+def test_gdalalg_vector_partition_non_append_format(tmp_vsimem):
+
+    gdal.Run(
+        "vector",
+        "partition",
+        input=src_ds(),
+        output=tmp_vsimem / "out",
+        format="GML",
+        field=["int_field"],
+        scheme="hive",
+    )
+
+    assert sorted(gdal.ReadDir(tmp_vsimem / "out" / "test")) == [
+        "int_field=1",
+        "int_field=2",
+    ]
+
+
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("max_cache_size", [100, 1])
 def test_gdalalg_vector_partition_str_field(tmp_vsimem, max_cache_size):

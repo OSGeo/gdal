@@ -81,7 +81,7 @@ class OGRGTFSLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
@@ -367,7 +367,7 @@ GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGTFSLayer::TestCapability(const char *pszCap) const
+bool OGRGTFSLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }
@@ -394,7 +394,7 @@ class OGRGTFSShapesGeomLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -519,7 +519,7 @@ OGRFeature *OGRGTFSShapesGeomLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap) const
+bool OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }

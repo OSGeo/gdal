@@ -78,7 +78,7 @@ Notes about specific drivers
 + GML: `xsd:decimal` with `totalDigits` and `fractionDigits`, `xs:totalDigits`
   defines the maximum number of digits of decimal and derived datatypes
   (both after and before the decimal point, not counting the decimal point itself).
-  `xs:fractionDigits`` defines the maximum number of fractional digits (i.e.,
+  ``xs:fractionDigits`` defines the maximum number of fractional digits (i.e.,
   digits that are after the decimal point) of an xs:decimal datatype.
 + FlatGeoBuf: for Float fields, OGR_width = flatgeobuf_precision and OGR_precision = flatgeobuf_scale
   (if flatgeobuf_scale != -1, or 0 if flatgeobuf_scale == -1)

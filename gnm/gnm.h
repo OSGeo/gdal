@@ -214,7 +214,7 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
     OGRLayer *GetLayer(int) const override;
     OGRErr DeleteLayer(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                 CSLConstList papszOptions = nullptr) override;
@@ -547,7 +547,7 @@ class GNMGenericLayer final : public OGRLayer
     virtual OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                               bool bForce = true) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -749,7 +749,7 @@ class OGRGNMWrappedResultLayer final : public OGRLayer
     OGRFeature *GetFeature(GIntBig nFID) override;
     const OGRFeatureDefn *GetLayerDefn() const override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,

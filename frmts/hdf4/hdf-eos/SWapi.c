@@ -79,6 +79,7 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 #include "mfhdf.h"
 #include "hcomp.h"
 #include "HdfEosDef.h"
+#include "hfile.h"
 #include <math.h>
 
 #include "hdf4compat.h"
@@ -302,8 +303,12 @@ SWattach(int32 fid, const char *swathname)
 		/* ---------------------------- */
 		vgid[0] = Vattach(HDFfid, vgRef, "r");
 		VgetnameSafe(vgid[0], name, sizeof(name));
+#if LIBVER_MAJOR == 4 && LIBVER_MINOR >= 4
+        size_t sz = sizeof(class);
+        Vgetclass(vgid[0], class, &sz);
+#else
 		Vgetclass(vgid[0], class);
-
+#endif
 
 		/*
 		 * If Vgroup with swathname and class SWATH found, load

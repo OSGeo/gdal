@@ -61,7 +61,7 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = true) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -233,7 +233,7 @@ OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
+bool OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;

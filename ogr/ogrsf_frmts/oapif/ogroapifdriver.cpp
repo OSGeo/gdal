@@ -211,7 +211,7 @@ class OGROAPIFLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -3211,7 +3211,7 @@ OGRErr OGROAPIFLayer::SetAttributeFilter(const char *pszQuery)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROAPIFLayer::TestCapability(const char *pszCap) const
+bool OGROAPIFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {

@@ -482,22 +482,6 @@ int
 ";
 
 
-%feature("docstring")  GetNextFeature "
-
-Fetch the next available feature from this dataset.
-
-This method is intended for the few drivers where
-:py:meth:`OGRLayer.GetNextFeature` is not efficient, but in general
-:py:meth:`OGRLayer.GetNextFeature` is a more natural API.
-
-See :cpp:func:`GDALDataset::GetNextFeature`.
-
-Returns
--------
-Feature
-
-";
-
 %feature("docstring")  GetProjection "
 
 Return a WKT representation of the dataset spatial reference.

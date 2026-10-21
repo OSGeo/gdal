@@ -44,6 +44,12 @@ but no projection checking is performed (unless the :option:`--projectionCheck` 
     Multiple :option:`--calc` options can be listed to produce a multiband file (GDAL >= 3.2).
     See :example:`gdal-calc-multiple-expr`.
 
+    .. warning::
+
+        Security: The expression is evaluated with Python ``eval()`` method which
+        can be used to run arbitrary code. Be careful when using ``gdal_calc`` in a
+        context where users can control the expression.
+
 .. option:: -A <filename>
 
     Input GDAL raster file, you can use any letter (a-z, A-Z).  (lower case supported since GDAL 3.3)

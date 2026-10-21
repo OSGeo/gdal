@@ -846,7 +846,7 @@ class CPLHTTPPostFields
 
                 if (nullptr == pszKey)
                 {
-                    osErrMsg = CPLSPrintf("Key #%d is not exists. Maybe wrong "
+                    osErrMsg = CPLSPrintf("Key #%d does not exist. Maybe wrong "
                                           "count of form items",
                                           i);
                     return CE_Failure;
@@ -854,7 +854,7 @@ class CPLHTTPPostFields
 
                 if (nullptr == pszValue)
                 {
-                    osErrMsg = CPLSPrintf("Value #%d is not exists. Maybe "
+                    osErrMsg = CPLSPrintf("Value #%d does not exist. Maybe "
                                           "wrong count of form items",
                                           i);
                     return CE_Failure;
@@ -1211,7 +1211,7 @@ int CPLHTTPPopFetchCallback(void)
  * CPLHTTPSetDefaultUserAgent() function.
  * Corresponding configuration option: GDAL_HTTP_USERAGENT.
  * </li>
- * <li>SSLCERT=filename (GDAL >= 3.7): Filename of the the SSL client certificate.
+ * <li>SSLCERT=filename (GDAL >= 3.7): Filename of the SSL client certificate.
  * Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html.
  * Corresponding configuration option: GDAL_HTTP_SSLCERT.
  * </li>
@@ -2503,7 +2503,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
 
     // Support for SSL client certificates
 
-    // Filename of the the client certificate
+    // Filename of the client certificate
     const char *pszSSLCert = CSLFetchNameValue(papszOptions, "SSLCERT");
     if (!pszSSLCert)
         pszSSLCert = CPLGetConfigOption("GDAL_HTTP_SSLCERT", nullptr);

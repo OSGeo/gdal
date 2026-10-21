@@ -28,7 +28,7 @@ Motivation
 A lot of drivers that have write capabilities may do write operations in their
 destructors, or just close the file descriptor owned by the dataset. Currently
 there is no clean way of catching errors that might occur. This recently bit
-`Fiona <https://github.com/Toblerity/Fiona/issues/1169>` where the GeoJSON driver
+`Fiona <https://github.com/Toblerity/Fiona/issues/1169>`__ where the GeoJSON driver
 may emit an error in its dataset destructor when writing the content of a file
 to a cloud object storage.
 

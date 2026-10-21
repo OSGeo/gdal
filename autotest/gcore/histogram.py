@@ -14,7 +14,6 @@
 ###############################################################################
 
 import math
-import os
 import shutil
 import struct
 import sys
@@ -343,9 +342,11 @@ def test_histogram_2(utmsmall_tif):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_histogram_3():
+def test_histogram_3(tmp_vsimem):
 
-    ds = gdal.Open("data/int32_withneg.grd")
+    gdal.CopyFile("data/int32_withneg.grd", tmp_vsimem / "test.grd")
+
+    ds = gdal.Open(tmp_vsimem / "test.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
         buckets=21, max=100, min=-100, include_out_of_range=1, approx_ok=0
     )
@@ -360,9 +361,11 @@ def test_histogram_3():
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_histogram_4():
+def test_histogram_4(tmp_vsimem):
 
-    ds = gdal.Open("data/int32_withneg.grd")
+    gdal.CopyFile("data/int32_withneg.grd", tmp_vsimem / "test.grd")
+
+    ds = gdal.Open(tmp_vsimem / "test.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
         buckets=21, max=100, min=-100, include_out_of_range=0, approx_ok=0
     )
@@ -372,8 +375,6 @@ def test_histogram_4():
     assert hist == exp_hist, "did not get expected histogram."
 
     ds = None
-
-    gdal.Unlink("data/int32_withneg.grd.aux.xml")
 
 
 ###############################################################################
@@ -659,14 +660,13 @@ def test_histogram_5(utmsmall_tif):
 
 
 @pytest.mark.require_driver("JPEG")
-def test_histogram_6():
+def test_histogram_6(tmp_vsimem):
 
-    shutil.copy("../gdrivers/data/jpeg/albania.jpg", "tmp/albania.jpg")
-    ds = gdal.Open("tmp/albania.jpg")
+    gdal.CopyFile("../gdrivers/data/jpeg/albania.jpg", tmp_vsimem / "albania.jpg")
+    ds = gdal.Open(tmp_vsimem / "albania.jpg")
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     assert hist is None, "did not get expected histogram."
     ds = None
-    os.unlink("tmp/albania.jpg")
 
 
 ###############################################################################

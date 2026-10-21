@@ -57,7 +57,7 @@ class OGRArrowArrayToOGRFeatureAdapterLayer final : public OGRLayer
         return nullptr;
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         return EQUAL(pszCap, OLCCreateField) ||
                EQUAL(pszCap, OLCSequentialWrite);
@@ -172,7 +172,7 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRADBCLayer)
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GDALDataset *GetDataset() override;
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
@@ -211,7 +211,7 @@ class OGRADBCBigQueryLayer final : public OGRADBCLayer
     OGRADBCBigQueryLayer(OGRADBCDataset *poDS, const char *pszName,
                          const std::string &osStatement, bool bInternalUse);
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -281,7 +281,7 @@ class OGRADBCDataset final : public GDALDataset
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/

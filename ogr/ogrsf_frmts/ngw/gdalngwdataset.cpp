@@ -177,7 +177,7 @@ void OGRNGWDataset::FetchPermissions()
 /*
  * TestCapability()
  */
-int OGRNGWDataset::TestCapability(const char *pszCap) const
+bool OGRNGWDataset::TestCapability(const char *pszCap) const
 {
     const_cast<OGRNGWDataset *>(this)->FetchPermissions();
     if (EQUAL(pszCap, ODsCCreateLayer))

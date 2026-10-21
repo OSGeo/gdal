@@ -39,9 +39,9 @@ def setup_and_cleanup():
     "fname,to_vsimem",
     [("int16.tif", True), ("int32.tif", False), ("float32.tif", False)],
 )
-def test_bt_create_copy(fname, to_vsimem):
+def test_bt_create_copy(fname, to_vsimem, tmp_path):
 
-    tst = gdaltest.GDALTest("BT", fname, 1, 4672)
+    tst = gdaltest.GDALTest("BT", fname, 1, 4672, tmpdir=tmp_path)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
     tst.testCreateCopy(

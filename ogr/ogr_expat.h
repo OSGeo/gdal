@@ -15,7 +15,9 @@
 
 #ifdef HAVE_EXPAT
 
+#include "cpl_error.h"
 #include "cpl_port.h"
+#include <cinttypes>
 #include <expat.h>
 
 #include <memory>
@@ -46,6 +48,22 @@
 
 /* Only for internal use ! */
 XML_Parser CPL_DLL OGRCreateExpatXMLParser(void);
+
+template <typename T> inline const char *OGRExpatGetParseError(const T &oParser)
+{
+#if XML_MAJOR_VERSION > 2 || (XML_MAJOR_VERSION == 2 && XML_MINOR_VERSION >= 9)
+    return CPLSPrintf(
+        "%s at line %" PRIu64 ", column %" PRIu64,
+        XML_ErrorString(XML_GetErrorCode(oParser)),
+        static_cast<std::uint64_t>(XML_GetCurrentLineNumber64(oParser)),
+        static_cast<std::uint64_t>(XML_GetCurrentColumnNumber64(oParser)));
+#else
+    return CPLSPrintf("%s at line %d, column %d",
+                      XML_ErrorString(XML_GetErrorCode(oParser)),
+                      static_cast<int>(XML_GetCurrentLineNumber(oParser)),
+                      static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+#endif
+}
 
 //
 //! @cond Doxygen_Suppress

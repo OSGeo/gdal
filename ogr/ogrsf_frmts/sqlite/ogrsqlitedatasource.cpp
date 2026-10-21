@@ -2934,7 +2934,7 @@ bool OGRSQLiteDataSource::OpenView(const char *pszViewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteDataSource::TestCapability(const char *pszCap) const
+bool OGRSQLiteDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
@@ -2954,7 +2954,7 @@ int OGRSQLiteDataSource::TestCapability(const char *pszCap) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::TestCapability(const char *pszCap) const
+bool OGRSQLiteBaseDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCTransactions))
         return true;
@@ -4045,6 +4045,7 @@ OGRErr OGRSQLiteBaseDataSource::SoftCommitTransaction()
     m_nSoftTransactionLevel--;
     if (m_nSoftTransactionLevel == 0)
     {
+        m_aosSavepoints.clear();
         eErr = DoTransactionCommand("COMMIT");
     }
 

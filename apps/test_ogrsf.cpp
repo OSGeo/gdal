@@ -1609,11 +1609,11 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
 
     const bool bLayerHasMeasuredGeometriesCapability =
-        CPL_TO_BOOL(poLayer->TestCapability(ODsCMeasuredGeometries));
+        poLayer->TestCapability(ODsCMeasuredGeometries);
     const bool bLayerHasCurveGeometriesCapability =
-        CPL_TO_BOOL(poLayer->TestCapability(OLCCurveGeometries));
+        poLayer->TestCapability(OLCCurveGeometries);
     const bool bLayerHasZGeometriesCapability =
-        CPL_TO_BOOL(poLayer->TestCapability(OLCZGeometries));
+        poLayer->TestCapability(OLCZGeometries);
 
     CPLErrorReset();
 

@@ -63,7 +63,7 @@ class OGRSOSILayer final : public OGRLayer
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 #endif
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************

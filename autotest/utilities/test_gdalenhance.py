@@ -38,7 +38,9 @@ def test_gdalenhance_output_histogram(gdalenhance_path, histogram_dest, tmp_path
 
     lut_fname = tmp_path / "lut.txt"
 
-    cmd = f"{gdalenhance_path} -quiet -equalize ../gcore/data/rgbsmall.tif"
+    gdal.CopyFile("../gcore/data/rgbsmall.tif", tmp_path / "rgbsmall.tif")
+
+    cmd = f"{gdalenhance_path} -quiet -equalize {tmp_path}/rgbsmall.tif"
 
     if histogram_dest == "file":
         cmd += f" -config {lut_fname}"
@@ -108,7 +110,8 @@ def test_gdalenhance_output_image(gdalenhance_path, tmp_path):
 
 def test_gdalenhance_invalid_usage(gdalenhance_path, tmp_path):
 
-    infile = "../gcore/data/rgbsmall.tif"
+    infile = tmp_path / "in.tif"
+    gdal.Translate(infile, "../gcore/data/rgbsmall.tif")
     outfile = tmp_path / "out.tif"
 
     out, err = gdaltest.runexternal_out_and_err(
@@ -125,7 +128,8 @@ def test_gdalenhance_invalid_usage(gdalenhance_path, tmp_path):
 
 def test_gdalenhance_malformed_lut(gdalenhance_path, tmp_path):
 
-    infile = "../gcore/data/rgbsmall.tif"
+    infile = tmp_path / "in.tif"
+    gdal.Translate(infile, "../gcore/data/rgbsmall.tif")
     outfile = tmp_path / "out.tif"
     lut_file = tmp_path / "lut.txt"
 
@@ -181,7 +185,8 @@ def test_gdalenhance_malformed_lut(gdalenhance_path, tmp_path):
 
 def test_gdalenhance_invalid_output_type(gdalenhance_path, tmp_path):
 
-    infile = "../gcore/data/rgbsmall.tif"
+    infile = tmp_path / "in.tif"
+    gdal.Translate(infile, "../gcore/data/rgbsmall.tif")
     outfile = tmp_path / "out.tif"
 
     out, err = gdaltest.runexternal_out_and_err(

@@ -207,7 +207,7 @@ OGRErr OGRLayerDecorator::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
     return m_poDecoratedLayer->GetExtent3D(iGeomField, psExtent, bForce);
 }
 
-int OGRLayerDecorator::TestCapability(const char *pszCapability) const
+bool OGRLayerDecorator::TestCapability(const char *pszCapability) const
 {
     if (!m_poDecoratedLayer)
         return FALSE;

@@ -170,7 +170,7 @@ static void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
     ctx->data[56] = static_cast<GByte>((ctx->bitlen >> 56) & 0xFFU);
     sha1_transform(ctx, ctx->data);
 
-    // Since this implementation uses little endian byte ordering and MD uses
+    // Since this implementation uses little endian byte ordering and SHA1 uses
     // big endian, reverse all the bytes when copying the final state to the
     // output hash.
     for (i = 0; i < 4; ++i)

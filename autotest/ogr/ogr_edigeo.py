@@ -45,13 +45,15 @@ def test_ogr_edigeo_1():
     for filename in filelist:
         gdaltest.download_or_skip(base_url + filename, filename)
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
         for filename in filelist:
-            os.stat("tmp/cache/" + filename)
+            os.stat(f"{tmp_dir}/" + filename)
     except OSError:
         pytest.skip()
 
-    ds = ogr.Open("tmp/cache/E000AB01.THF")
+    ds = ogr.Open(f"{tmp_dir}/E000AB01.THF")
     assert ds.GetLayerCount() == 24
 
     layers = [

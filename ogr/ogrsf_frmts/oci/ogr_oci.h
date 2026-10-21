@@ -280,7 +280,7 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const char *GetFIDColumn() const override;
     const char *GetGeometryColumn() const override;
@@ -411,7 +411,7 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -498,7 +498,7 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr SyncToDisk() override;
 
@@ -573,7 +573,7 @@ class OGROCIDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void DeleteLayer(const char *);
 

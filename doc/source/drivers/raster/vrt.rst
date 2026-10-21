@@ -1245,6 +1245,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Computes the complex conjugate of a single raster band
 
        (just a copy if the input is non-complex)
+   * - **count**
+     - >= 1
+     - -
+     - (GDAL >= 3.14) Number of sources with defined (non-NoData) values
    * - **dB**
      - 1
      - ``fact`` (optional)
@@ -1304,7 +1308,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Note: this function is the recommended one to perform conversion form
 
-       logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case
+       logarithmic scale (dB): ``10. ^ (x / 20.)``, in this case
 
        ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
 
@@ -1615,7 +1619,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - >= 1
      - ``k`` (optional)
 
-       ``propagateNoData`` (optional, default=``false``)
+       ``propagateNoData`` (optional, default=\ ``false``)
      - Sum 1 or more raster bands. If the optional ``k`` parameter is provided
 
        then it is added to each element of the result.

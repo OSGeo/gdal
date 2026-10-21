@@ -230,11 +230,11 @@ bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (!m_targetExtent.empty())
     {
         aosOptions.AddString("-txe");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_targetExtent[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_targetExtent[2]));
+        aosOptions.AddString(m_targetExtent[0]);
+        aosOptions.AddString(m_targetExtent[2]);
         aosOptions.AddString("-tye");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_targetExtent[1]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_targetExtent[3]));
+        aosOptions.AddString(m_targetExtent[1]);
+        aosOptions.AddString(m_targetExtent[3]);
     }
 
     if (!m_bbox.empty())
@@ -242,7 +242,7 @@ bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-clipsrc");
         for (double v : m_bbox)
         {
-            aosOptions.AddString(CPLSPrintf("%.17g", v));
+            aosOptions.AddString(v);
         }
     }
 
@@ -251,7 +251,7 @@ bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-tr");
         for (double targetResolution : m_targetResolution)
         {
-            aosOptions.AddString(CPLSPrintf("%.17g", targetResolution));
+            aosOptions.AddString(targetResolution);
         }
     }
 
@@ -293,13 +293,13 @@ bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     if (m_zOffset != 0)
     {
         aosOptions.AddString("-z_increase");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_zOffset));
+        aosOptions.AddString(m_zOffset);
     }
 
     if (m_zMultiply != 0)
     {
         aosOptions.AddString("-z_multiply");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_zMultiply));
+        aosOptions.AddString(m_zMultiply);
     }
 
     if (!m_zField.empty())

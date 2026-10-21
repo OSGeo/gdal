@@ -203,8 +203,8 @@ bool CPLHaveRuntimeAVX()
 #if defined(__GNUC__)
 
 bool bCPLHasAVX2 = false;
-// Use 102 because  CPLHaveRuntimeAVXInitialize() uses 101, so we are run
-// afterwards
+// Use 102 because CPLHaveRuntimeAVXInitialize() uses 101, so this is run
+// afterwards.
 static void CPLHaveRuntimeAVX2Initialize() __attribute__((constructor(102)));
 
 static void CPLHaveRuntimeAVX2Initialize()

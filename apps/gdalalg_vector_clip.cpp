@@ -192,7 +192,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         return true;
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCStringsAsUTF8) ||
             EQUAL(pszCap, OLCCurveGeometries) || EQUAL(pszCap, OLCZGeometries))

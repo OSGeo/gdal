@@ -91,7 +91,7 @@ template <class T> class Enumerator
 
 //! @endcond
 
-/** Function returning an eumerator whose values are
+/** Function returning an enumerator whose values are
  * a std::pair of (index: size_t, value: iterable::value_type).
  *
  * This is similar to Python enumerate() function and C++23

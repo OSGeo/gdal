@@ -352,33 +352,49 @@ def netcdf_cfproj_test_cf(proj, projNc) -> None:
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def test_netcdf_cf_1(netcdf_setup):  # noqa
-    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, "tmp/netcdf_cf_1.nc")
+def test_netcdf_cf_1(tmp_path, netcdf_setup):  # noqa
+    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, str(tmp_path / "netcdf_cf_1.nc"))
 
-    netcdf_cf_check_file("tmp/netcdf_cf_1.nc")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_1.nc"))
 
-    netcdf_test_copy("tmp/netcdf_cf_1.nc", 1, 14, "tmp/netcdf_cf_1.tif", [], "GTIFF")
+    netcdf_test_copy(
+        str(tmp_path / "netcdf_cf_1.nc"),
+        1,
+        14,
+        str(tmp_path / "netcdf_cf_1.tif"),
+        [],
+        "GTIFF",
+    )
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
-def test_netcdf_cf_2():
+def test_netcdf_cf_2(tmp_path):
 
-    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, "tmp/netcdf_cf_2.nc")
+    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, str(tmp_path / "netcdf_cf_2.nc"))
 
-    netcdf_cf_check_file("tmp/netcdf_cf_2.nc", "auto")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_2.nc"), "auto")
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
-def test_netcdf_cf_3():
+def test_netcdf_cf_3(tmp_path):
 
-    netcdf_test_copy("data/netcdf/trmm-wgs84.tif", 1, 14, "tmp/netcdf_cf_3.nc")
+    netcdf_test_copy(
+        "data/netcdf/trmm-wgs84.tif", 1, 14, str(tmp_path / "netcdf_cf_3.nc")
+    )
 
-    netcdf_test_copy("tmp/netcdf_cf_3.nc", 1, 14, "tmp/netcdf_cf_3.tif", [], "GTIFF")
+    netcdf_test_copy(
+        str(tmp_path / "netcdf_cf_3.nc"),
+        1,
+        14,
+        str(tmp_path / "netcdf_cf_3.tif"),
+        [],
+        "GTIFF",
+    )
 
-    netcdf_cf_check_file("tmp/netcdf_cf_3.nc", "auto")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_3.nc"), "auto")
 
 
 ###############################################################################

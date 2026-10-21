@@ -60,7 +60,7 @@ OGRDXFDataSource::~OGRDXFDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFDataSource::TestCapability(const char *pszCap) const
+bool OGRDXFDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCZGeometries))
         return true;

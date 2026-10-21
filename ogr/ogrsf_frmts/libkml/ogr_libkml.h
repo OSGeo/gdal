@@ -126,7 +126,7 @@ class OGRLIBKMLLayer final : public OGRLayer,
         return m_pszName;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -266,7 +266,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
     int Create(const char *pszFilename, CSLConstList papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     kmldom::KmlFactory *GetKmlFactory()
     {

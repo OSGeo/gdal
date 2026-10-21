@@ -14,7 +14,7 @@
     <ResampleAlg>NearestNeighbour</ResampleAlg>
     <WorkingDataType>Int16</WorkingDataType>
     <Option name="INIT_DEST">0</Option>
-    <SourceDataset relativeToVRT="1">../tmp/test.tif</SourceDataset>
+    <SourceDataset relativeToVRT="1">test.tif</SourceDataset>
     <Transformer>
       <ApproxTransformer>
         <MaxError>0.125</MaxError>
