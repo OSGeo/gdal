@@ -2206,8 +2206,9 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
             GetName().c_str());
         return false;
     }
-    const auto nExpectedChunks = std::accumulate(
-        anBlockCount.begin(), anBlockCount.end(), 1ul, std::multiplies<>());
+    const auto nExpectedChunks =
+        std::accumulate(anBlockCount.begin(), anBlockCount.end(),
+                        std::uint64_t{1}, std::multiplies<>());
     const bool bSparse = nExpectedChunks != nActualChunks;
 
     unsigned nFilterMask = 0;
