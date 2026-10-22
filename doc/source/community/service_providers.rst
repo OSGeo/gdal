@@ -216,3 +216,6 @@ The steps to add a company to the service providers list are outlined in the :re
    :class: img-logos
    :width: 100 px
    :target: `Hobu, Inc.`_
+
+.. spelling:word-list::
+    osgEarth
