@@ -706,6 +706,28 @@ def test_vrtwarp_irasterio_optim_three_band():
 
 
 ###############################################################################
+# Test that VRTWarpedDataset::IRasterIO() honours the requested resampling
+# when reading the whole image at a reduced resolution
+
+
+def test_vrtwarp_irasterio_optim_rescaled_resampling():
+
+    src_ds = gdal.Translate("", "data/byte.tif", format="MEM", width=1000)
+    warped_vrt_ds = gdal.Warp("", src_ds, format="VRT")
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(
+            buf_xsize=100, buf_ysize=10, resample_alg=gdal.GRIORA_Average
+        )
+    assert (
+        warped_vrt_ds.ReadRaster(
+            buf_xsize=100, buf_ysize=10, resample_alg=gdal.GRIORA_Average
+        )
+        == expected_data
+    )
+
+
+###############################################################################
 # Test VRTWarpedDataset::IRasterIO() code path
 
 
