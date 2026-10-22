@@ -948,6 +948,9 @@ def test_hdf5_multidim_getrawblockinfo_big_endian():
 
 def test_hdf5_multidim_getrawblockinfo_sparse():
 
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
     fname = "data/hdf5/sparse_2d.h5"
 
     if False:
