@@ -2967,3 +2967,24 @@ def test_ogr_openfilegdb_vsizip_random_zip_name_and_no_gdb_subdir():
 
     with ogr.Open("/vsizip/data/filegdb/testopenfilegdb.zip") as ds:
         assert ds.GetLayerCount() == 37
+
+
+###############################################################################
+# Test opening a table where fields are not editable, but have a default value
+# (as found in ArcGIS Utility Network geodatabases, e.g. ASSOCIATIONSTATUS)
+
+
+def test_ogr_openfilegdb_non_editable_field_with_default_value():
+
+    with ogr.Open("/vsizip/data/filegdb/openfilegdb_nonEditable_default.gdb.zip") as ds:
+        lyr = ds.GetLayerByName("test")
+        assert lyr.GetFeatureCount() == 3
+        assert [
+            lyr.GetLayerDefn().GetFieldDefn(i).GetName()
+            for i in range(lyr.GetLayerDefn().GetFieldCount())
+        ] == ["ASSOCIATIONSTATUS", "ISSUBNETWORKCONTROLLER"]
+        assert [(f["ASSOCIATIONSTATUS"], f["ISSUBNETWORKCONTROLLER"]) for f in lyr] == [
+            (1, 0),
+            (2, 1),
+            (3, 0),
+        ]
