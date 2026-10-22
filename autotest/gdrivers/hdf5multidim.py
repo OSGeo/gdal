@@ -953,6 +953,7 @@ def test_hdf5_multidim_getrawblockinfo_sparse():
 
     fname = "data/hdf5/sparse_2d.h5"
 
+    # Create the test file sparse_2d.h5
     if False:
         import h5py
         import numpy as np
