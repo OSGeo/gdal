@@ -28,7 +28,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature("compactdefaultargs");
 #endif
 
@@ -567,12 +567,13 @@ public:
   {
         *matches = OSRFindMatches(self, options, nvalues, confidence_values);
   }
+%clear (int *nvalues, CTYPE **confidence_values);
 #endif
 
 #ifdef SWIGCSHARP
-  OSRSpatialReferenceShadow** FindMatches(char** options, int* nvalues, int** confidence_values)
+  OSRSpatialReferenceShadow** FindMatches(char** options, int* confidence_values, int** ppanMatchConfidence )
   {
-       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
+       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, confidence_values, ppanMatchConfidence);
   }
 #endif
 
@@ -1376,21 +1377,40 @@ public:
   }
 #endif
 
-#ifdef SWIGCSHARP
-  %apply (double *inout) {(double*)};
-#endif
-
-#ifndef SWIGPYTHON
-  void TransformPoints( int nCount, double *x, double *y, double *z ) {
-    if (self == NULL)
-        return;
-    OCTTransform( self, nCount, x, y, z );
-  }
-#else
+#ifdef SWIGPYTHON
   void TransformPoints( int nCount, double *x, double *y, double *z, double *t ) {
     if (self == NULL)
         return;
     OCTTransform4D( self, nCount, x, y, z, t, NULL );
+  }
+#elif defined(SWIGCSHARP)
+/* ignore overload which splits multi-argument typemap*/
+%ignore TransformPoints(int,double *,int,double *,int);
+%ignore TransformPoints(int,double *,int,double *,int,double *,int);
+%ignore TransformPoints(int,double *,int,double *,int,double *,int,double *,int);
+%apply (int nList, double *pList) { (int x, double *pX), (int y, double *pY), (int z, double *pZ), (int t, double *pT) };
+%apply (int nList, int *pList) { (int success, int *panSuccess) };
+  bool TransformPoints( int x, double *pX, int y, double *pY,
+                        int z = 0, double *pZ = NULL, int t = 0, double *pT = NULL,
+						int success = 0, int *panSuccess = NULL) {
+    CPLErrorReset();
+    if (!pX || !pY) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All x and y arrays must be non-null.");
+      return 0;	
+    }
+    else if (x != y || (pZ && x != z) || (pT && x != t) || (panSuccess && x != success)) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be the same size.");
+      return 0;
+    }
+    return OCTTransform4D( self, x, pX, pY, pZ, pT, panSuccess );
+  }
+%clear (int x, double *pX), (int y, double *pY), (int z, double *pZ), (int t, double *pT);
+%clear (int success, int *panSuccess);
+#else
+  void TransformPoints( int nCount, double *x, double *y, double *z ) {
+    if (self == NULL)
+        return;
+    OCTTransform( self, nCount, x, y, z );
   }
 #endif
 
@@ -1407,10 +1427,29 @@ public:
     return NULL;
   }
   %clear int*;
-#endif
-
-#ifdef SWIGCSHARP
-  %clear (double*);
+#elif defined(SWIGCSHARP)
+/* ignore overload which splits multi-argument typemap*/
+%ignore TransformPointsWithErrorCodes(int,double *,int,double *,int);
+%ignore TransformPointsWithErrorCodes(int,double *,int,double *,int,double *,int);
+%ignore TransformPointsWithErrorCodes(int,double *,int,double *,int,double *,int,double *,int);
+%apply (int nList, double *pList) { (int x, double *pX), (int y, double *pY), (int z, double *pZ), (int t, double *pT) };
+%apply (int nList, int *pList) { (int errorCodes, int *panErrorCodes) };
+  bool TransformPointsWithErrorCodes( int x, double *pX, int y, double *pY,
+                        int z = 0, double *pZ = NULL, int t = 0, double *pT = NULL,
+						int errorCodes = 0, int *panErrorCodes = NULL) {
+    CPLErrorReset();
+    if (!pX || !pY) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All x and y arrays must be non-null.");
+      return 0;	
+    }
+    else if (x != y || (pZ && x != z) || (pT && x != t) || (panErrorCodes && x != errorCodes)) {
+      CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be the same size.");
+      return 0;
+    }
+    return OCTTransform4DWithErrorCodes( self, x, pX, pY, pZ, pT, panErrorCodes );
+  }
+%clear (int x, double *pX), (int y, double *pY), (int z, double *pZ), (int t, double *pT);
+%clear (int errorCodes, int *panErrorCodes);
 #endif
 
 void TransformBounds(
