@@ -404,11 +404,14 @@ static void OGRPGTokenizeStringListUnescapeToken(char *pszToken)
     }
 
     int iSrc = 0, iDst = 0;
-    for (iSrc = 0; pszToken[iSrc] != '\0'; iSrc++)
+    while (pszToken[iSrc] != '\0')
     {
         pszToken[iDst] = pszToken[iSrc];
-        if (pszToken[iSrc] != '\\')
-            iDst++;
+        if (pszToken[iSrc] == '\\' && pszToken[iSrc + 1] != '\0')
+        {
+            iSrc++;
+        }
+        pszToken[iDst++] = pszToken[iSrc++];
     }
     pszToken[iDst] = '\0';
 }
