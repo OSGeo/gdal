@@ -2280,7 +2280,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             asDateTimeValues[i].bIsValid = true;
             asDateTimeValues[i].nTimeZoneHour = 0;
             asDateTimeValues[i].nTimeZoneMinute = 0;
-            PyObject *tzinfo = ((PyDateTime_DateTime *)pyDateTime)->tzinfo;
+            PyObject *tzinfo = PyDateTime_TIME_GET_TZINFO(pyDateTime);
             if (tzinfo && tzinfo != Py_None)
             {
                 PyObject *pyMethodName = PyUnicode_FromString("utcoffset");
