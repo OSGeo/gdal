@@ -40,6 +40,9 @@ class GDALCachedPixelAccessor
 
     struct CachedTile
     {
+        // Avoid a GCC 13.1 ICE in C++20 aggregate initialization of the array.
+        CachedTile() = default;
+
         std::vector<Type> m_data{};
         int m_nTileX = -1;
         int m_nTileY = -1;
