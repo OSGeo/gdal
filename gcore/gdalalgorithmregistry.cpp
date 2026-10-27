@@ -21,7 +21,7 @@
 #include "gdalalg_info.h"
 #include "gdalalg_pipeline.h"
 #include "gdalalg_vsi.h"
-#include "gdalalg_srsinfo.h"
+#include "gdalalg_crs.h"
 #endif
 
 #include "cpl_vsi.h"
@@ -161,7 +161,7 @@ GDALGlobalAlgorithmRegistry::GDALGlobalAlgorithmRegistry()
     Register<GDALInfoAlgorithm>();
     Register<GDALPipelineAlgorithm>();
     Register<GDALVSIAlgorithm>();
-    Register<GDALSRSInfoAlgorithm>();
+    Register<GDALCRSAlgorithm>();
 #endif
 }
 

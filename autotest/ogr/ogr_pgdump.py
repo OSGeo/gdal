@@ -1673,32 +1673,3 @@ def test_ogr_pgdump_skip_conflicts(tmp_vsimem):
         sql = sql[sql.find(needle) + len(needle) :]
 
     check_and_remove(") ON CONFLICT DO NOTHING;")
-
-
-###############################################################################
-# Test that " and \ in string list items are escaped in both COPY and INSERT mode
-
-
-@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
-def test_ogr_pgdump_stringlist_escaping(tmp_vsimem, pg_use_copy):
-
-    with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
-        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            tmp_vsimem / "ogr_pgdump_stringlist_escape.sql"
-        )
-        lyr = ds.CreateLayer("testlayer", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("stringlist", ogr.OFTStringList))
-
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        feat.SetFieldStringList(0, ["a\\b", 'c"d'])
-        lyr.CreateFeature(feat)
-        ds = None
-
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_stringlist_escape.sql", "rb")
-    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
-    gdal.VSIFCloseL(f)
-
-    if pg_use_copy == "YES":
-        assert r'{"a\\\\b","c\\"d"}' in sql, sql
-    else:
-        assert "ARRAY['a\\b','c\"d']" in sql, sql

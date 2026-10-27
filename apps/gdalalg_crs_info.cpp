@@ -1,54 +1,53 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "srsinfo" subcommand
- * Author:   Even Rouault <even dot rouault at spatialys.com>
+ * Purpose:  gdal "crsinfo" subcommand
+ * Author:   Alessandro Pasotti <elpaso at itopen dot it>
  *
  ******************************************************************************
- * Copyright (c) 2024, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2024, Alessandro Pasotti <elpaso at itopen dot it>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 //! @cond Doxygen_Suppress
 
-#include "gdalalg_srsinfo.h"
-
+#include "gdalalg_crs_info.h"
 #include "gdal_priv.h"
+#include "ogr_spatialref.h"
+#include <sstream>
 
 #ifndef _
 #define _(x) (x)
 #endif
 
 /************************************************************************/
-/*                         GDALSRSInfoAlgorithm                         */
+/*                         GDALCRSInfoAlgorithm                         */
 /************************************************************************/
 
-GDALSRSInfoAlgorithm::GDALSRSInfoAlgorithm()
+GDALCRSInfoAlgorithm::GDALCRSInfoAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL),
       m_outputTypeStr(OUTPUT_TYPE_DEFAULT_STR),
       m_outputType(OutputType::OUTPUT_TYPE_DEFAULT)
 {
-    AddArg(GDAL_ARG_NAME_INPUT_CRS, 's', _("SRS"), &m_srs)
+    AddOutputStringArg(&m_output);
+    AddArg(GDAL_ARG_NAME_INPUT_CRS, 's', _("CRS"), &m_crs)
         .SetIsCRSArg()
         .SetRequired()
         .SetPositional();
 
-    AddArg("validate", 'v', _("Validate the SRS"), &m_validate)
-        .AddShortNameAlias('V');
-    AddArg("epsg", 'e', _("Search for EPSG number(s) corresponding to SRS"),
+    AddArg("validate", 0, _("Validate the CRS"), &m_validate);
+    AddArg("epsg", 0, _("Search for EPSG number(s) corresponding to CRS"),
            &m_listEpsgNumbersForSrs);
-    AddArg("single-line", 'l', _("Print WKT on a single line"),
+    AddArg("single-line", 0, _("Print WKT or PROJJSON on a single line"),
            &m_singleLineOutput);
     AddArg("output-type", 'o', _("Output type"), &m_outputTypeStr)
         .SetDefault(OUTPUT_TYPE_DEFAULT_STR)
         .SetChoices({OUTPUT_TYPE_DEFAULT_STR, OUTPUT_TYPE_ALL_STR,
                      OUTPUT_TYPE_WKT_ALL_STR, OUTPUT_TYPE_WKT_LATEST_STR,
                      OUTPUT_TYPE_PROJJSON_STR, OUTPUT_TYPE_PROJ4_STR,
-                     OUTPUT_TYPE_WKT1_STR, OUTPUT_TYPE_WKT_SIMPLE_STR,
-                     OUTPUT_TYPE_WKT_NOCT_STR, OUTPUT_TYPE_WKT_ESRI_STR,
-                     OUTPUT_TYPE_WKT2_STR, OUTPUT_TYPE_WKT2_2015_STR,
-                     OUTPUT_TYPE_WKT2_2019_STR, OUTPUT_TYPE_MAPINFO_STR,
+                     OUTPUT_TYPE_WKT1_STR, OUTPUT_TYPE_WKT_ESRI_STR,
+                     OUTPUT_TYPE_WKT2_STR, OUTPUT_TYPE_MAPINFO_STR,
                      OUTPUT_TYPE_XML_STR})
         .AddAction(
             [this]()
@@ -59,10 +58,9 @@ GDALSRSInfoAlgorithm::GDALSRSInfoAlgorithm()
                     m_outputType = OutputType::OUTPUT_TYPE_DEFAULT;
                 }
                 // Latest and 2019
-                else if (m_outputTypeStr == OUTPUT_TYPE_WKT_LATEST_STR ||
-                         m_outputTypeStr == OUTPUT_TYPE_WKT2_2019_STR)
+                else if (m_outputTypeStr == OUTPUT_TYPE_WKT_LATEST_STR)
                 {
-                    m_outputType = OutputType::OUTPUT_TYPE_WKT2_2019;
+                    m_outputType = OutputType::OUTPUT_TYPE_WKT2;
                 }
                 else if (m_outputTypeStr == OUTPUT_TYPE_ALL_STR)
                 {
@@ -84,14 +82,6 @@ GDALSRSInfoAlgorithm::GDALSRSInfoAlgorithm()
                 {
                     m_outputType = OutputType::OUTPUT_TYPE_WKT1;
                 }
-                else if (m_outputTypeStr == OUTPUT_TYPE_WKT_SIMPLE_STR)
-                {
-                    m_outputType = OutputType::OUTPUT_TYPE_WKT_SIMPLE;
-                }
-                else if (m_outputTypeStr == OUTPUT_TYPE_WKT_NOCT_STR)
-                {
-                    m_outputType = OutputType::OUTPUT_TYPE_WKT_NOCT;
-                }
                 else if (m_outputTypeStr == OUTPUT_TYPE_WKT_ESRI_STR)
                 {
                     m_outputType = OutputType::OUTPUT_TYPE_WKT_ESRI;
@@ -99,10 +89,6 @@ GDALSRSInfoAlgorithm::GDALSRSInfoAlgorithm()
                 else if (m_outputTypeStr == OUTPUT_TYPE_WKT2_STR)
                 {
                     m_outputType = OutputType::OUTPUT_TYPE_WKT2;
-                }
-                else if (m_outputTypeStr == OUTPUT_TYPE_WKT2_2015_STR)
-                {
-                    m_outputType = OutputType::OUTPUT_TYPE_WKT2_2015;
                 }
                 else if (m_outputTypeStr == OUTPUT_TYPE_MAPINFO_STR)
                 {
@@ -115,27 +101,36 @@ GDALSRSInfoAlgorithm::GDALSRSInfoAlgorithm()
             });
 }
 
-bool GDALSRSInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+void GDALCRSInfoAlgorithm::Print(const char *str) const
+{
+    std::ostringstream oss;
+    oss << str;
+    m_output += oss.str();
+}
+
+bool GDALCRSInfoAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                   void *pProgressData)
 {
 
-    struct SRSMatch
+    struct CRSMatch
     {
-        SRSMatch(std::unique_ptr<OGRSpatialReference> oSRSIn, int nConfidenceIn)
-            : oSRS(std::move(oSRSIn)), nConfidence(nConfidenceIn)
+        CRSMatch(std::unique_ptr<OGRSpatialReference> oCRSIn, int nConfidenceIn)
+            : oCRS(std::move(oCRSIn)), nConfidence(nConfidenceIn)
         {
         }
 
-        std::unique_ptr<OGRSpatialReference> oSRS;
+        std::unique_ptr<OGRSpatialReference> oCRS;
         int nConfidence = 0;
     };
 
-    std::vector<SRSMatch> aoSRS;
+    std::vector<CRSMatch> aoCRS;
 
-    std::unique_ptr<OGRSpatialReference> oSRS;
-    if (oSRS->SetFromUserInput(m_srs.c_str()) != OGRERR_NONE)
+    std::unique_ptr<OGRSpatialReference> oCRS =
+        std::make_unique<OGRSpatialReference>();
+    if (oCRS->SetFromUserInput(m_crs.c_str()) != OGRERR_NONE)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse SRS: %s",
-                 m_srs.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse CRS: %s",
+                 m_crs.c_str());
         return false;
     }
 
@@ -145,39 +140,41 @@ bool GDALSRSInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     {
         int *panConfidence = nullptr;
 
-        OGRSpatialReferenceH *pahSRS = nullptr;
-        pahSRS =
+        OGRSpatialReferenceH *pahCRS = nullptr;
+        pahCRS =
             OSRFindMatches(reinterpret_cast<OGRSpatialReferenceH>(
-                               const_cast<OGRSpatialReference *>(oSRS.get())),
+                               const_cast<OGRSpatialReference *>(oCRS.get())),
                            nullptr, &nEntries, &panConfidence);
 
         for (int i = 0; i < nEntries; i++)
         {
-            OGRSpatialReferenceH hSRS = pahSRS[i];
-            std::unique_ptr<OGRSpatialReference> srs(
-                OGRSpatialReference::FromHandle(hSRS));
-            aoSRS.emplace_back(std::move(srs), panConfidence[i]);
+            OGRSpatialReferenceH hCRS = pahCRS[i];
+            std::unique_ptr<OGRSpatialReference> crs(
+                OGRSpatialReference::FromHandle(hCRS));
+            aoCRS.emplace_back(std::move(crs), panConfidence[i]);
         }
         CPLFree(panConfidence);
     }
     else
     {
-        aoSRS.emplace_back(std::move(oSRS), 100);
+        aoCRS.emplace_back(std::move(oCRS), 100);
     }
 
-    for (const auto &srsMatch : aoSRS)
+    for (const auto &crsMatch : aoCRS)
     {
         std::string osIdentifier;
         if (nEntries)
         {
-            if (srsMatch.nConfidence != 100)
+            if (crsMatch.nConfidence != 100)
             {
-                printf("Confidence in this match: %d %%\n",
-                       srsMatch.nConfidence);
+                std::ostringstream oss;
+                oss << _("Confidence in this match: ") << crsMatch.nConfidence
+                    << "\n";
+                m_output += oss.str();
             }
 
-            osIdentifier = srsMatch.oSRS->GetAuthorityName();
-            if (const std::string osCode = srsMatch.oSRS->GetAuthorityCode();
+            osIdentifier = crsMatch.oCRS->GetAuthorityName();
+            if (const std::string osCode = crsMatch.oCRS->GetAuthorityCode();
                 !osCode.empty())
             {
                 if (!osIdentifier.empty())
@@ -188,33 +185,39 @@ bool GDALSRSInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
         if (m_validate)
         {
-            const OGRErr eErr = srsMatch.oSRS->Validate();
+            const OGRErr eErr = crsMatch.oCRS->Validate();
             if (eErr != OGRERR_NONE)
             {
-                printf(_("\nValidate Fails"));
+                std::ostringstream oss;
+                oss << _("\nValidate Fails");
                 if (eErr == OGRERR_CORRUPT_DATA)
-                    printf(_(" - SRS is not well formed"));
+                    oss << _(" - CRS is not well formed");
                 else if (eErr == OGRERR_UNSUPPORTED_SRS)
-                    printf(_(" - contains non-standard PROJECTION[] values"));
-                printf("\n");
+                    oss << _(" - contains non-standard PROJECTION[] values");
+                oss << "\n";
+                m_output += oss.str();
             }
             else
-                printf(_("\nValidate Succeeds\n"));
+            {
+                Print(_("\nValidate Succeeds\n"));
+            }
         }
 
         if (!m_singleLineOutput && m_listEpsgNumbersForSrs)
         {
-            printf("\n%s\n", osIdentifier.c_str());
+            Print("\n");
+            m_output += osIdentifier;
+            Print("\n");
         }
 
-        PrintSRSOutputTypes(srsMatch.oSRS.get(), m_outputType,
+        PrintCRSOutputTypes(crsMatch.oCRS.get(), m_outputType,
                             !m_singleLineOutput);
     }
 
     return true;
 }
 
-CPLErr GDALSRSInfoAlgorithm::PrintSRSInfo(const OGRSpatialReference *srs,
+CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
                                           OutputType outputType,
                                           bool prettyPrint,
                                           bool printSeparator) const
@@ -227,102 +230,75 @@ CPLErr GDALSRSInfoAlgorithm::PrintSRSInfo(const OGRSpatialReference *srs,
         {
             // Note: this is inline (space instead of line break)
             if (printSeparator)
-                printf("PROJ.4 : ");
-            srs->exportToProj4(&pszOutput);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+                Print("PROJ.4 : ");
+            crs->exportToProj4(&pszOutput);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_PROJJSON:
         {
             if (printSeparator)
-                printf("PROJJSON :\n");
+                Print("PROJJSON :\n");
             const char *const apszOptions[] = {
                 prettyPrint ? "MULTILINE=YES" : "MULTILINE=NO", nullptr};
-            srs->exportToPROJJSON(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+            crs->exportToPROJJSON(&pszOutput, apszOptions);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_WKT1:
         {
             if (printSeparator)
-                printf("WKT1 :\n");
+                Print("WKT1 :\n");
             const char *const apszOptions[] = {
                 "FORMAT=WKT1_GDAL", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
-            break;
-        }
-        case OutputType::OUTPUT_TYPE_WKT_SIMPLE:
-        {
-            if (printSeparator)
-                printf("OGC WKT1 (simple) :\n");
-            const char *const apszOptions[] = {
-                "FORMAT=WKT1_SIMPLE", prettyPrint ? "MULTILINE=YES" : nullptr,
-                nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
-            break;
-        }
-        case OutputType::OUTPUT_TYPE_WKT_NOCT:
-        {
-            if (printSeparator)
-                printf("OGC WKT1 (no CT) :\n");
-            const char *const apszOptions[] = {
-                "FORMAT=SFSQL", prettyPrint ? "MULTILINE=YES" : nullptr,
-                nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+            crs->exportToWkt(&pszOutput, apszOptions);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_WKT_ESRI:
         {
             if (printSeparator)
-                printf("ESRI WKT1 :\n");
+                Print("ESRI WKT1 :\n");
             const char *const apszOptions[] = {
                 "FORMAT=WKT1_ESRI", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
-            break;
-        }
-        case OutputType::OUTPUT_TYPE_WKT2_2015:
-        {
-            if (printSeparator)
-                printf("OGC WKT2:2015 :\n");
-            const char *const apszOptions[] = {
-                "FORMAT=WKT2_2015", prettyPrint ? "MULTILINE=YES" : nullptr,
-                nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+            crs->exportToWkt(&pszOutput, apszOptions);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_WKT2:
-        case OutputType::OUTPUT_TYPE_WKT2_2019:
         {
             if (printSeparator)
-                printf("OGC WKT2:2019 :\n");
+                Print("OGC WKT2:2019 :\n");
             const char *const apszOptions[] = {
                 "FORMAT=WKT2_2019", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
-            srs->exportToWkt(&pszOutput, apszOptions);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+            crs->exportToWkt(&pszOutput, apszOptions);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_MAPINFO:
         {
             if (printSeparator)
-                printf("MapInfo :\n");
-            srs->exportToMICoordSys(&pszOutput);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+                Print("MapInfo :\n");
+            crs->exportToMICoordSys(&pszOutput);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         case OutputType::OUTPUT_TYPE_XML:
         {
             if (printSeparator)
-                printf("XML :\n");
-            srs->exportToXML(&pszOutput);
-            printf("%s\n", pszOutput ? pszOutput : "(error)");
+                Print("XML :\n");
+            crs->exportToXML(&pszOutput);
+            Print(pszOutput ? pszOutput : "(error)");
+            Print("\n");
             break;
         }
         default:
@@ -336,7 +312,7 @@ CPLErr GDALSRSInfoAlgorithm::PrintSRSInfo(const OGRSpatialReference *srs,
     return CE_None;
 }
 
-void GDALSRSInfoAlgorithm::PrintSRSOutputTypes(const OGRSpatialReference *srs,
+void GDALCRSInfoAlgorithm::PrintCRSOutputTypes(const OGRSpatialReference *crs,
                                                OutputType outputTypes,
                                                bool prettyPrint) const
 {
@@ -347,8 +323,8 @@ void GDALSRSInfoAlgorithm::PrintSRSOutputTypes(const OGRSpatialReference *srs,
         if (static_cast<uint32_t>(outputTypes) & (1 << i))
         {
             if (prettyPrint)
-                printf("\n");
-            PrintSRSInfo(srs, static_cast<OutputType>(1 << i), prettyPrint,
+                Print("\n");
+            PrintCRSInfo(crs, static_cast<OutputType>(1 << i), prettyPrint,
                          prettyPrint);
         }
     }
