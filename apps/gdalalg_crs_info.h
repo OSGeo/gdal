@@ -51,13 +51,13 @@ class GDALCRSInfoAlgorithm final : public GDALAlgorithm
         OUTPUT_TYPE_PROJJSON = 1 << 0,
         OUTPUT_TYPE_PROJ4 = 1 << 1,
         OUTPUT_TYPE_WKT1 = 1 << 2,
-        OUTPUT_TYPE_WKT2 = 1 << 5,
-        OUTPUT_TYPE_WKT_ESRI = 1 << 8,
-        OUTPUT_TYPE_MAPINFO = 1 << 9,
-        OUTPUT_TYPE_XML = 1 << 10,
+        OUTPUT_TYPE_WKT2 = 1 << 3,
+        OUTPUT_TYPE_WKT_ESRI = 1 << 4,
+        OUTPUT_TYPE_MAPINFO = 1 << 5,
+        OUTPUT_TYPE_XML = 1 << 6,
 
         // This flag is used to indicate the last output type. It is not used for output but for internal purposes only.
-        OUTPUT_TYPE_LAST = 1 << 11,
+        OUTPUT_TYPE_LAST = 1 << 6,
 
         // Combinations of flags
         OUTPUT_TYPE_WKT_ALL =

@@ -15,6 +15,7 @@
 #include "gdalalg_crs_info.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
+#include "cpl_port.h"
 #include <sstream>
 
 #ifndef _
@@ -108,8 +109,8 @@ void GDALCRSInfoAlgorithm::Print(const char *str) const
     m_output += oss.str();
 }
 
-bool GDALCRSInfoAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
-                                   void *pProgressData)
+bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
+                                   CPL_UNUSED void *pProgressData)
 {
 
     struct CRSMatch
@@ -316,7 +317,7 @@ void GDALCRSInfoAlgorithm::PrintCRSOutputTypes(const OGRSpatialReference *crs,
                                                OutputType outputTypes,
                                                bool prettyPrint) const
 {
-    for (uint32_t i = 0; static_cast<uint32_t>(1 << i) <
+    for (uint32_t i = 0; static_cast<uint32_t>(1 << i) <=
                          static_cast<uint32_t>(OutputType::OUTPUT_TYPE_LAST);
          i++)
     {
