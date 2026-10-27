@@ -16,7 +16,6 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "cpl_port.h"
-#include <sstream>
 
 #ifndef _
 #define _(x) (x)
@@ -31,15 +30,18 @@ GDALCRSInfoAlgorithm::GDALCRSInfoAlgorithm()
       m_outputTypeStr(OUTPUT_TYPE_DEFAULT_STR),
       m_outputType(OutputType::OUTPUT_TYPE_DEFAULT)
 {
+
+    AddProgressArg(/* hidden */ true);
     AddOutputStringArg(&m_output);
-    AddArg(GDAL_ARG_NAME_INPUT_CRS, 's', _("CRS"), &m_crs)
+    AddStdoutArg(&m_stdout);
+    AddArg(GDAL_ARG_NAME_INPUT_CRS, 's', _("Input CRS"), &m_crs)
         .SetIsCRSArg()
         .SetRequired()
         .SetPositional();
 
     AddArg("validate", 0, _("Validate the CRS"), &m_validate);
-    AddArg("epsg", 0, _("Search for EPSG number(s) corresponding to CRS"),
-           &m_listEpsgNumbersForSrs);
+    AddArg("identify", 'i', _("Search for EPSG number(s) corresponding to CRS"),
+           &m_identifyCRS);
     AddArg("single-line", 0, _("Print WKT or PROJJSON on a single line"),
            &m_singleLineOutput);
     AddArg("output-type", 'o', _("Output type"), &m_outputTypeStr)
@@ -104,9 +106,10 @@ GDALCRSInfoAlgorithm::GDALCRSInfoAlgorithm()
 
 void GDALCRSInfoAlgorithm::Print(const char *str) const
 {
-    std::ostringstream oss;
-    oss << str;
-    m_output += oss.str();
+    if (m_stdout)
+        fwrite(str, 1, strlen(str), stdout);
+    else
+        m_output += str;
 }
 
 bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
@@ -137,7 +140,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
 
     int nEntries = 0;
 
-    if (m_listEpsgNumbersForSrs)
+    if (m_identifyCRS)
     {
         int *panConfidence = nullptr;
 
@@ -168,10 +171,9 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
         {
             if (crsMatch.nConfidence != 100)
             {
-                std::ostringstream oss;
-                oss << _("Confidence in this match: ") << crsMatch.nConfidence
-                    << "\n";
-                m_output += oss.str();
+                Print(_("Confidence in this match: "));
+                Print(std::to_string(crsMatch.nConfidence).c_str());
+                Print("\n");
             }
 
             osIdentifier = crsMatch.oCRS->GetAuthorityName();
@@ -189,14 +191,12 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             const OGRErr eErr = crsMatch.oCRS->Validate();
             if (eErr != OGRERR_NONE)
             {
-                std::ostringstream oss;
-                oss << _("\nValidate Fails");
+                Print(_("\nValidate Fails"));
                 if (eErr == OGRERR_CORRUPT_DATA)
-                    oss << _(" - CRS is not well formed");
+                    Print(_(" - CRS is not well formed"));
                 else if (eErr == OGRERR_UNSUPPORTED_SRS)
-                    oss << _(" - contains non-standard PROJECTION[] values");
-                oss << "\n";
-                m_output += oss.str();
+                    Print(_(" - contains non-standard PROJECTION[] values"));
+                Print("\n");
             }
             else
             {
@@ -204,10 +204,10 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             }
         }
 
-        if (!m_singleLineOutput && m_listEpsgNumbersForSrs)
+        if (!m_singleLineOutput && m_identifyCRS)
         {
             Print("\n");
-            m_output += osIdentifier;
+            Print(osIdentifier.c_str());
             Print("\n");
         }
 

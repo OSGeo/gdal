@@ -28,4 +28,12 @@ GDALCRSAlgorithm::GDALCRSAlgorithm()
     RegisterSubAlgorithm<GDALCRSInfoAlgorithm>();
 }
 
+bool GDALCRSAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "The Run() method should not be called directly on the \"gdal "
+             "dataset\" program.");
+    return false;
+}
+
 //! @endcond

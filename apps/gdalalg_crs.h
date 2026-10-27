@@ -33,13 +33,7 @@ class GDALCRSAlgorithm final : public GDALAlgorithm
     GDALCRSAlgorithm();
 
   private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "The Run() method should not be called directly on the \"gdal "
-                 "dataset\" program.");
-        return false;
-    }
+    bool RunImpl(GDALProgressFunc, void *) override;
 };
 
 //! @endcond

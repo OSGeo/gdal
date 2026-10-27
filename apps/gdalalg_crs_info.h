@@ -26,7 +26,7 @@ class GDALCRSInfoAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "info";
     static constexpr const char *DESCRIPTION =
-        "Return information on a spatial reference system.";
+        "Return information on a coordinate reference system (CRS).";
     static constexpr const char *HELP_URL = "/programs/gdal_crs_info.html";
 
     GDALCRSInfoAlgorithm();
@@ -38,10 +38,11 @@ class GDALCRSInfoAlgorithm final : public GDALAlgorithm
     void Print(const char *str) const;
 
     mutable std::string m_output{};
+    bool m_stdout{false};
     std::string m_crs{};
     bool m_validate{false};
     bool m_singleLineOutput{false};
-    bool m_listEpsgNumbersForSrs{false};
+    bool m_identifyCRS{false};
     std::string m_outputTypeStr;
 
     // Flags to control the output type. The default is OUTPUT_TYPE_DEFAULT

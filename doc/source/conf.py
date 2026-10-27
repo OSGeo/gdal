@@ -448,6 +448,20 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_crs",
+        "gdal-crs",
+        "Entry point for commands related to coordinate reference system (CRS)",
+        [author_elpaso],
+        1,
+    ),
+    (
+        "programs/gdal_crs_info",
+        "gdal-crs-info",
+        "Get information on a coordinate reference system (CRS)",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_dataset_identify",
         "gdal-dataset-identify",
         "Identify driver opening dataset(s)",

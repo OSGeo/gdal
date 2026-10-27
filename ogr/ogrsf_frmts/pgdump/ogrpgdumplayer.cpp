@@ -979,7 +979,7 @@ OGRPGDumpEscapeStringList(char **papszItems, bool bForInsertOrUpdate,
 
                 while (*pszStr)
                 {
-                    if (*pszStr == '"')
+                    if (*pszStr == '"' || *pszStr == '\\')
                         osStr += "\\";
                     osStr += *pszStr;
                     pszStr++;
