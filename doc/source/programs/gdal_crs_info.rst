@@ -44,7 +44,7 @@ Options
 
 .. option:: --identify, -i
 
-    Search for EPSG number(s) corresponding to the CRS.
+    Search for CRS registered in the PROJ database, typically CRS of the EPSG or ESRI catalogs, corresponding to the CRS.
 
 .. option:: --single-line
 
