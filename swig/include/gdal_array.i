@@ -2280,15 +2280,14 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             asDateTimeValues[i].bIsValid = true;
             asDateTimeValues[i].nTimeZoneHour = 0;
             asDateTimeValues[i].nTimeZoneMinute = 0;
-#ifdef PyDateTime_TIME_GET_TZINFO
-            PyObject *tzinfo = PyDateTime_TIME_GET_TZINFO(pyDateTime);
-#else
+            // there appears not to be a PyDateTime_DATETIME_GET_TZINFO (although versions for date and time)
             PyObject *tzinfo = NULL;
-            if( _PyDateTime_HAS_TZINFO(pyDateTime) )
+            // _PyDateTime_HAS_TZINFO not available in Python 3.8
+            if( ((PyDateTime_DateTime *)pyDateTime)->hastzinfo )
             {
                 tzinfo = ((PyDateTime_DateTime *)pyDateTime)->tzinfo;
             }
-#endif
+            fprintf(stderr, "sdasdasd %p %p %p\n", pyDateTime, tzinfo, Py_None);
             if (tzinfo && tzinfo != Py_None)
             {
                 PyObject *pyMethodName = PyUnicode_FromString("utcoffset");
