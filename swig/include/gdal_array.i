@@ -2287,7 +2287,6 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             {
                 tzinfo = ((PyDateTime_DateTime *)pyDateTime)->tzinfo;
             }
-            fprintf(stderr, "sdasdasd %p %p %p\n", pyDateTime, tzinfo, Py_None);
             if (tzinfo && tzinfo != Py_None)
             {
                 PyObject *pyMethodName = PyUnicode_FromString("utcoffset");
