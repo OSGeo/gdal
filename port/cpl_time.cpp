@@ -21,9 +21,12 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  */
 
+#include "cpl_port.h"
 #include "cpl_time.h"
 #include "cpl_string.h"
 
+#include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 

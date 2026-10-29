@@ -14,8 +14,9 @@
 #include "cpl_port.h"
 #include "cpl_conv.h"
 
-#include <cstddef>
+#include <string>
 
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
