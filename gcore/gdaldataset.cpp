@@ -51,6 +51,9 @@
 
 #ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
 #include "gdal_matrix_avx2_fma.h"
+#ifdef _MSC_VER
+    #include <intrin.h>
+#endif
 #endif
 
 #include "gdalsubdatasetinfo.h"
@@ -13019,6 +13022,33 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
 /*              ComputeInterBandCovarianceMatrixInternal()              */
 /************************************************************************/
 
+#ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
+/** Returns whether the CPU supports the AVX2 and FMA instruction sets.
+ *
+ * This does not check whether the OS saves the AVX registers, which
+ * CPLHaveRuntimeAVX() does.
+ */
+static bool GDALHasCPUAVX2AndFMA()
+{
+#ifdef _MSC_VER
+    // __builtin_cpu_supports() reads __cpu_model from compiler-rt, which is
+    // not linked for MSVC targets (e.g. clang-cl), so query CPUID directly
+    int anRegs[4];  // EAX, EBX, ECX, EDX
+    __cpuid(anRegs, 0);
+    if (anRegs[0] < 7)
+        return false;
+    __cpuid(anRegs, 1);
+    const bool bHasFMA = (anRegs[2] & (1 << 12)) != 0;
+    __cpuidex(anRegs, 7, 0);
+    const bool bHasAVX2 = (anRegs[1] & (1 << 5)) != 0;
+    return bHasFMA && bHasAVX2;
+#else
+    return __builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma");
+#endif
+}
+#endif
+
+
 template <class T>
 // CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW because it seems the uses of openmp-simd
 // causes that to happen
@@ -13223,9 +13253,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 #endif
 
 #ifdef CAN_DETECT_AVX2_FMA_AT_RUNTIME
-    const bool bHasAVX2_FMA = CPLHaveRuntimeAVX() &&
-                              __builtin_cpu_supports("avx2") &&
-                              __builtin_cpu_supports("fma");
+    const bool bHasAVX2_FMA = CPLHaveRuntimeAVX() && GDALHasCPUAVX2AndFMA();
 #endif
 
     // Iterate over all blocks
