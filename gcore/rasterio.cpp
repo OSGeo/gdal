@@ -3050,7 +3050,7 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
 // ---- AVX2 helpers for int32 narrowing (runtime dispatch) ----
 
 #if defined(HAVE_AVX2_DISPATCH)
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) || defined(__clang__)
 __attribute__((target("avx2")))
 #endif
 static void GDALCopyWordsInt32ToUInt8_AVX2(const int32_t *CPL_RESTRICT pSrc,
@@ -3086,7 +3086,7 @@ static void GDALCopyWordsInt32ToUInt8_AVX2(const int32_t *CPL_RESTRICT pSrc,
     }
 }
 
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) || defined(__clang__)
 __attribute__((target("avx2")))
 #endif
 static void GDALCopyWordsInt32ToUInt16_AVX2(const int32_t *CPL_RESTRICT pSrc,
