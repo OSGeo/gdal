@@ -304,6 +304,62 @@ TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
     GDALClose(hWarpedVRT);
 }
 
+static int IdentityTransform(void *, int, int nCount, double *, double *,
+                             double *, int *pabSuccess)
+{
+    for (int i = 0; i < nCount; ++i)
+        pabSuccess[i] = TRUE;
+    return TRUE;
+}
+
+static int CPL_STDCALL AlwaysContinueProgress(double, const char *, void *)
+{
+    return TRUE;
+}
+
+// Test that multithreaded warping reports an error when worker threads
+// cannot clone the transformer, both with and without a progress callback
+TEST_F(test_alg, GDALChunkAndWarpImage_transformer_clone_failure)
+{
+    for (const bool bWithProgress : {false, true})
+    {
+        auto poDriver = GDALDriver::FromHandle(GDALGetDriverByName("MEM"));
+        GDALDatasetUniquePtr poSrcDS(
+            poDriver->Create("", 512, 512, 1, GDT_Byte, nullptr));
+        GDALDatasetUniquePtr poDstDS(
+            poDriver->Create("", 512, 512, 1, GDT_Byte, nullptr));
+
+        // Not a GDAL transformer, so GDALCloneTransformer() fails on it
+        std::array<GByte, 256> abyTransformerArg{};
+
+        GDALWarpOptions *psOptions = GDALCreateWarpOptions();
+        psOptions->hSrcDS = GDALDataset::ToHandle(poSrcDS.get());
+        psOptions->hDstDS = GDALDataset::ToHandle(poDstDS.get());
+        psOptions->nBandCount = 1;
+        psOptions->panSrcBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nBandCount));
+        psOptions->panSrcBands[0] = 1;
+        psOptions->panDstBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nBandCount));
+        psOptions->panDstBands[0] = 1;
+        psOptions->pfnTransformer = IdentityTransform;
+        psOptions->pTransformerArg = abyTransformerArg.data();
+        psOptions->papszWarpOptions =
+            CSLSetNameValue(psOptions->papszWarpOptions, "NUM_THREADS", "4");
+        if (bWithProgress)
+            psOptions->pfnProgress = AlwaysContinueProgress;
+
+        CPLConfigOptionSetter oSetter("WARP_THREAD_CHUNK_SIZE", "0", false);
+        GDALWarpOperation oWO;
+        ASSERT_EQ(oWO.Initialize(psOptions), CE_None);
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            EXPECT_EQ(oWO.ChunkAndWarpImage(0, 0, 512, 512), CE_Failure);
+        }
+        GDALDestroyWarpOptions(psOptions);
+    }
+}
+
 // Test GDALIsLineOfSightVisible() with single point dataset
 TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
 {
