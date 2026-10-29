@@ -88,8 +88,8 @@ class GDALCRSInfoAlgorithm final : public GDALAlgorithm
     CPLErr PrintCRSInfo(const OGRSpatialReference *crs, OutputType outputType,
                         bool prettyPrint, bool printSeparator) const;
 
-    void PrintCRSOutputTypes(const OGRSpatialReference *crs,
-                             OutputType outputTypes, bool prettyPrint) const;
+    CPLErr PrintCRSOutputTypes(const OGRSpatialReference *crs,
+                               OutputType outputTypes, bool prettyPrint) const;
 };
 
 //! @endcond

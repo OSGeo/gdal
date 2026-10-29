@@ -131,6 +131,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
 
     std::unique_ptr<OGRSpatialReference> oCRS =
         std::make_unique<OGRSpatialReference>();
+
     if (oCRS->SetFromUserInput(m_crs.c_str()) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse CRS: %s",
@@ -139,6 +140,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
     }
 
     int nEntries = 0;
+    CPLErr eErr = CE_None;
 
     if (m_identifyCRS)
     {
@@ -188,15 +190,16 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
 
         if (m_validate)
         {
-            const OGRErr eErr = crsMatch.oCRS->Validate();
-            if (eErr != OGRERR_NONE)
+            const OGRErr retErr = crsMatch.oCRS->Validate();
+            if (retErr != OGRERR_NONE)
             {
                 Print(_("\nValidate Fails"));
-                if (eErr == OGRERR_CORRUPT_DATA)
+                if (retErr == OGRERR_CORRUPT_DATA)
                     Print(_(" - CRS is not well formed"));
-                else if (eErr == OGRERR_UNSUPPORTED_SRS)
+                else if (retErr == OGRERR_UNSUPPORTED_SRS)
                     Print(_(" - contains non-standard PROJECTION[] values"));
                 Print("\n");
+                eErr = CE_Failure;
             }
             else
             {
@@ -211,11 +214,15 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             Print("\n");
         }
 
-        PrintCRSOutputTypes(crsMatch.oCRS.get(), m_outputType,
-                            !m_singleLineOutput);
+        if (const auto retErr = PrintCRSOutputTypes(
+                crsMatch.oCRS.get(), m_outputType, !m_singleLineOutput);
+            retErr != CE_None)
+        {
+            eErr = retErr;
+        }
     }
 
-    return true;
+    return eErr == CE_None;
 }
 
 CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
@@ -225,6 +232,16 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
 {
     char *pszOutput = nullptr;
 
+    CPLErr eErr = CE_None;
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+    const auto PrintError = [&]()
+    {
+        eErr = CE_Failure;
+        Print("(error) ");
+        Print(CPLGetLastErrorMsg());
+    };
+
     switch (outputType)
     {
         case OutputType::OUTPUT_TYPE_PROJ4:
@@ -233,7 +250,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
             if (printSeparator)
                 Print("PROJ.4 : ");
             crs->exportToProj4(&pszOutput);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -244,7 +268,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
             const char *const apszOptions[] = {
                 prettyPrint ? "MULTILINE=YES" : "MULTILINE=NO", nullptr};
             crs->exportToPROJJSON(&pszOutput, apszOptions);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -256,7 +287,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
                 "FORMAT=WKT1_GDAL", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
             crs->exportToWkt(&pszOutput, apszOptions);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -268,8 +306,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
                 "FORMAT=WKT1_ESRI", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
             crs->exportToWkt(&pszOutput, apszOptions);
-            Print(pszOutput ? pszOutput : "(error)");
-            Print("\n");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             break;
         }
         case OutputType::OUTPUT_TYPE_WKT2:
@@ -280,7 +324,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
                 "FORMAT=WKT2_2019", prettyPrint ? "MULTILINE=YES" : nullptr,
                 nullptr};
             crs->exportToWkt(&pszOutput, apszOptions);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -289,7 +340,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
             if (printSeparator)
                 Print("MapInfo :\n");
             crs->exportToMICoordSys(&pszOutput);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -298,7 +356,14 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
             if (printSeparator)
                 Print("XML :\n");
             crs->exportToXML(&pszOutput);
-            Print(pszOutput ? pszOutput : "(error)");
+            if (pszOutput)
+            {
+                Print(pszOutput);
+            }
+            else
+            {
+                PrintError();
+            }
             Print("\n");
             break;
         }
@@ -310,25 +375,41 @@ CPLErr GDALCRSInfoAlgorithm::PrintCRSInfo(const OGRSpatialReference *crs,
     }
 
     CPLFree(pszOutput);
-    return CE_None;
+    return eErr;
 }
 
-void GDALCRSInfoAlgorithm::PrintCRSOutputTypes(const OGRSpatialReference *crs,
-                                               OutputType outputTypes,
-                                               bool prettyPrint) const
+CPLErr GDALCRSInfoAlgorithm::PrintCRSOutputTypes(const OGRSpatialReference *crs,
+                                                 OutputType outputTypes,
+                                                 bool prettyPrint) const
 {
+
+    CPLErr eErr = CE_None;
+    // Count requested formats
+    std::vector<OutputType> requestedFormats;
     for (uint32_t i = 0; static_cast<uint32_t>(1 << i) <=
                          static_cast<uint32_t>(OutputType::OUTPUT_TYPE_LAST);
          i++)
     {
         if (static_cast<uint32_t>(outputTypes) & (1 << i))
         {
-            if (prettyPrint)
-                Print("\n");
-            PrintCRSInfo(crs, static_cast<OutputType>(1 << i), prettyPrint,
-                         prettyPrint);
+            requestedFormats.push_back(static_cast<OutputType>(1 << i));
         }
     }
+
+    const size_t numFormats = requestedFormats.size();
+
+    for (const auto &requestedFormat : requestedFormats)
+    {
+        if (numFormats > 1 && prettyPrint)
+            Print("\n");
+        if (const auto retErr = PrintCRSInfo(crs, requestedFormat, prettyPrint,
+                                             numFormats > 1 && prettyPrint);
+            retErr != CE_None)
+        {
+            eErr = retErr;
+        }
+    }
+    return eErr;
 }
 
 //! @endcond
