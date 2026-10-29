@@ -294,6 +294,37 @@ def test_osr_ct_8():
 
 
 ###############################################################################
+# Test WebMercator -> WGS84 optimized transform with infinite or huge
+# easting values (#15431)
+
+
+@pytest.mark.parametrize("x", [float("-inf"), -1e30, 1e30])
+def test_osr_ct_webmercator_to_wgs84_huge_easting(x):
+
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromEPSG(3857)
+
+    dst_srs = osr.SpatialReference()
+    dst_srs.SetWellKnownGeogCS("WGS84")
+    dst_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(src_srs, dst_srs)
+
+    with gdal.quiet_errors(), osr.ExceptionMgr(useExceptions=False):
+        res_x, res_y, _ = ct.TransformPoint(x, 0, 0)
+
+    if math.isinf(x):
+        # Infinite input reported as a failed point (positive infinity)
+        assert math.isinf(res_x)
+        assert math.isinf(res_y)
+    else:
+        # Huge finite input (1e30) is wrapped into the valid longitude range
+        assert math.isfinite(res_x)
+        assert -180 <= res_x <= 180
+        assert res_y == pytest.approx(0, abs=1e-10)
+
+
+###############################################################################
 # Test coordinate transformation where only one CRS has a towgs84 clause (#1156)
 
 

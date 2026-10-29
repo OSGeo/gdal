@@ -2488,8 +2488,10 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
         double y0 = y[0];
         for (size_t i = 0; i < nCount; i++)
         {
-            if (x[i] == HUGE_VAL)
+            if (!std::isfinite(x[i]))
             {
+                x[i] = HUGE_VAL;
+                y[i] = HUGE_VAL;
                 bRet = FALSE;
             }
             else
@@ -2510,10 +2512,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                     }
                     else
                     {
-                        do
-                        {
-                            x[i] -= 2 * M_PI;
-                        } while (x[i] > M_PI);
+                        x[i] = std::remainder(x[i], 2 * M_PI);
                     }
                 }
                 else if (x[i] < -M_PI)
@@ -2531,10 +2530,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                     }
                     else
                     {
-                        do
-                        {
-                            x[i] += 2 * M_PI;
-                        } while (x[i] < -M_PI);
+                        x[i] = std::remainder(x[i], 2 * M_PI);
                     }
                 }
                 constexpr double RAD_TO_DEG = 180. / M_PI;
