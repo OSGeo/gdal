@@ -158,8 +158,10 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             std::unique_ptr<OGRSpatialReference> crs(
                 OGRSpatialReference::FromHandle(hCRS));
             aoCRS.emplace_back(std::move(crs), panConfidence[i]);
+            pahCRS[i] = nullptr;  // Ownership transferred to unique_ptr
         }
         CPLFree(panConfidence);
+        CPLFree(pahCRS);
     }
     else
     {
