@@ -156,21 +156,22 @@ def TransformPoint(self, *args):
     -------
     tuple
         A tuple of (x, y, z) or (x, y, z, t) values, depending on the input.
+        If the transformation fails and exceptions are not enabled, the returned 
+        values will be infinite.
 
     Examples
     --------
-    >>> wgs84 = osr.SpatialReference()
-    >>> wgs84.ImportFromEPSG(4326)
-    0
-    >>> vt_sp = osr.SpatialReference()
-    >>> vt_sp.ImportFromEPSG(5646)
-    0
+    >>> wgs84 = osr.SpatialReference(epsg=4326)
+    >>> vt_sp = osr.SpatialReference(epsg=5646)
     >>> ct = osr.CoordinateTransformation(wgs84, vt_sp)
     >>> # Transform a point from WGS84 lat/long to Vermont State Plane easting/northing
     >>> ct.TransformPoint(44.26, -72.58)
     (1619458.11, 641509.19, 0.0) # rtol: 1e-6
     >>> ct.TransformPoint(44.26, -72.58, 103)
     (1619458.11, 641509.19, 103.0) # rtol: 1e-6
+    >>> ct.TransformPoint(90.1, -70)
+    ERROR 1: PROJ: tmerc: Invalid latitude
+    (inf, inf, inf)
     """
 
     import collections.abc
