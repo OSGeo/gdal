@@ -31,11 +31,17 @@ function(check_compiler_machine_option outvar feature)
   endmacro()
 
   set(_FLAGS)
+  # clang-cl sets MSVC but, unlike cl.exe, needs -m<feature> to enable intrinsics
+  if(MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(_is_clang_cl TRUE)
+  else()
+    set(_is_clang_cl FALSE)
+  endif()
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
-    if(MSVC AND (${feature} MATCHES "SSE"))
+    if(MSVC AND NOT _is_clang_cl AND (${feature} MATCHES "SSE"))
       # SSE2 and SSE are default on
       set(_FLAGS " ")
-    elseif(MSVC)
+    elseif(MSVC AND NOT _is_clang_cl)
       # Only Visual Studio 2017 version 15.3 / Visual C++ 19.11 & up have support for AVX-512.
       # https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
       set(MSVC_FLAG_MAP AVX512 "-arch:AVX512" AVX2 "-arch:AVX2" AVX "-arch:AVX")
