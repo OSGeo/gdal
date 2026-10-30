@@ -793,23 +793,31 @@ OGRErr OGRLayer::SetAttributeFilter(const char *pszQuery)
 /*                      ContainGeomSpecialField()                       */
 /************************************************************************/
 
-static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount)
+static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount,
+                                   int nLayerGeomFieldCount)
 {
     if (expr->eNodeType == SNT_COLUMN)
     {
         if (expr->table_index == 0 && expr->field_index != -1)
         {
             int nSpecialFieldIdx = expr->field_index - nLayerFieldCount;
-            return nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_AREA;
+            if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
+                return TRUE;
+            int iFirstGeomField = nLayerFieldCount + SPECIAL_FIELD_COUNT;
+            if (expr->field_index >= iFirstGeomField &&
+                expr->field_index < iFirstGeomField + nLayerGeomFieldCount)
+                return TRUE;
+            return FALSE;
         }
     }
     else if (expr->eNodeType == SNT_OPERATION)
     {
         for (int i = 0; i < expr->nSubExprCount; i++)
         {
-            if (ContainGeomSpecialField(expr->papoSubExpr[i], nLayerFieldCount))
+            if (ContainGeomSpecialField(expr->papoSubExpr[i], nLayerFieldCount,
+                                        nLayerGeomFieldCount))
                 return TRUE;
         }
     }
@@ -828,9 +836,12 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     swq_expr_node *expr =
         static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
-    int nLayerFieldCount = GetLayerDefn()->GetFieldCount();
+    const auto poLayerDefn = GetLayerDefn();
+    int nLayerFieldCount = poLayerDefn->GetFieldCount();
+    int nLayerGeomFieldCount = poLayerDefn->GetGeomFieldCount();
 
-    return ContainGeomSpecialField(expr, nLayerFieldCount);
+    return ContainGeomSpecialField(expr, nLayerFieldCount,
+                                   nLayerGeomFieldCount);
 }
 
 //! @endcond

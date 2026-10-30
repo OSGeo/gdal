@@ -4697,6 +4697,48 @@ TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
     stream.release(&stream);
 }
 
+TEST_F(test_ogr, OGRLayer_AttributeFilterEvaluationNeedsGeometry)
+{
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+    auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
+    {
+        OGRFieldDefn oFieldDefn("str", OFTString);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
+    }
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("geom1", wkbPoint);
+        EXPECT_EQ(poLayer->CreateGeomField(&oGeomFieldDefn), OGRERR_NONE);
+    }
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("geom2", wkbPoint);
+        EXPECT_EQ(poLayer->CreateGeomField(&oGeomFieldDefn), OGRERR_NONE);
+    }
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter(nullptr));
+    EXPECT_FALSE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE,
+              poLayer->SetAttributeFilter("OGR_GEOMETRY = 'POINT'"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("OGR_GEOM_WKT IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("OGR_GEOM_AREA > 0"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("geom1 IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("geom2 IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("str IS NULL"));
+    EXPECT_FALSE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+}
+
 // Test OGRFeatureDefn::GetFieldSubTypeByName()
 TEST_F(test_ogr, OGRFieldDefnGetFieldSubTypeByName)
 {
