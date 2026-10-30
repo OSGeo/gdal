@@ -2492,6 +2492,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
             {
                 x[i] = HUGE_VAL;
                 y[i] = HUGE_VAL;
+                y0 = HUGE_VAL;
                 bRet = FALSE;
             }
             else
