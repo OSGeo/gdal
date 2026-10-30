@@ -136,7 +136,7 @@ jobs:
       run: |
         cmake --version
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DSQLite3_ROOT=$(brew --prefix sqlite) -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" 
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-Werror -isystem /opt/homebrew/include" -DUSE_CCACHE=ON -DSQLite3_ROOT=$(brew --prefix sqlite) -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" 
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
