@@ -87,6 +87,20 @@ Sharding support
 is supported since GDAL 3.13. Write support involves setting the
 :co:`SHARD_CHUNK_SHAPE` array creation option.
 
+scale_offset and cast_value codecs
+----------------------------------
+
+.. versionadded:: 3.14
+
+The Zarr v3
+`scale_offset <https://github.com/zarr-developers/zarr-extensions/tree/main/codecs/scale_offset>`__
+and
+`cast_value <https://github.com/zarr-developers/zarr-extensions/tree/main/codecs/cast_value>`__
+codecs are supported for reading. They are typically used together to
+store floating-point values as integers. The ``cast_value`` codec follows
+the behavior of the reference implementation
+`cast-value.rs <https://github.com/zarr-developers/cast-value.rs>`__.
+
 Multiscales (overviews / pyramids)
 ----------------------------------
 

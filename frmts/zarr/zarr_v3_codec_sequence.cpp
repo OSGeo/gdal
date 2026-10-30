@@ -99,6 +99,10 @@ bool ZarrV3CodecSequence::InitFromJson(const std::string &osArrayName,
             poCodec = std::make_unique<ZarrV3CodecBytes>();
         else if (osName == ZarrV3CodecTranspose::NAME)
             poCodec = std::make_unique<ZarrV3CodecTranspose>();
+        else if (osName == ZarrV3CodecScaleOffset::NAME)
+            poCodec = std::make_unique<ZarrV3CodecScaleOffset>();
+        else if (osName == ZarrV3CodecCastValue::NAME)
+            poCodec = std::make_unique<ZarrV3CodecCastValue>();
         else if (osName == ZarrV3CodecCRC32C::NAME)
             poCodec = std::make_unique<ZarrV3CodecCRC32C>();
         else if (osName == ZarrV3CodecVLenUTF8::NAME)
