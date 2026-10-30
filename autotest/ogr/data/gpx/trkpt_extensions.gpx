@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxdata="http://www.cluetrust.com/XML/GPXDATA/1/0" creator="test" version="1.1">
+ <trk>
+  <trkseg>
+   <trkpt lat="49" lon="2">
+    <extensions>
+     <gpxdata:hr>91</gpxdata:hr>
+     <gpxdata:cadence>81</gpxdata:cadence>
+    </extensions>
+   </trkpt>
+   <trkpt lat="50" lon="3">
+    <extensions>
+     <gpxdata:hr>92</gpxdata:hr>
+     <gpxdata:cadence>82</gpxdata:cadence>
+    </extensions>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
