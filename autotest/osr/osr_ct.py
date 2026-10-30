@@ -310,18 +310,41 @@ def test_osr_ct_webmercator_to_wgs84_huge_easting(x):
 
     ct = osr.CoordinateTransformation(src_srs, dst_srs)
 
-    with gdal.quiet_errors(), osr.ExceptionMgr(useExceptions=False):
-        res_x, res_y, _ = ct.TransformPoint(x, 0, 0)
+    res_x, res_y, _ = ct.TransformPoint(x, 0, 0)
 
     if math.isinf(x):
-        # Infinite input reported as a failed point (positive infinity)
+        # Infinite input reported as a failed point (positive infinity / HUGE_VAL)
         assert math.isinf(res_x)
         assert math.isinf(res_y)
     else:
-        # Huge finite input (1e30) is wrapped into the valid longitude range
+        # Huge finite input is wrapped into the valid longitude range
         assert math.isfinite(res_x)
         assert -180 <= res_x <= 180
         assert res_y == pytest.approx(0, abs=1e-10)
+
+
+###############################################################################
+# Test WebMercator -> WGS84 optimized transform with an invalid first point
+# followed by a valid point with the same northing
+
+
+@pytest.mark.parametrize("x", [float("-inf"), float("inf"), float("nan")])
+def test_osr_ct_webmercator_to_wgs84_invalid_first_point(x):
+
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromEPSG(3857)
+
+    dst_srs = osr.SpatialReference()
+    dst_srs.SetWellKnownGeogCS("WGS84")
+    dst_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(src_srs, dst_srs)
+
+    res = ct.TransformPoints([(x, 6274861.39400658), (0, 6274861.39400658)])
+
+    assert (res[0][0], res[0][1]) == (float("inf"), float("inf"))
+    assert res[1][0] == pytest.approx(0.0, abs=1e-10)
+    assert res[1][1] == pytest.approx(49.0, abs=1e-10)
 
 
 ###############################################################################
