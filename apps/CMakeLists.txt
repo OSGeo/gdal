@@ -51,6 +51,8 @@ target_sources(appslib PRIVATE
   gdalalg_mdim_reproject.cpp
   gdalalg_mdim_write.cpp
   gdalalg_pipeline.cpp
+  gdalalg_crs_info.cpp
+  gdalalg_crs.cpp
   gdalalg_raster.cpp
   gdalalg_raster_info.cpp
   gdalalg_raster_as_features.cpp
