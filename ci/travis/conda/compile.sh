@@ -32,7 +32,7 @@ echo "CONDA_SUBDIR=${CONDA_PLAT}-${ARCH}" >> $GITHUB_ENV
 # so look for any file starting with the platform name
 # (e.g. win_64_.yaml or win_64_channel_sourcesconda-forge.yaml)
 VARIANT_FILE=""
-for candidate in .ci_support/${CONDA_PLAT}_${ARCH}_*.yaml; do
+for candidate in ".ci_support/${CONDA_PLAT}_${ARCH}_"*.yaml; do
     # check the file exists (if no files match, $candidate is the literal pattern)
     if [ -f "$candidate" ]; then
         VARIANT_FILE="$candidate"
