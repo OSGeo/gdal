@@ -9673,3 +9673,186 @@ def test_zarr_build_overviews_multiband(tmp_path, after_reopen, get_ovr_after_bu
     assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
     assert ds.GetRasterBand(1).GetOverview(0).XSize == 2
     assert ds.GetRasterBand(2).GetOverviewCount() == 1
+
+
+###############################################################################
+# Test Zarr v3 scale_offset and cast_value codecs
+
+
+def _f32(x):
+    return struct.unpack("f", struct.pack("f", x))[0]
+
+
+@pytest.mark.parametrize(
+    "dirname",
+    [
+        "scale_offset_cast_value.zarr",
+        "scale_offset_cast_value_sharded.zarr",
+        "cast_value.zarr",
+    ],
+)
+def test_zarr_v3_read_scale_offset_cast_value(dirname):
+    ds = gdal.Open("data/zarr/v3/" + dirname, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray(dirname[: -len(".zarr")])
+    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_Float32
+    got = struct.unpack("f" * 16, ar.Read())
+
+    # Stored values are 1000 + i, and 0 for NaN
+    expected = []
+    for i in range(16):
+        raw = 1000 + i
+        if dirname == "cast_value.zarr":
+            expected.append(float(raw))
+        else:
+            # Decoding is done in float32 arithmetic
+            expected.append(_f32(_f32(_f32(raw) / 10000.0) + _f32(-0.1)))
+    expected[0] = float("nan")
+    if dirname == "scale_offset_cast_value_sharded.zarr":
+        # Missing inner chunk
+        for i in (10, 11, 14, 15):
+            expected[i] = float("nan")
+
+    assert [math.isnan(x) for x in got] == [math.isnan(x) for x in expected]
+    assert [x for x in got if not math.isnan(x)] == [
+        x for x in expected if not math.isnan(x)
+    ]
+
+
+def _create_zarr_v3_array(path, data_type, fill_value, codecs, chunk):
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [4],
+        "data_type": data_type,
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [4]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": fill_value,
+        "codecs": codecs + [{"name": "bytes", "configuration": {"endian": "little"}}],
+    }
+    gdal.FileFromMemBuffer(path / "zarr.json", json.dumps(j))
+    gdal.FileFromMemBuffer(path / "c" / "0", chunk)
+
+
+@pytest.mark.parametrize(
+    "rounding,out_of_range,expected",
+    [
+        (None, "clamp", (2, -2, 4, 127)),
+        ("towards-zero", "clamp", (2, -2, 3, 127)),
+        ("towards-positive", "clamp", (3, -2, 4, 127)),
+        ("towards-negative", "clamp", (2, -3, 3, 127)),
+        ("nearest-away", "clamp", (3, -3, 4, 127)),
+        ("nearest-even", None, None),
+    ],
+)
+def test_zarr_v3_cast_value_rounding_out_of_range(
+    tmp_vsimem, rounding, out_of_range, expected
+):
+    config = {"data_type": "float64"}
+    if rounding:
+        config["rounding"] = rounding
+    if out_of_range:
+        config["out_of_range"] = out_of_range
+    _create_zarr_v3_array(
+        tmp_vsimem / "test.zarr",
+        "int8",
+        0,
+        [{"name": "cast_value", "configuration": config}],
+        struct.pack("<4d", 2.5, -2.5, 3.5, 200.0),
+    )
+    ds = gdal.Open(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("test")
+    if expected is None:
+        with pytest.raises(Exception, match="value 200 cannot be cast"):
+            ar.Read()
+    else:
+        assert struct.unpack("4b", ar.Read()) == expected
+
+
+def test_zarr_v3_cast_value_wrap(tmp_vsimem):
+    config = {"data_type": "int16", "out_of_range": "wrap"}
+    _create_zarr_v3_array(
+        tmp_vsimem / "test.zarr",
+        "int8",
+        0,
+        [{"name": "cast_value", "configuration": config}],
+        struct.pack("<4h", 1, -1, 200, -200),
+    )
+    ds = gdal.Open(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("test")
+    assert struct.unpack("4b", ar.Read()) == (1, -1, -56, 56)
+
+
+def test_zarr_v3_scale_offset_integer(tmp_vsimem):
+    codecs = [{"name": "scale_offset", "configuration": {"offset": 10, "scale": 2}}]
+    _create_zarr_v3_array(
+        tmp_vsimem / "test.zarr", "int16", 0, codecs, struct.pack("<4h", -20, 0, 4, 8)
+    )
+    ds = gdal.Open(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("test")
+    assert struct.unpack("4h", ar.Read()) == (0, 10, 12, 14)
+
+    # 3 / 2 has a remainder
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.zarr" / "c" / "0", struct.pack("<4h", 0, 3, 0, 0)
+    )
+    ds = gdal.Open(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("test")
+    with pytest.raises(Exception, match="not representable"):
+        ar.Read()
+
+
+@pytest.mark.parametrize(
+    "codec,error",
+    [
+        (
+            {"name": "scale_offset", "configuration": {"foo": 1}},
+            "unhandled member: foo",
+        ),
+        (
+            {"name": "scale_offset", "configuration": {"scale": 0}},
+            "scale must not be 0",
+        ),
+        (
+            {"name": "scale_offset", "configuration": {"offset": "bar"}},
+            "invalid value for offset",
+        ),
+        ({"name": "cast_value", "configuration": {}}, "data_type missing"),
+        (
+            {"name": "cast_value", "configuration": {"data_type": "float16"}},
+            "unsupported data type",
+        ),
+        (
+            {
+                "name": "cast_value",
+                "configuration": {"data_type": "float32", "out_of_range": "wrap"},
+            },
+            "invalid value for out_of_range",
+        ),
+        (
+            {
+                "name": "cast_value",
+                "configuration": {"data_type": "uint8", "rounding": "bar"},
+            },
+            "invalid value for rounding",
+        ),
+        (
+            {
+                "name": "cast_value",
+                "configuration": {
+                    "data_type": "uint8",
+                    "scalar_map": {"encode": [[1]]},
+                },
+            },
+            "invalid scalar_map.encode entry",
+        ),
+        (
+            {"name": "cast_value", "configuration": {"data_type": "uint8"}},
+            "fill value cannot be cast",
+        ),
+    ],
+)
+def test_zarr_v3_scale_offset_cast_value_errors(tmp_vsimem, codec, error):
+    _create_zarr_v3_array(tmp_vsimem / "test.zarr", "float32", "NaN", [codec], b"")
+    with pytest.raises(Exception, match=error):
+        ds = gdal.Open(tmp_vsimem / "test.zarr", gdal.OF_MULTIDIM_RASTER)
+        ds.GetRootGroup().OpenMDArray("test")
