@@ -246,11 +246,17 @@ jobs:
       # Get the architecture so we can use it as part of the cache key,
       # but only if we are going to use avx2 in the build. If we are not,
       # including the arch will cause unnecessary cache misses.
+      # Also hash the -march=native flags: the -march name alone can match CPUs
+      # with different instruction sets (e.g. a VM may hide AVX-512).
       - name: Get Architecture
         id: get-arch
         if: matrix.use_avx2
         run: |
-            export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+            # CPU name GCC uses for -march=native, e.g. "znver3"
+            CPU_NAME=$(cc -march=native -Q --help=target | grep -E '^\s+-march=' | awk '{print $2}')
+            # Instruction sets enabled by -march=native, e.g. "-mavx2  [enabled]"
+            FLAGS=$(cc -march=native -Q --help=target | grep '\[enabled\]')
+            export ARCH="$CPU_NAME-$(echo "$FLAGS" | md5sum | cut -c1-8)"
             echo "Architecture: $ARCH"
             echo "arch=$ARCH" >> $GITHUB_OUTPUT
 
