@@ -252,10 +252,16 @@ jobs:
         id: get-arch
         if: matrix.use_avx2
         run: |
-            # CPU name GCC uses for -march=native, e.g. "znver3"
-            CPU_NAME=$(cc -march=native -Q --help=target | grep -E '^\s+-march=' | awk '{print $2}')
-            # Instruction sets enabled by -march=native, e.g. "-mavx2  [enabled]"
-            FLAGS=$(cc -march=native -Q --help=target | grep '\[enabled\]')
+            # Log the CPU, for info only (same as the container sees)
+            echo "CPU model: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
+            echo "AVX-512 available: $(grep -q avx512f /proc/cpuinfo && echo yes || echo no)"
+            # What -march=native enables with the container's compiler
+            TARGET_INFO=$(docker run --rm ${CONTAINER_NAME_FULL} cc -march=native -Q --help=target)
+            # CPU name, e.g. "znver2"
+            CPU_NAME=$(echo "$TARGET_INFO" | grep -E '^\s+-march=' | awk '{print $2}')
+            echo "CPU name (container GCC): $CPU_NAME"
+            # Options enabled by -march=native, e.g. "-mavx2  [enabled]"
+            FLAGS=$(echo "$TARGET_INFO" | grep '\[enabled\]')
             export ARCH="$CPU_NAME-$(echo "$FLAGS" | md5sum | cut -c1-8)"
             echo "Architecture: $ARCH"
             echo "arch=$ARCH" >> $GITHUB_OUTPUT
