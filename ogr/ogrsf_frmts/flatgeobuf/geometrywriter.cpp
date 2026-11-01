@@ -122,6 +122,7 @@ const Offset<Geometry>
 GeometryWriter::writeCompoundCurve(const OGRCompoundCurve *cc, int depth)
 {
     std::vector<Offset<Geometry>> parts;
+    parts.reserve(cc->getNumCurves());
     for (const auto curve : *cc)
         parts.push_back(writePart(curve, depth + 1));
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr,
@@ -142,6 +143,7 @@ const Offset<Geometry>
 GeometryWriter::writePolyhedralSurface(const OGRPolyhedralSurface *p, int depth)
 {
     std::vector<Offset<Geometry>> parts;
+    parts.reserve(p->getNumGeometries());
     for (const auto part : *p)
         parts.push_back(writePart(part, depth + 1));
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr,

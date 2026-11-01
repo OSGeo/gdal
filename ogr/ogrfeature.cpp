@@ -4359,6 +4359,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                 std::vector<int> anValues;
                 if (nCount == CSLCount(papszValueList) - 1)
                 {
+                    anValues.reserve(nCount);
                     for (int i = 0; i < nCount; i++)
                     {
                         // As allowed by C standard, some systems like
@@ -4386,6 +4387,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                 std::vector<GIntBig> anValues;
                 if (nCount == CSLCount(papszValueList) - 1)
                 {
+                    anValues.reserve(nCount);
                     for (int i = 0; i < nCount; i++)
                     {
                         const GIntBig nVal = CPLAtoGIntBigEx(
@@ -4402,6 +4404,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                 std::vector<double> adfValues;
                 if (nCount == CSLCount(papszValueList) - 1)
                 {
+                    adfValues.reserve(nCount);
                     for (int i = 0; i < nCount; i++)
                         adfValues.push_back(CPLAtof(papszValueList[i + 1]));
                     if (nCount > 0)
@@ -4426,6 +4429,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                 std::vector<char *> aosValues;
                 if (nCount == CSLCount(papszValueList) - 1)
                 {
+                    aosValues.reserve(nCount + 1);
                     for (int i = 0; i < nCount; i++)
                         aosValues.push_back(papszValueList[i + 1]);
                     aosValues.push_back(nullptr);
@@ -4758,6 +4762,8 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
     if (eType == OFTIntegerList)
     {
         std::vector<int> anValues;
+        if (nCount > 0)
+            anValues.reserve(nCount);
 
         for (int i = 0; i < nCount; i++)
         {
