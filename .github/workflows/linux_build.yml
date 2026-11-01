@@ -193,7 +193,7 @@ jobs:
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}   # zizmor: ignore[secrets-outside-env]
           password: ${{ secrets.DOCKERHUB_TOKEN }}   # zizmor: ignore[secrets-outside-env]
@@ -399,14 +399,14 @@ jobs:
           docker push ${CONTAINER_NAME_FULL}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: coverage_index.html
           path: build-${{ matrix.id }}/coverage_html/index.html
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: HTML
