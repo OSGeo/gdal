@@ -6429,3 +6429,24 @@ def test_ogr_pg_geometry_intersection_spatial_filter(
         assert f.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5)"
         f = sql_lyr.GetNextFeature()
         assert f is None
+
+
+###############################################################################
+# Test backslash characters are properly read when reading string lists
+
+
+@only_without_postgis
+def test_ogr_pg_string_list_escaping(pg_ds):
+
+    paths = [r"c:\data", r'c:\"Program Files"']
+
+    lyr = pg_ds.CreateLayer("paths")
+    lyr.CreateField(ogr.FieldDefn("txt", ogr.OFTStringList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["txt"] = paths
+    lyr.CreateFeature(f)
+
+    lyr.ResetReading()
+
+    f_out = lyr.GetNextFeature()
+    assert f_out["txt"] == paths
