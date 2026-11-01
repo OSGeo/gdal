@@ -1476,7 +1476,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 %typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 %typemap(jni) (double *argout[ANY]) "jdoubleArray"
@@ -1548,7 +1548,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 %typemap(freearg) (double argout[ANY])
 {
   /* %typemap(freearg) (double argout[ANY]) */
-  jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, 0);
+  if ( $1 ) jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, 0);
 }
 
 %typemap(jni) (double argout[ANY]) "jdoubleArray"
@@ -1587,10 +1587,12 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 
 %typemap(freearg) char ** {
     /* %typemap(freearg) char ** */
-    int i;
-    for (i=0; i<size$argnum-1; i++)
-      free($1[i]);
-    free($1);
+    if ( $1 ) {
+      int i;
+      for (i=0; i<size$argnum-1; i++)
+        free($1[i]);
+      free($1);
+    }
 }
 
 /* This allows a C function to return a char ** as a Java String array */
@@ -1684,7 +1686,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 
 %typemap(freearg) (ctype *regularArrayOut, size_t nRegularArraySizeOut)
 {
-  if (result == CE_None)  // testing the CPL result
+  if ($1 && result == CE_None)  // testing the CPL result
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
@@ -1754,7 +1756,7 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *regularArrayIn, size_t nRegularArraySizeIn)
 {
-  jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
+  if ( $1 ) jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
 }
 
 
@@ -1822,7 +1824,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(freearg) (ctype *arrayOut, size_t arraySize)
 {
-  if (result)  // testing the boolean function result
+  if ($1 && result)  // testing the boolean function result
     jenv->element_setter($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
@@ -1892,7 +1894,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *arrayIn, size_t arraySize)
 {
-  jenv->element_releaser($input, (jtype*) $1, JNI_ABORT);
+  if ( $1 ) jenv->element_releaser($input, (jtype*) $1, JNI_ABORT);
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
@@ -2192,8 +2194,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(freearg) (int* pnCountOut, int** outErrorCodes)
 {
   /* %typemap(freearg) (int* pnCountOut, int** outErrorCodes) */
-  int* errorCodes = *($2);
-  VSIFree(errorCodes);
+  if ( $2 ) VSIFree(*($2));
 }
 
 %typemap(jni) (int* pnCountOut, int** outErrorCodes) "jintArray"
@@ -2293,8 +2294,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
     /* %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ) */
-    VSIFree(*$2);
-    VSIFree(*$3);
+    if ( $2 ) VSIFree(*$2);
+    if ( $3 ) VSIFree(*$3);
 }
 
 %typemap(argout) (retGetPoints*)
