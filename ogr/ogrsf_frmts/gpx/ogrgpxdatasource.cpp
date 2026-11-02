@@ -193,6 +193,12 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
     }
     else if (m_validity == GPX_VALIDITY_VALID)
     {
+        // Any <extensions> element, at any level means the file uses extensions
+        if (strcmp(pszNameIn, "extensions") == 0)
+        {
+            m_bUseExtensions = true;
+        }
+
         if (m_nDepth == 1 && strcmp(pszNameIn, "metadata") == 0)
         {
             m_bInMetadata = true;
@@ -332,10 +338,6 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
             {
                 m_osMetadataKey = "AUTHOR_LINK_TYPE";
             }
-        }
-        else if (m_nDepth == 2 && strcmp(pszNameIn, "extensions") == 0)
-        {
-            m_bUseExtensions = true;
         }
     }
     m_nDepth++;
