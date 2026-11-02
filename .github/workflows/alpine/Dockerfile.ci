@@ -92,10 +92,7 @@ RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages num
 COPY requirements.txt /tmp/
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt
 
-# Pin SWIG to the commit before swig/swig@f8cf11b, which breaks GDAL's freearg typemaps
-# TODO go back to master once resolved
-ARG SWIG_GIT_REF=e39467af72bde8644701cafc0eb7a2a2dad832b8
-# ARG SWIG_GIT_REF=master
+ARG SWIG_GIT_REF=master
 
 RUN apk add git autoconf automake libtool bison && \
     wget https://github.com/swig/swig/archive/${SWIG_GIT_REF}.tar.gz -O swig.tar.gz && \

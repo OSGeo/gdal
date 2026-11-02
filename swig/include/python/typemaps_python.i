@@ -338,7 +338,7 @@ CreateTupleFromDoubleArray( const double *first, size_t size ) {
 %typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 %typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
@@ -713,7 +713,7 @@ CreateCDoubleListFromSequence( PyObject* pySeq, int* pnSize ) {
 %typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  VSIFree( *$2 );
+  if ( $2 ) VSIFree( *$2 );
 }
 
 %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
@@ -737,7 +737,7 @@ CreateCDoubleListFromSequence( PyObject* pySeq, int* pnSize ) {
 %typemap(freearg) (size_t *nLen, char **pBuf )
 {
   /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-  VSIFree( *$2 );
+  if ( $2 ) VSIFree( *$2 );
 }
 
 
@@ -1571,7 +1571,7 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
 %typemap(freearg) (char **argout)
 {
   /* %typemap(freearg) (char **argout) */
-  if ( *$1 )
+  if ( $1 && *$1 )
     CPLFree( *$1 );
 }
 
@@ -2527,8 +2527,8 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
     /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
-    VSIFree(*$2);
-    VSIFree(*$3);
+    if ( $2 ) VSIFree(*$2);
+    if ( $3 ) VSIFree(*$3);
 }
 
 %typemap(in) (GDALDataType eType)
@@ -2807,8 +2807,8 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(freearg) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL)
 {
     /* %typemap(freearg) (OOSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
-    OSRFreeSRSArray( *($1) );
-    CPLFree( *($3) );
+    if ( $1 ) OSRFreeSRSArray( *($1) );
+    if ( $3 ) CPLFree( *($3) );
 }
 
 /*
@@ -2849,7 +2849,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount)
 {
   /* %typemap(freearg) (OSRCRSInfo*** pList, int* pnListCount) */
-  OSRDestroyCRSInfoList( *($1) );
+  if ( $1 ) OSRDestroyCRSInfoList( *($1) );
 }
 
 
@@ -2881,7 +2881,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount) */
-  GDALReleaseAttributes(*$1, *$2);
+  if ( $1 && $2 ) GDALReleaseAttributes(*$1, *$2);
 }
 
 OBJECT_LIST_INPUT(GDALDimensionHS);
@@ -2968,7 +2968,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount) */
-  GDALReleaseDimensions(*$1, *$2);
+  if ( $1 && $2 ) GDALReleaseDimensions(*$1, *$2);
 }
 
 
@@ -3000,7 +3000,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount) */
-  GDALReleaseArrays(*$1, *$2);
+  if ( $1 && $2 ) GDALReleaseArrays(*$1, *$2);
 }
 
 /*
@@ -3031,7 +3031,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (GUIntBig** pvals, size_t* pnCount)
 {
   /* %typemap(freearg) (GUIntBig** pvals, size_t* pnCount) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 /*
@@ -3054,7 +3054,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (int** pvals, size_t* pnCount)
 {
   /* %typemap(freearg) (int** pvals, size_t* pnCount) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 /*
@@ -3077,7 +3077,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (long long** pvals, size_t* pnCount)
 {
   /* %typemap(freearg) (long long** pvals, size_t* pnCount) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 /*
@@ -3100,7 +3100,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (double** pvals, size_t* pnCount)
 {
   /* %typemap(freearg) (double** pvals, size_t* pnCount) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 /*
@@ -3131,7 +3131,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
-  GDALExtendedDataTypeFreeComponents(*$1, *$2);
+  if ( $1 && $2 ) GDALExtendedDataTypeFreeComponents(*$1, *$2);
 }
 
 OBJECT_LIST_INPUT(GDALEDTComponentHS)
@@ -3421,7 +3421,7 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount)
 {
     /* %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
-    VSIFree(*$1);
+    if ( $1 ) VSIFree(*$1);
 }
 
 /***************************************************
@@ -3463,7 +3463,7 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount)
 {
     /* %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
-    OSRFreeSRSArray(*$1);
+    if ( $1 ) OSRFreeSRSArray(*$1);
 }
 
 
