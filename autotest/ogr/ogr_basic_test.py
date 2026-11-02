@@ -1295,7 +1295,10 @@ def test_geom_use_after_add_geometry_directly_feature_delete():
 
     del feat
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Geometry_GetPointCount', argument 1 of type 'OGRGeometryShadow \*'",
+    ):
         ring.GetPointCount()
 
 
