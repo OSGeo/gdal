@@ -193,7 +193,7 @@ jobs:
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}   # zizmor: ignore[secrets-outside-env]
           password: ${{ secrets.DOCKERHUB_TOKEN }}   # zizmor: ignore[secrets-outside-env]
@@ -246,11 +246,23 @@ jobs:
       # Get the architecture so we can use it as part of the cache key,
       # but only if we are going to use avx2 in the build. If we are not,
       # including the arch will cause unnecessary cache misses.
+      # Also hash the -march=native flags: the -march name alone can match CPUs
+      # with different instruction sets (e.g. a VM may hide AVX-512).
       - name: Get Architecture
         id: get-arch
         if: matrix.use_avx2
         run: |
-            export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+            # Log the CPU, for info only (same as the container sees)
+            echo "CPU model: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
+            echo "AVX-512 available: $(grep -q avx512f /proc/cpuinfo && echo yes || echo no)"
+            # What -march=native enables with the container's compiler
+            TARGET_INFO=$(docker run --rm ${CONTAINER_NAME_FULL} cc -march=native -Q --help=target)
+            # CPU name, e.g. "znver2"
+            CPU_NAME=$(echo "$TARGET_INFO" | grep -E '^\s+-march=' | awk '{print $2}')
+            echo "CPU name (container GCC): $CPU_NAME"
+            # Options enabled by -march=native, e.g. "-mavx2  [enabled]"
+            FLAGS=$(echo "$TARGET_INFO" | grep '\[enabled\]')
+            export ARCH="$CPU_NAME-$(echo "$FLAGS" | md5sum | cut -c1-8)"
             echo "Architecture: $ARCH"
             echo "arch=$ARCH" >> $GITHUB_OUTPUT
 
@@ -399,14 +411,14 @@ jobs:
           docker push ${CONTAINER_NAME_FULL}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: coverage_index.html
           path: build-${{ matrix.id }}/coverage_html/index.html
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: HTML

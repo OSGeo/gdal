@@ -1120,76 +1120,71 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             OGRField sDefault;
             OGR_RawField_SetUnset(&sDefault);
-            if (flags & FileGDBField::MASK_EDITABLE)
+            // Default value
+            // Found on PreNIS.gdb/a0000000d.gdbtable
+            if (defaultValueLength > 0)
             {
-                /* Default value */
-                /* Found on PreNIS.gdb/a0000000d.gdbtable */
                 returnErrorIf(nRemaining < defaultValueLength);
-                if (defaultValueLength)
+                if (eType == FGFT_STRING)
                 {
-                    if (eType == FGFT_STRING)
+                    if (m_bStringsAreUTF8)
                     {
-                        if (m_bStringsAreUTF8)
-                        {
-                            sDefault.String = static_cast<char *>(
-                                CPLMalloc(defaultValueLength + 1));
-                            memcpy(sDefault.String, pabyIter,
-                                   defaultValueLength);
-                            sDefault.String[defaultValueLength] = 0;
-                        }
-                        else
-                        {
-                            m_osTempString = ReadUTF16String(
-                                pabyIter, defaultValueLength / 2);
-                            sDefault.String = CPLStrdup(m_osTempString.c_str());
-                        }
+                        sDefault.String = static_cast<char *>(
+                            CPLMalloc(defaultValueLength + 1));
+                        memcpy(sDefault.String, pabyIter, defaultValueLength);
+                        sDefault.String[defaultValueLength] = 0;
                     }
-                    else if (eType == FGFT_INT16 && defaultValueLength == 2)
+                    else
                     {
-                        sDefault.Integer = GetInt16(pabyIter, 0);
-                        sDefault.Set.nMarker2 = 0;
-                        sDefault.Set.nMarker3 = 0;
+                        m_osTempString =
+                            ReadUTF16String(pabyIter, defaultValueLength / 2);
+                        sDefault.String = CPLStrdup(m_osTempString.c_str());
                     }
-                    else if (eType == FGFT_INT32 && defaultValueLength == 4)
-                    {
-                        sDefault.Integer = GetInt32(pabyIter, 0);
-                        sDefault.Set.nMarker2 = 0;
-                        sDefault.Set.nMarker3 = 0;
-                    }
-                    else if (eType == FGFT_FLOAT32 && defaultValueLength == 4)
-                    {
-                        sDefault.Real = GetFloat32(pabyIter, 0);
-                    }
-                    else if (eType == FGFT_FLOAT64 && defaultValueLength == 8)
-                    {
-                        sDefault.Real = GetFloat64(pabyIter, 0);
-                    }
-                    else if ((eType == FGFT_DATETIME || eType == FGFT_DATE) &&
-                             defaultValueLength == 8)
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        FileGDBDoubleDateToOGRDate(dfVal, true, &sDefault);
-                    }
-                    else if (eType == FGFT_TIME && defaultValueLength == 8)
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        FileGDBDoubleTimeToOGRTime(dfVal, &sDefault);
-                    }
-                    else if (eType == FGFT_INT64 && defaultValueLength == 8)
-                    {
-                        sDefault.Integer64 = GetInt64(pabyIter, 0);
-                        sDefault.Set.nMarker3 = 0;
-                    }
-                    else if (eType == FGFT_DATETIME_WITH_OFFSET &&
-                             defaultValueLength ==
-                                 sizeof(double) + sizeof(int16_t))
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        const int16_t nUTCOffset =
-                            GetInt16(pabyIter + sizeof(double), 0);
-                        FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
-                                                           &sDefault);
-                    }
+                }
+                else if (eType == FGFT_INT16 && defaultValueLength == 2)
+                {
+                    sDefault.Integer = GetInt16(pabyIter, 0);
+                    sDefault.Set.nMarker2 = 0;
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_INT32 && defaultValueLength == 4)
+                {
+                    sDefault.Integer = GetInt32(pabyIter, 0);
+                    sDefault.Set.nMarker2 = 0;
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_FLOAT32 && defaultValueLength == 4)
+                {
+                    sDefault.Real = GetFloat32(pabyIter, 0);
+                }
+                else if (eType == FGFT_FLOAT64 && defaultValueLength == 8)
+                {
+                    sDefault.Real = GetFloat64(pabyIter, 0);
+                }
+                else if ((eType == FGFT_DATETIME || eType == FGFT_DATE) &&
+                         defaultValueLength == 8)
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    FileGDBDoubleDateToOGRDate(dfVal, true, &sDefault);
+                }
+                else if (eType == FGFT_TIME && defaultValueLength == 8)
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    FileGDBDoubleTimeToOGRTime(dfVal, &sDefault);
+                }
+                else if (eType == FGFT_INT64 && defaultValueLength == 8)
+                {
+                    sDefault.Integer64 = GetInt64(pabyIter, 0);
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_DATETIME_WITH_OFFSET &&
+                         defaultValueLength == sizeof(double) + sizeof(int16_t))
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    const int16_t nUTCOffset =
+                        GetInt16(pabyIter + sizeof(double), 0);
+                    FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
+                                                       &sDefault);
                 }
 
                 pabyIter += defaultValueLength;
