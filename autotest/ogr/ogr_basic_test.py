@@ -1267,6 +1267,38 @@ def test_subgeom_use_after_geom_destroy():
         ring.GetPointCount()
 
 
+def _make_ring():
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    for x, y in [(0, 0), (0, 1), (1, 1), (0, 0)]:
+        ring.AddPoint_2D(x, y)
+    return ring
+
+
+def test_geom_use_after_add_geometry_directly_parent_delete():
+
+    ring = _make_ring()
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometryDirectly(ring)
+
+    del poly
+
+    assert ring.GetPointCount() == 4
+
+
+def test_geom_use_after_add_geometry_directly_feature_delete():
+
+    feat = ogr.Feature(ogr.FeatureDefn())
+    feat.SetGeometry(ogr.Geometry(ogr.wkbPolygon))
+    ring = _make_ring()
+    feat.GetGeometryRef().AddGeometryDirectly(ring)
+
+    del feat
+
+    with pytest.raises(Exception):
+        ring.GetPointCount()
+
+
 def test_geom_use_after_transfer_to_feature_1(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_vsimem / "test.shp")
