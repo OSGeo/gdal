@@ -170,7 +170,6 @@ def TransformPoint(self, *args):
     >>> ct.TransformPoint(44.26, -72.58, 103)
     (1619458.11, 641509.19, 103.0) # rtol: 1e-6
     >>> ct.TransformPoint(90.1, -70)
-    ERROR 1: PROJ: tmerc: Invalid latitude
     (inf, inf, inf)
     """
 
