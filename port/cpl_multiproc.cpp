@@ -1148,6 +1148,7 @@ typedef struct
     void *pAppData;
     CPLThreadFunc pfnMain;
     HANDLE hThread;
+    bool bJoinable;
 } CPLStdCallThreadInfo;
 
 static DWORD WINAPI CPLStdCallThreadJacket(void *pData)
@@ -1157,8 +1158,9 @@ static DWORD WINAPI CPLStdCallThreadJacket(void *pData)
 
     psInfo->pfnMain(psInfo->pAppData);
 
-    if (psInfo->hThread == nullptr)
-        CPLFree(psInfo);  // Only for detached threads.
+    // Only for detached threads
+    if (!psInfo->bJoinable)
+        CPLFree(psInfo);
 
     CPLCleanupTLS();
 
@@ -1181,6 +1183,7 @@ int CPLCreateThread(CPLThreadFunc pfnMain, void *pThreadArg)
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
     psInfo->hThread = nullptr;
+    psInfo->bJoinable = false;
 
     DWORD nThreadId = 0;
     HANDLE hThread =
@@ -1206,6 +1209,7 @@ CPLJoinableThread *CPLCreateJoinableThread(CPLThreadFunc pfnMain,
         CPLCalloc(sizeof(CPLStdCallThreadInfo), 1));
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
+    psInfo->bJoinable = true;
 
     DWORD nThreadId = 0;
     HANDLE hThread =
