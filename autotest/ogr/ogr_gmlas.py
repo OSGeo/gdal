@@ -3402,6 +3402,7 @@ def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 # Test bugfix for https://github.com/r-spatial/sf/issues/2371
 
 
+@gdaltest.enable_exceptions()
 @pytest.mark.require_curl()
 def test_ogr_gmlas_bugfix_sf_2371():
 
@@ -3410,16 +3411,19 @@ def test_ogr_gmlas_bugfix_sf_2371():
         "http://docs.oasis-open.org/election/external/xAL.xsd",
     )
 
-    ds = gdal.Open("GMLAS:data/gmlas/citygml_empty_lod1.gml")
+    for url in urls:
+        conn = gdaltest.gdalurlopen(url, timeout=4)
+        if conn is None:
+            pytest.skip(f"cannot open {url}")
 
-    if ds is None:
-        for url in urls:
-            conn = gdaltest.gdalurlopen(url, timeout=4)
-            if conn is None:
-                pytest.skip(f"cannot open {url}")
-        # "ERROR 1: http://docs.oasis-open.org/election/external/xAL.xsd:1:1342
-        # element name expected" on some Ubuntu CI runners
-        pytest.skip("GMLAS open failed although schema URLs are reachable")
+    try:
+        ds = gdal.Open("GMLAS:data/gmlas/citygml_empty_lod1.gml")
+    except Exception as e:
+        # Remote schemas (or their imports) can still fail during the open, e.g.
+        # "Could not resolve host: repository.gdi-de.org"
+        if "resolve" in str(e):
+            pytest.skip(str(e))
+        raise
 
     lyr = ds.GetLayerByName("address1")
     assert lyr.GetFeatureCount() == 0
@@ -3491,6 +3495,7 @@ def test_ogr_gmlas_choice_inlined(filename, attrname, value):
 # Test opening a CityGML 2.0 file without schema location
 
 
+@gdaltest.enable_exceptions()
 @pytest.mark.require_curl()
 def test_ogr_gmlas_citygml_lod2_no_schema_location():
 
@@ -3499,16 +3504,19 @@ def test_ogr_gmlas_citygml_lod2_no_schema_location():
         "http://docs.oasis-open.org/election/external/xAL.xsd",
     )
 
-    ds = gdal.Open("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
+    for url in urls:
+        conn = gdaltest.gdalurlopen(url, timeout=4)
+        if conn is None:
+            pytest.skip(f"cannot open {url}")
 
-    if ds is None:
-        for url in urls:
-            conn = gdaltest.gdalurlopen(url, timeout=4)
-            if conn is None:
-                pytest.skip(f"cannot open {url}")
-        # "ERROR 1: http://docs.oasis-open.org/election/external/xAL.xsd:1:1342
-        # element name expected" on some Ubuntu CI runners
-        pytest.skip("GMLAS open failed although schema URLs are reachable")
+    try:
+        ds = gdal.Open("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
+    except Exception as e:
+        # Remote schemas (or their imports) can still fail during the open, e.g.
+        # "Could not resolve host: schemas.opengis.net"
+        if "resolve" in str(e):
+            pytest.skip(str(e))
+        raise
 
     assert ds.GetLayerCount() == 1537
 
