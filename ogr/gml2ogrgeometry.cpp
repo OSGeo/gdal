@@ -828,10 +828,10 @@ static double GetUOMInMetre(const char *pszUnits, const char *pszAttribute,
     if (EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]"))
         return CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
 
-    if (EQUAL(pszUnits, "mi"))
+    if (EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "[mi_i]"))
         return CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
 
-    if (EQUAL(pszUnits, "ft"))
+    if (EQUAL(pszUnits, "ft") || EQUAL(pszUnits, "[ft_i]"))
         return CPLAtof(SRS_UL_INTL_FOOT_CONV);
 
     if (pszId)
