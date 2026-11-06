@@ -113,6 +113,7 @@ height
 hide-nodata
 high-pitch
 hist
+identify
 id-metadata-item
 id-method
 ignore-missing-fields
@@ -240,6 +241,7 @@ output-min
 output-nodata
 output-open-option
 output-string
+output-type
 overlay
 overview
 overview-resampling
@@ -287,6 +289,7 @@ sd-filename
 side
 simplify-tolerance
 single
+single-line
 size
 size-threshold
 skip
@@ -352,6 +355,7 @@ upsert
 url
 use-source-timestamp
 use-tempfile
+validate
 variant
 verbose
 visible-value

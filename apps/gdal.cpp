@@ -197,7 +197,7 @@ MAIN_START(argc, argv)
         }
     }
 
-    // Process generic cmomand options
+    // Process generic command options
     argc = GDALGeneralCmdLineProcessor(
         argc, &argv, GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_MULTIDIM_RASTER);
     for (auto &pair : apOrigFormat)

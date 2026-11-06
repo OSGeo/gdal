@@ -574,7 +574,10 @@ Other utilities
    :hidden:
 
    sozip
+   gdal_crs
+   gdal_crs_info
 
 .. only:: html
 
     - :ref:`sozip`: Generate a seek-optimized ZIP (SOZip) file
+    - :ref:`gdal_crs`: Commands to manage coordinate reference systems (CRS)
