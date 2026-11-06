@@ -256,3 +256,12 @@ def test_aigrid_online_2():
 
 
 ###############################################################################
+
+
+def test_aigrid_delete(tmp_path):
+
+    shutil.copytree("data/aigrid/abc3x1", tmp_path / "abc3x1")
+
+    gdal.GetDriverByName("AIG").Delete(tmp_path / "abc3x1")
+
+    assert not os.listdir(tmp_path)

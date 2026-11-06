@@ -1033,6 +1033,11 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         self._add_geom_ref(val)
 %}
 
+%feature("pythonappend") AddGeometryDirectly %{
+    args[0]._parent_geom = self
+    self._add_geom_ref(args[0])
+%}
+
 }
 
 

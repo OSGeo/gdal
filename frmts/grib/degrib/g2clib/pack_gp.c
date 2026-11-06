@@ -1442,7 +1442,6 @@ L420:
 	if (*ier == 714 || *ier == 715) {
 /*              REDUCE HAS ABORTED.  REEXECUTE PACK_GP WITHOUT REDUCE. */
 /*              PROVIDE FOR A NON FATAL RETURN FROM REDUCE. */
-	    iersav = *ier;
 	    ired = 1;
 	    *ier = 0;
 	    goto L102;

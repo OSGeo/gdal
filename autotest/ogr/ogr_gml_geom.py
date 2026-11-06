@@ -2455,6 +2455,29 @@ def test_gml_CircleByCenterPoint_srs_geog_unnhandled_uom():
 
 
 ###############################################################################
+# Test GML CircleByCenterPoint with uom="[nmi_i]", "[mi_i]" and "[ft_i]"
+
+
+def test_gml_CircleByCenterPoint_uom_ics():
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="m">1000</gml:radius></gml:CircleByCenterPoint>'
+    geom1 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[nmi_i]">0.5399568034557235</gml:radius></gml:CircleByCenterPoint>'
+    geom2 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[mi_i]">0.6213711922373341</gml:radius></gml:CircleByCenterPoint>'
+    geom3 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[ft_i]">3280.8398950131236</gml:radius></gml:CircleByCenterPoint>'
+    geom4 = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(geom1, geom2)
+    ogrtest.check_feature_geometry(geom1, geom3)
+    ogrtest.check_feature_geometry(geom1, geom4)
+
+
+###############################################################################
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match
 # with ends of neighbouring curves, as found in some AIXM files
 # with all curves in the same <segment> element as found in #2356)
