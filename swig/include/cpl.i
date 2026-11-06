@@ -895,23 +895,43 @@ int wrapper_VSIStatL( const char * path, StatBuf *psStatBufOut, int nFlags = 0 )
 
 #endif
 
-%rename (GetFileMetadata) VSIGetFileMetadata;
+%rename("%(regex:/.*VSIGetFileMetadata/GetFileMetadata/)s") "";
 #if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 %apply (char **dictAndCSLDestroy) { char ** };
 #else
 %apply (char **) { char ** };
 #endif
 %apply (char **options) { char ** options };
+#if defined(SWIGPYTHON)
 char** VSIGetFileMetadata( const char *path, const char* domain,
                            char** options = NULL );
+#else
+%inline {
+  char** wrapper_VSIGetFileMetadata( const char *path, const char* domain,
+                                     char** options = NULL ) {
+    return VSIGetFileMetadata(path, domain, options);
+  }
+}
+#endif
 %clear char **;
 
-%rename (SetFileMetadata) VSISetFileMetadata;
+%rename("%(regex:/.*VSISetFileMetadata/SetFileMetadata/)s") "";
 %apply (char **dict) { char ** metadata };
+#if defined(SWIGPYTHON)
 bool VSISetFileMetadata( const char * path,
                          char** metadata,
                          const char* domain,
                          char** options = NULL );
+#else
+%inline {
+  bool wrapper_VSISetFileMetadata( const char * path,
+                                   char** metadata,
+                                   const char* domain,
+                                   char** options = NULL ) {
+    return VSISetFileMetadata(path, metadata, domain, options);
+  }
+}
+#endif
 %clear char **;
 
 %apply Pointer NONNULL {VSILFILE* fp};
@@ -1035,7 +1055,16 @@ int     VSIFWriteL( const char *pBuffer, int nSize, int nCount, VSILFILE *fp );
 const char* CPLReadLineL(VSILFILE* fp);
 
 void VSINetworkStatsReset();
+#if defined(SWIGPYTHON)
 retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );
+#else
+%rename (NetworkStatsGetAsSerializedJSON) wrapper_VSINetworkStatsGetAsSerializedJSON;
+%inline {
+retStringAndCPLFree* wrapper_VSINetworkStatsGetAsSerializedJSON( char** options = NULL ) {
+    return VSINetworkStatsGetAsSerializedJSON(options);
+  }
+}
+#endif
 
 #endif /* !defined(SWIGJAVA) */
 
