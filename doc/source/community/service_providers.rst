@@ -47,16 +47,6 @@ the most out of it.
 
 .. container:: service-provider
 
-  |logo_spatialys|
-
-  .. container:: service-provider-description
-
-      `Spatialys`_ (France) is a company founded by Even Rouault that is dedicated
-      to providing to its clients the best of its expertise around Open Source
-      geospatial software - such as GDAL/OGR, PROJ, MapServer, and QGIS - and Open standards.
-
-.. container:: service-provider
-
   |logo_hobu|
 
   .. container:: service-provider-description

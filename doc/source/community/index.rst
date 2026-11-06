@@ -178,7 +178,6 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Daniel Morissette    (`@dmorissette <https://github.com/dmorissette>`__)
 - Howard Butler        (`@hobu <https://github.com/hobu>`__)
 - Tamas Szekeres       (`@szekerest <https://github.com/szekerest>`__)
-- Even Rouault (chair) (`@rouault <https://github.com/rouault>`__)
 - Jukka Rahkonen       (`@jratike80 <https://github.com/jratike80>`__)
 - Kurt Schwehr         (`@schwehr <https://github.com/schwehr>`__)
 - Norman Barker        (`@normanb <https://github.com/normanb>`__)
@@ -191,6 +190,7 @@ Past members:
 - Andrey Kiselev       (@strezen) (retired in 2019)
 - Mateusz Łoskot       (@mloskot) (retired in 2023)
 - Sean Gillies         (@sgillies) (retired in 2025)
+- Even Rouault         (@rouault) (retired in 2026)
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
