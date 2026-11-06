@@ -280,7 +280,7 @@ def test_rat_readasarray():
         np.array([False, True, False, True, False], dtype=np.bool_),
     )
 
-    # Test GFT_DateTime
+    # Test GFT_DateTime with a timezone
     dt = datetime.datetime(
         2025,
         12,
@@ -290,6 +290,23 @@ def test_rat_readasarray():
         59,
         500000,
         tzinfo=datetime.timezone(datetime.timedelta(seconds=4500)),
+    )
+    rat.WriteArray(np.array([dt, None], dtype=object), 4, 0)
+    np.testing.assert_array_equal(
+        rat.ReadAsArray(4, 0, 2),
+        np.array([dt, None], dtype=object),
+    )
+
+    # Test GFT_DateTime without a timezone
+    dt = datetime.datetime(
+        2025,
+        12,
+        31,
+        10,
+        30,
+        59,
+        500000,
+        tzinfo=None,
     )
     rat.WriteArray(np.array([dt, None], dtype=object), 4, 0)
     np.testing.assert_array_equal(
