@@ -907,6 +907,35 @@ def test_tiff_read_tiepoints_pixelispoint():
 
 
 ###############################################################################
+# Test reading AREA_OR_POINT metadata from GeoTIFF with and without PAM
+
+
+@pytest.mark.parametrize("md_value", ("Area", "Point"))
+def test_tiff_read_area_or_point_pam(tmp_vsimem, md_value):
+
+    src_fname = tmp_vsimem / "src.tif"
+    pam_fname = tmp_vsimem / "src.tif.aux.xml"
+
+    with gdal.GetDriverByName("GTiff").Create(src_fname, 1, 1) as src_ds:
+        src_ds.GetRasterBand(1).Fill(255)
+        src_ds.SetSpatialRef(osr.SpatialReference(epsg=32632))
+        src_ds.SetMetadataItem("AREA_OR_POINT", md_value)
+
+    assert not gdal.VSIStatL(pam_fname)
+
+    with gdal.Open(src_fname) as ds:
+        assert ds.GetMetadata()["AREA_OR_POINT"] == md_value
+
+    with gdal.VSIFile(pam_fname, "w") as pf:
+        pf.write(
+            '<PAMDataset><SRS dataAxisToSRSAxisMapping="1,2">EPSG:32632</SRS></PAMDataset>'
+        )
+
+    with gdal.Open(src_fname) as ds:
+        assert ds.GetMetadata()["AREA_OR_POINT"] == md_value
+
+
+###############################################################################
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
 
