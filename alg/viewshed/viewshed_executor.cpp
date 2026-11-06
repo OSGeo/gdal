@@ -1208,7 +1208,8 @@ bool ViewshedExecutor::run()
                               std::numeric_limits<double>::quiet_NaN());
             }
         });
-    return true;
+    pQueue->WaitCompletion();
+    return !err;
 }
 
 }  // namespace viewshed
