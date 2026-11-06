@@ -17,6 +17,7 @@
 
 #include "cpl_string.h"
 
+#include <atomic>
 #include <limits>
 
 //! @cond Doxygen_Suppress

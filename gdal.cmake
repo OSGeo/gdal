@@ -321,6 +321,9 @@ set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
 function (is_sharp_embed_available res)
     if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.21 AND
+        # Support for C23 and Clang-cl only exists from cmake 4.1 onwards
+        ((CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC" AND CMAKE_VERSION VERSION_GREATER_EQUAL 4.1) OR
+         (NOT CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")) AND
         ((CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 15.0) OR
          (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.0)))
         # CMAKE_C_STANDARD=23 only supported since CMake 3.21
@@ -558,7 +561,7 @@ target_include_directories(
          $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # MSVC specific resource preparation
-if (MSVC)
+if (MSVC AND BUILD_SHARED_LIBS)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
   source_group("Resource Files" FILES gcore/Version.rc)
 endif ()
