@@ -144,8 +144,9 @@ struct PolygonContourWriter
 
         if (currentGeometry_->getNumGeometries() > 0)
         {
-            OGRPolygonContourWriter(previousLevel_, currentLevel_,
-                                    *currentGeometry_, poInfo_);
+            if (OGRPolygonContourWriter(previousLevel_, currentLevel_,
+                                        *currentGeometry_, poInfo_) != CE_None)
+                failed_ = true;
         }
 
         currentGeometry_.reset(nullptr);
@@ -186,6 +187,7 @@ struct PolygonContourWriter
     OGRContourWriterInfo *poInfo_ = nullptr;
     double currentLevel_ = 0;
     double previousLevel_ = 0;
+    bool failed_ = false;
 };
 
 struct GDALRingAppender
@@ -211,12 +213,21 @@ struct GDALRingAppender
         }
 
         if (write_(level, int(sz), &xs[0], &ys[0], data_) != CE_None)
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "cannot write linestring");
+            failed_ = true;
+        }
+    }
+
+    bool failed() const
+    {
+        return failed_;
     }
 
   private:
     GDALContourWriter write_;
     void *data_;
+    bool failed_ = false;
 };
 
 /************************************************************************/
@@ -833,76 +844,82 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
             }
 
             PolygonContourWriter w(&oCWI, dfMinimum);
-            typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
-            // Ring coordinates reach the appender in raster space (the
-            // writer applies the geotransform), so the spatial index's
-            // domain is the raster extent plus the border cells.
-            RingAppender appender(w, -1.0, -1.0,
-                                  GDALGetRasterBandXSize(hBand) + 1.0,
-                                  GDALGetRasterBandYSize(hBand) + 1.0);
+            {
+                typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
+                // Ring coordinates reach the appender in raster space (the
+                // writer applies the geotransform), so the spatial index's
+                // domain is the raster extent plus the border cells.
+                RingAppender appender(w, -1.0, -1.0,
+                                      GDALGetRasterBandXSize(hBand) + 1.0,
+                                      GDALGetRasterBandYSize(hBand) + 1.0);
 
-            if (expBase > 0.0)
-            {
-                // Do not provide the actual minimum value to level iterator
-                // in polygonal case, otherwise it can result in a polygon
-                // with a degenerate min=max range.
-                ExponentialLevelRangeIterator generator(
-                    expBase, -std::numeric_limits<double>::infinity());
-                auto levelIt{generator.range(dfMinimum, dfMaximum)};
-                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                if (expBase > 0.0)
                 {
-                    const double level = (*i).second;
-                    fixedLevels.push_back(level);
+                    // Do not provide the actual minimum value to level iterator
+                    // in polygonal case, otherwise it can result in a polygon
+                    // with a degenerate min=max range.
+                    ExponentialLevelRangeIterator generator(
+                        expBase, -std::numeric_limits<double>::infinity());
+                    auto levelIt{generator.range(dfMinimum, dfMaximum)};
+                    for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                    {
+                        const double level = (*i).second;
+                        fixedLevels.push_back(level);
+                    }
+                    // Append minimum value to fixed levels
+                    fixedLevels.push_back(dfMinimum);
+                    // Append maximum value to fixed levels
+                    fixedLevels.push_back(dfMaximum);
                 }
-                // Append minimum value to fixed levels
-                fixedLevels.push_back(dfMinimum);
-                // Append maximum value to fixed levels
-                fixedLevels.push_back(dfMaximum);
-            }
-            else if (contourInterval != 0)
-            {
-                // Do not provide the actual minimum value to level iterator
-                // in polygonal case, otherwise it can result in a polygon
-                // with a degenerate min=max range.
-                IntervalLevelRangeIterator generator(
-                    contourBase, contourInterval,
-                    -std::numeric_limits<double>::infinity());
-                auto levelIt{generator.range(dfMinimum, dfMaximum)};
-                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                else if (contourInterval != 0)
                 {
-                    const double level = (*i).second;
-                    fixedLevels.push_back(level);
+                    // Do not provide the actual minimum value to level iterator
+                    // in polygonal case, otherwise it can result in a polygon
+                    // with a degenerate min=max range.
+                    IntervalLevelRangeIterator generator(
+                        contourBase, contourInterval,
+                        -std::numeric_limits<double>::infinity());
+                    auto levelIt{generator.range(dfMinimum, dfMaximum)};
+                    for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                    {
+                        const double level = (*i).second;
+                        fixedLevels.push_back(level);
+                    }
+                    // Append minimum value to fixed levels
+                    fixedLevels.push_back(dfMinimum);
+                    // Append maximum value to fixed levels
+                    fixedLevels.push_back(dfMaximum);
                 }
-                // Append minimum value to fixed levels
-                fixedLevels.push_back(dfMinimum);
-                // Append maximum value to fixed levels
-                fixedLevels.push_back(dfMaximum);
-            }
 
-            if (!fixedLevels.empty())
-            {
-                std::sort(fixedLevels.begin(), fixedLevels.end());
-                auto uniqueIt =
-                    std::unique(fixedLevels.begin(), fixedLevels.end());
-                fixedLevels.erase(uniqueIt, fixedLevels.end());
-                // Do not provide the actual minimum value to level iterator
-                // in polygonal case, otherwise it can result in a polygon
-                // with a degenerate min=max range.
-                FixedLevelRangeIterator levels(
-                    &fixedLevels[0], fixedLevels.size(),
-                    -std::numeric_limits<double>::infinity(), dfMaximum);
-                SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(
-                    appender, levels, /* polygonize */ true);
-                std::vector<int> aoiSkipLevels;
-                // Skip first and last levels (min/max) in polygonal case
-                aoiSkipLevels.push_back(0);
-                aoiSkipLevels.push_back(static_cast<int>(levels.levelsCount()));
-                writer.setSkipLevels(aoiSkipLevels);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           FixedLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
+                if (!fixedLevels.empty())
+                {
+                    std::sort(fixedLevels.begin(), fixedLevels.end());
+                    auto uniqueIt =
+                        std::unique(fixedLevels.begin(), fixedLevels.end());
+                    fixedLevels.erase(uniqueIt, fixedLevels.end());
+                    // Do not provide the actual minimum value to level iterator
+                    // in polygonal case, otherwise it can result in a polygon
+                    // with a degenerate min=max range.
+                    FixedLevelRangeIterator levels(
+                        &fixedLevels[0], fixedLevels.size(),
+                        -std::numeric_limits<double>::infinity(), dfMaximum);
+                    SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(
+                        appender, levels, /* polygonize */ true);
+                    std::vector<int> aoiSkipLevels;
+                    // Skip first and last levels (min/max) in polygonal case
+                    aoiSkipLevels.push_back(0);
+                    aoiSkipLevels.push_back(
+                        static_cast<int>(levels.levelsCount()));
+                    writer.setSkipLevels(aoiSkipLevels);
+                    ContourGeneratorFromRaster<decltype(writer),
+                                               FixedLevelRangeIterator>
+                        cg(hBand, useNoData, noDataValue, writer, levels);
+                    ok = cg.process(pfnProgress, pProgressArg);
+                }
             }
+            // ~RingAppender() has now emitted all the polygons.
+            if (w.failed_)
+                ok = false;
         }
         else
         {
@@ -946,6 +963,9 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                     cg(hBand, useNoData, noDataValue, writer, levels);
                 ok = cg.process(pfnProgress, pProgressArg);
             }
+            // ~SegmentMerger() has now flushed the remaining lines.
+            if (appender.failed())
+                ok = false;
         }
     }
     catch (const std::exception &e)
@@ -1032,8 +1052,12 @@ CPLErr GDAL_CG_FeedLine(GDALContourGeneratorH hCG, double *padfScanline)
 
 {
     VALIDATE_POINTER1(hCG, "GDAL_CG_FeedLine", CE_Failure);
-    return reinterpret_cast<marching_squares::ContourGeneratorOpaque *>(hCG)
-        ->contourGenerator.feedLine(padfScanline);
+    auto poCG =
+        reinterpret_cast<marching_squares::ContourGeneratorOpaque *>(hCG);
+    const CPLErr eErr = poCG->contourGenerator.feedLine(padfScanline);
+    // Contour lines are emitted through pfnWriter while lines are fed: report
+    // any failure of it.
+    return poCG->writer.failed() ? CE_Failure : eErr;
 }
 
 /************************************************************************/
