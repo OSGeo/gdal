@@ -1308,6 +1308,7 @@ int DDFRecord::ResizeField(DDFField *poField, int nNewDataSize)
     /*      Store field offsets                                             */
     /* -------------------------------------------------------------------- */
     std::vector<int> anOffsets;
+    anOffsets.reserve(apoFields.size());
     for (auto &poIterField : apoFields)
     {
         anOffsets.push_back(
@@ -1715,6 +1716,7 @@ void DDFRecord::ResetDirectory()
                nNewDataSize - nDirSize);
 
         std::vector<int> anOffsets;
+        anOffsets.reserve(apoFields.size());
         for (auto &poField : apoFields)
         {
             anOffsets.push_back(static_cast<int>(

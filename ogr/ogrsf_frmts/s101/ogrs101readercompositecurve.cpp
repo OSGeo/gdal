@@ -428,6 +428,7 @@ bool OGRS101Reader::ProcessUpdateRecordCompositeCurve(
     };
 
     std::vector<CurveComponent> asTarget;
+    asTarget.reserve(nTargetRepeatCount);
     // Ingest the existing/target record
     for (int i = 0; i < nTargetRepeatCount; ++i)
     {
@@ -440,6 +441,7 @@ bool OGRS101Reader::ProcessUpdateRecordCompositeCurve(
     std::vector<CurveComponent> asUpdate;
     if (poUpdateField)
     {
+        asUpdate.reserve(nUpdateRepeatCount);
         for (int i = 0; i < nUpdateRepeatCount; ++i)
         {
             CurveComponent cc;

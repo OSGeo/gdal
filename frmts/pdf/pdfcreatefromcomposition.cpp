@@ -803,6 +803,7 @@ GDALPDFObjectNum GDALPDFComposerWriter::GenerateISO32000_Georeferencing(
     }
 
     std::vector<gdal::GCP> aGCPReprojected;
+    aGCPReprojected.reserve(aGCPs.size());
     bool bSuccess = true;
     for (const auto &gcp : aGCPs)
     {

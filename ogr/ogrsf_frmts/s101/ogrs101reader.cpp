@@ -212,6 +212,7 @@ bool OGRS101Reader::CheckFieldDefinitions(
         &mapExpectedFields) const
 {
     std::vector<std::string> fieldsInRecord;
+    fieldsInRecord.reserve(poRecord->GetFields().size());
     for (const auto &poField : poRecord->GetFields())
     {
         fieldsInRecord.push_back(poField->GetFieldDefn()->GetName());

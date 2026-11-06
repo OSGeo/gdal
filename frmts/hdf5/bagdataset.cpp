@@ -1980,6 +1980,7 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     // If there are at least 3 source nodes, sort them
                     // by increasing distance w.r.t the point to be interpolated
                     anIndices.clear();
+                    anIndices.reserve(adfX.size());
                     for (size_t i = 0; i < adfX.size(); ++i)
                         anIndices.push_back(static_cast<int>(i));
                     // Sort nodes by increasing distance w.r.t (dfX, dfY)
