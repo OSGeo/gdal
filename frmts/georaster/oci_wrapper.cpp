@@ -16,6 +16,7 @@
 #include <algorithm>
 
 static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_UInt8},
+                                              {"8BIT_S", GDT_Int8},
                                               {"16BIT_U", GDT_UInt16},
                                               {"16BIT_S", GDT_Int16},
                                               {"32BIT_U", GDT_UInt32},

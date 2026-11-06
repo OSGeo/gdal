@@ -965,6 +965,25 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
 
     switch (eDataType)
     {
+        case GDT_Int8:
+        {
+            GInt8 *pnBuffer = (GInt8 *)pBuffer;
+
+            for (i = 0; i < n; i++)
+            {
+                for (j = 0; j < nNoDataArraySz; j++)
+                {
+                    if (pnBuffer[i] == (GInt8)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (GInt8)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (GInt8)pahNoDataArray[j].dfUpper))
+                    {
+                        pnBuffer[i] = (GInt8)dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
         case GDT_UInt8:
         {
             GByte *pbBuffer = (GByte *)pBuffer;
