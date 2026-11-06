@@ -986,25 +986,25 @@ static CPLErr AIGDelete(const char *pszDatasetname)
     if (hDS == nullptr)
         return CE_Failure;
 
-    char **papszFileList = GDALGetFileList(hDS);
+    const CPLStringList aosFileList(GDALGetFileList(hDS));
     GDALClose(hDS);
 
-    if (papszFileList == nullptr)
+    if (aosFileList.empty())
         return CE_Failure;
 
     /* -------------------------------------------------------------------- */
     /*      Delete all regular files.                                       */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; papszFileList[i] != nullptr; i++)
+    for (const char *pszFilename : cpl::Iterate(aosFileList))
     {
         VSIStatBufL sStatBuf;
-        if (VSIStatL(papszFileList[i], &sStatBuf) == 0 &&
+        if (VSIStatL(pszFilename, &sStatBuf) == 0 &&
             VSI_ISREG(sStatBuf.st_mode))
         {
-            if (VSIUnlink(papszFileList[i]) != 0)
+            if (VSIUnlink(pszFilename) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to delete '%s':\n%s", papszFileList[i],
+                         "Unable to delete '%s':\n%s", pszFilename,
                          VSIStrerror(errno));
                 return CE_Failure;
             }
@@ -1014,13 +1014,13 @@ static CPLErr AIGDelete(const char *pszDatasetname)
     /* -------------------------------------------------------------------- */
     /*      Delete directories.                                             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; papszFileList[i] != nullptr; i++)
+    for (const char *pszFilename : cpl::Iterate(aosFileList))
     {
         VSIStatBufL sStatBuf;
-        if (VSIStatL(papszFileList[i], &sStatBuf) == 0 &&
+        if (VSIStatL(pszFilename, &sStatBuf) == 0 &&
             VSI_ISDIR(sStatBuf.st_mode))
         {
-            if (CPLUnlinkTree(papszFileList[i]) != 0)
+            if (CPLUnlinkTree(pszFilename) != 0)
                 return CE_Failure;
         }
     }
