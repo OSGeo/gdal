@@ -1828,8 +1828,8 @@ ZarrV3Array::GetChunkIndicesFromFilename(const char *pszFilename) const
 /*                            ParseDtypeV3()                            */
 /************************************************************************/
 
-static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
-                                         std::vector<DtypeElt> &elts)
+GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
+                                  std::vector<DtypeElt> &elts)
 {
     do
     {

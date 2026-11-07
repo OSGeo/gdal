@@ -34,6 +34,9 @@ struct ZarrArrayMetadata
     std::vector<GByte> abyNoData{};
 };
 
+GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
+                                  std::vector<DtypeElt> &elts);
+
 /************************************************************************/
 /*                             ZarrV3Codec                              */
 /************************************************************************/
@@ -47,6 +50,11 @@ class ZarrV3Codec CPL_NON_FINAL
     ZarrArrayMetadata m_oInputArrayMetadata{};
 
     ZarrV3Codec(const std::string &osName);
+
+    // Parse a scalar encoded with the Zarr V3 fill value rules into
+    // abyVal, with the native layout of oElt. Only for numeric types.
+    static bool ParseScalar(const CPLJSONObject &oObj, const DtypeElt &oElt,
+                            std::vector<GByte> &abyVal);
 
   public:
     virtual ~ZarrV3Codec();
@@ -409,6 +417,142 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
         Reorder1DForward(anStartIdx);
         Reorder1DForward(anCount);
     }
+};
+
+/************************************************************************/
+/*                        ZarrV3CodecScaleOffset                        */
+/************************************************************************/
+
+// Implements https://github.com/zarr-developers/zarr-extensions/tree/main/codecs/scale_offset
+class ZarrV3CodecScaleOffset final : public ZarrV3Codec
+{
+    // Values in the native layout of the input data type
+    std::vector<GByte> m_abyOffset{};
+    std::vector<GByte> m_abyScale{};
+    bool m_bIsNoOp = true;
+
+    bool Apply(const ZarrByteVectorQuickResize &abySrc,
+               ZarrByteVectorQuickResize &abyDst, bool bEncode) const;
+
+  public:
+    static constexpr const char *NAME = "scale_offset";
+
+    ZarrV3CodecScaleOffset();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    bool IsNoOp() const override
+    {
+        return m_bIsNoOp;
+    }
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool DecodePartial(VSIVirtualHandle *poFile,
+                       const ZarrByteVectorQuickResize &abySrc,
+                       ZarrByteVectorQuickResize &abyDst,
+                       std::vector<size_t> &anStartIdx,
+                       std::vector<size_t> &anCount) override;
+};
+
+/************************************************************************/
+/*                         ZarrV3CodecCastValue                         */
+/************************************************************************/
+
+// Implements https://github.com/zarr-developers/zarr-extensions/tree/main/codecs/cast_value
+// following the reference implementation https://github.com/zarr-developers/cast-value.rs
+class ZarrV3CodecCastValue final : public ZarrV3Codec
+{
+  public:
+    enum class Rounding
+    {
+        NEAREST_EVEN,
+        TOWARDS_ZERO,
+        TOWARDS_POSITIVE,
+        TOWARDS_NEGATIVE,
+        NEAREST_AWAY
+    };
+
+    enum class OutOfRange
+    {
+        NONE,
+        CLAMP,
+        WRAP
+    };
+
+    /** One direction of the cast. Map keys are in the layout of the
+     * source type, and map values in the layout of the target type. */
+    struct Cast
+    {
+        GDALDataType eSrcDT = GDT_Unknown;
+        GDALDataType eDstDT = GDT_Unknown;
+        Rounding eRounding = Rounding::NEAREST_EVEN;
+        OutOfRange eOutOfRange = OutOfRange::NONE;
+        std::vector<GByte> abyMapKeys{};
+        std::vector<GByte> abyMapValues{};
+
+        bool Run(const GByte *pabySrc, GByte *pabyDst, size_t nCount) const;
+    };
+
+  private:
+    Cast m_oEncode{};
+    Cast m_oDecode{};
+
+    bool Apply(const Cast &oCast, const ZarrByteVectorQuickResize &abySrc,
+               ZarrByteVectorQuickResize &abyDst) const;
+
+  public:
+    static constexpr const char *NAME = "cast_value";
+
+    ZarrV3CodecCastValue();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool DecodePartial(VSIVirtualHandle *poFile,
+                       const ZarrByteVectorQuickResize &abySrc,
+                       ZarrByteVectorQuickResize &abyDst,
+                       std::vector<size_t> &anStartIdx,
+                       std::vector<size_t> &anCount) override;
 };
 
 /************************************************************************/
