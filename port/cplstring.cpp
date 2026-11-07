@@ -17,8 +17,10 @@
 #include <cctype>
 #include <cstdarg>
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <string>
+#include <utility>
 
 #include "cpl_config.h"
 #include "cpl_conv.h"

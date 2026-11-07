@@ -25,9 +25,10 @@
 #include <unistd.h>
 #endif
 
-#include <algorithm>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_config.h"
