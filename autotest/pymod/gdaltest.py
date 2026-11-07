@@ -2099,17 +2099,20 @@ def validate_json(jsn, schema):
 
         def retrieve_remote_file(uri: str):
             if not uri.startswith("http://") and not uri.startswith("https://"):
-                raise Exception(f"Cannot retrieve {uri}")
+                raise ConnectionError(f"Cannot retrieve {uri}")
             tmp_dir = get_cache_dir()
             filename = tmp_dir + "/" + os.path.basename(uri)
             if not download_file(uri, filename=filename, force_download=True):
-                raise Exception(f"Cannot download {uri}")
+                raise ConnectionError(f"Cannot download {uri}")
             response = open(filename, "rb").read()
             return Resource.from_contents(json.loads(response))
 
-        registry = Registry(retrieve=retrieve_remote_file)
-        validator_cls = jsonschema.validators.validator_for(schema)
-        validator_cls(schema, registry=registry).validate(jsn)
+        try:
+            registry = Registry(retrieve=retrieve_remote_file)
+            validator_cls = jsonschema.validators.validator_for(schema)
+            validator_cls(schema, registry=registry).validate(jsn)
+        except ConnectionError as e:
+            pytest.skip(str(e))
 
     else:
         # jsonschema < 4.18
