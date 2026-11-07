@@ -625,4 +625,21 @@ TEST_F(test_osr, exportToPanorama)
         EXPECT_NEAR(adfParams[6], 0, EPS);           //false_northing
     }
 }
+// Test that ALLOW_FILE_ACCESS=NO returns consistent error codes and does not probe filesystem (GH #15479)
+TEST_F(test_osr, SetFromUserInput_ALLOW_FILE_ACCESS_NO)
+{
+    OGRSpatialReference oSRS;
+    const char *const apszOptions[] = {"ALLOW_FILE_ACCESS=NO", nullptr};
+
+    // 1. Existing file
+    OGRErr errExist = oSRS.SetFromUserInput("CMakeLists.txt", apszOptions);
+
+    // 2. Non-existing file
+    OGRErr errNonExist =
+        oSRS.SetFromUserInput("definitely_non_existing_file_12345.prj", apszOptions);
+
+    // Both must return OGRERR_CORRUPT_DATA without probing filesystem
+    EXPECT_EQ(errExist, OGRERR_CORRUPT_DATA);
+    EXPECT_EQ(errNonExist, OGRERR_CORRUPT_DATA);
+}
 }  // namespace
