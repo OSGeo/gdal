@@ -803,7 +803,10 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
                 m_iFIDCol = iCol;
                 if (nIdx >=
                     0) /* in case it has also been created as a regular field */
+                {
+                    m_panFieldOrdinals[nIdx] = iCol;
                     nCountFieldOrdinals++;
+                }
             }
             continue;
         }
