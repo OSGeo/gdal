@@ -17,12 +17,13 @@ if grep -q "ubuntu" <<< "$GHA_CI_PLATFORM"; then
     fi
 fi
 
-if grep -q "macos-14" <<< "$GHA_CI_PLATFORM"; then
+if grep -q "macos" <<< "$GHA_CI_PLATFORM"; then
     CONDA_PLAT="osx"
-    ARCH="arm64"
-elif grep -q "macos-15-intel" <<< "$GHA_CI_PLATFORM"; then
-    CONDA_PLAT="osx"
-    ARCH="64"
+    if grep -q "intel" <<< "$GHA_CI_PLATFORM"; then
+      ARCH="64"
+    else
+      ARCH="arm64"
+    fi
 fi
 
 echo "CONDA_SUBDIR=${CONDA_PLAT}-${ARCH}" >> $GITHUB_ENV
