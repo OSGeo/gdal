@@ -88,6 +88,7 @@ CPL_C_END
 
 #include "cpl_string.h"
 #include <vector>
+#include <map>
 
 std::vector<std::string> CPL_DLL
 GetOutputDriversFor(const char *pszDestFilename, int nFlagRasterVector);
@@ -97,6 +98,9 @@ void GDALRemoveBOM(GByte *pabyData);
 int ArgIsNumeric(const char *pszArg);
 
 bool GDALPatternMatch(const char *input, const char *pattern);
+
+void ApplySubstitutions(CPLString &s,
+                        const std::map<std::string, std::string> &substs);
 
 // Those values shouldn't be changed, because overview levels >= 0 are meant
 // to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
