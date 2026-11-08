@@ -2920,6 +2920,13 @@ def test_ogr_sqlite_39(sqlite_test_db):
     ):
         f.DumpReadable()
         pytest.fail()
+
+    f = lyr.GetFeature(10)
+    assert f.GetFID() == 10
+    assert f.GetField("str") == "first string"
+    assert f.GetField("str2") == "second string"
+    assert f.GetField("myfid") == 10
+
     f = None
 
 
