@@ -1073,6 +1073,10 @@ CPLErr MMRRasterBand::FromPaletteToAttributeTable()
     if (m_Palette->GetNumberOfColors() <= 0)
         return CE_Failure;
 
+    if (m_Palette->GetSizeOfPaletteColors() <
+        m_Palette->GetNumberOfColorsIncludingNodata())
+        return CE_Failure;
+
     if (m_Palette->GetColorScaling() == ColorTreatment::DIRECT_ASSIGNATION)
         return FromPaletteToAttributeTableDirectAssig();
 
