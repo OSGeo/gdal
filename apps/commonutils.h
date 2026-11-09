@@ -99,9 +99,6 @@ int ArgIsNumeric(const char *pszArg);
 
 bool GDALPatternMatch(const char *input, const char *pattern);
 
-void ApplySubstitutions(CPLString &s,
-                        const std::map<std::string, std::string> &substs);
-
 // Those values shouldn't be changed, because overview levels >= 0 are meant
 // to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
 // automatically selected minus (OVR_LEVEL_AUTO - ovr_level).

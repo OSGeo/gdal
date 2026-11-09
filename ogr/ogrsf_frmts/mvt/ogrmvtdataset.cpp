@@ -21,7 +21,6 @@
 #include "cpl_http.h"
 #include "ogr_p.h"
 #include "gdal_thread_pool.h"
-#include "commonutils.h"
 
 #include "mvt_tile.h"
 #include "mvtutils.h"

@@ -226,19 +226,3 @@ bool GDALPatternMatch(const char *input, const char *pattern)
     else
         return true;
 }
-
-/************************************************************************/
-/*                         ApplySubstitutions()                         */
-/************************************************************************/
-
-void ApplySubstitutions(CPLString &s,
-                        const std::map<std::string, std::string> &substs)
-{
-    for (const auto &[key, value] : substs)
-    {
-        s.replaceAll("%(" + key + ")s", value);
-        s.replaceAll("%(" + key + ")d", value);
-        s.replaceAll("%(" + key + ")f", value);
-        s.replaceAll("${" + key + "}", value);
-    }
-}
