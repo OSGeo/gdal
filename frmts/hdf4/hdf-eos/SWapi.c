@@ -3181,7 +3181,7 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
     int32           dims[8];	/* Dimensions array */
     int32           dum;	/* Dummy variable */
 
-    char            name[80];	/* Fill value "attribute" name */
+    char            name[84];	/* Fill value "attribute" name */
 
     /* Check for valid swath ID */
     status = SWchkswid(swathID, "SWgetfillvalue", &dum, &dum, &dum);
@@ -3194,9 +3194,16 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 	if (status == 0)
 	{
 	    /* Read fill value attribute */
-	    strcpy(name, "_FV_");
-	    strcat(name, fieldname);
-	    status = SWreadattr(swathID, name, fillval);
+	    int ret = snprintf(name, sizeof(name), "_FV_%s", fieldname);
+	    if (ret < 0 || (size_t) ret >= sizeof(name))
+	    {
+	        status = -1;
+	        HEpush(DFE_GENAPP, "SWgetfillvalue", __FILE__, __LINE__);
+	        HEreport("Attribute name \"_FV_%s\" exceeds the maximum allowable length.\n", fieldname);
+	    } else
+	    {
+	        status = SWreadattr(swathID, name, fillval);
+	    }
 	}
 	else
 	{
