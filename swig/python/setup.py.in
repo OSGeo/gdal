@@ -280,6 +280,11 @@ class gdal_ext(build_ext):
             for ext in self.extensions:
                 ext.extra_compile_args += os.environ["GDAL_PYTHON_CXXFLAGS"].split(" ")
 
+        # workaround for https://github.com/pypa/distutils/issues/439
+        # initialize compiler here, before worker threads start
+        if ct == 'msvc' and not self.compiler.initialized:
+            self.compiler.initialize()
+
         build_ext.build_extensions(self)
 
     def finalize_options(self):
