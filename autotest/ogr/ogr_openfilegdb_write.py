@@ -1350,6 +1350,67 @@ def test_ogr_openfilegdb_write_delete_field_before_geom(tmp_vsimem):
 
 
 ###############################################################################
+# Test changing the fields of a table does not modify the flags of the
+# geometry field.
+# See https://github.com/OSGeo/gdal/issues/15263
+
+
+def get_geom_field_flags(gdbtable_filename, field_name="SHAPE"):
+    """Return the flags byte of a geometry field in a .gdbtable file
+    (0x01 = nullable, 0x02 = required, 0x04 = editable)"""
+
+    f = gdal.VSIFOpenL(gdbtable_filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, gdal.VSIStatL(gdbtable_filename).size, f)
+    gdal.VSIFCloseL(f)
+
+    # A field descriptor starts with its name: a count of UTF-16 chars, then the chars
+    name = bytes([len(field_name)]) + field_name.encode("utf-16le")
+    pos = data.find(name)
+    assert pos >= 0
+    pos += len(name)
+
+    # Then the alias, in the same format
+    alias_len = data[pos]
+    pos += 1 + alias_len * 2
+
+    # Then one byte each for the field type, the role and the flags
+    field_type, _, flags = data[pos : pos + 3]
+    assert field_type == 7  # FGFT_GEOMETRY
+    return flags
+
+
+@pytest.mark.parametrize("operation", ["create", "delete", "alter"])
+def test_ogr_openfilegdb_write_geom_field_flags(tmp_vsimem, operation):
+
+    dirname = tmp_vsimem / "out.gdb"
+    gdbtable_filename = dirname / "a00000009.gdbtable"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
+    ds = None
+
+    # 0x07 = nullable | required | editable
+    assert get_geom_field_flags(gdbtable_filename) == 0x07
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    if operation == "create":
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    elif operation == "delete":
+        assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    else:
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_NAME_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    # flags should not have changed
+    assert get_geom_field_flags(gdbtable_filename) == 0x07
+
+
+###############################################################################
 
 
 def test_ogr_openfilegdb_write_feature_dataset_no_crs(tmp_vsimem):
