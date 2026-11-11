@@ -8194,8 +8194,6 @@ begin:
         if (nWKBSize == 0)
         {
             // Features with a null geometry never match a spatial filter.
-            // This matters when the spatial index is not used, because the
-            // filter contains the layer extent.
             if (psFillArrowArray->poLayerForFilterGeom)
             {
                 return;
