@@ -3194,7 +3194,7 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 	if (status == 0)
 	{
 	    /* Read fill value attribute */
-	    int ret = snprintf(name, sizeof(name), "_FV_%s", fieldname);
+	    const int ret = snprintf(name, sizeof(name), "_FV_%s", fieldname);
 	    if (ret < 0 || (size_t) ret >= sizeof(name))
 	    {
 	        status = -1;
