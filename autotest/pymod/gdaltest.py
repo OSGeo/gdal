@@ -1946,6 +1946,10 @@ def gdalurlopen(url, timeout=10):
         print(f"HTTP service for {url} timed out")
         socket.setdefaulttimeout(old_timeout)
         return None
+    except ConnectionResetError as e:
+        print(f"HTTP service for {url} is not available: ConnectionResetError : {e}")
+        socket.setdefaulttimeout(old_timeout)
+        return None
     except http.client.RemoteDisconnected as e:
         print(f"HTTP service for {url} is not available: RemoteDisconnected : {e}")
         socket.setdefaulttimeout(old_timeout)
