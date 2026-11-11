@@ -1542,6 +1542,33 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 
 
 ###############################################################################
+# Test spatial filtering on a Web Mercator layer and its .spx index.
+# PROJ >= 9.7.1 gives it a lat/long base CRS, and the filter then used
+# minY=0 and maxY=0.
+# See https://github.com/OSGeo/gdal/issues/15337
+
+
+@pytest.mark.parametrize("use_spatial_index", ["YES", "NO"])
+def test_ogr_openfilegdb_spx_spatial_filter_web_mercator(use_spatial_index):
+
+    with gdaltest.config_option("OPENFILEGDB_USE_SPATIAL_INDEX", use_spatial_index):
+        ds = ogr.Open("data/filegdb/test_web_mercator_spatial_index.gdb.zip")
+
+        # Use one layer per query, as only the first spatial filter
+        # on a layer is clamped
+        lyr = ds.GetLayerByName("north")
+        lyr.SetSpatialFilterRect(-8836500, 5410000, -8835500, 5411000)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+        # Southern hemisphere filter
+        lyr = ds.GetLayerByName("south")
+        lyr.SetSpatialFilterRect(999500, -4000500, 1000500, -3999500)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+
+###############################################################################
 # Test reading a broken .spx that has an index depth of 1 instead of 2
 # Simulates scenario of SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
 # from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
