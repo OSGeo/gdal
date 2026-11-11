@@ -8889,24 +8889,26 @@ def test_ogr_gpkg_arrow_stream_spatial_filter_null_and_empty_geom(
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    filename = str(tmp_vsimem / "test.gpkg")
-    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbUnknown, options=["FID=fid"])
-    for fid, wkt in [
-        (1, "POINT (10 50)"),
-        (2, "POINT (11 51)"),
-        (3, None),
-        (4, "POINT EMPTY"),
-        (5, "LINESTRING EMPTY"),
-        (6, "POLYGON EMPTY"),
-        (7, "GEOMETRYCOLLECTION EMPTY"),
-    ]:
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(fid)
-        if wkt:
-            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
-        lyr.CreateFeature(f)
-    ds = None
+    filename = tmp_vsimem / "test.gpkg"
+    with ogr.GetDriverByName("GPKG").CreateVector(filename) as src_ds:
+        lyr = src_ds.CreateLayer(
+            "test", geom_type=ogr.wkbUnknown, options={"FID": "fid"}
+        )
+
+        for fid, wkt in [
+            (1, "POINT (10 50)"),
+            (2, "POINT (11 51)"),
+            (3, None),
+            (4, "POINT EMPTY"),
+            (5, "LINESTRING EMPTY"),
+            (6, "POLYGON EMPTY"),
+            (7, "GEOMETRYCOLLECTION EMPTY"),
+        ]:
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetFID(fid)
+            if wkt:
+                f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+            lyr.CreateFeature(f)
 
     ds = ogr.Open(filename)
     if layer_type == "direct":
