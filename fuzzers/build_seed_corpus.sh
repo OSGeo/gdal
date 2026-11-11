@@ -687,5 +687,14 @@ rm -f $OUT/gdal_algorithm_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
 rm test*.tar
 
+echo "Building gpkg_fuzzer_seed_corpus.zip"
+rm -f $OUT/gpkg_fuzzer_seed_corpus.zip
+cd $(dirname $0)/../autotest/gdrivers/data/gpkg
+zip -r $OUT/gpkg_fuzzer_seed_corpus.zip ./*.gpkg >/dev/null
+cd $OLDPWD
+cd $(dirname $0)/../autotest/ogr/data/gpkg
+zip -r $OUT/gpkg_fuzzer_seed_corpus.zip ./*.gpkg >/dev/null
+cd $OLDPWD
+
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT
