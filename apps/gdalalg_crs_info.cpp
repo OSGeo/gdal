@@ -1,11 +1,11 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  gdal "crsinfo" subcommand
+ * Purpose:  gdal "crs info" subcommand
  * Author:   Alessandro Pasotti <elpaso at itopen dot it>
  *
  ******************************************************************************
- * Copyright (c) 2024, Alessandro Pasotti <elpaso at itopen dot it>
+ * Copyright (c) 2026, Alessandro Pasotti <elpaso at itopen dot it>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -129,10 +129,10 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
 
     std::vector<CRSMatch> aoCRS;
 
-    std::unique_ptr<OGRSpatialReference> oCRS =
+    std::unique_ptr<OGRSpatialReference> poCRS =
         std::make_unique<OGRSpatialReference>();
 
-    if (oCRS->SetFromUserInput(m_crs.c_str()) != OGRERR_NONE)
+    if (poCRS->SetFromUserInput(m_crs.c_str()) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse CRS: %s",
                  m_crs.c_str());
@@ -146,11 +146,8 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
     {
         int *panConfidence = nullptr;
 
-        OGRSpatialReferenceH *pahCRS = nullptr;
-        pahCRS =
-            OSRFindMatches(reinterpret_cast<OGRSpatialReferenceH>(
-                               const_cast<OGRSpatialReference *>(oCRS.get())),
-                           nullptr, &nEntries, &panConfidence);
+        OGRSpatialReferenceH *pahCRS =
+            poCRS->FindMatches(nullptr, &nEntries, &panConfidence);
 
         for (int i = 0; i < nEntries; i++)
         {
@@ -165,7 +162,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
     }
     else
     {
-        aoCRS.emplace_back(std::move(oCRS), 100);
+        aoCRS.emplace_back(std::move(poCRS), 100);
     }
 
     for (const auto &crsMatch : aoCRS)
@@ -195,7 +192,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             const OGRErr retErr = crsMatch.oCRS->Validate();
             if (retErr != OGRERR_NONE)
             {
-                Print(_("\nValidate Fails"));
+                Print(_("\nValidation Failed"));
                 if (retErr == OGRERR_CORRUPT_DATA)
                     Print(_(" - CRS is not well formed"));
                 else if (retErr == OGRERR_UNSUPPORTED_SRS)
@@ -205,7 +202,7 @@ bool GDALCRSInfoAlgorithm::RunImpl(CPL_UNUSED GDALProgressFunc pfnProgress,
             }
             else
             {
-                Print(_("\nValidate Succeeds\n"));
+                Print(_("\nValidation Succeeded\n"));
             }
         }
 
