@@ -687,5 +687,35 @@ rm -f $OUT/gdal_algorithm_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
 rm test*.tar
 
+echo "Building gti_fuzzer_seed_corpus.zip"
+# No dictionary: the index container carries the SQLite magic via seeds, and
+# tile locations are plain relative filenames resolved against the index dir.
+CUR_DIR=$PWD
+cd $(dirname $0)/../autotest/gdrivers/data/gti
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:test.gti.gpkg\\n"
+    cat tile-001.gti.gpkg
+    printf "\\n***NEWFILE***:tile-001-000.tif\\n"
+    cat tile-001-000.tif
+    printf "\\n***NEWFILE***:tile-001-001.tif\\n"
+    cat tile-001-001.tif
+} > $CUR_DIR/gti_tile001.tar
+for variant in tiles_utm49s_new tiles_utm49s_old; do
+    {
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+        printf "***NEWFILE***:test.gti.gpkg\\n"
+        cat issue_13944/$variant.gti.gpkg
+        for f in issue_13944/tile?_utm49s.tif; do
+            printf "\\n***NEWFILE***:%s\\n" "$(basename $f)"
+            cat "$f"
+        done
+    } > $CUR_DIR/gti_${variant}.tar
+done
+cd $CUR_DIR
+rm -f $OUT/gti_fuzzer_seed_corpus.zip
+zip -j $OUT/gti_fuzzer_seed_corpus.zip gti_*.tar >/dev/null
+rm -f gti_*.tar
+
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT
