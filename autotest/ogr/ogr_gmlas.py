@@ -3403,6 +3403,7 @@ def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 
 
 @gdaltest.enable_exceptions()
+@gdaltest.skip_on_network_error()
 @pytest.mark.require_curl()
 def test_ogr_gmlas_bugfix_sf_2371():
 
@@ -3416,14 +3417,7 @@ def test_ogr_gmlas_bugfix_sf_2371():
         if conn is None:
             pytest.skip(f"cannot open {url}")
 
-    try:
-        ds = gdal.Open("GMLAS:data/gmlas/citygml_empty_lod1.gml")
-    except Exception as e:
-        # Remote schemas (or their imports) can still fail during the open, e.g.
-        # "Could not resolve host: repository.gdi-de.org"
-        if "resolve" in str(e):
-            pytest.skip(str(e))
-        raise
+    ds = gdal.Open("GMLAS:data/gmlas/citygml_empty_lod1.gml")
 
     lyr = ds.GetLayerByName("address1")
     assert lyr.GetFeatureCount() == 0
@@ -3496,6 +3490,7 @@ def test_ogr_gmlas_choice_inlined(filename, attrname, value):
 
 
 @gdaltest.enable_exceptions()
+@gdaltest.skip_on_network_error()
 @pytest.mark.require_curl()
 def test_ogr_gmlas_citygml_lod2_no_schema_location():
 
@@ -3509,14 +3504,7 @@ def test_ogr_gmlas_citygml_lod2_no_schema_location():
         if conn is None:
             pytest.skip(f"cannot open {url}")
 
-    try:
-        ds = gdal.Open("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
-    except Exception as e:
-        # Remote schemas (or their imports) can still fail during the open, e.g.
-        # "Could not resolve host: schemas.opengis.net"
-        if "resolve" in str(e):
-            pytest.skip(str(e))
-        raise
+    ds = gdal.Open("GMLAS:data/gmlas/lod2_empty_no_schema_location.gml")
 
     assert ds.GetLayerCount() == 1537
 
