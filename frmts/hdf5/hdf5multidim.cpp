@@ -3315,15 +3315,24 @@ HDF5Attribute::~HDF5Attribute()
 /*                       CopyAllAttrValuesInto()                        */
 /************************************************************************/
 
-static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
-                                  const GDALExtendedDataType &bufferDataType,
-                                  void *pDstBuffer, hid_t hSrcBufferType,
-                                  const void *pabySrcBuffer)
+static void CopyAllAttrValuesInto(
+    const std::vector<std::shared_ptr<GDALDimension>> &dims,
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pDstBuffer, hid_t hSrcBufferType, const void *pabySrcBuffer)
 {
+    const size_t nDims = dims.size();
     const size_t nBufferDataTypeSize(bufferDataType.GetSize());
     const size_t nSrcDataTypeSize(H5Tget_size(hSrcBufferType));
+    // Byte stride of each dimension in the source buffer (row-major)
+    std::vector<GPtrDiff_t> anSrcStride(nDims);
+    GPtrDiff_t nStride = static_cast<GPtrDiff_t>(nSrcDataTypeSize);
+    for (size_t i = nDims; i > 0;)
+    {
+        --i;
+        anSrcStride[i] = nStride;
+        nStride *= static_cast<GPtrDiff_t>(dims[i]->GetSize());
+    }
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte *> pabySrcBufferStack(nDims + 1);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
@@ -3335,7 +3344,7 @@ static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
 
     pabySrcBufferStack[0] = static_cast<const GByte *>(pabySrcBuffer);
     if (nDims > 0)
-        pabySrcBufferStack[0] += arrayStartIdx[0] * nSrcDataTypeSize;
+        pabySrcBufferStack[0] += arrayStartIdx[0] * anSrcStride[0];
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
     size_t iDim = 0;
 lbl_next_depth:
@@ -3356,7 +3365,7 @@ lbl_next_depth:
             if (iDim < nDims)
             {
                 pabySrcBufferStack[iDim] +=
-                    arrayStartIdx[iDim] * nSrcDataTypeSize;
+                    arrayStartIdx[iDim] * anSrcStride[iDim];
             }
             goto lbl_next_depth;
         lbl_return_to_caller_in_loop:
@@ -3366,7 +3375,7 @@ lbl_next_depth:
                 break;
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * nBufferDataTypeSize;
-            pabySrcBufferStack[iDim] += arrayStep[iDim] * nSrcDataTypeSize;
+            pabySrcBufferStack[iDim] += arrayStep[iDim] * anSrcStride[iDim];
         }
     }
     if (iDim > 0)
@@ -3385,7 +3394,6 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 {
     HDF5_GLOBAL_LOCK();
 
-    const size_t nDims(m_dims.size());
     if (m_dt.GetClass() == GEDTC_STRING)
     {
         if (bufferDataType.GetClass() != GEDTC_STRING)
@@ -3406,7 +3414,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 VSIFree(pabyTemp);
                 return false;
             }
-            CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep,
+            CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep,
                                   bufferStride, bufferDataType, pDstBuffer,
                                   m_hNativeDT, pabyTemp);
             VSIFree(pabyTemp);
@@ -3422,7 +3430,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 VSIFree(pabyTemp);
                 return false;
             }
-            CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep,
+            CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep,
                                   bufferStride, bufferDataType, pDstBuffer,
                                   m_hNativeDT, pabyTemp);
             H5Dvlen_reclaim(m_hNativeDT, m_hDataSpace, H5P_DEFAULT, pabyTemp);
@@ -3482,7 +3490,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         VSIFree(pabyTemp);
         return false;
     }
-    CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep, bufferStride,
+    CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep, bufferStride,
                           bufferDataType, pDstBuffer, hBufferType, pabyTemp);
     if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasString)
     {

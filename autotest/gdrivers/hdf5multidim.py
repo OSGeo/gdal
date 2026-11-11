@@ -524,6 +524,28 @@ def test_hdf5_multidim_read_missing_value_of_different_type():
 
 
 ###############################################################################
+# Test reading attributes with 2 or more dimensions
+
+
+def test_hdf5_multidim_read_attr_nd():
+    def create():
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/attr_nd.h5", "w")
+        f.attrs["attr"] = np.arange(24, dtype="int32").reshape(2, 3, 4)
+        f.close()
+
+    # create()
+
+    ds = gdal.Open("data/hdf5/attr_nd.h5", gdal.OF_MULTIDIM_RASTER)
+    attr = ds.GetRootGroup().GetAttribute("attr")
+    assert attr.GetDimensionsSize() == [2, 3, 4]
+    assert attr.Read() == tuple(range(24))
+
+
+###############################################################################
 
 
 def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
