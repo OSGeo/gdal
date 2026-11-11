@@ -1235,7 +1235,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             returnErrorIf(nRemaining < 2);
             GByte flags = pabyIter[1];
-            poField->m_bNullable = (flags & 1) != 0;
+            poField->m_bNullable = (flags & FileGDBField::MASK_NULLABLE) != 0;
+            poField->m_bRequired = (flags & FileGDBField::MASK_REQUIRED) != 0;
+            poField->m_bEditable = (flags & FileGDBField::MASK_EDITABLE) != 0;
             pabyIter += 2;
             nRemaining -= 2;
 
