@@ -385,7 +385,7 @@ list
 Examples
 --------
 >>> gdal.GetGlobalAlgorithmRegistry().GetAlgNames()
-['convert', 'dataset', 'info', 'mdim', 'pipeline', 'raster', 'vector', 'vsi']
+['convert', 'crs', 'dataset', 'info', 'mdim', 'pipeline', 'raster', 'vector', 'vsi']
 
 };
 
