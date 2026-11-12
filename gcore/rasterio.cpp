@@ -618,10 +618,12 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     double dfYSize = nYSize;
     if (psExtraArg->bFloatingPointWindowValidity)
     {
-        dfXOff = psExtraArg->dfXOff;
-        dfYOff = psExtraArg->dfYOff;
-        dfXSize = psExtraArg->dfXSize;
-        dfYSize = psExtraArg->dfYSize;
+        // These should really be integers, but we round to be safe.
+        // See issue GH #15513
+        dfXOff = std::round(psExtraArg->dfXOff);
+        dfYOff = std::round(psExtraArg->dfYOff);
+        dfXSize = std::round(psExtraArg->dfXSize);
+        dfYSize = std::round(psExtraArg->dfYSize);
     }
 
     /* -------------------------------------------------------------------- */
