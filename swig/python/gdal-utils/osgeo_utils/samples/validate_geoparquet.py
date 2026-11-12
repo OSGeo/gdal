@@ -28,7 +28,7 @@ map_ogr_geom_type_to_geoparquet = {
     ogr.wkbMultiLineString: "MultiLineString",
     ogr.wkbMultiPolygon: "MultiPolygon",
     ogr.wkbGeometryCollection: "GeometryCollection",
-    ogr.wkbPoint25D: "Point",
+    ogr.wkbPoint25D: "Point Z",
     ogr.wkbLineString25D: "LineString Z",
     ogr.wkbPolygon25D: "Polygon Z",
     ogr.wkbMultiPoint25D: "MultiPoint Z",
