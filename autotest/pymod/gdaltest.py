@@ -2306,3 +2306,29 @@ def set_cpl_tmpdir(tmp_path_factory, subdir_name):
     tmpdir = tmp_path_factory.mktemp(subdir_name)
     with gdal.config_option("CPL_TMPDIR", tmpdir):
         yield
+
+
+###############################################################################
+# Decorator / context manager for skipping tests that fail due to network problems
+
+
+@contextlib.contextmanager
+def skip_on_network_error():
+
+    assert (
+        gdal.GetUseExceptions()
+    ), "gdaltest.skip_on_network_error requires exceptions to be enabled"
+
+    try:
+        yield
+    except ConnectionResetError as e:
+        pytest.skip(str(e))
+    except Exception as e:
+        if (
+            "Connection reset by peer" in str(e)
+            or "Connection timed out" in str(e)
+            or "Could not resolve host" in str(e)
+        ):
+            pytest.skip(str(e))
+        else:
+            raise
