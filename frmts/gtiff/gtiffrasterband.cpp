@@ -279,7 +279,8 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 
     bool bCanUseMultiThreadedRead = false;
-    if (m_poGDS->m_nDisableMultiThreadedRead == 0 && eRWFlag == GF_Read &&
+    if (!psExtraArg->bFloatingPointWindowValidity &&
+        m_poGDS->m_nDisableMultiThreadedRead == 0 && eRWFlag == GF_Read &&
         m_poGDS->m_poThreadPool != nullptr && nXSize == nBufXSize &&
         nYSize == nBufYSize && m_poGDS->IsMultiThreadedReadCompatible())
     {
