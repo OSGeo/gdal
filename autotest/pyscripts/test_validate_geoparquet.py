@@ -362,3 +362,31 @@ def test_validate_geoparquet_invalid_winding_order(tmp_path):
         ret
         and """Interior ring of geometry at row 1 has invalid orientation""" in str(ret)
     )
+
+
+##############################################################################
+# Test issue https://github.com/OSGeo/gdal/issues/15498 where Point Z is
+# not correctly recognized
+
+
+def test_validate_geoparquet_point_z(tmp_vsimem):
+
+    tmp_path = tmp_vsimem / "point_z.parquet"
+    ds = gdal.GetDriverByName("Parquet").Create(tmp_path, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint25D)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(tmp_path)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == ogr.wkbPoint25D
+
+    ds = None
+    ret = _validate(tmp_path, check_data=True)
+    assert ret == []
