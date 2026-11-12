@@ -78,7 +78,7 @@ jobs:
             libnetcdf-dev \
             libopenexr-dev \
             libopenjp2-7-dev \
-            libpcre3-dev \
+            libpcre2-dev \
             libpng-dev \
             libpoppler-dev \
             libpoppler-private-dev \
