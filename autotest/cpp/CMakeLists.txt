@@ -55,10 +55,20 @@ else()
     # Add googletest directly to our build. This defines
     # the gtest and gtest_main targets.
     #option(INSTALL_GTEST "Enable installation of googletest" OFF)
+
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+      cmake_diagnostic(PUSH)
+      cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+    endif()
+
     add_subdirectory(
       ${CMAKE_CURRENT_BINARY_DIR}/googletest-src
       ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
       EXCLUDE_FROM_ALL)
+
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+      cmake_diagnostic(POP)
+    endif()
 
     add_library(gtest_for_gdal ALIAS gtest)
 
