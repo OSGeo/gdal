@@ -722,6 +722,18 @@ def test_pcidsk_tile_v2_overview():
 
 
 ###############################################################################
+# Test GetNoDataValue() on overview bands
+
+
+def test_pcidsk_overview_nodata(tmp_vsimem):
+
+    ds = gdal.Open("data/pcidsk/tile_v2.pix")
+    assert ds.GetRasterBand(1).GetOverview(0).GetNoDataValue() is None
+
+    gdal.Translate(tmp_vsimem / "out.tif", ds, format="COG")
+
+
+###############################################################################
 # Test RPC
 
 
