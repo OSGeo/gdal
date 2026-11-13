@@ -1588,6 +1588,43 @@ def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
 
 
 ###############################################################################
+# Test that a stale attribute index (with entries for deleted features) is
+# ignored with a warning, and not an error
+# See https://github.com/OSGeo/gdal/issues/15505
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_openfilegdb_read_stale_attribute_index(tmp_vsimem):
+
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_read_stale_attribute_index.gdb"
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    for i in range(1, 4):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = f"v{i}"
+        lyr.CreateFeature(f)
+    ds.ExecuteSQL("CREATE INDEX idx_str ON test(str)")
+    ds = None
+
+    # GDAL updates the index when deleting features, so restore the index
+    # from before the deletion
+    atx = str(dirname / "a00000009.idx_str.atx")
+    gdal.CopyFile(atx, atx + ".bak")
+    ds = ogr.Open(dirname, update=1)
+    ds.GetLayer(0).DeleteFeature(1)
+    ds = None
+    gdal.CopyFile(atx + ".bak", atx)
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    with gdal.quiet_errors():
+        lyr.SetAttributeFilter("str = 'v2'")
+    assert "is out of date" in gdal.GetLastErrorMsg()
+    assert [f.GetFID() for f in lyr] == [2]
+
+
+###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
 
