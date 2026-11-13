@@ -392,6 +392,28 @@ The following dataset creation options are supported:
       'tile_matrix_height_zoom_0') can be specified to indicate the number of
       tiles along the X (resp. Y) axis at zoom level 0.
 
+-  .. co:: WEBVIEWER
+      :choices: none, all, leaflet, openlayers, mapml
+      :default: all
+      :since: 3.14
+
+      Web viewer(s) to generate at the root of the output directory:
+      :file:`leaflet.html`, :file:`openlayers.html` and/or :file:`mapml.mapml`.
+      Several values can be specified as a comma-separated list.
+      Web viewers are only generated for :co:`FORMAT=DIRECTORY` and the default
+      WebMercator tiling scheme.
+
+-  .. co:: TITLE
+      :since: 3.14
+
+      Title of the web viewers. Defaults to the name of the output directory.
+
+-  .. co:: COPYRIGHT
+      :since: 3.14
+
+      Copyright / attribution text displayed in the Leaflet and OpenLayers
+      web viewers.
+
 Layer configuration
 -------------------
 

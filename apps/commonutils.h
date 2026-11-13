@@ -88,6 +88,7 @@ CPL_C_END
 
 #include "cpl_string.h"
 #include <vector>
+#include <map>
 
 std::vector<std::string> CPL_DLL
 GetOutputDriversFor(const char *pszDestFilename, int nFlagRasterVector);

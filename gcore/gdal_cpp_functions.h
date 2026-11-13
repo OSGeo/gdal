@@ -26,7 +26,9 @@
 
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -314,6 +316,9 @@ GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);
 
 bool GDALCanReliablyUseSiblingFileList(const char *pszFilename);
+
+void ApplySubstitutions(CPLString &s,
+                        const std::map<std::string, std::string> &substs);
 
 typedef enum
 {

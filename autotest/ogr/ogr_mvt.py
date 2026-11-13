@@ -1836,6 +1836,52 @@ def test_ogr_mvt_write_custom_tiling_scheme_WorldCRS84Quad(tmp_vsimem, TILING_SC
 
 
 ###############################################################################
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_mvt_write_with_web_pages():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    lyr = src_ds.CreateLayer("mylayer", srs=srs)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((5.417312276519684 43.388855780691273,5.414630512514916 43.418951132300329,5.467520858164498 43.42923122765194,5.496275327771173 43.384386174016655,5.451430274135893 43.369487485101281,5.427145411203831 43.374106078665051,5.417312276519684 43.388855780691273))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    with gdal.config_option("MVT_RASTER_TILE_HTML_PREC", "10"):
+        out_ds = gdal.VectorTranslate("/vsimem/out", src_ds, format="MVT")
+        assert out_ds is not None
+        out_ds = None
+
+    with gdal.VSIFile("/vsimem/out/leaflet.html", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/mvt/expected_mvt_leaflet.html", "wb").write(got)
+        assert got == open("data/mvt/expected_mvt_leaflet.html", "rb").read()
+
+    with gdal.VSIFile("/vsimem/out/openlayers.html", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/mvt/expected_mvt_openlayers.html", "wb").write(got)
+        assert got == open("data/mvt/expected_mvt_openlayers.html", "rb").read()
+
+    with gdal.VSIFile("/vsimem/out/mapml.mapml", "rb") as f:
+        got = f.read()
+        # Uncomment below line to regenerate expected file
+        # open("data/mvt/expected_mvt_mapml.mapml", "wb").write(got)
+        assert got == open("data/mvt/expected_mvt_mapml.mapml", "rb").read()
+
+    gdal.RmdirRecursive("/vsimem/out")
+
+
+###############################################################################
 # Test reading a uncompressed file with 0-byte padding
 # Scenario of https://github.com/OSGeo/gdal/issues/13268
 
