@@ -2778,6 +2778,7 @@ void FileGDBTable::GetMinMaxProjYForSpatialIndex(double &dfYMin,
         return;
     if (!oSRS.IsProjected())
         return;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     const char *pszProjection = oSRS.GetAttrValue("PROJECTION");
     if (pszProjection == nullptr)
         return;
