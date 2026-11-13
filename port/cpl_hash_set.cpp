@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_hash_set.h"
 
 #include <cstring>
