@@ -687,5 +687,140 @@ rm -f $OUT/gdal_algorithm_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_algorithm_fuzzer_seed_corpus.zip test*.tar >/dev/null
 rm test*.tar
 
+echo "Building apps_fuzzer_seed_corpus.zip"
+# One tar per app mode; datasets: byte.tif (in.tif), a second small tif
+# (tile2.tif), a CSV vector (in.csv + in.csvt) and grid points.
+T2=$(dirname $0)/../autotest/gdrivers/data/acetate.tif
+test -f "$T2" || T2=$(dirname $0)/../autotest/gcore/data/byte.tif
+mk_app_tar() {
+    OUTTAR=$1
+    {
+        printf "FUZZER_FRIENDLY_ARCHIVE\n"
+        printf "***NEWFILE***:apps_fuzzer_cmd.txt\n"
+        while IFS= read -r line; do printf "%s\n" "$line"; done
+        printf "***NEWFILE***:in.tif\n"
+        cat $(dirname $0)/../autotest/gcore/data/byte.tif
+        printf "\n***NEWFILE***:tile2.tif\n"
+        cat "$T2"
+        printf "\n***NEWFILE***:in.csv\n"
+        printf 'id,WKT\n1,"POINT(1 2)"\n2,"POINT(2 3)"\n'
+        printf "\n***NEWFILE***:in.csvt\n"
+        printf 'Integer,WKT\n'
+        printf "\n***NEWFILE***:points.txt\n"
+        printf '0 0 1\n10 0 2\n0 10 3\n10 10 4\n50 50 2\n'
+    } > "$OUTTAR"
+}
+
+mk_tars() {
+    mk_app_tar $OUT/apps_fuzzer_1.tar <<CMD_EOF
+info
+-checksum
+-mm
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_2.tar <<CMD_EOF
+vectorinfo
+-al
+-so
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_3.tar <<CMD_EOF
+dem
+slope
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_4.tar <<CMD_EOF
+dem
+hillshade
+-z
+2
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_5.tar <<CMD_EOF
+contour
+LEVEL_INTERVAL
+10
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_6.tar <<CMD_EOF
+grid
+invdist
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_7.tar <<CMD_EOF
+grid
+linear
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_8.tar <<CMD_EOF
+buildvrt
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_9.tar <<CMD_EOF
+tileindex
+CMD_EOF
+    mk_app_tar $OUT/apps_fuzzer_10.tar <<CMD_EOF
+info
+-json
+CMD_EOF
+}
+mk_tars
+
+rm -f $OUT/apps_fuzzer_seed_corpus.zip
+zip -j $OUT/apps_fuzzer_seed_corpus.zip $OUT/apps_fuzzer_*.tar >/dev/null
+rm -f $OUT/apps_fuzzer_*.tar
+
+# Dictionary for apps_fuzzer: multi-byte tokens traceable to the apps
+# utility option parsing (gdalinfo/ogrinfo/gdaldem/gdalbuildvrt/gdaltindex
+# and the contour/grid option names)
+cat > $OUT/apps_fuzzer.dict << APPS_DICT_EOF
+"info"
+"vectorinfo"
+"dem"
+"contour"
+"grid"
+"buildvrt"
+"tileindex"
+"slope"
+"aspect"
+"hillshade"
+"roughness"
+"tpi"
+"tri"
+"invdist"
+"invdistnn"
+"average"
+"nearest"
+"minimum"
+"maximum"
+"range"
+"count"
+"average_distance"
+"average_distance_pts"
+"linear"
+"-json"
+"-mm"
+"-stats"
+"-hist"
+"-checksum"
+"-nomd"
+"-nofl"
+"-al"
+"-so"
+"-summary"
+"-computeEdges"
+"-alg"
+"Horn"
+"ZevenbergenThorne"
+"-separate"
+"-addalpha"
+"-resolution"
+"highest"
+"lowest"
+"-lyr"
+"-tileindex"
+"-f"
+"Memory"
+"LEVEL_INTERVAL"
+"LEVEL_BASE"
+"ID_FIELD"
+"ELEV_FIELD"
+"FIXED_LEVELS"
+"POLYGONIZE"
+"NODATA"
+APPS_DICT_EOF
+
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT
