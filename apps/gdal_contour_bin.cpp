@@ -97,7 +97,8 @@ MAIN_START(argc, argv)
     if (GDALClose(hSrcDS) != CE_None)
         eErr = CE_Failure;
 
-    GDALClose(hDstDS);
+    if (GDALClose(hDstDS) != CE_None)
+        eErr = CE_Failure;
 
     CSLDestroy(papszStringOptions);
     GDALDestroyDriverManager();
