@@ -27,6 +27,7 @@ TIFF *VSI_TIFFOpenChild(
 TIFF *VSI_TIFFReOpen(TIFF *tif);
 VSILFILE *VSI_TIFFGetVSILFile(thandle_t th);
 int VSI_TIFFFlushBufferedWrite(thandle_t th);
+bool VSI_TIFFHasWriteError(thandle_t th);
 toff_t VSI_TIFFSeek(TIFF *tif, toff_t off, int whence);
 int VSI_TIFFWrite(TIFF *tif, const void *buffer, size_t buffersize);
 int VSI_TIFFHasCachedRanges(thandle_t th);

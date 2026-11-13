@@ -12604,3 +12604,61 @@ def test_tiff_write_10bit_roundtrip(tmp_vsimem, width):
     with gdal.Open(fname) as ds:
         read = ds.GetRasterBand(1).ReadAsArray().flatten()
     assert np.array_equal(data, read)
+
+
+###############################################################################
+# Test that a failed write of data buffered by the GTiff I/O layer is reported
+# when closing the dataset, instead of leaving a truncated file behind
+
+
+@pytest.mark.skipif(
+    sys.platform not in ("linux", "darwin"), reason="requires setrlimit()"
+)
+@pytest.mark.parametrize(
+    "operation,limit_kb", [("translate", 200), ("translate", 240), ("overviews", 300)]
+)
+def test_tiff_write_buffered_write_error(tmp_path, operation, limit_kb):
+
+    resource = pytest.importorskip("resource")
+    import signal
+    import subprocess
+
+    src_filename = str(tmp_path / "src.tif")
+    # About 262 KB uncompressed, so larger than the file size limit
+    gdal.Translate(src_filename, "data/byte.tif", width=512, height=512)
+    out_filename = str(tmp_path / "out.tif")
+
+    if operation == "translate":
+        action = "ds = gdal.Translate(sys.argv[2], sys.argv[1])"
+    else:
+        action = (
+            "ds = gdal.Open(sys.argv[2], gdal.GA_Update)\n"
+            "ds.BuildOverviews('NEAREST', [2, 4, 8, 16])"
+        )
+    script = (
+        "import sys\n"
+        "from osgeo import gdal\n"
+        "gdal.DontUseExceptions()\n"
+        f"{action}\n"
+        "sys.exit(0 if ds is not None and ds.Close() == 0 else 2)\n"
+    )
+
+    def run(limit_kb):
+        def limit_file_size():
+            signal.signal(signal.SIGXFSZ, signal.SIG_IGN)
+            if limit_kb:
+                resource.setrlimit(resource.RLIMIT_FSIZE, (limit_kb * 1024,) * 2)
+
+        if operation == "overviews":
+            shutil.copy(src_filename, out_filename)
+        return subprocess.run(
+            [sys.executable, "-c", script, src_filename, out_filename],
+            preexec_fn=limit_file_size,
+            capture_output=True,
+        )
+
+    # Without a limit the script succeeds. With one it must exit with 2,
+    # which is Close() failing and not a Python error
+    assert run(None).returncode == 0
+    ret = run(limit_kb)
+    assert ret.returncode == 2, ret.stderr

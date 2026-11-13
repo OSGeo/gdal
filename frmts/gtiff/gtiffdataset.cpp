@@ -288,6 +288,13 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 
     if (m_hTIFF)
     {
+        // tifvsi.cpp reports buffered writes as done before they reach the
+        // file, so check that none failed (overviews and mask are closed now)
+        if (!VSI_TIFFFlushBufferedWrite(TIFFClientdata(m_hTIFF)) ||
+            VSI_TIFFHasWriteError(TIFFClientdata(m_hTIFF)))
+        {
+            eErr = CE_Failure;
+        }
         XTIFFClose(m_hTIFF);
         m_hTIFF = nullptr;
     }

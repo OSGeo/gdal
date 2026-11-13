@@ -62,6 +62,7 @@ struct GDALTiffHandleShared
     int nUserCounter;
     bool bAtEndOfFile;
     vsi_l_offset nFileLength;
+    bool bWriteError;  // sticky: set once any write to fpL has failed
 };
 
 struct GDALTiffHandle
@@ -155,7 +156,11 @@ static bool GTHFlushBuffer(thandle_t th)
         bRet = nRet == psGTH->nWriteBufferSize;
         if (!bRet)
         {
-            TIFFErrorExt(th, "_tiffWriteProc", "%s", VSIStrerror(errno));
+            // libtiff was already told that these bytes were written, so
+            // remember the failure for VSI_TIFFHasWriteError()
+            psGTH->psShared->bWriteError = true;
+            CPLError(CE_Failure, CPLE_FileIO, "Write error on %s: %s",
+                     psGTH->psShared->pszName, VSIStrerror(errno));
         }
         psGTH->nWriteBufferSize = 0;
     }
@@ -195,6 +200,7 @@ static tsize_t _tiffWriteProc(thandle_t th, tdata_t buf, tsize_t size)
             psGTH->nWriteBufferSize = 0;
             if (nRet != BUFFER_SIZE)
             {
+                psGTH->psShared->bWriteError = true;
                 TIFFErrorExt(th, "_tiffWriteProc", "%s", VSIStrerror(errno));
                 return 0;
             }
@@ -207,6 +213,7 @@ static tsize_t _tiffWriteProc(thandle_t th, tdata_t buf, tsize_t size)
     const tsize_t nRet = VSIFWriteL(buf, 1, size, psGTH->psShared->fpL);
     if (nRet < size)
     {
+        psGTH->psShared->bWriteError = true;
         TIFFErrorExt(th, "_tiffWriteProc", "%s", VSIStrerror(errno));
     }
 
@@ -342,6 +349,12 @@ int VSI_TIFFFlushBufferedWrite(thandle_t th)
     SetActiveGTH(psGTH);
     psGTH->psShared->bAtEndOfFile = false;
     return GTHFlushBuffer(th);
+}
+
+bool VSI_TIFFHasWriteError(thandle_t th)
+{
+    GDALTiffHandle *psGTH = reinterpret_cast<GDALTiffHandle *>(th);
+    return psGTH->psShared->bWriteError;
 }
 
 int VSI_TIFFHasCachedRanges(thandle_t th)
@@ -507,6 +520,7 @@ TIFF *VSI_TIFFOpen(const char *name, const char *mode, VSILFILE *fpL)
     psGTH->psShared->psActiveHandle = psGTH;
     psGTH->psShared->nFileLength = 0;
     psGTH->psShared->bAtEndOfFile = false;
+    psGTH->psShared->bWriteError = false;
     psGTH->psShared->nUserCounter = 1;
 
     return VSI_TIFFOpen_common(psGTH, mode);
