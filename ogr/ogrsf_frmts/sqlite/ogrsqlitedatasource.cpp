@@ -85,6 +85,13 @@ void GDALOpenInfoUnDeclareFileNotToOpen(const char *pszFilename);
 
 #ifdef HAVE_SPATIALITE
 
+// Mutex protecting the libspatialite cleanup, which is not thread-safe as of
+// libspatialite 5.1, because it calls both xmlCleanupParser() and
+// sqlite3_reset_auto_extension().
+// See https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ
+// and https://www.gaia-gis.it/fossil/libspatialite/tktview?name=2fe86e5011.
+static std::mutex gSpatialiteMutex;
+
 #ifdef SPATIALITE_DLOPEN
 static CPLMutex *hMutexLoadSpatialiteSymbols = nullptr;
 static void *(*pfn_spatialite_alloc_connection)(void) = nullptr;
@@ -186,14 +193,9 @@ bool OGRSQLiteBaseDataSource::InitSpatialite()
 
 void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
-    // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
-    // is not re-entrant due to the use of xmlCleanupParser()
-    // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
-    static std::mutex oCleanupMutex;
-    std::lock_guard oLock(oCleanupMutex);
-
     if (hSpatialiteCtxt != nullptr)
     {
+        std::lock_guard oLock(gSpatialiteMutex);
         pfn_spatialite_cleanup_ex(hSpatialiteCtxt);
         hSpatialiteCtxt = nullptr;
     }
@@ -1342,9 +1344,6 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
         sqlite3_config(SQLITE_CONFIG_MALLOC, &sDebugMemAlloc);
 #endif
 
-    if (bRegisterOGR2SQLiteExtensions)
-        OGR2SQLITE_Register();
-
     const bool bUseOGRVFS =
         CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO")) ||
         STARTS_WITH(m_pszFilename, "/vsi") ||
@@ -1430,8 +1429,19 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
     for (int iterOpen = 0; iterOpen < 2; iterOpen++)
     {
         CPLAssert(hDB == nullptr);
-        int rc = sqlite3_open_v2(m_osFilenameForSQLiteOpen.c_str(), &hDB, flags,
+        int rc;
+        {
+#ifdef HAVE_SPATIALITE
+            // Acquire the same mutex as FinishSpatialite(), to prevent a
+            // concurrent call to sqlite3_reset_auto_extension().
+            std::lock_guard oLock(gSpatialiteMutex);
+#endif
+            if (bRegisterOGR2SQLiteExtensions)
+                OGR2SQLITE_Register();
+
+            rc = sqlite3_open_v2(m_osFilenameForSQLiteOpen.c_str(), &hDB, flags,
                                  pMyVFS ? pMyVFS->zName : nullptr);
+        }
         if (rc != SQLITE_OK || !hDB)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
