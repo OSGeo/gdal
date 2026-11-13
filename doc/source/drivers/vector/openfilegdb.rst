@@ -19,11 +19,11 @@ extension), provided they contain a .gdb directory at their first level.
 A specific .gdbtable file (including "system" tables) can also be opened
 directly.
 
-Curve in geometries are supported.
+Curve geometries are supported.
 
-Write and update capabilities are supported since GDAL >= 3.6
+Write and update capabilities are supported since GDAL 3.6.
 
-The driver also supports :ref:`raster layers<raster.openfilegdb>` since GDAL 3.7
+The driver also supports :ref:`raster layers<raster.openfilegdb>` since GDAL 3.7.
 
 Driver capabilities
 -------------------
@@ -42,13 +42,14 @@ Spatial filtering
 Since GDAL 3.2, the driver can use the native .spx spatial indices for
 spatial filtering.
 
-In earlier versions, it uses the minimum bounding rectangle included
-at the beginning of the geometry blobs to speed up spatial filtering. By
-default, it also builds on the fly a in-memory spatial index during
-the first sequential read of a layer. Following spatial filtering
-operations on that layer will then benefit from that spatial index. The
-building of this in-memory spatial index can be disabled by setting the
-:config:`OPENFILEGDB_IN_MEMORY_SPI` configuration option to NO.
+When no .spx file is available, or its use is disabled with the
+:config:`OPENFILEGDB_USE_SPATIAL_INDEX` configuration option, the driver
+builds an in-memory spatial index on the fly during the first complete
+sequential read of a layer, and later spatial filters on that layer use it
+until the dataset is closed.
+
+The building of this in-memory spatial index can be disabled by setting
+the :config:`OPENFILEGDB_IN_MEMORY_SPI` configuration option to ``NO``.
 
 SQL support
 -----------
@@ -57,13 +58,15 @@ SQL statements are run through the OGR SQL engine. When attribute
 indexes (.atx files) exist, the driver will use them to speed up WHERE
 clauses or SetAttributeFilter() calls.
 
+This can be disabled with the :config:`OPENFILEGDB_USE_INDEX` configuration option.
+
 Special SQL requests
 ~~~~~~~~~~~~~~~~~~~~
 
 "GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name"
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content (only available in
-Geodatabases created with ArcGIS 10 or above)
+Geodatabases created with ArcGIS 10 or above).
 
 The "CREATE INDEX idx_name ON layer_name(field_name)" SQL request can be
 used to create an attribute index. idx_name must have 16 characters or less,
@@ -75,10 +78,15 @@ an update of the layer extent in layer metadata. This is useful when updating
 or deleting features that modify the general layer extent.
 
 The "REPACK" or "REPACK layer_name" SQL requests can be used respectively to
-compact the whole database or a given layer. This is useful when doing editions
+compact the whole database or a given layer. This is useful when doing edits
 (updates or feature deletions) that may leave holes in .gdbtable files. The REPACK
 command causes the .gdbtable to be rewritten without holes. Note that compaction
 does not involve extent recomputation.
+
+.. warning::
+
+   REPACK removes the attribute (.atx) and spatial (.spx) index
+   files of the tables it rewrites, without recreating them.
 
 Configuration options
 ---------------------
@@ -86,11 +94,30 @@ Configuration options
 |about-config-options|
 The following configuration options are available:
 
+-  .. config:: OPENFILEGDB_USE_SPATIAL_INDEX
+      :choices: YES, NO
+      :default: YES
+
+      Whether to use the native .spx spatial index for spatial filtering.
+      If ``NO``, the in-memory spatial index is used instead, unless
+      :config:`OPENFILEGDB_IN_MEMORY_SPI` is set to ``NO``.
+      See `Spatial filtering`_.
+
 -  .. config:: OPENFILEGDB_IN_MEMORY_SPI
       :choices: YES, NO
+      :default: YES
 
-      If ``YES``, an in-memory spatial index will be built instead of
-      using the native spatial index. See `Spatial filtering`_.
+      If ``YES`` (the default), an in-memory spatial index is built
+      when the native .spx spatial index is not available, or is disabled with
+      :config:`OPENFILEGDB_USE_SPATIAL_INDEX` set to ``NO``. See `Spatial filtering`_.
+
+-  .. config:: OPENFILEGDB_USE_INDEX
+      :choices: YES, NO
+      :default: YES
+
+      Whether to use attribute indexes (.atx files) to speed up attribute
+      filters, WHERE clauses, and MIN, MAX, SUM, AVG and COUNT in OGR SQL
+      SELECT statements. If ``NO``, all features are read instead.
 
 
 -  .. config:: OPENFILEGDB_DEFAULT_STRING_WIDTH
@@ -111,7 +138,8 @@ The following open options are supported:
       :since: 3.4
 
       This may be "YES" to force all tables,
-      including system and internal tables (such as the GDB_* tables) to be listed
+      including system and internal tables (such as the GDB_* tables) to be listed.
+      These are marked as [private] in the layer list. By default, only user tables are listed.
 
 Dataset Creation Options
 ------------------------
@@ -130,10 +158,10 @@ The following layer creation options are supported:
       :since: 3.9
 
       ArcGIS version that the dataset must be compatible with.
-      If creation of Integer64, Date, Time field types is needed, the
+      If creation of Integer64, Date, Time field types is needed,
       ``ARCGIS_PRO_3_2_OR_LATER`` must be selected.
-      If set or let to the default value ``ALL``, those types will be
-      respectively be encoded to fallback types (Float64 instead of Integer64,
+      If set or left to the default value ``ALL``, those types will
+      respectively be encoded to fallback types (Real instead of Integer64,
       DateTime instead of Date or Time).
 
 -  .. lco:: FEATURE_DATASET
@@ -170,7 +198,7 @@ The following layer creation options are supported:
 
 -  **XYTOLERANCE, ZTOLERANCE, MTOLERANCE**\=value: These parameters control the snapping
    tolerance used for advanced ArcGIS features like network and topology
-   rules. They won't effect any OGR operations, but they will by used by
+   rules. They won't affect any OGR operations, but they will be used by
    ArcGIS. The units of the parameters are the units of the coordinate
    reference system.
 
@@ -179,9 +207,9 @@ The following layer creation options are supported:
    for geographic coordinate systems.
    ArcMap 10.0 and OGR defaults for ZTOLERANCE and MTOLERANCE are 0.0001.
 
--  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, ZORIGIN**\=value: These parameters
+-  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, MSCALE**\=value: These parameters
    control the `coordinate precision
-   grid <http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000>`__
+   grid <https://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000>`__
    inside the file geodatabase. The dimensions of the grid are
    determined by the origin, and the scale. The origin defines the
    location of a reference grid point in space. The scale is the
@@ -220,14 +248,14 @@ The following layer creation options are supported:
 -  .. lco:: CONFIGURATION_KEYWORD
       :choices: DEFAULTS, MAX_FILE_SIZE_4GB, MAX_FILE_SIZE_256TB
 
-      Customize how data is stored. By default text in UTF-8 and data up to 1TB
+      Customize how data is stored. By default text in UTF-8 and data up to 1TB.
 
 -  .. lco:: CREATE_SHAPE_AREA_AND_LENGTH_FIELDS
       :choices: YES, NO
       :default: NO
 
       When this option is set,
-      a Shape_Area and Shape_Length special fields will be created for polygonal
+      Shape_Area and Shape_Length special fields will be created for polygonal
       layers (Shape_Length only for linear layers). These fields will automatically
       be populated with the feature's area or length whenever a new feature is
       added to the dataset or an existing feature is amended.
@@ -243,9 +271,9 @@ The following layer creation options are supported:
 
 On creation, 64-bit integer field support requires setting the :lco:`TARGET_ARCGIS_VERSION`
 layer creation option to ``ARCGIS_PRO_3_2_OR_LATER``.
-Note that Esri `recommends <https://pro.arcgis.com/en/pro-app/latest/help/data/geodatabases/overview/arcgis-field-data-types.htm#ESRI_SECTION2_8BF2454C879941258DC44AF6BB31F386>`__ to restrict the
-range of 64-bit integer values to [-9007199254740991, 9007199254740991] for the
-larger compatibility. GDAL will allow writing values outside of that range without
+Note that Esri `recommends <https://doc.esri.com/en/arcgis-pro/latest/help/data/geodatabases/overview/arcgis-field-data-types.html#ESRI_SECTION2_8BF2454C879941258DC44AF6BB31F386>`__ to restrict the
+range of 64-bit integer values to [-9007199254740991, 9007199254740991] for
+wider compatibility. GDAL will allow writing values outside of that range without
 warning, and can also read them fine.
 
 Field domains
@@ -268,16 +296,16 @@ Hierarchical organization
 .. versionadded:: 3.4
 
 The hierarchical organization of tables and feature classes as top-level
-element or within a feature dataset can be explored using the methods
+elements or within feature datasets can be explored using the methods
 :cpp:func:`GDALDataset::GetRootGroup`,
 :cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
-:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`
+:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`.
 
 Transaction support
 -------------------
 
 The driver implements transactions at the database level,
-through an emulation (as per :ref:`rfc-54`). This works by backing up
+through emulation (as per :ref:`rfc-54`). This works by backing up
 the current state of the modified parts of a geodatabase after
 StartTransaction(force=TRUE) is called.
 If the transaction is committed, the backup copy is destroyed.
@@ -297,18 +325,18 @@ precision, using the XYResolution, ZResolution and MResolution members of
 the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
 :cpp:class:`OGRGeomFieldDefn`. ``XYScale`` is computed as 1.0 / ``XYResolution``
 (and similarly for the Z and M components). The tolerance setting is computed
-as being one tenth of the resolution
+as being one tenth of the resolution.
 
 On reading, the coordinate precision grid parameters are returned as format
 specific options of :cpp:class:`OGRGeomCoordinatePrecision` with the
 ``FileGeodatabase`` format key, with the following option key names:
-``XYScale``, ``XYTolerance``, ``XYOrigin``,
+``XYScale``, ``XYTolerance``, ``XOrigin``, ``YOrigin``,
 ``ZScale``, ``ZTolerance``, ``ZOrigin``,
 ``MScale``, ``MTolerance``, ``MOrigin``. On writing, they are also honored
 (they will have precedence over XYResolution, ZResolution and MResolution).
 
 On layer creation, the XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE,
-ZORIGIN, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
+MSCALE, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
 used in priority over the settings of :cpp:class:`OGRGeomCoordinatePrecision`.
 
 Advantages of the OpenFileGDB driver, compared to the FileGDB driver
@@ -323,7 +351,7 @@ Advantages of the OpenFileGDB driver, compared to the FileGDB driver
 -  Uses the VSI Virtual File API, enabling the user to read a
    Geodatabase in a ZIP file or stored on a HTTP server.
 
--  Faster on databases with a big number of fields.
+-  Faster on databases with a large number of fields.
 
 -  Does not depend on a third-party library.
 
@@ -338,14 +366,14 @@ Limitations
 
 -  Support for tables with 64-bit OBJECTIDs (which require GDAL >= 3.10), where
    OBJECTIDs are sparse, is read-only and incomplete.
-   The driver will emit a warning if such situation occurs, and will attribute
+   The driver will emit a warning if such situation occurs, and will assign
    non-faithful OBJECTIDs.
 
 Examples
 --------
 
 .. example::
-   :title: Reading a layer from FileGDB and load into PostGIS
+   :title: Reading a layer from FileGDB and loading into PostGIS
 
    .. code-block:: bash
 
@@ -365,6 +393,64 @@ Examples
 
       ogrinfo -al "C:\somefolder\MyGDB.gdb.zip"
 
+The following examples use datasets from the ``autotest/ogr/data/filegdb``
+folder of the GDAL source tree.
+
+.. example::
+   :title: Listing the layers of a FileGDB with the gdal CLI
+
+   .. code-block:: bash
+
+      gdal vector info --summary testopenfilegdb.gdb.zip
+      # and with all tables
+      gdal vector info --summary --oo LIST_ALL_TABLES=YES testopenfilegdb.gdb.zip
+
+.. example::
+   :title: Reading a zipped FileGDB directly from a web server
+
+   .. code-block:: bash
+
+      gdal vector info --summary /vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/filegdb/test_spatial_index.gdb.zip
+
+.. example::
+   :title: Converting a layer from a zipped FileGDB to GeoPackage, with an attribute filter
+
+   .. code-block:: bash
+
+      gdal vector pipeline read test_spatial_index.gdb.zip --layer test ! filter --where "id = 1" ! write out.gpkg
+
+.. example::
+   :title: Creating a FileGDB for ArcGIS Pro 3.2 or later, and listing its field types
+
+   .. code-block:: bash
+
+      gdal vector convert arcgis_pro_32_types.gdb out.gdb --of OpenFileGDB --lco TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER
+      gdal vector info --format json out.gdb | jq -r '.layers[] | .name as $layer | .fields[] | [$layer, .name, .type] | @tsv'
+
+   Extract of the output. Without ``TARGET_ARCGIS_VERSION``, these types would
+   be written as Date → DateTime, Time → DateTime, and Integer64 → Real:
+
+   .. code-block:: text
+
+      date_types  date_only  Date
+      date_types  time_only  Time
+      big_int     big        Integer64
+
+.. example::
+   :title: Creating an attribute index, and checking it is used
+
+   .. code-block:: bash
+
+      # Make a writable copy (zipped geodatabases are read-only)
+      gdal vector convert test_spatial_index.gdb.zip work.gdb --of OpenFileGDB
+      # Create the index
+      gdal vector sql --update --sql "CREATE INDEX idx_id ON test(id)" work.gdb
+      # Check that the index is used
+      gdal vector info work.gdb --layer test --where "id = 1" --features --config CPL_DEBUG=ON
+      # INFO: Open of `work.gdb'
+      #       using driver `OpenFileGDB' successful.
+      # OpenFileGDB: Using index on field id (= 1)
+
 Links
 -----
 
@@ -377,5 +463,5 @@ Links
 Credits
 -------
 
-Edition/write capabilities of the driver have been funded by the following
+Edit/write capabilities of the driver have been funded by the following
 organizations: Provincie Zuid-Holland, Provincie Gelderland and Gemeente Amsterdam.
