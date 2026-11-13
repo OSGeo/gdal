@@ -2245,7 +2245,7 @@ const OGRField *FileGDBIndexIterator::GetMinValue(int &eOutType)
 const OGRField *FileGDBIndexIterator::GetMaxValue(int &eOutType)
 {
     if (eOp != FGSO_ISNOTNULL)
-        return FileGDBIterator::GetMinValue(eOutType);
+        return FileGDBIterator::GetMaxValue(eOutType);
     if (eFieldType == FGFT_STRING || eFieldType == FGFT_GUID ||
         eFieldType == FGFT_GLOBALID)
         sMax.String = szMax;
