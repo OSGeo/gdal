@@ -409,6 +409,7 @@ static void ThreadFuncAdapter(void *pData)
         if (!pTransformerArg)
         {
             psJob->stopFlag = true;
+            psJob->cv.notify_one();
             return;
         }
         psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
@@ -493,7 +494,6 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         job.pfnFunc = pfnFunc;
     }
 
-    bool bStopFlag;
     {
         {
             // Important: do not run the SubmitJob() loop under the mutex
@@ -523,7 +523,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         std::unique_lock<std::mutex> lock(psThreadData->mutex);
         if (poWK->pfnProgress != GDALDummyProgress)
         {
-            while (psThreadData->counter < nDstYSize)
+            while (psThreadData->counter < nDstYSize && !psThreadData->stopFlag)
             {
                 psThreadData->cv.wait(lock);
                 if (!poWK->pfnProgress(poWK->dfProgressBase +
@@ -549,8 +549,6 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
                 }
             }
         }
-
-        bStopFlag = psThreadData->stopFlag;
     }
 
     /* -------------------------------------------------------------------- */
@@ -558,7 +556,9 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
     /* -------------------------------------------------------------------- */
     psThreadData->poJobQueue->WaitCompletion();
 
-    return bStopFlag ? CE_Failure : CE_None;
+    // Read the flag only now, as a job may have set it after the progress loop
+    std::lock_guard<std::mutex> lock(psThreadData->mutex);
+    return psThreadData->stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
