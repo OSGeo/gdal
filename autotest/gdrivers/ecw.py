@@ -2432,6 +2432,7 @@ def test_ecw_online_5():
 
 
 @pytest.mark.require_driver("HTTP")
+@gdaltest.skip_on_network_error()
 def test_ecw_online_6():
 
     url = "http://download.osgeo.org/gdal/data/ecw/spif83.ecw"

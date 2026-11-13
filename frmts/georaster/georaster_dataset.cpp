@@ -190,6 +190,7 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     poGRD->eAccess = eAccessIn;
     poGRD->poGeoRaster = poGRW;
+    poGRD->SetDescription(pszFilenameIn);
 
     //  -------------------------------------------------------------------
     //  List Subdatasets

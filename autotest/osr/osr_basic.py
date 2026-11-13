@@ -2580,3 +2580,23 @@ def test_osr_basic_constructor_invalid_kwarg():
 
     with pytest.raises(ValueError, match="Unexpected argument"):
         osr.SpatialReference(description="VT State Plane")
+
+
+@pytest.mark.parametrize("allow_file_access", (None, False))
+@pytest.mark.parametrize("file_exists", (True, False))
+@gdaltest.disable_exceptions()
+def test_osr_allow_file_access(tmp_path, file_exists, allow_file_access):
+
+    fname = tmp_path / "crs"
+
+    if file_exists:
+        open(fname, "w").write(osr.SpatialReference(epsg=32145).ExportToWkt())
+
+    sr = osr.SpatialReference()
+    ret = sr.SetFromUserInput(str(fname), {"ALLOW_FILE_ACCESS": allow_file_access})
+
+    if allow_file_access is False or not file_exists:
+        assert ret == ogr.OGRERR_CORRUPT_DATA
+    else:
+        assert ret == ogr.OGRERR_NONE
+        assert sr.GetAuthorityCode() == "32145"

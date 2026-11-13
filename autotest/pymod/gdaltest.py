@@ -1946,6 +1946,10 @@ def gdalurlopen(url, timeout=10):
         print(f"HTTP service for {url} timed out")
         socket.setdefaulttimeout(old_timeout)
         return None
+    except ConnectionResetError as e:
+        print(f"HTTP service for {url} is not available: ConnectionResetError : {e}")
+        socket.setdefaulttimeout(old_timeout)
+        return None
     except http.client.RemoteDisconnected as e:
         print(f"HTTP service for {url} is not available: RemoteDisconnected : {e}")
         socket.setdefaulttimeout(old_timeout)
@@ -2099,17 +2103,20 @@ def validate_json(jsn, schema):
 
         def retrieve_remote_file(uri: str):
             if not uri.startswith("http://") and not uri.startswith("https://"):
-                raise Exception(f"Cannot retrieve {uri}")
+                raise ConnectionError(f"Cannot retrieve {uri}")
             tmp_dir = get_cache_dir()
             filename = tmp_dir + "/" + os.path.basename(uri)
             if not download_file(uri, filename=filename, force_download=True):
-                raise Exception(f"Cannot download {uri}")
+                raise ConnectionError(f"Cannot download {uri}")
             response = open(filename, "rb").read()
             return Resource.from_contents(json.loads(response))
 
-        registry = Registry(retrieve=retrieve_remote_file)
-        validator_cls = jsonschema.validators.validator_for(schema)
-        validator_cls(schema, registry=registry).validate(jsn)
+        try:
+            registry = Registry(retrieve=retrieve_remote_file)
+            validator_cls = jsonschema.validators.validator_for(schema)
+            validator_cls(schema, registry=registry).validate(jsn)
+        except ConnectionError as e:
+            pytest.skip(str(e))
 
     else:
         # jsonschema < 4.18
@@ -2299,3 +2306,29 @@ def set_cpl_tmpdir(tmp_path_factory, subdir_name):
     tmpdir = tmp_path_factory.mktemp(subdir_name)
     with gdal.config_option("CPL_TMPDIR", tmpdir):
         yield
+
+
+###############################################################################
+# Decorator / context manager for skipping tests that fail due to network problems
+
+
+@contextlib.contextmanager
+def skip_on_network_error():
+
+    assert (
+        gdal.GetUseExceptions()
+    ), "gdaltest.skip_on_network_error requires exceptions to be enabled"
+
+    try:
+        yield
+    except ConnectionResetError as e:
+        pytest.skip(str(e))
+    except Exception as e:
+        if (
+            "Connection reset by peer" in str(e)
+            or "Connection timed out" in str(e)
+            or "Could not resolve host" in str(e)
+        ):
+            pytest.skip(str(e))
+        else:
+            raise

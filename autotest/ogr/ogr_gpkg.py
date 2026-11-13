@@ -8877,6 +8877,69 @@ def test_ogr_gpkg_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem, layer_t
 
 
 ###############################################################################
+# Test that features with a null or empty geometry never match a spatial
+# filter in GetArrowStream(), including when the filter contains the layer
+# extent and the spatial index is not used (https://github.com/OSGeo/gdal/issues/15465)
+
+
+@pytest.mark.parametrize("layer_type", ["direct", "sql"])
+def test_ogr_gpkg_arrow_stream_spatial_filter_null_and_empty_geom(
+    tmp_vsimem, layer_type
+):
+    gdaltest.importorskip_gdal_array()
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+    with ogr.GetDriverByName("GPKG").CreateVector(filename) as src_ds:
+        lyr = src_ds.CreateLayer(
+            "test", geom_type=ogr.wkbUnknown, options={"FID": "fid"}
+        )
+
+        for fid, wkt in [
+            (1, "POINT (10 50)"),
+            (2, "POINT (11 51)"),
+            (3, None),
+            (4, "POINT EMPTY"),
+            (5, "LINESTRING EMPTY"),
+            (6, "POLYGON EMPTY"),
+            (7, "GEOMETRYCOLLECTION EMPTY"),
+        ]:
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetFID(fid)
+            if wkt:
+                f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+            lyr.CreateFeature(f)
+
+    ds = ogr.Open(filename)
+    if layer_type == "direct":
+        lyr = ds.GetLayer(0)
+    else:
+        lyr = ds.ExecuteSQL("SELECT * FROM test")
+
+    def arrow_fids():
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        return [fid for batch in stream for fid in batch["fid"]]
+
+    # Filter that contains the layer extent: the spatial index is not used
+    with ogrtest.spatial_filter(lyr, 9.9, 49.9, 11.1, 51.1):
+        assert arrow_fids() == [1, 2]
+        assert [f.GetFID() for f in lyr] == [1, 2]
+
+    # Filter that selects only part of the layer: the spatial index is used
+    with ogrtest.spatial_filter(lyr, 9.9, 49.9, 10.1, 50.1):
+        assert arrow_fids() == [1]
+        assert [f.GetFID() for f in lyr] == [1]
+
+    # Without a filter, the null and empty geometries are returned
+    assert arrow_fids() == [1, 2, 3, 4, 5, 6, 7]
+
+    if layer_type != "direct":
+        ds.ReleaseResultSet(lyr)
+
+    ds = None
+
+
+###############################################################################
 # Test reading an empty file with GetArrowStream()
 
 

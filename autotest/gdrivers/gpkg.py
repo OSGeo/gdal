@@ -4413,3 +4413,26 @@ def test_gpkg_copy_using_get_data_coverage_status(tmp_vsimem):
         == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
         and pct == 25.0
     )
+
+
+###############################################################################
+# Test that each band of a multi-band raster reads back its own metadata
+
+
+@pytest.mark.require_driver("PNG")
+def test_gpkg_multiband_band_metadata(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    for i in range(3):
+        src_ds.GetRasterBand(i + 1).SetMetadataItem("FOO", str(i + 1))
+
+    filename = str(tmp_vsimem / "test_gpkg_multiband_band_metadata.gpkg")
+    gdaltest.gpkg_dr.CreateCopy(filename, src_ds, options=["TILE_FORMAT=PNG"])
+
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).GetMetadataItem("FOO") for i in range(3)] == [
+        "1",
+        "2",
+        "3",
+    ]

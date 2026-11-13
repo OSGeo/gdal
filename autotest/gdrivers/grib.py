@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import array
 import base64
 import struct
 
@@ -1570,27 +1571,23 @@ def test_grib_grib2_write_data_encodings_dynamic_lt_1(
     tmpfilename = tmp_vsimem / "out.grb2"
 
     options = {"DATA_ENCODING": encoding}
-    if encoding == "COMPLEX_PACKING":
-        with pytest.raises(Exception, match="Error while packing"):
-            gdal.Translate(tmpfilename, test_ds, format="GRIB", creationOptions=options)
-    else:
-        gdal.Translate(tmpfilename, test_ds, format="GRIB", creationOptions=options)
+    gdal.Translate(tmpfilename, test_ds, format="GRIB", creationOptions=options)
 
-        out_ds = gdal.Open(tmpfilename)
-        got_vals = struct.unpack(4 * "d", out_ds.ReadRaster())
-        out_ds = None
-        if encoding == "IEEE_FLOATING_POINT":
-            expected_vals = (1.23, 1.45, 1.56, 1.78)
-        else:
-            expected_vals = (
-                1.2300000190734863,
-                1.4487500190734863,
-                1.5581250190734863,
-                1.7807812690734863,
-            )
-        assert (
-            max([abs(got_vals[i] - expected_vals[i]) for i in range(4)]) <= 1e-7
-        ), "did not get expected values"
+    out_ds = gdal.Open(tmpfilename)
+    got_vals = struct.unpack(4 * "d", out_ds.ReadRaster())
+    out_ds = None
+    if encoding == "IEEE_FLOATING_POINT":
+        expected_vals = (1.23, 1.45, 1.56, 1.78)
+    else:
+        expected_vals = (
+            1.2300000190734863,
+            1.4487500190734863,
+            1.5581250190734863,
+            1.7807812690734863,
+        )
+    assert (
+        max([abs(got_vals[i] - expected_vals[i]) for i in range(4)]) <= 1e-7
+    ), "did not get expected values"
 
 
 @pytest.mark.parametrize("encoding", ["SIMPLE_PACKING", "PNG", "JPEG2000"])
@@ -2547,3 +2544,34 @@ def test_grib_complex_unpacking_invalid_bits_per_packed_value(tmp_vsimem):
 
     with pytest.raises(Exception, match="Error reading GRIB data"):
         gdal.Translate("", tmp_vsimem / "src.grib2", format="MEM")
+
+
+def test_grib_small_raster_nodata(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
+
+    nx = 10
+    ny = 10
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", nx, ny, eType=gdal.GDT_Float64)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src_ds.SetSpatialRef(osr.SpatialReference("WGS84"))
+    src_ds.GetRasterBand(1).SetNoDataValue(9999)
+
+    src_data = array.array(
+        "d", [9999 if i % nx == 0 else nx + i / 10 for i in range(nx * ny)]
+    )
+    src_ds.WriteRaster(0, 0, nx, ny, src_data, buf_type=gdal.GDT_Float64)
+
+    gdal.Translate(tmpfilename, src_ds, creationOptions={"NBITS": 16})
+
+    dst_ds = gdal.Open(tmpfilename)
+    dst_data = memoryview(dst_ds.ReadRaster()).cast("d").tolist()
+
+    assert len(src_data) == len(dst_data)
+    for s, d in zip(src_data, dst_data):
+        if s == 9999:
+            # nodata value preserved exactly
+            assert d == 9999
+        else:
+            assert d == pytest.approx(s, 1e-5)

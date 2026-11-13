@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include <numeric>
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
@@ -2054,9 +2055,7 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     // Compute the block index from the coordinates
     hsize_t nBlockIdx = 0;
     hsize_t nMult = 1;
-#ifdef HAVE_H5Dchunk_iter
     std::vector<uint64_t> anBlockCount(anBlockSize.size());
-#endif
     for (size_t nDimIdx = anBlockSize.size(); nDimIdx > 0;)
     {
         --nDimIdx;
@@ -2073,9 +2072,7 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                      static_cast<unsigned>(nDimIdx));
             return false;
         }
-#ifdef HAVE_H5Dchunk_iter
         anBlockCount[nDimIdx] = nBlockCount;
-#endif
         nBlockIdx += panBlockCoordinates[nDimIdx] * nMult;
         nMult *= nBlockCount;
     }
@@ -2200,18 +2197,55 @@ bool HDF5Array::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     }
 #endif
 
-    std::vector<hsize_t> anOffset(GetDimensionCount());
-    unsigned nFilterMask = 0;
-    haddr_t nChunkOffset = 0;
-    hsize_t nChunkSize = 0;
-    if (H5Dget_chunk_info(m_hArray, m_hDataSpace, nBlockIdx, anOffset.data(),
-                          &nFilterMask, &nChunkOffset, &nChunkSize) < 0)
+    hsize_t nActualChunks = 0;
+    if (H5Dget_num_chunks(m_hArray, m_hDataSpace, &nActualChunks) < 0)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "GetRawBlockInfo() failed: array %s: H5Dget_chunk_info() failed",
+            "GetRawBlockInfo() failed: array %s: H5Dget_num_chunks() failed",
             GetName().c_str());
         return false;
+    }
+    const auto nExpectedChunks =
+        std::accumulate(anBlockCount.begin(), anBlockCount.end(),
+                        std::uint64_t{1}, std::multiplies<>());
+    const bool bSparse = nExpectedChunks != nActualChunks;
+
+    unsigned nFilterMask = 0;
+    haddr_t nChunkOffset = 0;
+    hsize_t nChunkSize = 0;
+
+    if (bSparse)
+    {
+        std::vector<hsize_t> anCoordOffsets(GetDimensionCount());
+        for (size_t i = 0; i < GetDimensionCount(); i++)
+        {
+            anCoordOffsets[i] = panBlockCoordinates[i] * anBlockSize[i];
+        }
+        if (H5Dget_chunk_info_by_coord(m_hArray, anCoordOffsets.data(),
+                                       &nFilterMask, &nChunkOffset,
+                                       &nChunkSize) < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: "
+                     "H5Dget_chunk_info_by_coord() failed",
+                     GetName().c_str());
+            return false;
+        }
+    }
+    else
+    {
+        std::vector<hsize_t> anOffset(GetDimensionCount());
+        if (H5Dget_chunk_info(m_hArray, m_hDataSpace, nBlockIdx,
+                              anOffset.data(), &nFilterMask, &nChunkOffset,
+                              &nChunkSize) < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetRawBlockInfo() failed: array %s: H5Dget_chunk_info() "
+                     "failed",
+                     GetName().c_str());
+            return false;
+        }
     }
 
     info.pszFilename = CPLStrdup(m_poShared->GetFilename().c_str());
@@ -3281,15 +3315,24 @@ HDF5Attribute::~HDF5Attribute()
 /*                       CopyAllAttrValuesInto()                        */
 /************************************************************************/
 
-static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
-                                  const GDALExtendedDataType &bufferDataType,
-                                  void *pDstBuffer, hid_t hSrcBufferType,
-                                  const void *pabySrcBuffer)
+static void CopyAllAttrValuesInto(
+    const std::vector<std::shared_ptr<GDALDimension>> &dims,
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pDstBuffer, hid_t hSrcBufferType, const void *pabySrcBuffer)
 {
+    const size_t nDims = dims.size();
     const size_t nBufferDataTypeSize(bufferDataType.GetSize());
     const size_t nSrcDataTypeSize(H5Tget_size(hSrcBufferType));
+    // Byte stride of each dimension in the source buffer (row-major)
+    std::vector<GPtrDiff_t> anSrcStride(nDims);
+    GPtrDiff_t nStride = static_cast<GPtrDiff_t>(nSrcDataTypeSize);
+    for (size_t i = nDims; i > 0;)
+    {
+        --i;
+        anSrcStride[i] = nStride;
+        nStride *= static_cast<GPtrDiff_t>(dims[i]->GetSize());
+    }
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte *> pabySrcBufferStack(nDims + 1);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
@@ -3301,7 +3344,7 @@ static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
 
     pabySrcBufferStack[0] = static_cast<const GByte *>(pabySrcBuffer);
     if (nDims > 0)
-        pabySrcBufferStack[0] += arrayStartIdx[0] * nSrcDataTypeSize;
+        pabySrcBufferStack[0] += arrayStartIdx[0] * anSrcStride[0];
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
     size_t iDim = 0;
 lbl_next_depth:
@@ -3322,7 +3365,7 @@ lbl_next_depth:
             if (iDim < nDims)
             {
                 pabySrcBufferStack[iDim] +=
-                    arrayStartIdx[iDim] * nSrcDataTypeSize;
+                    arrayStartIdx[iDim] * anSrcStride[iDim];
             }
             goto lbl_next_depth;
         lbl_return_to_caller_in_loop:
@@ -3332,7 +3375,7 @@ lbl_next_depth:
                 break;
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * nBufferDataTypeSize;
-            pabySrcBufferStack[iDim] += arrayStep[iDim] * nSrcDataTypeSize;
+            pabySrcBufferStack[iDim] += arrayStep[iDim] * anSrcStride[iDim];
         }
     }
     if (iDim > 0)
@@ -3351,7 +3394,6 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 {
     HDF5_GLOBAL_LOCK();
 
-    const size_t nDims(m_dims.size());
     if (m_dt.GetClass() == GEDTC_STRING)
     {
         if (bufferDataType.GetClass() != GEDTC_STRING)
@@ -3372,7 +3414,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 VSIFree(pabyTemp);
                 return false;
             }
-            CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep,
+            CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep,
                                   bufferStride, bufferDataType, pDstBuffer,
                                   m_hNativeDT, pabyTemp);
             VSIFree(pabyTemp);
@@ -3388,7 +3430,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                 VSIFree(pabyTemp);
                 return false;
             }
-            CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep,
+            CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep,
                                   bufferStride, bufferDataType, pDstBuffer,
                                   m_hNativeDT, pabyTemp);
             H5Dvlen_reclaim(m_hNativeDT, m_hDataSpace, H5P_DEFAULT, pabyTemp);
@@ -3448,7 +3490,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         VSIFree(pabyTemp);
         return false;
     }
-    CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep, bufferStride,
+    CopyAllAttrValuesInto(m_dims, arrayStartIdx, count, arrayStep, bufferStride,
                           bufferDataType, pDstBuffer, hBufferType, pabyTemp);
     if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasString)
     {

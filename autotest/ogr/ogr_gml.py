@@ -2601,8 +2601,14 @@ def test_ogr_gml_64(parser):
 @pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
 def test_ogr_gml_billion_laugh(parser):
 
+    # Expat's limit may abort before GDAL's own limit
+    if parser == "EXPAT":
+        match = "File probably corrupted|limit on input amplification factor"
+    else:
+        match = "File probably corrupted"
+
     with gdal.config_option("GML_PARSER", parser), pytest.raises(
-        Exception, match="File probably corrupted"
+        Exception, match=match
     ):
         with gdal.Open("data/gml/billionlaugh.gml") as ds:
             assert ds.GetDriver().GetDescription() == "GML"

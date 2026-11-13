@@ -2699,7 +2699,7 @@ GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
     int32           dims[8];	/* Dimensions array */
     int32           dum;	/* Dummy variable */
 
-    char            name[80];	/* Fill value "attribute" name */
+    char            name[84];	/* Fill value "attribute" name */
 
     status = GDchkgdid(gridID, "GDgetfillvalue", &dum, &dum, &dum);
 
@@ -2712,9 +2712,16 @@ GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
 	if (status == 0)
 	{
 	    /* Read fill value attribute */
-	    strcpy(name, "_FV_");
-	    strcat(name, fieldname);
-	    status = GDreadattr(gridID, name, fillval);
+	    const int ret = snprintf(name, sizeof(name), "_FV_%s", fieldname);
+	    if (ret < 0 || (size_t) ret >= sizeof(name))
+	    {
+	        status = -1;
+	        HEpush(DFE_GENAPP, "GDgetfillvalue", __FILE__, __LINE__);
+	        HEreport("Attribute name \"_FV_%s\" exceeds the maximum allowable length.\n", fieldname);
+	    } else
+	    {
+	        status = GDreadattr(gridID, name, fillval);
+	    }
 	}
 	else
 	{

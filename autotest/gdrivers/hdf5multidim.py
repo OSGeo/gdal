@@ -524,6 +524,28 @@ def test_hdf5_multidim_read_missing_value_of_different_type():
 
 
 ###############################################################################
+# Test reading attributes with 2 or more dimensions
+
+
+def test_hdf5_multidim_read_attr_nd():
+    def create():
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/attr_nd.h5", "w")
+        f.attrs["attr"] = np.arange(24, dtype="int32").reshape(2, 3, 4)
+        f.close()
+
+    # create()
+
+    ds = gdal.Open("data/hdf5/attr_nd.h5", gdal.OF_MULTIDIM_RASTER)
+    attr = ds.GetRootGroup().GetAttribute("attr")
+    assert attr.GetDimensionsSize() == [2, 3, 4]
+    assert attr.Read() == tuple(range(24))
+
+
+###############################################################################
 
 
 def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
@@ -940,6 +962,51 @@ def test_hdf5_multidim_getrawblockinfo_big_endian():
     var = rg.OpenMDArray("test")
     info = var.GetRawBlockInfo([0, 0])
     assert info.GetInfo() == ["ENDIANNESS=BIG"]
+
+
+###############################################################################
+# Test GetRawBlockInfo() on file with missing chunk(s)
+
+
+def test_hdf5_multidim_getrawblockinfo_sparse():
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    fname = "data/hdf5/sparse_2d.h5"
+
+    # Create the test file sparse_2d.h5
+    if False:
+        import h5py
+        import numpy as np
+
+        with h5py.File(fname, "w") as f:
+            dset = f.create_dataset("test", shape=(21, 16), chunks=(3, 4), dtype="i4")
+            dset[6:8, 8:10] = np.array([[1, 2], [3, 4]])
+            dset[17:19, 2:4] = np.array([[5, 6], [7, 8]])
+
+    ds = gdal.OpenEx(fname, gdal.OF_MULTIDIM_RASTER)
+    var = ds.GetRootGroup().OpenMDArray("test")
+    info = var.GetRawBlockInfo([2, 2])
+
+    with open(fname, "rb") as f:
+        f.seek(info.GetOffset())
+        dat = f.read(info.GetSize())
+
+        assert memoryview(dat).cast("i").tolist() == [
+            1,
+            2,
+            0,
+            0,
+            3,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
 
 
 ###############################################################################

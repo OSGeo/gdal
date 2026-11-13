@@ -1050,6 +1050,11 @@ init_list_attribute_tables = [
         None,
     ),
     (
+        "data/miramon/palettes/Continous/LinearLogSimbo/LinearSimboI.rel",
+        1,  # band index
+        None,
+    ),
+    (
         "data/miramon/palettes/Continous/LinearLogSimbo/LinearSimboWith0I.rel",
         1,  # band index
         {

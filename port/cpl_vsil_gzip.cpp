@@ -808,7 +808,7 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
         return true;
     }
 
-    // whence == SEEK_END is unsuppored in original gzseek.
+    // whence == SEEK_END is unsupported in original gzseek.
     if (whence == SEEK_END)
     {
         // If we known the uncompressed size, we can fake a jump to
@@ -1510,7 +1510,7 @@ bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
     CPLDebug("GZIP", "Seek(" CPL_FRMT_GUIB ",%d)", offset, whence);
 #endif
 
-    // whence == SEEK_END is unsuppored in original gzseek.
+    // whence == SEEK_END is unsupported in original gzseek.
     if (whence == SEEK_END)
     {
         // If we known the uncompressed size, we can fake a jump to
@@ -3968,7 +3968,7 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nBytes)
             bError_ = true;
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
-                     " whereas %u where expected",
+                     " whereas %u were expected",
                      static_cast<unsigned>(nOut),
                      static_cast<GUIntBig>(nCurPos_),
                      static_cast<unsigned>(nToReadThisIter));
@@ -4008,7 +4008,7 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nBytes)
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
-                " whereas %u where expected",
+                " whereas %u were expected",
                 static_cast<unsigned>(nToReadThisIter - sStream_.avail_out),
                 static_cast<GUIntBig>(nCurPos_),
                 static_cast<unsigned>(nToReadThisIter));

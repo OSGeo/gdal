@@ -8193,6 +8193,11 @@ begin:
 
         if (nWKBSize == 0)
         {
+            // Features with a null geometry never match a spatial filter.
+            if (psFillArrowArray->poLayerForFilterGeom)
+            {
+                return;
+            }
             if (!psHelper->SetNull(iArrowField, iFeat))
             {
                 goto error;

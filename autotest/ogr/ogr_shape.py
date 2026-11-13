@@ -6284,3 +6284,41 @@ def test_ogr_shape_dbf_invalid(tmp_vsimem):
         Exception, match="exists, but cannot be opened. File likely corrupted"
     ):
         assert ogr.Open(tmp_vsimem / "dbf-invalid.dbf")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_count_filter_geometry(tmp_vsimem):
+
+    with gdal.GetDriverByName("ESRI Shapefile").CreateVector(
+        tmp_vsimem / "tmp.shp"
+    ) as ds:
+        lyr = ds.CreateLayer("tmp")
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 3)"))
+        lyr.CreateFeature(f)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+    ds = ogr.Open(tmp_vsimem / "tmp.shp")
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 3
+    assert len([f for f in lyr]) == 3
+    with ogrtest.attribute_filter(lyr, "OGR_GEOMETRY = 'POINT'"):
+        assert lyr.GetFeatureCount() == 2
+        assert len([f for f in lyr]) == 2
+    with ogrtest.attribute_filter(lyr, '"_ogr_geometry_" IS NOT NULL'):
+        assert lyr.GetFeatureCount() == 2
+        assert len([f for f in lyr]) == 2
+    with ogrtest.attribute_filter(lyr, '"_ogr_geometry_" IS NULL'):
+        assert lyr.GetFeatureCount() == 1
+        assert len([f for f in lyr]) == 1
