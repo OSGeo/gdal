@@ -3077,6 +3077,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     const size_t nEltCount = GetEltCount(
                         anOffsets, sizeof(v[0]), v.size() * sizeof(v[0]));
                     std::vector<int32_t> tmp;
+                    tmp.reserve(nEltCount);
                     const auto *inPtr =
                         v.data() +
                         static_cast<size_t>(anOffsets[m_nOffsetInResultSet] /
@@ -3094,6 +3095,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     const size_t nEltCount = GetEltCount(
                         anOffsets, sizeof(v[0]), v.size() * sizeof(v[0]));
                     std::vector<int32_t> tmp;
+                    tmp.reserve(nEltCount);
                     const auto *inPtr =
                         v.data() +
                         static_cast<size_t>(anOffsets[m_nOffsetInResultSet] /
@@ -3124,6 +3126,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     const size_t nEltCount = GetEltCount(
                         anOffsets, sizeof(v[0]), v.size() * sizeof(v[0]));
                     std::vector<int32_t> tmp;
+                    tmp.reserve(nEltCount);
                     const auto *inPtr =
                         v.data() +
                         static_cast<size_t>(anOffsets[m_nOffsetInResultSet] /
@@ -3209,6 +3212,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     const size_t nEltCount = GetEltCount(
                         anOffsets, sizeof(v[0]), v.size() * sizeof(v[0]));
                     std::vector<double> tmp;
+                    tmp.reserve(nEltCount);
                     const auto *inPtr =
                         v.data() +
                         static_cast<size_t>(anOffsets[m_nOffsetInResultSet] /

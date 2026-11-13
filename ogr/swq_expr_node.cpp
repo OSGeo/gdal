@@ -850,6 +850,7 @@ swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
     std::vector<int> anValueNeedsFree;
     bool bError = false;
     apoValues.reserve(nSubExprCount);
+    anValueNeedsFree.reserve(nSubExprCount);
     for (int i = 0; i < nSubExprCount && !bError; i++)
     {
         if (papoSubExpr[i]->eNodeType == SNT_CONSTANT)
@@ -990,6 +991,7 @@ void swq_expr_node::RebalanceAndOr()
             if ((eOp == SWQ_OR || eOp == SWQ_AND) && node->nSubExprCount > 2)
             {
                 std::vector<swq_expr_node *> exprs;
+                exprs.reserve(node->nSubExprCount);
                 for (int i = 0; i < node->nSubExprCount; i++)
                 {
                     node->papoSubExpr[i]->RebalanceAndOr();
