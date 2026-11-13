@@ -23,7 +23,8 @@ can be created by GDAL is set to 1,000,000x1,000,000 pixels by libpng.
 
 Text chunks are translated into metadata, typically with multiple lines
 per item. :ref:`raster.wld` with the extensions of .pgw, .pngw or
-.wld will be read. Single transparency values in greyscale files will be
+.wld will be read. If available a MapInfo .tab file will also be used for
+georeferencing. Single transparency values in greyscale files will be
 recognised as a nodata value in GDAL. Transparent index in paletted
 images are preserved when the color table is read.
 

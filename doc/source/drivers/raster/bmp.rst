@@ -21,7 +21,8 @@ or three- band files could be saved in BMP file. Input values will be
 resampled to 8 bit.
 
 If an ESRI world file exists with the .bpw, .bmpw or .wld extension, it
-will be read and used to establish the geotransform for the image.
+will be read and used to establish the geotransform for the image.  If
+available a MapInfo .tab file will also be used for georeferencing.
 
 Driver capabilities
 -------------------
