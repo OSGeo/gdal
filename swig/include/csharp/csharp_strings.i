@@ -41,7 +41,7 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
   public static OSR.IStringEncoder StringEncoder
     => ThreadLocalStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
   public static OSR.IStringEncoder GlobalStringEncoder { get; set; }
-  public static OSR.IStringEncoder ThreadLocalStringEncoder {    
+  public static OSR.IStringEncoder ThreadLocalStringEncoder {
     get => s_ThreadLocalStringEncoder;
     set => s_ThreadLocalStringEncoder = value;
   }
@@ -109,7 +109,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
   "$module.StringEncoder?.ToNullTerminated($csinput)"
-  
+
 %define CS_RETURN_UTF8_STRING
 
   IntPtr cPtr = $imcall;
@@ -212,9 +212,11 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       _ar[ar.Length] = IntPtr.Zero;
     }
     public StringListMarshal(System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, string>> kvps)
-	  : this(KvpCollectionToStringArray(kvps)) {}
-	  
+      : this(KvpCollectionToStringArray(kvps)) {}
+
     private static string[] KvpCollectionToStringArray(System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<string, string>> kvps) {
+      if (kvps == null)
+        return null;
       string[] array = new string[2 * kvps.Count];
       int i = 0;
       foreach (var kvp in kvps) {
@@ -224,12 +226,12 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       }
       return array;
     }
-	
+
     ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
-	  var handles = System.Threading.Interlocked.Exchange(ref _handles, null);
+      var handles = System.Threading.Interlocked.Exchange(ref _handles, null);
       if (handles != null && _ar != null) {
-         for (int cx = 0; cx < handles.Length; cx++) {		   
+         for (int cx = 0; cx < handles.Length; cx++) {
            if (handles[cx].IsAllocated)
              handles[cx].Free();
            _ar[cx] = IntPtr.Zero;
@@ -259,10 +261,10 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       var ret = new System.Collections.Generic.KeyValuePair<string,string>[count];
       for(int cx = 0; cx < count; cx++) {
         IntPtr pKey = System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, 2 * cx * IntPtr.Size);
-        IntPtr pValue = System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, (2 * cx + 1) * IntPtr.Size);		
+        IntPtr pValue = System.Runtime.InteropServices.Marshal.ReadIntPtr(pKvp, (2 * cx + 1) * IntPtr.Size);
         string key = $module.StringEncoder?.FromNullTerminated(pKey);
         string value = $module.StringEncoder?.FromNullTerminated(pValue);
-		ret[cx] = new System.Collections.Generic.KeyValuePair<string,string>(key, value);
+        ret[cx] = new System.Collections.Generic.KeyValuePair<string,string>(key, value);
       }
       return ret;
     }
@@ -345,7 +347,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   public class ExceptionHelperUtf8 {
     public delegate void ExceptionDelegateUtf8(IntPtr pMessage);
     public delegate void ExceptionArgumentDelegateUtf8(IntPtr pMessage, IntPtr pParamName);
-	
+
     [DllImport("$dllimport", EntryPoint = "SWIGRegisterExceptionCallbacks_$module")]
     public static extern void RegisterExceptionCallbacksUtf8(
         ExceptionDelegateUtf8 applicationDelegate,
@@ -379,7 +381,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
         new ExceptionDelegateUtf8(SetPendingOutOfMemoryException),
         new ExceptionDelegateUtf8(SetPendingOverflowException),
         new ExceptionDelegateUtf8(SetPendingSystemException));
-		
+
       RegisterExceptionCallbacksArgumentUtf8(
         new ExceptionArgumentDelegateUtf8(SetPendingArgumentException),
         new ExceptionArgumentDelegateUtf8(SetPendingArgumentNullException),
@@ -412,16 +414,16 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       => SWIGPendingException.Set(new ArgumentException(Utf8UnmanagedToString(pMessage), Utf8UnmanagedToString(pParamName), SWIGPendingException.Retrieve()));
     static void SetPendingArgumentNullException(IntPtr pMessage, IntPtr pParamName) {
       Exception e = SWIGPendingException.Retrieve();
-	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+      string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentNullException(Utf8UnmanagedToString(pParamName), message));
     }
     static void SetPendingArgumentOutOfRangeException(IntPtr pMessage, IntPtr pParamName) {
       Exception e = SWIGPendingException.Retrieve();
-	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+      string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentOutOfRangeException(Utf8UnmanagedToString(pParamName), message));
     }
     static string Utf8UnmanagedToString(IntPtr pUtf8Bts)
-	  => $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
+      => $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
   }
   //Instantiate the helper class so that the static constructor executes
   static readonly ExceptionHelperUtf8 exceptionHelperUtf8 = new ExceptionHelperUtf8();

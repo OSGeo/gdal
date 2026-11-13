@@ -59,7 +59,65 @@ From GDAL 3.13 to GDAL 3.14
 
 - Changes impacting C# users:
 
-  * Several call sites have been removed from from the C# bindings due to corrected and improved type mapping
+  * Several new call sites have been added. Below is a list of new GDAL methods exposed to C#:
+
+    + OSGeo.OSR.CoordinateTransformation.TransformPointsWithErrorCodes
+    + OSGeo.OGR.Feature
+
+      + SetFieldInteger64List
+      + GetFieldAsInteger64List
+      + SetFieldBinary
+      + GetFieldAsBinary
+      + Overloads for all field getter/setters that accept field names
+
+    + OSGeo.OGR.FldDomain.GetEnumeration
+    + OSGeo.OGR.Geometry
+
+      + WkbLongSize (property)
+      + ExportToIsoWkb
+
+    + OSGeo.OGR.Layer
+
+      + GetDataset (via an OSGeo.GDAL extension method)
+      + GetExtent (overload which accepts int geom_field)
+      + GetExtent3D
+
+    + OSGeo.OGR.Ogr
+
+      + CreateCodedFieldDomain
+      + CreateGeometryFromEnvelope
+
+    + OSGeo.GDAL.AlgorithmArg
+
+      + GetDefaultAsIntegerList
+      + GetDefaultAsDoubleList
+      + GetAsIntegerList
+      + GetAsDoubleList
+      + SetDatasets
+
+    + OSGeo.GDAL.Band
+
+      + GetHistogramEx
+      + GetDefaultHistogramEx
+      + SetDefaultHistogramEx
+
+    + OSGeo.GDAL.Dataset
+
+      + SetGCPs2 (accepts a SpatialReference object)
+      + CreateLayer
+      + CreateLayerFromGeomFieldDefn
+      + CopyLayer
+      + ExecuteSQL
+      + ReleaseResultSet
+      + GetStyleTable
+      + SetStyleTable
+
+    + OSGeo.GDAL.ExtendedDataType.CreateCompound
+    + OSGeo.GDAL.Gdal.GetOpenDatasets
+    + OSGeo.GDAL.RATDateTime.ctor
+    + OSGeo.GDAL.RATDateTime..ctor
+
+  * Several call sites have been removed from the C# bindings due to corrected and improved type mapping.
 
     + The overloads of ``OSGeo.GDAL.Group.CreateAttribute``, ``OSGeo.GDAL.MDArray.CreateAttribute``, and ``OSGeo.GDAL.MDArray.Resize`` which accepted ``uint[]`` are no longer available due to that parameter being incorrectly type mapped to ``uint[]`` instead of ``ulong[]``.
 

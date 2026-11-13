@@ -62,7 +62,7 @@ OGRErrMessages( int rc ) {
 /* GDAL Typemaps */
 
 %apply (char*) {(tostring argin)};
-%apply (long) {(IF_FALSE_RETURN_NONE)};
+%apply (int) {(IF_FALSE_RETURN_NONE)};
 %apply (long long) {GIntBig};
 %apply (unsigned long long) {GUIntBig};
 
@@ -150,11 +150,13 @@ OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
 }
 %typemap(argout)  (CTYPE *argout[ANY]) {
   /* %typemap(argout) (CTYPE *argout[ANY]) */
-  memcpy($input, *$1, $1_dim0 * sizeof(CTYPE));
+  if ($input && *$1 && $1_dim0 > 0)
+    memcpy($input, *$1, $1_dim0 * sizeof(CTYPE));
 }
 %typemap(freearg) (CTYPE *argout[ANY]) {
   /* %typemap(freearg) (CTYPE *argout[ANY]) */
-  CPLFree(*$1);
+  if (*$1)
+    CPLFree(*$1);
 }
 
 %typemap(ctype)  CTYPE inout[ANY] "CTYPE*"
@@ -255,17 +257,19 @@ OBJECT_LIST_INOUT(OGRLayerShadow, OSGeo.OGR.Layer)
  *****************************************************************************/
 %apply (int *nLen, int **pList_free) {(int* confidence_values, int** ppanMatchConfidence )};
 %typemap(imtype, out="IntPtr") OSRSpatialReferenceShadow** FindMatches "SpatialReference[]"
-%typemap(cstype) OSRSpatialReferenceShadow** FindMatches %{SpatialReference[]%}
+%typemap(cstype) OSRSpatialReferenceShadow** FindMatches "SpatialReference[]"
 %typemap(csout, excode=SWIGEXCODE) OSRSpatialReferenceShadow** FindMatches {
         /* %typemap(csout) OSRSpatialReferenceShadow** FindMatches */
         IntPtr cPtr = $imcall;
-        $excode
-        var srsArray = new $modulePINVOKE.ArrayWithSize(tempconfidence_values.Count, IntPtr.Size, cPtr);
-        SpatialReference[] ret = srsArray.ToReferenceArray<SpatialReference>(p => new SpatialReference(p, true, ThisOwn_true()));
-        if (cPtr != IntPtr.Zero) {
+        try {
+          $excode
+          var srsArray = new $modulePINVOKE.ArrayWithSize(tempconfidence_values.Count, IntPtr.Size, cPtr);
+          return srsArray.ToReferenceArray<SpatialReference>(p => new SpatialReference(p, true, ThisOwn_true()));
+        } finally {
+          if (cPtr != IntPtr.Zero) {
             $modulePINVOKE.CPLMemDestroy(cPtr);
+          }
         }
-        return ret;
 }
 
 /***************************************************

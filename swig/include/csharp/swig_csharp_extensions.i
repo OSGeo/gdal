@@ -48,11 +48,12 @@
   }
 // Proxy classes (base classes, i.e, not derived classes)
 %typemap(csbody) SWIGTYPE %{
-  private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
-  protected readonly object m_LockObject = new object();
+  private volatile bool $csclassname_Disposed;
+  private HandleRef $csclassname_swigCPtr;
+  private HandleRef swigCPtr => !$csclassname_Disposed ? $csclassname_swigCPtr : throw new ObjectDisposedException(GetType().FullName);
   protected bool swigCMemOwn;
   protected object swigParentRef;
+  protected readonly object m_DisposeLock = new object();
 
   protected static object ThisOwn_true() { return null; }
   protected object ThisOwn_false() { return this; }
@@ -94,8 +95,9 @@
 
 // Derived proxy classes
 %typemap(csbody_derived) SWIGTYPE %{
-  private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
+  private volatile bool $csclassname_Disposed;
+  private HandleRef $csclassname_swigCPtr;
+  private HandleRef swigCPtr => !$csclassname_Disposed ? $csclassname_swigCPtr : throw new ObjectDisposedException(GetType().FullName);
 
   public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassname_SWIGUpcast(cPtr), cMemoryOwn, parent) {
     $csclassname_swigCPtr = new HandleRef(this, cPtr);
@@ -148,24 +150,26 @@
 %}
 
 %typemap(csdisposing, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
-  lock(m_LockObject) {
-      if($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != IntPtr.Zero && swigCMemOwn) {
+  lock (m_DisposeLock) {
+      if($csclassname_swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
         $imcall;
       }
-      $csclassname_swigCPtr = null;
+      $csclassname_swigCPtr = default;
+      $csclassname_Disposed = true;
       swigParentRef = null;
       GC.SuppressFinalize(this);
     }
   }
 
 %typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public") SWIGTYPE  {
-  lock(m_LockObject) {
-      if($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != IntPtr.Zero && swigCMemOwn) {
+  lock (m_DisposeLock) {
+      if($csclassname_swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
         $imcall;
       }
-      $csclassname_swigCPtr = null;
+      $csclassname_swigCPtr = default;
+      $csclassname_Disposed = true;
       swigParentRef = null;
       GC.SuppressFinalize(this);
       base.Dispose();
@@ -177,7 +181,7 @@
 
 %pragma(csharp) modulecode=%{
   internal class $moduleObject : IDisposable {
-	public virtual void Dispose() {
+    public virtual void Dispose() {
 
     }
   }
@@ -228,7 +232,7 @@ typedef struct {
   $2 = ($2_ltype)&$input->pArray;
 %}
 %typemap(argout) (int *nLen, CTYPE **pList) %{
-  $input->Count = static_cast<int64_t>(count$input);
+  $input->Count = static_cast<int32_t>(count$input);
 %}
 %apply (int *nLen, CTYPE **pList)    {(int *nLen, CTYPE **pList_free)};
 %typemap(csin,
@@ -273,7 +277,7 @@ typedef struct {
   $2 = ($2_ltype)&$input->pArray;
 %}
 %typemap(argout) (int *nList, CTYPE **pList) %{
-  $input->Count = static_cast<int64_t>(count$input);
+  $input->Count = static_cast<int32_t>(count$input);
 %}
 %typemap(csin,
   pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
@@ -304,7 +308,7 @@ typedef struct {
   $2 = ($2_ltype)&$input->pArray;
 %}
 %typemap(argout) (int *object_list_count, CTYPE **poObjects) %{
-  $input->Count = static_cast<int64_t>(count$input);
+  $input->Count = static_cast<int32_t>(count$input);
 %}
 %typemap(csin,
   pre="    var temp$csinput = default($modulePINVOKE.ArrayWithSize);",
@@ -313,10 +317,10 @@ typedef struct {
 %enddef //OBJECT_LIST_INOUT
 
 %pragma(csharp) imclasscode=%{
-internal readonly ref struct ArrayWithSize {
-  public readonly int Count;
-  public readonly int ItemSize;
-  public readonly IntPtr pArray;
+public ref struct ArrayWithSize {
+  public int Count;
+  public int ItemSize;
+  public IntPtr pArray;
 
   public ArrayWithSize(int count, int itemSize, IntPtr p) {
     Count = count;
@@ -350,7 +354,7 @@ internal readonly ref struct ArrayWithSize {
     return result;
   }
 }
-internal class ArrayHelper<T> : IDisposable {
+public class ArrayHelper<T> : IDisposable {
   private IntPtr m_ArrayHandle;
   private T[] Objects { get; }
   public int Count { get; }

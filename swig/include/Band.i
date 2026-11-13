@@ -248,7 +248,7 @@ public:
     if (mean) *mean = 0;
     if (stddev) *stddev = -1; /* This is the only way to recognize from Python if GetRasterStatistics() has updated the values */
     return GDALGetRasterStatistics( self, approx_ok, force,
-				    min, max, mean, stddev );
+                    min, max, mean, stddev );
   }
 %clear (CPLErr);
 
@@ -494,7 +494,7 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 %apply (int *nLen, GUIntBig **pList_free) {(int *histogram, GUIntBig **ppanHistogram)};
 CPLErr GetDefaultHistogramEx( double *min_ret, double *max_ret, int *histogram,
                             GUIntBig **ppanHistogram, bool force = TRUE,
-			    GDALProgressFunc callback = NULL,
+                GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
     return GDALGetDefaultHistogramEx( self, min_ret, max_ret, histogram,
                                     ppanHistogram, force,
@@ -506,7 +506,7 @@ CPLErr GetDefaultHistogramEx( double *min_ret, double *max_ret, int *histogram,
 %apply (int *nLen, int **pList_free) {(int *histogram, int **ppanHistogram)};
 CPLErr GetDefaultHistogram( double *min_ret, double *max_ret, int *histogram,
                             int **ppanHistogram, bool force = TRUE,
-			    GDALProgressFunc callback = NULL,
+                GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
     return GDALGetDefaultHistogram( self, min_ret, max_ret, histogram,
                                     ppanHistogram, force,
@@ -527,9 +527,9 @@ CPLErr SetDefaultHistogram( double min, double max,
 #else
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
 CPLErr SetDefaultHistogram( double min, double max,
-       			    int buckets_in, int *panHistogram_in ) {
+                       int buckets_in, int *panHistogram_in ) {
     return GDALSetDefaultHistogram( self, min, max,
-    	   			    buckets_in, panHistogram_in );
+                           buckets_in, panHistogram_in );
 }
 %clear (int buckets_in, int *panHistogram_in);
 #endif

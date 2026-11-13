@@ -20,7 +20,7 @@
 {
 %immutable;
     long long          WkbLongSize;
-	OGRwkbGeometryType GeometryType;
+    OGRwkbGeometryType GeometryType;
 
 %apply (size_t native_size) {(size_t length)};
     OGRErr ExportToWkb( size_t length, void *buffer_ptr, OGRwkbByteOrder byte_order = wkbNDR ) {

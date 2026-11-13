@@ -30,35 +30,35 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %typemap(cscode, noblock="1") OGRGeometryShadow {
   public byte[] ExportToWkb(wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
     if (WkbLongSize > int.MaxValue)
-	  throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
+      throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
     var buffer = new byte[WkbLongSize];
-	if (ExportToWkb(buffer, byte_order) != 0)
-	  throw new ApplicationException("ExportToWkb return code did not indicate success.");
-	return buffer;
+    if (ExportToWkb(buffer, byte_order) != 0)
+      throw new ApplicationException("ExportToWkb return code did not indicate success.");
+    return buffer;
   }
   public int ExportToWkb(byte[] buffer, wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
-	var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-	try {
-	  return ExportToWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
-	} finally {
-	  handle.Free();
-	}
+    var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    try {
+      return ExportToWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
+    } finally {
+      handle.Free();
+    }
   }
   public byte[] ExportToIsoWkb(wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
     if (WkbLongSize > int.MaxValue)
-	  throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
+      throw new InvalidOperationException("The geometry is too larget to fit in a .NET array.");
     var buffer = new byte[WkbLongSize];
-	if (ExportToIsoWkb(buffer, byte_order) != 0)
-	  throw new ApplicationException("ExportToIsoWkb return code did not indicate success.");
-	return buffer;
+    if (ExportToIsoWkb(buffer, byte_order) != 0)
+      throw new ApplicationException("ExportToIsoWkb return code did not indicate success.");
+    return buffer;
   }
   public int ExportToIsoWkb(byte[] buffer, wkbByteOrder byte_order = wkbByteOrder.wkbNDR) {
-	var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-	try {
-	  return ExportToIsoWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
-	} finally {
-	  handle.Free();
-	}
+    var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    try {
+      return ExportToIsoWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), byte_order);
+    } finally {
+      handle.Free();
+    }
   }
 
   public static $csclassname CreateFromWkb(byte[] wkb){
@@ -77,14 +77,14 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 /*
  * Overload to maintain backwards compatibility with multi-argument typemaps
  */
- 
+
   [Obsolete("Use ExportToWkb(IntPtr length, IntPtr buffer_ptr, wkbByteOrder byte_order) instead.")]
   public int ExportToWkb(int bufLen, IntPtr buffer, wkbByteOrder byte_order)
     => ExportToWkb(new IntPtr(bufLen), buffer, byte_order);
-	
+
   [Obsolete("Use $csclassname(wkbGeometryType type, string wkt, byte[] wkb, string gml) instead.")]
   public $csclassname(wkbGeometryType type, string wkt, int wkb, IntPtr wkb_buf, string gml)
-    : this(type, wkt, PtrToByteArray(wkb, wkb_buf), gml) { }  
+    : this(type, wkt, PtrToByteArray(wkb, wkb_buf), gml) { }
 
   private static byte[] PtrToByteArray(int size, IntPtr ptr) {
     if (size <= 0 || ptr == IntPtr.Zero) return null;
@@ -107,7 +107,7 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
   public void SetField(int id, DateTime dateTime) {
     DateTimeToParts(dateTime, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
     SetField(id, year, month, day, hour, minute, second, tz);
-  }   
+  }
   public void SetField(string field_name, DateTime dateTime) {
     DateTimeToParts(dateTime, out int year, out int month, out int day, out int hour, out int minute, out float second, out int tz);
     SetField(field_name, year, month, day, hour, minute, second, tz);
@@ -158,13 +158,13 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 
   public static Geometry CreateGeometryFromWkb(byte[] buffer, OSR.SpatialReference reference = null) {
     var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-	try {
-	  return CreateGeometryFromWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), reference);
-	} finally {
-	  handle.Free();
-	}
+    try {
+      return CreateGeometryFromWkb(new IntPtr(buffer.Length), handle.AddrOfPinnedObject(), reference);
+    } finally {
+      handle.Free();
+    }
   }
-  
+
   [Obsolete("Use CreateGeometryFromWkb(IntPtr len, IntPtr bin_string, SpatialReference reference) instead.")]
   public static Geometry CreateGeometryFromWkb(uint len, IntPtr bin_string, OSR.SpatialReference reference)
     => CreateGeometryFromWkb(new IntPtr(len), bin_string, reference);
@@ -185,10 +185,7 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Update;
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Clip;
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") OGRLayerShadow::Erase;
-%feature("cs:defaultargs", force="true") OGRLayerShadow::GetExtent(int, OGREnvelope*, bool);
-%feature("cs:defaultargs", force="true") OGRLayerShadow::GetExtent3D;
 
-%feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;
 %feature("cs:defaultargs", options="null") OGRFeatureShadow::GetFieldAsISO8601DateTime;
 %feature("cs:defaultargs", options="null") OGRFeatureShadow::DumpReadableAsString;
 %feature("cs:defaultargs", flags=0x7FFFFFEF, bEmitError=1) OGRFeatureShadow::Validate; //0x7FFFFFEF = OGR_F_VAL_ALL
@@ -202,9 +199,6 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %feature("cs:defaultargs", options="null") OGRGeometryShadow::MakeValid;
 %feature("cs:defaultargs", options="null") OGRGeometryShadow::GetLinearGeometry;
 %feature("cs:defaultargs", options="null") OGRGeometryShadow::GetCurveGeometry;
-%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPoint;
-%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPointZM;
-%feature("cs:defaultargs", argout="null") OGRGeometryShadow::GetPoint_2D;
 %feature("cs:defaultargs", bOnlyEdges=0) OGRGeometryShadow::DelaunayTriangulation;
 %feature("cs:defaultargs", bLookForCircular=0) OGRGeometryShadow::HasCurveGeometry;
 

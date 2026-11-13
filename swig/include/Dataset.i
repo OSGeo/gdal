@@ -442,8 +442,6 @@ public:
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 
-/* ignore overload which splits multi-argument typemap*/
-%ignore BuildOverviews(const char *,int);
 #ifdef SWIGPYTHON
 %feature("kwargs") BuildOverviews;
 #endif
@@ -456,6 +454,8 @@ public:
                       void* callback_data=NULL,
                       char** options = NULL ) {
 #else
+/* ignore audomatically generated overload which splits multi-argument typemap*/
+%ignore BuildOverviews(const char *,int);
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0,
                       GDALProgressFunc callback = NULL,

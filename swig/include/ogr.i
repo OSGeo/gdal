@@ -971,10 +971,10 @@ public:
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-								  name,
-								  srs,
-								  geom_type,
-								  options);
+                                  name,
+                                  srs,
+                                  geom_type,
+                                  options);
     return layer;
   }
 
@@ -1453,11 +1453,11 @@ public:
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
     return OGR_L_GetExtent(self, extent, force);
   }
-  bool GetExtent(int geom_field, OGREnvelope* extent,  bool force=TRUE) {
-    return OGR_L_GetExtentEx(self, geom_field, extent, force) == OGRERR_NONE;
+  OGRErr GetExtent(int geom_field, OGREnvelope* extent, int force=1) {
+    return OGR_L_GetExtentEx(self, geom_field, extent, force);
   }
-  bool GetExtent3D(int geom_field, OGREnvelope3D* extent,  bool force=TRUE) {
-    return OGR_L_GetExtent3D(self, geom_field, extent, force) == OGRERR_NONE;
+  OGRErr GetExtent3D(int geom_field, OGREnvelope3D* extent, int force=1) {
+    return OGR_L_GetExtent3D(self, geom_field, extent, force);
   }
 #elif defined(SWIGPYTHON)
   %feature( "kwargs" ) GetExtent;
@@ -2100,9 +2100,9 @@ public:
   int GetFieldAsInteger(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return OGR_F_GetFieldAsInteger(self, i);
+      return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
   /* ------------------------------------------- */
@@ -2144,23 +2144,23 @@ public:
   %apply (int *OUTPUT) {(int *)};
   %apply (float *OUTPUT) {(float *)};
   void GetFieldAsDateTime(int id, int *pnYear, int *pnMonth, int *pnDay,
-			  int *pnHour, int *pnMinute, float *pfSecond,
-			  int *pnTZFlag) {
+              int *pnHour, int *pnMinute, float *pfSecond,
+              int *pnTZFlag) {
       OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pfSecond,
-			       pnTZFlag);
+                   pnHour, pnMinute, pfSecond,
+                   pnTZFlag);
   }
 
   void GetFieldAsDateTime(const char* field_name, int *pnYear, int *pnMonth, int *pnDay,
-			  int *pnHour, int *pnMinute, float *pfSecond,
-			  int *pnTZFlag) {
+              int *pnHour, int *pnMinute, float *pfSecond,
+              int *pnTZFlag) {
       int id = OGR_F_GetFieldIndex(self, field_name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pfSecond,
-			       pnTZFlag);
+      OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+                   pnHour, pnMinute, pfSecond,
+                   pnTZFlag);
   }
 
   %clear (int *);
@@ -2222,7 +2222,7 @@ public:
           return OGR_F_GetFieldAsInteger64List(self, id, count);
   }
   %clear (const GIntBig *);
-  %clear (int *count); 
+  %clear (int *count);
 #endif
 
 #if defined(SWIGJAVA)
@@ -2345,7 +2345,7 @@ public:
         return OGRERR_NONE;
       }
   }
-#else /* SWIGPYTHON */
+#elif defined(SWIGCSHARP)
   %apply (GByte *byteList) {const GByte *};
   %apply (int *hasval) {int *count};
   const GByte *GetFieldAsBinary(int id, int *count) {
@@ -2362,7 +2362,7 @@ public:
   }
   %clear (const GByte *);
   %clear (int *count);
-#endif /* SWIGCSHARP */
+#endif
 
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
@@ -2372,9 +2372,9 @@ public:
   bool IsFieldSet(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldSet(self, i) > 0);
+      return (OGR_F_IsFieldSet(self, i) > 0);
       return false;
   }
 
@@ -2388,9 +2388,9 @@ public:
   bool IsFieldNull(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldNull(self, i) > 0);
+      return (OGR_F_IsFieldNull(self, i) > 0);
       return false;
   }
 
@@ -2404,9 +2404,9 @@ public:
   bool IsFieldSetAndNotNull(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldSetAndNotNull(self, i) > 0);
+      return (OGR_F_IsFieldSetAndNotNull(self, i) > 0);
       return false;
   }
 
@@ -2463,7 +2463,7 @@ public:
   }
 
   /* ---- SetField ----------------------------- */
-  %apply ( const char *utf8_string ) { (const char* value) };
+  %apply ( tostring argin ) { (const char* value) };
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
   }
@@ -2490,9 +2490,9 @@ public:
   void SetField(const char* field_name, int value) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldInteger(self, i, value);
+      OGR_F_SetFieldInteger(self, i, value);
   }
 #endif /* SWIGPYTHON */
 
@@ -2503,9 +2503,9 @@ public:
   void SetField(const char* field_name, double value) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldDouble(self, i, value);
+      OGR_F_SetFieldDouble(self, i, value);
   }
 
   void SetField( int id, int year, int month, int day,
@@ -2521,11 +2521,11 @@ public:
                              int tzflag ) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
-				 hour, minute, second,
-				 tzflag);
+      OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
+                 hour, minute, second,
+                 tzflag);
   }
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
@@ -2596,7 +2596,7 @@ public:
   %apply (int nList, char *pList) {(int bytes, char *pBuf)};
   void SetFieldBinary(int id, int bytes, char *pBuf) {
       OGR_F_SetFieldBinary(self, id, bytes, pBuf);
-  }  
+  }
   void SetFieldBinary(const char* field_name, int bytes, char *pBuf) {
       int id = OGR_F_GetFieldIndex(self, field_name);
       if (id == -1)
@@ -3423,7 +3423,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %inline %{
   OGRGeometryShadow* ApproximateArcAngles(
         double dfCenterX, double dfCenterY, double dfZ,
-  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
+        double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
         double dfStartAngle, double dfEndAngle,
         double dfMaxAngleStepSizeDegrees ) {
 
@@ -3504,8 +3504,10 @@ OGRGeometryShadow* ForceTo( OGRGeometryShadow *geom_in, OGRwkbGeometryType eTarg
 /*                             OGRGeometry                              */
 /************************************************************************/
 
-/* ignore overload which splits multi-argument typemap*/
+#ifdef SWIGCSHARP
+/* ignore overload which splits multi-argument typemap */
 %ignore OGRGeometryShadow::OGRGeometryShadow(OGRwkbGeometryType,char *,int wkb);
+#endif
 %rename (Geometry) OGRGeometryShadow;
 class OGRGeometryShadow {
   OGRGeometryShadow();
@@ -4872,8 +4874,8 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         CPLDebug( "SWIG",
-		  "OGROpen() succeeded, but an error is posted, so we destroy"
-		  " the datasource and fail at swig level." );
+          "OGROpen() succeeded, but an error is posted, so we destroy"
+          " the datasource and fail at swig level." );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }

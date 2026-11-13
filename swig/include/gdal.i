@@ -622,7 +622,7 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 %inline
 {
 int wrapper_GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[9] )
+                                     double argout[9] )
 {
     return GDALGCPsToHomography(nGCPs, pGCPs, argout);
 }
@@ -630,7 +630,7 @@ int wrapper_GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
 #else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
 RETURN_NONE GDALGCPsToHomography( int nGCPs, GDAL_GCP const * pGCPs,
-    	                             double argout[9]);
+                                     double argout[9]);
 %clear (RETURN_NONE);
 #endif
 
@@ -2207,7 +2207,7 @@ struct GDALBuildVRTOptions {
 
 #ifdef SWIGPYTHON
 %rename (BuildVRTInternalObjects) wrapper_GDALBuildVRT_objects;
-#else
+#elif defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (BuildVRT) wrapper_GDALBuildVRT_objects;
 #endif
 

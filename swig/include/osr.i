@@ -625,7 +625,7 @@ public:
 
 %feature( "kwargs" ) SetACEA;
   OGRErr SetACEA( double stdp1, double stdp2,
- 		double clat, double clong,
+         double clat, double clong,
                 double fe, double fn ) {
     return OSRSetACEA( self, stdp1, stdp2, clat, clong,
                        fe, fn );
@@ -878,7 +878,7 @@ public:
   OGRErr SetSOC( double latitudeoforigin, double cm,
                double fe, double fn ) {
     return OSRSetSOC( self, latitudeoforigin, cm,
-	              fe, fn );
+                  fe, fn );
   }
 
 %feature( "kwargs" ) SetTM;
@@ -1277,7 +1277,7 @@ public:
     OCTDestroyCoordinateTransformation( self );
   }
 
-#ifdef SWIGJAVA 
+#ifdef SWIGJAVA
    %newobject GetSource;
    OSRSpatialReferenceShadow* GetSource() {
     OGRSpatialReferenceH srs = OCTGetSourceCS(self);
@@ -1392,11 +1392,11 @@ public:
 %apply (int nList, int *pList) { (int success, int *panSuccess) };
   bool TransformPoints( int x, double *pX, int y, double *pY,
                         int z = 0, double *pZ = NULL, int t = 0, double *pT = NULL,
-						int success = 0, int *panSuccess = NULL) {
+                        int success = 0, int *panSuccess = NULL) {
     CPLErrorReset();
     if (!pX || !pY) {
       CPLError(CE_Failure, CPLE_IllegalArg, "All x and y arrays must be non-null.");
-      return 0;	
+      return 0;
     }
     else if (x != y || (pZ && x != z) || (pT && x != t) || (panSuccess && x != success)) {
       CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be the same size.");
@@ -1436,11 +1436,11 @@ public:
 %apply (int nList, int *pList) { (int errorCodes, int *panErrorCodes) };
   bool TransformPointsWithErrorCodes( int x, double *pX, int y, double *pY,
                         int z = 0, double *pZ = NULL, int t = 0, double *pT = NULL,
-						int errorCodes = 0, int *panErrorCodes = NULL) {
+                        int errorCodes = 0, int *panErrorCodes = NULL) {
     CPLErrorReset();
     if (!pX || !pY) {
       CPLError(CE_Failure, CPLE_IllegalArg, "All x and y arrays must be non-null.");
-      return 0;	
+      return 0;
     }
     else if (x != y || (pZ && x != z) || (pT && x != t) || (panErrorCodes && x != errorCodes)) {
       CPLError(CE_Failure, CPLE_IllegalArg, "All arrays must be the same size.");

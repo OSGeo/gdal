@@ -208,12 +208,12 @@ public GCP[] GetGCPs() {
   [Obsolete("Use AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int[] band_list, string[] options) instead.")]
   public CPLErr AdviseRead(int xoff, int yoff, int xsize, int ysize, ref int buf_xsize, ref int buf_ysize, ref int buf_type, int band_list, int[] pband_list, string[] options)
     => AdviseRead(xoff, yoff, xsize, ysize, buf_xsize, buf_ysize, (DataType)buf_type, pband_list, options);
-  
+
   [Obsolete("Use BuildOverviews(string resampling, int[] overviewlist, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) instead.")]
   public int BuildOverviews(string resampling, int overviewlist, IntPtr pOverviews, Gdal.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
     var managedList = new int[overviewlist];
-	Marshal.Copy(pOverviews, managedList, overviewlist, overviewlist);
-	return BuildOverviews(resampling, managedList, callback, callback_data, options);
+    Marshal.Copy(pOverviews, managedList, overviewlist, overviewlist);
+    return BuildOverviews(resampling, managedList, callback, callback_data, options);
   }
 
   [Obsolete("Use GetNextFeature(out Layer ppoBelongingLayer, out double pdfProgressPct, GDALProgressFuncDelegate callback, string callback_data) instead.")]
@@ -425,9 +425,9 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
   public DateTimeOffset ToDateTimeOffset() {
     var sec = (int)fSecond;
     var ms = (int)Math.Round((fSecond - sec) * 1000);
-	var offsetMins = nTimeZoneHour * 60 + nTimeZoneMinute;
-	if (!bPositiveTimeZone)
-	  offsetMins *= -1;
+    var offsetMins = nTimeZoneHour * 60 + nTimeZoneMinute;
+    if (!bPositiveTimeZone)
+      offsetMins *= -1;
     var offset = TimeSpan.FromMinutes(offsetMins);
     return new DateTimeOffset(nYear, nMonth, nDay, nHour, nMinute, sec, ms, offset);
   }
@@ -606,9 +606,11 @@ struct  GdalExtensions{};
  * Enable C# default arguments all GDAL methods                              *
  * Apply fixes to specific methods to translate C++ default values to C#     *
  ****************************************************************************/
- 
+
 #if SWIG_VERSION >= 0x040200
 %feature("cs:defaultargs");
+
+%feature("cs:defaultargs", second="0.0f", positiveTimeZone="true") GDALRATDateTime::GDALRATDateTime;
 
 %feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDatasetShadow::Create;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateVector;
@@ -647,18 +649,16 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", transformerOptions="null") GDALRasterBandShadow::InterpolateAtGeolocation;
 
 %feature("cs:defaultargs", buf_type="DataType.GDT_Byte", band_list="null", options="null") GDALDatasetShadow::AdviseRead;
-%feature("cs:defaultargs", overviewlist="null") GDALDatasetShadow::BuildOverviews;
 %feature("cs:defaultargs", srs="null") GDALDatasetShadow::GetExtent;
 %feature("cs:defaultargs", srs="null", geom_type="wkbGeometryType.wkbUnknown", options="null") GDALDatasetShadow::CreateLayer;
-%feature("cs:defaultargs", datatype="DataType.GDT_Byte") GDALDatasetShadow::AddBand;
+%feature("cs:defaultargs", datatype="DataType.GDT_Byte", options="null") GDALDatasetShadow::AddBand;
 %feature("cs:defaultargs", spatialFilter="null") GDALDatasetShadow::ExecuteSQL;
 %feature("cs:defaultargs", force=0) GDALDatasetShadow::StartTransaction;
 %feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::ReadRaster;
 %feature("cs:defaultargs", extraArg="null") GDALDatasetShadow::WriteRaster;
-%feature("cs:defaultargs", callback="null", callback_data="null", options="null") GDALDatasetShadow::BuildOverviews;
+%feature("cs:defaultargs", overviewlist="null", callback="null", callback_data="null", options="null") GDALDatasetShadow::BuildOverviews;
 %feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::GetNextFeature;
 %feature("cs:defaultargs", callback="null", callback_data="null") GDALDatasetShadow::Close;
-%feature("cs:defaultargs", options="null") GDALDatasetShadow::AddBand;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::CreateLayerFromGeomFieldDefn;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::CopyLayer;
 %feature("cs:defaultargs", options="null") GDALDatasetShadow::GetFieldDomainNames;
@@ -667,7 +667,6 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", hSRS="null") GDALDatasetShadow::SetGCPs2;
 
 %feature("cs:defaultargs", eType="DataType.GDT_Byte", options="null") GDALDriverShadow::Create;
-%feature("cs:defaultargs", options="null") GDALDriverShadow::Create;
 %feature("cs:defaultargs", options="null") GDALDriverShadow::CreateVector;
 %feature("cs:defaultargs", root_group_options="null", options="null") GDALDriverShadow::CreateMultiDimensional;
 %feature("cs:defaultargs", options="null", callback="null", callback_data="null") GDALDriverShadow::CreateCopy;
@@ -717,7 +716,6 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") FPolygonize;
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") FillNodata;
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") SieveFilter;
-%feature("cs:defaultargs", callback="null", callback_data="null") RegenerateOverview;
 %feature("cs:defaultargs", callback="null", callback_data="null") ContourGenerate;
 %feature("cs:defaultargs", callback="null", callback_data="null", options="null") ContourGenerateEx;
 %feature("cs:defaultargs", heightMode="ViewshedOutputType.GVOT_NORMAL", callback="null", callback_data="null", options="null") ViewshedGenerate;
@@ -752,3 +750,4 @@ struct  GdalExtensions{};
 %feature("cs:defaultargs", callback="null", callback_data="null") wrapper_GDALMultiDimTranslateDestName;
 
 #endif //SWIG_VERSION >= 0x040200
+%pragma(csharp) imclassclassmodifiers="public class"

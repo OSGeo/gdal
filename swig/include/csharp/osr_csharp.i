@@ -22,7 +22,7 @@
 typedef OSRCRSInfo* OSRCRSInfoList;
 %}
 
-%typemap(cscode) OSRCRSInfoList %{  
+%typemap(cscode) OSRCRSInfoList %{
   public CRSInfo this[int i]
   {
      get { return get(i); }
@@ -70,8 +70,8 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
   [Obsolete("Use FindMatches(string[] options, out int[] confidence_values) instead.")]
   public SpatialReference[] FindMatches(string[] options, out int nvalues, out int[] confidence_values) {
     var ret = FindMatches(options, out confidence_values);
-	nvalues = confidence_values.Length;
-	return ret;
+    nvalues = confidence_values.Length;
+    return ret;
   }
 }
 /*
@@ -88,7 +88,7 @@ OSRCRSInfoList* GetCRSInfoListFromDatabase( char* authName, int* pnListCount )
  * Enable C# default arguments all OSR methods                               *
  * Apply fixes to specific methods to translate C++ default values to C#     *
  ****************************************************************************/
- 
+
 #if SWIG_VERSION >= 0x040200 && !defined(FROM_GDAL_I)
 %feature("cs:defaultargs");
 

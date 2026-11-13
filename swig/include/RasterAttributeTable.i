@@ -80,9 +80,11 @@ struct GDALRATDateTime {
     /*! Whether time zone is positive (or null) */ bool bPositiveTimeZone;
     /*! Whether this object is valid */ bool bIsValid;
 
+#if defined(SWIGCSHARP)
 %extend {
-  GDALRATDateTime( int year, int month, int day, int hour, int minute, float second, int timeZoneHour, int timeZoneMinute, bool positiveTimeZone ) {
-    GDALRATDateTime *self = (GDALRATDateTime*) CPLMalloc( sizeof( GDALRATDateTime ) );
+  GDALRATDateTime( int year, int month, int day, int hour = 0, int minute = 0, float second = 0.0, int timeZoneHour = 0, int timeZoneMinute = 0, bool positiveTimeZone = TRUE ) {
+    /* GDALRATDateTime is a c++ class. SWIG automaticaly creates a destructor. */
+    GDALRATDateTime *self = new GDALRATDateTime();
     self->nYear = year;
     self->nMonth = month;
     self->nDay = day;
@@ -92,21 +94,18 @@ struct GDALRATDateTime {
     self->nTimeZoneHour = timeZoneHour;
     self->nTimeZoneMinute = timeZoneMinute;
     self->bPositiveTimeZone = positiveTimeZone;
-    self->bIsValid = TRUE;	  
+    self->bIsValid = TRUE;
     return self;
   }
   GDALRATDateTime() {
-    GDALRATDateTime *self = (GDALRATDateTime*) CPLMalloc( sizeof( GDALRATDateTime ) );
+    GDALRATDateTime *self = new GDALRATDateTime();
     self->nYear = self->nMonth = self->nDay = self->nHour = self->nMinute = self->nTimeZoneHour = self->nTimeZoneMinute = 0;
-	self->fSecond = 0.0;
-    self->bPositiveTimeZone = self->bIsValid = FALSE;	  
+    self->fSecond = 0.0;
+    self->bPositiveTimeZone = self->bIsValid = FALSE;
     return self;
   }
-
-  ~GDALRATDateTime() {
-    CPLFree(self);
-  }
 } //%extend
+#endif //defined(SWIGCSHARP)
 };
 
 %rename (RasterAttributeTable) GDALRasterAttributeTableShadow;
@@ -120,7 +119,7 @@ public:
 
     GDALRasterAttributeTableShadow() {
         return (GDALRasterAttributeTableShadow*)
-		GDALCreateRasterAttributeTable();
+        GDALCreateRasterAttributeTable();
     }
 
     ~GDALRasterAttributeTableShadow() {
@@ -246,7 +245,7 @@ public:
     }
     %clear double *pdfRow0Min, double *pdfBinSize;
 
-    int	SetLinearBinning (double dfRow0Min, double dfBinSize)
+    int SetLinearBinning (double dfRow0Min, double dfBinSize)
     {
         return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);
     }
