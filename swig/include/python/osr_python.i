@@ -156,7 +156,7 @@ def TransformPoint(self, *args):
     -------
     tuple
         A tuple of (x, y, z) or (x, y, z, t) values, depending on the input.
-        If the transformation fails and exceptions are not enabled, the returned 
+        If the transformation fails and exceptions are not enabled, the returned
         values will be infinite.
 
     Examples

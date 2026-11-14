@@ -1,5 +1,5 @@
 /* ==================================================================== */
-/*	Support function for progress callbacks to python.              */
+/*      Support function for progress callbacks to python.              */
 /* ==================================================================== */
 
 %{
