@@ -2420,3 +2420,100 @@ def test_ogr_libkml_read_simple_field_ID():
     f = lyr.GetNextFeature()
     assert f["id"] == "test.1"
     assert f["ID2"] == 32
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/15367
+# LIBKML: editing a KMZ in update mode leaves a 134-byte archive holding only layers/
+
+
+def test_ogr_libkml_update_kmz_embedded_doc_kml(tmp_path):
+
+    import zipfile
+
+    kmz_path = str(tmp_path / "test_embedded.kmz")
+    doc_kml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Folder>
+      <name>Parks</name>
+      <Placemark id="p1">
+        <name>Central Park</name>
+        <Point>
+          <coordinates>-73.9654,40.7829,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>"""
+
+    with zipfile.ZipFile(kmz_path, "w") as z:
+        z.writestr("doc.kml", doc_kml_content)
+
+    ds = ogr.Open(kmz_path, update=1)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    f = lyr.GetNextFeature()
+    assert f is not None
+    assert f.GetField("Name") == "Central Park"
+    f.SetField("Name", "Central Park (edited)")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    with zipfile.ZipFile(kmz_path, "r") as z:
+        namelist = z.namelist()
+        assert "doc.kml" in namelist
+        assert "layers/" not in namelist
+        doc_kml = z.read("doc.kml").decode("utf-8")
+        assert "Central Park (edited)" in doc_kml
+
+    ds = ogr.Open(kmz_path)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    f = lyr.GetNextFeature()
+    assert f is not None
+    assert f.GetField("Name") == "Central Park (edited)"
+    ds = None
+
+
+def test_ogr_libkml_update_kmz_layers_subdir(tmp_path):
+
+    import zipfile
+
+    kmz_path = str(tmp_path / "test_layers_subdir.kmz")
+    drv = ogr.GetDriverByName("LIBKML")
+    ds = drv.CreateDataSource(kmz_path)
+    lyr1 = ds.CreateLayer("pts", geom_type=ogr.wkbPoint)
+    feat = ogr.Feature(lyr1.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr1.CreateFeature(feat)
+    ds = None
+
+    with zipfile.ZipFile(kmz_path, "r") as z:
+        namelist = z.namelist()
+        assert "doc.kml" in namelist
+        assert "layers/pts.kml" in namelist
+
+    ds = ogr.Open(kmz_path, update=1)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    with zipfile.ZipFile(kmz_path, "r") as z:
+        namelist = z.namelist()
+        assert "doc.kml" in namelist
+        assert "layers/pts.kml" in namelist
+        assert "layers/layers/pts.kml" not in namelist
+
+    ds = ogr.Open(kmz_path)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    geom = f.GetGeometryRef()
+    assert geom.GetX() == 3 and geom.GetY() == 4
+    ds = None

@@ -457,9 +457,18 @@ bool OGRLIBKMLDataSource::WriteKmz()
         CPLCloseFileInZip(hZIP);
     }
 
+    bool bCreatedLayersSubdir = false;
+
     /***** loop though the layers and write them *****/
     for (int iLayer = 0; iLayer < nLayers && !m_poKmlUpdate; iLayer++)
     {
+        const char *pszSubFileName = papoLayers[iLayer]->GetFileName();
+        if (pszSubFileName == nullptr || pszSubFileName[0] == '\0')
+        {
+            // Layers embedded in doc.kml are already written above
+            continue;
+        }
+
         ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer();
 
         if (poKmlContainer->IsA(kmldom::Type_Document))
@@ -490,23 +499,34 @@ bool OGRLIBKMLDataSource::WriteKmz()
         std::string oKmlOut = kmldom::SerializePretty(poKmlKml);
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        if (iLayer == 0 && CPLTestBool(pszUseDocKml))
-        {
-            CPL_IGNORE_RET_VAL(CPLCreateFileInZip(hZIP, "layers/", nullptr));
-        }
-
         const char *pszLayerFileName = nullptr;
         if (CPLTestBool(pszUseDocKml))
-            pszLayerFileName =
-                CPLSPrintf("layers/%s", papoLayers[iLayer]->GetFileName());
+        {
+            if (!bCreatedLayersSubdir)
+            {
+                CPL_IGNORE_RET_VAL(
+                    CPLCreateFileInZip(hZIP, "layers/", nullptr));
+                bCreatedLayersSubdir = true;
+            }
+            if (STARTS_WITH_CI(pszSubFileName, "layers/") ||
+                STARTS_WITH_CI(pszSubFileName, "layers\\"))
+                pszLayerFileName = pszSubFileName;
+            else
+                pszLayerFileName = CPLSPrintf("layers/%s", pszSubFileName);
+        }
         else
-            pszLayerFileName = papoLayers[iLayer]->GetFileName();
+        {
+            pszLayerFileName = pszSubFileName;
+        }
 
         if (CPLCreateFileInZip(hZIP, pszLayerFileName, nullptr) != CE_None ||
             CPLWriteFileInZip(hZIP, oKmlOut.data(),
                               static_cast<int>(oKmlOut.size())) != CE_None)
+        {
+            bRet = false;
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
-                     papoLayers[iLayer]->GetFileName(), GetDescription());
+                     pszSubFileName, GetDescription());
+        }
         CPLCloseFileInZip(hZIP);
     }
 
@@ -604,6 +624,13 @@ bool OGRLIBKMLDataSource::WriteDir()
     /***** loop though the layers and write them *****/
     for (int iLayer = 0; iLayer < nLayers && !m_poKmlUpdate; iLayer++)
     {
+        const char *pszSubFileName = papoLayers[iLayer]->GetFileName();
+        if (pszSubFileName == nullptr || pszSubFileName[0] == '\0')
+        {
+            // Layers embedded in doc.kml are already written above
+            continue;
+        }
+
         ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer();
 
         if (poKmlContainer->IsA(kmldom::Type_Document))
@@ -1312,6 +1339,9 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
     /***** if the doc.kml has no links treat it as a normal kml file *****/
     else
     {
+        m_poKmlDocKml = poKmlContainer;
+        m_poKmlDocKmlRoot = poKmlDocKmlRoot;
+
         /* TODO: There could still be a separate styles file in the KMZ
            if there is this would be a layer style table IF its only a single
            layer.
@@ -1334,11 +1364,10 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
             }
 
             AddLayer(layername_default.c_str(), wkbUnknown, nullptr, this,
-                     std::move(poKmlDocKmlRoot), poKmlContainer, pszFilename,
-                     false, bUpdateIn, 1);
+                     poKmlDocKmlRoot, poKmlContainer, "", false, bUpdateIn, 1);
         }
 
-        ParseLayers(std::move(poKmlContainer), true);
+        ParseLayers(poKmlContainer, true);
     }
 
     /***** read the style table if it has one *****/
@@ -2051,6 +2080,12 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz(int iLayer)
         {
             FeaturePtr poKmlFeat =
                 m_poKmlDocKml->get_feature_array_at(iKmlFeature);
+
+            if (poKmlFeat == poOgrLayer->GetKmlLayer())
+            {
+                m_poKmlDocKml->DeleteFeatureAt(iKmlFeature);
+                break;
+            }
 
             if (poKmlFeat->IsA(kmldom::Type_NetworkLink))
             {
