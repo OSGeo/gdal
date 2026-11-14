@@ -1618,9 +1618,8 @@ def test_ogr_openfilegdb_read_stale_attribute_index(tmp_vsimem):
 
     ds = ogr.Open(dirname)
     lyr = ds.GetLayer(0)
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "is out of date"):
         lyr.SetAttributeFilter("str = 'v2'")
-    assert "is out of date" in gdal.GetLastErrorMsg()
     assert [f.GetFID() for f in lyr] == [2]
 
 
