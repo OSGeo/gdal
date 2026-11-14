@@ -50,6 +50,8 @@ def script_path():
 
 
 def _validate(filename, check_data=False, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA):
+    gdaltest.importorskip_gdal_array()  # validation uses GetArrowStreamAsNumPy()
+
     import sys
 
     from test_py_scripts import samples_path
