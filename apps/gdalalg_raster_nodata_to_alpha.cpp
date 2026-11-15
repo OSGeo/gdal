@@ -129,7 +129,8 @@ bool GDALRasterNoDataToAlphaAlgorithm::RunStep(GDALPipelineStepRunContext &)
                 "", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
             GDALTranslateOptionsFree(psOptions);
 
-            poOutDS->GetRasterBand(1)->GetMaskFlags();
+            if (poOutDS)
+                poOutDS->GetRasterBand(1)->GetMaskFlags();
         }
         bRet = poOutDS != nullptr;
         if (poOutDS)
