@@ -2278,7 +2278,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                                             PyDateTime_DATE_GET_MICROSECOND(pyDateTime) * 1e-6);
             asDateTimeValues[i].bPositiveTimeZone = true;
             asDateTimeValues[i].bIsValid = true;
-            asDateTimeValues[i].nTimeZoneHour = 0;
+            asDateTimeValues[i].nTimeZoneHour = -1;  // start with no timezone info, fill in if available below
             asDateTimeValues[i].nTimeZoneMinute = 0;
             // there appears not to be a PyDateTime_DATETIME_GET_TZINFO (although versions for date and time)
             PyObject *tzinfo = NULL;
@@ -2493,20 +2493,40 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                     brokendowntime.tm_sec = (int)asDateTimeValues[i].fSecond;
                     GIntBig nTimestamp = CPLYMDHMSToUnixTime(&brokendowntime);
                     double dfTimestamp = (double)nTimestamp + (double)fmod(asDateTimeValues[i].fSecond, 1.0f);
-                    int nTimeZoneOffset = asDateTimeValues[i].nTimeZoneHour * 3600 +
-                                          asDateTimeValues[i].nTimeZoneMinute * 60;
-                    if (!asDateTimeValues[i].bPositiveTimeZone)
-                        nTimeZoneOffset = -nTimeZoneOffset;
-                    dfTimestamp -= nTimeZoneOffset;
-                    PyObject* pyTimestamp = PyFloat_FromDouble(dfTimestamp);
-                    PyObject* pyDelta = PyDelta_FromDSU(0, nTimeZoneOffset, 0);
-                    PyObject* pyTimeZone = PyTimeZone_FromOffset(pyDelta);
-                    Py_DECREF(pyDelta);
-                    PyObject* pyArgs = PyTuple_Pack(2, pyTimestamp, pyTimeZone);
-                    pyDateTime = PyDateTime_FromTimestamp(pyArgs);
-                    Py_DECREF(pyArgs);
-                    Py_DECREF(pyTimestamp);
-                    Py_DECREF(pyTimeZone);
+                    if( asDateTimeValues[i].nTimeZoneHour >= 0 )
+                    {
+                        int nTimeZoneOffset = asDateTimeValues[i].nTimeZoneHour * 3600 +
+                                              asDateTimeValues[i].nTimeZoneMinute * 60;
+                        if (!asDateTimeValues[i].bPositiveTimeZone)
+                            nTimeZoneOffset = -nTimeZoneOffset;
+                        dfTimestamp -= nTimeZoneOffset;
+                        PyObject* pyTimestamp = PyFloat_FromDouble(dfTimestamp);
+                        PyObject* pyDelta = PyDelta_FromDSU(0, nTimeZoneOffset, 0);
+                        PyObject* pyTimeZone = PyTimeZone_FromOffset(pyDelta);
+                        Py_DECREF(pyDelta);
+                        PyObject* pyArgs = PyTuple_Pack(2, pyTimestamp, pyTimeZone);
+                        pyDateTime = PyDateTime_FromTimestamp(pyArgs);
+                        Py_DECREF(pyArgs);
+                        Py_DECREF(pyTimestamp);
+                        Py_DECREF(pyTimeZone);
+                    }
+                    else
+                    {
+                        // note: no adjustment for timezone
+                        PyObject* pyTimestamp = PyFloat_FromDouble(dfTimestamp);
+                        // call datetime.utcfromtimestamp directly to create a timezone
+                        // naive datetime object without a local time zone correction
+                        // (not available from the C API)
+                        PyObject *pyMethodName = PyUnicode_FromString("utcfromtimestamp");
+                        pyDateTime = PyObject_CallMethodObjArgs(
+                            (PyObject *)PyDateTimeAPI->DateTimeType,
+                            pyMethodName,
+                            pyTimestamp,
+                            NULL
+                        );
+                        Py_DECREF(pyMethodName);
+                        Py_DECREF(pyTimestamp);
+                    }
                 }
                 else
                 {

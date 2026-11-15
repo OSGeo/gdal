@@ -19,6 +19,7 @@ import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
+gdal.UseExceptions()
 
 ###############################################################################
 # Create a raster attribute table.

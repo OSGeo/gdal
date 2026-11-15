@@ -2474,7 +2474,7 @@ extern "C++"
         /*! Hour [0, 23] */ int nHour;
         /*! Minute [0, 59] */ int nMinute;
         /*! Second [0, 61) */ float fSecond;
-        /*! Time zone hour [0, 23] */ int nTimeZoneHour;
+        /*! Time zone hour [0, 23], or -1 for no timezone */ int nTimeZoneHour;
         /*! Time zone minute: 0, 15, 30, 45 */ int nTimeZoneMinute;
         /*! Whether time zone is positive (or null) */ bool bPositiveTimeZone;
         /*! Whether this object is valid */ bool bIsValid;
