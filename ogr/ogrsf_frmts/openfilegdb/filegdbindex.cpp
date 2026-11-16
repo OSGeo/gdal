@@ -1148,8 +1148,18 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
 
     if (!ReadTrailer(osAtxName.c_str()))
         return FALSE;
-    returnErrorIf(m_nValueCountInIdx >
-                  static_cast<GUInt64>(poParent->GetValidRecordCount()));
+
+    // Issue a warning for stale indexes
+    if (m_nValueCountInIdx >
+        static_cast<GUInt64>(poParent->GetValidRecordCount()))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Attribute index %s on field %s is out of date (it still "
+                 "lists deleted features) and will not be used.",
+                 poIndex->GetIndexName().c_str(),
+                 poIndex->GetFieldName().c_str());
+        return FALSE;
+    }
 
     switch (eFieldType)
     {
