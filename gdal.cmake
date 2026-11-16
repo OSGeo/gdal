@@ -433,6 +433,11 @@ endif()
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-fopenmp-simd HAVE_OPENMP_SIMD)
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(PUSH)
+  cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+endif()
+
 if (GDAL_USE_OPENMP)
   add_compile_definitions(HAVE_OPENMP)
   add_compile_options(${OpenMP_C_FLAGS})
@@ -445,6 +450,10 @@ if (GDAL_USE_OPENMP)
 elseif (HAVE_OPENMP_SIMD)
   add_compile_definitions(HAVE_OPENMP_SIMD)
   add_compile_options("-fopenmp-simd")
+endif()
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(POP)
 endif()
 
 # Precompiled header

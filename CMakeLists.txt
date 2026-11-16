@@ -50,6 +50,11 @@ include(CheckCXXSourceCompiles)
 
 #
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+    cmake_diagnostic(PUSH)
+    cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+  endif()
+
   check_compiler_machine_option(flag SSE)
   if (NOT ${flag} STREQUAL "")
     set(HAVE_SSE_AT_COMPILE_TIME 1)
@@ -120,6 +125,10 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
         c = _mm256_fmadd_pd(a,b,c);
         return 0;
     }" HAVE_AVX2_FMA_WITHOUT_FLAG)
+
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+    cmake_diagnostic(POP)
+  endif()
 
 else()
 

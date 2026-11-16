@@ -10,6 +10,11 @@ include(CheckCXXCompilerFlag)
 set(GDAL_C_WARNING_FLAGS)
 set(GDAL_CXX_WARNING_FLAGS)
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(PUSH)
+  cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+endif()
+
 if (MSVC)
   # 1. conditional expression is constant
   # 2. 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -253,3 +258,7 @@ if (MINGW)
     add_compile_options(-Os)
   endif ()
 endif ()
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(POP)
+endif()
