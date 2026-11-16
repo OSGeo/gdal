@@ -279,8 +279,7 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 
     bool bCanUseMultiThreadedRead = false;
-    if (!psExtraArg->bFloatingPointWindowValidity &&
-        m_poGDS->m_nDisableMultiThreadedRead == 0 && eRWFlag == GF_Read &&
+    if (m_poGDS->m_nDisableMultiThreadedRead == 0 && eRWFlag == GF_Read &&
         m_poGDS->m_poThreadPool != nullptr && nXSize == nBufXSize &&
         nYSize == nBufYSize && m_poGDS->IsMultiThreadedReadCompatible())
     {
@@ -292,7 +291,21 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const int nYBlocks = nBlockY2 - nBlockY1 + 1;
         if (nXBlocks > 1 || nYBlocks > 1)
         {
-            bCanUseMultiThreadedRead = true;
+            if (psExtraArg->bFloatingPointWindowValidity)
+            {
+                const char *pszNumThreads =
+                    CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+                if (pszNumThreads != nullptr)
+                {
+                    ReportError(CE_Warning, CPLE_AppDefined,
+                                "Multi-threaded reading is disabled because a "
+                                "floating point window is requested.");
+                }
+            }
+            else
+            {
+                bCanUseMultiThreadedRead = true;
+            }
         }
     }
 
