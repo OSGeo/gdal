@@ -44,6 +44,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     bool m_bHaveOffsetScale = false;
     bool m_bRATSet = false;
     bool m_bRATTriedReadingFromPAM = false;
+    bool m_bWarnedAboutMultiThreadedReadDisabled = false;
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,

@@ -297,9 +297,14 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
                 if (pszNumThreads != nullptr)
                 {
-                    ReportError(CE_Warning, CPLE_AppDefined,
-                                "Multi-threaded reading is disabled because a "
-                                "floating point window is requested.");
+                    if (!m_bWarnedAboutMultiThreadedReadDisabled)
+                    {
+                        m_bWarnedAboutMultiThreadedReadDisabled = true;
+                        ReportError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Multi-threaded reading is disabled because a "
+                            "floating point window is requested.");
+                    }
                 }
             }
             else
