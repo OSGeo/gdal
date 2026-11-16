@@ -5863,7 +5863,7 @@ def test_tiff_read_non_standard_tiled_blockysize_one():
 
 
 @pytest.mark.require_driver("GTiff")
-@pytest.mark.parametrize("num_threads", ["1", "2"])
+@pytest.mark.parametrize("num_threads", [1, 2])
 @pytest.mark.parametrize(
     "x_off, y_off, x_size, y_size",
     [
@@ -5871,11 +5871,11 @@ def test_tiff_read_non_standard_tiled_blockysize_one():
         (300.4, 200, 500.4, 600),
     ],
 )
-def test_tiff_multi_threaded_read(
+def test_tiff_multi_threaded_read_floating_point_window(
     tmp_vsimem, num_threads, x_off, y_off, x_size, y_size
 ):
 
-    # 1024 x 1024 tiled GeoTIFF, 256 x 256 blocks, pixel values are the column index
+    # 1024 x 1024 GeoTIFF, pixel values are the column index
     ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024, 1, gdal.GDT_Float32)
     ds.GetRasterBand(1).WriteArray(
         np.tile(np.arange(1024, dtype=np.float32), (1024, 1))
@@ -5884,9 +5884,14 @@ def test_tiff_multi_threaded_read(
 
     with gdal.config_option("GDAL_NUM_THREADS", num_threads):
         ds = gdal.Open(tmp_vsimem / "src.tif")
-        a = ds.GetRasterBand(1).ReadAsArray(
-            x_off, y_off, x_size, y_size, buf_xsize=500, buf_ysize=600
-        )
+
+        with gdaltest.error_raised(
+            gdal.CE_None if num_threads == 1 else gdal.CE_Warning,
+            "Multi-threaded reading is disabled",
+        ):
+            a = ds.GetRasterBand(1).ReadAsArray(
+                x_off, y_off, x_size, y_size, buf_xsize=500, buf_ysize=600
+            )
 
         assert (
             a[0, -1] == 800.0
