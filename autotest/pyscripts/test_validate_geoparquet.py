@@ -61,9 +61,10 @@ def _validate(filename, check_data=False, local_schema=GEOPARQUET_1_1_0_JSON_SCH
         sys.path.append(path)
     import validate_geoparquet
 
-    return validate_geoparquet.check(
-        filename, check_data=check_data, local_schema=local_schema
-    )
+    with gdaltest.skip_on_network_error():
+        return validate_geoparquet.check(
+            filename, check_data=check_data, local_schema=local_schema
+        )
 
 
 ###############################################################################
