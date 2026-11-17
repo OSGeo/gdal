@@ -321,7 +321,18 @@ else ()
     DEPRECATE_SPRINTF)
   if (NOT DEPRECATE_SPRINTF)
     set(DONT_DEPRECATE_SPRINTF 1)
+
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+      cmake_diagnostic(PUSH)
+      cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+    endif()
+
     add_definitions(-DDONT_DEPRECATE_SPRINTF)
+
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+      cmake_diagnostic(POP)
+    endif()
+
   endif ()
 
   check_cxx_source_compiles(
