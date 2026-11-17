@@ -491,6 +491,13 @@ General options
       decreasing priority. The set of sources recognized by this option is
       driver-specific.
 
+-  .. config:: TAB_APPROX_GEOTRANSFORM
+      :choices: YES, NO
+      :default: NO
+
+      To decide if an approximate geotransform is acceptable when reading a .tab
+      file as a georeferencing source in a raster driver.
+
 -  .. config:: GDAL_OVR_PROPAGATE_NODATA
       :choices: YES, NO
       :default: NO

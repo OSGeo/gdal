@@ -1382,13 +1382,6 @@ the default behavior of the GTiff driver.
       be in coordinate system linear units. (`Ticket
       #3901 <http://trac.osgeo.org/gdal/ticket/3901>`__).
 
--  .. config:: TAB_APPROX_GEOTRANSFORM
-      :choices: YES, NO
-      :default: NO
-
-      To decide if an approximate geotransform is acceptable when reading a .tab
-      file.
-
 -  .. config:: GTIFF_DIRECT_IO
       :choices: YES, NO
       :default: NO
