@@ -34,6 +34,7 @@ import struct
 import sys
 
 import gdaltest
+import numpy as np
 import pytest
 import webserver
 
@@ -5856,3 +5857,44 @@ def test_tiff_read_non_standard_tiled_blockysize_one():
     with gdaltest.error_raised(gdal.CE_Warning):
         ds = gdal.Open("data/gtiff/non_standard_tiled_blockysize_one.tif")
     assert ds.ReadRaster() == b"\x01\x01\x01"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize("num_threads", [1, 2])
+@pytest.mark.parametrize(
+    "x_off, y_off, x_size, y_size",
+    [
+        (300.4, 200.4, 500.4, 600.4),
+        (300.4, 200, 500.4, 600),
+    ],
+)
+def test_tiff_multi_threaded_read_floating_point_window(
+    tmp_vsimem, num_threads, x_off, y_off, x_size, y_size
+):
+
+    gdaltest.importorskip_gdal_array()
+
+    # 1024 x 1024 GeoTIFF, pixel values are the column index
+    ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024, 1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteArray(
+        np.tile(np.arange(1024, dtype=np.float32), (1024, 1))
+    )
+    gdal.Translate(tmp_vsimem / "src.tif", ds)
+
+    with gdal.config_option("GDAL_NUM_THREADS", num_threads):
+        ds = gdal.Open(tmp_vsimem / "src.tif")
+
+        with gdaltest.error_raised(
+            gdal.CE_None if num_threads == 1 else gdal.CE_Warning,
+            "Multi-threaded reading is disabled",
+        ):
+            a = ds.GetRasterBand(1).ReadAsArray(
+                x_off, y_off, x_size, y_size, buf_xsize=500, buf_ysize=600
+            )
+
+        assert (
+            a[0, -1] == 800.0
+        ), f"Did not read expected data 800 with num_threads={num_threads}"

@@ -237,7 +237,7 @@ jobs:
       run: |
         python scripts/collect_config_options.py
         git diff
-        git diff --quiet || (echo "You need to run scripts/collect_config_options to update port/cpl_known_config_options.h" && /bin/false)
+        git diff --quiet || (echo "You need to run scripts/collect_config_options.py to update port/cpl_known_config_options.h" && /bin/false)
 
   check-driver-connection-prefix:
     runs-on: ubuntu-latest
