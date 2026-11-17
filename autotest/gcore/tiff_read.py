@@ -5875,6 +5875,8 @@ def test_tiff_multi_threaded_read_floating_point_window(
     tmp_vsimem, num_threads, x_off, y_off, x_size, y_size
 ):
 
+    gdaltest.importorskip_gdal_array()
+
     # 1024 x 1024 GeoTIFF, pixel values are the column index
     ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024, 1, gdal.GDT_Float32)
     ds.GetRasterBand(1).WriteArray(
