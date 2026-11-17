@@ -243,6 +243,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         else
         {
             /* No destination file is given, so pass serialized XML directly. */
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             pCopyDS = GDALDataset::Open(pszXML, GDAL_OF_RASTER |
                                                     GDAL_OF_MULTIDIM_RASTER |
                                                     GDAL_OF_UPDATE);
@@ -250,7 +251,8 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
         CPLFree(pszXML);
 
-        return pCopyDS;
+        if (pCopyDS || pszFilename[0] != '\0')
+            return pCopyDS;
     }
 
     /* -------------------------------------------------------------------- */

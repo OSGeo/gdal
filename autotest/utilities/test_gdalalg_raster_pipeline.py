@@ -766,3 +766,12 @@ def test_gdalalg_raster_pipeline_inner_pipeline():
     ) as alg:
         ds = alg.Output()
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.parametrize("last_step", ["select 1", "nodata-to-alpha"])
+def test_gdalalg_raster_pipeline_vrt_step_on_unnamed_dataset(last_step):
+
+    with gdal.alg.raster.pipeline(
+        pipeline=f"create --size 10,10 --burn 1 ! resize --size 5,5 ! {last_step}"
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 25
