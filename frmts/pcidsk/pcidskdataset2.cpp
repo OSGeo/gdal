@@ -713,7 +713,7 @@ double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
     }
 
     PCIDSK2Dataset *poGDS = cpl::down_cast<PCIDSK2Dataset *>(poDS);
-    pszNoData = poGDS->GetMetadataItem("NO_DATA_VALUE", "");
+    pszNoData = poGDS ? poGDS->GetMetadataItem("NO_DATA_VALUE", "") : nullptr;
     if (pszNoData != nullptr)
     {
         if (pbSuccess)
