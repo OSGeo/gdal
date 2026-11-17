@@ -3441,7 +3441,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff,
                     // not be used so as to avoid edge effects (although we
                     // should probably repeat last pixels if we really want to
                     // do that, but that only makes sense if readers only clip
-                    // to the gpkg_contents extent). Well, here on the safe side
+                    // to the gpkg_contents extent). Well, err on the safe side
                     // for now
                     if (m_poTPD->m_eTF != GPKG_TF_JPEG &&
                         (nBlockXOff * nBlockXSize >=
