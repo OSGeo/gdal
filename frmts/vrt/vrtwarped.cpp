@@ -1959,7 +1959,10 @@ CPLErr VRTWarpedDataset::IRasterIO(
 
     if (nBufXSize != nXSize || nBufYSize != nYSize)
     {
-        if (!bWholeImage || !GDALTransformHasFastClone(psWO->pTransformerArg))
+        // The rescaled warp below ignores the requested resampling
+        if (!bWholeImage ||
+            psExtraArg->eResampleAlg != GRIORA_NearestNeighbour ||
+            !GDALTransformHasFastClone(psWO->pTransformerArg))
         {
             return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize, eBufType,
