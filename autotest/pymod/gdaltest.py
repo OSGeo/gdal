@@ -2327,7 +2327,10 @@ def skip_on_network_error():
         if (
             "Connection reset by peer" in str(e)
             or "Connection timed out" in str(e)
+            or "Connection timeout" in str(e)
             or "Could not resolve host" in str(e)
+            or "Bad gateway" in str(e)
+            or "Gateway Time-out" in str(e)
         ):
             pytest.skip(str(e))
         else:
