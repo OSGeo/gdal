@@ -34,7 +34,6 @@ import struct
 import sys
 
 import gdaltest
-import numpy as np
 import pytest
 import webserver
 
@@ -5876,6 +5875,7 @@ def test_tiff_multi_threaded_read_floating_point_window(
 ):
 
     gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
 
     # 1024 x 1024 GeoTIFF, pixel values are the column index
     ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024, 1, gdal.GDT_Float32)
