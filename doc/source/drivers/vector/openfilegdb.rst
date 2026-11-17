@@ -50,6 +50,8 @@ until the dataset is closed.
 
 The building of this in-memory spatial index can be disabled by setting
 the :config:`OPENFILEGDB_IN_MEMORY_SPI` configuration option to ``NO``.
+In this case, if the .spx spatial index is not used, every spatial filter 
+requires all features to be read.
 
 SQL support
 -----------
@@ -139,7 +141,9 @@ The following open options are supported:
 
       This may be "YES" to force all tables,
       including system and internal tables (such as the GDB_* tables) to be listed.
-      These are marked as [private] in the layer list. By default, only user tables are listed.
+      By default, only user tables are listed.
+      In the layer list of ``ogrinfo`` and ``gdal vector info``, internal tables are
+      followed by ``[private]``.
 
 Dataset Creation Options
 ------------------------
