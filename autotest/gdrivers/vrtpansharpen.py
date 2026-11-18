@@ -2467,3 +2467,64 @@ def test_vrtpansharpen_small_slice_at_edge(tmp_vsimem):
     </VRTDataset>""")
 
     assert vrt_ds.ReadRaster(64043, 38080, 159, 2) == b"\x1e" * (159 * 2)
+
+
+#################################################################################
+# Test reading pan pixels lying beyond the last spectral pixel, when the spectral
+# dataset is missing its last rows/columns to cover the pan fully.
+
+
+@pytest.mark.parametrize("num_threads", ["1", "ALL_CPUS"])
+@pytest.mark.parametrize("adjustment", ["Union", "Intersection", "NoneWithoutWarning"])
+def test_vrtpansharpen_pan_beyond_spectral_extent(tmp_vsimem, num_threads, adjustment):
+
+    # Pan extent is [-0.5, 399.5] on both axes (positive Y resolution),
+    # spectral one is [-2, 398]: the last pan column maps to spectral column
+    # 100.125, i.e. outside the spectral extent. This occurs frequently on PHR
+    # primary datasets.
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "pan.tif", 400, 400, 1, gdal.GDT_UInt8
+    )
+    ds.SetGeoTransform([-0.5, 1, 0, -0.5, 0, 1])
+    ds.GetRasterBand(1).Fill(30)
+    ds = None
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "ms.tif", 100, 100, 1, gdal.GDT_UInt8
+    )
+    ds.SetGeoTransform([-2, 4, 0, -2, 0, 4])
+    ds.GetRasterBand(1).Fill(10)
+    ds = None
+
+    vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>{num_threads}</NumThreads>
+            <SpatialExtentAdjustment>{adjustment}</SpatialExtentAdjustment>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    assert vrt_ds.RasterXSize == 400
+    assert vrt_ds.RasterYSize == 400
+
+    for xoff, yoff, xsize, ysize in [
+        (399, 0, 1, 400),  # last column
+        (398, 0, 2, 400),  # last 2 columns
+        (0, 399, 400, 1),  # last row
+        (0, 398, 400, 2),  # last 2 rows
+        (399, 399, 1, 1),  # last pixel
+        (392, 392, 8, 8),  # crosses the spectral edges
+    ]:
+        n = xsize * ysize
+        assert vrt_ds.ReadRaster(xoff, yoff, xsize, ysize) == b"\x1e" * n, (
+            xoff,
+            yoff,
+            xsize,
+            ysize,
+        )

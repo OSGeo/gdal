@@ -1209,10 +1209,28 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
     sExtraArg.dfYOff = m_panToMSGT[3] + nYOff * m_panToMSGT[5];
     sExtraArg.dfXSize = nXSize * m_panToMSGT[1];
     sExtraArg.dfYSize = nYSize * m_panToMSGT[5];
-    if (sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize())
-        sExtraArg.dfXSize = aMSBands[0]->GetXSize() - sExtraArg.dfXOff;
-    if (sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize())
-        sExtraArg.dfYSize = aMSBands[0]->GetYSize() - sExtraArg.dfYOff;
+    const int nMSXSize = aMSBands[0]->GetXSize();
+    const int nMSYSize = aMSBands[0]->GetYSize();
+    if (sExtraArg.dfXOff + sExtraArg.dfXSize > nMSXSize)
+        sExtraArg.dfXSize = nMSXSize - sExtraArg.dfXOff;
+    if (sExtraArg.dfYOff + sExtraArg.dfYSize > nMSYSize)
+        sExtraArg.dfYSize = nMSYSize - sExtraArg.dfYOff;
+    // The window may lie entirely beyond the spectral raster when the pan one
+    // extends past it by more than one pan pixel (mismatch below the extent
+    // adjustment tolerance, or no adjustment): shift it back to end at the
+    // spectral edge. For overhangs under one spectral pixel, this yields the
+    // edge pixels. Larger ones read the last spectral pixels shifted, which
+    // depends on the requested window: such extents are not really supported.
+    if (sExtraArg.dfXSize <= 0)
+    {
+        sExtraArg.dfXOff = std::max(0.0, nMSXSize - nXSize * m_panToMSGT[1]);
+        sExtraArg.dfXSize = nMSXSize - sExtraArg.dfXOff;
+    }
+    if (sExtraArg.dfYSize <= 0)
+    {
+        sExtraArg.dfYOff = std::max(0.0, nMSYSize - nYSize * m_panToMSGT[5]);
+        sExtraArg.dfYSize = nMSYSize - sExtraArg.dfYOff;
+    }
     int nSpectralXOff = static_cast<int>(sExtraArg.dfXOff);
     int nSpectralYOff = static_cast<int>(sExtraArg.dfYOff);
     int nSpectralXSize = static_cast<int>(0.49999 + sExtraArg.dfXSize);
@@ -1369,8 +1387,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     pasJobs[i].poMEMDS = poMEMDS;
                     pasJobs[i].eResampleAlg = eResampleAlg;
                     pasJobs[i].dfXOff = dfXOff;
-                    pasJobs[i].dfYOff = m_panToMSGT[3] +
-                                        (nYOff + iStartLine) * m_panToMSGT[5] -
+                    // Relative to sExtraArg.dfYOff, which may have been shifted
+                    // back above.
+                    pasJobs[i].dfYOff = sExtraArg.dfYOff +
+                                        iStartLine * m_panToMSGT[5] -
                                         nYOffExtract;
                     pasJobs[i].dfXSize = dfXSize;
                     pasJobs[i].dfYSize =
