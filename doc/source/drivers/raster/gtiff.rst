@@ -55,7 +55,7 @@ pixel size, a transformation matrix, or a list of GCPs.
 If no georeferencing information is available in the TIFF file itself,
 GDAL will also check for, and use an ESRI :ref:`world
 file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
-.wld, as well as a MapInfo .tab file.
+.wld, as well as a MapInfo :ref:`.tab file <raster.tab>`.
 
 By default, information is fetched in following order (first listed is
 the highest priority): PAM (Persistent Auxiliary metadata) .aux.xml
