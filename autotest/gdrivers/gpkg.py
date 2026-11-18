@@ -15,7 +15,6 @@
 import os
 import sys
 
-import numpy as np
 import pytest
 from test_py_scripts import samples_path
 
@@ -4446,6 +4445,9 @@ def test_gpkg_multiband_band_metadata(tmp_vsimem):
 
 @pytest.mark.parametrize("w,h", [(50, 513), (1025, 50)])
 def test_gpkg_15442(tmp_path, w, h):
+    
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")		
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32750)
     a = (np.arange(w * h).reshape(h, w) % 200 + 1).astype("uint8")
