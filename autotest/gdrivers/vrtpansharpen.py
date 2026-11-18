@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -2467,3 +2468,183 @@ def test_vrtpansharpen_small_slice_at_edge(tmp_vsimem):
     </VRTDataset>""")
 
     assert vrt_ds.ReadRaster(64043, 38080, 159, 2) == b"\x1e" * (159 * 2)
+
+
+###############################################################################
+# Test SpatialExtentAdjustment=UsePAN: output extent is exactly the pan one,
+# and pan pixels not covered by spectral are set to nodata
+#
+# Pan extent is always [-0.5, 399.5]. MS extent varies so that
+# it covers the following cases:
+#
+# origin | size |  pan top/left                  | pan bottom/right
+# -------------------------------------------------------------
+# -2     | 101  | fully covered                  | fully covered
+# -0.5   | 101  | fully covered, edges aligned   | fully covered
+# 0      | 101  | 1 partially covered            | fully covered
+# 6.5    | 101  | 7 uncovered                    | fully covered
+# 6      | 101  | 6 uncovered, 1 partially       | fully covered
+# -4.5   | 101  | fully covered                  | fully covered, edges aligned
+# -1     | 100  | fully covered                  | 1 partially covered
+# -1.5   | 98   | fully covered                  | 9 uncovered
+# -2     | 98   | fully covered                  | 9 uncovered, 1 partially
+
+
+@pytest.mark.parametrize("num_threads", ["1", "ALL_CPUS"])
+@pytest.mark.parametrize("resampling", ["Nearest", "Cubic"])
+@pytest.mark.parametrize("nodata", [None, 255])
+@pytest.mark.parametrize(
+    "ms_origin,ms_size",
+    [
+        (-2, 101),
+        (-0.5, 101),
+        (0, 101),
+        (6.5, 101),
+        (6, 101),
+        (-4.5, 101),
+        (-1, 100),
+        (-1.5, 98),
+        (-2, 98),
+    ],
+)
+def test_vrtpansharpen_use_pan(
+    tmp_vsimem, num_threads, resampling, nodata, ms_origin, ms_size
+):
+
+    first = max(0, math.floor(ms_origin - 0.5) + 1)
+    end = min(400, math.ceil(ms_origin + 4 * ms_size + 0.5))
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "pan.tif", 400, 400, 1, gdal.GDT_UInt8
+    )
+    ds.SetGeoTransform([-0.5, 1, 0, -0.5, 0, 1])
+    ds.GetRasterBand(1).Fill(30)
+    ds = None
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "ms.tif", ms_size, ms_size, 2, gdal.GDT_UInt8
+    )
+    ds.SetGeoTransform([ms_origin, 4, 0, ms_origin, 0, 4])
+    ds.GetRasterBand(1).Fill(10)
+    ds.GetRasterBand(2).Fill(20)
+    ds = None
+
+    nodata_xml = f"<NoData>{nodata}</NoData>" if nodata is not None else ""
+    vrt_ds = gdal.Open(f"""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>{num_threads}</NumThreads>
+            <Resampling>{resampling}</Resampling>
+            {nodata_xml}
+            <SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    assert vrt_ds.RasterXSize == 400
+    assert vrt_ds.RasterYSize == 400
+    assert vrt_ds.GetGeoTransform() == (-0.5, 1, 0, -0.5, 0, 1)
+    expected_nodata = 0 if nodata is None else nodata
+    for i in range(2):
+        assert vrt_ds.GetRasterBand(i + 1).GetNoDataValue() == expected_nodata
+
+    expected = []
+    for val in (20, 40):
+        band = bytearray([expected_nodata] * (400 * 400))
+        for y in range(first, end):
+            band[y * 400 + first : y * 400 + end] = bytes([val]) * (end - first)
+        expected.append(bytes(band))
+
+    for xoff, yoff, xsize, ysize in [
+        (0, 0, 400, 400),  # whole raster
+        (100, 100, 50, 50),  # fully covered
+        (0, 0, 1, 400),  # first column
+        (0, 0, 400, 1),  # first row
+        (0, 0, 1, 1),  # first pixel
+        (first, 0, 1, 400),  # first covered column
+        (0, first, 400, 1),  # first covered row
+        (0, 0, 8, 8),  # top-left corner
+        (0, 0, 20, 400),  # crosses the left spectral edge
+        (end - 1, 0, 1, 400),  # last covered column
+        (0, end - 1, 400, 1),  # last covered row
+        (399, 0, 1, 400),  # last column
+        (0, 399, 400, 1),  # last row
+        (399, 399, 1, 1),  # last pixel
+        (392, 392, 8, 8),  # bottom-right corner
+        (380, 0, 20, 400),  # crosses the right spectral edge
+    ]:
+        exp = b"".join(
+            b"".join(
+                band[y * 400 + xoff : y * 400 + xoff + xsize]
+                for y in range(yoff, yoff + ysize)
+            )
+            for band in expected
+        )
+        assert vrt_ds.ReadRaster(xoff, yoff, xsize, ysize) == exp, (
+            xoff,
+            yoff,
+            xsize,
+            ysize,
+        )
+
+    xml = vrt_ds.GetMetadata("xml:VRT")[0]
+    assert "<SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>" in xml
+    assert f"<NoData>{expected_nodata}</NoData>" in xml
+
+
+###############################################################################
+# Test SpatialExtentAdjustment=UsePAN with NoData=None: spectral pixels must
+# cover every pan pixel
+
+
+@pytest.mark.parametrize(
+    "pan_gt,covered",
+    [
+        # all pan pixels are (at least partially) covered by spectral data
+        ([-0.5, 1, 0, 0.5, 0, -1], True),
+        # first pan pixel is fully uncovered
+        ([-1, 1, 0, 1, 0, -1], False),
+    ],
+)
+@gdaltest.disable_exceptions()
+def test_vrtpansharpen_use_pan_nodata_none(tmp_vsimem, pan_gt, covered):
+
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "pan.tif", 400, 400)
+    ds.SetGeoTransform(pan_gt)
+    ds.GetRasterBand(1).Fill(30)
+    ds = None
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "ms.tif", 100, 100)
+    ds.SetGeoTransform([0, 4, 0, 0, 0, -4])
+    ds.GetRasterBand(1).Fill(10)
+    ds = None
+
+    xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NoData>None</NoData>
+            <SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">{tmp_vsimem}/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+
+    with gdal.quiet_errors():
+        vrt_ds = gdal.Open(xml)
+
+    if not covered:
+        assert vrt_ds is None
+    else:
+        assert vrt_ds is not None

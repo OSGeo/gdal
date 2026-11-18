@@ -42,7 +42,7 @@ def Usage(isError):
         file=f,
     )
     print(
-        "                       [-spat_adjust {union|intersection|none|nonewithoutwarning}]",
+        "                       [-spat_adjust {union|intersection|none|nonewithoutwarning|usepan}]",
         file=f,
     )
     print("                       [-verbose_vrt] [-co <NAME>=<VALUE>]... [-q]", file=f)

@@ -86,7 +86,8 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
            _("Select behavior when bands have not the same extent"),
            &m_spatialExtentAdjustment)
         .SetDefault(m_spatialExtentAdjustment)
-        .SetChoices("union", "intersection", "none", "none-without-warning");
+        .SetChoices("union", "intersection", "none", "none-without-warning",
+                    "use-pan");
     AddNumThreadsArg(&m_numThreads, &m_numThreadsStr);
 }
 

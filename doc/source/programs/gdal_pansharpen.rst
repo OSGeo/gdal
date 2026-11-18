@@ -22,7 +22,7 @@ Synopsis
                     [-of <format>] [-b <band>]... [-w <weight_val>]...
                     [-r {nearest|bilinear|cubic|cubicspline|lanczos|average}]
                     [-threads {ALL_CPUS|<number>}] [-bitdepth <val>] [-nodata <val>]
-                    [-spat_adjust {union|intersection|none|nonewithoutwarning}]
+                    [-spat_adjust {union|intersection|none|nonewithoutwarning|usepan}]
                     [-co <NAME>=<VALUE>]... [-q]
 
 Description
@@ -83,7 +83,7 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
     pan-sharpening computation itself. If not set, deduced from the
     input bands, provided they have a consistent setting.
 
-.. option:: -spat_adjust {union|intersection|none|nonewithoutwarning}
+.. option:: -spat_adjust {union|intersection|none|nonewithoutwarning|usepan}
 
     Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`

@@ -68,7 +68,7 @@ Program-Specific Options
 
     Select a resampling algorithm. ``cubic`` is the default.
 
-.. option:: --spatial-extent-adjustment union|intersection|none|none-without-warning
+.. option:: --spatial-extent-adjustment union|intersection|none|none-without-warning|use-pan
 
     Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`

@@ -87,6 +87,12 @@ typedef struct
      * threaded mode is enabled unless the GDAL_NUM_THREADS configuration option
      * is set to an integer or ALL_CPUS. */
     int nThreads;
+
+    /** Sets output pixels that are not covered (at least partially) by spectral data
+     * to dfNoData. If set and bHasNoData is FALSE, the pansharpening operation will
+     * fail if the spectral bands do not fully cover the panchromatic band.
+     * @since GDAL 3.14 */
+    int bNoDataOutsideSpectralExtent;
 } GDALPansharpenOptions;
 
 GDALPansharpenOptions CPL_DLL *GDALCreatePansharpenOptions(void);
