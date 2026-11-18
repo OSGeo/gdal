@@ -848,9 +848,9 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
     else if (eGType != wkbNone)
     {
         if (OGR_GT_HasZ(eGType))
-            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84h";
+            osCoordRefSys = "\"http://www.opengis.net/def/crs/OGC/0/CRS84h\"";
         else
-            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84";
+            osCoordRefSys = "\"http://www.opengis.net/def/crs/OGC/0/CRS84\"";
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No SRS set on layer. Assuming it is long/lat on WGS84 "
                  "ellipsoid");

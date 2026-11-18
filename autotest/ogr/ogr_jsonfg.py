@@ -690,6 +690,17 @@ def test_jsonfg_read_prism_with_polygon_base():
             None,
         ),
         (
+            None,
+            "http://www.opengis.net/def/crs/OGC/0/CRS84",
+            False,
+            2,
+            49,
+            2,
+            49,
+            None,
+            None,
+        ),
+        (
             _get_epsg_crs(4258),
             "http://www.opengis.net/def/crs/EPSG/0/4258",
             True,
