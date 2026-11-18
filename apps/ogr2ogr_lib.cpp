@@ -2817,6 +2817,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             poDriver->GetMetadataItem(
                 GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY);
 
+        const bool bShapefileZip =
+            EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
+            (osDestFilename.endsWith(".shp.zip") ||
+             osDestFilename.endsWith(".SHP.ZIP"));
+
         /* ------------------------------------------------------------------ */
         /*   Special case to improve user experience when translating         */
         /*   a datasource with multiple layers into a shapefile. If the       */
@@ -2844,7 +2849,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         if (psOptions->bInvokedFromGdalAlgorithm && !bSingleLayer &&
-            !bOutputDirectory &&
+            !bOutputDirectory && !bShapefileZip &&
             !poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS))
         {
             CPLError(CE_Failure, CPLE_AppDefined,

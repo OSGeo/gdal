@@ -367,6 +367,22 @@ def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver
         assert convert.Run()
 
 
+def test_gdalalg_vector_convert_multiple_layers_shp_zip(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    with gdal.Open("../ogr/data/poly.shp") as poly_ds:
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
+
+    convert = get_convert_alg()
+    convert["input"] = src_ds
+    convert["output"] = tmp_vsimem / "out.shp.zip"
+    assert convert.Run() and convert.Finalize()
+
+    with gdal.OpenEx(tmp_vsimem / "out.shp.zip") as ds:
+        assert ds.GetLayerCount() == 2
+
+
 @pytest.mark.parametrize("output_format", ("stream", "MEM"))
 def test_gdalalg_vector_convert_no_create_empty_layers(output_format):
 
