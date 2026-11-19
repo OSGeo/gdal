@@ -584,10 +584,7 @@ class CPL_DLL GDALWarpOperation final
                       double dfProgressBase, double dfProgressScale);
     CPLErr WarpRegionToBuffer(int nDstXOff, int nDstYOff, int nDstXSize,
                               int nDstYSize, void *pDataBuf,
-                              GDALDataType eBufDataType, int nSrcXOff = 0,
-                              int nSrcYOff = 0, int nSrcXSize = 0,
-                              int nSrcYSize = 0, double dfProgressBase = 0.0,
-                              double dfProgressScale = 1.0);
+                              GDALDataType eBufDataType);
     CPLErr WarpRegionToBuffer(int nDstXOff, int nDstYOff, int nDstXSize,
                               int nDstYSize, void *pDataBuf,
                               GDALDataType eBufDataType, int nSrcXOff,
