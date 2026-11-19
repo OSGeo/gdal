@@ -138,7 +138,7 @@ Examples
 
    .. code-block::
 
-       gdal raster pansharpen -w 0.7,0.2,0.1 panchro.tif multispectral.tif pansharpened_out.tif
+       gdal raster pansharpen --weights 0.7,0.2,0.1 panchro.tif multispectral.tif pansharpened_out.tif
 
 .. example::
    :title: Select RGB bands from a RGBNir multispectral dataset while computing the pseudo panchromatic intensity on the 4 RGBNir bands
