@@ -1266,11 +1266,12 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     for (int iY = 0; iY < nCovYSize; iY++)
                     {
                         memcpy(
-                            pabyDst + ((static_cast<size_t>(iBand) * nYSize +
-                                        static_cast<size_t>((nCovYOff - nYOff) + iY) *
-                                           nXSize +
-                                       static_cast<size_t>(nCovXOff - nXOff)) *
-                                          nBufDTSize,
+                            pabyDst +
+                                ((static_cast<size_t>(iBand) * nYSize +
+                                  static_cast<size_t>(nCovYOff - nYOff) + iY) *
+                                     nXSize +
+                                 static_cast<size_t>(nCovXOff - nXOff)) *
+                                    nBufDTSize,
                             pabyCovBuf +
                                 (static_cast<size_t>(iBand) * nCovYSize + iY) *
                                     nCovXSize * nBufDTSize,
