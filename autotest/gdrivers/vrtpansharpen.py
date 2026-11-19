@@ -2614,7 +2614,6 @@ def test_vrtpansharpen_use_pan(
         ([-1, 1, 0, 1, 0, -1], False),
     ],
 )
-@gdaltest.disable_exceptions()
 def test_vrtpansharpen_use_pan_nodata_none(tmp_vsimem, pan_gt, covered):
 
     ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "pan.tif", 400, 400)
@@ -2641,10 +2640,8 @@ def test_vrtpansharpen_use_pan_nodata_none(tmp_vsimem, pan_gt, covered):
         </PansharpeningOptions>
     </VRTDataset>"""
 
-    with gdal.quiet_errors():
-        vrt_ds = gdal.Open(xml)
-
-    if not covered:
-        assert vrt_ds is None
-    else:
-        assert vrt_ds is not None
+     if covered:
+         gdal.Open(xml)
+     else:
+         with pytest.raises(Exception, match="output nodata has been explicitly set"):
+            gdal.Open(xml)

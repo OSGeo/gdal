@@ -422,7 +422,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             nCovYEnd == nPanYSize)
         {
             // nodata masking can be disabled as the spectral band fully covers the pan band
-            psOptions->bNoDataOutsideSpectralExtent = FALSE;
+            psOptions->bNoDataOutsideSpectralExtent = false;
         }
         else if (!psOptions->bHasNoData)
         {
@@ -1267,9 +1267,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                     {
                         memcpy(
                             pabyDst + ((static_cast<size_t>(iBand) * nYSize +
-                                        (nCovYOff - nYOff) + iY) *
+                                        static_cast<size_t>((nCovYOff - nYOff) + iY) *
                                            nXSize +
-                                       (nCovXOff - nXOff)) *
+                                       static_cast<size_t>(nCovXOff - nXOff)) *
                                           nBufDTSize,
                             pabyCovBuf +
                                 (static_cast<size_t>(iBand) * nCovYSize + iY) *
