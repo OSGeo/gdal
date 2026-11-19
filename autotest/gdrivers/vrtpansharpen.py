@@ -2640,8 +2640,8 @@ def test_vrtpansharpen_use_pan_nodata_none(tmp_vsimem, pan_gt, covered):
         </PansharpeningOptions>
     </VRTDataset>"""
 
-     if covered:
-         gdal.Open(xml)
-     else:
-         with pytest.raises(Exception, match="output nodata has been explicitly set"):
+    if covered:
+        gdal.Open(xml)
+    else:
+        with pytest.raises(Exception, match="output nodata has been explicitly set"):
             gdal.Open(xml)
