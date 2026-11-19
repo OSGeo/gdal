@@ -1122,8 +1122,8 @@ def download_file(
 
     if filename is None:
         filename = os.path.basename(url)
-    elif filename.startswith(base_dir + "/"):
-        filename = filename[len(base_dir + "/") :]
+    elif filename.startswith(f"{base_dir}/"):
+        filename = filename[len(f"{base_dir}/") :]
 
     if os.path.exists(os.path.join(base_dir, filename)):
         return True
@@ -1195,7 +1195,7 @@ def download_file(
         os.mkdir(base_dir)
 
     try:
-        open(base_dir + "/" + filename, "wb").write(val)
+        open(os.path.join(base_dir, filename), "wb").write(val)
         return True
     except IOError:
         print("Cannot write %s" % (filename))

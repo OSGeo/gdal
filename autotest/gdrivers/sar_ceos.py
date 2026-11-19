@@ -11,12 +11,25 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
 
 from osgeo import gdal
 
 ###############################################################################
+
+
+def check_url(url, tmpdir):
+    if not gdaltest.download_file(
+        url, "url_contents", base_dir=tmpdir, force_download=True, download_size=1024
+    ):
+        pytest.skip(f"Could not read from {url}")
+
+    with open(os.path.join(tmpdir, "url_contents")) as f:
+        if "DOCTYPE HTML" in f.read():
+            pytest.skip(f"Data not available at {url}")
 
 
 @gdaltest.disable_exceptions()
@@ -37,11 +50,10 @@ def test_sar_ceos_asf_2():
 
 @pytest.mark.network
 @pytest.mark.require_curl
-def test_sar_ceos_alos2_L1_1():
+def test_sar_ceos_alos2_L1_1(tmp_path):
     url = "https://www.eorc.jaxa.jp/ALOS-2/en/doc/sampledata/stripmap3m/stripmap3m_L1.1_CEOS.zip"
 
-    if gdaltest.gdalurlopen(url, timeout=5) is None:
-        pytest.skip(f"Could not read from {url}")
+    check_url(url, tmp_path)
 
     with gdaltest.error_raised(gdal.CE_None):
         ds = gdal.Open(
@@ -466,11 +478,10 @@ def test_sar_ceos_alos2_L1_1():
 
 @pytest.mark.network
 @pytest.mark.require_curl
-def test_sar_ceos_alos2_L1_5():
+def test_sar_ceos_alos2_L1_5(tmp_path):
     url = "https://www.eorc.jaxa.jp/ALOS/en/alos-2/datause/sample_data/010_fuji/0000021462_001001_ALOS2004060740-140620.zip"
 
-    if gdaltest.gdalurlopen(url, timeout=5) is None:
-        pytest.skip(f"Could not read from {url}")
+    check_url(url, tmp_path)
 
     with gdaltest.error_raised(gdal.CE_None):
         ds = gdal.Open(
@@ -921,11 +932,10 @@ def test_sar_ceos_alos2_L1_5():
 
 @pytest.mark.network
 @pytest.mark.require_curl
-def test_sar_ceos_alos4_L1_1():
+def test_sar_ceos_alos4_L1_1(tmp_path):
     url = "https://www.eorc.jaxa.jp/ALOS/en/alos-4/sample_product/2025_May/Tokyo/L11/ALOS40182880250307UWD-RD0109_1.1__-.zip"
 
-    if gdaltest.gdalurlopen(url, timeout=5) is None:
-        pytest.skip(f"Could not read from {url}")
+    check_url(url, tmp_path)
 
     with gdaltest.error_raised(gdal.CE_None):
         ds = gdal.Open(
